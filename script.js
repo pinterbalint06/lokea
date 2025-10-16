@@ -37,7 +37,7 @@ function kirajzol(pontok, indexek, ctx, eredeti) {
     // kamera távolsága
     const D = 1;
     // kamera helye
-    const kameraPont = [0, 20, -64];
+    const kameraPont = [100, 40, -100];
     for (let i = 0; i < pontok.length / 3; i++) {
         // 2Ds canvasra kell kirajzolnunk a 3Ds pontokat
         //x jobbra balra
@@ -59,7 +59,7 @@ function kirajzol(pontok, indexek, ctx, eredeti) {
         let i1 = indexek[i];
         let i2 = indexek[i + 1];
         let i3 = indexek[i + 2];
-        let tavolsag = (pontok[i1 * 3 + 1] + pontok[i2 * 3 + 1] + pontok[i3 * 3 + 1]) / 3;
+        let tavolsag = (pontok[i1 * 3 + 2] + pontok[i2 * 3 + 2] + pontok[i3 * 3 + 2]) / 3;
 
         tavolsagok.push([tavolsag, i, i + 1, i + 2]);
     }
@@ -142,10 +142,18 @@ function forgatasYtengelyen(szog, forgatando) {
 
 function eltolas(mertek, eltolandok) {
     for (let i = 0; i < eltolandok.length / 3; i++) {
-        // csak x-et és y-t kell eltolni
-        // z eltolása megváltoztatná a magasságot
+        // csak x-et és z-t kell eltolni
+        // y eltolása megváltoztatná a magasságot
         eltolandok[i * 3] += mertek;
-        eltolandok[i * 3 + 1] += mertek;
+        eltolandok[i * 3 + 2] += mertek;
+    }
+}
+
+function skalazas(mertek, skalazandok) {
+    for (let i = 0; i < skalazandok.length / 3; i++) {
+        // csak x-et és z-t kell skalazni
+        skalazandok[i * 3] *= mertek;
+        skalazandok[i * 3 + 2] *= mertek;
     }
 }
 
@@ -159,7 +167,7 @@ document.addEventListener("DOMContentLoaded", function () {
 function fo() {
     let seed = document.getElementById("seed").value;
     const meret = 128;
-    let perlinErtekek = perlin(1, meret, seed, 1, 9, 2, 2.2);
+    let perlinErtekek = perlin(1, meret, seed, 2, 9, 2, 2.2);
     let pontok = pontokKiszamolasa(perlinErtekek, 150);
     let eredeti = [...pontok];
     let indexek = osszekotesekKiszamolasa(meret);
@@ -168,9 +176,10 @@ function fo() {
     let ctx = canvas.getContext("2d");
     canvas.width = 1000;
     canvas.height = 1000;
-    // let kozep = (meret - 1) / 2;
-    // eltolas(-kozep, pontok);
-    // forgatasXtengelyen(Math.PI / 2, pontok);
-    // eltolas(kozep, pontok);
+    let kozep = (meret - 1) / 2;
+    eltolas(-kozep, pontok);
+    forgatasXtengelyen(Math.PI / -8, pontok);
+    skalazas(1.2, pontok);
+    eltolas(kozep, pontok);
     kirajzol(pontok, indexek, ctx, eredeti);
 }
