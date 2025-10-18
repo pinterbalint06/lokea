@@ -114,8 +114,8 @@ function forgatasZtengelyen(szog, forgatando) {
         let x = forgatando[i * 3];
         let y = forgatando[i * 3 + 1];
 
-        forgatando[i * 3] = x * cosinus - y * sinus;
-        forgatando[i * 3 + 1] = x * sinus + y * cosinus;
+        forgatando[i * 3] = x * cosinus + y * sinus;
+        forgatando[i * 3 + 1] = y * cosinus - x * sinus;
     }
 }
 
@@ -126,20 +126,20 @@ function forgatasXtengelyen(szog, forgatando) {
         let y = forgatando[i * 3 + 1];
         let z = forgatando[i * 3 + 2];
 
-        forgatando[i * 3 + 1] = y * cosinus - z * sinus;
-        forgatando[i * 3 + 2] = y * sinus + z * cosinus;
+        forgatando[i * 3 + 1] = y * cosinus + z * sinus;
+        forgatando[i * 3 + 2] = z * cosinus - y * sinus;
     }
 }
 
-function forgatasYtengelyen(szog, forgatando) {
+function forgatasYtengelyen(szog, forgatando) { 
     const cosinus = Math.cos(szog);
     const sinus = Math.sin(szog);
     for (let i = 0; i < forgatando.length / 3; i++) {
         let x = forgatando[i * 3];
         let z = forgatando[i * 3 + 2];
 
-        forgatando[i * 3] = x * cosinus + z * sinus;
-        forgatando[i * 3 + 2] = (-1) * x * sinus + z * cosinus;
+        forgatando[i * 3] = x * cosinus - z * sinus;
+        forgatando[i * 3 + 2] = x * sinus + z * cosinus;
     }
 }
 
@@ -181,7 +181,7 @@ function fo() {
     canvas.height = 1000;
     let kozep = (meret - 1) / 2;
     eltolas(-kozep, pontok);
-    forgatasXtengelyen(Math.PI / -8, pontok);
+    forgatasXtengelyen(Math.PI / 8, pontok);
     skalazas(1.5, pontok);
     eltolas((meret*1.5 - 1) / 2, pontok);
     kirajzol(pontok, indexek, ctx, eredeti);
