@@ -43,6 +43,7 @@ function transpose(m) {
 // a mátrixunkat augmentáljuk egy egységmátrixal (a mátrixunkon végzett műveleteket elvégezzük az egységmátrixon is)
 // A mátrixunkat alapvető számsorú műveletekkel egységmátrixá alakítjuk. A kezdetileg egységmátrixból így az alap mátrixunk inverz mátrixát kapjuk.
 // Négyzetmátrixnak kell lennie és determinánsa nem 0
+// row-major
 function invertalas(matrix) {
     m = JSON.parse(JSON.stringify(matrix));
     if (m.length == m[0].length) {
@@ -121,4 +122,65 @@ function invertalas(matrix) {
     } else {
         throw "halo hiba";
     }
+}
+
+
+/**
+ * Kiszámolja a vektor hosszát
+ * 
+ * @param {number[]} vektor - A vektor [x, y, z] formában
+ * @returns {number} A vektor hossza
+*/
+function vektorHossza(vektor) {
+    return Math.sqrt(vektor[0]*vektor[0] + vektor[1]*vektor[1] + vektor[2]*vektor[2]);
+}
+
+/**
+ * Normalizálja a vektort
+ * 
+ * @param {numnber[]} vektor - A vektor [x, y, z] formában
+ * @returns A normalizált vektor
+ */
+function vektorNormalizal(vektor) {
+    let normalizalt = [];
+    let hossz = vektorHossza(vektor);
+    if (hossz > 1) {
+        let reciprok = 1 / hossz;
+        normalizalt.push(vektor[0] / reciprok);
+        normalizalt.push(vektor[1] / reciprok);
+        normalizalt.push(vektor[2] / reciprok);
+    }
+    return normalizalt;
+}
+
+/**
+ * Gömbkoordinátákat átkonvertálja Descartes-féle koordinátákba
+ * 
+ * @param {number} theta - A gömbkoordináta théta szöge radiánban
+ * @param {number} phi - A gömbkoordináta phi szöge radiánban
+ * @returns A vektor Descartes-féle koordinátákban [x, y, z] alakban. Z fel konvencióval.
+ */
+function gombbolDescartesba(theta, phi) {
+    return [Math.sin(theta) * Math.cos(phi), Math.sin(theta) * Math.sin(phi), Math.cos(theta)];
+}
+
+/**
+ * Kiszámolja a thétát.
+ * 
+ * @param {number[]} vektor - Az átváltandó vektor. Z fel konvencióban és normalizálva.
+ * @returns Théta [0;π]
+ */
+function gombTheta(vektor) {
+    return Math.acos(vektor[2]);
+}
+
+/**
+ * Kiszámolja a phit.
+ * 
+ * @param {number[]} vektor - Az átváltandó vektor. Z fel konvencióban és normalizálva.
+ * @returns Phi. [0;2π]
+ */
+function gombPhi(vektor) {
+    let phi = Math.atan2(vektor[1], vektor[0]);
+    return phi < 0 ? phi + 2 * Math.PI : phi;
 }
