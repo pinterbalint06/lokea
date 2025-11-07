@@ -340,6 +340,7 @@ document.addEventListener("DOMContentLoaded", function () {
     sd.nextElementSibling.value = sd.value
     ujTerkep();
     ujhely();
+    rendereles();
 });
 
 let yforgas = 0;
@@ -363,11 +364,11 @@ function ujTerkep() {
     indexek = new Float32Array((meret-1)*(meret-1)*6);
     osszekotesekKiszamolasa(indexek, meret)
     console.log("Új térkép idő:",performance.now() - eleje);
+    rendereles();
 }
 
 function ujhely() {
     rndszm = Math.round(Math.random() * meret * meret);
-    rendereles();
 }
 
 function irany(x, y) {
