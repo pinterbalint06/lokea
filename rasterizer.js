@@ -1,9 +1,9 @@
 // kamera tulajdonsagai
-const fokuszTavolsag = 35; // mm focalLength
-const filmNyilasSzelesseg = 0.980;
-const filmNyilasMagassag = 0.735;
+const fokuszTavolsag = 12.7; // mm focalLength
+const filmNyilasSzelesseg = 1;
+const filmNyilasMagassag = 1;
 const jsCanvasSzelesseg = 1200;
-const jsCanvasMagassag = 900;
+const jsCanvasMagassag = 1200;
 const inchToMm = 25.4;
 const kozelVagasiSikZ = 0.1;
 const tavollVagasiSikZ = 1000;
@@ -26,7 +26,7 @@ if (filmNyilasSzelesseg / filmNyilasMagassag > jsCanvasSzelesseg / jsCanvasMagas
 // let canvasMeret = 2 * Math.tan(fov/2) * canvasTavolsag;
 
 // gyorsabban. kiszamoljuk a felso szélét ennek ellentettje az also
-// a jobb oldalit megkapjuk ha a felsőt megszorozzuk a képaránnyal
+// a jobb oldalit megkapjuk ha a felsőt megszorozzuk a képaránnyal  
 const t = ((filmNyilasMagassag * inchToMm / 2) / fokuszTavolsag * kozelVagasiSikZ) * yKitoltes;
 const r = t * (filmNyilasSzelesseg / filmNyilasMagassag) * xKitoltes;
 const b = -t;
@@ -157,7 +157,7 @@ function kameraHelybolNDCHelybeY(y, z) {
     return (2 * ((y / (-z)) * kozelVagasiSikZ) / (t - b) - (t + b) / (t - b));
 }
 
-function kirajzol(pontok, indexek, ctx) {
+function kirajzol(pontok, indexek, ctx, forgasx, forgasy) {
     ctx.clearRect(0, 0, jsCanvasSzelesseg, jsCanvasMagassag);
     // kamera helye
     let kameraMatrix = [
@@ -166,7 +166,12 @@ function kirajzol(pontok, indexek, ctx) {
         [0, 0, 1, 0],
         [-pontok[rndszm * 3], -pontok[rndszm * 3 + 1] + 15, -pontok[rndszm * 3 + 2], 1]
     ];
-    kameraMatrix = matrixSzorzas(kameraMatrix, forgatasYMatrix4x4(Math.PI * forgas));
+    if (forgasy != 0) {
+        kameraMatrix = matrixSzorzas(kameraMatrix, forgatasYMatrix4x4(Math.PI * forgasy));
+    }
+    if (forgasx != 0) {
+        kameraMatrix = matrixSzorzas(kameraMatrix, forgatasXMatrix4x4(Math.PI * forgasx));
+    }
     let zbuffer = [];
     zBufferInit(zbuffer);
     let kivetitettPontok;
@@ -335,17 +340,24 @@ document.addEventListener("DOMContentLoaded", function () {
     fo();
 });
 
-let forgas = 0;
+let yforgas = 0;
+let xforgas = 0;
 let rndszm;
 const meret = 256;
 
 function forgasTovab() {
-    forgas += 0.1;
+    yforgas += 0.1;
     fo();
 }
 
 function ujhely() {
     rndszm = Math.round(Math.random() * meret * meret);
+    fo();
+}
+
+function irany(x, y) {
+    yforgas = y;
+    xforgas = x;
     fo();
 }
 
@@ -361,7 +373,7 @@ function fo() {
     let ctx = canvas.getContext("2d");
     canvas.width = jsCanvasSzelesseg;
     canvas.height = jsCanvasMagassag;
-    kirajzol(pontok, indexek, ctx);
+    kirajzol(pontok, indexek, ctx, xforgas, yforgas);
 
     console.log(performance.now() - eleje);
 }
