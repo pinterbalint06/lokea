@@ -155,7 +155,8 @@ function kameraHelybolNDCHelybeY(y, z) {
     return (2 * ((y / (-z)) * kozelVagasiSikZ) / (t - b) - (t + b) / (t - b));
 }
 
-function kirajzol(pontok, indexek, ctx, forgasx, forgasy, antialias) {
+function kirajzol(canvasId, antialias) {
+    let ctx = document.getElementById(canvasId).getContext("2d");
     ctx.clearRect(0, 0, jsCanvasSzelesseg, jsCanvasMagassag);
     // kamera helye
     let kameraMatrix = [
@@ -164,11 +165,11 @@ function kirajzol(pontok, indexek, ctx, forgasx, forgasy, antialias) {
         [0, 0, 1, 0],
         [-pontok[rndszm * 3], -pontok[rndszm * 3 + 1] + 15, -pontok[rndszm * 3 + 2], 1]
     ];
-    if (forgasy != 0) {
-        kameraMatrix = matrixSzorzas(kameraMatrix, forgatasYMatrix4x4(Math.PI * forgasy));
+    if (yforgas != 0) {
+        kameraMatrix = matrixSzorzas(kameraMatrix, forgatasYMatrix4x4(Math.PI * yforgas));
     }
-    if (forgasx != 0) {
-        kameraMatrix = matrixSzorzas(kameraMatrix, forgatasXMatrix4x4(Math.PI * forgasx));
+    if (xforgas != 0) {
+        kameraMatrix = matrixSzorzas(kameraMatrix, forgatasXMatrix4x4(Math.PI * xforgas));
     }
     let zbuffer = new Float32Array(jsCanvasMagassag * jsCanvasSzelesseg);
     zbuffer.fill(tavollVagasiSikZ);
@@ -329,51 +330,54 @@ function skalazas(mertek, skalazandok) {
 }
 
 document.addEventListener("DOMContentLoaded", function () {
-    // let matrix = [[1, 6, 3, 7], [4, 0, 6, 5], [7, 8, 9, 2], [23, 21, 2, 0]];
-    // console.log(matrixSzorzas(invertalas(matrix), matrix));
+    let canvas = document.getElementById("canvas");
+    canvas.get
+    canvas.width = jsCanvasSzelesseg;
+    canvas.height = jsCanvasMagassag;
     let sd = document.getElementById("seed");
-    sd.value = Math.floor(Math.random() * 10000) + 1;
+    seed = Math.floor(Math.random() * 10000) + 1;
+    sd.value = seed;
     sd.nextElementSibling.value = sd.value
-    rndszm = Math.round(Math.random() * meret * meret);
-    fo();
+    ujTerkep();
+    ujhely();
 });
 
 let yforgas = 0;
 let xforgas = 0;
 let rndszm;
 const meret = 256;
+let seed;
+// listak
+let perlinErtekek, pontok, indexek;
 
 function forgasTovab() {
     yforgas += 0.1;
-    fo();
+    rendereles();
+}
+
+function ujTerkep() {
+    let eleje = performance.now()
+    perlinErtekek = perlin(1, meret, seed, 2, 9, 2, 2.2);
+    pontok = new Float32Array(meret * meret * 3);
+    pontokKiszamolasa(pontok, perlinErtekek, 150);
+    indexek = new Float32Array((meret-1)*(meret-1)*6);
+    osszekotesekKiszamolasa(indexek, meret)
+    console.log("Új térkép idő:",performance.now() - eleje);
 }
 
 function ujhely() {
     rndszm = Math.round(Math.random() * meret * meret);
-    fo();
+    rendereles();
 }
 
 function irany(x, y) {
     yforgas = y;
     xforgas = x;
-    fo();
+    rendereles();
 }
 
-function fo() {
+function rendereles() {
     let eleje = performance.now()
-
-    let seed = document.getElementById("seed").value;
-    let perlinErtekek = perlin(1, meret, seed, 2, 9, 2, 2.2);
-    let pontok = new Float32Array(meret * meret * 3);
-    pontokKiszamolasa(pontok, perlinErtekek, 150);
-    let indexek = new Float32Array((meret-1)*(meret-1)*6);
-    osszekotesekKiszamolasa(indexek, meret)
-
-    let canvas = document.getElementById("canvas");
-    let ctx = canvas.getContext("2d");
-    canvas.width = jsCanvasSzelesseg;
-    canvas.height = jsCanvasMagassag;
-    kirajzol(pontok, indexek, ctx, xforgas, yforgas, 1);
-
-    console.log(performance.now() - eleje);
+    kirajzol("canvas", 1);
+    console.log("Renderelés idő:",performance.now() - eleje);
 }
