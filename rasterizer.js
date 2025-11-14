@@ -84,14 +84,14 @@ function osszekotesekKiszamolasa(indexek, meret) {
  * 
  * @param {number} X A vonalat meghatározó első pont X koordinátája
  * @param {number} Y A vonalat meghatározó első pont Y koordinátája
- * @param {number} x1 A vonalat meghatározó második pont X koordinátája
- * @param {number} y1 A vonalat meghatározó második pont Y koordinátája
+ * @param {number} dX A vonalat meghatározó vektor X koordinátája
+ * @param {number} y1 A vonalat meghatározó vektor Y koordinátája
  * @param {number} x0 A vizsgált pont X koordinátája
  * @param {number} y0 A vizsgált pont Y koordinátája
  * @returns {number} Vektoriális szorzatuk Z koordinátája. Z=0 vonalon. Z>0 jobbra. Z<0 balra.
  */
-function edgeFunction(X, Y, x1, y1, x0, y0) {
-    return (x0 - X) * (y1 - Y) - (y0 - Y) * (x1 - X);
+function edgeFunction(X, Y, dX, dY, x, y) {
+    return (x - X) * dY - (y - Y) * dX;
 }
 
 /**
@@ -121,16 +121,20 @@ function haromszogbenVanE(v0, v1, v2, p) {
  * @returns {boolean} Ha a háromszögben van akkor visszaadja a baricentrikus koordinátáit egyébként null.
  */
 function rajtaVanEAPixelAHaromszogon(v0, v1, v2, p) {
-    let w0 = edgeFunction(v1[0], v1[1], v2[0], v2[1], p[0], p[1]);
-    let w1 = edgeFunction(v2[0], v2[1], v0[0], v0[1], p[0], p[1]);
-    let w2 = edgeFunction(v0[0], v0[1], v1[0], v1[1], p[0], p[1]);
+    let w0 = edgeFunction(v1[0], v1[1], v2[0] - v1[0], v2[1] - v1[1], p[0], p[1]);
+    let w1 = edgeFunction(v2[0], v2[1], v0[0] - v2[0], v0[1] - v2[1], p[0], p[1]);
+    let w2 = edgeFunction(v0[0], v0[1], v1[0] - v0[0], v1[1] - v0[1], p[0], p[1]);
     let vissza = null;
     if (w0 >= 0 && w1 >= 0 && w2 >= 0) {
-        let haromszogterulet = edgeFunction(v0[0], v0[1], v1[0], v1[1], v2[0], v2[1]);
+        let haromszogterulet = edgeFunction(v0[0], v0[1], v1[0] - v0[0], v1[1] - v0[1], v2[0], v2[1]);
         vissza = [w0 / haromszogterulet, w1 / haromszogterulet, w2 / haromszogterulet];
     }
     return vissza;
 }
+
+console.log(edgeFunction(0, 0, 2, 2, 1, 1));
+console.log(edgeFunction(0, 0, 2, 2, 2, 1));
+console.log(edgeFunction(0, 0, 2, 2, 1, 1) + 2 - 0);
 
 function pontMatrixSzorzas(pont, matrix) {
     let eredmeny = matrixSzorzas([[pont[0], pont[1], pont[2], 1]], matrix)[0];
@@ -260,6 +264,8 @@ function kirajzol(canvasId, antialias = 1) {
     let kameraKoordinatak;
     let gyokElsimitas = Math.sqrt(antialias);
     let gyokElsimitasReciprok = 1 / Math.sqrt(antialias);
+    let inc = gyokElsimitasReciprok * 0.5;
+    console.log("inc", inc);
     console.log("Bufferek létrehozása, előszámítások:", performance.now() - ido, "ms");
     for (let i = 0; i < indexek.length; i += 3) {
         htminx = 2000;
@@ -299,32 +305,74 @@ function kirajzol(canvasId, antialias = 1) {
             htminy = Math.max(0, Math.min(jsCanvasMagassag - 1, Math.floor(htminy)));
             htmaxx = Math.max(0, Math.min(jsCanvasSzelesseg - 1, Math.ceil(htmaxx)));
             htmaxy = Math.max(0, Math.min(jsCanvasMagassag - 1, Math.ceil(htmaxy)));
+            let dX0 = kivetitettPontok[2][0] - kivetitettPontok[1][0];
+            let dY0 = kivetitettPontok[2][1] - kivetitettPontok[1][1];
+            let dX1 = kivetitettPontok[0][0] - kivetitettPontok[2][0];
+            let dY1 = kivetitettPontok[0][1] - kivetitettPontok[2][1];
+            let dX2 = kivetitettPontok[1][0] - kivetitettPontok[0][0];
+            let dY2 = kivetitettPontok[1][1] - kivetitettPontok[0][1];
+            // kiszámoljuk a bounding box-tól balra fenti pixel edgefunctionjét
+            let w0 = edgeFunction(kivetitettPontok[1][0], kivetitettPontok[1][1], dX0, dY0, htminx - 1 + inc, htminy - 1 + inc);
+            let w1 = edgeFunction(kivetitettPontok[2][0], kivetitettPontok[2][1], dX1, dY1, htminx - 1 + inc, htminy - 1 + inc);
+            let w2 = edgeFunction(kivetitettPontok[0][0], kivetitettPontok[0][1], dX2, dY2, htminx - 1 + inc, htminy - 1 + inc);
             for (let y = htminy; y <= htmaxy; y++) {
+                // Ei(x, y+1) = Ei(x, y) - dXi
+                // letoljuk egy pixellel
+                w0 -= dX0;
+                w1 -= dX1;
+                w2 -= dX2;
                 for (let x = htminx; x <= htmaxx; x++) {
+                    // Ei(x+1, y) = Ei(x, y) + dYi
+                    // jobbra toljuk egy pixellel
+                    w0 += dY0;
+                    w1 += dY1;
+                    w2 += dY2;
                     for (let ya = 0; ya < gyokElsimitas; ya++) {
                         for (let xa = 0; xa < gyokElsimitas; xa++) {
-                            // A pixel közepe rajta van-e a kivetitett pontok altal meghatarozott haromszogon
-                            // kis pixelek közepének kiszámolása:
-                            // x a pixelünk kezdete
-                            // legyen egy pixel egy egység hosszú ezt felosztjuk gyokElsimitas kis pixelre egy kis pixel hossza 1/gyokElsimitas tehat gyokelSimitasReciprok
-                            // a kis pixel közepe kell úgy hogy kell a kis pixel hosszának fele ami = (1/gyokElsimitas)/2 = gyokElsimitasReciprok*0.5
-                            // ehhez még hozzá kell adni azt hogy hanyadik kis pixelben vagyunk ez xa-szor a kis pixel hossza tehát xa*gyokElsimitasReciprok
-                            // a teljes koordináta x+gyokElsimitasReciprok*0.5+xa*gyokElsimitasReciprok. kiemelve gyokElsimitasReciprok-ot. x+(xa + 0.5) * gyokElsimitasReciprok
-                            baricentrikus = rajtaVanEAPixelAHaromszogon(kivetitettPontok[0], kivetitettPontok[1], kivetitettPontok[2], [x + (xa + 0.5) * gyokElsimitasReciprok, y + (ya + 0.5) * gyokElsimitasReciprok]);
-                            if (baricentrikus !== null) {
-                                zMelyseg = 1 / ((1 / kivetitettPontok[0][2]) * baricentrikus[0] + (1 / kivetitettPontok[1][2]) * baricentrikus[1] + (1 / kivetitettPontok[2][2]) * baricentrikus[2]);
-                                bufferIndex = (y * jsCanvasSzelesseg + x) * antialias + ya * gyokElsimitas + xa;
-                                if (zMelyseg < zbuffer[bufferIndex]) {
-                                    zbuffer[(y * jsCanvasSzelesseg + x) * antialias + ya * gyokElsimitas + xa] = zMelyseg;
-                                    kepIndex = bufferIndex * 3;
-                                    image[kepIndex] = 255 / kivetitettPontok[0][2] * baricentrikus[0] * zMelyseg;
-                                    image[kepIndex + 1] = 255 / kivetitettPontok[1][2] * baricentrikus[1] * zMelyseg;
-                                    image[kepIndex + 2] = 255 / kivetitettPontok[2][2] * baricentrikus[2] * zMelyseg;
+                            // elsőre jó helyen van ellenőrizzük
+                            if (w0 >= 0 && w1 >= 0 && w2 >= 0) {
+                                let haromszogterulet = edgeFunction(kivetitettPontok[0][0], kivetitettPontok[0][1], kivetitettPontok[1][0] - kivetitettPontok[0][0], kivetitettPontok[1][1] - kivetitettPontok[0][1], kivetitettPontok[2][0], kivetitettPontok[2][1]);
+                                baricentrikus = [w0 / haromszogterulet, w1 / haromszogterulet, w2 / haromszogterulet];
+                                if (baricentrikus !== null) {
+                                    zMelyseg = 1 / ((1 / kivetitettPontok[0][2]) * baricentrikus[0] + (1 / kivetitettPontok[1][2]) * baricentrikus[1] + (1 / kivetitettPontok[2][2]) * baricentrikus[2]);
+                                    bufferIndex = (y * jsCanvasSzelesseg + x) * antialias + ya * gyokElsimitas + xa;
+                                    if (zMelyseg < zbuffer[bufferIndex]) {
+                                        zbuffer[(y * jsCanvasSzelesseg + x) * antialias + ya * gyokElsimitas + xa] = zMelyseg;
+                                        kepIndex = bufferIndex * 3;
+                                        image[kepIndex] = 255 / kivetitettPontok[0][2] * baricentrikus[0] * zMelyseg;
+                                        image[kepIndex + 1] = 255 / kivetitettPontok[1][2] * baricentrikus[1] * zMelyseg;
+                                        image[kepIndex + 2] = 255 / kivetitettPontok[2][2] * baricentrikus[2] * zMelyseg;
+                                    }
                                 }
                             }
+                            // a következő ciklusra eltoljuk jobbra a kis pixel hosszával (gyokElsimitasReciprok)
+                            w0 += dY0 * gyokElsimitasReciprok;
+                            w1 += dY1 * gyokElsimitasReciprok;
+                            w2 += dY2 * gyokElsimitasReciprok;
                         }
+                        // Ei(x-1, y) = Ei(x, y) - dYi
+                        // Ei(x, y+1) = Ei(x, y) - dXi
+                        // ha a sor végére értünk
+                        // vissza a sor elejére:
+                        // dYi * gyokElsimitas * gyokElsimitasReciprok-vel visszatoljuk balra a kis pixelek (száma(gyokElsimitas)*kis pixel hossza(gyokElsimitasReciprok))-val
+                        // egy sorral lejjebb
+                        // dXi * gyokElsimitasReciprok letoljuk egyel a kis pixel hosszával
+                        w0 -= dY0 * gyokElsimitas * gyokElsimitasReciprok + dX0 * gyokElsimitasReciprok;
+                        w1 -= dY1 * gyokElsimitas * gyokElsimitasReciprok + dX1 * gyokElsimitasReciprok;
+                        w2 -= dY2 * gyokElsimitas * gyokElsimitasReciprok + dX2 * gyokElsimitasReciprok;
                     }
+                    // Ei(x, y-1) = Ei(x, y) + dXi
+                    // a sorok végére jutottunk. Visszatoljuk az első sorra
+                    // vissza fel toljuk a (kis pixelek száma(gyokElsimitas)*kis pixel hossza(gyokElsimitasReciprok))-val
+                    w0 += dX0 * gyokElsimitas * gyokElsimitasReciprok;
+                    w1 += dX1 * gyokElsimitas * gyokElsimitasReciprok;
+                    w2 += dX2 * gyokElsimitas * gyokElsimitasReciprok;
                 }
+                // Ei(x-1, y) = Ei(x, y) - dYi
+                // a sor végére jutottunk visszatoljuk a sor elejére
+                w0 -= dY0 * (htmaxx - htminx + 1);
+                w1 -= dY1 * (htmaxx - htminx + 1);
+                w2 -= dY2 * (htmaxx - htminx + 1);
             }
             pixelTesztIdo += performance.now() - ido;
         }
