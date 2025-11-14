@@ -150,9 +150,75 @@ function kameraTerbe(x0, y0, z0, x1, y1, z1, x2, y2, z2, Mkamera) {
     ];
 }
 
-function pontKivetitese(pont, P) {
-    let er = pontMatrixSzorzas(pont, P);
-    return [(er[0] + 1) * 0.5 * jsCanvasSzelesseg, (1 - er[1]) * 0.5 * jsCanvasMagassag, er[2]]
+function pontokKivetitese(p0, p1, p2) {
+    let p0t = matrixSzorzas([[p0[0], p0[1], p0[2], 1]], P)[0];
+    let p1t = matrixSzorzas([[p1[0], p1[1], p1[2], 1]], P)[0];
+    let p2t = matrixSzorzas([[p2[0], p2[1], p2[2], 1]], P)[0];
+
+    let clipped = SutherlandHodgman(p0t, p1t, p2t);
+    let vissza = [];
+
+    for (let i = 0; i < clipped.length - 2; i++) {
+        let v0_clip = clipped[0];
+        let v1_clip = clipped[i + 1];
+        let v2_clip = clipped[i + 2];
+
+        let haromszog = [];
+        for (let v of [v0_clip, v1_clip, v2_clip]) {
+            const invW = 1.0 / v[3];
+            haromszog.push([
+                (v[0] * invW + 1) * 0.5 * jsCanvasSzelesseg,
+                (1 - v[1] * invW) * 0.5 * jsCanvasMagassag,
+                v[2] * invW
+            ]);
+        }
+        vissza.push(haromszog);
+    }
+    return vissza;
+}
+
+function SutherlandHodgman(p0, p1, p2) {
+    let kimenet = [p0, p1, p2];
+    let oldalak = [
+        [3, 0, -1],
+        [3, 0, 1],
+        [3, 1, -1],
+        [3, 1, 1],
+        [3, 2, -1],
+        [3, 2, 1]
+    ];
+    let pont, elozoPont, tavolsag, elozoTavolsag, bemenet;
+    for (let k = 0; k < oldalak.length; k++) {
+        bemenet = [...kimenet];
+        kimenet.length = 0;
+        for (let i = 0; i < bemenet.length; i++) {
+            pont = bemenet[i];
+            tavolsag = pont[oldalak[k][0]] + pont[oldalak[k][1]] * oldalak[k][2];
+            elozoPont = bemenet[i == 0 ? bemenet.length - 1 : i - 1];
+            elozoTavolsag = elozoPont[oldalak[k][0]] + elozoPont[oldalak[k][1]] * oldalak[k][2];
+            if (tavolsag >= 0) {
+                if (elozoTavolsag < 0) {
+                    kimenet.push([
+                        linearis_interpolacio(elozoPont[0], pont[0], elozoTavolsag / (elozoTavolsag - tavolsag)),
+                        linearis_interpolacio(elozoPont[1], pont[1], elozoTavolsag / (elozoTavolsag - tavolsag)),
+                        linearis_interpolacio(elozoPont[2], pont[2], elozoTavolsag / (elozoTavolsag - tavolsag)),
+                        linearis_interpolacio(elozoPont[3], pont[3], elozoTavolsag / (elozoTavolsag - tavolsag)),
+                    ]);
+                }
+                kimenet.push(pont);
+            } else {
+                if (elozoTavolsag >= 0) {
+                    kimenet.push([
+                        linearis_interpolacio(elozoPont[0], pont[0], elozoTavolsag / (elozoTavolsag - tavolsag)),
+                        linearis_interpolacio(elozoPont[1], pont[1], elozoTavolsag / (elozoTavolsag - tavolsag)),
+                        linearis_interpolacio(elozoPont[2], pont[2], elozoTavolsag / (elozoTavolsag - tavolsag)),
+                        linearis_interpolacio(elozoPont[3], pont[3], elozoTavolsag / (elozoTavolsag - tavolsag)),
+                    ]);
+                }
+            }
+        }
+    }
+    return kimenet;
 }
 
 function kirajzol(canvasId, antialias = 1) {
@@ -182,8 +248,8 @@ function kirajzol(canvasId, antialias = 1) {
     ido = performance.now();
     // jsCanvasMagassag * gyokElsmitas * jsCanvasSzelesseg * gyokElsimitas = jsCanvasMagassag * jsCanvasSzelesseg * antialias
     let zbuffer = new Float32Array(jsCanvasMagassag * jsCanvasSzelesseg * antialias);
-    zbuffer.fill(f);
-    let kivetitettPontok;
+    zbuffer.fill(1);
+    let kivetitettHaromszogek;
     // a háromszög határolókeretje
     let htminx, htminy, htmaxx, htmaxy;
     let zMelyseg;
@@ -209,18 +275,11 @@ function kirajzol(canvasId, antialias = 1) {
             kameraMatrix
         );
         pontKivetitesIdo += performance.now() - ido;
-        if (-n >= kameraKoordinatak[0][2] && kameraKoordinatak[0][2] >= -f &&
-            -n >= kameraKoordinatak[1][2] && kameraKoordinatak[1][2] >= -f &&
-            -n >= kameraKoordinatak[2][2] && kameraKoordinatak[2][2] >= -f
-        ) {
-            ido = performance.now();
-            kivetitettPontok = [
-                pontKivetitese(kameraKoordinatak[0], P),
-                pontKivetitese(kameraKoordinatak[1], P),
-                pontKivetitese(kameraKoordinatak[2], P),
-            ];
-            pontKivetitesIdo += performance.now() - ido;
-            ido = performance.now();
+        ido = performance.now();
+        kivetitettHaromszogek = pontokKivetitese(kameraKoordinatak[0], kameraKoordinatak[1], kameraKoordinatak[2]);
+        pontKivetitesIdo += performance.now() - ido;
+        ido = performance.now();
+        for (let kivetitettPontok of kivetitettHaromszogek) {
             // A háromszöget határolókeret pontjainak kiszámolása
             for (let k = 0; k < kivetitettPontok.length; k++) {
                 if (kivetitettPontok[k][0] < htminx) {

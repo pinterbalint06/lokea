@@ -37,6 +37,10 @@ function transpose(m) {
     return transposed;
 }
 
+function linearis_interpolacio(a1, a2, d) {
+    return a1 + (a2 - a1) * d;
+}
+
 // Gauss-Jordan Method
 // A mátrix és inverzének szorzata egyenlő az egységmátrixal
 // a mátrixunkat augmentáljuk egy egységmátrixal (a mátrixunkon végzett műveleteket elvégezzük az egységmátrixon is)
