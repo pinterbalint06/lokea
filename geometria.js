@@ -21,6 +21,26 @@ function matrixSzorzas(m1, m2) {
     }
 }
 
+// row-major
+function matrixSzorzas4x4(m1, m2) {
+    let eredmeny = new Float32Array(16);
+    for (let i = 0; i < 4; i++) {
+        for (let j = 0; j < 4; j++) {
+            eredmeny[i * 4 + j] = m1[i * 4] * m2[j] + m1[i * 4 + 1] * m2[4 + j] + m1[i * 4 + 2] * m2[8 + j] + m1[i * 4 + 3] * m2[12 + j];
+        }
+    }
+    return eredmeny;
+}
+
+// row-major
+function pontMatrix(pont, matrix) {
+    let eredmeny = new Float32Array(4);
+    for (let i = 0; i < 4; i++) {
+        eredmeny[i] = pont[0] * matrix[i] + pont[1] * matrix[4 + i] + pont[2] * matrix[8 + i] + matrix[12 + i];
+    }
+    return eredmeny;
+}
+
 function transpose(m) {
     let transposed = [];
     for (let i = 0; i < m.length; i++) {
@@ -127,20 +147,21 @@ function invertalas(matrix) {
     }
 }
 
-
 /**
  * Kiszámolja a vektor hosszát
- * 
+ *
  * @param {number[]} vektor - A vektor [x, y, z] formában
  * @returns {number} A vektor hossza
-*/
+ */
 function vektorHossza(vektor) {
-    return Math.sqrt(vektor[0] * vektor[0] + vektor[1] * vektor[1] + vektor[2] * vektor[2]);
+    return Math.sqrt(
+        vektor[0] * vektor[0] + vektor[1] * vektor[1] + vektor[2] * vektor[2]
+    );
 }
 
 /**
  * Normalizálja a vektort
- * 
+ *
  * @param {number[]} vektor - A vektor [x, y, z] formában
  * @returns A normalizált vektor
  */
@@ -158,18 +179,22 @@ function vektorNormalizal(vektor) {
 
 /**
  * Gömbkoordinátákat átkonvertálja Descartes-féle koordinátákba
- * 
+ *
  * @param {number} theta - A gömbkoordináta théta szöge radiánban
  * @param {number} phi - A gömbkoordináta phi szöge radiánban
  * @returns A vektor Descartes-féle koordinátákban [x, y, z] alakban. Z fel konvencióval.
  */
 function gombbolDescartesba(theta, phi) {
-    return [Math.sin(theta) * Math.cos(phi), Math.sin(theta) * Math.sin(phi), Math.cos(theta)];
+    return [
+        Math.sin(theta) * Math.cos(phi),
+        Math.sin(theta) * Math.sin(phi),
+        Math.cos(theta),
+    ];
 }
 
 /**
  * Kiszámolja a thétát.
- * 
+ *
  * @param {number[]} vektor - Az átváltandó vektor. Z fel konvencióban és normalizálva.
  * @returns Théta [0;π]
  */
@@ -179,7 +204,7 @@ function gombTheta(vektor) {
 
 /**
  * Kiszámolja a phit.
- * 
+ *
  * @param {number[]} vektor - Az átváltandó vektor. Z fel konvencióban és normalizálva.
  * @returns Phi. [0;2π]
  */
@@ -192,10 +217,10 @@ function forgatasXMatrix4x4(szog) {
     const cosinus = Math.cos(szog);
     const sinus = Math.sin(szog);
     return [
-        [1, 0, 0, 0],
-        [0, cosinus, sinus, 0],
-        [0, -sinus, cosinus, 0],
-        [0, 0, 0, 1]
+        1, 0, 0, 0,
+        0, cosinus, sinus, 0,
+        0, -sinus, cosinus, 0,
+        0, 0, 0, 1
     ];
 }
 
@@ -203,57 +228,11 @@ function forgatasYMatrix4x4(szog) {
     const cosinus = Math.cos(szog);
     const sinus = Math.sin(szog);
     return [
-        [cosinus, 0, -sinus, 0],
-        [0, 1, 0, 0],
-        [sinus, 0, cosinus, 0],
-        [0, 0, 0, 1]
+        cosinus, 0, -sinus, 0,
+        0, 1, 0, 0,
+        sinus, 0, cosinus, 0,
+        0, 0, 0, 1
     ];
-}
-
-function forgatasXMatrix(szog) {
-    const cosinus = Math.cos(szog);
-    const sinus = Math.sin(szog);
-    return [
-        [1, 0, 0],
-        [0, cosinus, sinus],
-        [0, -sinus, cosinus]
-    ];
-}
-
-function forgatasXtengelyen(szog, forgatando) {
-    forgatas(forgatasXMatrix(szog), forgatando);
-}
-
-function forgatasYtengelyen(szog, forgatando) {
-    const cosinus = Math.cos(szog);
-    const sinus = Math.sin(szog);
-    const Ry = [
-        [cosinus, 0, -sinus],
-        [0, 1, 0],
-        [sinus, 0, cosinus]
-    ];
-    forgatas(Ry, forgatando);
-}
-
-function forgatasZtengelyen(szog, forgatando) {
-    const cosinus = Math.cos(szog);
-    const sinus = Math.sin(szog);
-    const Rz = [[cosinus, sinus, 0],
-    [-sinus, cosinus, 0],
-    [0, 0, 1]
-    ];
-    forgatas(Rz, forgatando);
-}
-
-
-function forgatas(Rmatrix, forgatando) {
-    for (let i = 0; i < forgatando.length / 3; i++) {
-        let eredmeny = matrixSzorzas([[forgatando[i * 3], forgatando[i * 3 + 1], forgatando[i * 3 + 2]]],
-            Rmatrix);
-        forgatando[i * 3] = eredmeny[0][0];
-        forgatando[i * 3 + 1] = eredmeny[0][1];
-        forgatando[i * 3 + 2] = eredmeny[0][2];
-    }
 }
 
 function eltolas(mertek, eltolandok) {
