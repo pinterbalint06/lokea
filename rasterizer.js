@@ -51,6 +51,12 @@ P[9] = (t + b) / (t - b);
 P[10] = f / (n - f);
 P[11] = -1;
 P[14] = n * f / (n - f);
+let module;
+const wasmMemory = new WebAssembly.Memory({
+    initial: 256,
+    maximum: 256,
+});
+const dw = new DataView(wasmMemory.buffer);
 
 const sikok = [
     3, 0, -1, // w - x
@@ -62,11 +68,11 @@ const sikok = [
 ];
 
 function pontokKiszamolasa(pontok, perlinek, szorzo) {
-    for (let y = 0; y < perlinek.length; y++) {
-        for (let x = 0; x < perlinek[y].length; x++) {
-            pontok[(y * perlinek.length + x) * 3] = x; // x koordináta
-            pontok[(y * perlinek.length + x) * 3 + 1] = perlinek[y][x] * szorzo; // y koordináta
-            pontok[(y * perlinek.length + x) * 3 + 2] = -y; // z koordináta
+    for (let y = 0; y < meret; y++) {
+        for (let x = 0; x < meret; x++) {
+            pontok[(y * meret + x) * 3] = x; // x koordináta
+            pontok[(y * meret + x) * 3 + 1] = perlinek[y*meret+x] * szorzo; // y koordináta
+            pontok[(y * meret + x) * 3 + 2] = -y; // z koordináta
         }
     }
     return pontok;
@@ -228,39 +234,39 @@ function kirajzol(canvasId, antialias = 1) {
             pontok[indexek[i + 2] * 3], pontok[indexek[i + 2] * 3 + 1], pontok[indexek[i + 2] * 3 + 2],
             kameraMatrix
         );
-        for (let i = 0; i < kivetitettHaromszogek.length; i+=9) {
+        for (let i = 0; i < kivetitettHaromszogek.length; i += 9) {
             // A háromszöget határolókeret pontjainak kiszámolása
-            for (let k = 0; k < 9; k+=3) {
-                if (kivetitettHaromszogek[i+k] < htminx) {
-                    htminx = kivetitettHaromszogek[i+k];
+            for (let k = 0; k < 9; k += 3) {
+                if (kivetitettHaromszogek[i + k] < htminx) {
+                    htminx = kivetitettHaromszogek[i + k];
                 }
-                if (kivetitettHaromszogek[i+k] > htmaxx) {
-                    htmaxx = kivetitettHaromszogek[i+k];
+                if (kivetitettHaromszogek[i + k] > htmaxx) {
+                    htmaxx = kivetitettHaromszogek[i + k];
                 }
-                if (kivetitettHaromszogek[i+k+1] < htminy) {
-                    htminy = kivetitettHaromszogek[i+k+1];
+                if (kivetitettHaromszogek[i + k + 1] < htminy) {
+                    htminy = kivetitettHaromszogek[i + k + 1];
                 }
-                if (kivetitettHaromszogek[i+k+1] > htmaxy) {
-                    htmaxy = kivetitettHaromszogek[i+k+1];
+                if (kivetitettHaromszogek[i + k + 1] > htmaxy) {
+                    htmaxy = kivetitettHaromszogek[i + k + 1];
                 }
             }
             htminx = Math.max(0, Math.min(jsCanvasSzelesseg - 1, Math.floor(htminx)));
             htminy = Math.max(0, Math.min(jsCanvasMagassag - 1, Math.floor(htminy)));
             htmaxx = Math.max(0, Math.min(jsCanvasSzelesseg - 1, Math.ceil(htmaxx)));
             htmaxy = Math.max(0, Math.min(jsCanvasMagassag - 1, Math.ceil(htmaxy)));
-            let dX0 = kivetitettHaromszogek[i+6] - kivetitettHaromszogek[i+3];
-            let dY0 = kivetitettHaromszogek[i+7] - kivetitettHaromszogek[i+4];
-            let dX1 = kivetitettHaromszogek[i] - kivetitettHaromszogek[i+6];
-            let dY1 = kivetitettHaromszogek[i+1] - kivetitettHaromszogek[i+7];
-            let dX2 = kivetitettHaromszogek[i+3] - kivetitettHaromszogek[i];
-            let dY2 = kivetitettHaromszogek[i+4] - kivetitettHaromszogek[i+1];
+            let dX0 = kivetitettHaromszogek[i + 6] - kivetitettHaromszogek[i + 3];
+            let dY0 = kivetitettHaromszogek[i + 7] - kivetitettHaromszogek[i + 4];
+            let dX1 = kivetitettHaromszogek[i] - kivetitettHaromszogek[i + 6];
+            let dY1 = kivetitettHaromszogek[i + 1] - kivetitettHaromszogek[i + 7];
+            let dX2 = kivetitettHaromszogek[i + 3] - kivetitettHaromszogek[i];
+            let dY2 = kivetitettHaromszogek[i + 4] - kivetitettHaromszogek[i + 1];
             // kiszámoljuk a bounding box-tól balra fenti pixel edgefunctionjét
-            let w0 = edgeFunction(kivetitettHaromszogek[i+3], kivetitettHaromszogek[i+4], dX0, dY0, htminx - 1 + inc, htminy - 1 + inc);
-            let w1 = edgeFunction(kivetitettHaromszogek[i+6], kivetitettHaromszogek[i+7], dX1, dY1, htminx - 1 + inc, htminy - 1 + inc);
-            let w2 = edgeFunction(kivetitettHaromszogek[i], kivetitettHaromszogek[i+1], dX2, dY2, htminx - 1 + inc, htminy - 1 + inc);
-            let z0Rec = 1 / kivetitettHaromszogek[i+2];
-            let z1Rec = 1 / kivetitettHaromszogek[i+5];
-            let z2Rec = 1 / kivetitettHaromszogek[i+8];
+            let w0 = edgeFunction(kivetitettHaromszogek[i + 3], kivetitettHaromszogek[i + 4], dX0, dY0, htminx - 1 + inc, htminy - 1 + inc);
+            let w1 = edgeFunction(kivetitettHaromszogek[i + 6], kivetitettHaromszogek[i + 7], dX1, dY1, htminx - 1 + inc, htminy - 1 + inc);
+            let w2 = edgeFunction(kivetitettHaromszogek[i], kivetitettHaromszogek[i + 1], dX2, dY2, htminx - 1 + inc, htminy - 1 + inc);
+            let z0Rec = 1 / kivetitettHaromszogek[i + 2];
+            let z1Rec = 1 / kivetitettHaromszogek[i + 5];
+            let z2Rec = 1 / kivetitettHaromszogek[i + 8];
             let jobbraKicsiPixel0 = dY0 * gyokElsimitasReciprok;
             let jobbraKicsiPixel1 = dY1 * gyokElsimitasReciprok;
             let jobbraKicsiPixel2 = dY2 * gyokElsimitasReciprok;
@@ -273,7 +279,7 @@ function kirajzol(canvasId, antialias = 1) {
             let sorEleje1 = dY1 * (htmaxx - htminx + 1);
             let sorEleje2 = dY2 * (htmaxx - htminx + 1);
             let lambda0, lambda1, lambda2;
-            let haromszogterulet = 1 / edgeFunction(kivetitettHaromszogek[i], kivetitettHaromszogek[i+1], kivetitettHaromszogek[i+3] - kivetitettHaromszogek[i], kivetitettHaromszogek[i+4] - kivetitettHaromszogek[i+1], kivetitettHaromszogek[i+6], kivetitettHaromszogek[i+7]);
+            let haromszogterulet = 1 / edgeFunction(kivetitettHaromszogek[i], kivetitettHaromszogek[i + 1], kivetitettHaromszogek[i + 3] - kivetitettHaromszogek[i], kivetitettHaromszogek[i + 4] - kivetitettHaromszogek[i + 1], kivetitettHaromszogek[i + 6], kivetitettHaromszogek[i + 7]);
             for (let y = htminy; y <= htmaxy; y++) {
                 // Ei(x, y+1) = Ei(x, y) - dXi
                 // letoljuk egy pixellel
@@ -298,9 +304,9 @@ function kirajzol(canvasId, antialias = 1) {
                                 if (zMelyseg < zbuffer[bufferIndex]) {
                                     zbuffer[bufferIndex] = zMelyseg;
                                     kepIndex = bufferIndex * 3;
-                                    image[kepIndex] = 255 / kivetitettHaromszogek[i+2] * lambda0 * zMelyseg;
-                                    image[kepIndex + 1] = 255 / kivetitettHaromszogek[i+5] * lambda1 * zMelyseg;
-                                    image[kepIndex + 2] = 255 / kivetitettHaromszogek[i+8] * lambda2 * zMelyseg;
+                                    image[kepIndex] = 255 / kivetitettHaromszogek[i + 2] * lambda0 * zMelyseg;
+                                    image[kepIndex + 1] = 255 / kivetitettHaromszogek[i + 5] * lambda1 * zMelyseg;
+                                    image[kepIndex + 2] = 255 / kivetitettHaromszogek[i + 8] * lambda2 * zMelyseg;
                                 }
                             }
                             // a következő ciklusra eltoljuk jobbra a kis pixel hosszával (gyokElsimitasReciprok)
@@ -367,7 +373,14 @@ function negyzetSzamE(x) {
     return gyok == parseInt(gyok);
 }
 
-document.addEventListener("DOMContentLoaded", function () {
+document.addEventListener("DOMContentLoaded", async function () {
+    let wasm = await fetch("rasterizer.wasm");
+    module = await WebAssembly.instantiateStreaming(wasm, {
+        env: {
+            memory: wasmMemory
+        }
+    });
+    console.log(module);
     let canvas = document.getElementById("canvas");
     canvas.get
     canvas.width = jsCanvasSzelesseg;
@@ -406,11 +419,20 @@ function teszt() {
 }
 
 function ujTerkep() {
+    // 45-75ms
     let eleje = performance.now()
     perlinErtekek = perlin(1, meret, seed, 2, 9, 2, 2.2);
-    pontok = new Float32Array(meret * meret * 3);
+    pontok = new Float32Array(
+        wasmMemory.buffer,
+        0,
+        meret * meret * 3
+    );
     pontokKiszamolasa(pontok, perlinErtekek, 150);
-    indexek = new Float32Array((meret - 1) * (meret - 1) * 6);
+    indexek = new Float32Array(
+        wasmMemory.buffer,
+        pontok.byteLength,
+        (meret - 1) * (meret - 1) * 6
+    );
     osszekotesekKiszamolasa(indexek, meret)
     console.log("Új térkép idő:", performance.now() - eleje);
     rendereles();
