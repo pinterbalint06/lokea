@@ -61,15 +61,14 @@ const sikok = [
     3, 2, 1   // w + z
 ];
 
-function pontokKiszamolasa(pontok, perlinek, szorzo) {
+function pontokKiszamolasa(szorzo) {
     for (let y = 0; y < meret; y++) {
         for (let x = 0; x < meret; x++) {
             pontok[(y * meret + x) * 3] = x; // x koordináta
-            pontok[(y * meret + x) * 3 + 1] = perlinek[y * meret + x] * szorzo; // y koordináta
+            pontok[(y * meret + x) * 3 + 1] = perlinErtekek[y * meret + x] * szorzo; // y koordináta
             pontok[(y * meret + x) * 3 + 2] = -y; // z koordináta
         }
     }
-    return pontok;
 }
 
 function osszekotesekKiszamolasa(indexek, meret) {
@@ -89,7 +88,6 @@ function osszekotesekKiszamolasa(indexek, meret) {
             // a négyzetet felosztottuk két háromszögre
         }
     }
-    return indexek;
 }
 
 /**
@@ -378,6 +376,7 @@ document.addEventListener("DOMContentLoaded", async function () {
     sd.nextElementSibling.value = sd.value;
     ujhely();
     Module.onRuntimeInitialized = function () {
+        Module._meretBeallit(meret);
         ujTerkep();
     };
 });
@@ -423,7 +422,7 @@ function ujTerkep() {
         pontokHelye,
         meret * meret * 3
     );
-    pontokKiszamolasa(pontok, perlinErtekek, 150);
+    Module._pontokKiszamolasa(150);
     let indexekHelye = Module._allocateIndexek((meret - 1) * (meret - 1) * 6);
     indexek = new Float32Array(
         wasmMemory.buffer,

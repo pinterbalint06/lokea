@@ -11,6 +11,12 @@ extern "C"
     static int indexekMeret = 0;
     static float *perlin = NULL;
     static int perlinMeret = 0;
+    int meret;
+
+    void meretBeallit(int meretKert)
+    {
+        meret = meretKert;
+    }
 
     int allocatePontok(int szamokSzama)
     {
@@ -64,5 +70,20 @@ extern "C"
             return (int)perlin;
         }
         return 0;
+    }
+
+    void pontokKiszamolasa(int szorzo)
+    {
+        int i;
+        for (int y = 0; y < meret; y++)
+        {
+            for (int x = 0; x < meret; x++)
+            {
+                i = (y * meret + x);
+                pontok[i * 3] = x;
+                pontok[i * 3 + 1] = perlin[i] * szorzo;
+                pontok[i * 3 + 2] = -y;
+            }
+        }
     }
 }

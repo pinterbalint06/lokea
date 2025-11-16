@@ -1552,9 +1552,11 @@ function checkIncomingModuleAPI() {
 }
 
 // Imports from the Wasm binary.
+var _meretBeallit = Module['_meretBeallit'] = makeInvalidEarlyAccess('_meretBeallit');
 var _allocatePontok = Module['_allocatePontok'] = makeInvalidEarlyAccess('_allocatePontok');
 var _allocateIndexek = Module['_allocateIndexek'] = makeInvalidEarlyAccess('_allocateIndexek');
 var _allocatePerlin = Module['_allocatePerlin'] = makeInvalidEarlyAccess('_allocatePerlin');
+var _pontokKiszamolasa = Module['_pontokKiszamolasa'] = makeInvalidEarlyAccess('_pontokKiszamolasa');
 var _fflush = makeInvalidEarlyAccess('_fflush');
 var _strerror = makeInvalidEarlyAccess('_strerror');
 var _emscripten_stack_get_end = makeInvalidEarlyAccess('_emscripten_stack_get_end');
@@ -1567,12 +1569,16 @@ var _emscripten_stack_get_current = makeInvalidEarlyAccess('_emscripten_stack_ge
 var __indirect_function_table = makeInvalidEarlyAccess('__indirect_function_table');
 
 function assignWasmExports(wasmExports) {
+  assert(typeof wasmExports['meretBeallit'] != 'undefined', 'missing Wasm export: meretBeallit');
+  _meretBeallit = Module['_meretBeallit'] = createExportWrapper('meretBeallit', 1);
   assert(typeof wasmExports['allocatePontok'] != 'undefined', 'missing Wasm export: allocatePontok');
   _allocatePontok = Module['_allocatePontok'] = createExportWrapper('allocatePontok', 1);
   assert(typeof wasmExports['allocateIndexek'] != 'undefined', 'missing Wasm export: allocateIndexek');
   _allocateIndexek = Module['_allocateIndexek'] = createExportWrapper('allocateIndexek', 1);
   assert(typeof wasmExports['allocatePerlin'] != 'undefined', 'missing Wasm export: allocatePerlin');
   _allocatePerlin = Module['_allocatePerlin'] = createExportWrapper('allocatePerlin', 1);
+  assert(typeof wasmExports['pontokKiszamolasa'] != 'undefined', 'missing Wasm export: pontokKiszamolasa');
+  _pontokKiszamolasa = Module['_pontokKiszamolasa'] = createExportWrapper('pontokKiszamolasa', 1);
   assert(typeof wasmExports['fflush'] != 'undefined', 'missing Wasm export: fflush');
   _fflush = createExportWrapper('fflush', 1);
   assert(typeof wasmExports['strerror'] != 'undefined', 'missing Wasm export: strerror');
