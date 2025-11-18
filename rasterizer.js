@@ -370,21 +370,25 @@ let seed;
 // listak
 let perlinErtekek, pontok, indexek;
 
-function forgasTovab() {
-    yforgas += 0.1;
-    Module.forgas();
+function xForgas(szoggel) {
+    Module.xForog(szoggel * (Math.PI / 180));
+    rendereles();
+}
+
+function yForgas(szoggel) {
+    Module.yForog(szoggel * (Math.PI / 180));
     rendereles();
 }
 
 // mennyi idő lenne lerenderelni a cubemapet
 function teszt() {
     let most = performance.now();
-    irany(0.5, 0);
-    irany(-0.5, 0);
+    irany(90, 0);
+    irany(-90, 0);
     irany(0, 0);
-    irany(0, 1);
-    irany(0, 0.5);
-    irany(0, -0.5);
+    irany(0, 180);
+    irany(0, 90);
+    irany(0, -90);
     document.getElementById("ido").innerText = Math.round(performance.now() - most);
 }
 
@@ -413,24 +417,23 @@ function ujTerkep() {
     Module.pontokKiszamolasa(150);
     Module.osszekotesekKiszamolasa();
     console.log("Új térkép idő:", performance.now() - eleje)
-    Module.ujHely();
-    rendereles();
+    ujhely();
 }
 
 function ujhely() {
     rndszm = Math.round(Math.random() * meret * meret);
-    Module.ujHely();
+    Module.ujHely(rndszm);
     rendereles();
 }
 
 function irany(x, y) {
-    yforgas = y;
-    xforgas = x;
+    Module.setXForog(x * (Math.PI / 180));
+    Module.setYForog(y * (Math.PI / 180));
     rendereles();
 }
 
 function ujKirajzol(canvasId, antialias = 1) {
-    Module.setAntialias(9);
+    Module.setAntialias(antialias);
     let imageBufferHely = Module.render();
     let imageBufferMeret = Module.imageBufferSize();
     let imageBuffer = new Float32Array(
@@ -455,7 +458,5 @@ function ujKirajzol(canvasId, antialias = 1) {
 
 async function rendereles() {
     let elsimitas = parseInt(document.getElementById("antialias").value);
-    let ido = performance.now();
     ujKirajzol("canvas", elsimitas);
-    console.log("Renderelés: ", performance.now()-ido, "ms");
 }

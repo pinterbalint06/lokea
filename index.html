@@ -22,13 +22,31 @@
                 oninput="this.nextElementSibling.value = this.value; ujhely();ujTerkep();">
             <output>40</output>
             <button type="button" onclick="ujhely();">Új hely</button>
-            <button type="button" onclick="forgasTovab();">Forgás</button>
-            <button type="button" onclick="irany(0.5, 0);">Le</button>
-            <button type="button" onclick="irany(-0.5, 0);">Fel</button>
+            <button type="button" onclick="irany(90, 0);">Le</button>
+            <button type="button" onclick="irany(-90, 0);">Fel</button>
             <button type="button" onclick="irany(0, 0);">Előre</button>
-            <button type="button" onclick="irany(0, 1);">Hátra</button>
-            <button type="button" onclick="irany(0, 0.5);">Jobbra</button>
-            <button type="button" onclick="irany(0, -0.5);">Balra</button>
+            <button type="button" onclick="irany(0, 180);">Hátra</button>
+            <button type="button" onclick="irany(0, 90);">Jobbra</button>
+            <button type="button" onclick="irany(0, -90);">Balra</button>
+            <br>
+            <p>Forgás:</p>
+            <div class="w100 col">
+                <div class="row w100">
+                    <div class="cella"></div>
+                    <div class="cella center"><button class="forog" onclick="xForgas(-10)">&lt;</button></div>
+                    <div class="cella"></div>
+                </div>
+                <div class="row w100">
+                    <div class="cella center"><button onclick="yForgas(-10)">&lt;</button></div>
+                    <div class="cella"></div>
+                    <div class="cella center"><button onclick="yForgas(10)">&gt;</button></div>
+                </div>
+                <div class="row w100">
+                    <div class="cella"></div>
+                    <div class="cella center"><button class="forog" onclick="xForgas(10)">&gt;</button></div>
+                    <div class="cella"></div>
+                </div>
+            </div>
             <br>
             <p>Renderelés:</p>
             <label for="antialias">Élsimítás:</label>

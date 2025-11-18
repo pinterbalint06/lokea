@@ -27,6 +27,7 @@ int clippedMeret;
 int imageAntiBufferLength;
 int imageBufferLength;
 float yforgas;
+float xforgas;
 
 float *P;
 // Camera Matrix
@@ -58,9 +59,9 @@ void matrixSzorzas4x4(float *m1, float *m2, float *eredmeny)
     }
 }
 
-void ujHely()
+void ujHely(int rd)
 {
-    rndSzm = rand() % (pontokMeret / 3);
+    rndSzm = rd;
     MCamera[12] = -pontok[rndSzm * 3];
     MCamera[13] = -pontok[rndSzm * 3 + 1] - 20;
     MCamera[14] = -pontok[rndSzm * 3 + 2];
@@ -103,7 +104,7 @@ void SutherlandHodgman(float *pont0, float *pont1, float *pont2)
     for (int k = 0; k < 6; k++)
     {
         bemenetMeret = clippedMeret;
-        copy(clipped, clippedMeret, bemenet);
+        memcpy(bemenet, clipped, clippedMeret * sizeof(float));
         clippedMeret = 0;
         for (int i = 0; i < bemenetMeret; i += 4)
         {
@@ -160,13 +161,13 @@ void pontokVetitese(const int &i0, const int &i1, const int &i2)
     for (int i = 0; i < clippedMeret / 4 - 2; i++)
     {
         wRec = 1.0f / clipped[3];
-        projectedTriangles[projectedTrianglesMeret++] = (clipped[0] * wRec) * 0.5f * (float)imageWidth;
+        projectedTriangles[projectedTrianglesMeret++] = (clipped[0] * wRec + 1) * 0.5f * (float)imageWidth;
         projectedTriangles[projectedTrianglesMeret++] = (1 - clipped[1] * wRec) * 0.5f * (float)imageHeight;
         projectedTriangles[projectedTrianglesMeret++] = clipped[2] * wRec;
         for (int j = 1; j <= 2; j++)
         {
             wRec = 1.0f / clipped[(i + j) * 4 + 3];
-            projectedTriangles[projectedTrianglesMeret++] = (clipped[(i + j) * 4] * wRec) * 0.5 * imageWidth;
+            projectedTriangles[projectedTrianglesMeret++] = (clipped[(i + j) * 4] * wRec + 1) * 0.5 * imageWidth;
             projectedTriangles[projectedTrianglesMeret++] = (1 - clipped[(i + j) * 4 + 1] * wRec) * 0.5 * imageHeight;
             projectedTriangles[projectedTrianglesMeret++] = clipped[(i + j) * 4 + 2] * wRec;
         }
@@ -176,6 +177,61 @@ void pontokVetitese(const int &i0, const int &i1, const int &i2)
 float edgeFunction(float X, float Y, float dX, float dY, float x, float y)
 {
     return (x - X) * dY - (y - Y) * dX;
+}
+
+void calcCameraMatrix()
+{
+    /*
+    Y forgás mátrix:
+        [cos, 0,  -sin, 0]
+        [0,   1,  0,    0]
+        [sin, 0,  cos,  0]
+        [0,   0,  0,    1]
+    */
+    float *yForgasMatrix = (float *)calloc(16, sizeof(float));
+    float sine = sinf(yforgas);
+    float cosine = cosf(yforgas);
+    yForgasMatrix[0] = cosine;
+    yForgasMatrix[2] = -sine;
+    yForgasMatrix[5] = 1;
+    yForgasMatrix[8] = sine;
+    yForgasMatrix[10] = cosine;
+    yForgasMatrix[15] = 1;
+    /*
+    X forgás mátrix:
+        [1, 0,    0,   0]
+        [0, cos,  sin, 0]
+        [0, -sin, cos, 0]
+        [0, 0,    0,   1]
+    */
+    float *xForgasMatrix = (float *)calloc(16, sizeof(float));
+    sine = sinf(xforgas);
+    cosine = cosf(xforgas);
+    xForgasMatrix[0] = 1;
+    xForgasMatrix[5] = cosine;
+    xForgasMatrix[6] = sine;
+    xForgasMatrix[9] = -sine;
+    xForgasMatrix[10] = cosine;
+    xForgasMatrix[15] = 1;
+    float *forgasMatrix = (float *)calloc(16, sizeof(float));
+    // Z Y X sorrendben
+    matrixSzorzas4x4(yForgasMatrix, xForgasMatrix, forgasMatrix);
+    free(yForgasMatrix);
+    free(xForgasMatrix);
+
+    float *temp = (float *)calloc(16, sizeof(float));
+    // egységmátrix
+    temp[0] = 1;
+    temp[5] = 1;
+    temp[10] = 1;
+    temp[15] = 1;
+
+    // kamera helye
+    temp[12] = -pontok[rndSzm * 3];
+    temp[13] = -pontok[rndSzm * 3 + 1] - 20;
+    temp[14] = -pontok[rndSzm * 3 + 2];
+    matrixSzorzas4x4(temp, forgasMatrix, MCamera);
+    free(temp);
 }
 
 int render()
@@ -188,13 +244,11 @@ int render()
     }
     imageAntiBufferLength = imageWidth * imageHeight * antialias * 3;
     imageAntiBuffer = (float *)calloc(imageAntiBufferLength, sizeof(float));
-    imageBufferLength = imageWidth * imageHeight * 3;
-    imageBuffer = (float *)calloc(imageBufferLength, sizeof(float));
     float sqrAntialias = sqrt(antialias);
     float sqrAntialiasRec = 1.0f / sqrt(antialias);
     float inc = sqrAntialiasRec * 0.5f;
     float htminx, htmaxx, htminy, htmaxy;
-    projectedTriangles = (float *)calloc(indexekMeret * 7, sizeof(float));
+    projectedTriangles = (float *)calloc(100, sizeof(float));
     float dX0, dY0, dX1, dY1, dX2, dY2, w0, w1, w2, z0Rec, z1Rec, z2Rec, jobbraKicsiPixel0, jobbraKicsiPixel1, jobbraKicsiPixel2;
     float balraFel0, balraFel1, balraFel2;
     float lambda0, lambda1, lambda2;
@@ -202,6 +256,7 @@ int render()
     float haromszogTerulet, haromszogTeruletRec;
     float zMelyseg;
     int bufferIndex, kepIndex;
+    calcCameraMatrix();
     matrixSzorzas4x4(MCamera, P, MVP);
     for (int i = 0; i < indexekMeret; i += 3)
     {
@@ -288,9 +343,9 @@ int render()
                                 {
                                     zBuffer[bufferIndex] = zMelyseg;
                                     kepIndex = bufferIndex * 3;
-                                    imageAntiBuffer[kepIndex] = 255.0f / projectedTriangles[i + 2] * lambda0 * zMelyseg;
-                                    imageAntiBuffer[kepIndex + 1] = 255.0f / projectedTriangles[i + 5] * lambda1 * zMelyseg;
-                                    imageAntiBuffer[kepIndex + 2] = 255.0f / projectedTriangles[i + 8] * lambda2 * zMelyseg;
+                                    imageAntiBuffer[kepIndex] = 255.0f / projectedTriangles[j + 2] * lambda0 * zMelyseg;
+                                    imageAntiBuffer[kepIndex + 1] = 255.0f / projectedTriangles[j + 5] * lambda1 * zMelyseg;
+                                    imageAntiBuffer[kepIndex + 2] = 255.0f / projectedTriangles[j + 8] * lambda2 * zMelyseg;
                                 }
                             }
                             w0 += jobbraKicsiPixel0;
@@ -311,6 +366,8 @@ int render()
             }
         }
     }
+    imageBufferLength = imageWidth * imageHeight * 3;
+    imageBuffer = (float *)calloc(imageBufferLength, sizeof(float));
     float r, g, b;
     int altalanosIndex, imageAntiIndex, subImageIndex, imageBufferIndex;
     float antiRec = 1.0f / antialias;
@@ -496,25 +553,24 @@ int allocate4x4Matrix()
     return 0;
 }
 
-void forgas()
+void yForog(float rad)
 {
-    yforgas += 0.1f;
-    if (yforgas >= 6.2831853f)
-        yforgas -= 6.2831853f;
-    float *forgasMatrix = (float *)calloc(16, sizeof(float));
-    float sine = sinf(yforgas);
-    float cosine = cosf(yforgas);
-    forgasMatrix[0] = cosine;
-    forgasMatrix[2] = -sine;
-    forgasMatrix[5] = 1;
-    forgasMatrix[8] = sine;
-    forgasMatrix[10] = cosine;
-    forgasMatrix[15] = 1;
-    float *temp = (float *)calloc(16, sizeof(float));
-    matrixSzorzas4x4(MCamera, forgasMatrix, temp);
-    memcpy(MCamera, temp, 16 * sizeof(float));
-    free(temp);
-    free(forgasMatrix);
+    yforgas += rad;
+}
+
+void xForog(float rad)
+{
+    xforgas += rad;
+}
+
+void setYForog(float rad)
+{
+    yforgas = rad;
+}
+
+void setXForog(float rad)
+{
+    xforgas = rad;
 }
 
 void init()
@@ -575,7 +631,10 @@ EMSCRIPTEN_BINDINGS(my_module)
     emscripten::function("ujHely", &ujHely);
     emscripten::function("meretBeallit", &meretBeallit);
     emscripten::function("setFrustum", &setFrustum);
-    emscripten::function("forgas", &forgas);
+    emscripten::function("xForog", &xForog);
+    emscripten::function("yForog", &yForog);
+    emscripten::function("setXForog", &setXForog);
+    emscripten::function("setYForog", &setYForog);
     emscripten::function("freeImageBuffer", &freeImageBuffer);
     emscripten::function("setAntialias", &setAntialias);
 }

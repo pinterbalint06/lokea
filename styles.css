@@ -12,6 +12,19 @@
     width: 100%;
 }
 
+.cella {
+  flex: 1 0 0;
+}
+
+.center {
+    display: flex;
+    justify-content: center;
+}
+
+.forog {
+    transform: rotate(90deg);
+}
+
 .around {
     justify-content: space-around;
 }
