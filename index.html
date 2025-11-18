@@ -30,21 +30,21 @@
             <button type="button" onclick="irany(0, -90);">Balra</button>
             <br>
             <p>Forgás:</p>
-            <div class="w100 col">
+            <div class="w100 col btns">
                 <div class="row w100">
-                    <div class="cella"></div>
-                    <div class="cella center"><button class="forog" onclick="xForgas(-10)">&lt;</button></div>
-                    <div class="cella"></div>
+                    <div class="cella center"><button onclick="xyForgas(-10, -10)"><p class="felforogPoz">&lt;</p></button></div>
+                    <div class="cella center"><button class="forog" onclick="xyForgas(-10, 0)">&lt;</button></div>
+                    <div class="cella center"><button onclick="xyForgas(-10, 10)"><p class="felforogNeg">&gt;</p></button></div>
                 </div>
                 <div class="row w100">
-                    <div class="cella center"><button onclick="yForgas(-10)">&lt;</button></div>
+                    <div class="cella center"><button onclick="xyForgas(0, -10)">&lt;</button></div>
                     <div class="cella"></div>
-                    <div class="cella center"><button onclick="yForgas(10)">&gt;</button></div>
+                    <div class="cella center"><button onclick="xyForgas(0, 10)">&gt;</button></div>
                 </div>
                 <div class="row w100">
-                    <div class="cella"></div>
-                    <div class="cella center"><button class="forog" onclick="xForgas(10)">&gt;</button></div>
-                    <div class="cella"></div>
+                    <div class="cella center"><button onclick="xyForgas(10, -10)"><p class="felforogNeg">&lt;</p></button></div>
+                    <div class="cella center"><button class="forog" onclick="xyForgas(10, 0)">&gt;</button></div>
+                    <div class="cella center"><button onclick="xyForgas(10, 10)"><p class="felforogPoz">&gt;</p></button></div>
                 </div>
             </div>
             <br>

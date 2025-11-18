@@ -370,18 +370,16 @@ let seed;
 // listak
 let perlinErtekek, pontok, indexek;
 
-function xForgas(szoggel) {
-    Module.xForog(szoggel * (Math.PI / 180));
-    rendereles();
-}
-
-function yForgas(szoggel) {
-    Module.yForog(szoggel * (Math.PI / 180));
+function xyForgas(xszoggel, yszoggel) {
+    Module.xForog(xszoggel * (Math.PI / 180));
+    Module.yForog(yszoggel * (Math.PI / 180));
     rendereles();
 }
 
 // mennyi idő lenne lerenderelni a cubemapet
 function teszt() {
+    let tempX = Module.getXForog();
+    let tempY = Module.getYForog();
     let most = performance.now();
     irany(90, 0);
     irany(-90, 0);
@@ -390,6 +388,7 @@ function teszt() {
     irany(0, 90);
     irany(0, -90);
     document.getElementById("ido").innerText = Math.round(performance.now() - most);
+    irany(tempX, tempY);
 }
 
 function ujTerkep() {

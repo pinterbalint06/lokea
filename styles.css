@@ -19,10 +19,24 @@
 .center {
     display: flex;
     justify-content: center;
+    align-items: center;
 }
 
 .forog {
     transform: rotate(90deg);
+}
+
+.felforogPoz {
+    transform: rotate(45deg);
+}
+
+.felforogNeg {
+    transform: rotate(-45deg);
+}
+
+.btns button {
+    width: 100%;
+    height: 100%;
 }
 
 .around {

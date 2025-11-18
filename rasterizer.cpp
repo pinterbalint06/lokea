@@ -234,8 +234,16 @@ void calcCameraMatrix()
     free(temp);
 }
 
+bool isSquareNumber(int n) {
+    return n >= 0 && std::sqrt(n) == (int)std::sqrt(n);
+}
+
 int render()
 {
+    if (!isSquareNumber(antialias))
+    {
+        throw "Wrong antialias";
+    }
     zBufferMeret = imageWidth * imageHeight * antialias;
     zBuffer = (float *)malloc(zBufferMeret * sizeof(float));
     for (int i = 0; i < zBufferMeret; i++)
@@ -371,11 +379,6 @@ int render()
     float r, g, b;
     int altalanosIndex, imageAntiIndex, subImageIndex, imageBufferIndex;
     float antiRec = 1.0f / antialias;
-    if (antialias == 0)
-    {
-        throw "rt";
-    }
-
     for (int y = 0; y < imageHeight; y++)
     {
         for (int x = 0; x < imageWidth; x++)
@@ -573,6 +576,16 @@ void setXForog(float rad)
     xforgas = rad;
 }
 
+float getYForog()
+{
+    return yforgas;
+}
+
+float getXForog()
+{
+    return xforgas;
+}
+
 void init()
 {
     P = (float *)calloc(16, sizeof(float));
@@ -635,6 +648,8 @@ EMSCRIPTEN_BINDINGS(my_module)
     emscripten::function("yForog", &yForog);
     emscripten::function("setXForog", &setXForog);
     emscripten::function("setYForog", &setYForog);
+    emscripten::function("getXForog", &getXForog);
+    emscripten::function("getYForog", &getYForog);
     emscripten::function("freeImageBuffer", &freeImageBuffer);
     emscripten::function("setAntialias", &setAntialias);
 }
