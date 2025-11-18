@@ -61,28 +61,15 @@ void matrixSzorzas4x4(float *m1, float *m2, float *eredmeny)
 
 void ujHely(int rd)
 {
-    rndSzm = rd;
+    rndSzm = rand() % (pontokMeret/3);
     MCamera[12] = -pontok[rndSzm * 3];
     MCamera[13] = -pontok[rndSzm * 3 + 1] - 20;
     MCamera[14] = -pontok[rndSzm * 3 + 2];
 }
 
-int getRandomHely()
-{
-    return (int)MVP;
-}
-
 int getMVP()
 {
     return (int)MVP;
-}
-
-void copy(float *masol, int meret, float *ide)
-{
-    for (int i = 0; i < meret; i++)
-    {
-        ide[i] = masol[i];
-    }
 }
 
 float linearis_interpolacio(float a1, float a2, float d)

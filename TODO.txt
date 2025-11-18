@@ -1,4 +1,5 @@
-1. WebAssembly
+1. Magasabb élsimításnál sötétebb a kép alsó fele
 2. Edge Function dokumentálása
 3. Webassembly SIMD
-2. Sutherland-Hodgman algoritmus dokumentálása
+4. Sutherland-Hodgman algoritmus dokumentálása
+5. Perlin-zaj átírása webassemblybe
