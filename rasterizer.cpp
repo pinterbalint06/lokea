@@ -1,15 +1,12 @@
 #include <emscripten/emscripten.h>
 #include <emscripten/bind.h>
-#include <cstdint>
-#include <stdlib.h>
-#include <stddef.h>
-#include <cstdlib>
 #include <cmath>
+#include <cstdlib>
+#include <cstring>
+#include <cstdint>
 #include <algorithm>
-#include <stdio.h>
-#include <string.h>
-#include <math.h>
-#include <string>
+#include <stdexcept>
+
 
 int t, b, r, l;
 int meret;
@@ -227,9 +224,9 @@ bool isSquareNumber(int n) {
 
 int render()
 {
-    if (!isSquareNumber(antialias))
+    if (!(isSquareNumber(antialias) && (1 <= antialias && antialias <= 16)))
     {
-        throw "Wrong antialias";
+        throw "Wrong antialias. Must be square number and between 1 and 16!";
     }
     zBufferMeret = imageWidth * imageHeight * antialias;
     zBuffer = (float *)malloc(zBufferMeret * sizeof(float));
