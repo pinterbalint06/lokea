@@ -1,0 +1,64 @@
+\documentclass[12pt]{article}
+\usepackage{mathtools,amssymb, amsthm, tikz}
+\usetikzlibrary{intersections}
+\usepackage[margin=1in]{geometry}
+\usepackage{url}
+\usepackage{natbib}
+\usepackage[colorlinks=true, linkcolor=black, urlcolor=blue, citecolor=blue]{hyperref}
+\usepackage[T1]{fontenc}
+\usepackage[utf8]{inputenc}
+\usepackage{lmodern}
+\usepackage{fontspec}
+\setmainfont{Times New Roman}
+
+\title{Sutherland-Hodgman algoritmus}
+\author{Pintér Bálint}
+\renewcommand{\contentsname}{Tartalomjegyzék}
+\renewcommand{\bibsection}{\section*{Források}}
+
+
+\begin{document}
+\maketitle
+\newpage
+\tableofcontents
+\newpage
+
+\section{Bevezetés}
+A Sutherland-Hodgman algoritmus egy clipping algoritmus. Feladata, hogy levágja
+az alakzatok látómezőről lelógó részeit. A teljesen kívül eső alakzatokat
+elveti, a kilógókat úgy vágja meg, hogy csak a látható rész maradjon.
+\begin{center}
+    \begin{tikzpicture}
+        \coordinate (A) at (0,0);
+        \coordinate (B) at (5,0);
+        \coordinate (C) at (5,3);
+        \coordinate (D) at (0,3);
+        \coordinate (E) at (-2,-1.5);
+        \coordinate (F) at (2,1);
+        \coordinate (G) at (-1,2);
+
+        \draw[name path=rectangle] (A) -- (B) -- (C) -- (D) -- cycle;
+        \draw[name path=triangle] (E) -- (F) -- (G) -- cycle;
+        \path [name intersections={of=rectangle and triangle, by={H, J}, sort by=rectangle}];
+        \fill [black] (H) circle (3pt) node[below right] {$H$};
+        \fill [black] (J) circle (3pt) node[below left] {$J$};
+
+        \node[left] at (A) {$A$};
+        \node[below right] at (B) {$B$};
+        \node[above right] at (C) {$C$};
+        \node[above left] at (D) {$D$};
+
+        \node[left] at (E) {$E$};
+        \node[right] at (F) {$F$};
+        \node[above] at (G) {$G$};
+
+    \end{tikzpicture}
+    \\
+    \textbf{1. Ábra:}\\Sutherland-Hodgman algoritmus szemléltetése
+\end{center}
+\newpage
+\nocite{*}
+\bibliographystyle{plainnat}
+\bibliography{forrasok}
+
+\end{document}
