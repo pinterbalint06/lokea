@@ -1,6 +1,7 @@
 \documentclass[12pt]{article}
 \usepackage{mathtools,amssymb, amsthm, tikz}
 \usetikzlibrary{intersections}
+\usetikzlibrary{patterns}
 \usepackage[margin=1in]{geometry}
 \usepackage{url}
 \usepackage{natbib}
@@ -37,11 +38,17 @@ elveti, a kilógókat úgy vágja meg, hogy csak a látható rész maradjon.
         \coordinate (F) at (2,1);
         \coordinate (G) at (-1,2);
 
-        \draw[name path=rectangle] (A) -- (B) -- (C) -- (D) -- cycle;
+        \draw[name path=rectangle, thick] (A) -- (B) -- (C) -- (D) -- cycle;
         \draw[name path=triangle] (E) -- (F) -- (G) -- cycle;
         \path [name intersections={of=rectangle and triangle, by={H, J}, sort by=rectangle}];
-        \fill [black] (H) circle (3pt) node[below right] {$H$};
-        \fill [black] (J) circle (3pt) node[below left] {$J$};
+        \draw[very thick, red!80]
+        (A) -- (H) -- (F) -- (J) -- cycle;
+
+        \fill [black] (H) circle (2pt) node[below right] {$H$};
+        \fill [black] (J) circle (2pt) node[below left] {$J$};
+
+        \fill[pattern=north east lines, pattern color=gray]
+        (A) -- (H) -- (F) -- (J) -- cycle;
 
         \node[left] at (A) {$A$};
         \node[below right] at (B) {$B$};
@@ -56,6 +63,9 @@ elveti, a kilógókat úgy vágja meg, hogy csak a látható rész maradjon.
     \\
     \textbf{1. Ábra:}\\Sutherland-Hodgman algoritmus szemléltetése
 \end{center}
+\section{Az algoritmus}
+\subsection{Alapelve}
+\subsection{Vágási lépések}
 \newpage
 \nocite{*}
 \bibliographystyle{plainnat}
