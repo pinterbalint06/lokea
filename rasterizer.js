@@ -77,6 +77,11 @@ function UjPerlinParam() {
     Module.newPerlinSameMap(seed, lacunarity.value, persistence.value, oktav.value);
 }
 
+function UjFenyIntenzitas() {
+    let intensity = document.getElementById("lightIntensity");
+    Module.newLightIntensity(intensity.value);
+}
+
 function ujhely() {
     Module.ujHely();
     rendereles();

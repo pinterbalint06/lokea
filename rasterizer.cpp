@@ -29,6 +29,8 @@ float xforgas;
 float heightMultiplier;
 // kamera magassága a talajtól
 float kameraMagassag;
+// light intensity
+float lightIntensity;
 
 // Perspective Projection Matrix
 float *P;
@@ -49,6 +51,7 @@ float *projectedTriangles;
 int *sikok;
 float *imageAntiBuffer;
 float *imageBuffer;
+float *lightDir;
 
 void matrixSzorzas4x4(float *m1, float *m2, float *eredmeny)
 {
@@ -238,6 +241,36 @@ bool isSquareNumber(int n)
     return n >= 0 && std::sqrt(n) == (int)std::sqrt(n);
 }
 
+void normalizeVector(float *vector)
+{
+    float vectorLengthInv = 1 / std::sqrt(vector[0] * vector[0] + vector[1] * vector[1] + vector[2] * vector[2]);
+    vector[0] *= vectorLengthInv;
+    vector[1] *= vectorLengthInv;
+    vector[2] *= vectorLengthInv;
+}
+
+void calculateNormal(int ind0, int ind1, int ind2, float *normalVector)
+{
+    float vec1[3];
+    float vec2[3];
+
+    vec1[0] = pontok[ind1 * 3] - pontok[ind0 * 3];
+    vec1[1] = pontok[ind1 * 3 + 1] - pontok[ind0 * 3 + 1];
+    vec1[2] = pontok[ind1 * 3 + 2] - pontok[ind0 * 3 + 2];
+
+    vec2[0] = pontok[ind2 * 3] - pontok[ind0 * 3];
+    vec2[1] = pontok[ind2 * 3 + 1] - pontok[ind0 * 3 + 1];
+    vec2[2] = pontok[ind2 * 3 + 2] - pontok[ind0 * 3 + 2];
+    normalVector[0] = vec1[1] * vec2[2] - vec1[2] * vec2[1];
+    normalVector[1] = vec1[2] * vec2[0] - vec1[0] * vec2[2];
+    normalVector[2] = vec1[0] * vec2[1] - vec1[1] * vec2[0];
+}
+
+float dotProduct3D(float *vec0, float *vec1)
+{
+    return vec0[0] * vec1[0] + vec0[1] * vec1[1] + vec0[2] * vec1[2];
+}
+
 int render()
 {
     if (!(isSquareNumber(antialias) && (1 <= antialias && antialias <= 16)))
@@ -269,6 +302,11 @@ int render()
     float haromszogTerulet, haromszogTeruletRec;
     float zMelyseg;
     int bufferIndex, kepIndex;
+    float *normal = (float *)malloc(3 * sizeof(float));
+    float *lightVec = (float *)malloc(3 * sizeof(float));
+    lightVec[0] = -lightDir[0];
+    lightVec[1] = -lightDir[1];
+    lightVec[2] = -lightDir[2];
     calcCameraMatrix();
     matrixSzorzas4x4(MCamera, P, MVP);
     for (int i = 0; i < indexekMeret; i += 3)
@@ -354,11 +392,29 @@ int render()
                                 bufferIndex = (y * imageWidth + x) * antialias + ya * sqrAntialias + xa;
                                 if (zMelyseg < zBuffer[bufferIndex])
                                 {
+                                    calculateNormal(indexek[i], indexek[i + 1], indexek[i + 2], normal);
+
+                                    normalizeVector(normal);
+
                                     zBuffer[bufferIndex] = zMelyseg;
                                     kepIndex = bufferIndex * 3;
-                                    imageAntiBuffer[kepIndex] = 255.0f / projectedTriangles[j + 2] * lambda0 * zMelyseg;
-                                    imageAntiBuffer[kepIndex + 1] = 255.0f / projectedTriangles[j + 5] * lambda1 * zMelyseg;
-                                    imageAntiBuffer[kepIndex + 2] = 255.0f / projectedTriangles[j + 8] * lambda2 * zMelyseg;
+                                    float dotProd = std::max(0.0f, dotProduct3D(normal, lightVec));
+                                    float lightCoefficent = 1 / M_PI * lightIntensity * dotProd;
+                                    // grass color
+                                    // 19.0 albedo -> (19/255)^2.2=0.0033
+                                    // 109.0 albedo -> (109/255)^2.2=0.154
+                                    // 21.0 albedo -> (21/255)^2.2=0.154
+                                    // sun color
+                                    // 255.0 normalize -> 255.0f/255.0 = 1.0
+                                    // 223.0 normalize -> 223.0f/255.0 = 0.8745f
+                                    // 34.0 normalize -> 34.0f/255.0 = 0.13333f
+                                    // final product
+                                    // 0.0033 * 1.0 = 0.0033
+                                    // 0.154 * 0.8745 = 0.134673
+                                    // 0.004 * 0.13333 = 0.00053332
+                                    imageAntiBuffer[kepIndex] = 0.0033f * lightCoefficent;
+                                    imageAntiBuffer[kepIndex + 1] = 0.134673f * lightCoefficent;
+                                    imageAntiBuffer[kepIndex + 2] = 0.00053332f * lightCoefficent;
                                 }
                             }
                             w0 += jobbraKicsiPixel0;
@@ -379,6 +435,9 @@ int render()
             }
         }
     }
+    free(lightVec);
+    free(normal);
+    free(projectedTriangles);
     imageBufferLength = imageWidth * imageHeight * 3;
     imageBuffer = (float *)calloc(imageBufferLength, sizeof(float));
     float r, g, b;
@@ -406,7 +465,6 @@ int render()
             imageBuffer[imageBufferIndex + 2] = b * antiRec;
         }
     }
-    free(projectedTriangles);
     free(imageAntiBuffer);
     return (int)imageBuffer;
 }
@@ -577,7 +635,6 @@ void newPerlinSameMap(int seed, float lacunarity, float persistence, int octaves
     renderJs(antialias);
 }
 
-
 void newHeightMult(float mult)
 {
     heightMultiplier = mult;
@@ -586,6 +643,12 @@ void newHeightMult(float mult)
     allocateIndexek((meret - 1) * (meret - 1) * 6);
     osszekotesekKiszamolasa();
     calcNewLocationCamera(rndSzm);
+    renderJs(antialias);
+}
+
+void newLightIntensity(float intensity)
+{
+    lightIntensity = intensity;
     renderJs(antialias);
 }
 
@@ -695,6 +758,11 @@ void init()
     yforgas = 0.0f;
     kameraMagassag = 3.8;
     heightMultiplier = 150.0f;
+    lightDir = (float *)malloc(3 * sizeof(float));
+    lightDir[0] = 0;
+    lightDir[1] = -1;
+    lightDir[2] = 0;
+    lightIntensity = 5000.0f;
 }
 
 EMSCRIPTEN_BINDINGS(raw_pointers)
@@ -727,4 +795,5 @@ EMSCRIPTEN_BINDINGS(my_module)
     emscripten::function("newHeightMult", &newHeightMult);
     emscripten::function("newCameraHeight", &newCameraHeight);
     emscripten::function("newPerlinSameMap", &newPerlinSameMap);
+    emscripten::function("newLightIntensity", &newLightIntensity);
 }

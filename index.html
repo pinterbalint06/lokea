@@ -101,6 +101,11 @@
                 <option value="8">8</option>
                 <option value="9" selected>9</option>
             </select>
+            <h2>Környezet:</h2>
+            <label for="lightIntensity">Fény intenzitás:</label>
+            <input type="range" id="lightIntensity" min="0" max="10000" value="5000" step="100"
+                oninput="this.nextElementSibling.value = this.value;UjFenyIntenzitas();">
+            <output>5000</output>
         </div>
         <div class="col">
             <canvas id="canvas"></canvas>
