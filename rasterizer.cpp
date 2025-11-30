@@ -666,9 +666,14 @@ void newLightDirection(float x, float y)
     renderJs(antialias);
 }
 
-void move(int z, int x) {
-    cameraLocation += z*meret+x;
-    renderJs(antialias);
+void move(int z, int x)
+{
+    int newLocation = cameraLocation + z * meret + x;
+    if (!((x == -1 && newLocation % meret == 255) || (x == 1 && newLocation % meret == 0) || (newLocation < 0) || (newLocation >= meret*meret)))
+    {
+        cameraLocation += z * meret + x;
+        renderJs(antialias);
+    }
 }
 
 int allocate4x4Matrix()
