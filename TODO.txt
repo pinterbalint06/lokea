@@ -1,9 +1,7 @@
-1. Texturing
-2. Edge function további optimalizálása (bejárás)
-3. Teljes graphics pipeline dokumentálása
-4. Pont tulajdonságok
-5. Pont tulajdonságok interpolálása a Sutherland-Hodgman algoritmuskor
+1. Perlin zaj tovább fejlesztése (több funkció, pont normálvektorok számolása)
+2. Perlin zaj dokumentálása
+3. Texturing
+4. Edge function további optimalizálása (bejárás)
+5. Teljes graphics pipeline dokumentálása
 6. Random szám generátor dokumentálása
-7. Perlin zaj tovább fejlesztése
-8. Perlin zaj dokumentálása
-9. Shading dokumentálása, Lambertian diffuse
+7. Shading dokumentálása, Lambertian diffuse
