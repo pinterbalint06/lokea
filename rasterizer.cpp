@@ -1,5 +1,6 @@
 #include <emscripten/emscripten.h>
 #include <emscripten/bind.h>
+#include "perlin.h"
 #include <cmath>
 #include <cstdlib>
 #include <cstring>
@@ -496,7 +497,7 @@ int allocatePerlin(int perlinek)
     }
 
     // Memória lefoglalása a listának
-    perlin = (float *)malloc(perlinek * sizeof(float));
+    perlin = (float *)calloc(perlinek, sizeof(float));
     if (perlin)
     {
         perlinMeret = perlinek;
@@ -505,7 +506,7 @@ int allocatePerlin(int perlinek)
     return 0;
 }
 
-void pontokKiszamolasa(int szorzo)
+void pontokKiszamolasa()
 {
     int i;
     for (int y = 0; y < meret; y++)
@@ -514,7 +515,7 @@ void pontokKiszamolasa(int szorzo)
         {
             i = (y * meret + x);
             pontok[i * 3] = x;
-            pontok[i * 3 + 1] = perlin[i] * szorzo;
+            pontok[i * 3 + 1] = perlin[i];
             pontok[i * 3 + 2] = -y;
         }
     }
@@ -530,7 +531,7 @@ void osszekotesekKiszamolasa()
             i = y * meret + x;
             // A három indexnek a pontjait (pontok[index] pontot ad meg) összekötjük háromszögekre
             // A négyzet
-            indexek[indexekMeret++] = i + 1;         // jobb felső pontja
+            indexek[indexekMeret++] = i + 1;     // jobb felső pontja
             indexek[indexekMeret++] = i + meret; // bal alsó pontja
             indexek[indexekMeret++] = i;         // bal felső pontja
 
@@ -540,6 +541,22 @@ void osszekotesekKiszamolasa()
             // a négyzetet felosztottuk két háromszögre
         }
     }
+}
+
+EM_JS(void, renderJs, (int elsimitas), {
+    render("canvas", elsimitas);
+});
+
+void newMap(int seed)
+{
+    allocatePerlin(meret * meret);
+    generatePerlinNoise(perlin, 1, meret, seed, 2, 9, 2, 0.5f, 0.0f, 150.0f);
+    allocatePontok(meret * meret * 3);
+    pontokKiszamolasa();
+    allocateIndexek((meret - 1) * (meret - 1) * 6);
+    osszekotesekKiszamolasa();
+    ujHely();
+    renderJs(antialias);
 }
 
 int allocate4x4Matrix()
@@ -668,4 +685,5 @@ EMSCRIPTEN_BINDINGS(my_module)
     emscripten::function("getYForog", &getYForog);
     emscripten::function("freeImageBuffer", &freeImageBuffer);
     emscripten::function("setAntialias", &setAntialias);
+    emscripten::function("newMap", &newMap);
 }

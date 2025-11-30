@@ -53,19 +53,8 @@ function teszt() {
 function ujTerkep() {
     // 45-75ms
     let eleje = performance.now()
-    let perlinHelye = Module.allocatePerlin(meret * meret);
-    perlinErtekek = new Float32Array(
-        wasmMemory.buffer,
-        perlinHelye,
-        meret * meret * 3
-    );
-    perlin(perlinErtekek, 1, meret, seed, 2, 9, 2, 2.2);
-    Module.allocatePontok(meret * meret * 3);
-    Module.allocateIndexek((meret - 1) * (meret - 1) * 6);
-    Module.pontokKiszamolasa(150);
-    Module.osszekotesekKiszamolasa();
+    Module.newMap(seed);
     console.log("Új térkép idő:", performance.now() - eleje)
-    ujhely();
 }
 
 function ujhely() {
