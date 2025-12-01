@@ -315,19 +315,18 @@ int render()
     {
         throw "Wrong antialias. Must be square number and between 1 and 16!";
     }
-    float temp = zBufferMeret;
-    zBufferMeret = imageWidth * imageHeight * antialias;
-    if (zBufferMeret > temp)
-    {
-        free(zBuffer);
-        zBuffer = (float *)malloc(zBufferMeret * sizeof(float));
-    }
     for (int i = 0; i < zBufferMeret; i++)
     {
-        zBuffer[i] = 1;
+        zBuffer[i] = 1.0f;
     }
-    imageAntiBufferLength = imageWidth * imageHeight * antialias * 3;
-    imageAntiBuffer = (float *)calloc(imageAntiBufferLength, sizeof(float));
+    for (int i = 0; i < imageAntiBufferLength; i++)
+    {
+        imageAntiBuffer[i] = 0.0f;
+    }
+    for (int i = 0; i < imageBufferLength; i++)
+    {
+        imageBuffer[i] = 0;
+    }
     float sqrAntialias = sqrt(antialias);
     float sqrAntialiasRec = 1.0f / sqrt(antialias);
     float inc = sqrAntialiasRec * 0.5f;
@@ -347,6 +346,7 @@ int render()
     lightVec[2] = -lightDir[2];
     calcCameraMatrix();
     vectorMatrixMultiplication(lightVec, MCamera);
+    float lightCoefficient = INV_PI * lightIntensity;
     for (int i = 0; i < indexekMeret; i += 3)
     {
         pontokVetitese(indexek[i], indexek[i + 1], indexek[i + 2], normal);
@@ -401,6 +401,23 @@ int render()
             sorEleje0 = dY0 * (htmaxx - htminx + 1);
             sorEleje1 = dY1 * (htmaxx - htminx + 1);
             sorEleje2 = dY2 * (htmaxx - htminx + 1);
+            float dotProd = std::max(0.0f, dotProduct3D(normal, lightVec));
+            float lightCoefficentTriangle = lightCoefficient * dotProd;
+            // grass color
+            // 19.0 albedo -> (19/255)^2.2=0.0033
+            // 109.0 albedo -> (109/255)^2.2=0.154
+            // 21.0 albedo -> (21/255)^2.2=0.154
+            // sun color
+            // 255.0 normalize -> 255.0f/255.0 = 1.0
+            // 223.0 normalize -> 223.0f/255.0 = 0.8745
+            // 34.0 normalize -> 34.0f/255.0 = 0.13333
+            // final product
+            // 0.0033 * 1.0 = 0.0033
+            // 0.154 * 0.8745 = 0.134673
+            // 0.004 * 0.13333 = 0.00053332
+            float r = 0.0033f * lightCoefficentTriangle;
+            float g = 0.134673f * lightCoefficentTriangle;
+            float b = 0.00053332f * lightCoefficentTriangle;
             haromszogTerulet = 1.0f / edgeFunction(
                                           projectedTriangles[j], projectedTriangles[j + 1],
                                           dX2,
@@ -432,23 +449,10 @@ int render()
 
                                     zBuffer[bufferIndex] = zMelyseg;
                                     kepIndex = bufferIndex * 3;
-                                    float dotProd = std::max(0.0f, dotProduct3D(normal, lightVec));
-                                    float lightCoefficent = INV_PI * lightIntensity * dotProd;
-                                    // grass color
-                                    // 19.0 albedo -> (19/255)^2.2=0.0033
-                                    // 109.0 albedo -> (109/255)^2.2=0.154
-                                    // 21.0 albedo -> (21/255)^2.2=0.154
-                                    // sun color
-                                    // 255.0 normalize -> 255.0f/255.0 = 1.0
-                                    // 223.0 normalize -> 223.0f/255.0 = 0.8745
-                                    // 34.0 normalize -> 34.0f/255.0 = 0.13333
-                                    // final product
-                                    // 0.0033 * 1.0 = 0.0033
-                                    // 0.154 * 0.8745 = 0.134673
-                                    // 0.004 * 0.13333 = 0.00053332
-                                    imageAntiBuffer[kepIndex] = 0.0033f * lightCoefficent;
-                                    imageAntiBuffer[kepIndex + 1] = 0.134673f * lightCoefficent;
-                                    imageAntiBuffer[kepIndex + 2] = 0.00053332f * lightCoefficent;
+
+                                    imageAntiBuffer[kepIndex] = r;
+                                    imageAntiBuffer[kepIndex + 1] = g;
+                                    imageAntiBuffer[kepIndex + 2] = b;
                                 }
                             }
                             w0 += jobbraKicsiPixel0;
@@ -472,8 +476,6 @@ int render()
     free(lightVec);
     free(normal);
     free(projectedTriangles);
-    imageBufferLength = imageWidth * imageHeight * 4;
-    imageBuffer = (uint8_t *)calloc(imageBufferLength, sizeof(uint8_t *));
     float r, g, b;
     int altalanosIndex, imageAntiIndex, subImageIndex, imageBufferIndex;
     float antiRec = 1.0f / antialias;
@@ -506,7 +508,6 @@ int render()
             imageBuffer[imageBufferIndex + 3] = 255;
         }
     }
-    free(imageAntiBuffer);
     return (int)imageBuffer;
 }
 
@@ -526,6 +527,25 @@ void setFrustum(float focal, float filmW, float filmH, int imageW, int imageH, f
     float yKitoltes = 1.0f;
     imageWidth = imageW;
     imageHeight = imageH;
+    if (imageBuffer)
+    {
+        free(imageBuffer);
+    }
+    imageBufferLength = imageWidth * imageHeight * 4;
+    imageBuffer = (uint8_t *)malloc(imageBufferLength * sizeof(uint8_t *));
+
+    if (imageAntiBuffer)
+    {
+        free(imageAntiBuffer);
+    }
+    imageAntiBufferLength = imageWidth * imageHeight * antialias * 3;
+    imageAntiBuffer = (float *)malloc(imageAntiBufferLength * sizeof(float));
+    if (zBuffer)
+    {
+        free(zBuffer);
+    }
+    zBufferMeret = imageWidth * imageHeight * antialias;
+    zBuffer = (float *)malloc(zBufferMeret * sizeof(float));
     // Ha a film képaránya más mint a kép képaránya
     if (filmW / filmH > imageW / imageH)
     {
@@ -574,6 +594,18 @@ int allocatePontok(int szamokSzama)
 void setAntialias(int anti)
 {
     antialias = anti;
+    if (imageAntiBuffer)
+    {
+        free(imageAntiBuffer);
+    }
+    imageAntiBufferLength = imageWidth * imageHeight * antialias * 3;
+    imageAntiBuffer = (float *)malloc(imageAntiBufferLength * sizeof(float));
+    if (zBuffer)
+    {
+        free(zBuffer);
+    }
+    zBufferMeret = imageWidth * imageHeight * antialias;
+    zBuffer = (float *)malloc(zBufferMeret * sizeof(float));
 }
 
 int allocateIndexek(int indexekSzam)
@@ -759,7 +791,6 @@ float getXForog()
 
 void init()
 {
-    srand(time(0));
     P = (float *)calloc(16, sizeof(float));
     MCamera = (float *)calloc(16, sizeof(float));
     p0 = (float *)calloc(4, sizeof(float));
@@ -807,7 +838,7 @@ void init()
     MCamera[10] = 1;
     MCamera[15] = 1;
     cameraLocation = 0;
-    antialias = 4;
+    antialias = 1;
     yforgas = 0.0f;
     kameraMagassag = 3.8;
     heightMultiplier = 150.0f;

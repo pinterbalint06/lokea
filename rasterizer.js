@@ -153,7 +153,6 @@ function render(canvasId, antialias = 1) {
 
     let imgData = new ImageData(clampedArray, jsCanvasSzelesseg, jsCanvasMagassag);
     ctx.putImageData(imgData, 0, 0);
-    Module.freeImageBuffer();
 }
 
 function rendereles() {
