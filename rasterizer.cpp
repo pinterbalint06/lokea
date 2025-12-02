@@ -312,6 +312,10 @@ bool isSquareNumber(int n)
     return n >= 0 && std::sqrt(n) == (int)std::sqrt(n);
 }
 
+EM_JS(void, call_alert, (float h), {
+    alert(h);
+});
+
 int render()
 {
     if (!(isSquareNumber(antialias) && (1 <= antialias && antialias <= 16)))
@@ -342,7 +346,7 @@ int render()
     float balraFel0, balraFel1, balraFel2;
     float lambda0, lambda1, lambda2;
     float sorEleje0, sorEleje1, sorEleje2;
-    float invTriArea;
+    float triArea, invTriArea;
     float zMelyseg;
     int bufferIndex, kepIndex;
     float *normal = (float *)malloc(3 * sizeof(float));
@@ -417,103 +421,108 @@ int render()
             w0 = edgeFunction(projectedTriangles[j + 3], projectedTriangles[j + 4], dX0, dY0, htminx + inc, htminy + inc);
             w1 = edgeFunction(projectedTriangles[j + 6], projectedTriangles[j + 7], dX1, dY1, htminx + inc, htminy + inc);
             w2 = edgeFunction(projectedTriangles[j], projectedTriangles[j + 1], dX2, dY2, htminx + inc, htminy + inc);
-            invTriArea = 1.0f / edgeFunction(
-                                    projectedTriangles[j], projectedTriangles[j + 1],
-                                    dX2,
-                                    dY2,
-                                    projectedTriangles[j + 6], projectedTriangles[j + 7]);
-            // base barycentric weight
-            // these are constants we do not change them we calculate the current row from these
-            // scaled by the triangle's area's inverse so we don't have to multiply by that in the inner loop
-            const float w0Base = w0 * invTriArea;
-            const float w1Base = w1 * invTriArea;
-            const float w2Base = w2 * invTriArea;
-
-            // E(x+ 1,y) = E(x,y) + dY
-            // scaled by the triangle's area's inverse so we don't have to multiply by that in the inner loop
-            float stepRightOnePixel0 = dY0 * invTriArea;
-            float stepRightOnePixel1 = dY1 * invTriArea;
-            float stepRightOnePixel2 = dY2 * invTriArea;
-
-            // E(x,y+ 1) = E(x,y) −dX
-            // scaled by the triangle's area's inverse so we don't have to multiply by that in the inner loop
-            float stepDownOnePixel0 = -dX0 * invTriArea;
-            float stepDownOnePixel1 = -dX1 * invTriArea;
-            float stepDownOnePixel2 = -dX2 * invTriArea;
-
-            // step right by the subpixel's width
-            // step one pixel * small pixel width
-            float stepRightOneSubPixel0 = stepRightOnePixel0 * sqrAntialiasRec;
-            float stepRightOneSubPixel1 = stepRightOnePixel1 * sqrAntialiasRec;
-            float stepRightOneSubPixel2 = stepRightOnePixel2 * sqrAntialiasRec;
-
-            // step down by the subpixel's height
-            // step one pixel * small pixel height
-            float stepDownOneSubPixel0 = stepDownOnePixel0 * sqrAntialiasRec;
-            float stepDownOneSubPixel1 = stepDownOnePixel1 * sqrAntialiasRec;
-            float stepDownOneSubPixel2 = stepDownOnePixel2 * sqrAntialiasRec;
-            for (int y = htminy; y <= htmaxy; y++)
+            triArea = edgeFunction(
+                          projectedTriangles[j], projectedTriangles[j + 1],
+                          dX2,
+                          dY2,
+                          projectedTriangles[j + 6], projectedTriangles[j + 7]) *
+                      0.5f;
+            if (fabs(triArea) > 0.00001f)
             {
-                // how many pixels are we from the top
-                float dy = (float)(y - htminy);
+                invTriArea = 1.0f / triArea;
+                // base barycentric weight
+                // these are constants we do not change them we calculate the current row from these
+                // scaled by the triangle's area's inverse so we don't have to multiply by that in the inner loop
+                const float w0Base = w0 * invTriArea;
+                const float w1Base = w1 * invTriArea;
+                const float w2Base = w2 * invTriArea;
 
-                // E(x,y + L) = E(x,y) - L * dX
-                // L is dy pixel's from top
-                // dX is the stepDownOnePixel
-                // calculate current row's edge function
-                float w0Row = w0Base + dy * stepDownOnePixel0;
-                float w1Row = w1Base + dy * stepDownOnePixel1;
-                float w2Row = w2Base + dy * stepDownOnePixel2;
+                // E(x+ 1,y) = E(x,y) + dY
+                // scaled by the triangle's area's inverse so we don't have to multiply by that in the inner loop
+                float stepRightOnePixel0 = dY0 * invTriArea;
+                float stepRightOnePixel1 = dY1 * invTriArea;
+                float stepRightOnePixel2 = dY2 * invTriArea;
 
-                for (int x = htminx; x <= htmaxx; x++)
+                // E(x,y+ 1) = E(x,y) −dX
+                // scaled by the triangle's area's inverse so we don't have to multiply by that in the inner loop
+                float stepDownOnePixel0 = -dX0 * invTriArea;
+                float stepDownOnePixel1 = -dX1 * invTriArea;
+                float stepDownOnePixel2 = -dX2 * invTriArea;
+
+                // step right by the subpixel's width
+                // step one pixel * small pixel width
+                float stepRightOneSubPixel0 = stepRightOnePixel0 * sqrAntialiasRec;
+                float stepRightOneSubPixel1 = stepRightOnePixel1 * sqrAntialiasRec;
+                float stepRightOneSubPixel2 = stepRightOnePixel2 * sqrAntialiasRec;
+
+                // step down by the subpixel's height
+                // step one pixel * small pixel height
+                float stepDownOneSubPixel0 = stepDownOnePixel0 * sqrAntialiasRec;
+                float stepDownOneSubPixel1 = stepDownOnePixel1 * sqrAntialiasRec;
+                float stepDownOneSubPixel2 = stepDownOnePixel2 * sqrAntialiasRec;
+                for (int y = htminy; y <= htmaxy; y++)
                 {
-                    // how many pixels are we from the left
-                    float dx = (float)(x - htminx);
+                    // how many pixels are we from the top
+                    float dy = (float)(y - htminy);
 
-                    // E(x+ L,y) = E(x,y) + L × dY
-                    // L is dx pixel's from the left
-                    // dY is the stepRightOnePixel
-                    // calculate current column's edge function
-                    float w0Col = w0Row + dx * stepRightOnePixel0;
-                    float w1Col = w1Row + dx * stepRightOnePixel1;
-                    float w2Col = w2Row + dx * stepRightOnePixel2;
+                    // E(x,y + L) = E(x,y) - L * dX
+                    // L is dy pixel's from top
+                    // dX is the stepDownOnePixel
+                    // calculate current row's edge function
+                    float w0Row = w0Base + dy * stepDownOnePixel0;
+                    float w1Row = w1Base + dy * stepDownOnePixel1;
+                    float w2Row = w2Base + dy * stepDownOnePixel2;
 
-                    float w0SubRow = w0Col;
-                    float w1SubRow = w1Col;
-                    float w2SubRow = w2Col;
-
-                    for (int ya = 0; ya < sqrAntialias; ya++)
+                    for (int x = htminx; x <= htmaxx; x++)
                     {
-                        float w0 = w0SubRow;
-                        float w1 = w1SubRow;
-                        float w2 = w2SubRow;
+                        // how many pixels are we from the left
+                        float dx = (float)(x - htminx);
 
-                        for (int xa = 0; xa < sqrAntialias; xa++)
+                        // E(x+ L,y) = E(x,y) + L × dY
+                        // L is dx pixel's from the left
+                        // dY is the stepRightOnePixel
+                        // calculate current column's edge function
+                        float w0Col = w0Row + dx * stepRightOnePixel0;
+                        float w1Col = w1Row + dx * stepRightOnePixel1;
+                        float w2Col = w2Row + dx * stepRightOnePixel2;
+
+                        float w0SubRow = w0Col;
+                        float w1SubRow = w1Col;
+                        float w2SubRow = w2Col;
+
+                        for (int ya = 0; ya < sqrAntialias; ya++)
                         {
-                            if (w0 >= 0.0f && w1 >= 0.0f && w2 >= 0.0f)
+                            float w0 = w0SubRow;
+                            float w1 = w1SubRow;
+                            float w2 = w2SubRow;
+
+                            for (int xa = 0; xa < sqrAntialias; xa++)
                             {
-                                zMelyseg = 1.0f / (w0 * z0Rec + w1 * z1Rec + w2 * z2Rec);
-                                bufferIndex = (y * imageWidth + x) * antialias + ya * sqrAntialias + xa;
-
-                                if (zMelyseg < zBuffer[bufferIndex])
+                                if (w0 >= 0.0f && w1 >= 0.0f && w2 >= 0.0f)
                                 {
-                                    zBuffer[bufferIndex] = zMelyseg;
-                                    kepIndex = bufferIndex * 3;
+                                    zMelyseg = 1.0f / (w0 * z0Rec + w1 * z1Rec + w2 * z2Rec);
+                                    bufferIndex = (y * imageWidth + x) * antialias + ya * sqrAntialias + xa;
 
-                                    imageAntiBuffer[kepIndex] = r;
-                                    imageAntiBuffer[kepIndex + 1] = g;
-                                    imageAntiBuffer[kepIndex + 2] = b;
+                                    if (zMelyseg < zBuffer[bufferIndex])
+                                    {
+                                        zBuffer[bufferIndex] = zMelyseg;
+                                        kepIndex = bufferIndex * 3;
+
+                                        imageAntiBuffer[kepIndex] = r;
+                                        imageAntiBuffer[kepIndex + 1] = g;
+                                        imageAntiBuffer[kepIndex + 2] = b;
+                                    }
                                 }
+
+                                w0 += stepRightOneSubPixel0;
+                                w1 += stepRightOneSubPixel1;
+                                w2 += stepRightOneSubPixel2;
                             }
 
-                            w0 += stepRightOneSubPixel0;
-                            w1 += stepRightOneSubPixel1;
-                            w2 += stepRightOneSubPixel2;
+                            w0SubRow += stepDownOneSubPixel0;
+                            w1SubRow += stepDownOneSubPixel1;
+                            w2SubRow += stepDownOneSubPixel2;
                         }
-
-                        w0SubRow += stepDownOneSubPixel0;
-                        w1SubRow += stepDownOneSubPixel1;
-                        w2SubRow += stepDownOneSubPixel2;
                     }
                 }
             }
