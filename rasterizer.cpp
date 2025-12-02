@@ -7,6 +7,9 @@
 #include <algorithm>
 #include <stdexcept>
 #define INV_PI 0.318309886f
+#define FIX_BITS 10
+// basically 2^FIX_BITS 00001=1 -> 1000....=2^FIX_BITS
+#define FIX_SCALE (1 << FIX_BITS)
 
 int t, b, r, l;
 int meret;
@@ -206,7 +209,7 @@ void pontokVetitese(const int &i0, const int &i1, const int &i2, float *normal)
     pontCameraMatrixMultiplication(i2, p2);
     calculateNormal(p0, p1, p2, normal);
     // backface culling
-    if (dotProduct3D(p0, normal) < 0.0f)
+    if (dotProduct3D(p2, normal) < 0.0f)
     {
         pontPerspectiveMultiplication(p0);
         pontPerspectiveMultiplication(p1);
@@ -327,16 +330,17 @@ int render()
     {
         imageBuffer[i] = 0;
     }
+    // subpixels width and height
     float sqrAntialias = sqrt(antialias);
+    // one subpixel's width and height
     float sqrAntialiasRec = 1.0f / sqrt(antialias);
+    // half of one subpixel's width and height
     float inc = sqrAntialiasRec * 0.5f;
     float htminx, htmaxx, htminy, htmaxy;
     projectedTriangles = (float *)calloc(100, sizeof(float));
-    float dX0, dY0, dX1, dY1, dX2, dY2, w0, w1, w2, z0Rec, z1Rec, z2Rec, jobbraKicsiPixel0, jobbraKicsiPixel1, jobbraKicsiPixel2;
-    float balraFel0, balraFel1, balraFel2;
+    float dX0, dY0, dX1, dY1, dX2, dY2, w0, w1, w2, z0Rec, z1Rec, z2Rec;
     float lambda0, lambda1, lambda2;
-    float sorEleje0, sorEleje1, sorEleje2;
-    float haromszogTerulet, haromszogTeruletRec;
+    float haromszogTerulet;
     float zMelyseg;
     int bufferIndex, kepIndex;
     float *normal = (float *)malloc(3 * sizeof(float));
@@ -380,27 +384,9 @@ int render()
             htminy = std::max(0, std::min(imageHeight - 1, (int)std::floor(htminy)));
             htmaxx = std::max(0, std::min(imageWidth - 1, (int)std::ceil(htmaxx)));
             htmaxy = std::max(0, std::min(imageHeight - 1, (int)std::ceil(htmaxy)));
-            dX0 = projectedTriangles[j + 6] - projectedTriangles[j + 3];
-            dY0 = projectedTriangles[j + 7] - projectedTriangles[j + 4];
-            dX1 = projectedTriangles[j] - projectedTriangles[j + 6];
-            dY1 = projectedTriangles[j + 1] - projectedTriangles[j + 7];
-            dX2 = projectedTriangles[j + 3] - projectedTriangles[j];
-            dY2 = projectedTriangles[j + 4] - projectedTriangles[j + 1];
-            w0 = edgeFunction(projectedTriangles[j + 3], projectedTriangles[j + 4], dX0, dY0, htminx - 1 + inc, htminy - 1 + inc);
-            w1 = edgeFunction(projectedTriangles[j + 6], projectedTriangles[j + 7], dX1, dY1, htminx - 1 + inc, htminy - 1 + inc);
-            w2 = edgeFunction(projectedTriangles[j], projectedTriangles[j + 1], dX2, dY2, htminx - 1 + inc, htminy - 1 + inc);
             z0Rec = 1.0f / projectedTriangles[j + 2];
             z1Rec = 1.0f / projectedTriangles[j + 5];
             z2Rec = 1.0f / projectedTriangles[j + 8];
-            jobbraKicsiPixel0 = dY0 * sqrAntialiasRec;
-            jobbraKicsiPixel1 = dY1 * sqrAntialiasRec;
-            jobbraKicsiPixel2 = dY2 * sqrAntialiasRec;
-            balraFel0 = sqrAntialiasRec * (dY0 * sqrAntialias + dX0);
-            balraFel1 = sqrAntialiasRec * (dY1 * sqrAntialias + dX1);
-            balraFel2 = sqrAntialiasRec * (dY2 * sqrAntialias + dX2);
-            sorEleje0 = dY0 * (htmaxx - htminx + 1);
-            sorEleje1 = dY1 * (htmaxx - htminx + 1);
-            sorEleje2 = dY2 * (htmaxx - htminx + 1);
             float dotProd = std::max(0.0f, dotProduct3D(normal, lightVec));
             float lightCoefficentTriangle = lightCoefficient * dotProd;
             // grass color
@@ -423,25 +409,45 @@ int render()
                                           dX2,
                                           dY2,
                                           projectedTriangles[j + 6], projectedTriangles[j + 7]);
+            dX0 = projectedTriangles[j + 6] - projectedTriangles[j + 3] * haromszogTerulet;
+            dY0 = projectedTriangles[j + 7] - projectedTriangles[j + 4] * haromszogTerulet;
+            dX1 = projectedTriangles[j] - projectedTriangles[j + 6] * haromszogTerulet;
+            dY1 = projectedTriangles[j + 1] - projectedTriangles[j + 7] * haromszogTerulet;
+            dX2 = projectedTriangles[j + 3] - projectedTriangles[j] * haromszogTerulet;
+            dY2 = projectedTriangles[j + 4] - projectedTriangles[j + 1] * haromszogTerulet;
+            w0 = edgeFunction(projectedTriangles[j + 3], projectedTriangles[j + 4], dX0, dY0, htminx + inc, htminy + inc) * haromszogTerulet;
+            w1 = edgeFunction(projectedTriangles[j + 6], projectedTriangles[j + 7], dX1, dY1, htminx + inc, htminy + inc) * haromszogTerulet;
+            w2 = edgeFunction(projectedTriangles[j], projectedTriangles[j + 1], dX2, dY2, htminx + inc, htminy + inc) * haromszogTerulet;
+            // to the right with one subpixel's width
+            float stepRightSub0 = dY0 * sqrAntialiasRec * haromszogTerulet;;
+            float stepRightSub1 = dY1 * sqrAntialiasRec * haromszogTerulet;;
+            float stepRightSub2 = dY2 * sqrAntialiasRec * haromszogTerulet;;
+            // go down with one subpixel's height
+            float stepDownSub0 = -(dX0 * sqrAntialiasRec * haromszogTerulet;);
+            float stepDownSub1 = -(dX1 * sqrAntialiasRec * haromszogTerulet;);
+            float stepDownSub2 = -(dX2 * sqrAntialiasRec * haromszogTerulet;);
             for (int y = htminy; y <= htmaxy; y++)
             {
-                w0 -= dX0;
-                w1 -= dX1;
-                w2 -= dX2;
+                float w0Col = w0;
+                float w1Col = w1;
+                float w2Col = w2;
                 for (int x = htminx; x <= htmaxx; x++)
                 {
-                    w0 += dY0;
-                    w1 += dY1;
-                    w2 += dY2;
+                    float w0Sub = w0Col;
+                    float w1Sub = w1Col;
+                    float w2Sub = w2Col;
                     for (int ya = 0; ya < sqrAntialias; ya++)
                     {
+                        float w0Cur = w0Sub;
+                        float w1Cur = w1Sub;
+                        float w2Cur = w2Sub;
                         for (int xa = 0; xa < sqrAntialias; xa++)
                         {
-                            if (w0 >= 0 && w1 >= 0 && w2 >= 0)
+                            if (w0Cur >= 0 && w1Cur >= 0 && w2Cur >= 0)
                             {
-                                lambda0 = w0 * haromszogTerulet;
-                                lambda1 = w1 * haromszogTerulet;
-                                lambda2 = w2 * haromszogTerulet;
+                                lambda0 = w0Cur;
+                                lambda1 = w1Cur;
+                                lambda2 = w2Cur;
                                 zMelyseg = 1.0f / (z0Rec * lambda0 + z1Rec * lambda1 + z2Rec * lambda2);
                                 bufferIndex = (y * imageWidth + x) * antialias + ya * sqrAntialias + xa;
                                 if (zMelyseg < zBuffer[bufferIndex])
@@ -455,21 +461,21 @@ int render()
                                     imageAntiBuffer[kepIndex + 2] = b;
                                 }
                             }
-                            w0 += jobbraKicsiPixel0;
-                            w1 += jobbraKicsiPixel1;
-                            w2 += jobbraKicsiPixel2;
+                            w0Cur += stepRightSub0;
+                            w1Cur += stepRightSub1;
+                            w2Cur += stepRightSub2;
                         }
-                        w0 -= balraFel0;
-                        w1 -= balraFel1;
-                        w2 -= balraFel2;
+                        w0Sub += stepDownSub0;
+                        w1Sub += stepDownSub1;
+                        w2Sub += stepDownSub2;
                     }
-                    w0 += dX0 * sqrAntialias * sqrAntialiasRec;
-                    w1 += dX1 * sqrAntialias * sqrAntialiasRec;
-                    w2 += dX2 * sqrAntialias * sqrAntialiasRec;
+                    w0Col += dY0;
+                    w1Col += dY1;
+                    w2Col += dY2;
                 }
-                w0 -= sorEleje0;
-                w1 -= sorEleje1;
-                w2 -= sorEleje2;
+                w0 -= dX0;
+                w1 -= dX1;
+                w2 -= dX2;
             }
         }
     }

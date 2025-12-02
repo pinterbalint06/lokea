@@ -75,3 +75,7 @@ button {
 .wfit {
     width: 100%;
 }
+
+.wrapreverse {
+    flex-wrap: wrap-reverse;
+}
