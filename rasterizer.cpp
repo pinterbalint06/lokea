@@ -8,8 +8,8 @@
 #include <stdexcept>
 #define INV_PI 0.318309886f
 #define FIX_BITS 10
-// basically 2^FIX_BITS 00001=1 -> 1000....=2^FIX_BITS
-#define FIX_SCALE (1 << FIX_BITS)
+#define FIX_ONE (1 << FIX_BITS)
+#define FIX64 (1 << (FIX_BITS * 2))
 
 int t, b, r, l;
 int meret;
@@ -34,6 +34,8 @@ float heightMultiplier;
 float kameraMagassag;
 // light intensity
 float lightIntensity;
+// pre calculated light used to multiply the object albedo * light color. INV_PI * lightIntensity
+float lightCoefficient;
 
 // Perspective Projection Matrix
 float *P;
@@ -53,6 +55,16 @@ int *sikok;
 float *imageAntiBuffer;
 uint8_t *imageBuffer;
 float *lightDir;
+
+int32_t Float2Fix(float num)
+{
+    return (int32_t)((num)*FIX_ONE);
+}
+
+int32_t Int2Fix(int num)
+{
+    return (int32_t)((num)*FIX_ONE);
+}
 
 void matrixSzorzas4x4(float *m1, float *m2, float *eredmeny)
 {
@@ -247,9 +259,9 @@ void pontokVetitese(const int &i0, const int &i1, const int &i2, float *normal)
     }
 }
 
-float edgeFunction(float X, float Y, float dX, float dY, float x, float y)
+int64_t edgeFunction(int32_t X, int32_t Y, int32_t dX, int32_t dY, int32_t x, int32_t y)
 {
-    return (x - X) * dY - (y - Y) * dX;
+    return ((int64_t)(x - X) * dY - (int64_t)(y - Y) * dX);
 }
 
 void calcCameraMatrix()
@@ -304,6 +316,7 @@ void calcCameraMatrix()
     temp[13] = -pontok[cameraLocation * 3 + 1] - kameraMagassag;
     temp[14] = -pontok[cameraLocation * 3 + 2];
     matrixSzorzas4x4(temp, forgasMatrix, MCamera);
+    free(forgasMatrix);
     free(temp);
 }
 
@@ -312,57 +325,54 @@ bool isSquareNumber(int n)
     return n >= 0 && std::sqrt(n) == (int)std::sqrt(n);
 }
 
-EM_JS(void, call_alert, (float h), {
-    alert(h);
-});
-
 int render()
 {
     if (!(isSquareNumber(antialias) && (1 <= antialias && antialias <= 16)))
     {
         throw "Wrong antialias. Must be square number and between 1 and 16!";
     }
-    for (int i = 0; i < zBufferMeret; i++)
-    {
-        zBuffer[i] = 1.0f;
-    }
-    for (int i = 0; i < imageAntiBufferLength; i++)
-    {
-        imageAntiBuffer[i] = 0.0f;
-    }
-    for (int i = 0; i < imageBufferLength; i++)
-    {
-        imageBuffer[i] = 0;
-    }
+    std::fill(zBuffer, zBuffer + zBufferMeret, 1.0f);
+    std::fill(imageAntiBuffer, imageAntiBuffer + imageAntiBufferLength, 0.0f);
+    std::fill(imageBuffer, imageBuffer + imageBufferLength, 0);
+    std::fill(projectedTriangles, projectedTriangles + 100, 0);
     // subpixels width and height
-    float sqrAntialias = sqrt(antialias);
+    int sqrAntialias = (int)sqrt(antialias);
     // one subpixel's width and height
-    float sqrAntialiasRec = 1.0f / sqrt(antialias);
+    int32_t sqrAntialiasRec = Float2Fix(1.0f / sqrAntialias);
     // half of one subpixel's width and height
-    float inc = sqrAntialiasRec * 0.5f;
+    // >> 1 = / 2
+    int32_t inc = sqrAntialiasRec >> 1;
+    // bounding box
     float htminx, htmaxx, htminy, htmaxy;
-    projectedTriangles = (float *)calloc(100, sizeof(float));
-    float dX0, dY0, dX1, dY1, dX2, dY2, w0, w1, w2, z0Rec, z1Rec, z2Rec;
-    float balraFel0, balraFel1, balraFel2;
-    float lambda0, lambda1, lambda2;
-    float sorEleje0, sorEleje1, sorEleje2;
-    float triArea, invTriArea;
-    float zMelyseg;
-    int bufferIndex, kepIndex;
+    // used for the edge function
+    int32_t dX0, dY0, dX1, dY1, dX2, dY2;
+    // edge function results
+    int64_t w0, w1, w2;
+    // reciprocal of the z values
+    float z0Rec, z1Rec, z2Rec;
+    // triangle's area
+    int64_t triArea;
+    // triangle's area's reciprocal
+    float invTriArea;
+    // used for the z-buffer
+    float zDepth;
+    // indexes
+    int bufferIndex, imageIndex;
+    // normal of the current triangle
     float *normal = (float *)malloc(3 * sizeof(float));
+    // light vector
     float *lightVec = (float *)malloc(3 * sizeof(float));
     lightVec[0] = -lightDir[0];
     lightVec[1] = -lightDir[1];
     lightVec[2] = -lightDir[2];
     calcCameraMatrix();
     vectorMatrixMultiplication(lightVec, MCamera);
-    float lightCoefficient = INV_PI * lightIntensity;
     for (int i = 0; i < indexekMeret; i += 3)
     {
         pontokVetitese(indexek[i], indexek[i + 1], indexek[i + 2], normal);
         for (int j = 0; j < projectedTrianglesMeret; j += 9)
         {
-            // A háromszöget határolókeret pontjainak kiszámolása
+            // Calculate bounding box
             htminx = imageWidth;
             htmaxx = -imageWidth;
             htminy = imageHeight;
@@ -386,14 +396,28 @@ int render()
                     htmaxy = projectedTriangles[j + k + 1];
                 }
             }
-            htminx = std::max(0, std::min(imageWidth - 1, (int)std::floor(htminx)));
-            htminy = std::max(0, std::min(imageHeight - 1, (int)std::floor(htminy)));
-            htmaxx = std::max(0, std::min(imageWidth - 1, (int)std::ceil(htmaxx)));
-            htmaxy = std::max(0, std::min(imageHeight - 1, (int)std::ceil(htmaxy)));
+            int bbminx = std::max(0, std::min(imageWidth - 1, (int)std::floor(htminx)));
+            int bbminy = std::max(0, std::min(imageHeight - 1, (int)std::floor(htminy)));
+            int bbmaxx = std::max(0, std::min(imageWidth - 1, (int)std::ceil(htmaxx)));
+            int bbmaxy = std::max(0, std::min(imageHeight - 1, (int)std::ceil(htmaxy)));
+
+            // Convert triangle vertices to fixed point integer
+            int32_t v0x = Float2Fix(projectedTriangles[j]);
+            int32_t v0y = Float2Fix(projectedTriangles[j + 1]);
+            int32_t v0z = Float2Fix(projectedTriangles[j + 2]);
+            int32_t v1x = Float2Fix(projectedTriangles[j + 3]);
+            int32_t v1y = Float2Fix(projectedTriangles[j + 4]);
+            int32_t v1z = Float2Fix(projectedTriangles[j + 5]);
+            int32_t v2x = Float2Fix(projectedTriangles[j + 6]);
+            int32_t v2y = Float2Fix(projectedTriangles[j + 7]);
+            int32_t v2z = Float2Fix(projectedTriangles[j + 8]);
+
+            // precalculate the reciprocal
             z0Rec = 1.0f / projectedTriangles[j + 2];
             z1Rec = 1.0f / projectedTriangles[j + 5];
             z2Rec = 1.0f / projectedTriangles[j + 8];
-            // go down with one subpixel's height
+
+            // precalculate the lighting
             float dotProd = std::max(0.0f, dotProduct3D(normal, lightVec));
             float lightCoefficentTriangle = lightCoefficient * dotProd;
             // grass color
@@ -412,125 +436,133 @@ int render()
             float g = 0.134673f * lightCoefficentTriangle;
             float b = 0.00053332f * lightCoefficentTriangle;
 
-            dX0 = projectedTriangles[j + 6] - projectedTriangles[j + 3];
-            dY0 = projectedTriangles[j + 7] - projectedTriangles[j + 4];
-            dX1 = projectedTriangles[j] - projectedTriangles[j + 6];
-            dY1 = projectedTriangles[j + 1] - projectedTriangles[j + 7];
-            dX2 = projectedTriangles[j + 3] - projectedTriangles[j];
-            dY2 = projectedTriangles[j + 4] - projectedTriangles[j + 1];
-            w0 = edgeFunction(projectedTriangles[j + 3], projectedTriangles[j + 4], dX0, dY0, htminx + inc, htminy + inc);
-            w1 = edgeFunction(projectedTriangles[j + 6], projectedTriangles[j + 7], dX1, dY1, htminx + inc, htminy + inc);
-            w2 = edgeFunction(projectedTriangles[j], projectedTriangles[j + 1], dX2, dY2, htminx + inc, htminy + inc);
+            // calculate parameters of edge function
+            dX0 = v2x - v1x;
+            dY0 = v2y - v1y;
+
+            dX1 = v0x - v2x;
+            dY1 = v0y - v2y;
+
+            dX2 = v1x - v0x;
+            dY2 = v1y - v0y;
+
+            // first pixel's center
+            int32_t startX = Int2Fix(bbminx) + inc;
+            int32_t startY = Int2Fix(bbminy) + inc;
+
+            // Edge functions
+            w0 = edgeFunction(v1x, v1y, dX0, dY0, startX, startY);
+            w1 = edgeFunction(v2x, v2y, dX1, dY1, startX, startY);
+            w2 = edgeFunction(v0x, v0y, dX2, dY2, startX, startY);
+
+            // gives back area * 2 but w0, w1, w2 is also * 2 so it will cancel out
             triArea = edgeFunction(
-                          projectedTriangles[j], projectedTriangles[j + 1],
-                          dX2,
-                          dY2,
-                          projectedTriangles[j + 6], projectedTriangles[j + 7]) *
-                      0.5f;
-            if (fabs(triArea) > 0.00001f)
+                v0x, v0y,
+                dX2,
+                dY2,
+                v2x, v2y);
+
+            // if triangle's are is 0 or smaller it is not a real triangle
+            if (triArea > 0)
             {
-                invTriArea = 1.0f / triArea;
-                // base barycentric weight
-                // these are constants we do not change them we calculate the current row from these
-                // scaled by the triangle's area's inverse so we don't have to multiply by that in the inner loop
-                const float w0Base = w0 * invTriArea;
-                const float w1Base = w1 * invTriArea;
-                const float w2Base = w2 * invTriArea;
+                // precalculate inverse of triangle's area
+                invTriArea = 1.0f / (float)triArea;
 
                 // E(x+ 1,y) = E(x,y) + dY
-                // scaled by the triangle's area's inverse so we don't have to multiply by that in the inner loop
-                float stepRightOnePixel0 = dY0 * invTriArea;
-                float stepRightOnePixel1 = dY1 * invTriArea;
-                float stepRightOnePixel2 = dY2 * invTriArea;
+                // dY Q21.10 so * FIX_ONE dY becomes Q42.20
+                int64_t stepRightOnePixel0 = (int64_t)dY0 * FIX_ONE;
+                int64_t stepRightOnePixel1 = (int64_t)dY1 * FIX_ONE;
+                int64_t stepRightOnePixel2 = (int64_t)dY2 * FIX_ONE;
 
                 // E(x,y+ 1) = E(x,y) −dX
-                // scaled by the triangle's area's inverse so we don't have to multiply by that in the inner loop
-                float stepDownOnePixel0 = -dX0 * invTriArea;
-                float stepDownOnePixel1 = -dX1 * invTriArea;
-                float stepDownOnePixel2 = -dX2 * invTriArea;
+                // dX Q21.10 so * FIX_ONE dX becomes Q42.20
+                int64_t stepDownOnePixel0 = (int64_t)(-dX0) * FIX_ONE;
+                int64_t stepDownOnePixel1 = (int64_t)(-dX1) * FIX_ONE;
+                int64_t stepDownOnePixel2 = (int64_t)(-dX2) * FIX_ONE;
 
                 // step right by the subpixel's width
                 // step one pixel * small pixel width
-                float stepRightOneSubPixel0 = stepRightOnePixel0 * sqrAntialiasRec;
-                float stepRightOneSubPixel1 = stepRightOnePixel1 * sqrAntialiasRec;
-                float stepRightOneSubPixel2 = stepRightOnePixel2 * sqrAntialiasRec;
+                // Q42.20 * Q21.10 would be Q32.30 so we have to >> FIX_BITS
+                int64_t stepRightOneSubPixel0 = (stepRightOnePixel0 * sqrAntialiasRec) >> FIX_BITS;
+                int64_t stepRightOneSubPixel1 = (stepRightOnePixel1 * sqrAntialiasRec) >> FIX_BITS;
+                int64_t stepRightOneSubPixel2 = (stepRightOnePixel2 * sqrAntialiasRec) >> FIX_BITS;
 
                 // step down by the subpixel's height
                 // step one pixel * small pixel height
-                float stepDownOneSubPixel0 = stepDownOnePixel0 * sqrAntialiasRec;
-                float stepDownOneSubPixel1 = stepDownOnePixel1 * sqrAntialiasRec;
-                float stepDownOneSubPixel2 = stepDownOnePixel2 * sqrAntialiasRec;
-                for (int y = htminy; y <= htmaxy; y++)
+                // Q42.20 * Q21.10 would be Q32.30 so we have to >> FIX_BITS
+                int64_t stepDownOneSubPixel0 = (stepDownOnePixel0 * sqrAntialiasRec) >> FIX_BITS;
+                int64_t stepDownOneSubPixel1 = (stepDownOnePixel1 * sqrAntialiasRec) >> FIX_BITS;
+                int64_t stepDownOneSubPixel2 = (stepDownOnePixel2 * sqrAntialiasRec) >> FIX_BITS;
+
+                int64_t w0Row = w0;
+                int64_t w1Row = w1;
+                int64_t w2Row = w2;
+                for (int y = bbminy; y <= bbmaxy; y++)
                 {
-                    // how many pixels are we from the top
-                    float dy = (float)(y - htminy);
+                    int64_t w0Col = w0Row;
+                    int64_t w1Col = w1Row;
+                    int64_t w2Col = w2Row;
 
-                    // E(x,y + L) = E(x,y) - L * dX
-                    // L is dy pixel's from top
-                    // dX is the stepDownOnePixel
-                    // calculate current row's edge function
-                    float w0Row = w0Base + dy * stepDownOnePixel0;
-                    float w1Row = w1Base + dy * stepDownOnePixel1;
-                    float w2Row = w2Base + dy * stepDownOnePixel2;
-
-                    for (int x = htminx; x <= htmaxx; x++)
+                    for (int x = bbminx; x <= bbmaxx; x++)
                     {
-                        // how many pixels are we from the left
-                        float dx = (float)(x - htminx);
-
-                        // E(x+ L,y) = E(x,y) + L × dY
-                        // L is dx pixel's from the left
-                        // dY is the stepRightOnePixel
-                        // calculate current column's edge function
-                        float w0Col = w0Row + dx * stepRightOnePixel0;
-                        float w1Col = w1Row + dx * stepRightOnePixel1;
-                        float w2Col = w2Row + dx * stepRightOnePixel2;
-
-                        float w0SubRow = w0Col;
-                        float w1SubRow = w1Col;
-                        float w2SubRow = w2Col;
+                        int64_t w0SubRow = w0Col;
+                        int64_t w1SubRow = w1Col;
+                        int64_t w2SubRow = w2Col;
 
                         for (int ya = 0; ya < sqrAntialias; ya++)
                         {
-                            float w0 = w0SubRow;
-                            float w1 = w1SubRow;
-                            float w2 = w2SubRow;
-
+                            int64_t w0Sub = w0SubRow;
+                            int64_t w1Sub = w1SubRow;
+                            int64_t w2Sub = w2SubRow;
                             for (int xa = 0; xa < sqrAntialias; xa++)
                             {
-                                if (w0 >= 0.0f && w1 >= 0.0f && w2 >= 0.0f)
+                                // the sign bit is one if the number is negative
+                                // if all three number is positive all of their sign bit is zero so in an OR operator the result's sign bit is also 0 and positive
+                                // if any of  the number is negative (their sign bit is 1) then the result's sign bit will also be 1 and will be negative
+                                if ((w0Sub | w1Sub | w2Sub) >= 0)
                                 {
-                                    zMelyseg = 1.0f / (w0 * z0Rec + w1 * z1Rec + w2 * z2Rec);
+                                    // barycentric coordinates
+                                    float lambda0 = (float)w0Sub * invTriArea;
+                                    float lambda1 = (float)w1Sub * invTriArea;
+                                    float lambda2 = (float)w2Sub * invTriArea;
+                                    // hyperbolic interpolation for z-coordinate
+                                    zDepth = 1.0f / (lambda0 * z0Rec + lambda1 * z1Rec + lambda2 * z2Rec);
                                     bufferIndex = (y * imageWidth + x) * antialias + ya * sqrAntialias + xa;
-
-                                    if (zMelyseg < zBuffer[bufferIndex])
+                                    if (zDepth < zBuffer[bufferIndex])
                                     {
-                                        zBuffer[bufferIndex] = zMelyseg;
-                                        kepIndex = bufferIndex * 3;
+                                        zBuffer[bufferIndex] = zDepth;
+                                        imageIndex = bufferIndex * 3;
 
-                                        imageAntiBuffer[kepIndex] = r;
-                                        imageAntiBuffer[kepIndex + 1] = g;
-                                        imageAntiBuffer[kepIndex + 2] = b;
+                                        imageAntiBuffer[imageIndex] = r;
+                                        imageAntiBuffer[imageIndex + 1] = g;
+                                        imageAntiBuffer[imageIndex + 2] = b;
                                     }
                                 }
-
-                                w0 += stepRightOneSubPixel0;
-                                w1 += stepRightOneSubPixel1;
-                                w2 += stepRightOneSubPixel2;
+                                // step one subpixel to the right
+                                w0Sub += stepRightOneSubPixel0;
+                                w1Sub += stepRightOneSubPixel1;
+                                w2Sub += stepRightOneSubPixel2;
                             }
-
+                            // step down one subpixel
                             w0SubRow += stepDownOneSubPixel0;
                             w1SubRow += stepDownOneSubPixel1;
                             w2SubRow += stepDownOneSubPixel2;
                         }
+                        // step one pixel to the right
+                        w0Col += stepRightOnePixel0;
+                        w1Col += stepRightOnePixel1;
+                        w2Col += stepRightOnePixel2;
                     }
+                    // step down one pixel
+                    w0Row += stepDownOnePixel0;
+                    w1Row += stepDownOnePixel1;
+                    w2Row += stepDownOnePixel2;
                 }
             }
         }
     }
     free(lightVec);
     free(normal);
-    free(projectedTriangles);
     float r, g, b;
     int altalanosIndex, imageAntiIndex, subImageIndex, imageBufferIndex;
     float antiRec = 1.0f / antialias;
@@ -564,11 +596,6 @@ int render()
         }
     }
     return (int)imageBuffer;
-}
-
-void freeImageBuffer()
-{
-    free(imageBuffer);
 }
 
 int imageBufferSize()
@@ -777,6 +804,7 @@ void newHeightMult(float mult)
 void newLightIntensity(float intensity)
 {
     lightIntensity = intensity;
+    lightCoefficient = INV_PI * lightIntensity;
     renderJs(antialias);
 }
 
@@ -902,6 +930,8 @@ void init()
     lightDir[1] = -1;
     lightDir[2] = 0;
     lightIntensity = 5000.0f;
+    lightCoefficient = INV_PI * lightIntensity;
+    projectedTriangles = (float *)calloc(100, sizeof(float));
 }
 
 EMSCRIPTEN_BINDINGS(raw_pointers)
@@ -928,7 +958,6 @@ EMSCRIPTEN_BINDINGS(my_module)
     emscripten::function("setYForog", &setYForog);
     emscripten::function("getXForog", &getXForog);
     emscripten::function("getYForog", &getYForog);
-    emscripten::function("freeImageBuffer", &freeImageBuffer);
     emscripten::function("setAntialias", &setAntialias);
     emscripten::function("newMap", &newMap);
     emscripten::function("newHeightMult", &newHeightMult);
