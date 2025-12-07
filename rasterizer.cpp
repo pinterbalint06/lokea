@@ -21,6 +21,7 @@ int zBufferMeret;
 int perlinMeret = 0;
 int indexekMeret = 0;
 int pontokMeret = 0;
+int normalsSize = 0;
 int bemenetMeret;
 int projectedTrianglesMeret;
 int clippedMeret;
@@ -38,6 +39,9 @@ float lightIntensity;
 float lightCoefficient;
 // color of the ground
 float rGround, bGround, gGround;
+// perlin parameters
+float lacunarity, persistence, frequency;
+int octaves, seed;
 
 // Perspective Projection Matrix
 float *P;
@@ -53,6 +57,7 @@ float *p2;
 float *bemenet;
 float *clipped;
 float *projectedTriangles;
+float *normals;
 int *sikok;
 float *imageAntiBuffer;
 uint8_t *imageBuffer;
@@ -173,6 +178,7 @@ void pontPerspectiveMultiplication(float *pont)
         pont[i] = tempPont[i];
     }
 }
+
 void vectorMatrixMultiplication(float *vec, float *matrix)
 {
     float tempVec[3];
@@ -327,6 +333,10 @@ bool isSquareNumber(int n)
     return n >= 0 && std::sqrt(n) == (int)std::sqrt(n);
 }
 
+EM_JS(void, normLog, (float x, float y, float z), {
+    console.log(x, y, z);
+});
+
 int render()
 {
     if (!(isSquareNumber(antialias) && (1 <= antialias && antialias <= 16)))
@@ -362,13 +372,40 @@ int render()
     int bufferIndex, imageIndex;
     // normal of the current triangle
     float *normal = (float *)malloc(3 * sizeof(float));
+    float *normalInterpolated = (float *)malloc(3 * sizeof(float));
     // light vector
     float *lightVec = (float *)malloc(3 * sizeof(float));
+    // sun color
+    // 255.0 normalize -> 255.0f/255.0 = 1.0
+    // 223.0 normalize -> 223.0f/255.0 = 0.8745
+    // 34.0 normalize -> 34.0f/255.0 = 0.13333
+    float rSun = 1.0f;
+    float gSun = 0.8745f;
+    float bSun = 0.13333f;
+    // grass color
+    // 65 -> (65/255)^2.2=0.04943 albedo
+    // 152 -> (152/255)^2.2=0.32038 albedo
+    // 10 -> (10/255)^2.2=0.000804 albedo
+    float rGrass = 0.04943;
+    float gGrass = 0.32038f;
+    float bGrass = 0.000804f;
+    // dirt color
+    // 155 -> (155/255)^2.2=0.33445
+    // 118 -> (118/255)^2.2=0.1835489
+    // 83  -> (83/255)^2.2=0.08464
+    float rDirt = 0.33445;
+    float gDirt = 0.1835489f;
+    float bDirt = 0.08464f;
+    float rPix, gPix, bPix;
     lightVec[0] = -lightDir[0];
     lightVec[1] = -lightDir[1];
     lightVec[2] = -lightDir[2];
+    // up vector
+    float *upVec = (float *)malloc(3 * sizeof(float));
+    upVec[0] = 0.0f;
+    upVec[1] = 1.0f;
+    upVec[2] = 0.0f;
     calcCameraMatrix();
-    vectorMatrixMultiplication(lightVec, MCamera);
     for (int i = 0; i < indexekMeret; i += 3)
     {
         pontokVetitese(indexek[i], indexek[i + 1], indexek[i + 2], normal);
@@ -418,13 +455,6 @@ int render()
             z0Rec = 1.0f / projectedTriangles[j + 2];
             z1Rec = 1.0f / projectedTriangles[j + 5];
             z2Rec = 1.0f / projectedTriangles[j + 8];
-
-            // precalculate the lighting
-            float dotProd = std::max(0.0f, dotProduct3D(normal, lightVec));
-            float lightCoefficentTriangle = lightCoefficient * dotProd;
-            float r = rGround * lightCoefficentTriangle;
-            float g = gGround * lightCoefficentTriangle;
-            float b = bGround * lightCoefficentTriangle;
 
             // calculate parameters of edge function
             dX0 = v2x - v1x;
@@ -522,10 +552,26 @@ int render()
                                     {
                                         zBuffer[bufferIndex] = zDepth;
                                         imageIndex = bufferIndex * 3;
+                                        // perspective correct interpolation
+                                        normalInterpolated[0] = (lambda0 * normals[indexek[i] * 3] * z0Rec + lambda1 * normals[indexek[i + 1] * 3] * z1Rec + lambda2 * normals[indexek[i + 2] * 3] * z2Rec) * zDepth;
+                                        normalInterpolated[1] = (lambda0 * normals[indexek[i] * 3 + 1] * z0Rec + lambda1 * normals[indexek[i + 1] * 3 + 1] * z1Rec + lambda2 * normals[indexek[i + 2] * 3 + 1] * z2Rec) * zDepth;
+                                        normalInterpolated[2] = (lambda0 * normals[indexek[i] * 3 + 2] * z0Rec + lambda1 * normals[indexek[i + 1] * 3 + 2] * z1Rec + lambda2 * normals[indexek[i + 2] * 3 + 2] * z2Rec) * zDepth;
+                                        float normalLengthInv = 1.0f / std::sqrt(normalInterpolated[0] * normalInterpolated[0] + normalInterpolated[1] * normalInterpolated[1] + normalInterpolated[2] * normalInterpolated[2]);
+                                        normalInterpolated[0] *= normalLengthInv;
+                                        normalInterpolated[1] *= normalLengthInv;
+                                        normalInterpolated[2] *= normalLengthInv;
 
-                                        imageAntiBuffer[imageIndex] = r;
-                                        imageAntiBuffer[imageIndex + 1] = g;
-                                        imageAntiBuffer[imageIndex + 2] = b;
+                                        float dotProd = std::max(0.0f, dotProduct3D(normalInterpolated, lightVec));
+                                        float lightCoefficentTriangle = lightCoefficient * dotProd;
+                                        // float slopeness = normalInterpolated[1];
+
+                                        // rPix = rDirt + (rGrass - rDirt) * slopeness;
+                                        // gPix = gDirt + (gGrass - gDirt) * slopeness;
+                                        // bPix = bDirt + (bGrass - bDirt) * slopeness;
+
+                                        imageAntiBuffer[imageIndex] = rGround * lightCoefficentTriangle;
+                                        imageAntiBuffer[imageIndex + 1] = gGround * lightCoefficentTriangle;
+                                        imageAntiBuffer[imageIndex + 2] = bGround * lightCoefficentTriangle;
                                     }
                                 }
                                 // step one subpixel to the right
@@ -553,6 +599,8 @@ int render()
     }
     free(lightVec);
     free(normal);
+    free(normalInterpolated);
+    free(upVec);
     float r, g, b;
     int altalanosIndex, imageAntiIndex, subImageIndex, imageBufferIndex;
     float antiRec = 1.0f / antialias;
@@ -716,6 +764,24 @@ int allocatePerlin(int perlinek)
     return 0;
 }
 
+int allocateNormals(int sizeNorm)
+{
+    // ha létezik felszabadítjuk
+    if (normals)
+    {
+        free(normals);
+    }
+
+    // Memória lefoglalása a listának
+    normals = (float *)calloc(sizeNorm, sizeof(float));
+    if (normals)
+    {
+        normalsSize = sizeNorm;
+        return (int)normals;
+    }
+    return 0;
+}
+
 void pontokKiszamolasa()
 {
     int i;
@@ -725,7 +791,7 @@ void pontokKiszamolasa()
         {
             i = (y * meret + x);
             pontok[i * 3] = x;
-            pontok[i * 3 + 1] = perlin[i] * heightMultiplier;
+            pontok[i * 3 + 1] = perlin[i];
             pontok[i * 3 + 2] = -y;
         }
     }
@@ -757,37 +823,21 @@ EM_JS(void, renderJs, (int elsimitas), {
     render("canvas", elsimitas);
 });
 
-void newMap(int seed, float lacunarity, float persistence, int octaves)
+void newPerlinMap(int seed, float frequency, float lacunarity, float persistence, int octaves, float heightMultiplier)
 {
+    ::frequency = frequency;
+    ::seed = octaves;
+    ::lacunarity = lacunarity;
+    ::persistence = persistence;
+    ::octaves = octaves;
+    ::heightMultiplier = heightMultiplier;
     allocatePerlin(meret * meret);
-    generatePerlinNoise(perlin, 1, meret, seed, 2, octaves, lacunarity, persistence);
+    allocateNormals(meret * meret * 3);
+    generatePerlinNoise(perlin, normals, frequency, meret, seed, 2, octaves, lacunarity, persistence, 0.0f, heightMultiplier);
     allocatePontok(meret * meret * 3);
     pontokKiszamolasa();
     allocateIndexek((meret - 1) * (meret - 1) * 6);
     osszekotesekKiszamolasa();
-    ujHely();
-    renderJs(antialias);
-}
-
-void newPerlinSameMap(int seed, float lacunarity, float persistence, int octaves)
-{
-    allocatePerlin(meret * meret);
-    generatePerlinNoise(perlin, 1, meret, seed, 2, octaves, lacunarity, persistence);
-    allocatePontok(meret * meret * 3);
-    pontokKiszamolasa();
-    allocateIndexek((meret - 1) * (meret - 1) * 6);
-    osszekotesekKiszamolasa();
-    renderJs(antialias);
-}
-
-void newHeightMult(float mult)
-{
-    heightMultiplier = mult;
-    allocatePontok(meret * meret * 3);
-    pontokKiszamolasa();
-    allocateIndexek((meret - 1) * (meret - 1) * 6);
-    osszekotesekKiszamolasa();
-    calcNewLocationCamera(cameraLocation);
     renderJs(antialias);
 }
 
@@ -865,6 +915,7 @@ void move(int z, int x)
     if (!((x == -1 && newLocation % meret == 255) || (x == 1 && newLocation % meret == 0) || (newLocation < 0) || (newLocation >= meret * meret)))
     {
         cameraLocation += z * meret + x;
+        normLog(normals[cameraLocation * 3], normals[cameraLocation * 3 + 1], normals[cameraLocation * 3 + 2]);
         renderJs(antialias);
     }
 }
@@ -999,10 +1050,8 @@ EMSCRIPTEN_BINDINGS(my_module)
     emscripten::function("getXForog", &getXForog);
     emscripten::function("getYForog", &getYForog);
     emscripten::function("setAntialias", &setAntialias);
-    emscripten::function("newMap", &newMap);
-    emscripten::function("newHeightMult", &newHeightMult);
     emscripten::function("newCameraHeight", &newCameraHeight);
-    emscripten::function("newPerlinSameMap", &newPerlinSameMap);
+    emscripten::function("newPerlinMap", &newPerlinMap);
     emscripten::function("newLightIntensity", &newLightIntensity);
     emscripten::function("newLightDirection", &newLightDirection);
     emscripten::function("mozgas", &move);

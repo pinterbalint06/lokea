@@ -16,7 +16,7 @@ document.addEventListener("DOMContentLoaded", async function () {
     canvas.width = jsCanvasSzelesseg;
     canvas.height = jsCanvasMagassag;
     let sd = document.getElementById("seed");
-    seed = Math.floor(Math.random() * 10000) + 1;
+    let seed = Math.floor(Math.random() * 10000) + 1;
     sd.value = seed;
     sd.nextElementSibling.value = sd.value;
     Module.onRuntimeInitialized = function () {
@@ -28,7 +28,6 @@ document.addEventListener("DOMContentLoaded", async function () {
 });
 
 const meret = 256;
-let seed;
 
 function xyForgas(xszoggel, yszoggel) {
     Module.xForog(xszoggel * (Math.PI / 180));
@@ -53,17 +52,9 @@ function teszt() {
 
 function ujTerkep() {
     // 45-75ms
-    let persistence = document.getElementById("persistence");
-    let lacunarity = document.getElementById("lacunarity");
-    let oktav = document.getElementById("oktav");
     let eleje = performance.now()
-    Module.newMap(seed, parseFloat(lacunarity.value), parseFloat(persistence.value), parseInt(oktav.value));
+    UjPerlinParam();
     console.log("Új térkép idő:", performance.now() - eleje)
-}
-
-function ujMagassag() {
-    let mult = document.getElementById("multiplier");
-    Module.newHeightMult(mult.value);
 }
 
 function ujKameraMagassag() {
@@ -72,10 +63,13 @@ function ujKameraMagassag() {
 }
 
 function UjPerlinParam() {
-    let oktav = document.getElementById("oktav");
-    let lacunarity = document.getElementById("lacunarity");
+    let seed = document.getElementById("seed");
     let persistence = document.getElementById("persistence");
-    Module.newPerlinSameMap(seed, parseFloat(lacunarity.value), parseFloat(persistence.value), parseInt(oktav.value));
+    let lacunarity = document.getElementById("lacunarity");
+    let oktav = document.getElementById("oktav");
+    let frequency = document.getElementById("frequency");
+    let mult = document.getElementById("multiplier");
+    Module.newPerlinMap(parseInt(seed.value), parseFloat(frequency.value), parseFloat(lacunarity.value), parseFloat(persistence.value), parseInt(oktav.value), parseFloat(mult.value));
 }
 
 function UjFenyIntenzitas() {
