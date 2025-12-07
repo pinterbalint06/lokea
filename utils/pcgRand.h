@@ -6,7 +6,7 @@
 class pcgRand
 {
 private:
-    uint64_t state;
+    uint64_t state_;
     void LCG();
     uint32_t RR(uint32_t x, unsigned r);
 

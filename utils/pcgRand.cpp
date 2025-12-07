@@ -8,7 +8,7 @@ void pcgRand::LCG()
     // a = 6364136223846793005=7^5, multiplier
     // c = 1442695040888963407, increment
     // m = 18446744073709552000=2^64, modulus. A uint64_t maximális száma 2^64-1, ha ezen túlmegy akkor visszaáll 0-ra így ez lányegében egy % 2^64.
-    state = (6364136223846793005 * state + 1442695040888963407);
+    state_ = (6364136223846793005 * state_ + 1442695040888963407);
 }
 
 uint32_t pcgRand::RR(uint32_t x, unsigned r)
@@ -22,13 +22,13 @@ uint32_t pcgRand::RR(uint32_t x, unsigned r)
 
 pcgRand::pcgRand(uint32_t seed)
 {
-    state = seed;
+    state_ = seed;
     LCG();
 }
 
 uint32_t pcgRand::random()
 {
-    uint64_t x = state;
+    uint64_t x = state_;
     unsigned count = (unsigned)(x >> 59);
     LCG();
 
