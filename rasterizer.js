@@ -90,6 +90,16 @@ function ujTalaj() {
     Module.newGroundType(type);
 }
 
+function ujArnyalas() {
+    let type = document.querySelector('input[name="shading"]:checked').value;
+    Module.setShadingTechnique(parseInt(type));
+}
+
+function UjNormalSzamitas() {
+    let type = document.querySelector('input[name="normalCalc"]:checked').value;
+    Module.setNormalCalculationMode(parseInt(type));
+}
+
 function korRajzol(x, y) {
     let canvas = document.getElementById('canvasAngle');
     let ctx = canvas.getContext('2d');
