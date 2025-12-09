@@ -1,1 +1,1 @@
-emcc .\rasterizer.cpp .\utils\pcgRand.cpp .\core\camera.cpp -o webassembly.js -lembind -s INITIAL_MEMORY=268435456 -sALLOW_MEMORY_GROWTH -O3 -flto -msimd128 -sFILESYSTEM=0 -s ENVIRONMENT="web"
+emcc .\rasterizer.cpp .\utils\pcgRand.cpp .\core\camera.cpp .\core\mesh.cpp -o webassembly.js -lembind -s INITIAL_MEMORY=268435456 -sALLOW_MEMORY_GROWTH -O3 -flto -msimd128 -sFILESYSTEM=0 -s ENVIRONMENT="web"

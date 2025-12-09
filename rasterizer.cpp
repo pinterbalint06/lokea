@@ -2,6 +2,7 @@
 #include <emscripten/bind.h>
 #include "utils/perlin.h"
 #include "core/camera.h"
+#include "core/mesh.h"
 #include <cmath>
 #include <cstdlib>
 #include <cstdint>
@@ -19,9 +20,6 @@ int imageWidth;
 int imageHeight;
 int zBufferMeret;
 int perlinMeret = 0;
-int indexekMeret = 0;
-int pontokMeret = 0;
-int normalsSize = 0;
 int bemenetMeret;
 int projectedTrianglesMeret;
 int clippedMeret;
@@ -29,6 +27,8 @@ int imageAntiBufferLength;
 int imageBufferLength;
 // camera
 Camera mainCamera;
+// terrain mesh
+Mesh *terrain = nullptr;
 // perlin noise height multiplier
 float heightMultiplier;
 // kamera magassága a talajtól
@@ -77,8 +77,6 @@ enum NORMALCALCMODE
 };
 enum NORMALCALCMODE currNormalCalcMode = NORMALCALCMODE::FINITEDIFFERENCE;
 
-float *pontok = NULL;
-int32_t *indexek = NULL;
 float *perlin = NULL;
 float *zBuffer;
 float *p0;
@@ -87,7 +85,6 @@ float *p2;
 float *bemenet;
 float *clipped;
 float *projectedTriangles;
-float *normals;
 int *sikok;
 float *imageAntiBuffer;
 uint8_t *imageBuffer;
@@ -116,12 +113,12 @@ void matrixSzorzas4x4(float *m1, float *m2, float *eredmeny)
 
 void calcNewLocationCamera(int index)
 {
-    mainCamera.setPosition(pontok[index * 3], pontok[index * 3 + 1] + kameraMagassag, pontok[index * 3 + 2]);
+    mainCamera.setPosition(terrain->getVertices()[index * 3], terrain->getVertices()[index * 3 + 1] + kameraMagassag, terrain->getVertices()[index * 3 + 2]);
 }
 
 void ujHely()
 {
-    cameraLocation = rand() % (pontokMeret / 3);
+    cameraLocation = rand() % (terrain->getVertexCount() / 3);
 }
 
 float linearis_interpolacio(float a1, float a2, float d)
@@ -190,7 +187,7 @@ void pontCameraMatrixMultiplication(const int &ind, float *pont)
     const float *MView = mainCamera.getViewMatrix();
     for (int i = 0; i < 4; i++)
     {
-        pont[i] = pontok[ind * 3] * MView[i] + pontok[ind * 3 + 1] * MView[4 + i] + pontok[ind * 3 + 2] * MView[8 + i] + MView[12 + i];
+        pont[i] = terrain->getVertices()[ind * 3] * MView[i] + terrain->getVertices()[ind * 3 + 1] * MView[4 + i] + terrain->getVertices()[ind * 3 + 2] * MView[8 + i] + MView[12 + i];
     }
 }
 
@@ -354,9 +351,11 @@ int renderPhong()
     upVec[1] = 1.0f;
     upVec[2] = 0.0f;
     mainCamera.updateViewMatrix();
-    for (int i = 0; i < indexekMeret; i += 3)
+    for (int i = 0; i < terrain->getIndexCount(); i += 3)
     {
-        pontokVetitese(indexek[i], indexek[i + 1], indexek[i + 2], normal);
+        int32_t *currIndices = terrain->getIndices();
+        float *currNormals = terrain->getNormals();
+        pontokVetitese(currIndices[i], currIndices[i + 1], currIndices[i + 2], normal);
         for (int j = 0; j < projectedTrianglesMeret; j += 9)
         {
             // Calculate bounding box
@@ -501,9 +500,9 @@ int renderPhong()
                                         zBuffer[bufferIndex] = zDepth;
                                         imageIndex = bufferIndex * 3;
                                         // perspective correct interpolation
-                                        normalInterpolated[0] = (lambda0 * normals[indexek[i] * 3] * z0Rec + lambda1 * normals[indexek[i + 1] * 3] * z1Rec + lambda2 * normals[indexek[i + 2] * 3] * z2Rec) * zDepth;
-                                        normalInterpolated[1] = (lambda0 * normals[indexek[i] * 3 + 1] * z0Rec + lambda1 * normals[indexek[i + 1] * 3 + 1] * z1Rec + lambda2 * normals[indexek[i + 2] * 3 + 1] * z2Rec) * zDepth;
-                                        normalInterpolated[2] = (lambda0 * normals[indexek[i] * 3 + 2] * z0Rec + lambda1 * normals[indexek[i + 1] * 3 + 2] * z1Rec + lambda2 * normals[indexek[i + 2] * 3 + 2] * z2Rec) * zDepth;
+                                        normalInterpolated[0] = (lambda0 * currNormals[currIndices[i] * 3] * z0Rec + lambda1 * currNormals[currIndices[i + 1] * 3] * z1Rec + lambda2 * currNormals[currIndices[i + 2] * 3] * z2Rec) * zDepth;
+                                        normalInterpolated[1] = (lambda0 * currNormals[currIndices[i] * 3 + 1] * z0Rec + lambda1 * currNormals[currIndices[i + 1] * 3 + 1] * z1Rec + lambda2 * currNormals[currIndices[i + 2] * 3 + 1] * z2Rec) * zDepth;
+                                        normalInterpolated[2] = (lambda0 * currNormals[currIndices[i] * 3 + 2] * z0Rec + lambda1 * currNormals[currIndices[i + 1] * 3 + 2] * z1Rec + lambda2 * currNormals[currIndices[i + 2] * 3 + 2] * z2Rec) * zDepth;
                                         float normalLengthInv = 1.0f / std::sqrt(normalInterpolated[0] * normalInterpolated[0] + normalInterpolated[1] * normalInterpolated[1] + normalInterpolated[2] * normalInterpolated[2]);
                                         normalInterpolated[0] *= normalLengthInv;
                                         normalInterpolated[1] *= normalLengthInv;
@@ -631,9 +630,11 @@ int renderGouraud()
     upVec[1] = 1.0f;
     upVec[2] = 0.0f;
     mainCamera.updateViewMatrix();
-    for (int i = 0; i < indexekMeret; i += 3)
+    for (int i = 0; i < terrain->getIndexCount(); i += 3)
     {
-        pontokVetitese(indexek[i], indexek[i + 1], indexek[i + 2], normal);
+        int32_t *currIndices = terrain->getIndices();
+        float *currNormals = terrain->getNormals();
+        pontokVetitese(currIndices[i], currIndices[i + 1], currIndices[i + 2], normal);
         for (int j = 0; j < projectedTrianglesMeret; j += 9)
         {
             // Calculate bounding box
@@ -747,11 +748,11 @@ int renderGouraud()
                 float lambda1 = (float)w1 * invTriArea;
                 float lambda2 = (float)w2 * invTriArea;
 
-                float dotProd = std::max(0.0f, dotProduct3D(&normals[indexek[i] * 3], lightVec));
+                float dotProd = std::max(0.0f, dotProduct3D(&currNormals[currIndices[i] * 3], lightVec));
                 float lightCoefficentTriangle0 = lightCoefficient * dotProd;
-                dotProd = std::max(0.0f, dotProduct3D(&normals[indexek[i + 1] * 3], lightVec));
+                dotProd = std::max(0.0f, dotProduct3D(&currNormals[currIndices[i + 1] * 3], lightVec));
                 float lightCoefficentTriangle1 = lightCoefficient * dotProd;
-                dotProd = std::max(0.0f, dotProduct3D(&normals[indexek[i + 2] * 3], lightVec));
+                dotProd = std::max(0.0f, dotProduct3D(&currNormals[currIndices[i + 2] * 3], lightVec));
                 float lightCoefficentTriangle2 = lightCoefficient * dotProd;
                 // float slopeness = normalInterpolated[1];
 
@@ -919,9 +920,10 @@ int renderFlat()
     upVec[1] = 1.0f;
     upVec[2] = 0.0f;
     mainCamera.updateViewMatrix();
-    for (int i = 0; i < indexekMeret; i += 3)
+    for (int i = 0; i < terrain->getIndexCount(); i += 3)
     {
-        pontokVetitese(indexek[i], indexek[i + 1], indexek[i + 2], normal);
+        int32_t *currIndices = terrain->getIndices();
+        pontokVetitese(currIndices[i], currIndices[i + 1], currIndices[i + 2], normal);
         for (int j = 0; j < projectedTrianglesMeret; j += 9)
         {
             // Calculate bounding box
@@ -1195,24 +1197,6 @@ void meretBeallit(int meretKert)
     meret = meretKert;
 }
 
-int allocatePontok(int szamokSzama)
-{
-    // ha létezik felszabadítjuk
-    if (pontok)
-    {
-        free(pontok);
-    }
-
-    // Memória lefoglalása a listának
-    pontok = (float *)malloc(szamokSzama * sizeof(float));
-    if (pontok)
-    {
-        pontokMeret = szamokSzama;
-        return (int)pontok;
-    }
-    return 0;
-}
-
 void setAntialias(int anti)
 {
     antialias = anti;
@@ -1228,24 +1212,6 @@ void setAntialias(int anti)
     }
     zBufferMeret = imageWidth * imageHeight * antialias;
     zBuffer = (float *)malloc(zBufferMeret * sizeof(float));
-}
-
-int allocateIndexek(int indexekSzam)
-{
-    // ha létezik felszabadítjuk
-    if (indexek)
-    {
-        free(indexek);
-    }
-
-    // Memória lefoglalása a listának
-    indexek = (int32_t *)malloc(indexekSzam * sizeof(int32_t));
-    if (indexek)
-    {
-        indexekMeret = 0;
-        return (int)indexek;
-    }
-    return 0;
 }
 
 int allocatePerlin(int perlinek)
@@ -1266,57 +1232,34 @@ int allocatePerlin(int perlinek)
     return 0;
 }
 
-int allocateNormals(int sizeNorm)
-{
-    // ha létezik felszabadítjuk
-    if (normals)
-    {
-        free(normals);
-    }
-
-    // Memória lefoglalása a listának
-    normals = (float *)calloc(sizeNorm, sizeof(float));
-    if (normals)
-    {
-        normalsSize = sizeNorm;
-        return (int)normals;
-    }
-    return 0;
-}
-
-void pontokKiszamolasa()
+void generateTerrain(float *perlin, Mesh *terrain)
 {
     int i;
     for (int y = 0; y < meret; y++)
     {
         for (int x = 0; x < meret; x++)
         {
-            i = (y * meret + x);
-            pontok[i * 3] = x;
-            pontok[i * 3 + 1] = perlin[i];
-            pontok[i * 3 + 2] = -y;
+            i = y * meret + x;
+            terrain->getVertices()[i * 3] = x;
+            terrain->getVertices()[i * 3 + 1] = perlin[i];
+            terrain->getVertices()[i * 3 + 2] = -y;
         }
     }
-}
-
-void osszekotesekKiszamolasa()
-{
-    int i;
+    // calculate indices
     for (int y = 0; y < meret - 1; y++)
     {
         for (int x = 0; x < meret - 1; x++)
         {
             i = y * meret + x;
-            // A három indexnek a pontjait (pontok[index] pontot ad meg) összekötjük háromszögekre
-            // A négyzet
-            indexek[indexekMeret++] = i + 1;     // jobb felső pontja
-            indexek[indexekMeret++] = i + meret; // bal alsó pontja
-            indexek[indexekMeret++] = i;         // bal felső pontja
 
-            indexek[indexekMeret++] = i + 1;         // jobb felső pontja
-            indexek[indexekMeret++] = i + meret + 1; // jobb alsó pontja
-            indexek[indexekMeret++] = i + meret;     // bal alsó pontja
-            // a négyzetet felosztottuk két háromszögre
+            // We form two triangles from a rectangle in the perlin grid
+            terrain->getIndices()[i * 6] = i + 1;         // top-right vertex
+            terrain->getIndices()[i * 6 + 1] = i + meret; // bottom-left vertex
+            terrain->getIndices()[i * 6 + 2] = i;         // top-left vertex
+
+            terrain->getIndices()[i * 6 + 3] = i + 1;         // top-right vertex
+            terrain->getIndices()[i * 6 + 4] = i + meret + 1; // bottom-right vertex
+            terrain->getIndices()[i * 6 + 5] = i + meret;     // bottom-left vertex
         }
     }
 }
@@ -1333,24 +1276,25 @@ void newPerlinMap(int seed, float frequency, float lacunarity, float persistence
     ::persistence = persistence;
     ::octaves = octaves;
     ::heightMultiplier = heightMultiplier;
+    if (terrain != nullptr)
+    {
+        delete terrain;
+    }
+    terrain = new Mesh(meret * meret * 3, (meret - 1) * (meret - 1) * 6);
     allocatePerlin(meret * meret);
-    allocateNormals(meret * meret * 3);
     switch (currNormalCalcMode)
     {
     case (NORMALCALCMODE::ANALYTICAL):
-        generatePerlinNoiseAnalytical(perlin, normals, frequency, meret, seed, 2, octaves, lacunarity, persistence, 0.0f, heightMultiplier);
+        generatePerlinNoiseAnalytical(perlin, terrain->getNormals(), frequency, meret, seed, 2, octaves, lacunarity, persistence, 0.0f, heightMultiplier);
         break;
     case (NORMALCALCMODE::FINITEDIFFERENCE):
-        generatePerlinNoiseFiniteDifference(perlin, normals, frequency, meret, seed, 2, octaves, lacunarity, persistence, 0.0f, heightMultiplier);
+        generatePerlinNoiseFiniteDifference(perlin, terrain->getNormals(), frequency, meret, seed, 2, octaves, lacunarity, persistence, 0.0f, heightMultiplier);
         break;
     default:
-        generatePerlinNoiseAnalytical(perlin, normals, frequency, meret, seed, 2, octaves, lacunarity, persistence, 0.0f, heightMultiplier);
+        generatePerlinNoiseAnalytical(perlin, terrain->getNormals(), frequency, meret, seed, 2, octaves, lacunarity, persistence, 0.0f, heightMultiplier);
         break;
     }
-    allocatePontok(meret * meret * 3);
-    pontokKiszamolasa();
-    allocateIndexek((meret - 1) * (meret - 1) * 6);
-    osszekotesekKiszamolasa();
+    generateTerrain(perlin, terrain);
     renderJs(antialias);
 }
 
@@ -1540,10 +1484,6 @@ EMSCRIPTEN_BINDINGS(my_module)
 {
     emscripten::function("init", &init);
     emscripten::function("allocatePerlin", &allocatePerlin);
-    emscripten::function("osszekotesekKiszamolasa", &osszekotesekKiszamolasa);
-    emscripten::function("allocatePontok", &allocatePontok);
-    emscripten::function("allocateIndexek", &allocateIndexek);
-    emscripten::function("pontokKiszamolasa", &pontokKiszamolasa);
     emscripten::function("render", &render);
     emscripten::function("imageBufferSize", &imageBufferSize);
     emscripten::function("ujHely", &ujHely);
