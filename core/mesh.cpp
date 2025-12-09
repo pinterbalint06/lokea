@@ -6,9 +6,9 @@ Mesh::Mesh(int vertexCount, int indexCount)
     vertexCount_ = vertexCount;
     indexCount_ = indexCount;
     normalCount_ = vertexCount_;
-    vertices_ = (float *)malloc(vertexCount_ * sizeof(float));
+    vertices_ = (float *)malloc(vertexCount_ * 3 * sizeof(float));
     indices_ = (int32_t *)malloc(indexCount_ * sizeof(int32_t));
-    normals_ = (float *)malloc(normalCount_ * sizeof(float));
+    normals_ = (float *)malloc(normalCount_ * 3 * sizeof(float));
 }
 
 Mesh::~Mesh()

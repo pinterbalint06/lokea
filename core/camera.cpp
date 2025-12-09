@@ -1,11 +1,12 @@
 #include "camera.h"
+#include "../utils/mathUtils.h"
 
 Camera::Camera()
 {
     viewMatrix_ = (float *)malloc(16 * sizeof(float));
     projMatrix_ = (float *)malloc(16 * sizeof(float));
-    setIdentity(viewMatrix_);
-    setIdentity(projMatrix_);
+    MathUtils::setIdentity(viewMatrix_);
+    MathUtils::setIdentity(projMatrix_);
     x_ = 0;
     y_ = 0;
     z_ = 0;
@@ -24,15 +25,6 @@ Camera::~Camera()
     {
         free(projMatrix_);
     }
-}
-
-void Camera::setIdentity(float *m)
-{
-    memset(m, 0, 16 * sizeof(float));
-    m[0] = 1.0f;
-    m[5] = 1.0f;
-    m[10] = 1.0f;
-    m[15] = 1.0f;
 }
 
 void Camera::setPosition(float x, float y, float z)
@@ -57,21 +49,6 @@ void Camera::rotate(float dPitch, float dYaw)
     newView_ = true;
 }
 
-void Camera::multiplyMatrix(float *m1, float *m2, float *result)
-{
-    for (int i = 0; i < 4; i++)
-    {
-        for (int j = 0; j < 4; j++)
-        {
-            result[i * 4 + j] =
-                m1[i * 4] * m2[j] +
-                m1[i * 4 + 1] * m2[4 + j] +
-                m1[i * 4 + 2] * m2[8 + j] +
-                m1[i * 4 + 3] * m2[12 + j];
-        }
-    }
-}
-
 void Camera::updateViewMatrix()
 {
     if (newView_)
@@ -93,7 +70,7 @@ void Camera::updateViewMatrix()
             [sin, 0,  cos,  0]
             [0,   0,  0,    1]
         */
-        setIdentity(yRotMatr);
+        MathUtils::setIdentity(yRotMatr);
         yRotMatr[0] = cosY;
         yRotMatr[2] = -sinY;
         yRotMatr[8] = sinY;
@@ -106,22 +83,22 @@ void Camera::updateViewMatrix()
             [0, -sin, cos, 0]
             [0, 0,    0,   1]
         */
-        setIdentity(xRotMatr);
+        MathUtils::setIdentity(xRotMatr);
         xRotMatr[5] = cosX;
         xRotMatr[6] = sinX;
         xRotMatr[9] = -sinX;
         xRotMatr[10] = cosX;
 
         // order: Z Y X
-        multiplyMatrix(yRotMatr, xRotMatr, rotMatr);
+        MathUtils::multiplyMatrix(yRotMatr, xRotMatr, rotMatr);
 
         // translation matrix
-        setIdentity(translation);
+        MathUtils::setIdentity(translation);
         translation[12] = -x_;
         translation[13] = -y_;
         translation[14] = -z_;
 
-        multiplyMatrix(translation, rotMatr, viewMatrix_);
+        MathUtils::multiplyMatrix(translation, rotMatr, viewMatrix_);
         newView_ = false;
     }
 }

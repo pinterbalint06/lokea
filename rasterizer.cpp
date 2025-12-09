@@ -4,12 +4,12 @@
 #include "core/camera.h"
 #include "core/mesh.h"
 #include "core/distantLight.h"
+#include "utils/mathUtils.h"
 #include <cmath>
 #include <cstdlib>
 #include <cstdint>
 #include <algorithm>
 #include <stdexcept>
-#define INV_PI 0.318309886f
 #define FIX_BITS 10
 #define FIX_ONE (1 << FIX_BITS)
 #define FIX64 (1 << (FIX_BITS * 2))
@@ -91,17 +91,6 @@ int32_t Int2Fix(int num)
     return (int32_t)((num)*FIX_ONE);
 }
 
-void matrixSzorzas4x4(float *m1, float *m2, float *eredmeny)
-{
-    for (int i = 0; i < 4; i++)
-    {
-        for (int j = 0; j < 4; j++)
-        {
-            eredmeny[i * 4 + j] = m1[i * 4] * m2[j] + m1[i * 4 + 1] * m2[4 + j] + m1[i * 4 + 2] * m2[8 + j] + m1[i * 4 + 3] * m2[12 + j];
-        }
-    }
-}
-
 void calcNewLocationCamera(int index)
 {
     mainCamera.setPosition(terrain->getVertices()[index * 3], terrain->getVertices()[index * 3 + 1] + kameraMagassag, terrain->getVertices()[index * 3 + 2]);
@@ -110,11 +99,6 @@ void calcNewLocationCamera(int index)
 void ujHely()
 {
     cameraLocation = rand() % (terrain->getVertexCount() / 3);
-}
-
-float linearis_interpolacio(float a1, float a2, float d)
-{
-    return a1 + (a2 - a1) * d;
 }
 
 void SutherlandHodgman(float *pont0, float *pont1, float *pont2)
@@ -146,10 +130,10 @@ void SutherlandHodgman(float *pont0, float *pont1, float *pont2)
                 if (elozoTavolsag < 0)
                 {
                     dTav = elozoTavolsag / (elozoTavolsag - tavolsag);
-                    clipped[clippedMeret++] = linearis_interpolacio(bemenet[elozoPontIndex], bemenet[i], dTav);
-                    clipped[clippedMeret++] = linearis_interpolacio(bemenet[elozoPontIndex + 1], bemenet[i + 1], dTav);
-                    clipped[clippedMeret++] = linearis_interpolacio(bemenet[elozoPontIndex + 2], bemenet[i + 2], dTav);
-                    clipped[clippedMeret++] = linearis_interpolacio(bemenet[elozoPontIndex + 3], bemenet[i + 3], dTav);
+                    clipped[clippedMeret++] = MathUtils::interpolation(bemenet[elozoPontIndex], bemenet[i], dTav);
+                    clipped[clippedMeret++] = MathUtils::interpolation(bemenet[elozoPontIndex + 1], bemenet[i + 1], dTav);
+                    clipped[clippedMeret++] = MathUtils::interpolation(bemenet[elozoPontIndex + 2], bemenet[i + 2], dTav);
+                    clipped[clippedMeret++] = MathUtils::interpolation(bemenet[elozoPontIndex + 3], bemenet[i + 3], dTav);
                 }
                 clipped[clippedMeret++] = bemenet[i];
                 clipped[clippedMeret++] = bemenet[i + 1];
@@ -161,10 +145,10 @@ void SutherlandHodgman(float *pont0, float *pont1, float *pont2)
                 if (elozoTavolsag >= 0)
                 {
                     dTav = elozoTavolsag / (elozoTavolsag - tavolsag);
-                    clipped[clippedMeret++] = linearis_interpolacio(bemenet[elozoPontIndex], bemenet[i], dTav);
-                    clipped[clippedMeret++] = linearis_interpolacio(bemenet[elozoPontIndex + 1], bemenet[i + 1], dTav);
-                    clipped[clippedMeret++] = linearis_interpolacio(bemenet[elozoPontIndex + 2], bemenet[i + 2], dTav);
-                    clipped[clippedMeret++] = linearis_interpolacio(bemenet[elozoPontIndex + 3], bemenet[i + 3], dTav);
+                    clipped[clippedMeret++] = MathUtils::interpolation(bemenet[elozoPontIndex], bemenet[i], dTav);
+                    clipped[clippedMeret++] = MathUtils::interpolation(bemenet[elozoPontIndex + 1], bemenet[i + 1], dTav);
+                    clipped[clippedMeret++] = MathUtils::interpolation(bemenet[elozoPontIndex + 2], bemenet[i + 2], dTav);
+                    clipped[clippedMeret++] = MathUtils::interpolation(bemenet[elozoPontIndex + 3], bemenet[i + 3], dTav);
                 }
             }
             elozoPontIndex = i;
@@ -173,84 +157,24 @@ void SutherlandHodgman(float *pont0, float *pont1, float *pont2)
     }
 }
 
-void pontCameraMatrixMultiplication(const int &ind, float *pont)
-{
-    const float *MView = mainCamera.getViewMatrix();
-    for (int i = 0; i < 4; i++)
-    {
-        pont[i] = terrain->getVertices()[ind * 3] * MView[i] + terrain->getVertices()[ind * 3 + 1] * MView[4 + i] + terrain->getVertices()[ind * 3 + 2] * MView[8 + i] + MView[12 + i];
-    }
-}
-
-void pontPerspectiveMultiplication(float *pont)
-{
-    float tempPont[4];
-    const float *MProj = mainCamera.getProjMatrix();
-    for (int i = 0; i < 4; i++)
-    {
-        tempPont[i] = pont[0] * MProj[i] + pont[1] * MProj[4 + i] + pont[2] * MProj[8 + i] + MProj[12 + i];
-    }
-    for (int i = 0; i < 4; i++)
-    {
-        pont[i] = tempPont[i];
-    }
-}
-
-void vectorMatrixMultiplication(float *vec, float *matrix)
-{
-    float tempVec[3];
-    for (int i = 0; i < 3; i++)
-    {
-        tempVec[i] = vec[0] * matrix[i] + vec[1] * matrix[4 + i] + vec[2] * matrix[8 + i];
-    }
-    for (int i = 0; i < 3; i++)
-    {
-        vec[i] = tempVec[i];
-    }
-}
-
-void normalizeVector(float *vector)
-{
-    float vectorLengthInv = 1 / std::sqrt(vector[0] * vector[0] + vector[1] * vector[1] + vector[2] * vector[2]);
-    vector[0] *= vectorLengthInv;
-    vector[1] *= vectorLengthInv;
-    vector[2] *= vectorLengthInv;
-}
-
-void calculateNormal(float *p0, float *p1, float *p2, float *normalVector)
-{
-    float vec1[3];
-    float vec2[3];
-
-    vec1[0] = p1[0] - p0[0];
-    vec1[1] = p1[1] - p0[1];
-    vec1[2] = p1[2] - p0[2];
-
-    vec2[0] = p2[0] - p0[0];
-    vec2[1] = p2[1] - p0[1];
-    vec2[2] = p2[2] - p0[2];
-    normalVector[0] = vec1[1] * vec2[2] - vec1[2] * vec2[1];
-    normalVector[1] = vec1[2] * vec2[0] - vec1[0] * vec2[2];
-    normalVector[2] = vec1[0] * vec2[1] - vec1[1] * vec2[0];
-}
-
-float dotProduct3D(float *vec0, float *vec1)
-{
-    return vec0[0] * vec1[0] + vec0[1] * vec1[1] + vec0[2] * vec1[2];
-}
-
 void pontokVetitese(const int &i0, const int &i1, const int &i2, float *normal)
 {
-    pontCameraMatrixMultiplication(i0, p0);
-    pontCameraMatrixMultiplication(i1, p1);
-    pontCameraMatrixMultiplication(i2, p2);
-    calculateNormal(p0, p1, p2, normal);
+
+    const float *MV = mainCamera.getViewMatrix();
+    MathUtils::vert3MatrixMult(&terrain->getVertices()[i0 * 3], MV, p0);
+    MathUtils::vert3MatrixMult(&terrain->getVertices()[i1 * 3], MV, p1);
+    MathUtils::vert3MatrixMult(&terrain->getVertices()[i2 * 3], MV, p2);
+    MathUtils::calculateNormal(p0, p1, p2, normal);
     // backface culling
-    if (dotProduct3D(p0, normal) < 0.0f)
+    if (MathUtils::dotProduct3D(p0, normal) < 0.0f)
     {
-        pontPerspectiveMultiplication(p0);
-        pontPerspectiveMultiplication(p1);
-        pontPerspectiveMultiplication(p2);
+        const float *MP = mainCamera.getProjMatrix();
+        MathUtils::vert3MatrixMult(p0, MP);
+        MathUtils::vert3MatrixMult(p1, MP);
+        MathUtils::vert3MatrixMult(p2, MP);
+        // pontPerspectiveMultiplication(p0);
+        // pontPerspectiveMultiplication(p1);
+        // pontPerspectiveMultiplication(p2);
         // clip space
         SutherlandHodgman(p0, p1, p2);
         float wRec;
@@ -279,7 +203,7 @@ void pontokVetitese(const int &i0, const int &i1, const int &i2, float *normal)
         }
         if (projectedTrianglesMeret > 0)
         {
-            normalizeVector(normal);
+            MathUtils::normalizeVector(normal);
         }
     }
 }
@@ -289,14 +213,9 @@ int64_t edgeFunction(int32_t X, int32_t Y, int32_t dX, int32_t dY, int32_t x, in
     return ((int64_t)(x - X) * dY - (int64_t)(y - Y) * dX);
 }
 
-bool isSquareNumber(int n)
-{
-    return n >= 0 && std::sqrt(n) == (int)std::sqrt(n);
-}
-
 int renderPhong()
 {
-    if (!(isSquareNumber(antialias) && (1 <= antialias && antialias <= 16)))
+    if (!(MathUtils::isSquareNumber(antialias) && (1 <= antialias && antialias <= 16)))
     {
         throw "Wrong antialias. Must be square number and between 1 and 16!";
     }
@@ -500,7 +419,7 @@ int renderPhong()
                                         normalInterpolated[1] *= normalLengthInv;
                                         normalInterpolated[2] *= normalLengthInv;
 
-                                        float dotProd = std::max(0.0f, dotProduct3D(normalInterpolated, lightVec));
+                                        float dotProd = std::max(0.0f, MathUtils::dotProduct3D(normalInterpolated, lightVec));
                                         // float slopeness = normalInterpolated[1];
 
                                         // rPix = rDirt + (rGrass - rDirt) * slopeness;
@@ -574,7 +493,7 @@ int renderPhong()
 
 int renderGouraud()
 {
-    if (!(isSquareNumber(antialias) && (1 <= antialias && antialias <= 16)))
+    if (!(MathUtils::isSquareNumber(antialias) && (1 <= antialias && antialias <= 16)))
     {
         throw "Wrong antialias. Must be square number and between 1 and 16!";
     }
@@ -702,9 +621,9 @@ int renderGouraud()
             if (triArea > 0)
             {
 
-                float dotProd0 = std::max(0.0f, dotProduct3D(&currNormals[currIndices[i] * 3], lightVec));
-                float dotProd1 = std::max(0.0f, dotProduct3D(&currNormals[currIndices[i + 1] * 3], lightVec));
-                float dotProd2 = std::max(0.0f, dotProduct3D(&currNormals[currIndices[i + 2] * 3], lightVec));
+                float dotProd0 = std::max(0.0f, MathUtils::dotProduct3D(&currNormals[currIndices[i] * 3], lightVec));
+                float dotProd1 = std::max(0.0f, MathUtils::dotProduct3D(&currNormals[currIndices[i + 1] * 3], lightVec));
+                float dotProd2 = std::max(0.0f, MathUtils::dotProduct3D(&currNormals[currIndices[i + 2] * 3], lightVec));
                 // float slopeness = normalInterpolated[1];
 
                 // rPix = rDirt + (rGrass - rDirt) * slopeness;
@@ -860,7 +779,7 @@ int renderGouraud()
 
 int renderFlat()
 {
-    if (!(isSquareNumber(antialias) && (1 <= antialias && antialias <= 16)))
+    if (!(MathUtils::isSquareNumber(antialias) && (1 <= antialias && antialias <= 16)))
     {
         throw "Wrong antialias. Must be square number and between 1 and 16!";
     }
@@ -958,7 +877,7 @@ int renderFlat()
             z2Rec = 1.0f / projectedTriangles[j + 8];
 
             // precalculate the lighting
-            float dotProd = std::max(0.0f, dotProduct3D(normal, lightVec));
+            float dotProd = std::max(0.0f, MathUtils::dotProduct3D(normal, lightVec));
             float r = rGround * sun->getRedCalculated() * dotProd;
             float g = gGround * sun->getGreenCalculated() * dotProd;
             float b = bGround * sun->getBlueCalculated() * dotProd;
@@ -1229,6 +1148,7 @@ void generateTerrain(float *perlin, Mesh *terrain)
         }
     }
     // calculate indices
+    int currIndex = 0;
     for (int y = 0; y < meret - 1; y++)
     {
         for (int x = 0; x < meret - 1; x++)
@@ -1236,13 +1156,13 @@ void generateTerrain(float *perlin, Mesh *terrain)
             i = y * meret + x;
 
             // We form two triangles from a rectangle in the perlin grid
-            terrain->getIndices()[i * 6] = i + 1;         // top-right vertex
-            terrain->getIndices()[i * 6 + 1] = i + meret; // bottom-left vertex
-            terrain->getIndices()[i * 6 + 2] = i;         // top-left vertex
+            terrain->getIndices()[currIndex++] = i + 1;         // top-right vertex
+            terrain->getIndices()[currIndex++] = i + meret; // bottom-left vertex
+            terrain->getIndices()[currIndex++] = i;         // top-left vertex
 
-            terrain->getIndices()[i * 6 + 3] = i + 1;         // top-right vertex
-            terrain->getIndices()[i * 6 + 4] = i + meret + 1; // bottom-right vertex
-            terrain->getIndices()[i * 6 + 5] = i + meret;     // bottom-left vertex
+            terrain->getIndices()[currIndex++] = i + 1;         // top-right vertex
+            terrain->getIndices()[currIndex++] = i + meret + 1; // bottom-right vertex
+            terrain->getIndices()[currIndex++] = i + meret;     // bottom-left vertex
         }
     }
 }
@@ -1263,7 +1183,7 @@ void newPerlinMap(int seed, float frequency, float lacunarity, float persistence
     {
         delete terrain;
     }
-    terrain = new Mesh(meret * meret * 3, (meret - 1) * (meret - 1) * 6);
+    terrain = new Mesh(meret * meret, (meret - 1) * (meret - 1) * 6);
     allocatePerlin(meret * meret);
     switch (currNormalCalcMode)
     {
@@ -1355,16 +1275,6 @@ void move(int z, int x)
     }
 }
 
-int allocate4x4Matrix()
-{
-    float *matrix = (float *)calloc(16, sizeof(float));
-    if (matrix)
-    {
-        return (int)matrix;
-    }
-    return 0;
-}
-
 void xyForog(float dPitch, float dYaw)
 {
     mainCamera.rotate(dPitch, dYaw);
@@ -1440,11 +1350,6 @@ void init()
     rGround = 0.04943f;
     gGround = 0.28017f;
     bGround = 0.00053332f;
-}
-
-EMSCRIPTEN_BINDINGS(raw_pointers)
-{
-    emscripten::function("matrixSzorzas4x4", &matrixSzorzas4x4, emscripten::allow_raw_pointers());
 }
 
 EMSCRIPTEN_BINDINGS(my_module)

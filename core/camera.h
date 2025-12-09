@@ -22,12 +22,6 @@ private:
 
     // need to recalculate view matrix
     bool newView_;
-
-    // temporary until math header file
-    void multiplyMatrix(float* m1, float* m2, float* result);
-    // set to identity matrix
-    void setIdentity(float* m);
-
 public:
     Camera();
     ~Camera();

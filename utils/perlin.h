@@ -2,30 +2,7 @@
 #include <emscripten/emscripten.h>
 #include <cmath>
 #include <algorithm>
-
-float dotProduct(float x0, float y0, float x1, float y1)
-{
-    return x0 * x1 + y0 * y1;
-}
-
-void randVector(pcgRand *random, float *vecX, float *vecY)
-{
-    float angle = random->randomFloat() * 2 * M_PI;
-    *vecX = cosf(angle);
-    *vecY = sinf(angle);
-}
-
-float smoothingFunction(float d)
-{
-    //  6 * t^5 - 15 * t^4 + 10 * t^3 = t * t * t * (t * (t * 6 - 15) + 10);
-    // Horner's method
-    return d * d * d * (d * (d * 6 - 15) + 10);
-}
-
-float linearInterpolation(float a1, float a2, float d)
-{
-    return a1 + (a2 - a1) * smoothingFunction(d);
-}
+#include "mathUtils.h"
 
 void generatePerlinNoiseAnalytical(float *values, float *normals, float frequency, int size, uint32_t seed, float amplitude, int octaveCount, float lacunarity = 2, float persistence = 0.5, float noiseOffset = 0, float noiseSize = 1)
 {
@@ -48,7 +25,7 @@ void generatePerlinNoiseAnalytical(float *values, float *normals, float frequenc
             for (int x = 0; x < gridCount; x++)
             {
                 baseIndex = (y * gridCount + x) * 2;
-                randVector(&rnd, &vectors[baseIndex], &vectors[baseIndex + 1]);
+                MathUtils::randVector(&rnd, &vectors[baseIndex], &vectors[baseIndex + 1]);
             }
         }
         float toWorld = 1.0f / gridSize;
@@ -89,15 +66,13 @@ void generatePerlinNoiseAnalytical(float *values, float *normals, float frequenc
                 int BottomRightVectorInd = (baseBottomIndex + rightGrid) * 2;
 
                 // calculate dot products
-                float a = dotProduct(leftToPointComp, topToPointComp, vectors[TopLeftVectorInd], vectors[TopLeftVectorInd + 1]);
-                float b = dotProduct(rightToPointComp, topToPointComp, vectors[TopRightVectorInd], vectors[TopRightVectorInd + 1]);
-                float c = dotProduct(leftToPointComp, bottomToPointComp, vectors[BottomLeftVectorInd], vectors[BottomLeftVectorInd + 1]);
-                float d = dotProduct(rightToPointComp, bottomToPointComp, vectors[BottomRightVectorInd], vectors[BottomRightVectorInd + 1]);
+                float a = MathUtils::dotProduct(leftToPointComp, topToPointComp, vectors[TopLeftVectorInd], vectors[TopLeftVectorInd + 1]);
+                float b = MathUtils::dotProduct(rightToPointComp, topToPointComp, vectors[TopRightVectorInd], vectors[TopRightVectorInd + 1]);
+                float c = MathUtils::dotProduct(leftToPointComp, bottomToPointComp, vectors[BottomLeftVectorInd], vectors[BottomLeftVectorInd + 1]);
+                float d = MathUtils::dotProduct(rightToPointComp, bottomToPointComp, vectors[BottomRightVectorInd], vectors[BottomRightVectorInd + 1]);
 
-                // interpolation factors
-                //  6 * t^5 - 15 * t^4 + 10 * t^3 = t * t * t * (t * (t * 6 - 15) + 10);
-                float u = leftToPointComp * leftToPointComp * leftToPointComp * (leftToPointComp * (leftToPointComp * 6 - 15) + 10);
-                float v = topToPointComp * topToPointComp * topToPointComp * (topToPointComp * (topToPointComp * 6 - 15) + 10);
+                float u = MathUtils::smoothingFunction(leftToPointComp);
+                float v = MathUtils::smoothingFunction(topToPointComp);
                 // derivative
                 // 30 * t^4 - 60 * t^3 + 30 * t^2 = 30 * t^2 (t^2-2t+1)
                 float du = 30 * leftToPointComp * leftToPointComp * (leftToPointComp * leftToPointComp - 2 * leftToPointComp + 1);
@@ -209,7 +184,7 @@ void generatePerlinNoiseFiniteDifference(float *values, float *normals, float fr
             for (int x = 0; x < gridCount; x++)
             {
                 baseIndex = (y * gridCount + x) * 2;
-                randVector(&rnd, &vectors[baseIndex], &vectors[baseIndex + 1]);
+                MathUtils::randVector(&rnd, &vectors[baseIndex], &vectors[baseIndex + 1]);
             }
         }
         for (int y = 0; y < size; y++)
@@ -249,23 +224,21 @@ void generatePerlinNoiseFiniteDifference(float *values, float *normals, float fr
                 int BottomRightVectorInd = (baseBottomIndex + rightGrid) * 2;
 
                 // calculate dot products
-                float a = dotProduct(leftToPointComp, topToPointComp, vectors[TopLeftVectorInd], vectors[TopLeftVectorInd + 1]);
-                float b = dotProduct(rightToPointComp, topToPointComp, vectors[TopRightVectorInd], vectors[TopRightVectorInd + 1]);
-                float c = dotProduct(leftToPointComp, bottomToPointComp, vectors[BottomLeftVectorInd], vectors[BottomLeftVectorInd + 1]);
-                float d = dotProduct(rightToPointComp, bottomToPointComp, vectors[BottomRightVectorInd], vectors[BottomRightVectorInd + 1]);
+                float a = MathUtils::dotProduct(leftToPointComp, topToPointComp, vectors[TopLeftVectorInd], vectors[TopLeftVectorInd + 1]);
+                float b = MathUtils::dotProduct(rightToPointComp, topToPointComp, vectors[TopRightVectorInd], vectors[TopRightVectorInd + 1]);
+                float c = MathUtils::dotProduct(leftToPointComp, bottomToPointComp, vectors[BottomLeftVectorInd], vectors[BottomLeftVectorInd + 1]);
+                float d = MathUtils::dotProduct(rightToPointComp, bottomToPointComp, vectors[BottomRightVectorInd], vectors[BottomRightVectorInd + 1]);
 
-                // interpolation factors
-                //  6 * t^5 - 15 * t^4 + 10 * t^3 = t * t * t * (t * (t * 6 - 15) + 10);
-                float u = leftToPointComp * leftToPointComp * leftToPointComp * (leftToPointComp * (leftToPointComp * 6 - 15) + 10);
-                float v = topToPointComp * topToPointComp * topToPointComp * (topToPointComp * (topToPointComp * 6 - 15) + 10);
+                float u = MathUtils::smoothingFunction(leftToPointComp);
+                float v = MathUtils::smoothingFunction(topToPointComp);
                 // horizontal interpolations
                 // a1 + (a2 - a1) * smoothingFunction(d)
-                float inter1 = a + (b - a) * u;
-                float inter2 = c + (d - c) * u;
+                float inter1 = MathUtils::interpolation(a, b, u);
+                float inter2 = MathUtils::interpolation(c, d, u);
 
                 // vertical interpolations
                 // a1 + (a2 - a1) * smoothingFunction(d)
-                float inter3 = inter1 + (inter2 - inter1) * v;
+                float inter3 = MathUtils::interpolation(inter1, inter2, v);
                 values[y * size + x] += inter3 *
                                         currAmplitude;
             }
@@ -299,7 +272,7 @@ void generatePerlinNoiseFiniteDifference(float *values, float *normals, float fr
             float centralDifferenceX = (values[nxtIndexX] - values[prevIndexX]) / 2.0f;
             int prevIndexY = std::max(0, (y - 1)) * size + x;
             int nxtIndexY = std::min(size - 1, (y + 1)) * size + x;
-            float centralDifferenceY = (values[prevIndexY] - values[nxtIndexY]) / 2.0f;
+            float centralDifferenceY = (values[nxtIndexY] - values[prevIndexY]) / 2.0f;
 
             normals[index * 3] = -centralDifferenceX;
             normals[index * 3 + 1] = steepnesCoeff;
