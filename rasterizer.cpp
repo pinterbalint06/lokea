@@ -1,6 +1,6 @@
 #include <emscripten/emscripten.h>
 #include <emscripten/bind.h>
-#include "perlin.h"
+#include "utils/perlin.h"
 #include "core/camera.h"
 #include <cmath>
 #include <cstdlib>
@@ -27,6 +27,7 @@ int projectedTrianglesMeret;
 int clippedMeret;
 int imageAntiBufferLength;
 int imageBufferLength;
+// camera
 Camera mainCamera;
 // perlin noise height multiplier
 float heightMultiplier;
@@ -121,7 +122,6 @@ void calcNewLocationCamera(int index)
 void ujHely()
 {
     cameraLocation = rand() % (pontokMeret / 3);
-    calcNewLocationCamera(cameraLocation);
 }
 
 float linearis_interpolacio(float a1, float a2, float d)
@@ -1141,6 +1141,7 @@ int renderFlat()
 
 int render()
 {
+    calcNewLocationCamera(cameraLocation);
     switch (currShadingMode)
     {
     case (SHADINGMODE::PHONG):
@@ -1363,7 +1364,6 @@ void newLightIntensity(float intensity)
 void newCameraHeight(float height)
 {
     kameraMagassag = height;
-    calcNewLocationCamera(cameraLocation);
     renderJs(antialias);
 }
 
@@ -1439,7 +1439,6 @@ void move(int z, int x)
     if (!((x == -1 && newLocation % meret == 255) || (x == 1 && newLocation % meret == 0) || (newLocation < 0) || (newLocation >= meret * meret)))
     {
         cameraLocation += z * meret + x;
-        calcNewLocationCamera(cameraLocation);
         renderJs(antialias);
     }
 }
@@ -1530,7 +1529,6 @@ void init()
     rGround = 0.04943f;
     gGround = 0.28017f;
     bGround = 0.00053332f;
-    calcNewLocationCamera(0);
 }
 
 EMSCRIPTEN_BINDINGS(raw_pointers)

@@ -5,7 +5,7 @@ const filmMag = 25.4;
 const jsCanvasSzelesseg = 1000;
 const jsCanvasMagassag = 1000;
 // near clipping plane - kozel vagasi sik
-const n = 1;
+const n = 0.1;
 // far clipping plane - tavol vagasi sik
 const f = 1000;
 
