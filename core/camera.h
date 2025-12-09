@@ -36,10 +36,14 @@ public:
     float* getViewMatrix() const { return viewMatrix_; }
     float* getProjMatrix() const { return projMatrix_; }
 
-    // position getter
+    // position getters
     float getXPosition() { return x_; }
     float getYPosition() { return y_; }
     float getZPosition() { return z_; }
+
+    // rotation getters
+    float getYaw() const { return yaw_; }
+    float getPitch() const { return pitch_; }
 
     // position setter
     void setPosition(float x, float y, float z);
@@ -47,8 +51,6 @@ public:
     // rotation setters
     void setRotation(float pitch, float yaw);
     void rotate(float dPitch, float dYaw);
-    float getYaw() const { return yaw_; }
-    float getPitch() const { return pitch_; }
 
     // view matrix calculation
     void updateViewMatrix();

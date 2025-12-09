@@ -19,52 +19,18 @@ public:
 
     ~Mesh();
 
-    void cleanup()
-    {
-        if (vertices_)
-        {
-            free(vertices_);
-            vertices_ = nullptr;
-        }
-        if (normals_)
-        {
-            free(normals_);
-            normals_ = nullptr;
-        }
-        if (indices_)
-        {
-            free(indices_);
-            indices_ = nullptr;
-        }
-        vertexCount_ = 0;
-        indexCount_ = 0;
-    }
+    void cleanup();
 
     // getters
-    int getVertexCount() const
-    {
-        return vertexCount_;
-    }
-    
-    int getIndexCount() const
-    {
-        return indexCount_;
-    }
+    int getVertexCount() const { return vertexCount_; }
 
-    float *getVertices() const
-    {
-        return vertices_;
-    }
+    int getIndexCount() const { return indexCount_; }
 
-    int32_t *getIndices() const
-    {
-        return indices_;
-    }
+    float *getVertices() const { return vertices_; }
 
-    float *getNormals() const
-    {
-        return normals_;
-    }
+    int32_t *getIndices() const { return indices_; }
+
+    float *getNormals() const { return normals_; }
 
     Mesh(const Mesh &) = delete;
     Mesh &operator=(const Mesh &) = delete;

@@ -15,3 +15,24 @@ Mesh::~Mesh()
 {
     cleanup();
 }
+
+Mesh::cleanup()
+{
+    if (vertices_)
+    {
+        free(vertices_);
+        vertices_ = nullptr;
+    }
+    if (normals_)
+    {
+        free(normals_);
+        normals_ = nullptr;
+    }
+    if (indices_)
+    {
+        free(indices_);
+        indices_ = nullptr;
+    }
+    vertexCount_ = 0;
+    indexCount_ = 0;
+}
