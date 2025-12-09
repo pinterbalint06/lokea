@@ -16,7 +16,7 @@ Mesh::~Mesh()
     cleanup();
 }
 
-Mesh::cleanup()
+void Mesh::cleanup()
 {
     if (vertices_)
     {

@@ -3,6 +3,7 @@
 #include "utils/perlin.h"
 #include "core/camera.h"
 #include "core/mesh.h"
+#include "core/distantLight.h"
 #include <cmath>
 #include <cstdlib>
 #include <cstdint>
@@ -29,26 +30,17 @@ int imageBufferLength;
 Camera mainCamera;
 // terrain mesh
 Mesh *terrain = nullptr;
+// terrain mesh
+distantLight *sun = nullptr;
 // perlin noise height multiplier
 float heightMultiplier;
 // kamera magassága a talajtól
 float kameraMagassag;
-// light intensity
-float lightIntensity;
-// pre calculated light used to multiply the object albedo * light color. INV_PI * lightIntensity
-float lightCoefficient;
 // color of the ground
 float rGround, bGround, gGround;
 // perlin parameters
 float lacunarity, persistence, frequency;
 int octaves, seed;
-// sun color
-// 255.0 normalize -> 255.0f/255.0 = 1.0
-float rSun = 1.0f;
-// 223.0 normalize -> 223.0f/255.0 = 0.8745
-float gSun = 0.8745f;
-// 34.0 normalize -> 34.0f/255.0 = 0.13333
-float bSun = 0.13333f;
 // grass color
 // 65 -> (65/255)^2.2=0.04943 albedo
 float rGrass = 0.04943;
@@ -88,7 +80,6 @@ float *projectedTriangles;
 int *sikok;
 float *imageAntiBuffer;
 uint8_t *imageBuffer;
-float *lightDir;
 
 int32_t Float2Fix(float num)
 {
@@ -340,13 +331,14 @@ int renderPhong()
     float *normal = (float *)malloc(3 * sizeof(float));
     float *normalInterpolated = (float *)malloc(3 * sizeof(float));
     // light vector
-    float *lightVec = (float *)malloc(3 * sizeof(float));
+    float lightVec[3];
     float rPix, gPix, bPix;
+    const float *lightDir = sun->getDirection();
     lightVec[0] = -lightDir[0];
     lightVec[1] = -lightDir[1];
     lightVec[2] = -lightDir[2];
     // up vector
-    float *upVec = (float *)malloc(3 * sizeof(float));
+    float upVec[3];
     upVec[0] = 0.0f;
     upVec[1] = 1.0f;
     upVec[2] = 0.0f;
@@ -509,16 +501,15 @@ int renderPhong()
                                         normalInterpolated[2] *= normalLengthInv;
 
                                         float dotProd = std::max(0.0f, dotProduct3D(normalInterpolated, lightVec));
-                                        float lightCoefficentTriangle = lightCoefficient * dotProd;
                                         // float slopeness = normalInterpolated[1];
 
                                         // rPix = rDirt + (rGrass - rDirt) * slopeness;
                                         // gPix = gDirt + (gGrass - gDirt) * slopeness;
                                         // bPix = bDirt + (bGrass - bDirt) * slopeness;
 
-                                        imageAntiBuffer[imageIndex] = rGround * lightCoefficentTriangle;
-                                        imageAntiBuffer[imageIndex + 1] = gGround * lightCoefficentTriangle;
-                                        imageAntiBuffer[imageIndex + 2] = bGround * lightCoefficentTriangle;
+                                        imageAntiBuffer[imageIndex] = rGround * sun->getRedCalculated() * dotProd;
+                                        imageAntiBuffer[imageIndex + 1] = gGround * sun->getGreenCalculated() * dotProd;
+                                        imageAntiBuffer[imageIndex + 2] = bGround * sun->getBlueCalculated() * dotProd;
                                     }
                                 }
                                 // step one subpixel to the right
@@ -544,10 +535,8 @@ int renderPhong()
             }
         }
     }
-    free(lightVec);
     free(normal);
     free(normalInterpolated);
-    free(upVec);
     float r, g, b;
     int altalanosIndex, imageAntiIndex, subImageIndex, imageBufferIndex;
     float antiRec = 1.0f / antialias;
@@ -619,13 +608,14 @@ int renderGouraud()
     // normal of the current triangle
     float *normal = (float *)malloc(3 * sizeof(float));
     // light vector
-    float *lightVec = (float *)malloc(3 * sizeof(float));
+    float lightVec[3];
     float rPix, gPix, bPix;
+    const float *lightDir = sun->getDirection();
     lightVec[0] = -lightDir[0];
     lightVec[1] = -lightDir[1];
     lightVec[2] = -lightDir[2];
     // up vector
-    float *upVec = (float *)malloc(3 * sizeof(float));
+    float upVec[3];
     upVec[0] = 0.0f;
     upVec[1] = 1.0f;
     upVec[2] = 0.0f;
@@ -711,6 +701,26 @@ int renderGouraud()
             // if triangle's are is 0 or smaller it is not a real triangle
             if (triArea > 0)
             {
+
+                float dotProd0 = std::max(0.0f, dotProduct3D(&currNormals[currIndices[i] * 3], lightVec));
+                float dotProd1 = std::max(0.0f, dotProduct3D(&currNormals[currIndices[i + 1] * 3], lightVec));
+                float dotProd2 = std::max(0.0f, dotProduct3D(&currNormals[currIndices[i + 2] * 3], lightVec));
+                // float slopeness = normalInterpolated[1];
+
+                // rPix = rDirt + (rGrass - rDirt) * slopeness;
+                // gPix = gDirt + (gGrass - gDirt) * slopeness;
+                // bPix = bDirt + (bGrass - bDirt) * slopeness;
+                float r0 = rGround * sun->getRedCalculated() * dotProd0;
+                float g0 = gGround * sun->getGreenCalculated() * dotProd0;
+                float b0 = bGround * sun->getBlueCalculated() * dotProd0;
+
+                float r1 = rGround * sun->getRedCalculated() * dotProd1;
+                float g1 = gGround * sun->getGreenCalculated() * dotProd1;
+                float b1 = bGround * sun->getBlueCalculated() * dotProd1;
+
+                float r2 = rGround * sun->getRedCalculated() * dotProd2;
+                float g2 = gGround * sun->getGreenCalculated() * dotProd2;
+                float b2 = bGround * sun->getBlueCalculated() * dotProd2;
                 // precalculate inverse of triangle's area
                 invTriArea = 1.0f / (float)triArea;
 
@@ -747,29 +757,6 @@ int renderGouraud()
                 float lambda0 = (float)w0 * invTriArea;
                 float lambda1 = (float)w1 * invTriArea;
                 float lambda2 = (float)w2 * invTriArea;
-
-                float dotProd = std::max(0.0f, dotProduct3D(&currNormals[currIndices[i] * 3], lightVec));
-                float lightCoefficentTriangle0 = lightCoefficient * dotProd;
-                dotProd = std::max(0.0f, dotProduct3D(&currNormals[currIndices[i + 1] * 3], lightVec));
-                float lightCoefficentTriangle1 = lightCoefficient * dotProd;
-                dotProd = std::max(0.0f, dotProduct3D(&currNormals[currIndices[i + 2] * 3], lightVec));
-                float lightCoefficentTriangle2 = lightCoefficient * dotProd;
-                // float slopeness = normalInterpolated[1];
-
-                // rPix = rDirt + (rGrass - rDirt) * slopeness;
-                // gPix = gDirt + (gGrass - gDirt) * slopeness;
-                // bPix = bDirt + (bGrass - bDirt) * slopeness;
-                float r0 = rGround * lightCoefficentTriangle0;
-                float b0 = bGround * lightCoefficentTriangle0;
-                float g0 = gGround * lightCoefficentTriangle0;
-
-                float r1 = rGround * lightCoefficentTriangle1;
-                float b1 = bGround * lightCoefficentTriangle1;
-                float g1 = gGround * lightCoefficentTriangle1;
-
-                float r2 = rGround * lightCoefficentTriangle2;
-                float b2 = bGround * lightCoefficentTriangle2;
-                float g2 = gGround * lightCoefficentTriangle2;
 
                 for (int y = bbminy; y <= bbmaxy; y++)
                 {
@@ -835,9 +822,7 @@ int renderGouraud()
             }
         }
     }
-    free(lightVec);
     free(normal);
-    free(upVec);
     float r, g, b;
     int altalanosIndex, imageAntiIndex, subImageIndex, imageBufferIndex;
     float antiRec = 1.0f / antialias;
@@ -909,13 +894,14 @@ int renderFlat()
     // normal of the current triangle
     float *normal = (float *)malloc(3 * sizeof(float));
     // light vector
-    float *lightVec = (float *)malloc(3 * sizeof(float));
+    float lightVec[3];
     float rPix, gPix, bPix;
+    const float *lightDir = sun->getDirection();
     lightVec[0] = -lightDir[0];
     lightVec[1] = -lightDir[1];
     lightVec[2] = -lightDir[2];
     // up vector
-    float *upVec = (float *)malloc(3 * sizeof(float));
+    float upVec[3];
     upVec[0] = 0.0f;
     upVec[1] = 1.0f;
     upVec[2] = 0.0f;
@@ -973,10 +959,9 @@ int renderFlat()
 
             // precalculate the lighting
             float dotProd = std::max(0.0f, dotProduct3D(normal, lightVec));
-            float lightCoefficentTriangle = lightCoefficient * dotProd;
-            float r = rGround * lightCoefficentTriangle;
-            float g = gGround * lightCoefficentTriangle;
-            float b = bGround * lightCoefficentTriangle;
+            float r = rGround * sun->getRedCalculated() * dotProd;
+            float g = gGround * sun->getGreenCalculated() * dotProd;
+            float b = bGround * sun->getBlueCalculated() * dotProd;
 
             // calculate parameters of edge function
             dX0 = v2x - v1x;
@@ -1103,9 +1088,7 @@ int renderFlat()
             }
         }
     }
-    free(lightVec);
     free(normal);
-    free(upVec);
     float r, g, b;
     int altalanosIndex, imageAntiIndex, subImageIndex, imageBufferIndex;
     float antiRec = 1.0f / antialias;
@@ -1300,8 +1283,7 @@ void newPerlinMap(int seed, float frequency, float lacunarity, float persistence
 
 void newLightIntensity(float intensity)
 {
-    lightIntensity = intensity;
-    lightCoefficient = INV_PI * lightIntensity;
+    sun->setIntensity(intensity);
     renderJs(antialias);
 }
 
@@ -1313,8 +1295,7 @@ void newCameraHeight(float height)
 
 void newLightDirection(float x, float y)
 {
-    lightDir[0] = x;
-    lightDir[1] = y;
+    sun->setDirection(x, y, 0.0f);
     renderJs(antialias);
 }
 
@@ -1325,41 +1306,28 @@ void newGroundType(int type)
     // 65 -> (65/255)^2.2=0.04943 albedo
     // 152 -> (152/255)^2.2=0.32038 albedo
     // 10 -> (10/255)^2.2=0.000804 albedo
-    // sun color
-    // 255.0 normalize -> 255.0f/255.0 = 1.0
-    // 223.0 normalize -> 223.0f/255.0 = 0.8745
-    // 34.0 normalize -> 34.0f/255.0 = 0.13333
-    // final product
-    // 0.04943 * 1.0 = 0.04943
-    // 0.32038 * 0.8745 = 0.28017
-    // 0.000804 * 0.13333 = 0.00053332
 
     // dirt color
     // 155 -> (155/255)^2.2=0.33445
     // 118 -> (118/255)^2.2=0.1835489
     // 83  -> (83/255)^2.2=0.08464
-    // precalculated with sun color
-    // final product
-    // 0.33445 * 1.0 = 0.33445
-    // 0.1835489 * 0.8745 = 0.160513
-    // 0.08464 * 0.13333 = 0.011285
 
     switch (type)
     {
     case 0:
         rGround = 0.04943f;
-        gGround = 0.28017f;
-        bGround = 0.00053332f;
+        gGround = 0.32038f;
+        bGround = 0.000804f;
         break;
     case 1:
         rGround = 0.33445f;
-        gGround = 0.160513f;
-        bGround = 0.011285f;
+        gGround = 0.1835489f;
+        bGround = 0.08464f;
         break;
     default:
         rGround = 0.04943f;
-        gGround = 0.28017f;
-        bGround = 0.00053332f;
+        gGround = 0.32038f;
+        bGround = 0.000804f;
         break;
     }
     renderJs(antialias);
@@ -1463,12 +1431,11 @@ void init()
     antialias = 1;
     kameraMagassag = 3.8;
     heightMultiplier = 150.0f;
-    lightDir = (float *)malloc(3 * sizeof(float));
-    lightDir[0] = 0;
-    lightDir[1] = -1;
-    lightDir[2] = 0;
-    lightIntensity = 1800.0f;
-    lightCoefficient = INV_PI * lightIntensity;
+    // sun color
+    // red: 255.0 normalize -> 255.0f/255.0 = 1.0
+    // green: 223.0 normalize -> 223.0f/255.0 = 0.8745
+    // blue: 34.0 normalize -> 34.0f/255.0 = 0.13333
+    sun = new distantLight(1.0f, 0.8745f, 0.13333f, 1800.0f, 0, -1, 0);
     projectedTriangles = (float *)calloc(100, sizeof(float));
     rGround = 0.04943f;
     gGround = 0.28017f;
