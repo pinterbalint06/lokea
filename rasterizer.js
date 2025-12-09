@@ -30,8 +30,7 @@ document.addEventListener("DOMContentLoaded", async function () {
 const meret = 256;
 
 function xyForgas(xszoggel, yszoggel) {
-    Module.xForog(xszoggel * (Math.PI / 180));
-    Module.yForog(yszoggel * (Math.PI / 180));
+    Module.xyForog(xszoggel * (Math.PI / 180), yszoggel * (Math.PI / 180));
     rendereles();
 }
 
@@ -128,8 +127,7 @@ function ujhely() {
 }
 
 function irany(x, y) {
-    Module.setXForog(x * (Math.PI / 180));
-    Module.setYForog(y * (Math.PI / 180));
+    Module.setRotate(x * (Math.PI / 180), y * (Math.PI / 180));
     rendereles();
 }
 

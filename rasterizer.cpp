@@ -1,6 +1,7 @@
 #include <emscripten/emscripten.h>
 #include <emscripten/bind.h>
 #include "perlin.h"
+#include "core/camera.h"
 #include <cmath>
 #include <cstdlib>
 #include <cstdint>
@@ -11,7 +12,6 @@
 #define FIX_ONE (1 << FIX_BITS)
 #define FIX64 (1 << (FIX_BITS * 2))
 
-int t, b, r, l;
 int meret;
 int cameraLocation;
 int antialias;
@@ -27,8 +27,7 @@ int projectedTrianglesMeret;
 int clippedMeret;
 int imageAntiBufferLength;
 int imageBufferLength;
-float yforgas;
-float xforgas;
+Camera mainCamera;
 // perlin noise height multiplier
 float heightMultiplier;
 // kamera magassága a talajtól
@@ -77,10 +76,6 @@ enum NORMALCALCMODE
 };
 enum NORMALCALCMODE currNormalCalcMode = NORMALCALCMODE::FINITEDIFFERENCE;
 
-// Perspective Projection Matrix
-float *P;
-// Camera Matrix
-float *MCamera;
 float *pontok = NULL;
 int32_t *indexek = NULL;
 float *perlin = NULL;
@@ -120,9 +115,7 @@ void matrixSzorzas4x4(float *m1, float *m2, float *eredmeny)
 
 void calcNewLocationCamera(int index)
 {
-    MCamera[12] = -pontok[index * 3];
-    MCamera[13] = -pontok[index * 3 + 1] - kameraMagassag;
-    MCamera[14] = -pontok[index * 3 + 2];
+    mainCamera.setPosition(pontok[index * 3], pontok[index * 3 + 1] + kameraMagassag, pontok[index * 3 + 2]);
 }
 
 void ujHely()
@@ -194,18 +187,20 @@ void SutherlandHodgman(float *pont0, float *pont1, float *pont2)
 
 void pontCameraMatrixMultiplication(const int &ind, float *pont)
 {
+    const float *MView = mainCamera.getViewMatrix();
     for (int i = 0; i < 4; i++)
     {
-        pont[i] = pontok[ind * 3] * MCamera[i] + pontok[ind * 3 + 1] * MCamera[4 + i] + pontok[ind * 3 + 2] * MCamera[8 + i] + MCamera[12 + i];
+        pont[i] = pontok[ind * 3] * MView[i] + pontok[ind * 3 + 1] * MView[4 + i] + pontok[ind * 3 + 2] * MView[8 + i] + MView[12 + i];
     }
 }
 
 void pontPerspectiveMultiplication(float *pont)
 {
     float tempPont[4];
+    const float *MProj = mainCamera.getProjMatrix();
     for (int i = 0; i < 4; i++)
     {
-        tempPont[i] = pont[0] * P[i] + pont[1] * P[4 + i] + pont[2] * P[8 + i] + P[12 + i];
+        tempPont[i] = pont[0] * MProj[i] + pont[1] * MProj[4 + i] + pont[2] * MProj[8 + i] + MProj[12 + i];
     }
     for (int i = 0; i < 4; i++)
     {
@@ -306,62 +301,6 @@ int64_t edgeFunction(int32_t X, int32_t Y, int32_t dX, int32_t dY, int32_t x, in
     return ((int64_t)(x - X) * dY - (int64_t)(y - Y) * dX);
 }
 
-void calcCameraMatrix()
-{
-    /*
-    Y forgás mátrix:
-        [cos, 0,  -sin, 0]
-        [0,   1,  0,    0]
-        [sin, 0,  cos,  0]
-        [0,   0,  0,    1]
-    */
-    float *yForgasMatrix = (float *)calloc(16, sizeof(float));
-    float sine = sinf(yforgas);
-    float cosine = cosf(yforgas);
-    yForgasMatrix[0] = cosine;
-    yForgasMatrix[2] = -sine;
-    yForgasMatrix[5] = 1;
-    yForgasMatrix[8] = sine;
-    yForgasMatrix[10] = cosine;
-    yForgasMatrix[15] = 1;
-    /*
-    X forgás mátrix:
-        [1, 0,    0,   0]
-        [0, cos,  sin, 0]
-        [0, -sin, cos, 0]
-        [0, 0,    0,   1]
-    */
-    float *xForgasMatrix = (float *)calloc(16, sizeof(float));
-    sine = sinf(xforgas);
-    cosine = cosf(xforgas);
-    xForgasMatrix[0] = 1;
-    xForgasMatrix[5] = cosine;
-    xForgasMatrix[6] = sine;
-    xForgasMatrix[9] = -sine;
-    xForgasMatrix[10] = cosine;
-    xForgasMatrix[15] = 1;
-    float *forgasMatrix = (float *)calloc(16, sizeof(float));
-    // Z Y X sorrendben
-    matrixSzorzas4x4(yForgasMatrix, xForgasMatrix, forgasMatrix);
-    free(yForgasMatrix);
-    free(xForgasMatrix);
-
-    float *temp = (float *)calloc(16, sizeof(float));
-    // egységmátrix
-    temp[0] = 1;
-    temp[5] = 1;
-    temp[10] = 1;
-    temp[15] = 1;
-
-    // kamera helye
-    temp[12] = -pontok[cameraLocation * 3];
-    temp[13] = -pontok[cameraLocation * 3 + 1] - kameraMagassag;
-    temp[14] = -pontok[cameraLocation * 3 + 2];
-    matrixSzorzas4x4(temp, forgasMatrix, MCamera);
-    free(forgasMatrix);
-    free(temp);
-}
-
 bool isSquareNumber(int n)
 {
     return n >= 0 && std::sqrt(n) == (int)std::sqrt(n);
@@ -414,7 +353,7 @@ int renderPhong()
     upVec[0] = 0.0f;
     upVec[1] = 1.0f;
     upVec[2] = 0.0f;
-    calcCameraMatrix();
+    mainCamera.updateViewMatrix();
     for (int i = 0; i < indexekMeret; i += 3)
     {
         pontokVetitese(indexek[i], indexek[i + 1], indexek[i + 2], normal);
@@ -691,7 +630,7 @@ int renderGouraud()
     upVec[0] = 0.0f;
     upVec[1] = 1.0f;
     upVec[2] = 0.0f;
-    calcCameraMatrix();
+    mainCamera.updateViewMatrix();
     for (int i = 0; i < indexekMeret; i += 3)
     {
         pontokVetitese(indexek[i], indexek[i + 1], indexek[i + 2], normal);
@@ -979,7 +918,7 @@ int renderFlat()
     upVec[0] = 0.0f;
     upVec[1] = 1.0f;
     upVec[2] = 0.0f;
-    calcCameraMatrix();
+    mainCamera.updateViewMatrix();
     for (int i = 0; i < indexekMeret; i += 3)
     {
         pontokVetitese(indexek[i], indexek[i + 1], indexek[i + 2], normal);
@@ -1226,8 +1165,6 @@ int imageBufferSize()
 
 void setFrustum(float focal, float filmW, float filmH, int imageW, int imageH, float n, float f)
 {
-    float xKitoltes = 1.0f;
-    float yKitoltes = 1.0f;
     imageWidth = imageW;
     imageHeight = imageH;
     if (imageBuffer)
@@ -1249,26 +1186,7 @@ void setFrustum(float focal, float filmW, float filmH, int imageW, int imageH, f
     }
     zBufferMeret = imageWidth * imageHeight * antialias;
     zBuffer = (float *)malloc(zBufferMeret * sizeof(float));
-    // Ha a film képaránya más mint a kép képaránya
-    if (filmW / filmH > imageW / imageH)
-    {
-        xKitoltes = (imageW / imageH) / (filmW / filmH);
-    }
-    else
-    {
-        yKitoltes = (filmW / filmH) / (imageW / imageH);
-    }
-    t = ((filmH / 2.0f) / focal * n) * yKitoltes;
-    r = t * (filmW / filmH) * xKitoltes;
-    b = -t;
-    l = -r;
-    P[0] = 2.0f * n / (r - l);
-    P[5] = 2.0f * n / (t - b);
-    P[8] = (r + l) / (r - l);
-    P[9] = (t + b) / (t - b);
-    P[10] = f / (n - f);
-    P[11] = -1.0f;
-    P[14] = n * f / (n - f);
+    mainCamera.setPerspective(focal, filmW, filmH, imageW, imageH, n, f);
 }
 
 void meretBeallit(int meretKert)
@@ -1521,6 +1439,7 @@ void move(int z, int x)
     if (!((x == -1 && newLocation % meret == 255) || (x == 1 && newLocation % meret == 0) || (newLocation < 0) || (newLocation >= meret * meret)))
     {
         cameraLocation += z * meret + x;
+        calcNewLocationCamera(cameraLocation);
         renderJs(antialias);
     }
 }
@@ -1535,40 +1454,28 @@ int allocate4x4Matrix()
     return 0;
 }
 
-void yForog(float rad)
+void xyForog(float dPitch, float dYaw)
 {
-    yforgas += rad;
+    mainCamera.rotate(dPitch, dYaw);
 }
 
-void xForog(float rad)
+void setRotate(float pitch, float yaw)
 {
-    xforgas += rad;
-}
-
-void setYForog(float rad)
-{
-    yforgas = rad;
-}
-
-void setXForog(float rad)
-{
-    xforgas = rad;
-}
-
-float getYForog()
-{
-    return yforgas;
+    mainCamera.setRotation(pitch, yaw);
 }
 
 float getXForog()
 {
-    return xforgas;
+    return mainCamera.getPitch();
+}
+
+float getYForog()
+{
+    return mainCamera.getYaw();
 }
 
 void init()
 {
-    P = (float *)calloc(16, sizeof(float));
-    MCamera = (float *)calloc(16, sizeof(float));
     p0 = (float *)calloc(4, sizeof(float));
     p1 = (float *)calloc(4, sizeof(float));
     p2 = (float *)calloc(4, sizeof(float));
@@ -1609,13 +1516,8 @@ void init()
     // sikok[17] = 0;
     // z + x * (0) = z
     // near clipping plane
-    MCamera[0] = 1;
-    MCamera[5] = 1;
-    MCamera[10] = 1;
-    MCamera[15] = 1;
     cameraLocation = 0;
     antialias = 1;
-    yforgas = 0.0f;
     kameraMagassag = 3.8;
     heightMultiplier = 150.0f;
     lightDir = (float *)malloc(3 * sizeof(float));
@@ -1628,6 +1530,7 @@ void init()
     rGround = 0.04943f;
     gGround = 0.28017f;
     bGround = 0.00053332f;
+    calcNewLocationCamera(0);
 }
 
 EMSCRIPTEN_BINDINGS(raw_pointers)
@@ -1648,10 +1551,8 @@ EMSCRIPTEN_BINDINGS(my_module)
     emscripten::function("ujHely", &ujHely);
     emscripten::function("meretBeallit", &meretBeallit);
     emscripten::function("setFrustum", &setFrustum);
-    emscripten::function("xForog", &xForog);
-    emscripten::function("yForog", &yForog);
-    emscripten::function("setXForog", &setXForog);
-    emscripten::function("setYForog", &setYForog);
+    emscripten::function("xyForog", &xyForog);
+    emscripten::function("setRotate", &setRotate);
     emscripten::function("getXForog", &getXForog);
     emscripten::function("getYForog", &getYForog);
     emscripten::function("setAntialias", &setAntialias);

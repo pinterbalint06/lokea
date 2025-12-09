@@ -1,17 +1,61 @@
 #ifndef CAMERA_H
 #define CAMERA_H
-#include <cstdint>
 
-class Camera{
-    private:
-        float height;
-    public:
-        Camera();
-        ~Camera();
+#include <cmath>
+#include <algorithm>
+#include <cstring>
+#include <cstdlib>
 
-        void setHeight(float height) {
-            this->height = height;
-        }
+class Camera {
+private:
+    // camera matrix
+    float* viewMatrix_;
+    // perspective projection matrix
+    float* projMatrix_;
+
+    // camera postion
+    float x_, y_, z_;
+    
+    // rotation in radian
+    float yaw_;
+    float pitch_;
+
+    // need to recalculate view matrix
+    bool newView_;
+
+    // temporary until math header file
+    void multiplyMatrix(float* m1, float* m2, float* result);
+    // set to identity matrix
+    void setIdentity(float* m);
+
+public:
+    Camera();
+    ~Camera();
+
+    // getters
+    float* getViewMatrix() const { return viewMatrix_; }
+    float* getProjMatrix() const { return projMatrix_; }
+
+    // position getter
+    float getXPosition() { return x_; }
+    float getYPosition() { return y_; }
+    float getZPosition() { return z_; }
+
+    // position setter
+    void setPosition(float x, float y, float z);
+    
+    // rotation setters
+    void setRotation(float pitch, float yaw);
+    void rotate(float dPitch, float dYaw);
+    float getYaw() const { return yaw_; }
+    float getPitch() const { return pitch_; }
+
+    // view matrix calculation
+    void updateViewMatrix();
+    
+    // calculates frustum
+    void setPerspective(float focal, float filmW, float filmH, 
+                       int imageW, int imageH, float n, float f);
 };
 
 #endif
