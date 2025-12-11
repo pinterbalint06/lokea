@@ -58,7 +58,7 @@ function ujTerkep() {
 
 function ujKameraMagassag() {
     let cHeight = document.getElementById("kameraHeight");
-    Module.newCameraHeight(cHeight.value);
+    Module.newCameraHeight(parseFloat(cHeight.value));
 }
 
 function UjPerlinParam() {
@@ -73,7 +73,7 @@ function UjPerlinParam() {
 
 function UjFenyIntenzitas() {
     let intensity = document.getElementById("lightIntensity");
-    Module.newLightIntensity(intensity.value);
+    Module.newLightIntensity(parseInt(intensity.value));
 }
 
 function UjFenyIrany() {
@@ -86,7 +86,7 @@ function UjFenyIrany() {
 
 function ujTalaj() {
     let type = document.querySelector('input[name="ground"]:checked').value;
-    Module.newGroundType(type);
+    Module.newGroundType(parseInt(type));
 }
 
 function ujArnyalas() {

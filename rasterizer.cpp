@@ -6,6 +6,7 @@
 #include "core/distantLight.h"
 #include "utils/mathUtils.h"
 #include "core/shader.h"
+#include "utils/frameBuffer.h"
 #include <cmath>
 #include <cstdlib>
 #include <cstdint>
@@ -20,17 +21,12 @@ int cameraLocation;
 int antialias;
 int imageWidth;
 int imageHeight;
-int zBufferMeret;
 int perlinMeret = 0;
 int bemenetMeret;
 int projectedTrianglesMeret;
 int clippedMeret;
-int imageAntiBufferLength;
-int imageBufferLength;
 // camera
 Camera mainCamera;
-// terrain mesh
-Mesh *terrain = nullptr;
 // terrain mesh
 distantLight *sun = nullptr;
 // perlin noise height multiplier
@@ -64,8 +60,7 @@ enum SHADINGMODE
 };
 enum SHADINGMODE currShadingMode = SHADINGMODE::PHONG;
 
-float *perlin = NULL;
-float *zBuffer;
+float *perlin = nullptr;
 float *p0;
 float *p1;
 float *p2;
@@ -73,8 +68,10 @@ float *bemenet;
 float *clipped;
 float *projectedTriangles;
 int *sikok;
-float *imageAntiBuffer;
-uint8_t *imageBuffer;
+// terrain mesh
+Mesh *terrain = nullptr;
+// frame buffers
+FrameBuffer *FrameBuff = nullptr;
 
 int32_t Float2Fix(float num)
 {
@@ -215,9 +212,7 @@ int renderTemplate()
     {
         throw "Wrong antialias. Must be square number and between 1 and 16!";
     }
-    std::fill(zBuffer, zBuffer + zBufferMeret, 1.0f);
-    std::fill(imageAntiBuffer, imageAntiBuffer + imageAntiBufferLength, 0.0f);
-    std::fill(imageBuffer, imageBuffer + imageBufferLength, 0);
+    FrameBuff->clear();
     std::fill(projectedTriangles, projectedTriangles + 100, 0);
     // subpixels width and height
     int sqrAntialias = (int)sqrt(antialias);
@@ -259,6 +254,8 @@ int renderTemplate()
     upVec[2] = 0.0f;
     mainCamera.updateViewMatrix();
     StructShader shader;
+    float *zBuffer = FrameBuff->getZBuffer();
+    float *imageAntiBuffer = FrameBuff->getAntialiasImageBuffer();
     for (int i = 0; i < terrain->getIndexCount(); i += 3)
     {
         int32_t *currIndices = terrain->getIndices();
@@ -442,39 +439,8 @@ int renderTemplate()
     }
     free(normal);
     free(normalInterpolated);
-    float r, g, b;
-    int altalanosIndex, imageAntiIndex, subImageIndex, imageBufferIndex;
-    float antiRec = 1.0f / antialias;
-    for (int y = 0; y < imageHeight; y++)
-    {
-        for (int x = 0; x < imageWidth; x++)
-        {
-            altalanosIndex = (y * imageWidth + x);
-            imageAntiIndex = altalanosIndex * antialias;
-            imageBufferIndex = altalanosIndex * 4;
-            r = 0.0f;
-            g = 0.0f;
-            b = 0.0f;
-            for (int k = 0; k < antialias; k++)
-            {
-                subImageIndex = (imageAntiIndex + k) * 3;
-                r += imageAntiBuffer[subImageIndex];
-                g += imageAntiBuffer[subImageIndex + 1];
-                b += imageAntiBuffer[subImageIndex + 2];
-            }
-            imageBuffer[imageBufferIndex] = static_cast<uint8_t>(
-                std::round(
-                    std::clamp(r * antiRec, 0.0f, 255.0f)));
-            imageBuffer[imageBufferIndex + 1] = static_cast<uint8_t>(
-                std::round(
-                    std::clamp(g * antiRec, 0.0f, 255.0f)));
-            imageBuffer[imageBufferIndex + 2] = static_cast<uint8_t>(
-                std::round(
-                    std::clamp(b * antiRec, 0.0f, 255.0f)));
-            imageBuffer[imageBufferIndex + 3] = 255;
-        }
-    }
-    return (int)imageBuffer;
+    FrameBuff->calculateAntialias();
+    return (int)FrameBuff->getImageBuffer();
 }
 
 int render()
@@ -499,32 +465,14 @@ int render()
 
 int imageBufferSize()
 {
-    return imageBufferLength;
+    return imageHeight * imageWidth * 4;
 }
 
 void setFrustum(float focal, float filmW, float filmH, int imageW, int imageH, float n, float f)
 {
     imageWidth = imageW;
     imageHeight = imageH;
-    if (imageBuffer)
-    {
-        free(imageBuffer);
-    }
-    imageBufferLength = imageWidth * imageHeight * 4;
-    imageBuffer = (uint8_t *)malloc(imageBufferLength * sizeof(uint8_t *));
-
-    if (imageAntiBuffer)
-    {
-        free(imageAntiBuffer);
-    }
-    imageAntiBufferLength = imageWidth * imageHeight * antialias * 3;
-    imageAntiBuffer = (float *)malloc(imageAntiBufferLength * sizeof(float));
-    if (zBuffer)
-    {
-        free(zBuffer);
-    }
-    zBufferMeret = imageWidth * imageHeight * antialias;
-    zBuffer = (float *)malloc(zBufferMeret * sizeof(float));
+    FrameBuff = new FrameBuffer(imageWidth, imageHeight, antialias);
     mainCamera.setPerspective(focal, filmW, filmH, imageW, imageH, n, f);
 }
 
@@ -536,18 +484,7 @@ void meretBeallit(int meretKert)
 void setAntialias(int anti)
 {
     antialias = anti;
-    if (imageAntiBuffer)
-    {
-        free(imageAntiBuffer);
-    }
-    imageAntiBufferLength = imageWidth * imageHeight * antialias * 3;
-    imageAntiBuffer = (float *)malloc(imageAntiBufferLength * sizeof(float));
-    if (zBuffer)
-    {
-        free(zBuffer);
-    }
-    zBufferMeret = imageWidth * imageHeight * antialias;
-    zBuffer = (float *)malloc(zBufferMeret * sizeof(float));
+    FrameBuff->setAntialias(antialias);
 }
 
 int allocatePerlin(int perlinek)
