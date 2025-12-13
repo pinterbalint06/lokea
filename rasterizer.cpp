@@ -8,6 +8,7 @@
 #include "core/shader.h"
 #include "utils/frameBuffer.h"
 #include "utils/edgeFunction.h"
+#include "utils/clipping.h"
 #include <cmath>
 #include <cstdlib>
 #include <cstdint>
@@ -18,9 +19,7 @@ int cameraLocation;
 int antialias;
 int imageWidth;
 int imageHeight;
-int bemenetMeret;
 int projectedTrianglesMeret;
-int clippedMeret;
 // camera
 Camera mainCamera;
 // terrain mesh
@@ -54,14 +53,13 @@ enum SHADINGMODE currShadingMode = SHADINGMODE::PHONG;
 float *p0;
 float *p1;
 float *p2;
-float *bemenet;
-float *clipped;
 float *projectedTriangles;
-int *sikok;
 // terrain class
 Terrain *worldTerrain = nullptr;
 // frame buffers
 FrameBuffer *FrameBuff = nullptr;
+// clipper
+Clipper *clipper = new Clipper();
 // normal of the current triangle
 float *normal;
 
@@ -76,62 +74,6 @@ void ujHely()
     cameraLocation = rand() % (worldTerrain->getMesh()->getVertexCount() / 3);
 }
 
-void SutherlandHodgman(float *pont0, float *pont1, float *pont2)
-{
-    for (int i = 0; i < 4; i++)
-    {
-        clipped[i] = pont0[i];
-        clipped[i + 4] = pont1[i];
-        clipped[i + 8] = pont2[i];
-    }
-    clippedMeret = 12;
-    int elozoPontIndex = 8;
-    float tavolsag, elozoTavolsag, dTav;
-    int k = 0;
-    float *temp;
-    while (k < 6 && clippedMeret != 0)
-    {
-        bemenetMeret = clippedMeret;
-        temp = bemenet;
-        bemenet = clipped;
-        clipped = temp;
-        clippedMeret = 0;
-        for (int i = 0; i < bemenetMeret; i += 4)
-        {
-            tavolsag = bemenet[i + sikok[k * 3]] + bemenet[i + sikok[k * 3 + 1]] * sikok[k * 3 + 2];
-            elozoTavolsag = bemenet[elozoPontIndex + sikok[k * 3]] + bemenet[elozoPontIndex + sikok[k * 3 + 1]] * sikok[k * 3 + 2];
-            if (tavolsag >= 0)
-            {
-                if (elozoTavolsag < 0)
-                {
-                    dTav = elozoTavolsag / (elozoTavolsag - tavolsag);
-                    clipped[clippedMeret++] = MathUtils::interpolation(bemenet[elozoPontIndex], bemenet[i], dTav);
-                    clipped[clippedMeret++] = MathUtils::interpolation(bemenet[elozoPontIndex + 1], bemenet[i + 1], dTav);
-                    clipped[clippedMeret++] = MathUtils::interpolation(bemenet[elozoPontIndex + 2], bemenet[i + 2], dTav);
-                    clipped[clippedMeret++] = MathUtils::interpolation(bemenet[elozoPontIndex + 3], bemenet[i + 3], dTav);
-                }
-                clipped[clippedMeret++] = bemenet[i];
-                clipped[clippedMeret++] = bemenet[i + 1];
-                clipped[clippedMeret++] = bemenet[i + 2];
-                clipped[clippedMeret++] = bemenet[i + 3];
-            }
-            else
-            {
-                if (elozoTavolsag >= 0)
-                {
-                    dTav = elozoTavolsag / (elozoTavolsag - tavolsag);
-                    clipped[clippedMeret++] = MathUtils::interpolation(bemenet[elozoPontIndex], bemenet[i], dTav);
-                    clipped[clippedMeret++] = MathUtils::interpolation(bemenet[elozoPontIndex + 1], bemenet[i + 1], dTav);
-                    clipped[clippedMeret++] = MathUtils::interpolation(bemenet[elozoPontIndex + 2], bemenet[i + 2], dTav);
-                    clipped[clippedMeret++] = MathUtils::interpolation(bemenet[elozoPontIndex + 3], bemenet[i + 3], dTav);
-                }
-            }
-            elozoPontIndex = i;
-        }
-        k++;
-    }
-}
-
 void pontokVetitese(const int &i0, const int &i1, const int &i2, float *normal, float *vertices)
 {
 
@@ -140,43 +82,41 @@ void pontokVetitese(const int &i0, const int &i1, const int &i2, float *normal, 
     MathUtils::vert3MatrixMult(&vertices[i1 * 3], MV, p1);
     MathUtils::vert3MatrixMult(&vertices[i2 * 3], MV, p2);
     MathUtils::calculateNormal(p0, p1, p2, normal);
-    // backface culling
-    if (MathUtils::dotProduct3D(p0, normal) < 0.0f || MathUtils::dotProduct3D(p1, normal) < 0.0f || MathUtils::dotProduct3D(p2, normal) < 0.0f)
+    const float *MP = mainCamera.getProjMatrix();
+    MathUtils::vert3MatrixMult(p0, MP);
+    MathUtils::vert3MatrixMult(p1, MP);
+    MathUtils::vert3MatrixMult(p2, MP);
+    // clip space
+    clipper->clip(p0, p1, p2);
+    float *clipped = clipper->getClipped();
+    int clippedSize = clipper->getClippedSize();
+    float wRec;
+    projectedTrianglesMeret = 0;
+    // triangle fan
+    for (int i = 0; i < clippedSize / 4 - 2; i++)
     {
-        const float *MP = mainCamera.getProjMatrix();
-        MathUtils::vert3MatrixMult(p0, MP);
-        MathUtils::vert3MatrixMult(p1, MP);
-        MathUtils::vert3MatrixMult(p2, MP);
-        // clip space
-        SutherlandHodgman(p0, p1, p2);
-        float wRec;
-        projectedTrianglesMeret = 0;
-        // triangle fan
-        for (int i = 0; i < clippedMeret / 4 - 2; i++)
-        {
-            wRec = 1.0f / clipped[3];
-            projectedTriangles[projectedTrianglesMeret++] = (clipped[0] * wRec + 1) * 0.5f * (float)imageWidth;
-            projectedTriangles[projectedTrianglesMeret++] = (1 - clipped[1] * wRec) * 0.5f * (float)imageHeight;
-            projectedTriangles[projectedTrianglesMeret++] = clipped[2] * wRec;
+        wRec = 1.0f / clipped[3];
+        projectedTriangles[projectedTrianglesMeret++] = (clipped[0] * wRec + 1) * 0.5f * (float)imageWidth;
+        projectedTriangles[projectedTrianglesMeret++] = (1 - clipped[1] * wRec) * 0.5f * (float)imageHeight;
+        projectedTriangles[projectedTrianglesMeret++] = clipped[2] * wRec;
 
-            // (i + 1) * 4 = i * 4 + 4
-            int index = i * 4 + 4;
-            wRec = 1.0f / clipped[index + 3];
-            projectedTriangles[projectedTrianglesMeret++] = (clipped[index] * wRec + 1) * 0.5 * imageWidth;
-            projectedTriangles[projectedTrianglesMeret++] = (1 - clipped[index + 1] * wRec) * 0.5 * imageHeight;
-            projectedTriangles[projectedTrianglesMeret++] = clipped[index + 2] * wRec;
+        // (i + 1) * 4 = i * 4 + 4
+        int index = i * 4 + 4;
+        wRec = 1.0f / clipped[index + 3];
+        projectedTriangles[projectedTrianglesMeret++] = (clipped[index] * wRec + 1) * 0.5 * imageWidth;
+        projectedTriangles[projectedTrianglesMeret++] = (1 - clipped[index + 1] * wRec) * 0.5 * imageHeight;
+        projectedTriangles[projectedTrianglesMeret++] = clipped[index + 2] * wRec;
 
-            // (i + 2) * 4 = i * 4 + 8
-            index = i * 4 + 8;
-            wRec = 1.0f / clipped[index + 3];
-            projectedTriangles[projectedTrianglesMeret++] = (clipped[index] * wRec + 1) * 0.5 * imageWidth;
-            projectedTriangles[projectedTrianglesMeret++] = (1 - clipped[index + 1] * wRec) * 0.5 * imageHeight;
-            projectedTriangles[projectedTrianglesMeret++] = clipped[index + 2] * wRec;
-        }
-        if (projectedTrianglesMeret > 0)
-        {
-            MathUtils::normalizeVector(normal);
-        }
+        // (i + 2) * 4 = i * 4 + 8
+        index = i * 4 + 8;
+        wRec = 1.0f / clipped[index + 3];
+        projectedTriangles[projectedTrianglesMeret++] = (clipped[index] * wRec + 1) * 0.5 * imageWidth;
+        projectedTriangles[projectedTrianglesMeret++] = (1 - clipped[index + 1] * wRec) * 0.5 * imageHeight;
+        projectedTriangles[projectedTrianglesMeret++] = clipped[index + 2] * wRec;
+    }
+    if (projectedTrianglesMeret > 0)
+    {
+        MathUtils::normalizeVector(normal);
     }
 }
 
@@ -480,43 +420,6 @@ void init()
     p0 = (float *)calloc(4, sizeof(float));
     p1 = (float *)calloc(4, sizeof(float));
     p2 = (float *)calloc(4, sizeof(float));
-    clipped = (float *)calloc(36, sizeof(float));
-    bemenet = (float *)calloc(36, sizeof(float));
-    sikok = (int *)calloc(18, sizeof(int));
-    sikok[0] = 3;
-    // sikok[1] = 0;
-    sikok[2] = -1;
-    // w + x * (-1) = w - x
-    // right clipping plane
-
-    sikok[3] = 3;
-    // sikok[4] = 0;
-    sikok[5] = 1;
-    // w + x * (1) = w + x
-    // left clipping plane
-
-    sikok[6] = 3;
-    sikok[7] = 1;
-    sikok[8] = -1;
-    // w + y * (-1) = w - y
-    // top clipping plane
-
-    sikok[9] = 3;
-    sikok[10] = 1;
-    sikok[11] = 1;
-    // w + y * (1) = w + y
-    // bottom clipping plane
-
-    sikok[12] = 3;
-    sikok[13] = 2;
-    sikok[14] = -1;
-    // w + z * (-1) = w - z
-    // far clipping plane
-    sikok[15] = 2;
-    // sikok[16] = 0;
-    // sikok[17] = 0;
-    // z + x * (0) = z
-    // near clipping plane
     cameraLocation = 0;
     antialias = 1;
     kameraMagassag = 3.8;
