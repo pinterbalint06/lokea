@@ -9,6 +9,7 @@
 #include "utils/frameBuffer.h"
 #include "utils/edgeFunction.h"
 #include "utils/clipping.h"
+#include "core/scene.h"
 #include <cmath>
 #include <cstdlib>
 #include <cstdint>
@@ -20,10 +21,6 @@ int antialias;
 int imageWidth;
 int imageHeight;
 int projectedTrianglesMeret;
-// camera
-Camera mainCamera;
-// terrain mesh
-distantLight *sun = nullptr;
 // kamera magassága a talajtól
 float kameraMagassag;
 // color of the ground
@@ -54,8 +51,8 @@ float *p0;
 float *p1;
 float *p2;
 float *projectedTriangles;
-// terrain class
-Terrain *worldTerrain = nullptr;
+// scene to render
+Scene *scene = nullptr;
 // frame buffers
 FrameBuffer *FrameBuff = nullptr;
 // clipper
@@ -65,24 +62,24 @@ float *normal;
 
 void calcNewLocationCamera(int index)
 {
-    float *vertices = worldTerrain->getMesh()->getVertices();
-    mainCamera.setPosition(vertices[index * 3], vertices[index * 3 + 1] + kameraMagassag, vertices[index * 3 + 2]);
+    float *vertices = scene->getTerrain()->getMesh()->getVertices();
+    scene->getCamera()->setPosition(vertices[index * 3], vertices[index * 3 + 1] + kameraMagassag, vertices[index * 3 + 2]);
 }
 
 void ujHely()
 {
-    cameraLocation = rand() % (worldTerrain->getMesh()->getVertexCount() / 3);
+    cameraLocation = rand() % (scene->getTerrain()->getMesh()->getVertexCount() / 3);
 }
 
-void pontokVetitese(const int &i0, const int &i1, const int &i2, float *normal, float *vertices)
+void pontokVetitese(const int &i0, const int &i1, const int &i2, float *normal, float *vertices, Camera *mainCamera)
 {
 
-    const float *MV = mainCamera.getViewMatrix();
+    const float *MV = mainCamera->getViewMatrix();
     MathUtils::vert3MatrixMult(&vertices[i0 * 3], MV, p0);
     MathUtils::vert3MatrixMult(&vertices[i1 * 3], MV, p1);
     MathUtils::vert3MatrixMult(&vertices[i2 * 3], MV, p2);
     MathUtils::calculateNormal(p0, p1, p2, normal);
-    const float *MP = mainCamera.getProjMatrix();
+    const float *MP = mainCamera->getProjMatrix();
     MathUtils::vert3MatrixMult(p0, MP);
     MathUtils::vert3MatrixMult(p1, MP);
     MathUtils::vert3MatrixMult(p2, MP);
@@ -145,24 +142,27 @@ int renderTemplate()
     // indexes
     int bufferIndex, imageIndex;
     // light vector
+    Camera *mainCamera = scene->getCamera();
+    // light
+    distantLight *sun = scene->getLight();
     float lightVec[3];
     float rPix, gPix, bPix;
     const float *lightDir = sun->getDirection();
     lightVec[0] = -lightDir[0];
     lightVec[1] = -lightDir[1];
     lightVec[2] = -lightDir[2];
-    mainCamera.updateViewMatrix();
+    mainCamera->updateViewMatrix();
     StructShader shader;
     float *zBuffer = FrameBuff->getZBuffer();
     float *imageAntiBuffer = FrameBuff->getAntialiasImageBuffer();
-    Mesh *mesh = worldTerrain->getMesh();
+    Mesh *mesh = scene->getTerrain()->getMesh();
     int32_t *currIndices = mesh->getIndices();
     float *currVertices = mesh->getVertices();
     float *currNormals = mesh->getNormals();
     int indicesCount = mesh->getIndexCount();
     for (int i = 0; i < indicesCount; i += 3)
     {
-        pontokVetitese(currIndices[i], currIndices[i + 1], currIndices[i + 2], normal, currVertices);
+        pontokVetitese(currIndices[i], currIndices[i + 1], currIndices[i + 2], normal, currVertices, mainCamera);
         for (int j = 0; j < projectedTrianglesMeret; j += 9)
         {
             EdgeFunction::EdgeFunction ef;
@@ -295,12 +295,12 @@ void setFrustum(float focal, float filmW, float filmH, int imageW, int imageH, f
     imageWidth = imageW;
     imageHeight = imageH;
     FrameBuff = new FrameBuffer(imageWidth, imageHeight, antialias);
-    mainCamera.setPerspective(focal, filmW, filmH, imageW, imageH, n, f);
+    scene->getCamera()->setPerspective(focal, filmW, filmH, imageW, imageH, n, f);
 }
 
 void meretBeallit(int meretKert)
 {
-    worldTerrain = new Terrain(meretKert);
+    scene = new Scene(meretKert);
 }
 
 void setAntialias(int anti)
@@ -315,6 +315,7 @@ EM_JS(void, renderJs, (int elsimitas), {
 
 void newPerlinMap(int seed, float frequency, float lacunarity, float persistence, int octaves, float heightMultiplier)
 {
+    Terrain *worldTerrain = scene->getTerrain();
     worldTerrain->setFrequency(frequency);
     worldTerrain->setSeed(seed);
     worldTerrain->setLacunarity(lacunarity);
@@ -327,7 +328,7 @@ void newPerlinMap(int seed, float frequency, float lacunarity, float persistence
 
 void newLightIntensity(float intensity)
 {
-    sun->setIntensity(intensity);
+    scene->getLight()->setIntensity(intensity);
     renderJs(antialias);
 }
 
@@ -339,7 +340,7 @@ void newCameraHeight(float height)
 
 void newLightDirection(float x, float y)
 {
-    sun->setDirection(x, y, 0.0f);
+    scene->getLight()->setDirection(x, y, 0.0f);
     renderJs(antialias);
 }
 
@@ -385,9 +386,9 @@ void setShadingTechnique(int shading)
 
 void move(int z, int x)
 {
-    int size = worldTerrain->getSize();
+    int size = scene->getTerrain()->getSize();
     int newLocation = cameraLocation + z * size + x;
-    if (!((x == -1 && newLocation % size == 255) || (x == 1 && newLocation % size == 0) || (newLocation < 0) || (newLocation >= size * size)))
+    if (!((x == -1 && newLocation % size == size-1) || (x == 1 && newLocation % size == 0) || (newLocation < 0) || (newLocation >= size * size)))
     {
         cameraLocation += z * size + x;
         renderJs(antialias);
@@ -396,22 +397,22 @@ void move(int z, int x)
 
 void xyForog(float dPitch, float dYaw)
 {
-    mainCamera.rotate(dPitch, dYaw);
+    scene->getCamera()->rotate(dPitch, dYaw);
 }
 
 void setRotate(float pitch, float yaw)
 {
-    mainCamera.setRotation(pitch, yaw);
+    scene->getCamera()->setRotation(pitch, yaw);
 }
 
 float getXForog()
 {
-    return mainCamera.getPitch();
+    return scene->getCamera()->getPitch();
 }
 
 float getYForog()
 {
-    return mainCamera.getYaw();
+    return scene->getCamera()->getYaw();
 }
 
 void init()
@@ -423,11 +424,6 @@ void init()
     cameraLocation = 0;
     antialias = 1;
     kameraMagassag = 3.8;
-    // sun color
-    // red: 255.0 normalize -> 255.0f/255.0 = 1.0
-    // green: 223.0 normalize -> 223.0f/255.0 = 0.8745
-    // blue: 34.0 normalize -> 34.0f/255.0 = 0.13333
-    sun = new distantLight(1.0f, 0.8745f, 0.13333f, 1800.0f, 0, -1, 0);
     projectedTriangles = (float *)calloc(100, sizeof(float));
     rGround = 0.04943f;
     gGround = 0.28017f;

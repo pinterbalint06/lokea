@@ -1,7 +1,7 @@
 #ifndef PERLIN_NOISE_H
 #define PERLIN_NOISE_H
 
-#include "pcgRand.h"
+class pcgRand;
 #include <emscripten/emscripten.h>
 #include <cmath>
 #include <algorithm>

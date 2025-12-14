@@ -2,7 +2,7 @@
 #define SHADER_H
 
 #include "../utils/mathUtils.h"
-#include "distantLight.h"
+class distantLight;
 
 namespace Shaders
 {
