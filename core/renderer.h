@@ -44,7 +44,7 @@ public:
     void setAntialias(int antialias);
     void setShadingMode(Shaders::SHADINGMODE shadingMode);
 
-    void setFrustum(float focal, float filmW, float filmH, int imageW, int imageH, float n, float f);
+    void setImageDimensions(int imageW, int imageH);
     void render(const Scene *scene);
 };
 

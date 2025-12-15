@@ -81,7 +81,7 @@ void Renderer::setShadingMode(Shaders::SHADINGMODE shadingMode)
     currShadingMode_ = shadingMode;
 }
 
-void Renderer::setFrustum(float focal, float filmW, float filmH, int imageW, int imageH, float n, float f)
+void Renderer::setImageDimensions(int imageW, int imageH)
 {
     imageWidth_ = imageW;
     imageHeight_ = imageH;

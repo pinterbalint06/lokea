@@ -8,10 +8,11 @@ const jsCanvasMagassag = 1000;
 const n = 0.1;
 // far clipping plane - tavol vagasi sik
 const f = 1000;
+const canvasId = "canvas";
 
 document.addEventListener("DOMContentLoaded", async function () {
     korRajzol(0, -1);
-    let canvas = document.getElementById("canvas");
+    let canvas = document.getElementById(canvasId);
     canvas.get
     canvas.width = jsCanvasSzelesseg;
     canvas.height = jsCanvasMagassag;
@@ -20,9 +21,7 @@ document.addEventListener("DOMContentLoaded", async function () {
     sd.value = seed;
     sd.nextElementSibling.value = sd.value;
     Module.onRuntimeInitialized = function () {
-        Module.init();
-        Module.meretBeallit(meret);
-        Module.setFrustum(fokuszTavolsag, filmSzel, filmMag, jsCanvasSzelesseg, jsCanvasMagassag, n, f);
+        Module.init(meret, fokuszTavolsag, filmSzel, filmMag, jsCanvasSzelesseg, jsCanvasMagassag, n, f);
         ujTerkep();
     };
 });
@@ -31,7 +30,7 @@ const meret = 256;
 
 function xyForgas(xszoggel, yszoggel) {
     Module.xyForog(xszoggel * (Math.PI / 180), yszoggel * (Math.PI / 180));
-    rendereles();
+    drawImage(canvasId);
 }
 
 // mennyi idő lenne lerenderelni a cubemapet
@@ -40,11 +39,17 @@ function teszt() {
     let tempY = Module.getYForog() * (180 / Math.PI);
     let most = performance.now();
     irany(90, 0);
+    drawImage(canvasId);
     irany(-90, 0);
+    drawImage(canvasId);
     irany(0, 0);
+    drawImage(canvasId);
     irany(0, 180);
+    drawImage(canvasId);
     irany(0, 90);
+    drawImage(canvasId);
     irany(0, -90);
+    drawImage(canvasId);
     document.getElementById("ido").innerText = Math.round(performance.now() - most);
     irany(tempX, tempY);
 }
@@ -59,6 +64,7 @@ function ujTerkep() {
 function ujKameraMagassag() {
     let cHeight = document.getElementById("kameraHeight");
     Module.newCameraHeight(parseFloat(cHeight.value));
+    drawImage(canvasId);
 }
 
 function UjPerlinParam() {
@@ -69,11 +75,13 @@ function UjPerlinParam() {
     let frequency = document.getElementById("frequency");
     let mult = document.getElementById("multiplier");
     Module.newPerlinMap(parseInt(seed.value), parseFloat(frequency.value), parseFloat(lacunarity.value), parseFloat(persistence.value), parseInt(oktav.value), parseFloat(mult.value));
+    drawImage(canvasId);
 }
 
 function UjFenyIntenzitas() {
     let intensity = document.getElementById("lightIntensity");
     Module.newLightIntensity(parseInt(intensity.value));
+    drawImage(canvasId);
 }
 
 function UjFenyIrany() {
@@ -82,26 +90,31 @@ function UjFenyIrany() {
     let y = Math.sin(angle);
     korRajzol(x, y);
     Module.newLightDirection(x, y);
+    drawImage(canvasId);
 }
 
 function ujTalaj() {
     let type = document.querySelector('input[name="ground"]:checked').value;
     Module.newGroundType(parseInt(type));
+    drawImage(canvasId);
 }
 
 function ujArnyalas() {
     let type = document.querySelector('input[name="shading"]:checked').value;
     Module.setShadingTechnique(parseInt(type));
+    drawImage(canvasId);
 }
 
 function UjNormalSzamitas() {
     let type = document.querySelector('input[name="normalCalc"]:checked').value;
     Module.setNormalCalculationMode(parseInt(type));
+    drawImage(canvasId);
 }
 
 function ujElsmitas() {
     let elsimitas = document.getElementById("antialias");
     Module.setAntialias(parseInt(elsimitas.value));
+    drawImage(canvasId);
 }
 
 function korRajzol(x, y) {
@@ -128,12 +141,12 @@ function korRajzol(x, y) {
 
 function ujhely() {
     Module.ujHely();
-    rendereles();
+    drawImage(canvasId);
 }
 
 function irany(x, y) {
     Module.setRotate(x * (Math.PI / 180), y * (Math.PI / 180));
-    rendereles();
+    drawImage(canvasId);
 }
 
 function mozgas(iranyZ, iranyX) {
@@ -149,24 +162,19 @@ function mozgas(iranyZ, iranyX) {
     let mozgasZ = Math.round(iranyZ * eloreZ + iranyX * jobbraZ);
 
     Module.mozgas(mozgasZ, mozgasX);
+    drawImage(canvasId);
 }
 
-function render(canvasId) {
-    let imageBufferHely = Module.render();
-    let imageBufferMeret = Module.imageBufferSize();
+function drawImage(canvasId) {
+    let imageBufferHely = Module.getImageLocation();
     let clampedArray = new Uint8ClampedArray(
         wasmMemory.buffer,
         imageBufferHely,
-        imageBufferMeret
+        jsCanvasSzelesseg * jsCanvasMagassag * 4
     );
     let ctx = document.getElementById(canvasId).getContext("2d");
     ctx.clearRect(0, 0, jsCanvasSzelesseg, jsCanvasMagassag);
 
     let imgData = new ImageData(clampedArray, jsCanvasSzelesseg, jsCanvasMagassag);
     ctx.putImageData(imgData, 0, 0);
-}
-
-function rendereles() {
-    let elsimitas = parseInt(document.getElementById("antialias").value);
-    render("canvas", elsimitas);
 }
