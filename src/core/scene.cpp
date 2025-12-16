@@ -11,6 +11,7 @@ Scene::Scene(int terrainSize) {
     light_ = new distantLight(1.0f, 0.8745f, 0.13333f, 1800.0f, 0, -1, 0);
     worldTerrain_ = new Terrain(terrainSize);
     cam_ = new Camera();
+    ambientLight_ = 1.0f;
 }
 
 Scene::~Scene() {

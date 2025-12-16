@@ -152,8 +152,8 @@ void Renderer::renderTemplate(const Scene *scene)
     float camZ = mainCamera->getZPosition();
     // light
     distantLight *sun = scene->getLight();
+    float ambientLight = scene->getAmbientLight();
     float lightVec[3];
-    float rPix, gPix, bPix;
     const float *lightDir = sun->getDirection();
     lightVec[0] = -lightDir[0];
     lightVec[1] = -lightDir[1];
@@ -220,7 +220,7 @@ void Renderer::renderTemplate(const Scene *scene)
                 shader.setupTriangle(normal_, currNormals, currVertices, currIndices,
                                      i, lightVec, meshMat, sun,
                                      z0Rec, z1Rec, z2Rec,
-                                     camX, camY, camZ);
+                                     camX, camY, camZ, ambientLight);
 
                 // setup step values for inside test
                 ef.setupStepValues(bbminx, bbminy, inc_, sqrAntialiasRec_);

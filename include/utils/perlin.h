@@ -112,7 +112,7 @@ namespace PerlinNoise
             {
                 int index = y * size + x;
                 int prevIndexX = y * size + std::max(0, (x - 1));
-                int nxtIndexX = y * size + (x + 1) % size;
+                int nxtIndexX = y * size + std::min(size - 1, (x + 1));
                 float centralDifferenceX = (values[nxtIndexX] - values[prevIndexX]) / 2.0f;
                 int prevIndexY = std::max(0, (y - 1)) * size + x;
                 int nxtIndexY = std::min(size - 1, (y + 1)) * size + x;

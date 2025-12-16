@@ -10,6 +10,7 @@ class Scene
 private:
     Camera *cam_;
     distantLight *light_;
+    float ambientLight_;
     Terrain *worldTerrain_;
 
 public:
@@ -19,6 +20,7 @@ public:
     // getters
     Camera *getCamera() const { return cam_; }
     distantLight *getLight() const { return light_; }
+    float getAmbientLight() const { return ambientLight_; }
     Terrain *getTerrain() const { return worldTerrain_; }
 };
 

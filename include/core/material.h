@@ -38,8 +38,8 @@ namespace Materials
             Material returnMat;
             returnMat.albedo_ = Color::fromRGB(65, 152, 10);
             returnMat.diffuseness_ = 1.0f;
-            returnMat.specularity_ = 0.1f;
-            returnMat.shininess_ = 1.0f;
+            returnMat.specularity_ = 0.02f;
+            returnMat.shininess_ = 10.0f;
             return returnMat;
         }
 
@@ -48,8 +48,8 @@ namespace Materials
             Material returnMat;
             returnMat.albedo_ = Color::fromRGB(155, 118, 83);
             returnMat.diffuseness_ = 1.0f;
-            returnMat.specularity_ = 0.0f;
-            returnMat.shininess_ = 1.0f;
+            returnMat.specularity_ = 0.01f;
+            returnMat.shininess_ = 10.0f;
             return returnMat;
         }
     };
