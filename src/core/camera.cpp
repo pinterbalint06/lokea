@@ -105,8 +105,8 @@ void Camera::updateViewMatrix()
 
 void Camera::setPerspective(float focal, float filmW, float filmH, int imageW, int imageH, float n, float f)
 {
-    float xKitoltes = 1.0f;
-    float yKitoltes = 1.0f;
+    float xFill = 1.0f;
+    float yFill = 1.0f;
 
     // aspect ratios
     float imageAspect = (float)imageW / imageH;
@@ -115,15 +115,15 @@ void Camera::setPerspective(float focal, float filmW, float filmH, int imageW, i
     // if film aspect ratio is different from image aspect ratio
     if (filmAspect > imageAspect)
     {
-        xKitoltes = imageAspect / filmAspect;
+        xFill = imageAspect / filmAspect;
     }
     else
     {
-        yKitoltes = filmAspect / imageAspect;
+        yFill = filmAspect / imageAspect;
     }
 
-    float t = ((filmH / 2.0f) / focal * n) * yKitoltes;
-    float r = t * filmAspect * xKitoltes;
+    float t = ((filmH / 2.0f) / focal * n) * yFill;
+    float r = t * filmAspect * xFill;
     float b = -t;
     float l = -r;
 
