@@ -51,7 +51,10 @@ void FrameBuffer::clear()
 void FrameBuffer::calculateAntialias()
 {
     float r, g, b;
+    uint8_t rFinal, gFinal, bFinal;
     int altalanosIndex, imageAntiIndex, subImageIndex, imageBufferIndex;
+    /// @brief accumulate z-buffer
+    float zBufferSum;
     float antiRec = 1.0f / antialias_;
     for (int y = 0; y < height_; y++)
     {
@@ -63,23 +66,38 @@ void FrameBuffer::calculateAntialias()
             r = 0.0f;
             g = 0.0f;
             b = 0.0f;
+            zBufferSum = 0.0f;
             for (int k = 0; k < antialias_; k++)
             {
                 subImageIndex = (imageAntiIndex + k) * 3;
                 r += antialiasImgBuff_[subImageIndex];
                 g += antialiasImgBuff_[subImageIndex + 1];
                 b += antialiasImgBuff_[subImageIndex + 2];
+                zBufferSum += zBuffer_[imageAntiIndex];
             }
-            imageBuffer_[imageBufferIndex] = static_cast<uint8_t>(
-                std::round(
-                    std::clamp(r * antiRec, 0.0f, 255.0f)));
-            imageBuffer_[imageBufferIndex + 1] = static_cast<uint8_t>(
-                std::round(
-                    std::clamp(g * antiRec, 0.0f, 255.0f)));
-            imageBuffer_[imageBufferIndex + 2] = static_cast<uint8_t>(
-                std::round(
-                    std::clamp(b * antiRec, 0.0f, 255.0f)));
-            imageBuffer_[imageBufferIndex + 3] = 255;
+            // accumulated z-buffer equals to antialias
+            // that means there is no mesh at this pixel -> set it to sky color
+            if (zBufferSum == antialias_)
+            {
+
+                imageBuffer_[imageBufferIndex] = 135;
+                imageBuffer_[imageBufferIndex + 1] = 206;
+                imageBuffer_[imageBufferIndex + 2] = 235;
+                imageBuffer_[imageBufferIndex + 3] = 255;
+            }
+            else
+            {
+                imageBuffer_[imageBufferIndex] = static_cast<uint8_t>(
+                    std::round(
+                        std::clamp(r * antiRec, 0.0f, 255.0f)));
+                imageBuffer_[imageBufferIndex + 1] = static_cast<uint8_t>(
+                    std::round(
+                        std::clamp(g * antiRec, 0.0f, 255.0f)));
+                imageBuffer_[imageBufferIndex + 2] = static_cast<uint8_t>(
+                    std::round(
+                        std::clamp(b * antiRec, 0.0f, 255.0f)));
+                imageBuffer_[imageBufferIndex + 3] = 255;
+            }
         }
     }
 }
