@@ -4,6 +4,7 @@
 #include "utils/mathUtils.h"
 #include "core/distantLight.h"
 #include "core/material.h"
+#include "core/vertex.h"
 
 namespace Shaders
 {
@@ -133,23 +134,22 @@ namespace Shaders
         float r_, g_, b_;
 
         /**
-         * @brief Calculates and stores the RGB color values for the triangle.
+         * @brief Stores the values required for shading in the inner loop.
          *
-         * Calculates the color values of the triangle based on its face normal,
-         * material color, and a distant light.
          * @param faceNormal Pointer to the face normal vector.
-         * @param vertNormals Pointer to the vertex normals array (unused here but needed so the same function can be used in the rendering loop).
-         * @param indices Pointer to the triangle's vertex indices (unused here).
-         * @param i Index of the current triangle (unused here).
+         * @param vertices Pointer to the triangle's vertices. (unused here but needed so the same function can be used in the rendering loop)
+         * @param indices Pointer to the triangle's vertex indices. (unused here)
+         * @param i Index of the current triangle. (unused here)
          * @param lightVec Pointer to the light direction vector.
          * @param material The material of the triangle.
-         * @param sun Pointer to the distant light source.
-         * @param z0Rec Reciprocal of the first vertex's depth (unused here).
-         * @param z1Rec Reciprocal of the second vertex's depth (unused here).
-         * @param z2Rec Reciprocal of the third vertex's depth (unused here).
+         * @param sun Pointer to the distant light source. (unused here)
+         * @param z0Rec Reciprocal of the first vertex's depth. (unused here)
+         * @param z1Rec Reciprocal of the second vertex's depth. (unused here)
+         * @param z2Rec Reciprocal of the third vertex's depth. (unused here)
+         * @param ambientLight The ambient light of the environment. (unused here)
          */
         inline void setupTriangle(
-            float *faceNormal, float *vertNormals, float *vertices, int32_t *indices, int i,
+            float *faceNormal, Vertex *vertices, int32_t *indices, int i,
             float *lightVec, Materials::Material material, distantLight *sun,
             float z0Rec, float z1Rec, float z2Rec, float camX, float camY, float camZ, float ambientLight)
         {
@@ -200,12 +200,10 @@ namespace Shaders
         float z0Rec_, z1Rec_, z2Rec_;
 
         /**
-         * @brief Calculates and sets the RGB color values for the triangle's vertices. Stores the inverse of the z-coordinates.
+         * @brief Stores the values required for shading in the inner loop.
          *
-         * Calculates the color values for the triangle at all of its vertices based on vertex normals,
-         * material color, and a distant light.
          * @param faceNormal Pointer to the face normal vector (unused here but needed so the same function can be used in the rendering loop).
-         * @param vertNormals Pointer to the vertex normals array.
+         * @param vertices Pointer to the triangle's vertices.
          * @param indices Pointer to the triangle's vertex indices.
          * @param i Index of the current triangle.
          * @param lightVec Pointer to the light direction vector.
@@ -214,25 +212,22 @@ namespace Shaders
          * @param z0Rec Reciprocal of the first vertex's depth.
          * @param z1Rec Reciprocal of the second vertex's depth.
          * @param z2Rec Reciprocal of the third vertex's depth.
+         * @param ambientLight The ambient light of the environment.
          */
         inline void setupTriangle(
-            float *faceNormal, float *vertNormals, float *vertices, int32_t *indices, int i,
+            float *faceNormal, Vertex *vertices, int32_t *indices, int i,
             float *lightVec, Materials::Material material, distantLight *sun,
             float z0Rec, float z1Rec, float z2Rec, float camX, float camY, float camZ, float ambientLight)
         {
             float result[3];
-            float *n0 = &vertNormals[indices[i] * 3];
-            float *n1 = &vertNormals[indices[i + 1] * 3];
-            float *n2 = &vertNormals[indices[i + 2] * 3];
-
-            float *vert0 = &vertices[indices[i] * 3];
-            float *vert1 = &vertices[indices[i + 1] * 3];
-            float *vert2 = &vertices[indices[i + 2] * 3];
+            Vertex &vert0 = vertices[indices[i]];
+            Vertex &vert1 = vertices[indices[i + 1]];
+            Vertex &vert2 = vertices[indices[i + 2]];
 
             phongReflectionModel(
-                vert0[0], vert0[1], vert0[2],
+                vert0.x, vert0.y, vert0.z,
                 camX, camY, camZ,
-                n0[0], n0[1], n0[2],
+                vert0.nx, vert0.ny, vert0.nz,
                 lightVec[0], lightVec[1], lightVec[2],
                 material,
                 sun,
@@ -243,9 +238,9 @@ namespace Shaders
             b0_ = result[2];
 
             phongReflectionModel(
-                vert1[0], vert1[1], vert1[2],
+                vert1.x, vert1.y, vert1.z,
                 camX, camY, camZ,
-                n1[0], n1[1], n1[2],
+                vert1.nx, vert1.ny, vert1.nz,
                 lightVec[0], lightVec[1], lightVec[2],
                 material,
                 sun,
@@ -256,9 +251,9 @@ namespace Shaders
             b1_ = result[2];
 
             phongReflectionModel(
-                vert2[0], vert2[1], vert2[2],
+                vert2.x, vert2.y, vert2.z,
                 camX, camY, camZ,
-                n2[0], n2[1], n2[2],
+                vert2.nx, vert2.ny, vert2.nz,
                 lightVec[0], lightVec[1], lightVec[2],
                 material,
                 sun,
@@ -337,7 +332,7 @@ namespace Shaders
          * @brief Stores the values required for shading in the inner loop.
          *
          * @param faceNormal Pointer to the face normal vector (unused here but needed so the same function can be used in the rendering loop).
-         * @param vertNormals Pointer to the vertex normals array.
+         * @param vertices Pointer to the triangle's vertices.
          * @param indices Pointer to the triangle's vertex indices.
          * @param i Index of the current triangle.
          * @param lightVec Pointer to the light direction vector.
@@ -346,44 +341,41 @@ namespace Shaders
          * @param z0Rec Reciprocal of the first vertex's depth.
          * @param z1Rec Reciprocal of the second vertex's depth.
          * @param z2Rec Reciprocal of the third vertex's depth.
+         * @param ambientLight The ambient light of the environment.
          */
         inline void setupTriangle(
-            float *faceNormal, float *vertNormals, float *vertices, int32_t *indices, int i,
+            float *faceNormal, Vertex *vertices, int32_t *indices, int i,
             float *lightVec, Materials::Material material, distantLight *sun,
             float z0Rec, float z1Rec, float z2Rec, float camX, float camY, float camZ, float ambientLight)
         {
             pSun_ = sun;
-            float *n0 = &vertNormals[indices[i] * 3];
-            float *n1 = &vertNormals[indices[i + 1] * 3];
-            float *n2 = &vertNormals[indices[i + 2] * 3];
+            Vertex &vert0 = vertices[indices[i]];
+            Vertex &vert1 = vertices[indices[i + 1]];
+            Vertex &vert2 = vertices[indices[i + 2]];
 
-            n0x_ = n0[0];
-            n0y_ = n0[1];
-            n0z_ = n0[2];
+            v0x_ = vert0.x;
+            v0y_ = vert0.y;
+            v0z_ = vert0.z;
 
-            n1x_ = n1[0];
-            n1y_ = n1[1];
-            n1z_ = n1[2];
+            v1x_ = vert1.x;
+            v1y_ = vert1.y;
+            v1z_ = vert1.z;
 
-            n2x_ = n2[0];
-            n2y_ = n2[1];
-            n2z_ = n2[2];
+            v2x_ = vert2.x;
+            v2y_ = vert2.y;
+            v2z_ = vert2.z;
 
-            float *v0 = &vertices[indices[i] * 3];
-            float *v1 = &vertices[indices[i + 1] * 3];
-            float *v2 = &vertices[indices[i + 2] * 3];
+            n0x_ = vert0.nx;
+            n0y_ = vert0.ny;
+            n0z_ = vert0.nz;
 
-            v0x_ = v0[0];
-            v0y_ = v0[1];
-            v0z_ = v0[2];
+            n1x_ = vert1.nx;
+            n1y_ = vert1.ny;
+            n1z_ = vert1.nz;
 
-            v1x_ = v1[0];
-            v1y_ = v1[1];
-            v1z_ = v1[2];
-
-            v2x_ = v2[0];
-            v2y_ = v2[1];
-            v2z_ = v2[2];
+            n2x_ = vert2.nx;
+            n2y_ = vert2.ny;
+            n2z_ = vert2.nz;
 
             cx_ = camX;
             cy_ = camY;

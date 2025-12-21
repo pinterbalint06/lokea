@@ -3,6 +3,7 @@
 
 #include "core/shader.h"
 #include "utils/frameBuffer.h"
+#include "core/vertex.h"
 
 class Clipper;
 class Scene;
@@ -20,12 +21,12 @@ private:
     // half of one subpixel's width and height
     // >> 1 = / 2
     int32_t inc_;
-    float *projectedTriangles_;
+    Vertex *projectedTriangles_;
     int projectedTrianglesSize_;
     Shaders::SHADINGMODE currShadingMode_;
-    float *p0_;
-    float *p1_;
-    float *p2_;
+    Vertex p0_;
+    Vertex p1_;
+    Vertex p2_;
     float *normal_;
     Clipper *clipper_;
     FrameBuffer *frameBuffer_;
@@ -33,7 +34,7 @@ private:
     template <typename StructShader>
     void renderTemplate(const Scene *scene);
 
-    void projectAndClipTriangle(const int &i0, const int &i1, const int &i2, float *normal, float *vertices, Camera *mainCamera);
+    void projectAndClipTriangle(const int &i0, const int &i1, const int &i2, float *normal, Vertex *vertices, Camera *mainCamera);
 
 public:
     Renderer();

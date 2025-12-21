@@ -63,23 +63,6 @@ namespace MathUtils
         m[15] = 1.0f;
     }
 
-    inline void calculateNormal(const float *p0, const float *p1, const float *p2, float *normalVector)
-    {
-        float vec1[3];
-        float vec2[3];
-
-        vec1[0] = p1[0] - p0[0];
-        vec1[1] = p1[1] - p0[1];
-        vec1[2] = p1[2] - p0[2];
-
-        vec2[0] = p2[0] - p0[0];
-        vec2[1] = p2[1] - p0[1];
-        vec2[2] = p2[2] - p0[2];
-        normalVector[0] = vec1[1] * vec2[2] - vec1[2] * vec2[1];
-        normalVector[1] = vec1[2] * vec2[0] - vec1[0] * vec2[2];
-        normalVector[2] = vec1[0] * vec2[1] - vec1[1] * vec2[0];
-    }
-
     inline void normalizeVector(float *vector)
     {
         float vectorLengthInv = 1 / std::sqrt(vector[0] * vector[0] + vector[1] * vector[1] + vector[2] * vector[2]);
@@ -93,27 +76,6 @@ namespace MathUtils
         float angle = random->randomFloat() * 2 * M_PI;
         *vecX = cosf(angle);
         *vecY = sinf(angle);
-    }
-
-    inline void vert3MatrixMult(const float *vec, const float *matrix, float *result)
-    {
-        for (int i = 0; i < 4; i++)
-        {
-            result[i] = vec[0] * matrix[i] + vec[1] * matrix[4 + i] + vec[2] * matrix[8 + i] + matrix[12 + i];
-        }
-    }
-
-    inline void vert3MatrixMult(float *vec, const float *matrix)
-    {
-        float tempVertex[4];
-        for (int i = 0; i < 4; i++)
-        {
-            tempVertex[i] = vec[0] * matrix[i] + vec[1] * matrix[4 + i] + vec[2] * matrix[8 + i] + matrix[12 + i];
-        }
-        for (int i = 0; i < 4; i++)
-        {
-            vec[i] = tempVertex[i];
-        }
     }
 }
 

@@ -2,14 +2,14 @@
 #define MESH_H
 #include <emscripten/emscripten.h>
 #include "core/material.h"
+#include "core/vertex.h"
 #include <cstdint>
 
 class Mesh
 {
 private:
-    float *vertices_;
+    Vertex *vertices_;
     int32_t *indices_;
-    float *normals_;
 
     int vertexCount_;
     int indexCount_;
@@ -29,11 +29,9 @@ public:
 
     int getIndexCount() const { return indexCount_; }
 
-    float *getVertices() const { return vertices_; }
+    Vertex *getVertices() const { return vertices_; }
 
     int32_t *getIndices() const { return indices_; }
-
-    float *getNormals() const { return normals_; }
 
     Materials::Material getMaterial() const { return material_; }
 

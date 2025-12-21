@@ -9,9 +9,8 @@ class pcgRand;
 
 namespace PerlinNoise
 {
-    void generatePerlinNoise(float *values, float *normals, float frequency, int size, uint32_t seed, float amplitude, int octaveCount, float lacunarity = 2, float persistence = 0.5, float noiseOffset = 0, float noiseSize = 1)
+    void generatePerlinNoise(float *values, Vertex *vertices, float frequency, int size, uint32_t seed, float amplitude, int octaveCount, float lacunarity = 2, float persistence = 0.5, float noiseOffset = 0, float noiseSize = 1)
     {
-        std::fill(normals, normals + size * size * 3, 0.0f);
         float currAmplitude = amplitude;
         float currFrequency = frequency;
         float gridSize = size / currFrequency;
@@ -118,14 +117,14 @@ namespace PerlinNoise
                 int nxtIndexY = std::min(size - 1, (y + 1)) * size + x;
                 float centralDifferenceY = (values[nxtIndexY] - values[prevIndexY]) / 2.0f;
 
-                normals[index * 3] = -centralDifferenceX;
-                normals[index * 3 + 1] = steepnesCoeff;
-                normals[index * 3 + 2] = centralDifferenceY;
+                vertices[index].nx = -centralDifferenceX;
+                vertices[index].ny = steepnesCoeff;
+                vertices[index].nz = centralDifferenceY;
 
-                float normLen = std::sqrt(normals[index * 3] * normals[index * 3] + normals[index * 3 + 1] * normals[index * 3 + 1] + normals[index * 3 + 2] * normals[index * 3 + 2]);
-                normals[index * 3] /= normLen;
-                normals[index * 3 + 1] /= normLen;
-                normals[index * 3 + 2] /= normLen;
+                float normLen = std::sqrt(vertices[index].nx * vertices[index].nx + vertices[index].ny * vertices[index].ny + vertices[index].nz * vertices[index].nz);
+                vertices[index].nx /= normLen;
+                vertices[index].ny /= normLen;
+                vertices[index].nz /= normLen;
             }
         }
     }

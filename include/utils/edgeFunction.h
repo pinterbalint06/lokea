@@ -8,7 +8,7 @@ namespace EdgeFunction
 {
     struct EdgeFunction
     {
-        float *triangle_;
+        Vertex *triangle_;
         float triArea_;
         float dX0_, dY0_;
         float dX1_, dY1_;
@@ -31,16 +31,16 @@ namespace EdgeFunction
             return ((int64_t)(x - X) * dY - (int64_t)(y - Y) * dX);
         }
 
-        inline void setupEdgeFunctionTriArea(float *triangle)
+        inline void setupEdgeFunctionTriArea(Vertex *triangle)
         {
             triangle_ = triangle;
             // Convert triangle vertices to fixed point integer (only x and y are needed for triangle area)
-            v0x_ = FixedPoint::Float2Fix(triangle_[0]);
-            v0y_ = FixedPoint::Float2Fix(triangle_[1]);
-            v1x_ = FixedPoint::Float2Fix(triangle_[3]);
-            v1y_ = FixedPoint::Float2Fix(triangle_[4]);
-            v2x_ = FixedPoint::Float2Fix(triangle_[6]);
-            v2y_ = FixedPoint::Float2Fix(triangle_[7]);
+            v0x_ = FixedPoint::Float2Fix(triangle_[0].x);
+            v0y_ = FixedPoint::Float2Fix(triangle_[0].y);
+            v1x_ = FixedPoint::Float2Fix(triangle_[1].x);
+            v1y_ = FixedPoint::Float2Fix(triangle_[1].y);
+            v2x_ = FixedPoint::Float2Fix(triangle_[2].x);
+            v2y_ = FixedPoint::Float2Fix(triangle_[2].y);
 
             // calculate parameters of edge function
             dX0_ = v2x_ - v1x_;

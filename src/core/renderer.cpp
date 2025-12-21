@@ -11,6 +11,7 @@
 #include "utils/frameBuffer.h"
 #include "utils/mathUtils.h"
 #include "utils/edgeFunction.h"
+#include "core/vertex.h"
 #include <cstring>
 
 Renderer::Renderer()
@@ -21,12 +22,9 @@ Renderer::Renderer()
     sqrAntialias_ = (int)sqrt(antialias_);
     sqrAntialiasRec_ = FixedPoint::Float2Fix(1.0f / sqrAntialias_);
     inc_ = sqrAntialiasRec_ >> 1;
-    projectedTriangles_ = (float *)malloc(100 * sizeof(float));
+    projectedTriangles_ = (Vertex *)malloc(20 * sizeof(Vertex));
     projectedTrianglesSize_ = 0;
     currShadingMode_ = Shaders::SHADINGMODE::PHONG;
-    p0_ = (float *)malloc(3 * sizeof(float));
-    p1_ = (float *)malloc(3 * sizeof(float));
-    p2_ = (float *)malloc(3 * sizeof(float));
     normal_ = (float *)malloc(3 * sizeof(float));
     clipper_ = new Clipper();
     frameBuffer_ = new FrameBuffer(imageWidth_, imageHeight_, antialias_);
@@ -37,18 +35,6 @@ Renderer::~Renderer()
     if (projectedTriangles_)
     {
         free(projectedTriangles_);
-    }
-    if (p0_)
-    {
-        free(p0_);
-    }
-    if (p1_)
-    {
-        free(p1_);
-    }
-    if (p2_)
-    {
-        free(p2_);
     }
     if (normal_)
     {
@@ -88,47 +74,63 @@ void Renderer::setImageDimensions(int imageW, int imageH)
     frameBuffer_->setNewOptions(imageWidth_, imageHeight_, antialias_);
 }
 
-void Renderer::projectAndClipTriangle(const int &i0, const int &i1, const int &i2, float *normal, float *vertices, Camera *mainCamera)
+void Renderer::projectAndClipTriangle(const int &i0, const int &i1, const int &i2, float *normal, Vertex *vertices, Camera *mainCamera)
 {
+    p0_ = vertices[i0];
+    p1_ = vertices[i1];
+    p2_ = vertices[i2];
     const float *MV = mainCamera->getViewMatrix();
-    MathUtils::vert3MatrixMult(&vertices[i0 * 3], MV, p0_);
-    MathUtils::vert3MatrixMult(&vertices[i1 * 3], MV, p1_);
-    MathUtils::vert3MatrixMult(&vertices[i2 * 3], MV, p2_);
-    MathUtils::calculateNormal(p0_, p1_, p2_, normal);
+    p0_.multWithMatrix(MV);
+    p1_.multWithMatrix(MV);
+    p2_.multWithMatrix(MV);
+    Vertex::calculateFaceNormal(p0_, p1_, p2_, normal);
     const float *MP = mainCamera->getProjMatrix();
-    MathUtils::vert3MatrixMult(p0_, MP);
-    MathUtils::vert3MatrixMult(p1_, MP);
-    MathUtils::vert3MatrixMult(p2_, MP);
+    p0_.multWithMatrix(MP);
+    p1_.multWithMatrix(MP);
+    p2_.multWithMatrix(MP);
     // clip space
     clipper_->clip(p0_, p1_, p2_);
-    float *clipped = clipper_->getClipped();
+    Vertex *clipped = clipper_->getClipped();
     int clippedSize = clipper_->getClippedSize();
     float wRec;
     projectedTrianglesSize_ = 0;
     // triangle fan
-    for (int i = 0; i < clippedSize / 4 - 2; i++)
+    if (clippedSize > 2)
     {
-        wRec = 1.0f / clipped[3];
-        projectedTriangles_[projectedTrianglesSize_++] = (clipped[0] * wRec + 1) * 0.5f * (float)imageWidth_;
-        projectedTriangles_[projectedTrianglesSize_++] = (1 - clipped[1] * wRec) * 0.5f * (float)imageHeight_;
-        projectedTriangles_[projectedTrianglesSize_++] = clipped[2] * wRec;
+        // starting projected vertex
+        const Vertex &v0 = clipped[0];
+        wRec = 1.0f / v0.w;
+        Vertex startProj;
+        startProj.x = (v0.x * wRec + 1) * 0.5f * (float)imageWidth_;
+        startProj.y = (1 - v0.y * wRec) * 0.5f * (float)imageHeight_;
+        startProj.z = v0.z * wRec;
+        startProj.nx = v0.nx;
+        startProj.ny = v0.ny;
+        startProj.nz = v0.nz;
+        for (int i = 0; i < clippedSize - 2; i++)
+        {
+            projectedTriangles_[projectedTrianglesSize_++] = startProj;
 
-        // (i + 1) * 4 = i * 4 + 4
-        int index = i * 4 + 4;
-        wRec = 1.0f / clipped[index + 3];
-        projectedTriangles_[projectedTrianglesSize_++] = (clipped[index] * wRec + 1) * 0.5 * imageWidth_;
-        projectedTriangles_[projectedTrianglesSize_++] = (1 - clipped[index + 1] * wRec) * 0.5 * imageHeight_;
-        projectedTriangles_[projectedTrianglesSize_++] = clipped[index + 2] * wRec;
+            const Vertex &v1 = clipped[i + 1];
+            wRec = 1.0f / v1.w;
+            Vertex &projected1 = projectedTriangles_[projectedTrianglesSize_++];
+            projected1.x = (v1.x * wRec + 1) * 0.5f * (float)imageWidth_;
+            projected1.y = (1 - v1.y * wRec) * 0.5f * (float)imageHeight_;
+            projected1.z = v1.z * wRec;
+            projected1.nx = v1.nx;
+            projected1.ny = v1.ny;
+            projected1.nz = v1.nz;
 
-        // (i + 2) * 4 = i * 4 + 8
-        index = i * 4 + 8;
-        wRec = 1.0f / clipped[index + 3];
-        projectedTriangles_[projectedTrianglesSize_++] = (clipped[index] * wRec + 1) * 0.5 * imageWidth_;
-        projectedTriangles_[projectedTrianglesSize_++] = (1 - clipped[index + 1] * wRec) * 0.5 * imageHeight_;
-        projectedTriangles_[projectedTrianglesSize_++] = clipped[index + 2] * wRec;
-    }
-    if (projectedTrianglesSize_ > 0)
-    {
+            const Vertex &v2 = clipped[i + 2];
+            wRec = 1.0f / v2.w;
+            Vertex &projected2 = projectedTriangles_[projectedTrianglesSize_++];
+            projected2.x = (v2.x * wRec + 1) * 0.5f * (float)imageWidth_;
+            projected2.y = (1 - v2.y * wRec) * 0.5f * (float)imageHeight_;
+            projected2.z = v2.z * wRec;
+            projected2.nx = v2.nx;
+            projected2.ny = v2.ny;
+            projected2.nz = v2.nz;
+        }
         MathUtils::normalizeVector(normal);
     }
 }
@@ -169,13 +171,12 @@ void Renderer::renderTemplate(const Scene *scene)
     float gGround = meshCol.g_;
     float bGround = meshCol.b_;
     int32_t *currIndices = mesh->getIndices();
-    float *currVertices = mesh->getVertices();
-    float *currNormals = mesh->getNormals();
+    Vertex *currVertices = mesh->getVertices();
     int indicesCount = mesh->getIndexCount();
     for (int i = 0; i < indicesCount; i += 3)
     {
         projectAndClipTriangle(currIndices[i], currIndices[i + 1], currIndices[i + 2], normal_, currVertices, mainCamera);
-        for (int j = 0; j < projectedTrianglesSize_; j += 9)
+        for (int j = 0; j < projectedTrianglesSize_; j += 3)
         {
             EdgeFunction::EdgeFunction ef;
             ef.setupEdgeFunctionTriArea(&projectedTriangles_[j]);
@@ -187,23 +188,23 @@ void Renderer::renderTemplate(const Scene *scene)
                 htmaxx = -imageWidth_;
                 htminy = imageHeight_;
                 htmaxy = -imageHeight_;
-                for (int k = 0; k < 9; k += 3)
+                for (int k = 0; k < 3; k++)
                 {
-                    if (projectedTriangles_[j + k] < htminx)
+                    if (projectedTriangles_[j + k].x < htminx)
                     {
-                        htminx = projectedTriangles_[j + k];
+                        htminx = projectedTriangles_[j + k].x;
                     }
-                    if (projectedTriangles_[j + k] > htmaxx)
+                    if (projectedTriangles_[j + k].x > htmaxx)
                     {
-                        htmaxx = projectedTriangles_[j + k];
+                        htmaxx = projectedTriangles_[j + k].x;
                     }
-                    if (projectedTriangles_[j + k + 1] < htminy)
+                    if (projectedTriangles_[j + k].y < htminy)
                     {
-                        htminy = projectedTriangles_[j + k + 1];
+                        htminy = projectedTriangles_[j + k].y;
                     }
-                    if (projectedTriangles_[j + k + 1] > htmaxy)
+                    if (projectedTriangles_[j + k].y > htmaxy)
                     {
-                        htmaxy = projectedTriangles_[j + k + 1];
+                        htmaxy = projectedTriangles_[j + k].y;
                     }
                 }
                 int bbminx = std::max(0, std::min(imageWidth_ - 1, (int)std::floor(htminx)));
@@ -212,12 +213,12 @@ void Renderer::renderTemplate(const Scene *scene)
                 int bbmaxy = std::max(0, std::min(imageHeight_ - 1, (int)std::ceil(htmaxy)));
 
                 // precalculate the reciprocal
-                z0Rec = 1.0f / projectedTriangles_[j + 2];
-                z1Rec = 1.0f / projectedTriangles_[j + 5];
-                z2Rec = 1.0f / projectedTriangles_[j + 8];
+                z0Rec = 1.0f / projectedTriangles_[j].z;
+                z1Rec = 1.0f / projectedTriangles_[j + 1].z;
+                z2Rec = 1.0f / projectedTriangles_[j + 2].z;
 
                 // initialize shader for triangle
-                shader.setupTriangle(normal_, currNormals, currVertices, currIndices,
+                shader.setupTriangle(normal_, currVertices, currIndices,
                                      i, lightVec, meshMat, sun,
                                      z0Rec, z1Rec, z2Rec,
                                      camX, camY, camZ, ambientLight);

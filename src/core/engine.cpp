@@ -3,6 +3,7 @@
 #include "core/scene.h"
 #include "core/renderer.h"
 #include "core/terrain.h"
+#include "core/vertex.h"
 
 Engine::Engine(int size)
 {
@@ -29,13 +30,13 @@ Engine::~Engine()
 
 void Engine::calcNewCamLoc()
 {
-    float *vertices = scene_->getTerrain()->getMesh()->getVertices();
-    scene_->getCamera()->setPosition(vertices[cameraLocation_ * 3], vertices[cameraLocation_ * 3 + 1] + cameraHeight_, vertices[cameraLocation_ * 3 + 2]);
+    Vertex *vertices = scene_->getTerrain()->getMesh()->getVertices();
+    scene_->getCamera()->setPosition(vertices[cameraLocation_].x, vertices[cameraLocation_ + 1].y + cameraHeight_, vertices[cameraLocation_ + 2].z);
 }
 
 void Engine::randomizeLocation()
 {
-    cameraLocation_ = rand() % (scene_->getTerrain()->getMesh()->getVertexCount() / 3);
+    cameraLocation_ = rand() % (scene_->getTerrain()->getMesh()->getVertexCount());
     calcNewCamLoc();
     renderer_->render(scene_);
 }

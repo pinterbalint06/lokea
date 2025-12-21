@@ -1,26 +1,28 @@
 #ifndef CLIPPING_H
 #define CLIPPING_H
 
+struct Vertex;
+
 class Clipper
 {
 private:
-    float *clipped_;
-    float *input_;
+    Vertex *clipped_;
+    Vertex *input_;
     int clippedSize_;
     int inputSize_;
 
-    void SutherlandHodgman(const float *pont0, const float *pont1, const float *pont2);
+    void SutherlandHodgman(const Vertex &pont0, const Vertex &pont1, const Vertex &pont2);
 
 public:
     Clipper();
     ~Clipper();
 
     // getter
-    float *getClipped() { return clipped_; }
+    Vertex *getClipped() { return clipped_; }
     int getClippedSize() { return clippedSize_; }
 
     // Sutherland-Hodgman
-    void clip(const float *pont0, const float *pont1, const float *pont2);
+    void clip(const Vertex &pont0, const Vertex &pont1, const Vertex &pont2);
 };
 
 #endif

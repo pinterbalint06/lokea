@@ -51,22 +51,23 @@ void Terrain::setSize(int size)
 void Terrain::regenerate()
 {
     std::memset(perlinValues_, 0, size_ * size_ * sizeof(float));
-    PerlinNoise::generatePerlinNoise(perlinValues_, mesh_->getNormals(), frequency_, size_, seed_, 2, octaves_, lacunarity_, persistence_, 0.0f, heightMultiplier_);
+    PerlinNoise::generatePerlinNoise(perlinValues_, mesh_->getVertices(), frequency_, size_, seed_, 2, octaves_, lacunarity_, persistence_, 0.0f, heightMultiplier_);
     buildTerrain();
 }
 
 void Terrain::buildTerrain()
 {
     int i;
-    float *vertices = mesh_->getVertices();
+    Vertex *vertices = mesh_->getVertices();
     for (int y = 0; y < size_; y++)
     {
         for (int x = 0; x < size_; x++)
         {
             i = y * size_ + x;
-            vertices[i * 3] = x * spacing_;
-            vertices[i * 3 + 1] = perlinValues_[i];
-            vertices[i * 3 + 2] = -y * spacing_;
+            vertices[i].x = x * spacing_;
+            vertices[i].y = perlinValues_[i];
+            vertices[i].z = -y * spacing_;
+            vertices[i].w = 1.0f;
         }
     }
 
