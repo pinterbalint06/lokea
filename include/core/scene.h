@@ -3,7 +3,7 @@
 
 class Camera;
 class DistantLight;
-class Terrain;
+class Mesh;
 
 class Scene
 {
@@ -11,20 +11,21 @@ private:
     Camera *cam_;
     DistantLight *light_;
     float ambientLight_;
-    Terrain *worldTerrain_;
+    Mesh *mesh_;
 
 public:
-    Scene(int terrainSize);
+    Scene();
     ~Scene();
 
     // getters
     Camera *getCamera() const { return cam_; }
     DistantLight *getLight() const { return light_; }
     float getAmbientLight() const { return ambientLight_; }
-    Terrain *getTerrain() const { return worldTerrain_; }
+    Mesh *getMesh() const { return mesh_; }
 
     // setter
     void setAmbientLight(float ambientLightIntensity);
+    void setMesh(Mesh *mesh);
 };
 
 #endif

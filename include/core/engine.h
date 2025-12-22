@@ -7,10 +7,14 @@
 #include "core/renderer.h"
 #include "core/material.h"
 
+class Terrain;
+class Mesh;
+
 class Engine
 {
 private:
     Scene *scene_;
+    Terrain *terrain_;
     Renderer *renderer_;
     float cameraHeight_;
     int cameraLocation_;
@@ -37,10 +41,13 @@ public:
     void rotateCamera(float dPitch, float dYaw);
     void setCameraRotation(float pitch, float yaw);
     void randomizeLocation();
+    void render() { renderer_->render(scene_); };
 
     float getPitch() { return scene_->getCamera()->getPitch(); }
     float getYaw() { return scene_->getCamera()->getYaw(); }
     uint8_t *getImageBufferLocation() { return renderer_->getImageBuffer(); }
+
+    void setMesh(Mesh *mesh) { scene_->setMesh(mesh); }
 };
 
 #endif

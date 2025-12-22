@@ -165,7 +165,7 @@ void Renderer::renderTemplate(const Scene *scene)
     StructShader shader;
     float *zBuffer = frameBuffer_->getZBuffer();
     float *imageAntiBuffer = frameBuffer_->getAntialiasImageBuffer();
-    Mesh *mesh = scene->getTerrain()->getMesh();
+    Mesh *mesh = scene->getMesh();
     Materials::Material meshMat = mesh->getMaterial();
     Materials::Color meshCol = meshMat.albedo;
     float rGround = meshCol.r;
@@ -359,6 +359,9 @@ void Renderer::render(const Scene *scene)
         break;
     case (Shaders::SHADINGMODE::FLAT):
         renderTemplate<Shaders::FlatShader>(scene);
+        break;
+    case (Shaders::SHADINGMODE::NO_SHADING):
+        renderTemplate<Shaders::NoShader>(scene);
         break;
     default:
         renderTemplate<Shaders::PhongShader>(scene);

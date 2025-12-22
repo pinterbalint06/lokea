@@ -5,21 +5,17 @@ project(TerrainGameEngine)
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED True)
 
+# headers
 include_directories(BEFORE ${CMAKE_SOURCE_DIR}/include)
 
-file(GLOB_RECURSE SOURCE_FILES
-    "src/*.cpp"
+# 1. core files
+file(GLOB_RECURSE ENGINE_CORE_FILES
     "src/core/*.cpp"
     "src/utils/*.cpp"
 )
 
-# -------------------------
-# optimized
-# -------------------------
-
-add_executable(release ${SOURCE_FILES})
-
-target_link_options(release PUBLIC
+# emscripten flags
+set(COMMON_WASM_FLAGS
     -lembind
     -sINITIAL_MEMORY=268435456
     -sALLOW_MEMORY_GROWTH
@@ -28,36 +24,40 @@ target_link_options(release PUBLIC
     -sENVIRONMENT=["web"]
 )
 
-target_compile_options(release PUBLIC
-    -O3
-    -flto
-)
-
-set_target_properties(release PROPERTIES
-    OUTPUT_NAME "engine"
-    RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}"
-)
-
-# -------------------------
+# ---------------------------------------------------------
+# optimized
+# ---------------------------------------------------------
+set(RELEASE_COMPILE_FLAGS -O3 -flto)
+# ---------------------------------------------------------
 # debug
-# -------------------------
+# ---------------------------------------------------------
+set(DEBUG_COMPILE_FLAGS -g)
 
-add_executable(debug ${SOURCE_FILES})
+# ---------------------------------------------------------
+# Test terrain
+# ---------------------------------------------------------
 
-target_link_options(debug PUBLIC
-    -lembind
-    -sINITIAL_MEMORY=268435456
-    -sALLOW_MEMORY_GROWTH
-    -msimd128
-    -sIMPORTED_MEMORY=1
-)
+# release
+add_executable(testTerrainWASM ${ENGINE_CORE_FILES} src/testTerrain.cpp)
+target_link_options(testTerrainWASM PUBLIC ${COMMON_WASM_FLAGS})
+target_compile_options(testTerrainWASM PUBLIC ${RELEASE_COMPILE_FLAGS})
 
-target_compile_options(debug PUBLIC
-    -g
-)
+# debug
+add_executable(testTerrainWASM_debug ${ENGINE_CORE_FILES} src/testTerrain.cpp)
+target_link_options(testTerrainWASM_debug PUBLIC ${COMMON_WASM_FLAGS})
+target_compile_options(testTerrainWASM_debug PUBLIC ${DEBUG_COMPILE_FLAGS})
 
-# Set the output file name for the debug build
-set_target_properties(debug PROPERTIES
-    OUTPUT_NAME "engine_debug"
-    RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}"
-)
+# ---------------------------------------------------------
+# Test equirectangular
+# ---------------------------------------------------------
+
+
+# release
+add_executable(testEquirectangularWASM ${ENGINE_CORE_FILES} src/testEquirectangular.cpp)
+target_link_options(testEquirectangularWASM PUBLIC ${COMMON_WASM_FLAGS})
+target_compile_options(testEquirectangularWASM PUBLIC ${RELEASE_COMPILE_FLAGS})
+
+# debug
+add_executable(testEquirectangularWASM_debug ${ENGINE_CORE_FILES} src/testEquirectangular.cpp)
+target_link_options(testEquirectangularWASM_debug PUBLIC ${COMMON_WASM_FLAGS})
+target_compile_options(testEquirectangularWASM_debug PUBLIC ${DEBUG_COMPILE_FLAGS})

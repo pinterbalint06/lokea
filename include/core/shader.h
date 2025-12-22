@@ -11,9 +11,10 @@ namespace Shaders
     /// @brief The SHADINGMODE enum for selecting shading algorithms
     enum SHADINGMODE
     {
-        PHONG = 0,   /// Phong shading
-        GOURAUD = 1, /// Gouraud shading
-        FLAT = 2     /// Flat shading
+        PHONG = 0,     /// Phong shading
+        GOURAUD = 1,   /// Gouraud shading
+        FLAT = 2,      /// Flat shading, /// Gouraud shading
+        NO_SHADING = 3 /// No shading
     };
 
     /**
@@ -124,6 +125,58 @@ namespace Shaders
         result[1] = diffuseG + specG + ambientG;
         result[2] = diffuseB + specB + ambientB;
     }
+
+    /**
+     * @brief No shading just sets the material's color as final output.
+     */
+    struct NoShader
+    {
+        /// @brief The color components for the triangle.
+        float r, g, b;
+
+        /**
+         * @brief Stores the color values of the material.
+         *
+         * @param faceNormal Pointer to the face normal vector.(unused here but needed so the same function can be used in the rendering loop)
+         * @param vertices Pointer to the triangle's vertices.  (unused here)
+         * @param i Index of the current triangle. (unused here)
+         * @param lightVec Pointer to the light direction vector. (unused here)
+         * @param material The material of the triangle.
+         * @param sun Pointer to the distant light source. (unused here)
+         * @param z0Rec Reciprocal of the first vertex's depth. (unused here)
+         * @param z1Rec Reciprocal of the second vertex's depth. (unused here)
+         * @param z2Rec Reciprocal of the third vertex's depth. (unused here)
+         * @param ambientLight The ambient light of the environment. (unused here)
+         */
+        inline void setupTriangle(
+            float *faceNormal, Vertex *vertices, int i,
+            float *lightVec, Materials::Material material, DistantLight *sun,
+            float z0Rec, float z1Rec, float z2Rec, float camX, float camY, float camZ, float ambientLight)
+        {
+            Materials::Color albedo = material.albedo;
+            r = 255.0f * std::pow(albedo.r, 1.0f / 2.2f);
+            g = 255.0f * std::pow(albedo.g, 1.0f / 2.2f);
+            b = 255.0f * std::pow(albedo.b, 1.0f / 2.2f);
+        }
+
+        /**
+         * @brief Writes the RGB color values to the image buffer for a pixel.
+         * @param lambda0 Barycentric coordinate for the first vertex (unused here but needed so the same function can be used in the rendering loop).
+         * @param lambda1 Barycentric coordinate for the second vertex (unused here).
+         * @param lambda2 Barycentric coordinate for the third vertex (unused here).
+         * @param zDepth Depth value for the pixel (unused here).
+         * @param imageAntiBuffer Pointer to the image buffer.
+         * @param imageIndex Index in the image buffer where the pixel's color should be written.
+         */
+        inline void shadePixel(
+            float lambda0, float lambda1, float lambda2,
+            float zDepth, float *imageAntiBuffer, int imageIndex)
+        {
+            imageAntiBuffer[imageIndex] = r;
+            imageAntiBuffer[imageIndex + 1] = g;
+            imageAntiBuffer[imageIndex + 2] = b;
+        }
+    };
 
     /**
      * @brief Shades the triangle using flat shading.

@@ -7,9 +7,11 @@
 
 Engine::Engine(int size)
 {
-    scene_ = new Scene(size);
-    Mesh *mesh = scene_->getTerrain()->getMesh();
+    scene_ = new Scene();
+    terrain_ = new Terrain(size);
+    Mesh *mesh = terrain_->getMesh();
     mesh->setMaterial(Materials::Material::Grass());
+    scene_->setMesh(mesh);
     renderer_ = new Renderer();
     cameraHeight_ = 3.8;
     cameraLocation_ = 0;
@@ -22,6 +24,10 @@ Engine::~Engine()
     {
         delete scene_;
     }
+    if (terrain_)
+    {
+        delete terrain_;
+    }
     if (renderer_)
     {
         delete renderer_;
@@ -30,13 +36,13 @@ Engine::~Engine()
 
 void Engine::calcNewCamLoc()
 {
-    Vertex *vertices = scene_->getTerrain()->getMesh()->getVertices();
+    Vertex *vertices = terrain_->getMesh()->getVertices();
     scene_->getCamera()->setPosition(vertices[cameraLocation_].x, vertices[cameraLocation_ + 1].y + cameraHeight_, vertices[cameraLocation_ + 2].z);
 }
 
 void Engine::randomizeLocation()
 {
-    cameraLocation_ = rand() % (scene_->getTerrain()->getMesh()->getVertexCount());
+    cameraLocation_ = rand() % (terrain_->getMesh()->getVertexCount());
     calcNewCamLoc();
     renderer_->render(scene_);
 }
@@ -49,15 +55,18 @@ void Engine::setAntialias(int antialias)
 
 void Engine::setTerrainParams(int size, int seed, float frequency, float lacunarity, float persistence, int octaves, float heightMultiplier)
 {
-    Terrain *worldTerrain = scene_->getTerrain();
-    worldTerrain->setSize(size);
-    worldTerrain->setFrequency(frequency);
-    worldTerrain->setSeed(seed);
-    worldTerrain->setLacunarity(lacunarity);
-    worldTerrain->setPersistence(persistence);
-    worldTerrain->setOctaves(octaves);
-    worldTerrain->setHeightMultiplier(heightMultiplier);
-    worldTerrain->regenerate();
+    if (terrain_->getSize() != size)
+    {
+        terrain_->setSize(size);
+        scene_->setMesh(terrain_->getMesh());
+    }
+    terrain_->setFrequency(frequency);
+    terrain_->setSeed(seed);
+    terrain_->setLacunarity(lacunarity);
+    terrain_->setPersistence(persistence);
+    terrain_->setOctaves(octaves);
+    terrain_->setHeightMultiplier(heightMultiplier);
+    terrain_->regenerate();
     calcNewCamLoc();
     renderer_->render(scene_);
 }
@@ -83,7 +92,7 @@ void Engine::setLightDirection(float x, float y, float z)
 
 void Engine::setGroundMaterial(Materials::Material material)
 {
-    scene_->getTerrain()->getMesh()->setMaterial(material);
+    terrain_->getMesh()->setMaterial(material);
     renderer_->render(scene_);
 }
 
@@ -95,7 +104,6 @@ void Engine::setShadingMode(Shaders::SHADINGMODE shadingmode)
 
 void Engine::setFrustum(float focal, float filmW, float filmH, int imageW, int imageH, float n, float f)
 {
-
     renderer_->setImageDimensions(imageW, imageH);
     scene_->getCamera()->setPerspective(focal, filmW, filmH, imageW, imageH, n, f);
     renderer_->render(scene_);
@@ -115,14 +123,14 @@ void Engine::setAmbientLight(float ambientLightIntensity)
 
 void Engine::setMapSpacing(float mapSpacing)
 {
-    scene_->getTerrain()->setSpacing(mapSpacing);
+    terrain_->setSpacing(mapSpacing);
     calcNewCamLoc();
     renderer_->render(scene_);
 }
 
 void Engine::moveCamera(int x, int z)
 {
-    int size = scene_->getTerrain()->getSize();
+    int size = terrain_->getSize();
     int newLocation = cameraLocation_ + z * size + x;
     if (!((x == -1 && newLocation % size == size - 1) || (x == 1 && newLocation % size == 0) || (newLocation < 0) || (newLocation >= size * size)))
     {

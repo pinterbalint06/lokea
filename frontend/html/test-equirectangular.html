@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html lang="hu">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Test equirectangular image</title>
+    <link rel="stylesheet" href="../css/test.css">
+    <script src="../js/testEquirectangularWASM.js"></script>
+    <script src="../js/test-equirectangular.js"></script>
+</head>
+
+<body>
+    <div class="row w100 around wrapreverse">
+        <div class="row wrap gap">
+            <div class="col">
+                <p class="m0">Forgás</p>
+                <div class="wfit col btns">
+                    <div class="row wfit flex1">
+                        <div class="flex1 center"><button onclick="xyForgas(-10, -10)">
+                                <p class="felforogPoz">&lt;</p>
+                            </button></div>
+                        <div class="flex1 center"><button onclick="xyForgas(-10, 0)">
+                                <p class="forog">&lt;</p>
+                            </button></div>
+                        <div class="flex1 center"><button onclick="xyForgas(-10, 10)">
+                                <p class="felforogNeg">&gt;</p>
+                            </button></div>
+                    </div>
+                    <div class="row wfit flex1">
+                        <div class="flex1 center"><button onclick="xyForgas(0, -10)">&lt;</button></div>
+                        <div></div>
+                        <div class="flex1 center"><button onclick="xyForgas(0, 10)">&gt;</button></div>
+                    </div>
+                    <div class="row wfit flex1">
+                        <div class="flex1 center"><button onclick="xyForgas(10, -10)">
+                                <p class="felforogNeg">&lt;</p>
+                            </button></div>
+                        <div class="flex1 center"><button onclick="xyForgas(10, 0)">
+                                <p class="forog">&gt;</p>
+                            </button></div>
+                        <div class="flex1 center"><button onclick="xyForgas(10, 10)">
+                                <p class="felforogPoz">&gt;</p>
+                            </button></div>
+                    </div>
+                </div>
+            </div>
+            <div class="col">
+                <canvas id="canvas"></canvas>
+            </div>
+        </div>
+    </div>
+</body>
+
+</html>

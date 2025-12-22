@@ -13,7 +13,6 @@ const canvasId = "canvas";
 document.addEventListener("DOMContentLoaded", async function () {
     korRajzol(0, -1);
     let canvas = document.getElementById(canvasId);
-    canvas.get
     canvas.width = jsCanvasSzelesseg;
     canvas.height = jsCanvasMagassag;
     let sd = document.getElementById("seed");

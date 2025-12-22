@@ -8,3 +8,7 @@
 8. 3 dimenziós perlin zaj
 9. Domborzatra gyakrabban kiszámolni a perlin zajt, így részletesebb térképet kapnánk
 10. Parallelizáció
+11. Fizikailag helyes árnyalás és pbr textúrák
+12. Equirectangular kép renderelése
+13. Kód újrastrukturálása (engine class, test equi es terrain értelmes elválasztása)
+14. Gömb generálás dokumentálása (RÖVID csak gömb koordináta -> Descartes koordináta szemléltetése és gömbkoordináták előállítása)
