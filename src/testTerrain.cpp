@@ -182,6 +182,14 @@ void setMapSpacing(float mapSpacing)
     }
 }
 
+void render()
+{
+    if (gEngine)
+    {
+        gEngine->render();
+    }
+}
+
 EMSCRIPTEN_BINDINGS(my_module)
 {
     emscripten::function("init", &init);
@@ -205,4 +213,5 @@ EMSCRIPTEN_BINDINGS(my_module)
     emscripten::function("setShadingTechnique", &setShadingMode);
     emscripten::function("getImageLocation", &getImageBufferLocation);
     emscripten::function("setMapSpacing", &setMapSpacing);
+    emscripten::function("render", &render);
 }

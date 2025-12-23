@@ -10,6 +10,39 @@ const n = 0.1;
 const f = 1000;
 const canvasId = "canvas";
 
+const TARGET_FPS = 30;
+const FRAME_MIN_TIME = 1000 / TARGET_FPS;
+let lastFrameTime = 0;
+let frameCount = 0;
+let lastFpsUpdate = 0;
+let fps = 0;
+
+
+function updateFPS(currentTime) {
+    frameCount++;
+
+    if (currentTime - lastFpsUpdate >= 1000) {
+        fps = frameCount;
+        frameCount = 0;
+        lastFpsUpdate = currentTime;
+
+        document.getElementById("fps").innerText = fps;
+    }
+}
+
+function mainLoop(currentTime) {
+    requestAnimationFrame(mainLoop);
+
+    const deltaTime = currentTime - lastFrameTime;
+
+    if (deltaTime >= FRAME_MIN_TIME) {
+        Module.render();
+        drawImage();
+        updateFPS(currentTime);
+        lastFrameTime = currentTime - (deltaTime % FRAME_MIN_TIME);
+    }
+}
+
 document.addEventListener("DOMContentLoaded", async function () {
     korRajzol(0, -1);
     let canvas = document.getElementById(canvasId);
@@ -22,6 +55,7 @@ document.addEventListener("DOMContentLoaded", async function () {
     Module.onRuntimeInitialized = function () {
         Module.init(meret, fokuszTavolsag, filmSzel, filmMag, jsCanvasSzelesseg, jsCanvasMagassag, n, f);
         ujTerkep();
+        requestAnimationFrame(mainLoop);
     };
 });
 
@@ -29,7 +63,6 @@ const meret = 256;
 
 function xyForgas(xszoggel, yszoggel) {
     Module.xyForog(xszoggel * (Math.PI / 180), yszoggel * (Math.PI / 180));
-    drawImage(canvasId);
 }
 
 // mennyi idő lenne lerenderelni a cubemapet
@@ -38,17 +71,17 @@ function teszt() {
     let tempY = Module.getYForog() * (180 / Math.PI);
     let most = performance.now();
     irany(90, 0);
-    drawImage(canvasId);
+    drawImage();
     irany(-90, 0);
-    drawImage(canvasId);
+    drawImage();
     irany(0, 0);
-    drawImage(canvasId);
+    drawImage();
     irany(0, 180);
-    drawImage(canvasId);
+    drawImage();
     irany(0, 90);
-    drawImage(canvasId);
+    drawImage();
     irany(0, -90);
-    drawImage(canvasId);
+    drawImage();
     document.getElementById("ido").innerText = Math.round(performance.now() - most);
     irany(tempX, tempY);
 }
@@ -63,7 +96,6 @@ function ujTerkep() {
 function ujKameraMagassag() {
     let cHeight = document.getElementById("kameraHeight");
     Module.newCameraHeight(parseFloat(cHeight.value));
-    drawImage(canvasId);
 }
 
 function UjPerlinParam() {
@@ -75,19 +107,16 @@ function UjPerlinParam() {
     let frequency = document.getElementById("frequency");
     let mult = document.getElementById("multiplier");
     Module.newPerlinMap(parseInt(size.value), parseInt(seed.value), parseFloat(frequency.value), parseFloat(lacunarity.value), parseFloat(persistence.value), parseInt(oktav.value), parseFloat(mult.value));
-    drawImage(canvasId);
 }
 
 function UjTerkoz() {
     let spacing = document.getElementById("spacing");
     Module.setMapSpacing(parseFloat(spacing.value));
-    drawImage(canvasId);
 }
 
 function UjFenyIntenzitas() {
     let intensity = document.getElementById("lightIntensity");
     Module.newLightIntensity(parseInt(intensity.value));
-    drawImage(canvasId);
 }
 
 function UjFenyIrany() {
@@ -96,25 +125,21 @@ function UjFenyIrany() {
     let y = Math.sin(angle);
     korRajzol(x, y);
     Module.newLightDirection(x, y);
-    drawImage(canvasId);
 }
 
 function ujArnyalas() {
     let type = document.querySelector('input[name="shading"]:checked').value;
     Module.setShadingTechnique(parseInt(type));
-    drawImage(canvasId);
 }
 
 function UjNormalSzamitas() {
     let type = document.querySelector('input[name="normalCalc"]:checked').value;
     Module.setNormalCalculationMode(parseInt(type));
-    drawImage(canvasId);
 }
 
 function ujElsmitas() {
     let elsimitas = document.getElementById("antialias");
     Module.setAntialias(parseInt(elsimitas.value));
-    drawImage(canvasId);
 }
 
 function korRajzol(x, y) {
@@ -176,7 +201,6 @@ function ujAnyag() {
     let spec = document.getElementById("specularity");
     let shin = document.getElementById("shininess");
     Module.setGroundMaterial(red, green, blue, parseFloat(diff.value), parseFloat(spec.value), parseFloat(shin.value));
-    drawImage(canvasId);
 }
 
 function talajFu() {
@@ -191,7 +215,6 @@ function talajFu() {
     shin.value = 10.0;
     shin.nextElementSibling.value = 10.0;
     Module.setMaterialGrass();
-    drawImage(canvasId);
 }
 
 function talajFold() {
@@ -206,12 +229,10 @@ function talajFold() {
     shin.value = 10.0;
     shin.nextElementSibling.value = 10.0;
     Module.setMaterialDirt();
-    drawImage(canvasId);
 }
 
 function ujhely() {
     Module.ujHely();
-    drawImage(canvasId);
 }
 
 function ujFenyszin() {
@@ -220,18 +241,15 @@ function ujFenyszin() {
     let green = fromHexaToDec(color.value[3]) * 16 + fromHexaToDec(color.value[4]);
     let blue = fromHexaToDec(color.value[5]) * 16 + fromHexaToDec(color.value[6]);
     Module.setLightColor(red, green, blue);
-    drawImage(canvasId);
 }
 
 function ujKornyezetiFeny() {
     let ambient = document.getElementById("ambientLight");
     Module.setAmbientLight(parseFloat(ambient.value));
-    drawImage(canvasId);
 }
 
 function irany(x, y) {
     Module.setRotate(x * (Math.PI / 180), y * (Math.PI / 180));
-    drawImage(canvasId);
 }
 
 function mozgas(iranyZ, iranyX) {
@@ -247,10 +265,9 @@ function mozgas(iranyZ, iranyX) {
     let mozgasZ = Math.round(iranyZ * eloreZ + iranyX * jobbraZ);
 
     Module.mozgas(mozgasZ, mozgasX);
-    drawImage(canvasId);
 }
 
-function drawImage(canvasId) {
+function drawImage() {
     let imageBufferHely = Module.getImageLocation();
     let clampedArray = new Uint8ClampedArray(
         Module.HEAPU8.buffer,

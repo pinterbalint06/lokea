@@ -44,13 +44,11 @@ void Engine::randomizeLocation()
 {
     cameraLocation_ = rand() % (terrain_->getMesh()->getVertexCount());
     calcNewCamLoc();
-    renderer_->render(scene_);
 }
 
 void Engine::setAntialias(int antialias)
 {
     renderer_->setAntialias(antialias);
-    renderer_->render(scene_);
 }
 
 void Engine::setTerrainParams(int size, int seed, float frequency, float lacunarity, float persistence, int octaves, float heightMultiplier)
@@ -68,64 +66,54 @@ void Engine::setTerrainParams(int size, int seed, float frequency, float lacunar
     terrain_->setHeightMultiplier(heightMultiplier);
     terrain_->regenerate();
     calcNewCamLoc();
-    renderer_->render(scene_);
 }
 
 void Engine::setLightIntensity(float intensity)
 {
     scene_->getLight()->setIntensity(intensity);
-    renderer_->render(scene_);
 }
 
 void Engine::setCameraHeight(float cameraHeight)
 {
     cameraHeight_ = cameraHeight;
     calcNewCamLoc();
-    renderer_->render(scene_);
 }
 
 void Engine::setLightDirection(float x, float y, float z)
 {
     scene_->getLight()->setDirection(x, y, z);
-    renderer_->render(scene_);
 }
 
 void Engine::setGroundMaterial(Materials::Material material)
 {
     terrain_->getMesh()->setMaterial(material);
-    renderer_->render(scene_);
 }
 
 void Engine::setShadingMode(Shaders::SHADINGMODE shadingmode)
 {
     renderer_->setShadingMode(shadingmode);
-    renderer_->render(scene_);
 }
 
 void Engine::setFrustum(float focal, float filmW, float filmH, int imageW, int imageH, float n, float f)
 {
     renderer_->setImageDimensions(imageW, imageH);
     scene_->getCamera()->setPerspective(focal, filmW, filmH, imageW, imageH, n, f);
-    renderer_->render(scene_);
 }
 
 void Engine::setLightColor(float r, float g, float b)
 {
     scene_->getLight()->setColor(r, g, b);
-    renderer_->render(scene_);
 }
 
 void Engine::setAmbientLight(float ambientLightIntensity)
 {
     scene_->setAmbientLight(ambientLightIntensity);
-    renderer_->render(scene_);
 }
 
 void Engine::setMapSpacing(float mapSpacing)
 {
     terrain_->setSpacing(mapSpacing);
     calcNewCamLoc();
-    renderer_->render(scene_);
 }
 
 void Engine::moveCamera(int x, int z)
@@ -143,12 +131,10 @@ void Engine::moveCamera(int x, int z)
 void Engine::rotateCamera(float dPitch, float dYaw)
 {
     scene_->getCamera()->rotate(dPitch, dYaw);
-    renderer_->render(scene_);
 }
 
 void Engine::setCameraRotation(float pitch, float yaw)
 {
 
     scene_->getCamera()->setRotation(pitch, yaw);
-    renderer_->render(scene_);
 }
