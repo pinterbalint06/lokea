@@ -14,6 +14,20 @@
     <div class="row w100 around wrapreverse">
         <div class="row wrap gap">
             <div class="col">
+                <p>FPS: <span id="fps"></span></p>
+                <button onclick="ujrarenderel();">Újrarenderel</button>
+                <label for="antialias">Élsimítás:</label>
+                <select name="antialias" id="antialias" onchange="ujElsmitas();">
+                    <option value="1" selected>1x</option>
+                    <option value="4">4x</option>
+                    <option value="9">9x</option>
+                    <option value="16">16x</option>
+                </select>
+                <div>
+                    <label for="url">Kép link</label>
+                    <input type="text" id="url">
+                    <button onclick="ujUrlbol();">betölt</button>
+                </div>
                 <p class="m0">Forgás</p>
                 <div class="wfit col btns">
                     <div class="row wfit flex1">

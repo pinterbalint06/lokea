@@ -18,10 +18,42 @@ function drawImage() {
         jsCanvasSzelesseg * jsCanvasMagassag * 4
     );
     let ctx = document.getElementById(canvasId).getContext("2d");
-    ctx.clearRect(0, 0, jsCanvasSzelesseg, jsCanvasMagassag);
 
     let imgData = new ImageData(clampedArray, jsCanvasSzelesseg, jsCanvasMagassag);
     ctx.putImageData(imgData, 0, 0);
+}
+
+const TARGET_FPS = 30;
+const FRAME_MIN_TIME = 1000 / TARGET_FPS;
+let lastFrameTime = 0;
+let frameCount = 0;
+let lastFpsUpdate = 0;
+let fps = 0;
+
+
+function updateFPS(currentTime) {
+    frameCount++;
+
+    if (currentTime - lastFpsUpdate >= 1000) {
+        fps = frameCount;
+        frameCount = 0;
+        lastFpsUpdate = currentTime;
+
+        document.getElementById("fps").innerText = fps;
+    }
+}
+
+function mainLoop(currentTime) {
+    requestAnimationFrame(mainLoop);
+
+    const deltaTime = currentTime - lastFrameTime;
+
+    if (deltaTime >= FRAME_MIN_TIME) {
+        Module.render();
+        drawImage();
+        updateFPS(currentTime);
+        lastFrameTime = currentTime - (deltaTime % FRAME_MIN_TIME);
+    }
 }
 
 document.addEventListener("DOMContentLoaded", async function () {
@@ -30,11 +62,59 @@ document.addEventListener("DOMContentLoaded", async function () {
     canvas.height = jsCanvasMagassag;
     Module.onRuntimeInitialized = function () {
         Module.init(256, fokuszTavolsag, filmSzel, filmMag, jsCanvasSzelesseg, jsCanvasMagassag, n, f);
-        drawImage();
+        Module.setShadingTexture();
+        imgFromUrl("../imgs/cathedral.jpg");
     };
 });
+
+function ujUrlbol() {
+    imgFromUrl(document.getElementById("url").value);
+}
+
+function ujElsmitas() {
+    let elsimitas = document.getElementById("antialias");
+    Module.setAntialias(parseInt(elsimitas.value));
+    drawImage();
+}
+
+function imgFromUrl(url) {
+    let img = new Image;
+    img.crossOrigin = "anonymous";
+    img.onload = function () {
+        let canvas = document.createElement('canvas');
+        canvas.width = this.width;
+        canvas.height = this.height;
+        let ctx = canvas.getContext('2d');
+        ctx.drawImage(img, 0, 0);
+        let imgData = ctx.getImageData(0, 0, this.width, this.height);
+        let rgbaData = imgData.data;
+
+        const ptr = Module.initTexture(this.width, this.height);
+        let rgbData = new Uint8Array(
+            Module.HEAPU8.buffer,
+            ptr,
+            this.width * this.height * 3
+        );
+        let index = 0;
+        for (let i = 0; i < rgbaData.length; i += 4) {
+            rgbData[index] = rgbaData[i];
+            index++;
+            rgbData[index] = rgbaData[i + 1];
+            index++;
+            rgbData[index] = rgbaData[i + 2];
+            index++;
+        }
+        requestAnimationFrame(mainLoop);
+    };
+    img.src = url;
+}
 
 function xyForgas(xszoggel, yszoggel) {
     Module.xyForog(xszoggel * (Math.PI / 180), yszoggel * (Math.PI / 180));
     drawImage(canvasId);
+}
+
+function ujrarenderel() {
+    Module.render();
+    drawImage();
 }

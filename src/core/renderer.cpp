@@ -107,6 +107,8 @@ void Renderer::projectAndClipTriangle(const int &i0, const int &i1, const int &i
         startProj.nx = v0.nx;
         startProj.ny = v0.ny;
         startProj.nz = v0.nz;
+        startProj.u = v0.u;
+        startProj.v = v0.v;
         for (int i = 0; i < clippedSize - 2; i++)
         {
             projectedTriangles_[projectedTrianglesSize_++] = startProj;
@@ -120,6 +122,8 @@ void Renderer::projectAndClipTriangle(const int &i0, const int &i1, const int &i
             projected1.nx = v1.nx;
             projected1.ny = v1.ny;
             projected1.nz = v1.nz;
+            projected1.u = v1.u;
+            projected1.v = v1.v;
 
             const Vertex &v2 = clipped[i + 2];
             wRec = 1.0f / v2.w;
@@ -130,6 +134,8 @@ void Renderer::projectAndClipTriangle(const int &i0, const int &i1, const int &i
             projected2.nx = v2.nx;
             projected2.ny = v2.ny;
             projected2.nz = v2.nz;
+            projected2.u = v2.u;
+            projected2.v = v2.v;
         }
         MathUtils::normalizeVector(normal);
     }
@@ -362,6 +368,9 @@ void Renderer::render(const Scene *scene)
         break;
     case (Shaders::SHADINGMODE::NO_SHADING):
         renderTemplate<Shaders::NoShader>(scene);
+        break;
+    case (Shaders::SHADINGMODE::TEXTURE):
+        renderTemplate<Shaders::TextureShader>(scene);
         break;
     default:
         renderTemplate<Shaders::PhongShader>(scene);

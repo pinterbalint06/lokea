@@ -13,6 +13,9 @@ struct Vertex
     // Normal
     float nx, ny, nz;
 
+    // texture coordinates
+    float u, v;
+
     void multWithMatrix(const float *matrix)
     {
         float tempX = x * matrix[0] + y * matrix[4] + z * matrix[8] + matrix[12];
@@ -39,6 +42,10 @@ struct Vertex
         returnVertex.nx = MathUtils::interpolation(v1.nx, v2.nx, t);
         returnVertex.ny = MathUtils::interpolation(v1.ny, v2.ny, t);
         returnVertex.nz = MathUtils::interpolation(v1.nz, v2.nz, t);
+
+        // Interpolate texture coordinates
+        returnVertex.u = MathUtils::interpolation(v1.u, v2.u, t);
+        returnVertex.v = MathUtils::interpolation(v1.v, v2.v, t);
 
         return returnVertex;
     }

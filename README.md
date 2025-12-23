@@ -1,4 +1,5 @@
 # Lokalizációs készségfejlesztő alkalmazás
+
 ## Buildelés
 
 ### 1. Követelmények
@@ -23,21 +24,45 @@
     emcmake cmake ..
     ```
 
+    Ha azt szeretnénk, hogy a build fájlokat átmásolja a frontend/js mappába.
+
+    ```bash
+    emcmake cmake -DCOPYFILES=ON ..
+    ```
+
 3.  **Buildelés**
     A konfigurálás után futtassa a build parancsot.
 
-    ##### A. **Release** build
+    ##### A. Adott **verzió** build
+
     A Release build teljesetmínyre optimalizált.
+
     ```bash
-    cmake --build . --target release
+    cmake --build . --target verzióneve
     ```
-    ##### B. **Debug** build
-    A Debug buildben egyszerűbb megtalálni a hibákat.
-    ```bash
-    cmake --build . --target debug
-    ```
-    ##### C. **Mindkettő** buildelése
+
+    ##### B. **Mindegyik** buildelése
+
     Mindkét verzót buildeli.
+
     ```bash
     cmake --build .
     ```
+
+4.  **Verziók:**
+
+    #### 1. testTerrainWASM
+
+    test-terrain HTML-hez használt fájlok. A domborzat generálás tesztelésének optimalizált verziója.
+
+    #### 2. testTerrainWASM_debug
+
+    test-terrain HTML-hez használt fájlok. A domborzat generálás tesztelésének debugolható verziója.
+
+    #### 3. testEquirectangularWASM
+
+    test-equirectangular HTML-hez használt fájlok. Az ekvirektanguláris képek megjelenítés tesztelésének optimalizált verziója.
+
+    #### 4. testEquirectangularWASM_debug
+
+    test-equirectangular HTML-hez használt fájlok. Az ekvirektanguláris képek megjelenítés tesztelésének debugolható verziója.

@@ -5,16 +5,18 @@
 #include "core/distantLight.h"
 #include "core/material.h"
 #include "core/vertex.h"
+#include "core/texture.h"
 
 namespace Shaders
 {
     /// @brief The SHADINGMODE enum for selecting shading algorithms
     enum SHADINGMODE
     {
-        PHONG = 0,     /// Phong shading
-        GOURAUD = 1,   /// Gouraud shading
-        FLAT = 2,      /// Flat shading, /// Gouraud shading
-        NO_SHADING = 3 /// No shading
+        PHONG = 0,      /// Phong shading
+        GOURAUD = 1,    /// Gouraud shading
+        FLAT = 2,       /// Flat shading
+        NO_SHADING = 3, /// No shading
+        TEXTURE = 4     /// Texture shading
     };
 
     /**
@@ -333,6 +335,75 @@ namespace Shaders
             imageAntiBuffer[imageIndex] = (lambda0 * r0 + lambda1 * r1 + lambda2 * r2) * zDepth;
             imageAntiBuffer[imageIndex + 1] = (lambda0 * g0 + lambda1 * g1 + lambda2 * g2) * zDepth;
             imageAntiBuffer[imageIndex + 2] = (lambda0 * b0 + lambda1 * b1 + lambda2 * b2) * zDepth;
+        }
+    };
+
+    /**
+     * @brief Shades the triangle using texturing.
+     *
+     * Texture shader precalculates vertex colors and interpolates those.
+     */
+    struct TextureShader
+    {
+        float u0, v0;
+        float u1, v1;
+        float u2, v2;
+
+        Texture *texture;
+
+        /**
+         * @brief Stores the values required for shading in the inner loop.
+         *
+         * @param faceNormal Pointer to the face normal vector (unused here but needed so the same function can be used in the rendering loop).
+         * @param vertices Pointer to the triangle's vertices.
+         * @param i Index of the current triangle.
+         * @param lightVec Pointer to the light direction vector.
+         * @param material The material of the triangle.
+         * @param sun Pointer to the distant light source.
+         * @param z0Rec Reciprocal of the first vertex's depth.
+         * @param z1Rec Reciprocal of the second vertex's depth.
+         * @param z2Rec Reciprocal of the third vertex's depth.
+         * @param ambientLight The ambient light of the environment.
+         */
+        inline void setupTriangle(
+            float *faceNormal, Vertex *vertices, int i,
+            float *lightVec, Materials::Material material, DistantLight *sun,
+            float z0Rec, float z1Rec, float z2Rec, float camX, float camY, float camZ, float ambientLight)
+        {
+            u0 = vertices[0].u * z0Rec;
+            v0 = vertices[0].v * z0Rec;
+
+            u1 = vertices[1].u * z1Rec;
+            v1 = vertices[1].v * z1Rec;
+
+            u2 = vertices[2].u * z2Rec;
+            v2 = vertices[2].v * z2Rec;
+            this->texture = material.texture;
+        }
+
+        /**
+         * @brief Perspective-correctly interpolates the vertex normals then computes the color values and writes them to the image buffer.
+         * @param lambda0 Barycentric coordinate for the first vertex.
+         * @param lambda1 Barycentric coordinate for the second vertex.
+         * @param lambda2 Barycentric coordinate for the third vertex.
+         * @param zDepth Depth value for the pixel.
+         * @param imageAntiBuffer Pointer to the image buffer.
+         * @param imageIndex Index in the image buffer where the pixel's color should be written.
+         */
+        inline void shadePixel(
+            float lambda0, float lambda1, float lambda2,
+            float zDepth, float *imageAntiBuffer, int imageIndex)
+        {
+            // perspective correct interpolation
+            float uInterpolated = (lambda0 * u0 + lambda1 * u1 + lambda2 * u2) * zDepth;
+            float vInterpolated = (lambda0 * v0 + lambda1 * v1 + lambda2 * v2) * zDepth;
+
+            float color[3];
+            texture->getTexturePixel(uInterpolated, vInterpolated, color);
+
+            imageAntiBuffer[imageIndex] = color[0];
+            imageAntiBuffer[imageIndex + 1] = color[1];
+            imageAntiBuffer[imageIndex + 2] = color[2];
         }
     };
 

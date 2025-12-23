@@ -9,10 +9,11 @@
 #include "core/material.h"
 #include "core/shader.h"
 #include "core/camera.h"
+#include "core/texture.h"
 
-// Game engine
 Renderer *renderer = nullptr;
 Scene *scene = nullptr;
+Texture *texture = nullptr;
 
 Mesh *generateSphere(int rings, int segments, float radius)
 {
@@ -43,6 +44,10 @@ Mesh *generateSphere(int rings, int segments, float radius)
             vert.nx = -x;
             vert.ny = -y;
             vert.nz = -z;
+            float u = (float)lon / segments;
+            float v = (float)lat / rings;
+            vert.u = u;
+            vert.v = v;
 
             vertices[count++] = vert;
         }
@@ -81,7 +86,7 @@ void init(int size, float focal, float filmW, float filmH, int imageW, int image
     renderer->setImageDimensions(imageW, imageH);
     scene->getCamera()->setPerspective(focal, filmW, filmH, imageW, imageH, n, f);
     renderer->setShadingMode(Shaders::SHADINGMODE::PHONG);
-    scene->setMesh(generateSphere(32, 32, 40.0f));
+    scene->setMesh(generateSphere(32, 32, 10.0f));
     renderer->render(scene);
 }
 
@@ -95,11 +100,45 @@ int getImageBufferLocation()
     return returnValue;
 }
 
-void rotateCamera(float dM_PItch, float dYaw)
+void rotateCamera(float dPitch, float dYaw)
 {
     if (scene && renderer)
     {
-        scene->getCamera()->rotate(dM_PItch, dYaw);
+        scene->getCamera()->rotate(dPitch, dYaw);
+        renderer->render(scene);
+    }
+}
+
+int initTexture(int width, int height)
+{
+    texture = new Texture(width, height);
+    Materials::Material newTexMat = Materials::Material::Grass();
+    newTexMat.texture = texture;
+    scene->getMesh()->setMaterial(newTexMat);
+    return (int)texture->getImgData();
+}
+
+void render()
+{
+    if (scene && renderer)
+    {
+        renderer->render(scene);
+    }
+}
+
+void setShadingTexture()
+{
+    if (scene && renderer)
+    {
+        renderer->setShadingMode(Shaders::SHADINGMODE::TEXTURE);
+    }
+}
+
+void setAntialias(int antialias)
+{
+    if (scene && renderer)
+    {
+        renderer->setAntialias(antialias);
         renderer->render(scene);
     }
 }
@@ -109,4 +148,8 @@ EMSCRIPTEN_BINDINGS(my_module)
     emscripten::function("init", &init);
     emscripten::function("getImageLocation", &getImageBufferLocation);
     emscripten::function("xyForog", &rotateCamera);
+    emscripten::function("initTexture", &initTexture);
+    emscripten::function("render", &render);
+    emscripten::function("setShadingTexture", &setShadingTexture);
+    emscripten::function("setAntialias", &setAntialias);
 }

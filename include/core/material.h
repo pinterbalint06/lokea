@@ -2,6 +2,8 @@
 #define MATERIAL_H
 #include <cmath>
 
+class Texture;
+
 namespace Materials
 {
     /**
@@ -38,6 +40,7 @@ namespace Materials
         float diffuseness; ///< Diffuse reflection coefficient [0;1].
         float specularity; ///< Specular reflection coefficient [0;1].
         float shininess;   ///< Specular exponent (shininess factor) [1; infinity[.
+        Texture *texture;
 
         /**
          * @brief Creates a basic material with a specific color.

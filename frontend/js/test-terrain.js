@@ -253,13 +253,10 @@ function mozgas(iranyZ, iranyX) {
 function drawImage(canvasId) {
     let imageBufferHely = Module.getImageLocation();
     let clampedArray = new Uint8ClampedArray(
-        wasmMemory.buffer,
+        Module.HEAPU8.buffer,
         imageBufferHely,
         jsCanvasSzelesseg * jsCanvasMagassag * 4
     );
     let ctx = document.getElementById(canvasId).getContext("2d");
-    ctx.clearRect(0, 0, jsCanvasSzelesseg, jsCanvasMagassag);
-
-    let imgData = new ImageData(clampedArray, jsCanvasSzelesseg, jsCanvasMagassag);
-    ctx.putImageData(imgData, 0, 0);
+    ctx.putImageData(new ImageData(clampedArray, jsCanvasSzelesseg, jsCanvasMagassag), 0, 0);
 }
