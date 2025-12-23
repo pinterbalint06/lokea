@@ -11,3 +11,6 @@
 11. Equirectangular kép renderelése
 12. Kód újrastrukturálása (engine class, test equi es terrain értelmes elválasztása)
 13. Gömb generálás dokumentálása (RÖVID csak gömb koordináta -> Descartes koordináta szemléltetése és gömbkoordináták előállítása)
+14. Frustum Culling
+15. Domborzat valósághűbb (erózió)
+16. Blinn-Phong

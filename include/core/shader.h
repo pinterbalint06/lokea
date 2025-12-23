@@ -26,12 +26,9 @@ namespace Shaders
      * normal, camera position, and light direction, based on the Phong reflection model.
      * The result is stored as an RGB triplet in the provided result array.
      *
-     * @param vertX X coordinate of the vertex position.
-     * @param vertY Y coordinate of the vertex position.
-     * @param vertZ Z coordinate of the vertex position.
-     * @param camX X coordinate of the camera position.
-     * @param camY Y coordinate of the camera position.
-     * @param camZ Z coordinate of the camera position.
+     * @param viewX X coordinate of the (normalized) view vector.
+     * @param viewY Y coordinate of the (normalized) view vector.
+     * @param viewZ Z coordinate of the (normalized) view vector.
      * @param normX X component of the (normalized) surface normal at the vertex.
      * @param normY Y component of the (normalized) surface normal at the vertex.
      * @param normZ Z component of the (normalized) surface normal at the vertex.
@@ -42,9 +39,8 @@ namespace Shaders
      * @param light Pointer to the DistantLight object representing the light source.
      * @param result Pointer to a float array of size 3 where the resulting RGB color will be stored.
      */
-    inline void phongReflectionModel(
-        float vertX, float vertY, float vertZ,
-        float camX, float camY, float camZ,
+    __attribute__((always_inline)) inline void phongReflectionModel(
+        float viewX, float viewY, float viewZ,
         float normX, float normY, float normZ,
         float lightX, float lightY, float lightZ,
         Materials::Material material,
@@ -80,17 +76,6 @@ namespace Shaders
         // if material is specular and light hits the object
         if (material.specularity > 0.0f && diffFactor > 0.0f)
         {
-            // view vector (POINT -> EYE (camera))
-            float viewX = camX - vertX;
-            float viewY = camY - vertY;
-            float viewZ = camZ - vertZ;
-
-            // normalize view vector
-            float viewLengthInv = 1.0f / std::sqrt(viewX * viewX + viewY * viewY + viewZ * viewZ);
-            viewX *= viewLengthInv;
-            viewY *= viewLengthInv;
-            viewZ *= viewLengthInv;
-
             // Reflection vector (perfectly reflected ray of light would take)
             // 2(L . N)N - L
             float rx = 2.0f * dotNL * normX - lightX;
@@ -275,9 +260,20 @@ namespace Shaders
             Vertex &vert1 = vertices[1];
             Vertex &vert2 = vertices[2];
 
+            // view vector (point -> eye (camera))
+            // calculate view vector
+            float viewX = camX - vert0.x;
+            float viewY = camY - vert0.y;
+            float viewZ = camZ - vert0.z;
+
+            // normalize view vector
+            float viewLengthInv = 1.0f / std::sqrt(viewX * viewX + viewY * viewY + viewZ * viewZ);
+            viewX *= viewLengthInv;
+            viewY *= viewLengthInv;
+            viewZ *= viewLengthInv;
+
             phongReflectionModel(
-                vert0.x, vert0.y, vert0.z,
-                camX, camY, camZ,
+                viewX, viewY, viewZ,
                 vert0.nx, vert0.ny, vert0.nz,
                 lightVec[0], lightVec[1], lightVec[2],
                 material,
@@ -289,9 +285,20 @@ namespace Shaders
             g0 = result[1] * z0Rec;
             b0 = result[2] * z0Rec;
 
+            // view vector (point -> eye (camera))
+            // calculate view vector
+            viewX = camX - vert1.x;
+            viewY = camY - vert1.y;
+            viewZ = camZ - vert1.z;
+
+            // normalize view vector
+            viewLengthInv = 1.0f / std::sqrt(viewX * viewX + viewY * viewY + viewZ * viewZ);
+            viewX *= viewLengthInv;
+            viewY *= viewLengthInv;
+            viewZ *= viewLengthInv;
+
             phongReflectionModel(
-                vert1.x, vert1.y, vert1.z,
-                camX, camY, camZ,
+                viewX, viewY, viewZ,
                 vert1.nx, vert1.ny, vert1.nz,
                 lightVec[0], lightVec[1], lightVec[2],
                 material,
@@ -303,9 +310,20 @@ namespace Shaders
             g1 = result[1] * z1Rec;
             b1 = result[2] * z1Rec;
 
+            // view vector (point -> eye (camera))
+            // calculate view vector
+            viewX = camX - vert2.x;
+            viewY = camY - vert2.y;
+            viewZ = camZ - vert2.z;
+
+            // normalize view vector
+            viewLengthInv = 1.0f / std::sqrt(viewX * viewX + viewY * viewY + viewZ * viewZ);
+            viewX *= viewLengthInv;
+            viewY *= viewLengthInv;
+            viewZ *= viewLengthInv;
+
             phongReflectionModel(
-                vert2.x, vert2.y, vert2.z,
-                camX, camY, camZ,
+                viewX, viewY, viewZ,
                 vert2.nx, vert2.ny, vert2.nz,
                 lightVec[0], lightVec[1], lightVec[2],
                 material,
@@ -422,15 +440,12 @@ namespace Shaders
         /// @brief The coordinates of the normal at vertex 2.
         float n2x, n2y, n2z;
 
-        /// @brief The coordinates of vertex 0.
+        /// @brief The coordinates of the view vector at vertex 0.
         float v0x, v0y, v0z;
-        /// @brief The coordinates of vertex 1.
+        /// @brief The coordinates of the view vector at vertex 1.
         float v1x, v1y, v1z;
-        /// @brief The coordinates of vertex 2.
+        /// @brief The coordinates of the view vector at vertex 2.
         float v2x, v2y, v2z;
-
-        /// @brief The coordinates of camera.
-        float cx, cy, cz;
 
         /// @brief The coordinates of the light vector.
         float lx, ly, lz;
@@ -468,19 +483,38 @@ namespace Shaders
             Vertex &vert1 = vertices[1];
             Vertex &vert2 = vertices[2];
 
+            // CALCULATE VIEW VECTORS
+            // VERTEX 0
+            float viewX = camX - vert0.x;
+            float viewY = camY - vert0.y;
+            float viewZ = camZ - vert0.z;
+
             // predivide with z for perspective-correct interpolation
-            v0x = vert0.x * z0Rec;
-            v0y = vert0.y * z0Rec;
-            v0z = vert0.z * z0Rec;
+            v0x = viewX * z0Rec;
+            v0y = viewY * z0Rec;
+            v0z = viewZ * z0Rec;
 
-            v1x = vert1.x * z1Rec;
-            v1y = vert1.y * z1Rec;
-            v1z = vert1.z * z1Rec;
+            // VERTEX 1
+            viewX = camX - vert1.x;
+            viewY = camY - vert1.y;
+            viewZ = camZ - vert1.z;
 
-            v2x = vert2.x * z2Rec;
-            v2y = vert2.y * z2Rec;
-            v2z = vert2.z * z2Rec;
+            // predivide with z for perspective-correct interpolation
+            v1x = viewX * z1Rec;
+            v1y = viewY * z1Rec;
+            v1z = viewZ * z1Rec;
 
+            // VERTEX 2
+            viewX = camX - vert2.x;
+            viewY = camY - vert2.y;
+            viewZ = camZ - vert2.z;
+
+            // predivide with z for perspective-correct interpolation
+            v2x = viewX * z2Rec;
+            v2y = viewY * z2Rec;
+            v2z = viewZ * z2Rec;
+
+            // store normals
             n0x = vert0.nx * z0Rec;
             n0y = vert0.ny * z0Rec;
             n0z = vert0.nz * z0Rec;
@@ -493,10 +527,7 @@ namespace Shaders
             n2y = vert2.ny * z2Rec;
             n2z = vert2.nz * z2Rec;
 
-            cx = camX;
-            cy = camY;
-            cz = camZ;
-
+            // store light
             lx = lightVec[0];
             ly = lightVec[1];
             lz = lightVec[2];
@@ -531,12 +562,17 @@ namespace Shaders
             nz *= normalLengthInv;
 
             // perspective correct interpolation
-            float px = (lambda0 * v0x + lambda1 * v1x + lambda2 * v2x) * zDepth;
-            float py = (lambda0 * v0y + lambda1 * v1y + lambda2 * v2y) * zDepth;
-            float pz = (lambda0 * v0z + lambda1 * v1z + lambda2 * v2z) * zDepth;
+            float vx = (lambda0 * v0x + lambda1 * v1x + lambda2 * v2x) * zDepth;
+            float vy = (lambda0 * v0y + lambda1 * v1y + lambda2 * v2y) * zDepth;
+            float vz = (lambda0 * v0z + lambda1 * v1z + lambda2 * v2z) * zDepth;
+
+            // normalize view Vector
+            float viewLengthInv = 1.0f / std::sqrt(vx * vx + vy * vy + vz * vz);
+            vx *= viewLengthInv;
+            vy *= viewLengthInv;
+            vz *= viewLengthInv;
             phongReflectionModel(
-                px, py, pz,
-                cx, cy, cz,
+                vx, vy, vz,
                 nx, ny, nz,
                 lx, ly, lz,
                 material,

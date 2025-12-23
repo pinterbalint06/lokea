@@ -8,6 +8,7 @@
 class Clipper;
 class Scene;
 class Camera;
+class Mesh;
 
 class Renderer
 {
@@ -30,11 +31,14 @@ private:
     float *normal_;
     Clipper *clipper_;
     FrameBuffer *frameBuffer_;
+    Vertex *vertexCache_;
+    int vertexCacheSize_;
 
     template <typename StructShader>
     void renderTemplate(const Scene *scene);
 
-    void projectAndClipTriangle(const int &i0, const int &i1, const int &i2, float *normal, Vertex *vertices, Camera *mainCamera);
+    void clipTriangle(const int &i0, const int &i1, const int &i2, Vertex *vertices);
+    void projectVertices(const Mesh *mesh, const Camera *camera);
 
 public:
     Renderer();

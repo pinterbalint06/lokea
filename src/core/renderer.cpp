@@ -24,10 +24,11 @@ Renderer::Renderer()
     inc_ = sqrAntialiasRec_ >> 1;
     projectedTriangles_ = (Vertex *)malloc(20 * sizeof(Vertex));
     projectedTrianglesSize_ = 0;
-    currShadingMode_ = Shaders::SHADINGMODE::PHONG;
+    currShadingMode_ = Shaders::SHADINGMODE::GOURAUD;
     normal_ = (float *)malloc(3 * sizeof(float));
     clipper_ = new Clipper();
     frameBuffer_ = new FrameBuffer(imageWidth_, imageHeight_, antialias_);
+    vertexCacheSize_ = 0;
 }
 
 Renderer::~Renderer()
@@ -74,20 +75,37 @@ void Renderer::setImageDimensions(int imageW, int imageH)
     frameBuffer_->setNewOptions(imageWidth_, imageHeight_, antialias_);
 }
 
-void Renderer::projectAndClipTriangle(const int &i0, const int &i1, const int &i2, float *normal, Vertex *vertices, Camera *mainCamera)
+void Renderer::projectVertices(const Mesh *mesh, const Camera *camera)
+{
+    int vertexCount = mesh->getVertexCount();
+    Vertex *vertices = mesh->getVertices();
+    if (vertexCacheSize_ < vertexCount)
+    {
+        if (vertexCache_)
+        {
+            free(vertexCache_);
+        }
+        vertexCache_ = (Vertex *)malloc(vertexCount * sizeof(Vertex));
+        vertexCacheSize_ = vertexCount;
+    }
+
+    const float *MV = camera->getViewMatrix();
+    const float *MP = camera->getProjMatrix();
+
+    for (int i = 0; i < vertexCount; i++)
+    {
+        Vertex v = vertices[i];
+        v.multWithMatrix(MV);
+        v.multWithMatrix(MP);
+        vertexCache_[i] = v;
+    }
+}
+
+void Renderer::clipTriangle(const int &i0, const int &i1, const int &i2, Vertex *vertices)
 {
     p0_ = vertices[i0];
     p1_ = vertices[i1];
     p2_ = vertices[i2];
-    const float *MV = mainCamera->getViewMatrix();
-    p0_.multWithMatrix(MV);
-    p1_.multWithMatrix(MV);
-    p2_.multWithMatrix(MV);
-    Vertex::calculateFaceNormal(p0_, p1_, p2_, normal);
-    const float *MP = mainCamera->getProjMatrix();
-    p0_.multWithMatrix(MP);
-    p1_.multWithMatrix(MP);
-    p2_.multWithMatrix(MP);
     // clip space
     clipper_->clip(p0_, p1_, p2_);
     Vertex *clipped = clipper_->getClipped();
@@ -137,7 +155,6 @@ void Renderer::projectAndClipTriangle(const int &i0, const int &i1, const int &i
             projected2.u = v2.u;
             projected2.v = v2.v;
         }
-        MathUtils::normalizeVector(normal);
     }
 }
 
@@ -180,9 +197,10 @@ void Renderer::renderTemplate(const Scene *scene)
     int32_t *currIndices = mesh->getIndices();
     Vertex *currVertices = mesh->getVertices();
     int indicesCount = mesh->getIndexCount();
+    projectVertices(mesh, mainCamera);
     for (int i = 0; i < indicesCount; i += 3)
     {
-        projectAndClipTriangle(currIndices[i], currIndices[i + 1], currIndices[i + 2], normal_, currVertices, mainCamera);
+        clipTriangle(currIndices[i], currIndices[i + 1], currIndices[i + 2], vertexCache_);
         for (int j = 0; j < projectedTrianglesSize_; j += 3)
         {
             EdgeFunction::EdgeFunction ef;
@@ -224,6 +242,11 @@ void Renderer::renderTemplate(const Scene *scene)
                 z1Rec = 1.0f / projectedTriangles_[j + 1].z;
                 z2Rec = 1.0f / projectedTriangles_[j + 2].z;
 
+                if (currShadingMode_ == Shaders::SHADINGMODE::FLAT)
+                {
+                    Vertex::calculateFaceNormal(currVertices[currIndices[i]], currVertices[currIndices[i + 1]], currVertices[currIndices[i + 2]], normal_);
+                    MathUtils::normalizeVector(normal_);
+                }
                 // initialize shader for triangle
                 shader.setupTriangle(normal_, &projectedTriangles_[j],
                                      i, lightVec, meshMat, sun,
