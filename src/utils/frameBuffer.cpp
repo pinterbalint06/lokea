@@ -2,6 +2,10 @@
 #include <cstring>
 #include <algorithm>
 #include <cmath>
+#include <wasm_simd128.h>
+#include <stdio.h>
+
+#define WASM_SIMD_COMPAT_SLOW
 
 FrameBuffer::FrameBuffer(int width, int height, int antialias)
 {
@@ -40,12 +44,17 @@ void FrameBuffer::cleanup()
     }
 }
 
-void FrameBuffer::clear()
+void FrameBuffer::clear(float r, float g, float b)
 {
     int size = width_ * height_;
     std::memset(imageBuffer_, 0, size * 4 * sizeof(uint8_t));
     std::memset(zBuffer_, 0, size * antialias_ * sizeof(float));
-    std::memset(antialiasImgBuff_, 0, size * antialias_ * 3 * sizeof(float));
+    for (int i = 0; i < size * antialias_ * 3; i += 3)
+    {
+        antialiasImgBuff_[i] = r;
+        antialiasImgBuff_[i + 1] = g;
+        antialiasImgBuff_[i + 2] = b;
+    }
 }
 
 void FrameBuffer::calculateAntialias()
@@ -56,49 +65,30 @@ void FrameBuffer::calculateAntialias()
     /// @brief accumulate z-buffer
     float zBufferSum;
     float antiRec = 1.0f / antialias_;
-    for (int y = 0; y < height_; y++)
+    for (int i = 0; i < width_ * height_; i++)
     {
-        for (int x = 0; x < width_; x++)
+        imageAntiIndex = i * antialias_ * 3;
+        imageBufferIndex = i * 4;
+        r = 0.0f;
+        g = 0.0f;
+        b = 0.0f;
+        for (int k = 0; k < antialias_; k++)
         {
-            altalanosIndex = (y * width_ + x);
-            imageAntiIndex = altalanosIndex * antialias_;
-            imageBufferIndex = altalanosIndex * 4;
-            r = 0.0f;
-            g = 0.0f;
-            b = 0.0f;
-            zBufferSum = 0.0f;
-            for (int k = 0; k < antialias_; k++)
-            {
-                subImageIndex = (imageAntiIndex + k) * 3;
-                r += antialiasImgBuff_[subImageIndex];
-                g += antialiasImgBuff_[subImageIndex + 1];
-                b += antialiasImgBuff_[subImageIndex + 2];
-                zBufferSum += zBuffer_[imageAntiIndex];
-            }
-            // accumulated z-buffer equals to antialias
-            // that means there is no mesh at this pixel -> set it to sky color
-            if (zBufferSum == 0.0f)
-            {
-
-                imageBuffer_[imageBufferIndex] = 135;
-                imageBuffer_[imageBufferIndex + 1] = 206;
-                imageBuffer_[imageBufferIndex + 2] = 235;
-                imageBuffer_[imageBufferIndex + 3] = 255;
-            }
-            else
-            {
-                imageBuffer_[imageBufferIndex] = static_cast<uint8_t>(
-                    std::round(
-                        std::clamp(r * antiRec, 0.0f, 255.0f)));
-                imageBuffer_[imageBufferIndex + 1] = static_cast<uint8_t>(
-                    std::round(
-                        std::clamp(g * antiRec, 0.0f, 255.0f)));
-                imageBuffer_[imageBufferIndex + 2] = static_cast<uint8_t>(
-                    std::round(
-                        std::clamp(b * antiRec, 0.0f, 255.0f)));
-                imageBuffer_[imageBufferIndex + 3] = 255;
-            }
+            r += antialiasImgBuff_[imageAntiIndex + k];
+            g += antialiasImgBuff_[imageAntiIndex + antialias_ + k];
+            b += antialiasImgBuff_[imageAntiIndex + 2 * antialias_ + k];
         }
+
+        imageBuffer_[imageBufferIndex] = static_cast<uint8_t>(
+            std::round(
+                std::clamp(r * antiRec, 0.0f, 255.0f)));
+        imageBuffer_[imageBufferIndex + 1] = static_cast<uint8_t>(
+            std::round(
+                std::clamp(g * antiRec, 0.0f, 255.0f)));
+        imageBuffer_[imageBufferIndex + 2] = static_cast<uint8_t>(
+            std::round(
+                std::clamp(b * antiRec, 0.0f, 255.0f)));
+        imageBuffer_[imageBufferIndex + 3] = 255;
     }
 }
 

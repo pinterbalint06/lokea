@@ -13,6 +13,7 @@ Engine::Engine(int size)
     mesh->setMaterial(Materials::Material::Grass());
     scene_->setMesh(mesh);
     renderer_ = new Renderer();
+    renderer_->setDefaultColor(135.0f, 206.0f, 235.0f);
     cameraHeight_ = 3.8;
     cameraLocation_ = 0;
     calcNewCamLoc();

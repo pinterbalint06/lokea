@@ -29,7 +29,7 @@ public:
     void setNewOptions(int width, int height, int antialias);
 
     void cleanup();
-    void clear();
+    void clear(float r, float g, float b);
     void calculateAntialias();
 };
 

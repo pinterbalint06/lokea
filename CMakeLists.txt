@@ -31,12 +31,14 @@ set(COMMON_WASM_FLAGS
 # ---------------------------------------------------------
 # optimized
 # ---------------------------------------------------------
-set(RELEASE_COMPILE_FLAGS -O3 -flto)
+set(RELEASE_COMPILE_FLAGS -O3 -flto -msimd128)
+
+set(RELEASE_LINK_FLAGS -flto)
 # ---------------------------------------------------------
 # debug
 # ---------------------------------------------------------
 # for debug js runs in frontend/js source location is two directories back fro m there
-set(DEBUG_COMPILE_FLAGS -g -gsource-map "SHELL:-fdebug-prefix-map=${CMAKE_SOURCE_DIR}=../../")
+set(DEBUG_COMPILE_FLAGS -g -gsource-map "SHELL:-fdebug-prefix-map=${CMAKE_SOURCE_DIR}=../../" -msimd128)
 set(DEBUG_LINK_FLAGS -g -gsource-map "SHELL:-fdebug-prefix-map=${CMAKE_SOURCE_DIR}=../../")
 
 # ---------------------------------------------------------
@@ -45,7 +47,7 @@ set(DEBUG_LINK_FLAGS -g -gsource-map "SHELL:-fdebug-prefix-map=${CMAKE_SOURCE_DI
 
 # release
 add_executable(testTerrainWASM ${ENGINE_CORE_FILES} src/testTerrain.cpp)
-target_link_options(testTerrainWASM PUBLIC ${COMMON_WASM_FLAGS})
+target_link_options(testTerrainWASM PUBLIC ${COMMON_WASM_FLAGS} ${RELEASE_LINK_FLAGS})
 target_compile_options(testTerrainWASM PUBLIC ${RELEASE_COMPILE_FLAGS})
 
 # debug
@@ -59,7 +61,7 @@ target_compile_options(testTerrainWASM_debug PUBLIC ${DEBUG_COMPILE_FLAGS})
 
 # release
 add_executable(testEquirectangularWASM ${ENGINE_CORE_FILES} src/testEquirectangular.cpp)
-target_link_options(testEquirectangularWASM PUBLIC ${COMMON_WASM_FLAGS})
+target_link_options(testEquirectangularWASM PUBLIC ${COMMON_WASM_FLAGS} ${RELEASE_LINK_FLAGS})
 target_compile_options(testEquirectangularWASM PUBLIC ${RELEASE_COMPILE_FLAGS})
 
 # debug

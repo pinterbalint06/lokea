@@ -147,21 +147,21 @@ namespace Shaders
         }
 
         /**
-         * @brief Writes the RGB color values to the image buffer for a pixel.
-         * @param lambda0 Barycentric coordinate for the first vertex (unused here but needed so the same function can be used in the rendering loop).
-         * @param lambda1 Barycentric coordinate for the second vertex (unused here).
-         * @param lambda2 Barycentric coordinate for the third vertex (unused here).
-         * @param zDepth Depth value for the pixel (unused here).
-         * @param imageAntiBuffer Pointer to the image buffer.
-         * @param imageIndex Index in the image buffer where the pixel's color should be written.
+         * @brief Writes the RGB color values to the image buffer for a pixel in RRRR GGGG BBBB. SoA data layout.
+         * @param lambda0 Barycentric coordinate for the first vertex. (unused here but needed so the same function can be used in the rendering loop).
+         * @param lambda1 Barycentric coordinate for the second vertex. (unused here).
+         * @param lambda2 Barycentric coordinate for the third vertex. (unused here).
+         * @param zDepth Depth value for the pixel. (unused here).
+         * @param imageAntiBuffer Pointer to the image buffer's first color values.
+         * @param antialias Supersampling antialias factor.
          */
         inline void shadePixel(
             float lambda0, float lambda1, float lambda2,
-            float zDepth, float *imageAntiBuffer, int imageIndex)
+            float zDepth, float *imageAntiBuffer, int antialias)
         {
-            imageAntiBuffer[imageIndex] = r;
-            imageAntiBuffer[imageIndex + 1] = g;
-            imageAntiBuffer[imageIndex + 2] = b;
+            imageAntiBuffer[0] = r;
+            imageAntiBuffer[antialias] = g;
+            imageAntiBuffer[2 * antialias] = b;
         }
     };
 
@@ -204,21 +204,21 @@ namespace Shaders
         }
 
         /**
-         * @brief Writes the precomputed RGB color values to the image buffer for a pixel.
-         * @param lambda0 Barycentric coordinate for the first vertex (unused here but needed so the same function can be used in the rendering loop).
-         * @param lambda1 Barycentric coordinate for the second vertex (unused here).
-         * @param lambda2 Barycentric coordinate for the third vertex (unused here).
-         * @param zDepth Depth value for the pixel (unused here).
-         * @param imageAntiBuffer Pointer to the image buffer.
-         * @param imageIndex Index in the image buffer where the pixel's color should be written.
+         * @brief Writes the precomputed RGB color values to the image buffer for a pixel in RRRR GGGG BBBB. SoA data layout.
+         * @param lambda0 Barycentric coordinate for the first vertex. (unused here but needed so the same function can be used in the rendering loop).
+         * @param lambda1 Barycentric coordinate for the second vertex. (unused here).
+         * @param lambda2 Barycentric coordinate for the third vertex. (unused here).
+         * @param zDepth Depth value for the pixel. (unused here).
+         * @param imageAntiBuffer Pointer to the image buffer's first color values.
+         * @param antialias Supersampling antialias factor.
          */
         inline void shadePixel(
             float lambda0, float lambda1, float lambda2,
-            float zDepth, float *imageAntiBuffer, int imageIndex)
+            float zDepth, float *imageAntiBuffer, int antialias)
         {
-            imageAntiBuffer[imageIndex] = r;
-            imageAntiBuffer[imageIndex + 1] = g;
-            imageAntiBuffer[imageIndex + 2] = b;
+            imageAntiBuffer[0] = r;
+            imageAntiBuffer[antialias] = g;
+            imageAntiBuffer[2 * antialias] = b;
         }
     };
 
@@ -337,22 +337,22 @@ namespace Shaders
         }
 
         /**
-         * @brief Perspective-correctly interpolates the vertex colors and writes them to the image buffer for a pixel.
+         * @brief Perspective-correctly interpolates the vertex colors and writes them to the image buffer for a pixel in RRRR GGGG BBBB. SoA data layout.
          * @param lambda0 Barycentric coordinate for the first vertex.
          * @param lambda1 Barycentric coordinate for the second vertex.
          * @param lambda2 Barycentric coordinate for the third vertex.
          * @param zDepth Depth value for the pixel.
-         * @param imageAntiBuffer Pointer to the image buffer.
-         * @param imageIndex Index in the image buffer where the pixel's color should be written.
+         * @param imageAntiBuffer Pointer to the image buffer's first color value.
+         * @param antialias Supersampling antialias factor.
          */
         inline void shadePixel(
             float lambda0, float lambda1, float lambda2,
-            float zDepth, float *imageAntiBuffer, int imageIndex)
+            float zDepth, float *imageAntiBuffer, int antialias)
         {
             // perspective correct interpolation
-            imageAntiBuffer[imageIndex] = (lambda0 * r0 + lambda1 * r1 + lambda2 * r2) * zDepth;
-            imageAntiBuffer[imageIndex + 1] = (lambda0 * g0 + lambda1 * g1 + lambda2 * g2) * zDepth;
-            imageAntiBuffer[imageIndex + 2] = (lambda0 * b0 + lambda1 * b1 + lambda2 * b2) * zDepth;
+            imageAntiBuffer[0] = (lambda0 * r0 + lambda1 * r1 + lambda2 * r2) * zDepth;
+            imageAntiBuffer[antialias] = (lambda0 * g0 + lambda1 * g1 + lambda2 * g2) * zDepth;
+            imageAntiBuffer[2 * antialias] = (lambda0 * b0 + lambda1 * b1 + lambda2 * b2) * zDepth;
         }
     };
 
@@ -400,7 +400,7 @@ namespace Shaders
         }
 
         /**
-         * @brief Perspective-correctly interpolates the vertex normals then computes the color values and writes them to the image buffer.
+         * @brief Perspective-correctly interpolates the vertex normals then computes the color values and writes them to the image buffer in RRRR GGGG BBBB. SoA data layout.
          * @param lambda0 Barycentric coordinate for the first vertex.
          * @param lambda1 Barycentric coordinate for the second vertex.
          * @param lambda2 Barycentric coordinate for the third vertex.
@@ -410,7 +410,7 @@ namespace Shaders
          */
         inline void shadePixel(
             float lambda0, float lambda1, float lambda2,
-            float zDepth, float *imageAntiBuffer, int imageIndex)
+            float zDepth, float *imageAntiBuffer, int antialias)
         {
             // perspective correct interpolation
             float uInterpolated = (lambda0 * u0 + lambda1 * u1 + lambda2 * u2) * zDepth;
@@ -419,9 +419,9 @@ namespace Shaders
             float color[3];
             texture->getTexturePixel(uInterpolated, vInterpolated, color);
 
-            imageAntiBuffer[imageIndex] = color[0];
-            imageAntiBuffer[imageIndex + 1] = color[1];
-            imageAntiBuffer[imageIndex + 2] = color[2];
+            imageAntiBuffer[0] = color[0];
+            imageAntiBuffer[antialias] = color[1];
+            imageAntiBuffer[2 * antialias] = color[2];
         }
     };
 
@@ -538,17 +538,18 @@ namespace Shaders
         }
 
         /**
-         * @brief Perspective-correctly interpolates the vertex normals then computes the color values and writes them to the image buffer.
+         * @brief Perspective-correctly interpolates the vertex normals then computes the color values and writes them to the image buffer in RRRR GGGG BBBB. SoA data layout.
          * @param lambda0 Barycentric coordinate for the first vertex.
          * @param lambda1 Barycentric coordinate for the second vertex.
          * @param lambda2 Barycentric coordinate for the third vertex.
          * @param zDepth Depth value for the pixel.
-         * @param imageAntiBuffer Pointer to the image buffer.
-         * @param imageIndex Index in the image buffer where the pixel's color should be written.
+         * @param imageAntiBuffer Pointer to the image buffer's first color value.
+         * @param antialias Supersampling antialias factor.
          */
+
         inline void shadePixel(
             float lambda0, float lambda1, float lambda2,
-            float zDepth, float *imageAntiBuffer, int imageIndex)
+            float zDepth, float *imageAntiBuffer, int antialias)
         {
             // perspective correct interpolation
             float nx = (lambda0 * n0x + lambda1 * n1x + lambda2 * n2x) * zDepth;
@@ -571,6 +572,7 @@ namespace Shaders
             vx *= viewLengthInv;
             vy *= viewLengthInv;
             vz *= viewLengthInv;
+            float colors[3];
             phongReflectionModel(
                 vx, vy, vz,
                 nx, ny, nz,
@@ -578,7 +580,10 @@ namespace Shaders
                 material,
                 pSun,
                 ambientLight,
-                &imageAntiBuffer[imageIndex]);
+                colors);
+            imageAntiBuffer[0] = colors[0];
+            imageAntiBuffer[antialias] = colors[1];
+            imageAntiBuffer[2 * antialias] = colors[2];
         }
     };
 }

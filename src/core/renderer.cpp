@@ -29,6 +29,9 @@ Renderer::Renderer()
     clipper_ = new Clipper();
     frameBuffer_ = new FrameBuffer(imageWidth_, imageHeight_, antialias_);
     vertexCacheSize_ = 0;
+    rBuffer_ = 0.0f;
+    gBuffer_ = 0.0f;
+    bBuffer_ = 0.0f;
 }
 
 Renderer::~Renderer()
@@ -162,15 +165,11 @@ template <typename StructShader>
 void Renderer::renderTemplate(const Scene *scene)
 {
     const int TILE_SIZE = 8;
-    frameBuffer_->clear();
+    frameBuffer_->clear(rBuffer_, gBuffer_, bBuffer_);
     // bounding box
     float htminx, htmaxx, htminy, htmaxy;
     // reciprocal of the z values
     float z0Rec, z1Rec, z2Rec;
-    // used for the z-buffer
-    float zDepth;
-    // indexes
-    int bufferIndex, imageIndex;
     // camera
     Camera *mainCamera = scene->getCamera();
     float camX = mainCamera->getXPosition();
@@ -285,88 +284,11 @@ void Renderer::renderTemplate(const Scene *scene)
                             ((c[1][0] | c[1][1] | c[1][2] | c[1][3]) >= 0) &&
                             ((c[2][0] | c[2][1] | c[2][2] | c[2][3]) >= 0))
                         {
-                            for (int y = ty; y <= yEnd; y++)
-                            {
-                                ef.backToRowStart();
-                                for (int x = tx; x <= xEnd; x++)
-                                {
-                                    ef.backToColStart();
-                                    for (int ya = 0; ya < sqrAntialias_; ya++)
-                                    {
-                                        ef.backToSubRowStart();
-                                        for (int xa = 0; xa < sqrAntialias_; xa++)
-                                        {
-                                            // barycentric coordinates
-                                            float lambda0 = (float)ef.w0Sub_ * invTriArea;
-                                            float lambda1 = (float)ef.w1Sub_ * invTriArea;
-                                            float lambda2 = (float)ef.w2Sub_ * invTriArea;
-                                            // hyperbolic interpolation for z-coordinate
-                                            zDepth = lambda0 * z0Rec + lambda1 * z1Rec + lambda2 * z2Rec;
-                                            bufferIndex = (y * imageWidth_ + x) * antialias_ + ya * sqrAntialias_ + xa;
-                                            if (zDepth > zBuffer[bufferIndex])
-                                            {
-                                                zBuffer[bufferIndex] = zDepth;
-                                                imageIndex = bufferIndex * 3;
-                                                // shade current pixel
-                                                shader.shadePixel(lambda0, lambda1, lambda2,
-                                                                  1.0f / zDepth, imageAntiBuffer, imageIndex);
-                                            }
-                                            // step one subpixel to the right
-                                            ef.oneSubColRight();
-                                        }
-                                        // step down one subpixel
-                                        ef.oneSubRowDown();
-                                    }
-                                    // step one pixel to the right
-                                    ef.oneColRight();
-                                }
-                                // step down one pixel
-                                ef.oneRowDown();
-                            }
+                            rasterizeTile<StructShader, true>(ef, invTriArea, z0Rec, z1Rec, z2Rec, tx, ty, xEnd, yEnd, shader);
                         }
                         else
                         {
-                            for (int y = ty; y <= yEnd; y++)
-                            {
-                                ef.backToRowStart();
-                                for (int x = tx; x <= xEnd; x++)
-                                {
-                                    ef.backToColStart();
-                                    for (int ya = 0; ya < sqrAntialias_; ya++)
-                                    {
-                                        ef.backToSubRowStart();
-                                        for (int xa = 0; xa < sqrAntialias_; xa++)
-                                        {
-                                            if (ef.isInside())
-                                            {
-                                                // barycentric coordinates
-                                                float lambda0 = (float)ef.w0Sub_ * invTriArea;
-                                                float lambda1 = (float)ef.w1Sub_ * invTriArea;
-                                                float lambda2 = (float)ef.w2Sub_ * invTriArea;
-                                                // hyperbolic interpolation for z-coordinate
-                                                zDepth = lambda0 * z0Rec + lambda1 * z1Rec + lambda2 * z2Rec;
-                                                bufferIndex = (y * imageWidth_ + x) * antialias_ + ya * sqrAntialias_ + xa;
-                                                if (zDepth > zBuffer[bufferIndex])
-                                                {
-                                                    zBuffer[bufferIndex] = zDepth;
-                                                    imageIndex = bufferIndex * 3;
-                                                    // shade current pixel
-                                                    shader.shadePixel(lambda0, lambda1, lambda2,
-                                                                      1.0f / zDepth, imageAntiBuffer, imageIndex);
-                                                }
-                                            }
-                                            // step one subpixel to the right
-                                            ef.oneSubColRight();
-                                        }
-                                        // step down one subpixel
-                                        ef.oneSubRowDown();
-                                    }
-                                    // step one pixel to the right
-                                    ef.oneColRight();
-                                }
-                                // step down one pixel
-                                ef.oneRowDown();
-                            }
+                            rasterizeTile<StructShader, false>(ef, invTriArea, z0Rec, z1Rec, z2Rec, tx, ty, xEnd, yEnd, shader);
                         }
                     }
                 }
