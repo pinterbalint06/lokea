@@ -8,7 +8,7 @@ Mesh::Mesh(int vertexCount, int indexCount)
     indexCount_ = indexCount;
     normalCount_ = vertexCount_;
     vertices_ = (Vertex *)malloc(vertexCount_ * sizeof(Vertex));
-    indices_ = (int32_t *)malloc(indexCount_ * sizeof(int32_t));
+    indices_ = (uint32_t *)malloc(indexCount_ * sizeof(uint32_t));
 }
 
 Mesh::~Mesh()

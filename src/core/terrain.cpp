@@ -105,7 +105,7 @@ void Terrain::buildTerrain()
     }
 
     // calculate indices
-    int32_t *indices = mesh_->getIndices();
+    uint32_t *indices = mesh_->getIndices();
     int currIndex = 0;
     for (int y = 0; y < size_ - 1; y++)
     {

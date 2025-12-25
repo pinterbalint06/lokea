@@ -11,4 +11,4 @@
 11. Gömb generálás dokumentálása (RÖVID csak gömb koordináta -> Descartes koordináta szemléltetése és gömbkoordináták előállítása)
 12. Domborzat valósághűbb (erózió)
 13. Blinn-Phong
-14. Váltás OpenGL-re
+14. Váltás WebGL-re (OpenGL ES)

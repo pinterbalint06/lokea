@@ -9,7 +9,7 @@ class Mesh
 {
 private:
     Vertex *vertices_;
-    int32_t *indices_;
+    uint32_t *indices_;
 
     int vertexCount_;
     int indexCount_;
@@ -31,7 +31,7 @@ public:
 
     Vertex *getVertices() const { return vertices_; }
 
-    int32_t *getIndices() const { return indices_; }
+    uint32_t *getIndices() const { return indices_; }
 
     Materials::Material getMaterial() const { return material_; }
 

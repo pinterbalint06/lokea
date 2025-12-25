@@ -39,7 +39,7 @@ private:
     template <typename StructShader>
     void renderTemplate(const Scene *scene);
 
-    void clipTriangle(const int &i0, const int &i1, const int &i2, Vertex *vertices);
+    void clipTriangle(const uint32_t &i0, const uint32_t &i1, const uint32_t &i2, Vertex *vertices);
     void projectVertices(const Mesh *mesh, const Camera *camera);
 
     template <typename StructShader, bool TrivialInside>
@@ -98,7 +98,12 @@ public:
 
     void setAntialias(int antialias);
     void setShadingMode(Shaders::SHADINGMODE shadingMode);
-    void setDefaultColor(float r, float g, float b) { rBuffer_ = r; gBuffer_ = g; bBuffer_ = b; };
+    void setDefaultColor(float r, float g, float b)
+    {
+        rBuffer_ = r;
+        gBuffer_ = g;
+        bBuffer_ = b;
+    };
 
     void setImageDimensions(int imageW, int imageH);
     void render(const Scene *scene);

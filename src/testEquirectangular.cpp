@@ -52,7 +52,7 @@ Mesh *generateSphere(int rings, int segments, float radius)
             vertices[count++] = vert;
         }
     }
-    int32_t *indices = mesh->getIndices();
+    uint32_t *indices = mesh->getIndices();
 
     count = 0;
     for (int lat = 0; lat < rings; lat++)

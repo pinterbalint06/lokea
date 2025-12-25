@@ -443,6 +443,11 @@ function initRuntime() {
   // No ATPOSTCTORS hooks
 }
 
+function preMain() {
+  checkStackCookie();
+  // No ATMAINS hooks
+}
+
 function postRun() {
   checkStackCookie();
    // PThreads reuse the runtime from the main thread.
@@ -525,7 +530,7 @@ function createExportWrapper(name, nargs) {
 var wasmBinaryFile;
 
 function findWasmBinary() {
-  return locateFile('testEquirectangularWASM_debug.wasm');
+  return locateFile('testWebGLWASM_debug.wasm');
 }
 
 function getBinarySync(file) {
@@ -1048,365 +1053,6 @@ async function createWasm() {
       });
     };
 
-  var createNamedFunction = (name, func) => Object.defineProperty(func, 'name', { value: name });
-  
-  var runDestructors = (destructors) => {
-      while (destructors.length) {
-        var ptr = destructors.pop();
-        var del = destructors.pop();
-        del(ptr);
-      }
-    };
-  
-  
-  function usesDestructorStack(argTypes) {
-      // Skip return value at index 0 - it's not deleted here.
-      for (var i = 1; i < argTypes.length; ++i) {
-        // The type does not define a destructor function - must use dynamic stack
-        if (argTypes[i] !== null && argTypes[i].destructorFunction === undefined) {
-          return true;
-        }
-      }
-      return false;
-    }
-  
-  
-  function checkArgCount(numArgs, minArgs, maxArgs, humanName, throwBindingError) {
-      if (numArgs < minArgs || numArgs > maxArgs) {
-        var argCountMessage = minArgs == maxArgs ? minArgs : `${minArgs} to ${maxArgs}`;
-        throwBindingError(`function ${humanName} called with ${numArgs} arguments, expected ${argCountMessage}`);
-      }
-    }
-  function createJsInvoker(argTypes, isClassMethodFunc, returns, isAsync) {
-      var needsDestructorStack = usesDestructorStack(argTypes);
-      var argCount = argTypes.length - 2;
-      var argsList = [];
-      var argsListWired = ['fn'];
-      if (isClassMethodFunc) {
-        argsListWired.push('thisWired');
-      }
-      for (var i = 0; i < argCount; ++i) {
-        argsList.push(`arg${i}`)
-        argsListWired.push(`arg${i}Wired`)
-      }
-      argsList = argsList.join(',')
-      argsListWired = argsListWired.join(',')
-  
-      var invokerFnBody = `return function (${argsList}) {\n`;
-  
-      invokerFnBody += "checkArgCount(arguments.length, minArgs, maxArgs, humanName, throwBindingError);\n";
-  
-      if (needsDestructorStack) {
-        invokerFnBody += "var destructors = [];\n";
-      }
-  
-      var dtorStack = needsDestructorStack ? "destructors" : "null";
-      var args1 = ["humanName", "throwBindingError", "invoker", "fn", "runDestructors", "fromRetWire", "toClassParamWire"];
-  
-      if (isClassMethodFunc) {
-        invokerFnBody += `var thisWired = toClassParamWire(${dtorStack}, this);\n`;
-      }
-  
-      for (var i = 0; i < argCount; ++i) {
-        var argName = `toArg${i}Wire`;
-        invokerFnBody += `var arg${i}Wired = ${argName}(${dtorStack}, arg${i});\n`;
-        args1.push(argName);
-      }
-  
-      invokerFnBody += (returns || isAsync ? "var rv = ":"") + `invoker(${argsListWired});\n`;
-  
-      var returnVal = returns ? "rv" : "";
-  
-      if (needsDestructorStack) {
-        invokerFnBody += "runDestructors(destructors);\n";
-      } else {
-        for (var i = isClassMethodFunc?1:2; i < argTypes.length; ++i) { // Skip return value at index 0 - it's not deleted here. Also skip class type if not a method.
-          var paramName = (i === 1 ? "thisWired" : ("arg"+(i - 2)+"Wired"));
-          if (argTypes[i].destructorFunction !== null) {
-            invokerFnBody += `${paramName}_dtor(${paramName});\n`;
-            args1.push(`${paramName}_dtor`);
-          }
-        }
-      }
-  
-      if (returns) {
-        invokerFnBody += "var ret = fromRetWire(rv);\n" +
-                         "return ret;\n";
-      } else {
-      }
-  
-      invokerFnBody += "}\n";
-  
-      args1.push('checkArgCount', 'minArgs', 'maxArgs');
-      invokerFnBody = `if (arguments.length !== ${args1.length}){ throw new Error(humanName + "Expected ${args1.length} closure arguments " + arguments.length + " given."); }\n${invokerFnBody}`;
-      return new Function(args1, invokerFnBody);
-    }
-  
-  function getRequiredArgCount(argTypes) {
-      var requiredArgCount = argTypes.length - 2;
-      for (var i = argTypes.length - 1; i >= 2; --i) {
-        if (!argTypes[i].optional) {
-          break;
-        }
-        requiredArgCount--;
-      }
-      return requiredArgCount;
-    }
-  
-  function craftInvokerFunction(humanName, argTypes, classType, cppInvokerFunc, cppTargetFunc, /** boolean= */ isAsync) {
-      // humanName: a human-readable string name for the function to be generated.
-      // argTypes: An array that contains the embind type objects for all types in the function signature.
-      //    argTypes[0] is the type object for the function return value.
-      //    argTypes[1] is the type object for function this object/class type, or null if not crafting an invoker for a class method.
-      //    argTypes[2...] are the actual function parameters.
-      // classType: The embind type object for the class to be bound, or null if this is not a method of a class.
-      // cppInvokerFunc: JS Function object to the C++-side function that interops into C++ code.
-      // cppTargetFunc: Function pointer (an integer to FUNCTION_TABLE) to the target C++ function the cppInvokerFunc will end up calling.
-      // isAsync: Optional. If true, returns an async function. Async bindings are only supported with JSPI.
-      var argCount = argTypes.length;
-  
-      if (argCount < 2) {
-        throwBindingError("argTypes array size mismatch! Must at least get return value and 'this' types!");
-      }
-  
-      assert(!isAsync, 'Async bindings are only supported with JSPI.');
-      var isClassMethodFunc = (argTypes[1] !== null && classType !== null);
-  
-      // Free functions with signature "void function()" do not need an invoker that marshalls between wire types.
-      // TODO: This omits argument count check - enable only at -O3 or similar.
-      //    if (ENABLE_UNSAFE_OPTS && argCount == 2 && argTypes[0].name == "void" && !isClassMethodFunc) {
-      //       return FUNCTION_TABLE[fn];
-      //    }
-  
-      // Determine if we need to use a dynamic stack to store the destructors for the function parameters.
-      // TODO: Remove this completely once all function invokers are being dynamically generated.
-      var needsDestructorStack = usesDestructorStack(argTypes);
-  
-      var returns = !argTypes[0].isVoid;
-  
-      var expectedArgCount = argCount - 2;
-      var minArgs = getRequiredArgCount(argTypes);
-      // Builld the arguments that will be passed into the closure around the invoker
-      // function.
-      var retType = argTypes[0];
-      var instType = argTypes[1];
-      var closureArgs = [humanName, throwBindingError, cppInvokerFunc, cppTargetFunc, runDestructors, retType.fromWireType.bind(retType), instType?.toWireType.bind(instType)];
-      for (var i = 2; i < argCount; ++i) {
-        var argType = argTypes[i];
-        closureArgs.push(argType.toWireType.bind(argType));
-      }
-      if (!needsDestructorStack) {
-        // Skip return value at index 0 - it's not deleted here. Also skip class type if not a method.
-        for (var i = isClassMethodFunc?1:2; i < argTypes.length; ++i) {
-          if (argTypes[i].destructorFunction !== null) {
-            closureArgs.push(argTypes[i].destructorFunction);
-          }
-        }
-      }
-      closureArgs.push(checkArgCount, minArgs, expectedArgCount);
-  
-      let invokerFactory = createJsInvoker(argTypes, isClassMethodFunc, returns, isAsync);
-      var invokerFn = invokerFactory(...closureArgs);
-      return createNamedFunction(humanName, invokerFn);
-    }
-  
-  var ensureOverloadTable = (proto, methodName, humanName) => {
-      if (undefined === proto[methodName].overloadTable) {
-        var prevFunc = proto[methodName];
-        // Inject an overload resolver function that routes to the appropriate overload based on the number of arguments.
-        proto[methodName] = function(...args) {
-          // TODO This check can be removed in -O3 level "unsafe" optimizations.
-          if (!proto[methodName].overloadTable.hasOwnProperty(args.length)) {
-            throwBindingError(`Function '${humanName}' called with an invalid number of arguments (${args.length}) - expects one of (${proto[methodName].overloadTable})!`);
-          }
-          return proto[methodName].overloadTable[args.length].apply(this, args);
-        };
-        // Move the previous function into the overload table.
-        proto[methodName].overloadTable = [];
-        proto[methodName].overloadTable[prevFunc.argCount] = prevFunc;
-      }
-    };
-  
-  /** @param {number=} numArguments */
-  var exposePublicSymbol = (name, value, numArguments) => {
-      if (Module.hasOwnProperty(name)) {
-        if (undefined === numArguments || (undefined !== Module[name].overloadTable && undefined !== Module[name].overloadTable[numArguments])) {
-          throwBindingError(`Cannot register public name '${name}' twice`);
-        }
-  
-        // We are exposing a function with the same name as an existing function. Create an overload table and a function selector
-        // that routes between the two.
-        ensureOverloadTable(Module, name, name);
-        if (Module[name].overloadTable.hasOwnProperty(numArguments)) {
-          throwBindingError(`Cannot register multiple overloads of a function with the same number of arguments (${numArguments})!`);
-        }
-        // Add the new function into the overload table.
-        Module[name].overloadTable[numArguments] = value;
-      } else {
-        Module[name] = value;
-        Module[name].argCount = numArguments;
-      }
-    };
-  
-  var heap32VectorToArray = (count, firstElement) => {
-      var array = [];
-      for (var i = 0; i < count; i++) {
-        // TODO(https://github.com/emscripten-core/emscripten/issues/17310):
-        // Find a way to hoist the `>> 2` or `>> 3` out of this loop.
-        array.push(HEAPU32[(((firstElement)+(i * 4))>>2)]);
-      }
-      return array;
-    };
-  
-  
-  var InternalError =  class InternalError extends Error { constructor(message) { super(message); this.name = 'InternalError'; }};
-  var throwInternalError = (message) => { throw new InternalError(message); };
-  /** @param {number=} numArguments */
-  var replacePublicSymbol = (name, value, numArguments) => {
-      if (!Module.hasOwnProperty(name)) {
-        throwInternalError('Replacing nonexistent public symbol');
-      }
-      // If there's an overload table for this symbol, replace the symbol in the overload table instead.
-      if (undefined !== Module[name].overloadTable && undefined !== numArguments) {
-        Module[name].overloadTable[numArguments] = value;
-      } else {
-        Module[name] = value;
-        Module[name].argCount = numArguments;
-      }
-    };
-  
-  
-  
-  var wasmTableMirror = [];
-  
-  
-  var getWasmTableEntry = (funcPtr) => {
-      var func = wasmTableMirror[funcPtr];
-      if (!func) {
-        /** @suppress {checkTypes} */
-        wasmTableMirror[funcPtr] = func = wasmTable.get(funcPtr);
-      }
-      /** @suppress {checkTypes} */
-      assert(wasmTable.get(funcPtr) == func, 'JavaScript-side Wasm function table mirror is out of date!');
-      return func;
-    };
-  var embind__requireFunction = (signature, rawFunction, isAsync = false) => {
-      assert(!isAsync, 'Async bindings are only supported with JSPI.');
-  
-      signature = AsciiToString(signature);
-  
-      function makeDynCaller() {
-        var rtn = getWasmTableEntry(rawFunction);
-        return rtn;
-      }
-  
-      var fp = makeDynCaller();
-      if (typeof fp != 'function') {
-          throwBindingError(`unknown function pointer with signature ${signature}: ${rawFunction}`);
-      }
-      return fp;
-    };
-  
-  
-  
-  class UnboundTypeError extends Error {}
-  
-  
-  
-  var getTypeName = (type) => {
-      var ptr = ___getTypeName(type);
-      var rv = AsciiToString(ptr);
-      _free(ptr);
-      return rv;
-    };
-  var throwUnboundTypeError = (message, types) => {
-      var unboundTypes = [];
-      var seen = {};
-      function visit(type) {
-        if (seen[type]) {
-          return;
-        }
-        if (registeredTypes[type]) {
-          return;
-        }
-        if (typeDependencies[type]) {
-          typeDependencies[type].forEach(visit);
-          return;
-        }
-        unboundTypes.push(type);
-        seen[type] = true;
-      }
-      types.forEach(visit);
-  
-      throw new UnboundTypeError(`${message}: ` + unboundTypes.map(getTypeName).join([', ']));
-    };
-  
-  
-  
-  
-  var whenDependentTypesAreResolved = (myTypes, dependentTypes, getTypeConverters) => {
-      myTypes.forEach((type) => typeDependencies[type] = dependentTypes);
-  
-      function onComplete(typeConverters) {
-        var myTypeConverters = getTypeConverters(typeConverters);
-        if (myTypeConverters.length !== myTypes.length) {
-          throwInternalError('Mismatched type converter count');
-        }
-        for (var i = 0; i < myTypes.length; ++i) {
-          registerType(myTypes[i], myTypeConverters[i]);
-        }
-      }
-  
-      var typeConverters = new Array(dependentTypes.length);
-      var unregisteredTypes = [];
-      var registered = 0;
-      for (let [i, dt] of dependentTypes.entries()) {
-        if (registeredTypes.hasOwnProperty(dt)) {
-          typeConverters[i] = registeredTypes[dt];
-        } else {
-          unregisteredTypes.push(dt);
-          if (!awaitingDependencies.hasOwnProperty(dt)) {
-            awaitingDependencies[dt] = [];
-          }
-          awaitingDependencies[dt].push(() => {
-            typeConverters[i] = registeredTypes[dt];
-            ++registered;
-            if (registered === unregisteredTypes.length) {
-              onComplete(typeConverters);
-            }
-          });
-        }
-      }
-      if (0 === unregisteredTypes.length) {
-        onComplete(typeConverters);
-      }
-    };
-  
-  var getFunctionName = (signature) => {
-      signature = signature.trim();
-      const argsIndex = signature.indexOf("(");
-      if (argsIndex === -1) return signature;
-      assert(signature.endsWith(")"), "Parentheses for argument names should match.");
-      return signature.slice(0, argsIndex);
-    };
-  var __embind_register_function = (name, argCount, rawArgTypesAddr, signature, rawInvoker, fn, isAsync, isNonnullReturn) => {
-      var argTypes = heap32VectorToArray(argCount, rawArgTypesAddr);
-      name = AsciiToString(name);
-      name = getFunctionName(name);
-  
-      rawInvoker = embind__requireFunction(signature, rawInvoker, isAsync);
-  
-      exposePublicSymbol(name, function() {
-        throwUnboundTypeError(`Cannot call ${name} due to unbound types`, argTypes);
-      }, argCount - 1);
-  
-      whenDependentTypesAreResolved([], argTypes, (argTypes) => {
-        var invokerArgsArray = [argTypes[0] /* return value */, null /* no class 'this'*/].concat(argTypes.slice(1) /* actual params */);
-        replacePublicSymbol(name, craftInvokerFunction(name, invokerArgsArray, null /* no class 'this'*/, rawInvoker, fn, isAsync), argCount - 1);
-        return [];
-      });
-    };
-
   
   
   
@@ -1866,6 +1512,48 @@ async function createWasm() {
       });
     };
 
+  var readEmAsmArgsArray = [];
+  var readEmAsmArgs = (sigPtr, buf) => {
+      // Nobody should have mutated _readEmAsmArgsArray underneath us to be something else than an array.
+      assert(Array.isArray(readEmAsmArgsArray));
+      // The input buffer is allocated on the stack, so it must be stack-aligned.
+      assert(buf % 16 == 0);
+      readEmAsmArgsArray.length = 0;
+      var ch;
+      // Most arguments are i32s, so shift the buffer pointer so it is a plain
+      // index into HEAP32.
+      while (ch = HEAPU8[sigPtr++]) {
+        var chr = String.fromCharCode(ch);
+        var validChars = ['d', 'f', 'i', 'p'];
+        // In WASM_BIGINT mode we support passing i64 values as bigint.
+        validChars.push('j');
+        assert(validChars.includes(chr), `Invalid character ${ch}("${chr}") in readEmAsmArgs! Use only [${validChars}], and do not specify "v" for void return argument.`);
+        // Floats are always passed as doubles, so all types except for 'i'
+        // are 8 bytes and require alignment.
+        var wide = (ch != 105);
+        wide &= (ch != 112);
+        buf += wide && (buf % 8) ? 4 : 0;
+        readEmAsmArgsArray.push(
+          // Special case for pointers under wasm64 or CAN_ADDRESS_2GB mode.
+          ch == 112 ? HEAPU32[((buf)>>2)] :
+          ch == 106 ? HEAP64[((buf)>>3)] :
+          ch == 105 ?
+            HEAP32[((buf)>>2)] :
+            HEAPF64[((buf)>>3)]
+        );
+        buf += wide ? 8 : 4;
+      }
+      return readEmAsmArgsArray;
+    };
+  var runEmAsmFunction = (code, sigPtr, argbuf) => {
+      var args = readEmAsmArgs(sigPtr, argbuf);
+      assert(ASM_CONSTS.hasOwnProperty(code), `No EM_ASM constant found at address ${code}.  The loaded WebAssembly file is likely out of sync with the generated JavaScript.`);
+      return ASM_CONSTS[code](...args);
+    };
+  var _emscripten_asm_const_int = (code, sigPtr, argbuf) => {
+      return runEmAsmFunction(code, sigPtr, argbuf);
+    };
+
   var getHeapMax = () =>
       // Stay one Wasm page short of 4GB: while e.g. Chrome is able to allocate
       // full 4GB Wasm memories, the size will wrap back to 0 bytes in Wasm side
@@ -1945,6 +1633,376 @@ async function createWasm() {
       return false;
     };
 
+  var GLctx;
+  
+  var webgl_enable_ANGLE_instanced_arrays = (ctx) => {
+      // Extension available in WebGL 1 from Firefox 26 and Google Chrome 30 onwards. Core feature in WebGL 2.
+      var ext = ctx.getExtension('ANGLE_instanced_arrays');
+      // Because this extension is a core function in WebGL 2, assign the extension entry points in place of
+      // where the core functions will reside in WebGL 2. This way the calling code can call these without
+      // having to dynamically branch depending if running against WebGL 1 or WebGL 2.
+      if (ext) {
+        ctx['vertexAttribDivisor'] = (index, divisor) => ext['vertexAttribDivisorANGLE'](index, divisor);
+        ctx['drawArraysInstanced'] = (mode, first, count, primcount) => ext['drawArraysInstancedANGLE'](mode, first, count, primcount);
+        ctx['drawElementsInstanced'] = (mode, count, type, indices, primcount) => ext['drawElementsInstancedANGLE'](mode, count, type, indices, primcount);
+        return 1;
+      }
+    };
+  
+  var webgl_enable_OES_vertex_array_object = (ctx) => {
+      // Extension available in WebGL 1 from Firefox 25 and WebKit 536.28/desktop Safari 6.0.3 onwards. Core feature in WebGL 2.
+      var ext = ctx.getExtension('OES_vertex_array_object');
+      if (ext) {
+        ctx['createVertexArray'] = () => ext['createVertexArrayOES']();
+        ctx['deleteVertexArray'] = (vao) => ext['deleteVertexArrayOES'](vao);
+        ctx['bindVertexArray'] = (vao) => ext['bindVertexArrayOES'](vao);
+        ctx['isVertexArray'] = (vao) => ext['isVertexArrayOES'](vao);
+        return 1;
+      }
+    };
+  
+  var webgl_enable_WEBGL_draw_buffers = (ctx) => {
+      // Extension available in WebGL 1 from Firefox 28 onwards. Core feature in WebGL 2.
+      var ext = ctx.getExtension('WEBGL_draw_buffers');
+      if (ext) {
+        ctx['drawBuffers'] = (n, bufs) => ext['drawBuffersWEBGL'](n, bufs);
+        return 1;
+      }
+    };
+  
+  var webgl_enable_WEBGL_draw_instanced_base_vertex_base_instance = (ctx) =>
+      // Closure is expected to be allowed to minify the '.dibvbi' property, so not accessing it quoted.
+      !!(ctx.dibvbi = ctx.getExtension('WEBGL_draw_instanced_base_vertex_base_instance'));
+  
+  var webgl_enable_WEBGL_multi_draw_instanced_base_vertex_base_instance = (ctx) => {
+      // Closure is expected to be allowed to minify the '.mdibvbi' property, so not accessing it quoted.
+      return !!(ctx.mdibvbi = ctx.getExtension('WEBGL_multi_draw_instanced_base_vertex_base_instance'));
+    };
+  
+  var webgl_enable_EXT_polygon_offset_clamp = (ctx) =>
+      !!(ctx.extPolygonOffsetClamp = ctx.getExtension('EXT_polygon_offset_clamp'));
+  
+  var webgl_enable_EXT_clip_control = (ctx) =>
+      !!(ctx.extClipControl = ctx.getExtension('EXT_clip_control'));
+  
+  var webgl_enable_WEBGL_polygon_mode = (ctx) =>
+      !!(ctx.webglPolygonMode = ctx.getExtension('WEBGL_polygon_mode'));
+  
+  var webgl_enable_WEBGL_multi_draw = (ctx) =>
+      // Closure is expected to be allowed to minify the '.multiDrawWebgl' property, so not accessing it quoted.
+      !!(ctx.multiDrawWebgl = ctx.getExtension('WEBGL_multi_draw'));
+  
+  var getEmscriptenSupportedExtensions = (ctx) => {
+      // Restrict the list of advertised extensions to those that we actually
+      // support.
+      var supportedExtensions = [
+        // WebGL 1 extensions
+        'ANGLE_instanced_arrays',
+        'EXT_blend_minmax',
+        'EXT_disjoint_timer_query',
+        'EXT_frag_depth',
+        'EXT_shader_texture_lod',
+        'EXT_sRGB',
+        'OES_element_index_uint',
+        'OES_fbo_render_mipmap',
+        'OES_standard_derivatives',
+        'OES_texture_float',
+        'OES_texture_half_float',
+        'OES_texture_half_float_linear',
+        'OES_vertex_array_object',
+        'WEBGL_color_buffer_float',
+        'WEBGL_depth_texture',
+        'WEBGL_draw_buffers',
+        // WebGL 2 extensions
+        'EXT_color_buffer_float',
+        'EXT_conservative_depth',
+        'EXT_disjoint_timer_query_webgl2',
+        'EXT_texture_norm16',
+        'NV_shader_noperspective_interpolation',
+        'WEBGL_clip_cull_distance',
+        // WebGL 1 and WebGL 2 extensions
+        'EXT_clip_control',
+        'EXT_color_buffer_half_float',
+        'EXT_depth_clamp',
+        'EXT_float_blend',
+        'EXT_polygon_offset_clamp',
+        'EXT_texture_compression_bptc',
+        'EXT_texture_compression_rgtc',
+        'EXT_texture_filter_anisotropic',
+        'KHR_parallel_shader_compile',
+        'OES_texture_float_linear',
+        'WEBGL_blend_func_extended',
+        'WEBGL_compressed_texture_astc',
+        'WEBGL_compressed_texture_etc',
+        'WEBGL_compressed_texture_etc1',
+        'WEBGL_compressed_texture_s3tc',
+        'WEBGL_compressed_texture_s3tc_srgb',
+        'WEBGL_debug_renderer_info',
+        'WEBGL_debug_shaders',
+        'WEBGL_lose_context',
+        'WEBGL_multi_draw',
+        'WEBGL_polygon_mode'
+      ];
+      // .getSupportedExtensions() can return null if context is lost, so coerce to empty array.
+      return (ctx.getSupportedExtensions() || []).filter(ext => supportedExtensions.includes(ext));
+    };
+  
+  
+  var GL = {
+  counter:1,
+  buffers:[],
+  programs:[],
+  framebuffers:[],
+  renderbuffers:[],
+  textures:[],
+  shaders:[],
+  vaos:[],
+  contexts:[],
+  offscreenCanvases:{
+  },
+  queries:[],
+  samplers:[],
+  transformFeedbacks:[],
+  syncs:[],
+  stringCache:{
+  },
+  stringiCache:{
+  },
+  unpackAlignment:4,
+  unpackRowLength:0,
+  recordError:(errorCode) => {
+        if (!GL.lastError) {
+          GL.lastError = errorCode;
+        }
+      },
+  getNewId:(table) => {
+        var ret = GL.counter++;
+        for (var i = table.length; i < ret; i++) {
+          table[i] = null;
+        }
+        return ret;
+      },
+  genObject:(n, buffers, createFunction, objectTable
+        ) => {
+        for (var i = 0; i < n; i++) {
+          var buffer = GLctx[createFunction]();
+          var id = buffer && GL.getNewId(objectTable);
+          if (buffer) {
+            buffer.name = id;
+            objectTable[id] = buffer;
+          } else {
+            GL.recordError(0x502 /* GL_INVALID_OPERATION */);
+          }
+          HEAP32[(((buffers)+(i*4))>>2)] = id;
+        }
+      },
+  getSource:(shader, count, string, length) => {
+        var source = '';
+        for (var i = 0; i < count; ++i) {
+          var len = length ? HEAPU32[(((length)+(i*4))>>2)] : undefined;
+          source += UTF8ToString(HEAPU32[(((string)+(i*4))>>2)], len);
+        }
+        return source;
+      },
+  createContext:(/** @type {HTMLCanvasElement} */ canvas, webGLContextAttributes) => {
+  
+        // BUG: Workaround Safari WebGL issue: After successfully acquiring WebGL
+        // context on a canvas, calling .getContext() will always return that
+        // context independent of which 'webgl' or 'webgl2'
+        // context version was passed. See:
+        //   https://webkit.org/b/222758
+        // and:
+        //   https://github.com/emscripten-core/emscripten/issues/13295.
+        // TODO: Once the bug is fixed and shipped in Safari, adjust the Safari
+        // version field in above check.
+        if (!canvas.getContextSafariWebGL2Fixed) {
+          canvas.getContextSafariWebGL2Fixed = canvas.getContext;
+          /** @type {function(this:HTMLCanvasElement, string, (Object|null)=): (Object|null)} */
+          function fixedGetContext(ver, attrs) {
+            var gl = canvas.getContextSafariWebGL2Fixed(ver, attrs);
+            return ((ver == 'webgl') == (gl instanceof WebGLRenderingContext)) ? gl : null;
+          }
+          canvas.getContext = fixedGetContext;
+        }
+  
+        var ctx =
+          (webGLContextAttributes.majorVersion > 1)
+          ? canvas.getContext("webgl2", webGLContextAttributes) :
+          canvas.getContext("webgl", webGLContextAttributes);
+  
+        if (!ctx) return 0;
+  
+        var handle = GL.registerContext(ctx, webGLContextAttributes);
+  
+        return handle;
+      },
+  registerContext:(ctx, webGLContextAttributes) => {
+        // without pthreads a context is just an integer ID
+        var handle = GL.getNewId(GL.contexts);
+  
+        var context = {
+          handle,
+          attributes: webGLContextAttributes,
+          version: webGLContextAttributes.majorVersion,
+          GLctx: ctx
+        };
+  
+        // Store the created context object so that we can access the context
+        // given a canvas without having to pass the parameters again.
+        if (ctx.canvas) ctx.canvas.GLctxObject = context;
+        GL.contexts[handle] = context;
+        if (typeof webGLContextAttributes.enableExtensionsByDefault == 'undefined' || webGLContextAttributes.enableExtensionsByDefault) {
+          GL.initExtensions(context);
+        }
+  
+        return handle;
+      },
+  makeContextCurrent:(contextHandle) => {
+  
+        // Active Emscripten GL layer context object.
+        GL.currentContext = GL.contexts[contextHandle];
+        // Active WebGL context object.
+        Module['ctx'] = GLctx = GL.currentContext?.GLctx;
+        return !(contextHandle && !GLctx);
+      },
+  getContext:(contextHandle) => {
+        return GL.contexts[contextHandle];
+      },
+  deleteContext:(contextHandle) => {
+        if (GL.currentContext === GL.contexts[contextHandle]) {
+          GL.currentContext = null;
+        }
+        if (typeof JSEvents == 'object') {
+          // Release all JS event handlers on the DOM element that the GL context is
+          // associated with since the context is now deleted.
+          JSEvents.removeAllHandlersOnTarget(GL.contexts[contextHandle].GLctx.canvas);
+        }
+        // Make sure the canvas object no longer refers to the context object so
+        // there are no GC surprises.
+        if (GL.contexts[contextHandle]?.GLctx.canvas) {
+          GL.contexts[contextHandle].GLctx.canvas.GLctxObject = undefined;
+        }
+        GL.contexts[contextHandle] = null;
+      },
+  initExtensions:(context) => {
+        // If this function is called without a specific context object, init the
+        // extensions of the currently active context.
+        context ||= GL.currentContext;
+  
+        if (context.initExtensionsDone) return;
+        context.initExtensionsDone = true;
+  
+        var GLctx = context.GLctx;
+  
+        // Detect the presence of a few extensions manually, ction GL interop
+        // layer itself will need to know if they exist.
+  
+        // Extensions that are available in both WebGL 1 and WebGL 2
+        webgl_enable_WEBGL_multi_draw(GLctx);
+        webgl_enable_EXT_polygon_offset_clamp(GLctx);
+        webgl_enable_EXT_clip_control(GLctx);
+        webgl_enable_WEBGL_polygon_mode(GLctx);
+        // Extensions that are only available in WebGL 1 (the calls will be no-ops
+        // if called on a WebGL 2 context active)
+        webgl_enable_ANGLE_instanced_arrays(GLctx);
+        webgl_enable_OES_vertex_array_object(GLctx);
+        webgl_enable_WEBGL_draw_buffers(GLctx);
+        // Extensions that are available from WebGL >= 2 (no-op if called on a WebGL 1 context active)
+        webgl_enable_WEBGL_draw_instanced_base_vertex_base_instance(GLctx);
+        webgl_enable_WEBGL_multi_draw_instanced_base_vertex_base_instance(GLctx);
+  
+        // On WebGL 2, EXT_disjoint_timer_query is replaced with an alternative
+        // that's based on core APIs, and exposes only the queryCounterEXT()
+        // entrypoint.
+        if (context.version >= 2) {
+          GLctx.disjointTimerQueryExt = GLctx.getExtension("EXT_disjoint_timer_query_webgl2");
+        }
+  
+        // However, Firefox exposes the WebGL 1 version on WebGL 2 as well and
+        // thus we look for the WebGL 1 version again if the WebGL 2 version
+        // isn't present. https://bugzil.la/1328882
+        if (context.version < 2 || !GLctx.disjointTimerQueryExt)
+        {
+          GLctx.disjointTimerQueryExt = GLctx.getExtension("EXT_disjoint_timer_query");
+        }
+  
+        for (var ext of getEmscriptenSupportedExtensions(GLctx)) {
+          // WEBGL_lose_context, WEBGL_debug_renderer_info and WEBGL_debug_shaders
+          // are not enabled by default.
+          if (!ext.includes('lose_context') && !ext.includes('debug')) {
+            // Call .getExtension() to enable that extension permanently.
+            GLctx.getExtension(ext);
+          }
+        }
+      },
+  };
+  
+  var webglPowerPreferences = ["default","low-power","high-performance"];
+  
+  var maybeCStringToJsString = (cString) => {
+      // "cString > 2" checks if the input is a number, and isn't of the special
+      // values we accept here, EMSCRIPTEN_EVENT_TARGET_* (which map to 0, 1, 2).
+      // In other words, if cString > 2 then it's a pointer to a valid place in
+      // memory, and points to a C string.
+      return cString > 2 ? UTF8ToString(cString) : cString;
+    };
+  
+  /** @type {Object} */
+  var specialHTMLTargets = [0, document, window];
+  var findEventTarget = (target) => {
+      target = maybeCStringToJsString(target);
+      var domElement = specialHTMLTargets[target] || document.querySelector(target);
+      return domElement;
+    };
+  var findCanvasEventTarget = findEventTarget;
+  
+  var _emscripten_webgl_do_create_context = (target, attributes) => {
+      assert(attributes);
+      var attr32 = ((attributes)>>2);
+      var powerPreference = HEAP32[attr32 + (8>>2)];
+      var contextAttributes = {
+        'alpha': !!HEAP8[attributes + 0],
+        'depth': !!HEAP8[attributes + 1],
+        'stencil': !!HEAP8[attributes + 2],
+        'antialias': !!HEAP8[attributes + 3],
+        'premultipliedAlpha': !!HEAP8[attributes + 4],
+        'preserveDrawingBuffer': !!HEAP8[attributes + 5],
+        'powerPreference': webglPowerPreferences[powerPreference],
+        'failIfMajorPerformanceCaveat': !!HEAP8[attributes + 12],
+        // The following are not predefined WebGL context attributes in the WebGL specification, so the property names can be minified by Closure.
+        majorVersion: HEAP32[attr32 + (16>>2)],
+        minorVersion: HEAP32[attr32 + (20>>2)],
+        enableExtensionsByDefault: HEAP8[attributes + 24],
+        explicitSwapControl: HEAP8[attributes + 25],
+        proxyContextToMainThread: HEAP32[attr32 + (28>>2)],
+        renderViaOffscreenBackBuffer: HEAP8[attributes + 32]
+      };
+  
+      //  TODO: Make these into hard errors at some point in the future
+      if (contextAttributes.majorVersion !== 1 && contextAttributes.majorVersion !== 2) {
+        err(`Invalid WebGL version requested: ${contextAttributes.majorVersion}`);
+      }
+  
+      var canvas = findCanvasEventTarget(target);
+  
+      if (!canvas) {
+        return 0;
+      }
+  
+      if (contextAttributes.explicitSwapControl) {
+        return 0;
+      }
+  
+      var contextHandle = GL.createContext(canvas, contextAttributes);
+      return contextHandle;
+    };
+  var _emscripten_webgl_create_context = _emscripten_webgl_do_create_context;
+
+  var _emscripten_webgl_make_context_current = (contextHandle) => {
+      var success = GL.makeContextCurrent(contextHandle);
+      return success ? 0 : -5;
+    };
+
   var SYSCALLS = {
   varargs:undefined,
   getStr(ptr) {
@@ -2003,6 +2061,187 @@ async function createWasm() {
       }
       HEAPU32[((pnum)>>2)] = num;
       return 0;
+    };
+
+  var _emscripten_glAttachShader = (program, shader) => {
+      GLctx.attachShader(GL.programs[program], GL.shaders[shader]);
+    };
+  var _glAttachShader = _emscripten_glAttachShader;
+
+  var _emscripten_glBindBuffer = (target, buffer) => {
+  
+      if (target == 0x88EB /*GL_PIXEL_PACK_BUFFER*/) {
+        // In WebGL 2 glReadPixels entry point, we need to use a different WebGL 2
+        // API function call when a buffer is bound to
+        // GL_PIXEL_PACK_BUFFER_BINDING point, so must keep track whether that
+        // binding point is non-null to know what is the proper API function to
+        // call.
+        GLctx.currentPixelPackBufferBinding = buffer;
+      } else if (target == 0x88EC /*GL_PIXEL_UNPACK_BUFFER*/) {
+        // In WebGL 2 gl(Compressed)Tex(Sub)Image[23]D entry points, we need to
+        // use a different WebGL 2 API function call when a buffer is bound to
+        // GL_PIXEL_UNPACK_BUFFER_BINDING point, so must keep track whether that
+        // binding point is non-null to know what is the proper API function to
+        // call.
+        GLctx.currentPixelUnpackBufferBinding = buffer;
+      }
+      GLctx.bindBuffer(target, GL.buffers[buffer]);
+    };
+  var _glBindBuffer = _emscripten_glBindBuffer;
+
+  var _emscripten_glBufferData = (target, size, data, usage) => {
+  
+      if (GL.currentContext.version >= 2) {
+        // If size is zero, WebGL would interpret uploading the whole input
+        // arraybuffer (starting from given offset), which would not make sense in
+        // WebAssembly, so avoid uploading if size is zero. However we must still
+        // call bufferData to establish a backing storage of zero bytes.
+        if (data && size) {
+          GLctx.bufferData(target, HEAPU8, usage, data, size);
+        } else {
+          GLctx.bufferData(target, size, usage);
+        }
+        return;
+      }
+      // N.b. here first form specifies a heap subarray, second form an integer
+      // size, so the ?: code here is polymorphic. It is advised to avoid
+      // randomly mixing both uses in calling code, to avoid any potential JS
+      // engine JIT issues.
+      GLctx.bufferData(target, data ? HEAPU8.subarray(data, data+size) : size, usage);
+    };
+  var _glBufferData = _emscripten_glBufferData;
+
+  var _emscripten_glClear = (x0) => GLctx.clear(x0);
+  var _glClear = _emscripten_glClear;
+
+  var _emscripten_glClearColor = (x0, x1, x2, x3) => GLctx.clearColor(x0, x1, x2, x3);
+  var _glClearColor = _emscripten_glClearColor;
+
+  var _emscripten_glCompileShader = (shader) => {
+      GLctx.compileShader(GL.shaders[shader]);
+    };
+  var _glCompileShader = _emscripten_glCompileShader;
+
+  var _emscripten_glCreateProgram = () => {
+      var id = GL.getNewId(GL.programs);
+      var program = GLctx.createProgram();
+      // Store additional information needed for each shader program:
+      program.name = id;
+      // Lazy cache results of
+      // glGetProgramiv(GL_ACTIVE_UNIFORM_MAX_LENGTH/GL_ACTIVE_ATTRIBUTE_MAX_LENGTH/GL_ACTIVE_UNIFORM_BLOCK_MAX_NAME_LENGTH)
+      program.maxUniformLength = program.maxAttributeLength = program.maxUniformBlockNameLength = 0;
+      program.uniformIdCounter = 1;
+      GL.programs[id] = program;
+      return id;
+    };
+  var _glCreateProgram = _emscripten_glCreateProgram;
+
+  var _emscripten_glCreateShader = (shaderType) => {
+      var id = GL.getNewId(GL.shaders);
+      GL.shaders[id] = GLctx.createShader(shaderType);
+  
+      return id;
+    };
+  var _glCreateShader = _emscripten_glCreateShader;
+
+  var _emscripten_glDrawElements = (mode, count, type, indices) => {
+  
+      GLctx.drawElements(mode, count, type, indices);
+  
+    };
+  var _glDrawElements = _emscripten_glDrawElements;
+
+  var _emscripten_glEnableVertexAttribArray = (index) => {
+      GLctx.enableVertexAttribArray(index);
+    };
+  var _glEnableVertexAttribArray = _emscripten_glEnableVertexAttribArray;
+
+  var _emscripten_glGenBuffers = (n, buffers) => {
+      GL.genObject(n, buffers, 'createBuffer', GL.buffers
+        );
+    };
+  var _glGenBuffers = _emscripten_glGenBuffers;
+
+  
+  var _emscripten_glGetAttribLocation = (program, name) =>
+      GLctx.getAttribLocation(GL.programs[program], UTF8ToString(name));
+  var _glGetAttribLocation = _emscripten_glGetAttribLocation;
+
+  var _emscripten_glLinkProgram = (program) => {
+      program = GL.programs[program];
+      GLctx.linkProgram(program);
+      // Invalidate earlier computed uniform->ID mappings, those have now become stale
+      program.uniformLocsById = 0; // Mark as null-like so that glGetUniformLocation() knows to populate this again.
+      program.uniformSizeAndIdsByName = {};
+  
+    };
+  var _glLinkProgram = _emscripten_glLinkProgram;
+
+  var _emscripten_glShaderSource = (shader, count, string, length) => {
+      var source = GL.getSource(shader, count, string, length);
+  
+      GLctx.shaderSource(GL.shaders[shader], source);
+    };
+  var _glShaderSource = _emscripten_glShaderSource;
+
+  var _emscripten_glUseProgram = (program) => {
+      program = GL.programs[program];
+      GLctx.useProgram(program);
+      // Record the currently active program so that we can access the uniform
+      // mapping table of that program.
+      GLctx.currentProgram = program;
+    };
+  var _glUseProgram = _emscripten_glUseProgram;
+
+  var _emscripten_glVertexAttribPointer = (index, size, type, normalized, stride, ptr) => {
+      GLctx.vertexAttribPointer(index, size, type, !!normalized, stride, ptr);
+    };
+  var _glVertexAttribPointer = _emscripten_glVertexAttribPointer;
+
+  
+  var runtimeKeepaliveCounter = 0;
+  var keepRuntimeAlive = () => noExitRuntime || runtimeKeepaliveCounter > 0;
+  var _proc_exit = (code) => {
+      EXITSTATUS = code;
+      if (!keepRuntimeAlive()) {
+        Module['onExit']?.(code);
+        ABORT = true;
+      }
+      quit_(code, new ExitStatus(code));
+    };
+  
+  
+  /** @param {boolean|number=} implicit */
+  var exitJS = (status, implicit) => {
+      EXITSTATUS = status;
+  
+      checkUnflushedContent();
+  
+      // if exit() was called explicitly, warn the user if the runtime isn't actually being shut down
+      if (keepRuntimeAlive() && !implicit) {
+        var msg = `program exited (with status: ${status}), but keepRuntimeAlive() is set (counter=${runtimeKeepaliveCounter}) due to an async operation, so halting execution but not exiting the runtime or preventing further async execution (you can use emscripten_force_exit, if you want to force a true shutdown)`;
+        err(msg);
+      }
+  
+      _proc_exit(status);
+    };
+
+  var handleException = (e) => {
+      // Certain exception types we do not treat as errors since they are used for
+      // internal control flow.
+      // 1. ExitStatus, which is thrown by exit()
+      // 2. "unwind", which is thrown by emscripten_unwind_to_js_event_loop() and others
+      //    that wish to return to JS event loop.
+      if (e instanceof ExitStatus || e == 'unwind') {
+        return EXITSTATUS;
+      }
+      checkStackCookie();
+      if (e instanceof WebAssembly.RuntimeError) {
+        if (_emscripten_stack_get_current() <= 0) {
+          err('Stack overflow detected.  You can try increasing -sSTACK_SIZE (currently set to 65536)');
+        }
+      }
+      quit_(1, e);
     };
 assert(emval_handles.length === 5 * 2);
 // End JS library code
@@ -2069,8 +2308,8 @@ Module['FS_createPreloadedFile'] = FS.createPreloadedFile;
   'stackAlloc',
   'getTempRet0',
   'setTempRet0',
+  'createNamedFunction',
   'zeroMemory',
-  'exitJS',
   'withStackSave',
   'strError',
   'inetPton4',
@@ -2079,14 +2318,12 @@ Module['FS_createPreloadedFile'] = FS.createPreloadedFile;
   'inetNtop6',
   'readSockaddr',
   'writeSockaddr',
-  'readEmAsmArgs',
+  'runMainThreadEmAsm',
   'jstoi_q',
   'getExecutableName',
   'autoResumeAudioContext',
   'getDynCaller',
   'dynCall',
-  'handleException',
-  'keepRuntimeAlive',
   'runtimeKeepalivePush',
   'runtimeKeepalivePop',
   'callUserCallback',
@@ -2119,8 +2356,6 @@ Module['FS_createPreloadedFile'] = FS.createPreloadedFile;
   'stringToUTF8OnStack',
   'writeArrayToMemory',
   'registerKeyEventCallback',
-  'maybeCStringToJsString',
-  'findEventTarget',
   'getBoundingClientRect',
   'fillMouseEventData',
   'registerMouseEventCallback',
@@ -2188,13 +2423,6 @@ Module['FS_createPreloadedFile'] = FS.createPreloadedFile;
   'getSocketAddress',
   'heapObjectForWebGLType',
   'toTypedArrayIndex',
-  'webgl_enable_ANGLE_instanced_arrays',
-  'webgl_enable_OES_vertex_array_object',
-  'webgl_enable_WEBGL_draw_buffers',
-  'webgl_enable_WEBGL_multi_draw',
-  'webgl_enable_EXT_polygon_offset_clamp',
-  'webgl_enable_EXT_clip_control',
-  'webgl_enable_WEBGL_polygon_mode',
   'emscriptenWebGLGet',
   'computeUnpackAlignedImageSize',
   'colorChannelsInGlTextureFormat',
@@ -2209,8 +2437,6 @@ Module['FS_createPreloadedFile'] = FS.createPreloadedFile;
   'registerWebGlEventCallback',
   'runAndAbortIfError',
   'emscriptenWebGLGetIndexed',
-  'webgl_enable_WEBGL_draw_instanced_base_vertex_base_instance',
-  'webgl_enable_WEBGL_multi_draw_instanced_base_vertex_base_instance',
   'ALLOC_NORMAL',
   'ALLOC_STACK',
   'allocate',
@@ -2221,10 +2447,24 @@ Module['FS_createPreloadedFile'] = FS.createPreloadedFile;
   'demangle',
   'stackTrace',
   'getNativeTypeSize',
+  'throwInternalError',
+  'whenDependentTypesAreResolved',
+  'getTypeName',
+  'getFunctionName',
   'getFunctionArgsName',
+  'heap32VectorToArray',
   'requireRegisteredType',
+  'usesDestructorStack',
   'createJsInvokerSignature',
+  'checkArgCount',
+  'getRequiredArgCount',
+  'createJsInvoker',
+  'UnboundTypeError',
   'PureVirtualError',
+  'throwUnboundTypeError',
+  'ensureOverloadTable',
+  'exposePublicSymbol',
+  'replacePublicSymbol',
   'getBasestPointer',
   'registerInheritedInstance',
   'unregisterInheritedInstance',
@@ -2232,6 +2472,9 @@ Module['FS_createPreloadedFile'] = FS.createPreloadedFile;
   'getInheritedInstanceCount',
   'getLiveInheritedInstances',
   'enumReadValueFromPointer',
+  'runDestructors',
+  'craftInvokerFunction',
+  'embind__requireFunction',
   'genericPointerToWireType',
   'constNoSmartPtrRawPointerToWireType',
   'nonConstNoSmartPtrRawPointerToWireType',
@@ -2287,8 +2530,8 @@ missingLibrarySymbols.forEach(missingLibrarySymbol)
   'bigintToI53Checked',
   'stackSave',
   'stackRestore',
-  'createNamedFunction',
   'ptrToString',
+  'exitJS',
   'getHeapMax',
   'growMemory',
   'ENV',
@@ -2299,6 +2542,10 @@ missingLibrarySymbols.forEach(missingLibrarySymbol)
   'timers',
   'warnOnce',
   'readEmAsmArgsArray',
+  'readEmAsmArgs',
+  'runEmAsmFunction',
+  'handleException',
+  'keepRuntimeAlive',
   'alignMemory',
   'wasmTable',
   'wasmMemory',
@@ -2329,6 +2576,8 @@ missingLibrarySymbols.forEach(missingLibrarySymbol)
   'lengthBytesUTF32',
   'JSEvents',
   'specialHTMLTargets',
+  'maybeCStringToJsString',
+  'findEventTarget',
   'findCanvasEventTarget',
   'currentFullscreenStrategy',
   'restoreOldWindowedStyle',
@@ -2358,6 +2607,13 @@ missingLibrarySymbols.forEach(missingLibrarySymbol)
   'tempFixedLengthArray',
   'miniTempWebGLFloatBuffers',
   'miniTempWebGLIntBuffers',
+  'webgl_enable_ANGLE_instanced_arrays',
+  'webgl_enable_OES_vertex_array_object',
+  'webgl_enable_WEBGL_draw_buffers',
+  'webgl_enable_WEBGL_multi_draw',
+  'webgl_enable_EXT_polygon_offset_clamp',
+  'webgl_enable_EXT_clip_control',
+  'webgl_enable_WEBGL_polygon_mode',
   'GL',
   'AL',
   'GLUT',
@@ -2366,12 +2622,13 @@ missingLibrarySymbols.forEach(missingLibrarySymbol)
   'IDBStore',
   'SDL',
   'SDL_gfx',
+  'webgl_enable_WEBGL_draw_instanced_base_vertex_base_instance',
+  'webgl_enable_WEBGL_multi_draw_instanced_base_vertex_base_instance',
   'print',
   'printErr',
   'jstoi_s',
   'InternalError',
   'BindingError',
-  'throwInternalError',
   'throwBindingError',
   'registeredTypes',
   'awaitingDependencies',
@@ -2379,21 +2636,8 @@ missingLibrarySymbols.forEach(missingLibrarySymbol)
   'tupleRegistrations',
   'structRegistrations',
   'sharedRegisterType',
-  'whenDependentTypesAreResolved',
-  'getTypeName',
-  'getFunctionName',
-  'heap32VectorToArray',
-  'usesDestructorStack',
-  'checkArgCount',
-  'getRequiredArgCount',
-  'createJsInvoker',
-  'UnboundTypeError',
   'EmValType',
   'EmValOptionalType',
-  'throwUnboundTypeError',
-  'ensureOverloadTable',
-  'exposePublicSymbol',
-  'replacePublicSymbol',
   'embindRepr',
   'registeredInstances',
   'registeredPointers',
@@ -2402,9 +2646,6 @@ missingLibrarySymbols.forEach(missingLibrarySymbol)
   'floatReadValueFromPointer',
   'assertIntegerRange',
   'readPointer',
-  'runDestructors',
-  'craftInvokerFunction',
-  'embind__requireFunction',
   'finalizationRegistry',
   'detachFinalizer_deps',
   'deletionQueue',
@@ -2426,11 +2667,16 @@ unexportedSymbols.forEach(unexportedRuntimeSymbol);
 function checkIncomingModuleAPI() {
   ignoredModuleProp('fetchSettings');
 }
+var ASM_CONSTS = {
+  71652: () => { console.log('A böngésződ nem támogatja a WebGL-t!'); },  
+ 71709: () => { console.log('WebGL sikeresen inicializálva!'); }
+};
 
 // Imports from the Wasm binary.
 var ___getTypeName = makeInvalidEarlyAccess('___getTypeName');
 var _malloc = makeInvalidEarlyAccess('_malloc');
 var _free = makeInvalidEarlyAccess('_free');
+var _main = Module['_main'] = makeInvalidEarlyAccess('_main');
 var _fflush = makeInvalidEarlyAccess('_fflush');
 var _emscripten_stack_get_end = makeInvalidEarlyAccess('_emscripten_stack_get_end');
 var _emscripten_stack_get_base = makeInvalidEarlyAccess('_emscripten_stack_get_base');
@@ -2442,7 +2688,6 @@ var _emscripten_stack_get_current = makeInvalidEarlyAccess('_emscripten_stack_ge
 var memory = makeInvalidEarlyAccess('memory');
 var __indirect_function_table = makeInvalidEarlyAccess('__indirect_function_table');
 var wasmMemory = makeInvalidEarlyAccess('wasmMemory');
-var wasmTable = makeInvalidEarlyAccess('wasmTable');
 
 function assignWasmExports(wasmExports) {
   assert(typeof wasmExports['__getTypeName'] != 'undefined', 'missing Wasm export: __getTypeName');
@@ -2451,6 +2696,8 @@ function assignWasmExports(wasmExports) {
   _malloc = createExportWrapper('malloc', 1);
   assert(typeof wasmExports['free'] != 'undefined', 'missing Wasm export: free');
   _free = createExportWrapper('free', 1);
+  assert(typeof wasmExports['main'] != 'undefined', 'missing Wasm export: main');
+  _main = Module['_main'] = createExportWrapper('main', 2);
   assert(typeof wasmExports['fflush'] != 'undefined', 'missing Wasm export: fflush');
   _fflush = createExportWrapper('fflush', 1);
   assert(typeof wasmExports['emscripten_stack_get_end'] != 'undefined', 'missing Wasm export: emscripten_stack_get_end');
@@ -2470,7 +2717,7 @@ function assignWasmExports(wasmExports) {
   assert(typeof wasmExports['memory'] != 'undefined', 'missing Wasm export: memory');
   memory = wasmMemory = wasmExports['memory'];
   assert(typeof wasmExports['__indirect_function_table'] != 'undefined', 'missing Wasm export: __indirect_function_table');
-  __indirect_function_table = wasmTable = wasmExports['__indirect_function_table'];
+  __indirect_function_table = wasmExports['__indirect_function_table'];
 }
 
 var wasmImports = {
@@ -2485,8 +2732,6 @@ var wasmImports = {
   /** @export */
   _embind_register_float: __embind_register_float,
   /** @export */
-  _embind_register_function: __embind_register_function,
-  /** @export */
   _embind_register_integer: __embind_register_integer,
   /** @export */
   _embind_register_memory_view: __embind_register_memory_view,
@@ -2497,13 +2742,51 @@ var wasmImports = {
   /** @export */
   _embind_register_void: __embind_register_void,
   /** @export */
+  emscripten_asm_const_int: _emscripten_asm_const_int,
+  /** @export */
   emscripten_resize_heap: _emscripten_resize_heap,
+  /** @export */
+  emscripten_webgl_create_context: _emscripten_webgl_create_context,
+  /** @export */
+  emscripten_webgl_make_context_current: _emscripten_webgl_make_context_current,
   /** @export */
   fd_close: _fd_close,
   /** @export */
   fd_seek: _fd_seek,
   /** @export */
-  fd_write: _fd_write
+  fd_write: _fd_write,
+  /** @export */
+  glAttachShader: _glAttachShader,
+  /** @export */
+  glBindBuffer: _glBindBuffer,
+  /** @export */
+  glBufferData: _glBufferData,
+  /** @export */
+  glClear: _glClear,
+  /** @export */
+  glClearColor: _glClearColor,
+  /** @export */
+  glCompileShader: _glCompileShader,
+  /** @export */
+  glCreateProgram: _glCreateProgram,
+  /** @export */
+  glCreateShader: _glCreateShader,
+  /** @export */
+  glDrawElements: _glDrawElements,
+  /** @export */
+  glEnableVertexAttribArray: _glEnableVertexAttribArray,
+  /** @export */
+  glGenBuffers: _glGenBuffers,
+  /** @export */
+  glGetAttribLocation: _glGetAttribLocation,
+  /** @export */
+  glLinkProgram: _glLinkProgram,
+  /** @export */
+  glShaderSource: _glShaderSource,
+  /** @export */
+  glUseProgram: _glUseProgram,
+  /** @export */
+  glVertexAttribPointer: _glVertexAttribPointer
 };
 
 
@@ -2511,6 +2794,27 @@ var wasmImports = {
 // === Auto-generated postamble setup entry stuff ===
 
 var calledRun;
+
+function callMain() {
+  assert(runDependencies == 0, 'cannot call main when async dependencies remain! (listen on Module["onRuntimeInitialized"])');
+  assert(typeof onPreRuns === 'undefined' || onPreRuns.length == 0, 'cannot call main when preRun functions remain to be called');
+
+  var entryFunction = _main;
+
+  var argc = 0;
+  var argv = 0;
+
+  try {
+
+    var ret = entryFunction(argc, argv);
+
+    // if we're not running an evented main loop, it's time to exit
+    exitJS(ret, /* implicit = */ true);
+    return ret;
+  } catch (e) {
+    return handleException(e);
+  }
+}
 
 function stackCheckInit() {
   // This is normally called automatically during __wasm_call_ctors but need to
@@ -2549,10 +2853,13 @@ function run() {
 
     initRuntime();
 
+    preMain();
+
     Module['onRuntimeInitialized']?.();
     consumedModuleProp('onRuntimeInitialized');
 
-    assert(!Module['_main'], 'compiled without a main, but one is present. if you added it from JS, use Module["onRuntimeInitialized"]');
+    var noInitialRun = Module['noInitialRun'] || false;
+    if (!noInitialRun) callMain();
 
     postRun();
   }

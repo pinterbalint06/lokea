@@ -104,7 +104,7 @@ void Renderer::projectVertices(const Mesh *mesh, const Camera *camera)
     }
 }
 
-void Renderer::clipTriangle(const int &i0, const int &i1, const int &i2, Vertex *vertices)
+void Renderer::clipTriangle(const uint32_t &i0, const uint32_t &i1, const uint32_t &i2, Vertex *vertices)
 {
     p0_ = vertices[i0];
     p1_ = vertices[i1];
@@ -193,7 +193,7 @@ void Renderer::renderTemplate(const Scene *scene)
     float rGround = meshCol.r;
     float gGround = meshCol.g;
     float bGround = meshCol.b;
-    int32_t *currIndices = mesh->getIndices();
+    uint32_t *currIndices = mesh->getIndices();
     Vertex *currVertices = mesh->getVertices();
     int indicesCount = mesh->getIndexCount();
     projectVertices(mesh, mainCamera);
