@@ -23,7 +23,6 @@ set(COMMON_WASM_FLAGS
     -sINITIAL_MEMORY=268435456
     -sALLOW_MEMORY_GROWTH
     -msimd128
-    -sFILESYSTEM=0
     -sENVIRONMENT=["web"]
     -sEXPORTED_RUNTIME_METHODS=["HEAPU8"]
     -sMAX_WEBGL_VERSION=2
@@ -37,7 +36,7 @@ set(COMMON_WASM_COMPILATION
 # ---------------------------------------------------------
 set(RELEASE_COMPILE_FLAGS -O3 -flto)
 
-set(RELEASE_LINK_FLAGS -flto -sFULL_ES2)
+set(RELEASE_LINK_FLAGS -flto -sFULL_ES2 --embed-file ${CMAKE_SOURCE_DIR}/resources/shaders@shaders)
 # ---------------------------------------------------------
 # debug
 # ---------------------------------------------------------

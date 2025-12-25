@@ -4,24 +4,22 @@
 #include <GLES2/gl2.h>
 #include <core/terrain.h>
 #include <core/mesh.h>
-
-const char *vertexShaderSource = R"(
-    attribute vec4 aPosition;
-    void main() {
-        gl_Position = aPosition;
-    }
-)";
-
-const char *fragmentShaderSource = R"(
-    precision mediump float;
-    void main() {
-        gl_FragColor = vec4(1.0, 0.5, 0.2, 1.0); // Orange
-    }
-)";
+#include <iostream>
+#include <fstream>
+#include <sstream>
+#include <string>
 
 GLuint program;
 GLuint vbo, ibo;
 Terrain *terrain;
+
+std::string ReadFile(const std::string &path)
+{
+    std::ifstream file(path);
+    std::stringstream buffer;
+    buffer << file.rdbuf();
+    return buffer.str();
+}
 
 void render()
 {
@@ -51,12 +49,16 @@ int main()
         EM_ASM(
             console.log('WebGL sikeresen inicializálva!'););
 
+        std::string vertexShaderString = ReadFile("shaders/vertex.vert");
+        const char *vertexSrc = vertexShaderString.c_str();
         GLuint vs = glCreateShader(GL_VERTEX_SHADER);
-        glShaderSource(vs, 1, &vertexShaderSource, NULL);
+        glShaderSource(vs, 1, &vertexSrc, NULL);
         glCompileShader(vs);
 
+        std::string fragmentShaderString = ReadFile("shaders/fragment.frag");
+        const char *fragSrc = fragmentShaderString.c_str();
         GLuint fs = glCreateShader(GL_FRAGMENT_SHADER);
-        glShaderSource(fs, 1, &fragmentShaderSource, NULL);
+        glShaderSource(fs, 1, &fragSrc, NULL);
         glCompileShader(fs);
 
         program = glCreateProgram();
