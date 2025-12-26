@@ -14,6 +14,8 @@ GLuint vbo, ibo;
 Terrain *terrain;
 double lastTime;
 int frameCount;
+const int canvasWidth = 1500;
+const int canvasHeight = 1500;
 
 std::string ReadFile(const std::string &path)
 {
@@ -59,6 +61,7 @@ int main()
     EmscriptenWebGLContextAttributes attrs;
     emscripten_webgl_init_context_attributes(&attrs);
     int ctx = emscripten_webgl_create_context("#canvas", &attrs);
+    emscripten_set_canvas_element_size("#canvas", canvasWidth, canvasHeight);
     if (!ctx)
     {
         EM_ASM(
