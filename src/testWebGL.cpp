@@ -2,7 +2,7 @@
 #include <emscripten/bind.h>
 #include <emscripten/html5.h>
 #include <emscripten/html5_webgl.h>
-#include <GLES2/gl2.h>
+#include <GLES3/gl3.h>
 #include <core/terrain.h>
 #include <core/mesh.h>
 #include <iostream>
@@ -11,7 +11,12 @@
 #include <string>
 
 GLuint program;
-GLuint vbo, ibo;
+// vertex buffer object
+GLuint vbo;
+// index buffer object
+GLuint ibo;
+// vertax array object
+GLuint vao;
 Terrain *terrain;
 double lastTime;
 int frameCount;
@@ -42,20 +47,7 @@ void render()
     }
 
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-    glBindBuffer(GL_ARRAY_BUFFER, vbo);
-    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, ibo);
-    GLint posAttrib = glGetAttribLocation(program, "aPosition");
-    if (posAttrib != -1)
-    {
-        glVertexAttribPointer(posAttrib, 4, GL_FLOAT, GL_FALSE, sizeof(Vertex), 0);
-        glEnableVertexAttribArray(posAttrib);
-    }
-    GLint normVec = glGetAttribLocation(program, "aNormal");
-    if (normVec != -1)
-    {
-        glVertexAttribPointer(normVec, 3, GL_FLOAT, GL_FALSE, sizeof(Vertex), (void *)(4 * sizeof(float)));
-        glEnableVertexAttribArray(normVec);
-    }
+    glBindVertexArray(vao);
 
     glDrawElements(GL_TRIANGLES, terrain->getMesh()->getIndexCount(), GL_UNSIGNED_INT, 0);
 }
@@ -64,6 +56,7 @@ int main()
 {
     EmscriptenWebGLContextAttributes attrs;
     emscripten_webgl_init_context_attributes(&attrs);
+    attrs.majorVersion = 2;
     int ctx = emscripten_webgl_create_context("#canvas", &attrs);
     if (!ctx)
     {
@@ -95,16 +88,39 @@ int main()
         glAttachShader(program, fs);
         glLinkProgram(program);
         glUseProgram(program);
+        glDeleteShader(vs);
+        glDeleteShader(fs);
 
         terrain = new Terrain(2048);
         terrain->regenerate();
 
+        glGenVertexArrays(1, &vao);
+
+        glBindVertexArray(vao);
         glGenBuffers(1, &vbo);
         glBindBuffer(GL_ARRAY_BUFFER, vbo);
         glBufferData(GL_ARRAY_BUFFER, terrain->getMesh()->getVertexCount() * sizeof(Vertex), terrain->getMesh()->getVertices(), GL_STATIC_DRAW);
         glGenBuffers(1, &ibo);
         glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, ibo);
         glBufferData(GL_ELEMENT_ARRAY_BUFFER, terrain->getMesh()->getIndexCount() * sizeof(uint32_t), terrain->getMesh()->getIndices(), GL_STATIC_DRAW);
+        GLint posAttrib = glGetAttribLocation(program, "aPosition");
+        if (posAttrib != -1)
+        {
+            glVertexAttribPointer(posAttrib, 4, GL_FLOAT, GL_FALSE, sizeof(Vertex), (void *)0);
+            glEnableVertexAttribArray(posAttrib);
+        }
+        GLint normVec = glGetAttribLocation(program, "aNormal");
+        if (normVec != -1)
+        {
+            glVertexAttribPointer(normVec, 3, GL_FLOAT, GL_FALSE, sizeof(Vertex), (void *)(4 * sizeof(float)));
+            glEnableVertexAttribArray(normVec);
+        }
+        GLint textureCoords = glGetAttribLocation(program, "aTexCoords");
+        if (textureCoords != -1)
+        {
+            glVertexAttribPointer(textureCoords, 2, GL_FLOAT, GL_FALSE, sizeof(Vertex), (void *)(7 * sizeof(float)));
+            glEnableVertexAttribArray(textureCoords);
+        }
 
         glEnable(GL_DEPTH_TEST);
         lastTime = emscripten_get_now();

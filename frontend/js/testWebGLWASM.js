@@ -5165,41 +5165,6 @@ async function createWasm() {
 
   var GLctx;
   
-  var webgl_enable_ANGLE_instanced_arrays = (ctx) => {
-      // Extension available in WebGL 1 from Firefox 26 and Google Chrome 30 onwards. Core feature in WebGL 2.
-      var ext = ctx.getExtension('ANGLE_instanced_arrays');
-      // Because this extension is a core function in WebGL 2, assign the extension entry points in place of
-      // where the core functions will reside in WebGL 2. This way the calling code can call these without
-      // having to dynamically branch depending if running against WebGL 1 or WebGL 2.
-      if (ext) {
-        ctx['vertexAttribDivisor'] = (index, divisor) => ext['vertexAttribDivisorANGLE'](index, divisor);
-        ctx['drawArraysInstanced'] = (mode, first, count, primcount) => ext['drawArraysInstancedANGLE'](mode, first, count, primcount);
-        ctx['drawElementsInstanced'] = (mode, count, type, indices, primcount) => ext['drawElementsInstancedANGLE'](mode, count, type, indices, primcount);
-        return 1;
-      }
-    };
-  
-  var webgl_enable_OES_vertex_array_object = (ctx) => {
-      // Extension available in WebGL 1 from Firefox 25 and WebKit 536.28/desktop Safari 6.0.3 onwards. Core feature in WebGL 2.
-      var ext = ctx.getExtension('OES_vertex_array_object');
-      if (ext) {
-        ctx['createVertexArray'] = () => ext['createVertexArrayOES']();
-        ctx['deleteVertexArray'] = (vao) => ext['deleteVertexArrayOES'](vao);
-        ctx['bindVertexArray'] = (vao) => ext['bindVertexArrayOES'](vao);
-        ctx['isVertexArray'] = (vao) => ext['isVertexArrayOES'](vao);
-        return 1;
-      }
-    };
-  
-  var webgl_enable_WEBGL_draw_buffers = (ctx) => {
-      // Extension available in WebGL 1 from Firefox 28 onwards. Core feature in WebGL 2.
-      var ext = ctx.getExtension('WEBGL_draw_buffers');
-      if (ext) {
-        ctx['drawBuffers'] = (n, bufs) => ext['drawBuffersWEBGL'](n, bufs);
-        return 1;
-      }
-    };
-  
   var webgl_enable_WEBGL_draw_instanced_base_vertex_base_instance = (ctx) =>
       // Closure is expected to be allowed to minify the '.dibvbi' property, so not accessing it quoted.
       !!(ctx.dibvbi = ctx.getExtension('WEBGL_draw_instanced_base_vertex_base_instance'));
@@ -5226,23 +5191,6 @@ async function createWasm() {
       // Restrict the list of advertised extensions to those that we actually
       // support.
       var supportedExtensions = [
-        // WebGL 1 extensions
-        'ANGLE_instanced_arrays',
-        'EXT_blend_minmax',
-        'EXT_disjoint_timer_query',
-        'EXT_frag_depth',
-        'EXT_shader_texture_lod',
-        'EXT_sRGB',
-        'OES_element_index_uint',
-        'OES_fbo_render_mipmap',
-        'OES_standard_derivatives',
-        'OES_texture_float',
-        'OES_texture_half_float',
-        'OES_texture_half_float_linear',
-        'OES_vertex_array_object',
-        'WEBGL_color_buffer_float',
-        'WEBGL_depth_texture',
-        'WEBGL_draw_buffers',
         // WebGL 2 extensions
         'EXT_color_buffer_float',
         'EXT_conservative_depth',
@@ -5497,10 +5445,7 @@ async function createWasm() {
           canvas.getContext = fixedGetContext;
         }
   
-        var ctx =
-          (webGLContextAttributes.majorVersion > 1)
-          ? canvas.getContext("webgl2", webGLContextAttributes) :
-          canvas.getContext("webgl", webGLContextAttributes);
+        var ctx = canvas.getContext("webgl2", webGLContextAttributes);
   
         if (!ctx) return 0;
   
@@ -5591,11 +5536,6 @@ async function createWasm() {
         webgl_enable_EXT_polygon_offset_clamp(GLctx);
         webgl_enable_EXT_clip_control(GLctx);
         webgl_enable_WEBGL_polygon_mode(GLctx);
-        // Extensions that are only available in WebGL 1 (the calls will be no-ops
-        // if called on a WebGL 2 context active)
-        webgl_enable_ANGLE_instanced_arrays(GLctx);
-        webgl_enable_OES_vertex_array_object(GLctx);
-        webgl_enable_WEBGL_draw_buffers(GLctx);
         // Extensions that are available from WebGL >= 2 (no-op if called on a WebGL 1 context active)
         webgl_enable_WEBGL_draw_instanced_base_vertex_base_instance(GLctx);
         webgl_enable_WEBGL_multi_draw_instanced_base_vertex_base_instance(GLctx);
@@ -5654,6 +5594,9 @@ async function createWasm() {
       //  TODO: Make these into hard errors at some point in the future
       if (contextAttributes.majorVersion !== 1 && contextAttributes.majorVersion !== 2) {
         err(`Invalid WebGL version requested: ${contextAttributes.majorVersion}`);
+      }
+      if (contextAttributes.majorVersion !== 2) {
+        err('WebGL 1 requested but only WebGL 2 is supported (MIN_WEBGL_VERSION is 2)');
       }
   
       var canvas = findCanvasEventTarget(target);
@@ -5875,9 +5818,16 @@ async function createWasm() {
     };
   var _glBindBuffer = _emscripten_glBindBuffer;
 
+  var _emscripten_glBindVertexArray = (vao) => {
+      GLctx.bindVertexArray(GL.vaos[vao]);
+      var ibo = GLctx.getParameter(0x8895 /*ELEMENT_ARRAY_BUFFER_BINDING*/);
+      GLctx.currentElementArrayBufferBinding = ibo ? (ibo.name | 0) : 0;
+    };
+  var _glBindVertexArray = _emscripten_glBindVertexArray;
+
   var _emscripten_glBufferData = (target, size, data, usage) => {
   
-      if (GL.currentContext.version >= 2) {
+      if (true) {
         // If size is zero, WebGL would interpret uploading the whole input
         // arraybuffer (starting from given offset), which would not make sense in
         // WebAssembly, so avoid uploading if size is zero. However we must still
@@ -5889,11 +5839,6 @@ async function createWasm() {
         }
         return;
       }
-      // N.b. here first form specifies a heap subarray, second form an integer
-      // size, so the ?: code here is polymorphic. It is advised to avoid
-      // randomly mixing both uses in calling code, to avoid any potential JS
-      // engine JIT issues.
-      GLctx.bufferData(target, data ? HEAPU8.subarray(data, data+size) : size, usage);
     };
   var _glBufferData = _emscripten_glBufferData;
 
@@ -5929,6 +5874,20 @@ async function createWasm() {
       return id;
     };
   var _glCreateShader = _emscripten_glCreateShader;
+
+  var _emscripten_glDeleteShader = (id) => {
+      if (!id) return;
+      var shader = GL.shaders[id];
+      if (!shader) {
+        // glDeleteShader actually signals an error when deleting a nonexisting
+        // object, unlike some other GL delete functions.
+        GL.recordError(0x501 /* GL_INVALID_VALUE */);
+        return;
+      }
+      GLctx.deleteShader(shader);
+      GL.shaders[id] = null;
+    };
+  var _glDeleteShader = _emscripten_glDeleteShader;
 
   var _emscripten_glDrawElements = (mode, count, type, indices) => {
       var buf;
@@ -5993,6 +5952,12 @@ async function createWasm() {
         );
     };
   var _glGenBuffers = _emscripten_glGenBuffers;
+
+  var _emscripten_glGenVertexArrays = (n, arrays) => {
+      GL.genObject(n, arrays, 'createVertexArray', GL.vaos
+        );
+    };
+  var _glGenVertexArrays = _emscripten_glGenVertexArrays;
 
   
   var _emscripten_glGetAttribLocation = (program, name) =>
@@ -6548,9 +6513,6 @@ missingLibrarySymbols.forEach(missingLibrarySymbol)
   'tempFixedLengthArray',
   'miniTempWebGLFloatBuffers',
   'miniTempWebGLIntBuffers',
-  'webgl_enable_ANGLE_instanced_arrays',
-  'webgl_enable_OES_vertex_array_object',
-  'webgl_enable_WEBGL_draw_buffers',
   'webgl_enable_WEBGL_multi_draw',
   'webgl_enable_EXT_polygon_offset_clamp',
   'webgl_enable_EXT_clip_control',
@@ -6626,9 +6588,9 @@ function checkIncomingModuleAPI() {
   ignoredModuleProp('fetchSettings');
 }
 var ASM_CONSTS = {
-  87664: ($0) => { console.log('FPS: ' + $0); },  
- 87695: () => { console.log('A böngésződ nem támogatja a WebGL-t!'); },  
- 87752: () => { console.log('WebGL sikeresen inicializálva!'); }
+  87712: ($0) => { console.log('FPS: ' + $0); },  
+ 87743: () => { console.log('A böngésződ nem támogatja a WebGL-t!'); },  
+ 87800: () => { console.log('WebGL sikeresen inicializálva!'); }
 };
 
 // Imports from the Wasm binary.
@@ -6757,6 +6719,8 @@ var wasmImports = {
   /** @export */
   glBindBuffer: _glBindBuffer,
   /** @export */
+  glBindVertexArray: _glBindVertexArray,
+  /** @export */
   glBufferData: _glBufferData,
   /** @export */
   glClear: _glClear,
@@ -6769,6 +6733,8 @@ var wasmImports = {
   /** @export */
   glCreateShader: _glCreateShader,
   /** @export */
+  glDeleteShader: _glDeleteShader,
+  /** @export */
   glDrawElements: _glDrawElements,
   /** @export */
   glEnable: _glEnable,
@@ -6776,6 +6742,8 @@ var wasmImports = {
   glEnableVertexAttribArray: _glEnableVertexAttribArray,
   /** @export */
   glGenBuffers: _glGenBuffers,
+  /** @export */
+  glGenVertexArrays: _glGenVertexArrays,
   /** @export */
   glGetAttribLocation: _glGetAttribLocation,
   /** @export */
