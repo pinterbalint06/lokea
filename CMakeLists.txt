@@ -1,6 +1,6 @@
 cmake_minimum_required(VERSION 3.10)
 
-project(TerrainGameEngine)
+project(3DRendererForWeb)
 
 # move files to frontend/js off by default
 option(COPYFILES "Move output files to frontend/js directory" OFF)
