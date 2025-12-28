@@ -3,7 +3,7 @@
 #include <emscripten/html5.h>
 #include <emscripten/html5_webgl.h>
 #include <GLES3/gl3.h>
-#include "core/renderer.h"
+#include <core/renderer.h>
 #include "core/shader.h"
 #include "core/scene.h"
 #include "core/material.h"
@@ -14,6 +14,7 @@
 #include "utils/fpsCounter.h"
 #include "core/vertex.h"
 #include <cstring>
+#include <map>
 
 Renderer::Renderer(std::string &canvasID)
 {
@@ -35,23 +36,24 @@ Renderer::Renderer(std::string &canvasID)
     emscripten_webgl_make_context_current(ctx);
     glClearColor(rBuffer_, gBuffer_, bBuffer_, 1);
     fps = new fpsCounter();
-    shaderProgram_ = new Shaders::Shader("shaders/vertex.vert", "shaders/fragment.frag");
-    shaderProgram_->use();
+    createShadingPrograms();
+    shaderPrograms_[currShadingMode_]->use();
 
     glEnable(GL_DEPTH_TEST);
 }
 
-Renderer::~Renderer()
+void Renderer::createShadingPrograms()
 {
-    if (shaderProgram_)
-    {
-        delete shaderProgram_;
-    }
+    shaderPrograms_[Shaders::SHADINGMODE::GOURAUD] =
+        std::make_unique<Shaders::Shader>("shaders/gouraud.vert", "shaders/gouraud.frag");
+    shaderPrograms_[Shaders::SHADINGMODE::TEXTURE] =
+        std::make_unique<Shaders::Shader>("shaders/texture.vert", "shaders/texture.frag");
 }
 
 void Renderer::setShadingMode(Shaders::SHADINGMODE shadingMode)
 {
     currShadingMode_ = shadingMode;
+    shaderPrograms_[currShadingMode_]->use();
 }
 
 void Renderer::setImageDimensions(int imageW, int imageH)
@@ -60,8 +62,7 @@ void Renderer::setImageDimensions(int imageW, int imageH)
     imageHeight_ = imageH;
 }
 
-template <typename StructShader>
-void Renderer::renderTemplate(const Scene *scene)
+void Renderer::render(const Scene *scene)
 {
     fps->update();
     // camera
@@ -82,7 +83,6 @@ void Renderer::renderTemplate(const Scene *scene)
     lightVec[1] = -lightDir[1];
     lightVec[2] = -lightDir[2];
 
-    StructShader shader;
     Mesh *mesh = scene->getMesh();
     Materials::Material meshMat = mesh->getMaterial();
     Materials::Color meshCol = meshMat.albedo;
@@ -94,36 +94,11 @@ void Renderer::renderTemplate(const Scene *scene)
 
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-    GLuint mvpLoc = glGetUniformLocation(shaderProgram_->getProgramID(), "uMVP");
+    GLuint mvpLoc = glGetUniformLocation(shaderPrograms_[currShadingMode_]->getProgramID(), "uMVP");
     glUniformMatrix4fv(mvpLoc, 1, GL_FALSE, VP);
 
     glBindVertexArray(mesh->getVAO());
 
     glDrawElements(GL_TRIANGLES, mesh->getIndexCount(), GL_UNSIGNED_INT, 0);
     glBindVertexArray(0);
-}
-
-void Renderer::render(const Scene *scene)
-{
-    switch (currShadingMode_)
-    {
-    case (Shaders::SHADINGMODE::PHONG):
-        renderTemplate<Shaders::PhongShader>(scene);
-        break;
-    case (Shaders::SHADINGMODE::GOURAUD):
-        renderTemplate<Shaders::GouraudShader>(scene);
-        break;
-    case (Shaders::SHADINGMODE::FLAT):
-        renderTemplate<Shaders::FlatShader>(scene);
-        break;
-    case (Shaders::SHADINGMODE::NO_SHADING):
-        renderTemplate<Shaders::NoShader>(scene);
-        break;
-    case (Shaders::SHADINGMODE::TEXTURE):
-        renderTemplate<Shaders::TextureShader>(scene);
-        break;
-    default:
-        renderTemplate<Shaders::PhongShader>(scene);
-        break;
-    }
 }

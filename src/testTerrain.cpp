@@ -179,6 +179,7 @@ void changeFocalLength(float focal)
         gEngine->setFocalLength(focal);
     }
 }
+
 void startRenderingLoop()
 {
     if (gEngine)

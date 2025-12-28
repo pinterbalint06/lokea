@@ -13,52 +13,6 @@ const n = 0.1;
 const f = 1000;
 const canvasId = "canvas";
 
-function drawImage() {
-    let imageBufferHely = Module.getImageLocation();
-    let clampedArray = new Uint8ClampedArray(
-        wasmMemory.buffer,
-        imageBufferHely,
-        jsCanvasSzelesseg * jsCanvasMagassag * 4
-    );
-    let ctx = document.getElementById(canvasId).getContext("2d");
-
-    let imgData = new ImageData(clampedArray, jsCanvasSzelesseg, jsCanvasMagassag);
-    ctx.putImageData(imgData, 0, 0);
-}
-
-const TARGET_FPS = 30;
-const FRAME_MIN_TIME = 1000 / TARGET_FPS;
-let lastFrameTime = 0;
-let frameCount = 0;
-let lastFpsUpdate = 0;
-let fps = 0;
-
-
-function updateFPS(currentTime) {
-    frameCount++;
-
-    if (currentTime - lastFpsUpdate >= 1000) {
-        fps = frameCount;
-        frameCount = 0;
-        lastFpsUpdate = currentTime;
-
-        document.getElementById("fps").innerText = fps;
-    }
-}
-
-function mainLoop(currentTime) {
-    requestAnimationFrame(mainLoop);
-
-    const deltaTime = currentTime - lastFrameTime;
-
-    if (deltaTime >= FRAME_MIN_TIME) {
-        Module.render();
-        drawImage();
-        updateFPS(currentTime);
-        lastFrameTime = currentTime - (deltaTime % FRAME_MIN_TIME);
-    }
-}
-
 document.addEventListener("DOMContentLoaded", async function () {
     let canvas = document.getElementById(canvasId);
     canvas.width = jsCanvasSzelesseg;
@@ -75,6 +29,7 @@ document.addEventListener("DOMContentLoaded", async function () {
         Module.init(256, fokuszTavolsag, filmSzel, filmMag, jsCanvasSzelesseg, jsCanvasMagassag, n, f);
         Module.setShadingTexture();
         imgFromUrl("../imgs/cathedral.jpg");
+        Module.startRenderingLoop();
         canvas.addEventListener('mousedown', (e) => {
             fogva = true;
             utolsoX = e.clientX;
@@ -161,17 +116,11 @@ function imgFromUrl(url) {
             rgbData[index] = rgbaData[i + 2];
             index++;
         }
-        requestAnimationFrame(mainLoop);
+        Module.uploadTextureToGPU();
     };
     img.src = url;
 }
 
 function xyForgas(xszoggel, yszoggel) {
     Module.xyForog(xszoggel * (Math.PI / 180), yszoggel * (Math.PI / 180));
-    drawImage(canvasId);
-}
-
-function ujrarenderel() {
-    Module.render();
-    drawImage();
 }

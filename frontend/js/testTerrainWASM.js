@@ -5883,6 +5883,21 @@ async function createWasm() {
     };
   var _glDeleteBuffers = _emscripten_glDeleteBuffers;
 
+  var _emscripten_glDeleteProgram = (id) => {
+      if (!id) return;
+      var program = GL.programs[id];
+      if (!program) {
+        // glDeleteProgram actually signals an error when deleting a nonexisting
+        // object, unlike some other GL delete functions.
+        GL.recordError(0x501 /* GL_INVALID_VALUE */);
+        return;
+      }
+      GLctx.deleteProgram(program);
+      program.name = 0;
+      GL.programs[id] = null;
+    };
+  var _glDeleteProgram = _emscripten_glDeleteProgram;
+
   var _emscripten_glDeleteShader = (id) => {
       if (!id) return;
       var shader = GL.shaders[id];
@@ -6818,10 +6833,10 @@ function checkIncomingModuleAPI() {
   ignoredModuleProp('fetchSettings');
 }
 var ASM_CONSTS = {
-  88928: () => { throw('A böngésződ nem támogatja a WebGL-t!'); },  
- 88979: ($0) => { throw("Sikertelen shader fordítás: " + UTF8ToString($0)); },  
- 89043: ($0) => { throw("Sikertelen shader összekapcsolás: " + UTF8ToString($0)); },  
- 89113: ($0) => { console.log('FPS: ' + $0); }
+  89520: () => { throw('A böngésződ nem támogatja a WebGL-t!'); },  
+ 89571: ($0) => { throw("Sikertelen shader fordítás: " + UTF8ToString($0)); },  
+ 89635: ($0) => { throw("Sikertelen shader összekapcsolás: " + UTF8ToString($0)); },  
+ 89705: ($0) => { console.log('FPS: ' + $0); }
 };
 
 // Imports from the Wasm binary.
@@ -6960,6 +6975,8 @@ var wasmImports = {
   glCreateShader: _glCreateShader,
   /** @export */
   glDeleteBuffers: _glDeleteBuffers,
+  /** @export */
+  glDeleteProgram: _glDeleteProgram,
   /** @export */
   glDeleteShader: _glDeleteShader,
   /** @export */

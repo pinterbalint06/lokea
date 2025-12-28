@@ -10,7 +10,6 @@
 10. Kód újrastrukturálása (engine class, test equi es terrain értelmes elválasztása)
 11. Gömb generálás dokumentálása (RÖVID csak gömb koordináta -> Descartes koordináta szemléltetése és gömbkoordináták előállítása)
 12. Domborzat valósághűbb (erózió)
-13. Blinn-Phong
-14. Váltás WebGL-re (OpenGL ES)
-15. WebGL MVP Mátrix megírása
-16. GPU Memory leakage a meshben?
+13. Blinn-Phong reflection model GLSL-ben
+14. GPU Memory leakage a meshben?
+15. Strukturálás

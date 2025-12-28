@@ -1,7 +1,9 @@
 #include <emscripten/emscripten.h>
 #include <emscripten/bind.h>
+#include <GLES3/gl3.h>
 #include <vector>
 #include <cmath>
+#include <string>
 #include "core/mesh.h"
 #include "core/scene.h"
 #include "core/vertex.h"
@@ -41,6 +43,7 @@ Mesh *generateSphere(int rings, int segments, float radius)
             vert.x = x * radius;
             vert.y = y * radius;
             vert.z = z * radius;
+            vert.w = 1.0f;
             vert.nx = -x;
             vert.ny = -y;
             vert.nz = -z;
@@ -81,23 +84,14 @@ Mesh *generateSphere(int rings, int segments, float radius)
 
 void init(int size, float focal, float filmW, float filmH, int imageW, int imageH, float n, float f)
 {
-    renderer = new Renderer();
+    std::string canvasID = "canvas";
+    renderer = new Renderer(canvasID);
     scene = new Scene();
     renderer->setImageDimensions(imageW, imageH);
     scene->getCamera()->setPerspective(focal, filmW, filmH, imageW, imageH, n, f);
-    renderer->setShadingMode(Shaders::SHADINGMODE::PHONG);
+    renderer->setShadingMode(Shaders::SHADINGMODE::TEXTURE);
     scene->setMesh(generateSphere(32, 32, 10.0f));
-    renderer->render(scene);
-}
-
-int getImageBufferLocation()
-{
-    int returnValue = 0;
-    if (renderer)
-    {
-        returnValue = (int)renderer->getImageBuffer();
-    }
-    return returnValue;
+    scene->getMesh()->setUpOpenGL();
 }
 
 void rotateCamera(float dPitch, float dYaw)
@@ -105,7 +99,6 @@ void rotateCamera(float dPitch, float dYaw)
     if (scene && renderer)
     {
         scene->getCamera()->rotate(dPitch, dYaw);
-        renderer->render(scene);
     }
 }
 
@@ -118,6 +111,17 @@ int initTexture(int width, int height)
     return (int)texture->getImgData();
 }
 
+void uploadTextureToGPU()
+{
+    GLuint textureGL;
+    glGenTextures(1, &textureGL);
+    glActiveTexture(GL_TEXTURE0);
+    glBindTexture(GL_TEXTURE_2D, textureGL);
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, texture->getWidth(), texture->getHeight(), 0, GL_RGB, GL_UNSIGNED_BYTE, texture->getImgData());
+    glGenerateMipmap(GL_TEXTURE_2D);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+}
+
 void render()
 {
     if (scene && renderer)
@@ -128,18 +132,9 @@ void render()
 
 void setShadingTexture()
 {
-    if (scene && renderer)
+    if (renderer)
     {
         renderer->setShadingMode(Shaders::SHADINGMODE::TEXTURE);
-    }
-}
-
-void setAntialias(int antialias)
-{
-    if (scene && renderer)
-    {
-        renderer->setAntialias(antialias);
-        renderer->render(scene);
     }
 }
 
@@ -148,18 +143,22 @@ void changeFocalLength(float focal)
     if (scene && renderer)
     {
         scene->getCamera()->setFocalLength(focal);
-        renderer->render(scene);
     }
+}
+
+void startRenderingLoop()
+{
+    emscripten_set_main_loop(render, 0, 0);
 }
 
 EMSCRIPTEN_BINDINGS(my_module)
 {
     emscripten::function("init", &init);
-    emscripten::function("getImageLocation", &getImageBufferLocation);
     emscripten::function("xyForog", &rotateCamera);
     emscripten::function("initTexture", &initTexture);
     emscripten::function("render", &render);
     emscripten::function("setShadingTexture", &setShadingTexture);
-    emscripten::function("setAntialias", &setAntialias);
     emscripten::function("changeFocalLength", &changeFocalLength);
+    emscripten::function("startRenderingLoop", &startRenderingLoop);
+    emscripten::function("uploadTextureToGPU", &uploadTextureToGPU);
 }

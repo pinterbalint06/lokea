@@ -4,6 +4,7 @@
 #include "core/shader.h"
 #include "core/vertex.h"
 #include <string>
+#include <map>
 
 class Clipper;
 class Scene;
@@ -16,16 +17,14 @@ class Renderer
 private:
     int imageWidth_, imageHeight_;
     Shaders::SHADINGMODE currShadingMode_;
-    Shaders::Shader *shaderProgram_;
+    std::map<Shaders::SHADINGMODE, std::unique_ptr<Shaders::Shader>> shaderPrograms_;
     fpsCounter *fps;
     float rBuffer_, gBuffer_, bBuffer_;
 
-    template <typename StructShader>
-    void renderTemplate(const Scene *scene);
+    void createShadingPrograms();
 
 public:
     Renderer(std::string &canvasID);
-    ~Renderer();
     void setShadingMode(Shaders::SHADINGMODE shadingMode);
     void setDefaultColor(float r, float g, float b)
     {
