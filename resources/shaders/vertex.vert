@@ -1,10 +1,12 @@
-attribute vec4 aPosition;
-attribute vec3 aNormal;
-attribute vec2 aTexCoords;
-varying vec3 vNormal;
+#version 300 es
+
+in vec4 aPosition;
+in vec3 aNormal;
+in vec2 aTexCoords;
+out vec3 vNormal;
 void main() {
     vNormal = aNormal;
     vec4 scaledPos = aPosition;
-    scaledPos.xyz = (scaledPos.xyz / 25.0);
+    scaledPos.xyz = (scaledPos.xyz / 25.0f);
     gl_Position = scaledPos;
 }

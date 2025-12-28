@@ -13,8 +13,8 @@
 GLuint program;
 // vertex buffer object
 GLuint vbo;
-// index buffer object
-GLuint ibo;
+// element buffer object
+GLuint ebo;
 // vertax array object
 GLuint vao;
 Terrain *terrain;
@@ -50,6 +50,7 @@ void render()
     glBindVertexArray(vao);
 
     glDrawElements(GL_TRIANGLES, terrain->getMesh()->getIndexCount(), GL_UNSIGNED_INT, 0);
+    glBindVertexArray(0);
 }
 
 int main()
@@ -100,8 +101,8 @@ int main()
         glGenBuffers(1, &vbo);
         glBindBuffer(GL_ARRAY_BUFFER, vbo);
         glBufferData(GL_ARRAY_BUFFER, terrain->getMesh()->getVertexCount() * sizeof(Vertex), terrain->getMesh()->getVertices(), GL_STATIC_DRAW);
-        glGenBuffers(1, &ibo);
-        glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, ibo);
+        glGenBuffers(1, &ebo);
+        glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, ebo);
         glBufferData(GL_ELEMENT_ARRAY_BUFFER, terrain->getMesh()->getIndexCount() * sizeof(uint32_t), terrain->getMesh()->getIndices(), GL_STATIC_DRAW);
         GLint posAttrib = glGetAttribLocation(program, "aPosition");
         if (posAttrib != -1)
@@ -121,6 +122,7 @@ int main()
             glVertexAttribPointer(textureCoords, 2, GL_FLOAT, GL_FALSE, sizeof(Vertex), (void *)(7 * sizeof(float)));
             glEnableVertexAttribArray(textureCoords);
         }
+        glBindVertexArray(0);
 
         glEnable(GL_DEPTH_TEST);
         lastTime = emscripten_get_now();

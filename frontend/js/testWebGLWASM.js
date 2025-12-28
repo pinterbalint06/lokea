@@ -6588,9 +6588,9 @@ function checkIncomingModuleAPI() {
   ignoredModuleProp('fetchSettings');
 }
 var ASM_CONSTS = {
-  87712: ($0) => { console.log('FPS: ' + $0); },  
- 87743: () => { console.log('A böngésződ nem támogatja a WebGL-t!'); },  
- 87800: () => { console.log('WebGL sikeresen inicializálva!'); }
+  87744: ($0) => { console.log('FPS: ' + $0); },  
+ 87775: () => { console.log('A böngésződ nem támogatja a WebGL-t!'); },  
+ 87832: () => { console.log('WebGL sikeresen inicializálva!'); }
 };
 
 // Imports from the Wasm binary.
