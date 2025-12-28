@@ -35,14 +35,6 @@ void randomizeLocation()
     }
 }
 
-void setAntialias(int anti)
-{
-    if (gEngine)
-    {
-        gEngine->setAntialias(anti);
-    }
-}
-
 void setLightIntensity(float intensity)
 {
     if (gEngine)
@@ -132,16 +124,6 @@ float getYaw()
     return returnValue;
 }
 
-int getImageBufferLocation()
-{
-    int returnValue = 0;
-    if (gEngine)
-    {
-        returnValue = (int)gEngine->getImageBufferLocation();
-    }
-    return returnValue;
-}
-
 void setMaterialGrass()
 {
     if (gEngine)
@@ -207,7 +189,6 @@ EMSCRIPTEN_BINDINGS(my_module)
     emscripten::function("setRotate", &setRotate);
     emscripten::function("getXForog", &getPitch);
     emscripten::function("getYForog", &getYaw);
-    emscripten::function("setAntialias", &setAntialias);
     emscripten::function("newCameraHeight", &newCameraHeight);
     emscripten::function("newPerlinMap", &setTerrainParams);
     emscripten::function("newLightIntensity", &setLightIntensity);
@@ -219,7 +200,6 @@ EMSCRIPTEN_BINDINGS(my_module)
     emscripten::function("setLightColor", &setLightColor);
     emscripten::function("setAmbientLight", &setAmbientLight);
     emscripten::function("setShadingTechnique", &setShadingMode);
-    emscripten::function("getImageLocation", &getImageBufferLocation);
     emscripten::function("setMapSpacing", &setMapSpacing);
     emscripten::function("render", &render);
     emscripten::function("changeFocalLength", &changeFocalLength);
