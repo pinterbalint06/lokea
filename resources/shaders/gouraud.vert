@@ -23,9 +23,9 @@ layout(std140) uniform SceneData {
                          // so total size is 128 bytes
 };
 
-out vec3 vNormal;
+out vec3 vColor;
 
 void main() {
-    vNormal = aNormal;
+    vColor = vec3(0.11f * aNormal.y, 0.62f * aNormal.y, 0.22f * aNormal.y);
     gl_Position = uMVP * aPosition;
 }

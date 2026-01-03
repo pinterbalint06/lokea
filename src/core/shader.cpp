@@ -75,7 +75,7 @@ namespace Shaders
         glUniformBlockBinding(programID_, uniformBlockIndex, 0);
     }
 
-    Shader::~Shader()
+    Shader::~Shader() 
     {
         if (programID_ != 0)
         {
