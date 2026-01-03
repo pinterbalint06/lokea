@@ -6,10 +6,9 @@
 6. 3 dimenziós perlin zaj
 7. Domborzatra gyakrabban kiszámolni a perlin zajt, így részletesebb térképet kapnánk
 8. Fizikailag helyes árnyalás és pbr textúrák
-9. Equirectangular kép renderelése
-10. Kód újrastrukturálása (engine class, test equi es terrain értelmes elválasztása)
-11. Gömb generálás dokumentálása (RÖVID csak gömb koordináta -> Descartes koordináta szemléltetése és gömbkoordináták előállítása)
-12. Domborzat valósághűbb (erózió)
-13. Blinn-Phong reflection model GLSL-ben
-14. GPU Memory leakage a meshben?
-15. Strukturálás
+9. Kód újrastrukturálása (engine class, test equi es terrain értelmes elválasztása)
+10. Gömb generálás dokumentálása (RÖVID csak gömb koordináta -> Descartes koordináta szemléltetése és gömbkoordináták előállítása)
+11. Domborzat valósághűbb (erózió)
+12. Blinn-Phong reflection model GLSL-ben
+13. GPU Memory leakage a meshben?
+14. Strukturálás

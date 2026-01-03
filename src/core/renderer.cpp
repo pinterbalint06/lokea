@@ -35,19 +35,27 @@ Renderer::Renderer(std::string &canvasID)
     }
     emscripten_webgl_make_context_current(ctx);
     glClearColor(rBuffer_, gBuffer_, bBuffer_, 1);
-    fps = new fpsCounter();
-    createShadingPrograms();
-    shaderPrograms_[currShadingMode_]->use();
+
+    glGenBuffers(1, &ubo_);
+    glBindBuffer(GL_UNIFORM_BUFFER, ubo_);
+    glBufferData(GL_UNIFORM_BUFFER, 128, NULL, GL_STATIC_DRAW);
+    glBindBuffer(GL_UNIFORM_BUFFER, 0);
+    glBindBufferRange(GL_UNIFORM_BUFFER, 0, ubo_, 0, sizeof(SceneData));
+
+    createShadingPrograms(ubo_);
+    shaderPrograms_[currShadingMode_]->use(); 
 
     glEnable(GL_DEPTH_TEST);
+
+    fps = new fpsCounter();
 }
 
-void Renderer::createShadingPrograms()
+void Renderer::createShadingPrograms(GLuint ubo)
 {
     shaderPrograms_[Shaders::SHADINGMODE::GOURAUD] =
-        std::make_unique<Shaders::Shader>("shaders/gouraud.vert", "shaders/gouraud.frag");
+        std::make_unique<Shaders::Shader>("shaders/gouraud.vert", "shaders/gouraud.frag", ubo);
     shaderPrograms_[Shaders::SHADINGMODE::TEXTURE] =
-        std::make_unique<Shaders::Shader>("shaders/texture.vert", "shaders/texture.frag");
+        std::make_unique<Shaders::Shader>("shaders/texture.vert", "shaders/texture.frag", ubo);
 }
 
 void Renderer::setShadingMode(Shaders::SHADINGMODE shadingMode)
@@ -65,23 +73,32 @@ void Renderer::setImageDimensions(int imageW, int imageH)
 void Renderer::render(const Scene *scene)
 {
     fps->update();
+    SceneData currSceneData;
     // camera
     Camera *mainCamera = scene->getCamera();
-    float camX = mainCamera->getXPosition();
-    float camY = mainCamera->getYPosition();
-    float camZ = mainCamera->getZPosition();
+    currSceneData.camPos[0] = mainCamera->getXPosition();
+    currSceneData.camPos[1] = mainCamera->getYPosition();
+    currSceneData.camPos[2] = mainCamera->getZPosition();
     mainCamera->updateViewMatrix();
-    float VP[16];
-    MathUtils::multiplyMatrix(mainCamera->getViewMatrix(), mainCamera->getProjMatrix(), VP);
+    MathUtils::multiplyMatrix(mainCamera->getViewMatrix(), mainCamera->getProjMatrix(), currSceneData.MVP);
 
     // light
     DistantLight *sun = scene->getLight();
     float ambientLight = scene->getAmbientLight();
     float lightVec[3];
     const float *lightDir = sun->getDirection();
-    lightVec[0] = -lightDir[0];
-    lightVec[1] = -lightDir[1];
-    lightVec[2] = -lightDir[2];
+    currSceneData.lightVec[0] = -lightDir[0];
+    currSceneData.lightVec[1] = -lightDir[1];
+    currSceneData.lightVec[2] = -lightDir[2];
+
+    currSceneData.lightColor[0] = 255.0f;
+    currSceneData.lightColor[1] = 255.0f;
+    currSceneData.lightColor[2] = 255.0f;
+    currSceneData.ambientLight = 0.0f;
+
+    glBindBuffer(GL_UNIFORM_BUFFER, ubo_);
+    glBufferSubData(GL_UNIFORM_BUFFER, 0, sizeof(SceneData), &currSceneData);
+    glBindBuffer(GL_UNIFORM_BUFFER, 0);
 
     Mesh *mesh = scene->getMesh();
     Materials::Material meshMat = mesh->getMaterial();
@@ -90,12 +107,7 @@ void Renderer::render(const Scene *scene)
     float gGround = meshCol.g;
     float bGround = meshCol.b;
 
-    // fpsCounter();
-
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-
-    GLuint mvpLoc = glGetUniformLocation(shaderPrograms_[currShadingMode_]->getProgramID(), "uMVP");
-    glUniformMatrix4fv(mvpLoc, 1, GL_FALSE, VP);
 
     glBindVertexArray(mesh->getVAO());
 
