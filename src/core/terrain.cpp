@@ -73,6 +73,8 @@ void Terrain::buildTerrain()
             vertices[i].y = perlinNoise_->fbm(x * scale, y * scale, octaves_, frequency_, 2.0f, persistence_, lacunarity_) * heightMultiplier_;
             vertices[i].z = -y * spacing_;
             vertices[i].w = 1.0f;
+            vertices[i].u = (float)x * 0.25f;
+            vertices[i].v = (float)y * 0.25f;
         }
     }
 

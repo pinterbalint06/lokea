@@ -42,6 +42,8 @@ public:
     void setCameraRotation(float pitch, float yaw);
     void randomizeLocation();
     void render() { renderer_->render(scene_); };
+    uint8_t *initTexture(int width, int height);
+    void uploadTextureToGPU();
 
     float getPitch() { return scene_->getCamera()->getPitch(); }
     float getYaw() { return scene_->getCamera()->getYaw(); }

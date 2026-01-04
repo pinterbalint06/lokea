@@ -4,6 +4,7 @@
 #include "core/renderer.h"
 #include "core/terrain.h"
 #include "core/vertex.h"
+#include "core/texture.h"
 #include <string>
 
 Engine::Engine(int size)
@@ -141,4 +142,18 @@ void Engine::setCameraRotation(float pitch, float yaw)
 {
 
     scene_->getCamera()->setRotation(pitch, yaw);
+}
+
+uint8_t *Engine::initTexture(int width, int height)
+{
+    Texture *texture = new Texture(width, height);
+    Materials::Material newTexMat = Materials::Material::Grass();
+    newTexMat.texture = texture;
+    scene_->getMesh()->setMaterial(newTexMat);
+    return texture->getImgData();
+}
+
+void Engine::uploadTextureToGPU()
+{
+    scene_->getMesh()->getMaterial().texture->uploadToGPU();
 }
