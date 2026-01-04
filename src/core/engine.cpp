@@ -4,6 +4,7 @@
 #include "core/renderer.h"
 #include "core/terrain.h"
 #include "core/vertex.h"
+#include <string>
 
 Engine::Engine(int size)
 {
@@ -12,7 +13,8 @@ Engine::Engine(int size)
     Mesh *mesh = terrain_->getMesh();
     mesh->setMaterial(Materials::Material::Grass());
     scene_->setMesh(mesh);
-    renderer_ = new Renderer();
+    std::string canvID = "canvas";
+    renderer_ = new Renderer(canvID);
     renderer_->setDefaultColor(135.0f, 206.0f, 235.0f);
     cameraHeight_ = 3.8;
     cameraLocation_ = 0;
@@ -47,11 +49,6 @@ void Engine::randomizeLocation()
     calcNewCamLoc();
 }
 
-void Engine::setAntialias(int antialias)
-{
-    renderer_->setAntialias(antialias);
-}
-
 void Engine::setTerrainParams(int size, int seed, float frequency, float lacunarity, float persistence, int octaves, float heightMultiplier)
 {
     if (terrain_->getSize() != size)
@@ -66,6 +63,7 @@ void Engine::setTerrainParams(int size, int seed, float frequency, float lacunar
     terrain_->setOctaves(octaves);
     terrain_->setHeightMultiplier(heightMultiplier);
     terrain_->regenerate();
+    terrain_->getMesh()->setUpOpenGL();
     calcNewCamLoc();
 }
 

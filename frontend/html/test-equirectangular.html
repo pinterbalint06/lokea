@@ -6,8 +6,8 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Test equirectangular image</title>
     <link rel="stylesheet" href="../css/test.css">
+    <script type="module" src="../js/test-equirectangular.js"></script>
     <script src="../js/testEquirectangularWASM.js"></script>
-    <script src="../js/test-equirectangular.js"></script>
 </head>
 
 <body>
@@ -15,7 +15,6 @@
         <div class="row wrap gap">
             <div class="col">
                 <p>FPS: <span id="fps"></span></p>
-                <button onclick="ujrarenderel();">Újrarenderel</button>
                 <label for="antialias">Élsimítás:</label>
                 <select name="antialias" id="antialias" onchange="ujElsmitas();">
                     <option value="1" selected>1x</option>

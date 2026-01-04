@@ -1,6 +1,6 @@
 cmake_minimum_required(VERSION 3.10)
 
-project(TerrainGameEngine)
+project(3DRendererForWeb)
 
 # move files to frontend/js off by default
 option(COPYFILES "Move output files to frontend/js directory" OFF)
@@ -26,6 +26,8 @@ set(COMMON_WASM_FLAGS
     -sENVIRONMENT=["web"]
     -sEXPORTED_RUNTIME_METHODS=["HEAPU8"]
     -sMAX_WEBGL_VERSION=2
+    -sMIN_WEBGL_VERSION=2
+    --embed-file ${CMAKE_SOURCE_DIR}/resources/shaders@shaders
 )
 
 set(COMMON_WASM_COMPILATION
@@ -36,7 +38,7 @@ set(COMMON_WASM_COMPILATION
 # ---------------------------------------------------------
 set(RELEASE_COMPILE_FLAGS -O3 -flto)
 
-set(RELEASE_LINK_FLAGS -flto -sFULL_ES2 --embed-file ${CMAKE_SOURCE_DIR}/resources/shaders@shaders)
+set(RELEASE_LINK_FLAGS -flto -sFULL_ES2)
 # ---------------------------------------------------------
 # debug
 # ---------------------------------------------------------

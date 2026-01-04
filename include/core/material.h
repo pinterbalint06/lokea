@@ -6,6 +6,14 @@ class Texture;
 
 namespace Materials
 {
+    struct MaterialData
+    {
+        float albedo[3];
+        float diffuseness;
+        float specularity;
+        float shininess;
+        float pad2[2];
+    };
     /**
      * @brief Represents an RGB color with helper methods for gamma correction.
      */

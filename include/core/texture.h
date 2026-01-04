@@ -16,6 +16,9 @@ public:
     Texture(int width, int height);
     ~Texture();
 
+    int getWidth() { return width_; }
+    int getHeight() { return height_; }
+
     uint8_t *getImgData() { return imgData_; }
 
     inline void getTexturePixel(float u, float v, float *outColor) const

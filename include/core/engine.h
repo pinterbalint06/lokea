@@ -28,7 +28,6 @@ public:
     void setGroundMaterial(Materials::Material material);
     void setCameraHeight(float cameraHeight);
     void setLightDirection(float x, float y, float z);
-    void setAntialias(int antialias);
     void setTerrainParams(int size, int seed, float frequency, float lacunarity, float persistence, int octaves, float heightMultiplier);
     void setLightIntensity(float intensity);
     void setShadingMode(Shaders::SHADINGMODE shadingmode);
@@ -46,7 +45,6 @@ public:
 
     float getPitch() { return scene_->getCamera()->getPitch(); }
     float getYaw() { return scene_->getCamera()->getYaw(); }
-    uint8_t *getImageBufferLocation() { return renderer_->getImageBuffer(); }
 
     void setMesh(Mesh *mesh) { scene_->setMesh(mesh); }
 };

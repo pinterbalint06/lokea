@@ -1,324 +1,139 @@
 #include <emscripten/emscripten.h>
-#include "core/renderer.h"
+#include <emscripten/bind.h>
+#include <emscripten/html5.h>
+#include <emscripten/html5_webgl.h>
+#include <GLES3/gl3.h>
+#include <core/renderer.h>
 #include "core/shader.h"
 #include "core/scene.h"
 #include "core/material.h"
 #include "core/camera.h"
 #include "core/distantLight.h"
 #include "core/mesh.h"
-#include "core/terrain.h"
-#include "utils/clipping.h"
-#include "utils/frameBuffer.h"
 #include "utils/mathUtils.h"
-#include "utils/edgeFunction.h"
+#include "utils/fpsCounter.h"
 #include "core/vertex.h"
 #include <cstring>
+#include <map>
 
-Renderer::Renderer()
+Renderer::Renderer(std::string &canvasID)
 {
-    imageWidth_ = 0;
-    imageHeight_ = 0;
-    antialias_ = 1;
-    sqrAntialias_ = (int)sqrt(antialias_);
-    sqrAntialiasRec_ = FixedPoint::Float2Fix(1.0f / sqrAntialias_);
-    inc_ = sqrAntialiasRec_ >> 1;
-    projectedTriangles_ = (Vertex *)malloc(20 * sizeof(Vertex));
-    projectedTrianglesSize_ = 0;
-    currShadingMode_ = Shaders::SHADINGMODE::GOURAUD;
-    normal_ = (float *)malloc(3 * sizeof(float));
-    clipper_ = new Clipper();
-    frameBuffer_ = new FrameBuffer(imageWidth_, imageHeight_, antialias_);
-    vertexCacheSize_ = 0;
+    imageWidth_ = 100;
+    imageHeight_ = 100;
     rBuffer_ = 0.0f;
     gBuffer_ = 0.0f;
     bBuffer_ = 0.0f;
+    currShadingMode_ = Shaders::SHADINGMODE::GOURAUD;
+    EmscriptenWebGLContextAttributes attrs;
+    emscripten_webgl_init_context_attributes(&attrs);
+    attrs.majorVersion = 2;
+    int ctx = emscripten_webgl_create_context(("#" + canvasID).c_str(), &attrs);
+    if (!ctx)
+    {
+        EM_ASM(
+            throw('A böngésződ nem támogatja a WebGL-t!'););
+    }
+    emscripten_webgl_make_context_current(ctx);
+    glClearColor(rBuffer_, gBuffer_, bBuffer_, 1);
+
+    // scene ubo
+    glGenBuffers(1, &uboScene_);
+    glBindBuffer(GL_UNIFORM_BUFFER, uboScene_);
+    glBufferData(GL_UNIFORM_BUFFER, sizeof(SceneData), NULL, GL_STATIC_DRAW);
+    glBindBuffer(GL_UNIFORM_BUFFER, 0);
+    glBindBufferRange(GL_UNIFORM_BUFFER, 0, uboScene_, 0, sizeof(SceneData));
+
+    // material ubo
+    glGenBuffers(1, &uboMat_);
+    glBindBuffer(GL_UNIFORM_BUFFER, uboMat_);
+    glBufferData(GL_UNIFORM_BUFFER, sizeof(Materials::MaterialData), NULL, GL_STATIC_DRAW);
+    glBindBuffer(GL_UNIFORM_BUFFER, 0);
+    glBindBufferRange(GL_UNIFORM_BUFFER, 1, uboMat_, 0, sizeof(Materials::MaterialData));
+
+    createShadingPrograms();
+    shaderPrograms_[currShadingMode_]->use();
+
+    glEnable(GL_DEPTH_TEST);
+
+    fps = new fpsCounter();
 }
 
-Renderer::~Renderer()
+void Renderer::createShadingPrograms()
 {
-    if (projectedTriangles_)
-    {
-        free(projectedTriangles_);
-    }
-    if (normal_)
-    {
-        free(normal_);
-    }
-    if (clipper_)
-    {
-        delete clipper_;
-    }
-    if (frameBuffer_)
-    {
-        delete frameBuffer_;
-    }
-}
-
-void Renderer::setAntialias(int antialias)
-{
-    if (MathUtils::isSquareNumber(antialias) && (1 <= antialias && antialias <= 16))
-    {
-        antialias_ = antialias;
-        sqrAntialias_ = (int)sqrt(antialias_);
-        sqrAntialiasRec_ = FixedPoint::Float2Fix(1.0f / sqrAntialias_);
-        inc_ = sqrAntialiasRec_ >> 1;
-        frameBuffer_->setAntialias(antialias_);
-    }
+    shaderPrograms_[Shaders::SHADINGMODE::GOURAUD] =
+        std::make_unique<Shaders::Shader>("shaders/gouraud.vert", "shaders/gouraud.frag");
+    shaderPrograms_[Shaders::SHADINGMODE::PHONG] =
+        std::make_unique<Shaders::Shader>("shaders/phong.vert", "shaders/phong.frag");
+    shaderPrograms_[Shaders::SHADINGMODE::TEXTURE] =
+        std::make_unique<Shaders::Shader>("shaders/texture.vert", "shaders/texture.frag");
 }
 
 void Renderer::setShadingMode(Shaders::SHADINGMODE shadingMode)
 {
     currShadingMode_ = shadingMode;
+    shaderPrograms_[currShadingMode_]->use();
 }
 
 void Renderer::setImageDimensions(int imageW, int imageH)
 {
     imageWidth_ = imageW;
     imageHeight_ = imageH;
-    frameBuffer_->setNewOptions(imageWidth_, imageHeight_, antialias_);
 }
 
-void Renderer::projectVertices(const Mesh *mesh, const Camera *camera)
+void Renderer::render(const Scene *scene)
 {
-    int vertexCount = mesh->getVertexCount();
-    Vertex *vertices = mesh->getVertices();
-    if (vertexCacheSize_ < vertexCount)
-    {
-        if (vertexCache_)
-        {
-            free(vertexCache_);
-        }
-        vertexCache_ = (Vertex *)malloc(vertexCount * sizeof(Vertex));
-        vertexCacheSize_ = vertexCount;
-    }
-
-    const float *MV = camera->getViewMatrix();
-    const float *MP = camera->getProjMatrix();
-
-    for (int i = 0; i < vertexCount; i++)
-    {
-        Vertex v = vertices[i];
-        v.multWithMatrix(MV);
-        v.multWithMatrix(MP);
-        vertexCache_[i] = v;
-    }
-}
-
-void Renderer::clipTriangle(const uint32_t &i0, const uint32_t &i1, const uint32_t &i2, Vertex *vertices)
-{
-    p0_ = vertices[i0];
-    p1_ = vertices[i1];
-    p2_ = vertices[i2];
-    // clip space
-    clipper_->clip(p0_, p1_, p2_);
-    Vertex *clipped = clipper_->getClipped();
-    int clippedSize = clipper_->getClippedSize();
-    float wRec;
-    projectedTrianglesSize_ = 0;
-    // triangle fan
-    if (clippedSize > 2)
-    {
-        // starting projected vertex
-        const Vertex &v0 = clipped[0];
-        wRec = 1.0f / v0.w;
-        Vertex startProj;
-        startProj.x = (v0.x * wRec + 1) * 0.5f * (float)imageWidth_;
-        startProj.y = (1 - v0.y * wRec) * 0.5f * (float)imageHeight_;
-        startProj.z = v0.z * wRec;
-        startProj.nx = v0.nx;
-        startProj.ny = v0.ny;
-        startProj.nz = v0.nz;
-        startProj.u = v0.u;
-        startProj.v = v0.v;
-        for (int i = 0; i < clippedSize - 2; i++)
-        {
-            projectedTriangles_[projectedTrianglesSize_++] = startProj;
-
-            const Vertex &v1 = clipped[i + 1];
-            wRec = 1.0f / v1.w;
-            Vertex &projected1 = projectedTriangles_[projectedTrianglesSize_++];
-            projected1.x = (v1.x * wRec + 1) * 0.5f * (float)imageWidth_;
-            projected1.y = (1 - v1.y * wRec) * 0.5f * (float)imageHeight_;
-            projected1.z = v1.z * wRec;
-            projected1.nx = v1.nx;
-            projected1.ny = v1.ny;
-            projected1.nz = v1.nz;
-            projected1.u = v1.u;
-            projected1.v = v1.v;
-
-            const Vertex &v2 = clipped[i + 2];
-            wRec = 1.0f / v2.w;
-            Vertex &projected2 = projectedTriangles_[projectedTrianglesSize_++];
-            projected2.x = (v2.x * wRec + 1) * 0.5f * (float)imageWidth_;
-            projected2.y = (1 - v2.y * wRec) * 0.5f * (float)imageHeight_;
-            projected2.z = v2.z * wRec;
-            projected2.nx = v2.nx;
-            projected2.ny = v2.ny;
-            projected2.nz = v2.nz;
-            projected2.u = v2.u;
-            projected2.v = v2.v;
-        }
-    }
-}
-
-template <typename StructShader>
-void Renderer::renderTemplate(const Scene *scene)
-{
-    const int TILE_SIZE = 8;
-    frameBuffer_->clear(rBuffer_, gBuffer_, bBuffer_);
-    // bounding box
-    float htminx, htmaxx, htminy, htmaxy;
-    // reciprocal of the z values
-    float z0Rec, z1Rec, z2Rec;
+    fps->update();
+    SceneData currSceneData;
     // camera
     Camera *mainCamera = scene->getCamera();
-    float camX = mainCamera->getXPosition();
-    float camY = mainCamera->getYPosition();
-    float camZ = mainCamera->getZPosition();
+    currSceneData.camPos[0] = mainCamera->getXPosition();
+    currSceneData.camPos[1] = mainCamera->getYPosition();
+    currSceneData.camPos[2] = mainCamera->getZPosition();
+    mainCamera->updateViewMatrix();
+    MathUtils::multiplyMatrix(mainCamera->getViewMatrix(), mainCamera->getProjMatrix(), currSceneData.MVP);
+
     // light
     DistantLight *sun = scene->getLight();
     float ambientLight = scene->getAmbientLight();
     float lightVec[3];
     const float *lightDir = sun->getDirection();
-    lightVec[0] = -lightDir[0];
-    lightVec[1] = -lightDir[1];
-    lightVec[2] = -lightDir[2];
-    mainCamera->updateViewMatrix();
-    StructShader shader;
-    float *zBuffer = frameBuffer_->getZBuffer();
-    float *imageAntiBuffer = frameBuffer_->getAntialiasImageBuffer();
+    currSceneData.lightVec[0] = -lightDir[0];
+    currSceneData.lightVec[1] = -lightDir[1];
+    currSceneData.lightVec[2] = -lightDir[2];
+
+    currSceneData.lightColor[0] = sun->getRed();
+    currSceneData.lightColor[1] = sun->getGreen();
+    currSceneData.lightColor[2] = sun->getBlue();
+
+    currSceneData.lightColorPreCalc[0] = sun->getRedCalculated();
+    currSceneData.lightColorPreCalc[1] = sun->getGreenCalculated();
+    currSceneData.lightColorPreCalc[2] = sun->getBlueCalculated();
+    currSceneData.ambientLight = scene->getAmbientLight();
+
+    glBindBuffer(GL_UNIFORM_BUFFER, uboScene_);
+    glBufferSubData(GL_UNIFORM_BUFFER, 0, sizeof(SceneData), &currSceneData);
+    glBindBuffer(GL_UNIFORM_BUFFER, 0);
+
     Mesh *mesh = scene->getMesh();
     Materials::Material meshMat = mesh->getMaterial();
     Materials::Color meshCol = meshMat.albedo;
-    float rGround = meshCol.r;
-    float gGround = meshCol.g;
-    float bGround = meshCol.b;
-    uint32_t *currIndices = mesh->getIndices();
-    Vertex *currVertices = mesh->getVertices();
-    int indicesCount = mesh->getIndexCount();
-    projectVertices(mesh, mainCamera);
-    for (int i = 0; i < indicesCount; i += 3)
-    {
-        clipTriangle(currIndices[i], currIndices[i + 1], currIndices[i + 2], vertexCache_);
-        for (int j = 0; j < projectedTrianglesSize_; j += 3)
-        {
-            EdgeFunction::EdgeFunction ef;
-            ef.setupEdgeFunctionTriArea(&projectedTriangles_[j]);
-            // if triangle's are is 0 or smaller it is not a real triangle or backface
-            if (ef.triArea_ > 0)
-            {
-                // Calculate bounding box
-                htminx = imageWidth_;
-                htmaxx = -imageWidth_;
-                htminy = imageHeight_;
-                htmaxy = -imageHeight_;
-                for (int k = 0; k < 3; k++)
-                {
-                    if (projectedTriangles_[j + k].x < htminx)
-                    {
-                        htminx = projectedTriangles_[j + k].x;
-                    }
-                    if (projectedTriangles_[j + k].x > htmaxx)
-                    {
-                        htmaxx = projectedTriangles_[j + k].x;
-                    }
-                    if (projectedTriangles_[j + k].y < htminy)
-                    {
-                        htminy = projectedTriangles_[j + k].y;
-                    }
-                    if (projectedTriangles_[j + k].y > htmaxy)
-                    {
-                        htmaxy = projectedTriangles_[j + k].y;
-                    }
-                }
-                int bbminx = std::max(0, std::min(imageWidth_ - 1, (int)std::floor(htminx)));
-                int bbminy = std::max(0, std::min(imageHeight_ - 1, (int)std::floor(htminy)));
-                int bbmaxx = std::max(0, std::min(imageWidth_ - 1, (int)std::ceil(htmaxx)));
-                int bbmaxy = std::max(0, std::min(imageHeight_ - 1, (int)std::ceil(htmaxy)));
+    Materials::MaterialData currMatData;
+    currMatData.albedo[0] = meshCol.r;
+    currMatData.albedo[1] = meshCol.g;
+    currMatData.albedo[2] = meshCol.b;
 
-                // precalculate the reciprocal
-                z0Rec = 1.0f / projectedTriangles_[j].z;
-                z1Rec = 1.0f / projectedTriangles_[j + 1].z;
-                z2Rec = 1.0f / projectedTriangles_[j + 2].z;
+    currMatData.diffuseness = meshMat.diffuseness;
+    currMatData.specularity = meshMat.specularity;
+    currMatData.shininess = meshMat.shininess;
 
-                if (currShadingMode_ == Shaders::SHADINGMODE::FLAT)
-                {
-                    Vertex::calculateFaceNormal(currVertices[currIndices[i]], currVertices[currIndices[i + 1]], currVertices[currIndices[i + 2]], normal_);
-                    MathUtils::normalizeVector(normal_);
-                }
-                // initialize shader for triangle
-                shader.setupTriangle(normal_, &projectedTriangles_[j],
-                                     i, lightVec, meshMat, sun,
-                                     z0Rec, z1Rec, z2Rec,
-                                     camX, camY, camZ, ambientLight);
+    glBindBuffer(GL_UNIFORM_BUFFER, uboMat_);
+    glBufferSubData(GL_UNIFORM_BUFFER, 0, sizeof(Materials::MaterialData), &currMatData);
+    glBindBuffer(GL_UNIFORM_BUFFER, 0);
 
-                // setup step values for inside test
-                ef.setupStepValues(bbminx, bbminy, inc_, sqrAntialiasRec_, TILE_SIZE);
+    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-                // precalculate inverse of triangle's area
-                float invTriArea = 1.0f / (float)ef.triArea_;
-                for (int ty = bbminy; ty <= bbmaxy; ty += TILE_SIZE)
-                {
-                    for (int tx = bbminx; tx <= bbmaxx; tx += TILE_SIZE)
-                    {
-                        int64_t c[3][4];
-                        ef.calculateTileCorners(tx, ty, c);
-                        // c[0][0] & c[0][1] & c[0][2] & c[0][3] is only < 0 if all numbers are negative
-                        // the result is only negative if it's sign bit is 1 which is only 1 if all the numbers negative bits were one (and)
-                        if (((c[0][0] & c[0][1] & c[0][2] & c[0][3]) < 0) ||
-                            ((c[1][0] & c[1][1] & c[1][2] & c[1][3]) < 0) ||
-                            ((c[2][0] & c[2][1] & c[2][2] & c[2][3]) < 0))
-                        {
-                            continue;
-                        }
+    glBindVertexArray(mesh->getVAO());
 
-                        // clamp tile ends to boundary box edges
-                        int yEnd = std::min(ty + TILE_SIZE - 1, bbmaxy);
-                        int xEnd = std::min(tx + TILE_SIZE - 1, bbmaxx);
-                        // set edgefunction to the correct location
-                        ef.setTileStart(tx, ty, inc_);
-                        // if any of the negative bits were one the result will also be negative
-                        // if none of the negative bits were one (all of the numberes were positive) the result will be positive
-                        // if all of them are positive it means they are completely in the triangle (trivial accept)
-                        if (((c[0][0] | c[0][1] | c[0][2] | c[0][3]) >= 0) &&
-                            ((c[1][0] | c[1][1] | c[1][2] | c[1][3]) >= 0) &&
-                            ((c[2][0] | c[2][1] | c[2][2] | c[2][3]) >= 0))
-                        {
-                            rasterizeTile<StructShader, true>(ef, invTriArea, z0Rec, z1Rec, z2Rec, tx, ty, xEnd, yEnd, shader);
-                        }
-                        else
-                        {
-                            rasterizeTile<StructShader, false>(ef, invTriArea, z0Rec, z1Rec, z2Rec, tx, ty, xEnd, yEnd, shader);
-                        }
-                    }
-                }
-            }
-        }
-    }
-    frameBuffer_->calculateAntialias();
-}
-
-void Renderer::render(const Scene *scene)
-{
-    switch (currShadingMode_)
-    {
-    case (Shaders::SHADINGMODE::PHONG):
-        renderTemplate<Shaders::PhongShader>(scene);
-        break;
-    case (Shaders::SHADINGMODE::GOURAUD):
-        renderTemplate<Shaders::GouraudShader>(scene);
-        break;
-    case (Shaders::SHADINGMODE::FLAT):
-        renderTemplate<Shaders::FlatShader>(scene);
-        break;
-    case (Shaders::SHADINGMODE::NO_SHADING):
-        renderTemplate<Shaders::NoShader>(scene);
-        break;
-    case (Shaders::SHADINGMODE::TEXTURE):
-        renderTemplate<Shaders::TextureShader>(scene);
-        break;
-    default:
-        renderTemplate<Shaders::PhongShader>(scene);
-        break;
-    }
+    glDrawElements(GL_TRIANGLES, mesh->getIndexCount(), GL_UNSIGNED_INT, 0);
+    glBindVertexArray(0);
 }

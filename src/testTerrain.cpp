@@ -1,4 +1,4 @@
-#include <emscripten/emscripten.h>
+#include <emscripten.h>
 #include <emscripten/bind.h>
 #include "core/engine.h"
 
@@ -32,14 +32,6 @@ void randomizeLocation()
     if (gEngine)
     {
         gEngine->randomizeLocation();
-    }
-}
-
-void setAntialias(int anti)
-{
-    if (gEngine)
-    {
-        gEngine->setAntialias(anti);
     }
 }
 
@@ -132,16 +124,6 @@ float getYaw()
     return returnValue;
 }
 
-int getImageBufferLocation()
-{
-    int returnValue = 0;
-    if (gEngine)
-    {
-        returnValue = (int)gEngine->getImageBufferLocation();
-    }
-    return returnValue;
-}
-
 void setMaterialGrass()
 {
     if (gEngine)
@@ -198,6 +180,14 @@ void changeFocalLength(float focal)
     }
 }
 
+void startRenderingLoop()
+{
+    if (gEngine)
+    {
+        emscripten_set_main_loop(render, 0, 0);
+    }
+}
+
 EMSCRIPTEN_BINDINGS(my_module)
 {
     emscripten::function("init", &init);
@@ -207,7 +197,6 @@ EMSCRIPTEN_BINDINGS(my_module)
     emscripten::function("setRotate", &setRotate);
     emscripten::function("getXForog", &getPitch);
     emscripten::function("getYForog", &getYaw);
-    emscripten::function("setAntialias", &setAntialias);
     emscripten::function("newCameraHeight", &newCameraHeight);
     emscripten::function("newPerlinMap", &setTerrainParams);
     emscripten::function("newLightIntensity", &setLightIntensity);
@@ -219,8 +208,8 @@ EMSCRIPTEN_BINDINGS(my_module)
     emscripten::function("setLightColor", &setLightColor);
     emscripten::function("setAmbientLight", &setAmbientLight);
     emscripten::function("setShadingTechnique", &setShadingMode);
-    emscripten::function("getImageLocation", &getImageBufferLocation);
     emscripten::function("setMapSpacing", &setMapSpacing);
     emscripten::function("render", &render);
     emscripten::function("changeFocalLength", &changeFocalLength);
+    emscripten::function("startRenderingLoop", &startRenderingLoop);
 }
