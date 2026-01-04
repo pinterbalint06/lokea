@@ -64,7 +64,6 @@ void Engine::setTerrainParams(int size, int seed, float frequency, float lacunar
     terrain_->setOctaves(octaves);
     terrain_->setHeightMultiplier(heightMultiplier);
     terrain_->regenerate();
-    terrain_->getMesh()->setUpOpenGL();
     calcNewCamLoc();
 }
 
@@ -119,6 +118,11 @@ void Engine::setMapSpacing(float mapSpacing)
 void Engine::setFocalLength(float focal)
 {
     scene_->getCamera()->setFocalLength(focal);
+}
+
+void Engine::setTextureSpacing(float textureSpacing)
+{
+    terrain_->setTextureSpacing(textureSpacing);
 }
 
 void Engine::moveCamera(int x, int z)

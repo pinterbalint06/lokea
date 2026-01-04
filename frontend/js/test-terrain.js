@@ -306,6 +306,11 @@ function texturaTorles() {
     Module.deleteTexture();
 }
 
+function setTexturaMeret() {
+    let textureSpacing = document.getElementById("textureSpacing");
+    Module.setTextureSpacing(1.0 / parseFloat(textureSpacing.value));
+}
+
 window.UjPerlinParam = UjPerlinParam;
 window.ujKameraMagassag = ujKameraMagassag;
 window.ujhely = ujhely;
@@ -325,3 +330,4 @@ window.talajFold = talajFold;
 window.ujAnyag = ujAnyag;
 window.ujUrlbol = ujUrlbol;
 window.texturaTorles = texturaTorles;
+window.setTexturaMeret = setTexturaMeret;

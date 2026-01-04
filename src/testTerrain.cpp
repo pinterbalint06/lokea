@@ -215,6 +215,14 @@ void deleteTexture()
     }
 }
 
+void setTextureSpacing(float textureSpacing)
+{
+    if (gEngine)
+    {
+        gEngine->setTextureSpacing(textureSpacing);
+    }
+}
+
 EMSCRIPTEN_BINDINGS(my_module)
 {
     emscripten::function("init", &init);
@@ -242,4 +250,5 @@ EMSCRIPTEN_BINDINGS(my_module)
     emscripten::function("initTexture", &initTexture);
     emscripten::function("uploadTextureToGPU", &uploadTextureToGPU);
     emscripten::function("deleteTexture", &deleteTexture);
+    emscripten::function("setTextureSpacing", &setTextureSpacing);
 }
