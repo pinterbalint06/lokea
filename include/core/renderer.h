@@ -25,6 +25,8 @@ private:
     float rBuffer_, gBuffer_, bBuffer_;
 
     void createShadingPrograms();
+    void updateSceneUBO(const Scene *scene);
+    void updateMeshUBO(const Mesh *mesh);
 
 public:
     Renderer(std::string &canvasID);

@@ -100,9 +100,8 @@ void Renderer::setImageDimensions(int imageW, int imageH)
     imageHeight_ = imageH;
 }
 
-void Renderer::render(const Scene *scene)
+void Renderer::updateSceneUBO(const Scene *scene)
 {
-    fps->update();
     SceneData currSceneData;
     // camera
     Camera *mainCamera = scene->getCamera();
@@ -130,11 +129,14 @@ void Renderer::render(const Scene *scene)
     currSceneData.lightColorPreCalc[2] = sun->getBlueCalculated();
     currSceneData.ambientLight = scene->getAmbientLight();
 
+    // upload to GPU
     glBindBuffer(GL_UNIFORM_BUFFER, uboScene_);
     glBufferSubData(GL_UNIFORM_BUFFER, 0, sizeof(SceneData), &currSceneData);
     glBindBuffer(GL_UNIFORM_BUFFER, 0);
+}
 
-    Mesh *mesh = scene->getMesh();
+void Renderer::updateMeshUBO(const Mesh *mesh)
+{
     Materials::Material meshMat = mesh->getMaterial();
     Materials::Color meshCol = meshMat.albedo;
     Materials::MaterialData currMatData;
@@ -162,11 +164,24 @@ void Renderer::render(const Scene *scene)
     glBindBuffer(GL_UNIFORM_BUFFER, uboMat_);
     glBufferSubData(GL_UNIFORM_BUFFER, 0, sizeof(Materials::MaterialData), &currMatData);
     glBindBuffer(GL_UNIFORM_BUFFER, 0);
+}
 
+void Renderer::render(const Scene *scene)
+{
+    fps->update();
+    // clear buffers
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
+    // update uniform buffer objects
+    updateSceneUBO(scene);
+    Mesh *mesh = scene->getMesh();
+    updateMeshUBO(mesh);
+
+    // bind current mesh
     glBindVertexArray(mesh->getVAO());
 
+    // draw mesh
     glDrawElements(GL_TRIANGLES, mesh->getIndexCount(), GL_UNSIGNED_INT, 0);
+    // unbind mesh
     glBindVertexArray(0);
 }
