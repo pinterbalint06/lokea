@@ -10,13 +10,13 @@ namespace PerlinNoise
 {
     struct PerlinParameters
     {
-        int seed;
-        int octaveCount;
-        float frequency;
-        float amplitude;
-        float persistence;
-        float lacunarity;
-        float noiseSize;
+        int seed;          // 0
+        int octaveCount;   // 4
+        float frequency;   // 8
+        float amplitude;   // 12
+        float persistence; // 16
+        float lacunarity;  // 20
+        float noiseSize;   // 24
     };
 
     class Perlin

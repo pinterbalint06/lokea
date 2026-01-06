@@ -1,6 +1,8 @@
 #version 300 es
 
-precision mediump float;
+precision highp float;
+precision highp int;
+
 in vec4 vColor;
 out vec4 outColor;
 

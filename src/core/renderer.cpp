@@ -154,12 +154,19 @@ void Renderer::updateMeshUBO(const Mesh *mesh)
     {
         glActiveTexture(GL_TEXTURE0);
         glBindTexture(GL_TEXTURE_2D, meshMat.texture->getGPULoc());
+        shaderPrograms_[currShadingMode_]->setUniformInt("uTexture0", 0);
         useTexture = 1;
     }
 
     shaderPrograms_[currShadingMode_]->setUniformInt("uUseTexture", useTexture);
 
-    shaderPrograms_[currShadingMode_]->setUniformInt("uIsTerrain", mesh->isTerrain());
+    int isTerrain = mesh->isTerrain();
+
+    if (isTerrain == 1)
+    {
+    }
+
+    shaderPrograms_[currShadingMode_]->setUniformInt("uIsTerrain", isTerrain);
 
     glBindBuffer(GL_UNIFORM_BUFFER, uboMat_);
     glBufferSubData(GL_UNIFORM_BUFFER, 0, sizeof(Materials::MaterialData), &currMatData);

@@ -199,14 +199,20 @@ namespace PerlinNoise
 
     void Perlin::uploadToGPU()
     {
-        glGenTextures(1, &permuTableTex_);
+        if (permuTableTex_ == 0)
+        {
+            glGenTextures(1, &permuTableTex_);
+        }
         glBindTexture(GL_TEXTURE_2D, permuTableTex_);
         // the overwrap doesn't have to be uploaded opengl wraps textures by default
         glTexImage2D(GL_TEXTURE_2D, 0, GL_R8UI, 256, 1, 0, GL_RED_INTEGER, GL_UNSIGNED_BYTE, permuTable_);
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
 
-        glGenTextures(1, &gradientsTex_);
+        if (gradientsTex_ == 0)
+        {
+            glGenTextures(1, &gradientsTex_);
+        }
         glBindTexture(GL_TEXTURE_2D, gradientsTex_);
         glTexImage2D(GL_TEXTURE_2D, 0, GL_RG32F, 256, 1, 0, GL_RG, GL_FLOAT, gradients_);
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);

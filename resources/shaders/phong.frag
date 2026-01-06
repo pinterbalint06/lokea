@@ -1,6 +1,7 @@
 #version 300 es
 
-precision mediump float;
+precision highp float;
+precision highp int;
 
 in vec4 vPosition;
 in vec3 vNormal;
@@ -35,15 +36,15 @@ layout(std140) uniform MaterialData {
                            // 24-28-32
 };
 
-uniform mediump int uUseTexture;
-uniform sampler2D texture1;
+uniform int uUseTexture;
+uniform sampler2D uTexture0;
 
 out vec4 outColor;
 
 void main() {
     vec3 baseColor;
     if(uUseTexture == 1) {
-        baseColor = texture(texture1, vTexCoords).rgb;
+        baseColor = texture(uTexture0, vTexCoords).rgb;
     } else {
         baseColor = uMatAlbedo;
     }
