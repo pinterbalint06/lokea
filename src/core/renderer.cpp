@@ -10,6 +10,7 @@
 #include "core/camera.h"
 #include "core/distantLight.h"
 #include "core/mesh.h"
+#include "core/terrain.h"
 #include "utils/mathUtils.h"
 #include "utils/fpsCounter.h"
 #include "core/vertex.h"
@@ -135,7 +136,7 @@ void Renderer::updateSceneUBO(const Scene *scene)
     glBindBuffer(GL_UNIFORM_BUFFER, 0);
 }
 
-void Renderer::updateMeshUBO(const Mesh *mesh)
+void Renderer::updateMeshUBO(Mesh *mesh)
 {
     Materials::Material meshMat = mesh->getMaterial();
     Materials::Color meshCol = meshMat.albedo;
@@ -160,10 +161,13 @@ void Renderer::updateMeshUBO(const Mesh *mesh)
 
     shaderPrograms_[currShadingMode_]->setUniformInt("uUseTexture", useTexture);
 
-    int isTerrain = mesh->isTerrain();
-
-    if (isTerrain == 1)
+    int isTerrain = 0;
+    Terrain *terrain = dynamic_cast<Terrain *>(mesh);
+    if (terrain != nullptr)
     {
+        isTerrain = 1;
+        // glActiveTexture(GL_TEXTURE5);
+        // glBindTexture(GL_TEXTURE_2D, meshMat.texture->getGPULoc());
     }
 
     shaderPrograms_[currShadingMode_]->setUniformInt("uIsTerrain", isTerrain);

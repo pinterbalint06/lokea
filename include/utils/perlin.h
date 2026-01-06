@@ -40,6 +40,8 @@ namespace PerlinNoise
 
         // getter
         PerlinParameters getParameters() const { return params_; }
+        GLuint getPermutationGPULoc() const { return permuTableTex_; }
+        GLuint getGradientsGPULoc() const { return gradientsTex_; }
 
         // setters
         void setLacunarity(float lacunarity);

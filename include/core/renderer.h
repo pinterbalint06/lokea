@@ -26,7 +26,7 @@ private:
 
     void createShadingPrograms();
     void updateSceneUBO(const Scene *scene);
-    void updateMeshUBO(const Mesh *mesh);
+    void updateMeshUBO(Mesh *mesh);
 
 public:
     Renderer(std::string &canvasID);

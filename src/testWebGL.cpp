@@ -50,9 +50,9 @@ int main()
     renderer = new Renderer(canvID);
     terrain = new Terrain(2048);
     terrain->regenerate();
-    scene->setMesh(terrain->getMesh());
-    terrain->getMesh()->setMaterial(Materials::Material::Grass());
-    terrain->getMesh()->setUpOpenGL();
+    scene->setMesh(terrain);
+    terrain->setMaterial(Materials::Material::Grass());
+    terrain->setUpOpenGL();
     glViewport(0, 0, width, height);
 
     emscripten_set_main_loop(render, 0, 1);

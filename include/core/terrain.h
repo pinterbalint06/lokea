@@ -2,9 +2,9 @@
 #define TERRAIN_H
 
 #include "utils/perlin.h"
-class Mesh;
+#include "core/mesh.h"
 
-class Terrain
+class Terrain : public Mesh
 {
 private:
     float *perlinHeightMap_;
@@ -14,10 +14,8 @@ private:
     // Perlin parameters
     float heightMultiplier_;
 
-    Mesh *mesh_ = nullptr;
     PerlinNoise::Perlin *perlinNoise_ = nullptr;
 
-    void cleanup();
     void buildTerrain();
 
 public:
@@ -27,7 +25,6 @@ public:
     void regenerate();
 
     // getters
-    Mesh *getMesh() const { return mesh_; }
     int getSize() { return size_; }
 
     // setters

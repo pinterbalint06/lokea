@@ -5748,6 +5748,25 @@ async function createWasm() {
     };
   var _glCreateShader = _emscripten_glCreateShader;
 
+  var _emscripten_glDeleteBuffers = (n, buffers) => {
+      for (var i = 0; i < n; i++) {
+        var id = HEAP32[(((buffers)+(i*4))>>2)];
+        var buffer = GL.buffers[id];
+  
+        // From spec: "glDeleteBuffers silently ignores 0's and names that do not
+        // correspond to existing buffer objects."
+        if (!buffer) continue;
+  
+        GLctx.deleteBuffer(buffer);
+        buffer.name = 0;
+        GL.buffers[id] = null;
+  
+        if (id == GLctx.currentPixelPackBufferBinding) GLctx.currentPixelPackBufferBinding = 0;
+        if (id == GLctx.currentPixelUnpackBufferBinding) GLctx.currentPixelUnpackBufferBinding = 0;
+      }
+    };
+  var _glDeleteBuffers = _emscripten_glDeleteBuffers;
+
   var _emscripten_glDeleteProgram = (id) => {
       if (!id) return;
       var program = GL.programs[id];
@@ -5776,6 +5795,15 @@ async function createWasm() {
       GL.shaders[id] = null;
     };
   var _glDeleteShader = _emscripten_glDeleteShader;
+
+  var _emscripten_glDeleteVertexArrays = (n, vaos) => {
+      for (var i = 0; i < n; i++) {
+        var id = HEAP32[(((vaos)+(i*4))>>2)];
+        GLctx.deleteVertexArray(GL.vaos[id]);
+        GL.vaos[id] = null;
+      }
+    };
+  var _glDeleteVertexArrays = _emscripten_glDeleteVertexArrays;
 
   var _emscripten_glDrawElements = (mode, count, type, indices) => {
   
@@ -6739,10 +6767,10 @@ function checkIncomingModuleAPI() {
   ignoredModuleProp('fetchSettings');
 }
 var ASM_CONSTS = {
-  97200: () => { throw('A böngésződ nem támogatja a WebGL-t!'); },  
- 97251: ($0) => { throw("Sikertelen shader fordítás: " + UTF8ToString($0)); },  
- 97315: ($0) => { throw("Sikertelen shader összekapcsolás: " + UTF8ToString($0)); },  
- 97385: ($0) => { console.log('FPS: ' + $0); }
+  98232: () => { throw('A böngésződ nem támogatja a WebGL-t!'); },  
+ 98283: ($0) => { throw("Sikertelen shader fordítás: " + UTF8ToString($0)); },  
+ 98347: ($0) => { throw("Sikertelen shader összekapcsolás: " + UTF8ToString($0)); },  
+ 98417: ($0) => { console.log('FPS: ' + $0); }
 };
 
 // Imports from the Wasm binary.
@@ -6880,9 +6908,13 @@ var wasmImports = {
   /** @export */
   glCreateShader: _glCreateShader,
   /** @export */
+  glDeleteBuffers: _glDeleteBuffers,
+  /** @export */
   glDeleteProgram: _glDeleteProgram,
   /** @export */
   glDeleteShader: _glDeleteShader,
+  /** @export */
+  glDeleteVertexArrays: _glDeleteVertexArrays,
   /** @export */
   glDrawElements: _glDrawElements,
   /** @export */

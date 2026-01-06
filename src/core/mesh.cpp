@@ -13,7 +13,6 @@ Mesh::Mesh(int vertexCount, int indexCount)
     vbo_ = 0;
     vao_ = 0;
     ebo_ = 0;
-    isTerrain_ = 0;
     material_ = Materials::Material::Error();
 }
 
@@ -86,4 +85,13 @@ void Mesh::cleanup()
     }
     vertexCount_ = 0;
     indexCount_ = 0;
+}
+
+void Mesh::resize(int vertexCount, int indexCount)
+{
+    cleanup();
+    vertexCount_ = vertexCount;
+    indexCount_ = indexCount;
+    vertices_ = (Vertex *)malloc(vertexCount_ * sizeof(Vertex));
+    indices_ = (uint32_t *)malloc(indexCount_ * sizeof(uint32_t));
 }

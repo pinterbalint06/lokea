@@ -13,9 +13,8 @@ Engine::Engine(int size)
     std::string canvID = "canvas";
     renderer_ = new Renderer(canvID);
     terrain_ = new Terrain(size);
-    Mesh *mesh = terrain_->getMesh();
-    mesh->setMaterial(Materials::Material::Grass());
-    scene_->setMesh(mesh);
+    terrain_->setMaterial(Materials::Material::Grass());
+    scene_->setMesh(terrain_);
     renderer_->setDefaultColor(135.0f, 206.0f, 235.0f);
     cameraHeight_ = 3.8;
     cameraLocation_ = 0;
@@ -40,30 +39,32 @@ Engine::~Engine()
 
 void Engine::calcNewCamLoc()
 {
-    Vertex *vertices = terrain_->getMesh()->getVertices();
+    Vertex *vertices = terrain_->getVertices();
     scene_->getCamera()->setPosition(vertices[cameraLocation_].x, vertices[cameraLocation_ + 1].y + cameraHeight_, vertices[cameraLocation_ + 2].z);
 }
 
 void Engine::randomizeLocation()
 {
-    cameraLocation_ = rand() % (terrain_->getMesh()->getVertexCount());
+    cameraLocation_ = rand() % (terrain_->getVertexCount());
     calcNewCamLoc();
 }
 
 void Engine::setTerrainParams(int size, int seed, float frequency, float lacunarity, float persistence, int octaves, float heightMultiplier)
 {
-    if (terrain_->getSize() != size)
-    {
-        terrain_->setSize(size);
-        scene_->setMesh(terrain_->getMesh());
-    }
     terrain_->setFrequency(frequency);
     terrain_->setSeed(seed);
     terrain_->setLacunarity(lacunarity);
     terrain_->setPersistence(persistence);
     terrain_->setOctaves(octaves);
     terrain_->setHeightMultiplier(heightMultiplier);
-    terrain_->regenerate();
+    if (terrain_->getSize() != size)
+    {
+        terrain_->setSize(size);
+    }
+    else
+    {
+        terrain_->regenerate();
+    }
     calcNewCamLoc();
 }
 
@@ -85,7 +86,7 @@ void Engine::setLightDirection(float x, float y, float z)
 
 void Engine::setGroundMaterial(Materials::Material material)
 {
-    terrain_->getMesh()->setMaterial(material);
+    terrain_->setMaterial(material);
 }
 
 void Engine::setShadingMode(Shaders::SHADINGMODE shadingmode)

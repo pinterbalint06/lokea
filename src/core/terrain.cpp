@@ -3,7 +3,7 @@
 #include <cstring>
 #include "utils/perlin.h"
 
-Terrain::Terrain(int size)
+Terrain::Terrain(int size) : Mesh(size * size, (size - 1) * (size - 1) * 6)
 {
     size_ = size;
     PerlinNoise::PerlinParameters parameters;
@@ -17,21 +17,14 @@ Terrain::Terrain(int size)
     spacing_ = 1.0f;
     textureSpacing_ = 1.0f;
     perlinNoise_ = new PerlinNoise::Perlin(parameters, true);
-    mesh_ = new Mesh(size * size, (size - 1) * (size - 1) * 6);
-    mesh_->isTerrain_ = 1;
-}
-
-void Terrain::cleanup()
-{
-    if (mesh_)
-    {
-        delete mesh_;
-    }
 }
 
 Terrain::~Terrain()
 {
-    cleanup();
+    if (perlinNoise_)
+    {
+        delete perlinNoise_;
+    }
 }
 
 void Terrain::setSeed(int seed)
@@ -47,28 +40,21 @@ void Terrain::setSeed(int seed)
 
 void Terrain::setSize(int size)
 {
-    Materials::Material currentMaterial = Materials::Material::Grass();
-    if (mesh_)
-    {
-        currentMaterial = mesh_->getMaterial();
-    }
     size_ = size;
     cleanup();
-    mesh_ = new Mesh(size * size, (size - 1) * (size - 1) * 6);
-    mesh_->isTerrain_ = 1;
-    mesh_->setMaterial(currentMaterial);
+    resize(size_ * size_, (size_ - 1) * (size_ - 1) * 6);
+    regenerate();
 }
 
 void Terrain::regenerate()
 {
     buildTerrain();
-    mesh_->setUpOpenGL();
+    setUpOpenGL();
 }
 
 void Terrain::buildTerrain()
 {
     int i;
-    Vertex *vertices = mesh_->getVertices();
     float scale = 1.0f / 128.0f;
     // generate heightmap
     for (int y = 0; y < size_; y++)
@@ -76,12 +62,12 @@ void Terrain::buildTerrain()
         for (int x = 0; x < size_; x++)
         {
             i = y * size_ + x;
-            vertices[i].x = x * spacing_;
-            vertices[i].y = perlinNoise_->fbm(x * scale, y * scale);
-            vertices[i].z = -y * spacing_;
-            vertices[i].w = 1.0f;
-            vertices[i].u = (float)x * textureSpacing_;
-            vertices[i].v = (float)y * textureSpacing_;
+            vertices_[i].x = x * spacing_;
+            vertices_[i].y = perlinNoise_->fbm(x * scale, y * scale);
+            vertices_[i].z = -y * spacing_;
+            vertices_[i].w = 1.0f;
+            vertices_[i].u = (float)x * textureSpacing_;
+            vertices_[i].v = (float)y * textureSpacing_;
         }
     }
 
@@ -93,28 +79,27 @@ void Terrain::buildTerrain()
         {
             i = y * size_ + x;
             // if it is already calculated get it from the heightmap if not calculate it
-            float prevValueX = x - 1 < 0 ? perlinNoise_->fbm(x * scale, y * scale) : vertices[y * size_ + x - 1].y;
-            float nxtValueX = x + 1 > size_ - 1 ? perlinNoise_->fbm(x * scale, y * scale) : vertices[y * size_ + x + 1].y;
+            float prevValueX = x - 1 < 0 ? perlinNoise_->fbm(x * scale, y * scale) : vertices_[y * size_ + x - 1].y;
+            float nxtValueX = x + 1 > size_ - 1 ? perlinNoise_->fbm(x * scale, y * scale) : vertices_[y * size_ + x + 1].y;
             float centralDifferenceX = (nxtValueX - prevValueX) * 0.5f * spacingInv;
 
             // if it is already calculated get it from the heightmap if not calculate it
-            float prevValueY = y - 1 < 0 ? perlinNoise_->fbm(x * scale, y * scale) : vertices[(y - 1) * size_ + x].y;
-            float nxtValueY = y + 1 > size_ - 1 ? perlinNoise_->fbm(x * scale, y * scale) : vertices[(y + 1) * size_ + x].y;
+            float prevValueY = y - 1 < 0 ? perlinNoise_->fbm(x * scale, y * scale) : vertices_[(y - 1) * size_ + x].y;
+            float nxtValueY = y + 1 > size_ - 1 ? perlinNoise_->fbm(x * scale, y * scale) : vertices_[(y + 1) * size_ + x].y;
             float centralDifferenceY = (nxtValueY - prevValueY) * 0.5f * spacingInv;
 
-            vertices[i].nx = -centralDifferenceX;
-            vertices[i].ny = 1.0f;
-            vertices[i].nz = centralDifferenceY;
+            vertices_[i].nx = -centralDifferenceX;
+            vertices_[i].ny = 1.0f;
+            vertices_[i].nz = centralDifferenceY;
 
-            float normLen = std::sqrt(vertices[i].nx * vertices[i].nx + vertices[i].ny * vertices[i].ny + vertices[i].nz * vertices[i].nz);
-            vertices[i].nx /= normLen;
-            vertices[i].ny /= normLen;
-            vertices[i].nz /= normLen;
+            float normLen = std::sqrt(vertices_[i].nx * vertices_[i].nx + vertices_[i].ny * vertices_[i].ny + vertices_[i].nz * vertices_[i].nz);
+            vertices_[i].nx /= normLen;
+            vertices_[i].ny /= normLen;
+            vertices_[i].nz /= normLen;
         }
     }
 
     // calculate indices
-    uint32_t *indices = mesh_->getIndices();
     int currIndex = 0;
     for (int y = 0; y < size_ - 1; y++)
     {
@@ -123,13 +108,13 @@ void Terrain::buildTerrain()
             i = y * size_ + x;
 
             // We form two triangles from a rectangle in the perlin grid
-            indices[currIndex++] = i + 1;     // top-right vertex
-            indices[currIndex++] = i + size_; // bottom-left vertex
-            indices[currIndex++] = i;         // top-left vertex
+            indices_[currIndex++] = i + 1;     // top-right vertex
+            indices_[currIndex++] = i + size_; // bottom-left vertex
+            indices_[currIndex++] = i;         // top-left vertex
 
-            indices[currIndex++] = i + 1;         // top-right vertex
-            indices[currIndex++] = i + size_ + 1; // bottom-right vertex
-            indices[currIndex++] = i + size_;     // bottom-left vertex
+            indices_[currIndex++] = i + 1;         // top-right vertex
+            indices_[currIndex++] = i + size_ + 1; // bottom-right vertex
+            indices_[currIndex++] = i + size_;     // bottom-left vertex
         }
     }
 }
@@ -144,16 +129,15 @@ void Terrain::setTextureSpacing(float textureSpacing)
 {
     textureSpacing_ = textureSpacing;
     // recalculate uvs
-    Vertex *vertices = mesh_->getVertices();
     for (int y = 0; y < size_; y++)
     {
         for (int x = 0; x < size_; x++)
         {
             int i = y * size_ + x;
-            vertices[i].u = (float)x * textureSpacing_;
-            vertices[i].v = (float)y * textureSpacing_;
+            vertices_[i].u = (float)x * textureSpacing_;
+            vertices_[i].v = (float)y * textureSpacing_;
         }
     }
     // upload to GPU
-    mesh_->setUpOpenGL();
+    setUpOpenGL();
 }

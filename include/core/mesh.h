@@ -8,12 +8,7 @@
 
 class Mesh
 {
-    friend class Terrain;
-
 private:
-    Vertex *vertices_;
-    uint32_t *indices_;
-
     // vertex buffer object
     GLuint vbo_;
     // element buffer object
@@ -27,14 +22,16 @@ private:
 
     Materials::Material material_;
 
-    void cleanup();
-
 protected:
-    int isTerrain_;
+    Vertex *vertices_;
+    uint32_t *indices_;
+
+    void cleanup();
+    void resize(int vertexCount, int indexCount);
 
 public:
     Mesh(int vertexCount, int indexCount);
-    ~Mesh();
+    virtual ~Mesh();
 
     GLuint setUpOpenGL();
 
@@ -42,8 +39,6 @@ public:
     int getVertexCount() const { return vertexCount_; }
 
     int getIndexCount() const { return indexCount_; }
-
-    int isTerrain() const { return isTerrain_; }
 
     Vertex *getVertices() const { return vertices_; }
 
