@@ -10,11 +10,11 @@ namespace PerlinNoise
     class Perlin
     {
     private:
-        int *p_;
+        uint8_t *p_;
         Vec2 *gradients_;
 
         static float dotProduct(const Vec2 &grad, const float x, const float y);
-        int hash(const int x, const int y);
+        uint8_t hash(const int x, const int y);
 
     public:
         Perlin(uint32_t seed);

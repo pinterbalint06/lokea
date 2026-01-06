@@ -12,14 +12,14 @@ namespace PerlinNoise
         return grad.x * x + grad.y * y;
     }
 
-    int Perlin::hash(const int x, const int y)
+    uint8_t Perlin::hash(const int x, const int y)
     {
         return p_[p_[x] + y];
     }
 
     Perlin::Perlin(uint32_t seed)
     {
-        p_ = (int *)malloc(512 * sizeof(int));
+        p_ = (uint8_t *)malloc(512 * sizeof(uint8_t));
         gradients_ = (Vec2 *)malloc(256 * sizeof(Vec2));
         pcgRand pcgRandGen(seed);
 
@@ -32,8 +32,8 @@ namespace PerlinNoise
         // shuffle the permutation table
         for (int i = 255; i > 0; i--)
         {
-            int j = pcgRandGen.random() % (i + 1);
-            int temp = p_[i];
+            uint8_t j = pcgRandGen.random() % (i + 1);
+            uint8_t temp = p_[i];
             p_[i] = p_[j];
             p_[j] = temp;
         }
