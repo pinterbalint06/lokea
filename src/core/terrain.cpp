@@ -18,6 +18,7 @@ Terrain::Terrain(int size)
     textureSpacing_ = 1.0f;
     perlinNoise_ = new PerlinNoise::Perlin(parameters, true);
     mesh_ = new Mesh(size * size, (size - 1) * (size - 1) * 6);
+    mesh_->isTerrain_ = 1;
 }
 
 void Terrain::cleanup()
@@ -54,6 +55,7 @@ void Terrain::setSize(int size)
     size_ = size;
     cleanup();
     mesh_ = new Mesh(size * size, (size - 1) * (size - 1) * 6);
+    mesh_->isTerrain_ = 1;
     mesh_->setMaterial(currentMaterial);
 }
 

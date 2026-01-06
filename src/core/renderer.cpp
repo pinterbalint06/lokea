@@ -154,12 +154,10 @@ void Renderer::render(const Scene *scene)
         glBindTexture(GL_TEXTURE_2D, meshMat.texture->getGPULoc());
         useTexture = 1;
     }
-    else
-    {
-        useTexture = 0;
-    }
 
     shaderPrograms_[currShadingMode_]->setUniformInt("uUseTexture", useTexture);
+
+    shaderPrograms_[currShadingMode_]->setUniformInt("uIsTerrain", mesh->isTerrain());
 
     glBindBuffer(GL_UNIFORM_BUFFER, uboMat_);
     glBufferSubData(GL_UNIFORM_BUFFER, 0, sizeof(Materials::MaterialData), &currMatData);

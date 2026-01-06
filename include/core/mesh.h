@@ -8,6 +8,8 @@
 
 class Mesh
 {
+    friend class Terrain;
+
 private:
     Vertex *vertices_;
     uint32_t *indices_;
@@ -27,6 +29,9 @@ private:
 
     void cleanup();
 
+protected:
+    int isTerrain_;
+
 public:
     Mesh(int vertexCount, int indexCount);
     ~Mesh();
@@ -37,6 +42,8 @@ public:
     int getVertexCount() const { return vertexCount_; }
 
     int getIndexCount() const { return indexCount_; }
+
+    int isTerrain() const { return isTerrain_; }
 
     Vertex *getVertices() const { return vertices_; }
 
