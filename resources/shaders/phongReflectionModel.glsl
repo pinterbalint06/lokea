@@ -1,4 +1,5 @@
-precision mediump float;
+precision highp float;
+precision highp int;
 
 vec4 phongReflectionModel(
     vec3 normal,

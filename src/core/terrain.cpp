@@ -3,67 +3,61 @@
 #include <cstring>
 #include "utils/perlin.h"
 
-Terrain::Terrain(int size)
+Terrain::Terrain(int size) : Mesh(size * size, (size - 1) * (size - 1) * 6)
 {
     size_ = size;
-    heightMultiplier_ = 150.0f;
-    lacunarity_ = 2.0f;
-    persistence_ = 0.4f;
-    octaves_ = 8;
-    frequency_ = 1.0f;
-    seed_ = 0;
-    spacing_ = 1.0f;
+    PerlinNoise::PerlinParameters parameters;
+    parameters.amplitude = 2.0f;
+    parameters.lacunarity = 2.0f;
+    parameters.persistence = 0.4f;
+    parameters.octaveCount = 8;
+    parameters.frequency = 1.0f;
+    parameters.seed = 0;
+    parameters.noiseSize = 150.0f;
+    parameters.scaling = 1.0f / 128.0f;
+    parameters.steepness = 3.5f;
     textureSpacing_ = 1.0f;
-    perlinNoise_ = new PerlinNoise::Perlin(seed_);
-    mesh_ = new Mesh(size * size, (size - 1) * (size - 1) * 6);
-}
-
-void Terrain::cleanup()
-{
-    if (mesh_)
-    {
-        delete mesh_;
-    }
+    perlinNoise_ = new PerlinNoise::Perlin(parameters, true);
 }
 
 Terrain::~Terrain()
-{
-    cleanup();
-}
-
-void Terrain::setSeed(int seed)
 {
     if (perlinNoise_)
     {
         delete perlinNoise_;
     }
-    seed_ = seed;
-    perlinNoise_ = new PerlinNoise::Perlin(seed_);
+}
+
+void Terrain::setSeed(int seed)
+{
+    PerlinNoise::PerlinParameters parameters = perlinNoise_->getParameters();
+    parameters.seed = seed;
+    if (perlinNoise_)
+    {
+        delete perlinNoise_;
+    }
+    perlinNoise_ = new PerlinNoise::Perlin(parameters, true);
 }
 
 void Terrain::setSize(int size)
 {
-    Materials::Material currentMaterial = Materials::Material::Grass();
-    if (mesh_)
+    if (size != size_)
     {
-        currentMaterial = mesh_->getMaterial();
+        size_ = size;
+        resize(size_ * size_, (size_ - 1) * (size_ - 1) * 6);
+        regenerate();
     }
-    size_ = size;
-    cleanup();
-    mesh_ = new Mesh(size * size, (size - 1) * (size - 1) * 6);
-    mesh_->setMaterial(currentMaterial);
 }
 
 void Terrain::regenerate()
 {
     buildTerrain();
-    mesh_->setUpOpenGL();
+    setUpOpenGL();
 }
 
 void Terrain::buildTerrain()
 {
     int i;
-    Vertex *vertices = mesh_->getVertices();
     float scale = 1.0f / 128.0f;
     // generate heightmap
     for (int y = 0; y < size_; y++)
@@ -71,16 +65,15 @@ void Terrain::buildTerrain()
         for (int x = 0; x < size_; x++)
         {
             i = y * size_ + x;
-            vertices[i].x = x * spacing_;
-            vertices[i].y = perlinNoise_->fbm(x * scale, y * scale, octaves_, frequency_, 2.0f, persistence_, lacunarity_) * heightMultiplier_;
-            vertices[i].z = -y * spacing_;
-            vertices[i].w = 1.0f;
-            vertices[i].u = (float)x * textureSpacing_;
-            vertices[i].v = (float)y * textureSpacing_;
+            vertices_[i].x = x;
+            vertices_[i].y = perlinNoise_->fbm(x * scale, y * scale);
+            vertices_[i].z = -y;
+            vertices_[i].w = 1.0f;
+            vertices_[i].u = (float)x * textureSpacing_;
+            vertices_[i].v = (float)y * textureSpacing_;
         }
     }
 
-    float spacingInv = 1.0f / spacing_;
     // calculate normals
     for (int y = 0; y < size_; y++)
     {
@@ -88,28 +81,27 @@ void Terrain::buildTerrain()
         {
             i = y * size_ + x;
             // if it is already calculated get it from the heightmap if not calculate it
-            float prevValueX = x - 1 < 0 ? perlinNoise_->fbm(x * scale, y * scale, octaves_, frequency_, 2.0f, persistence_, lacunarity_) * heightMultiplier_ : vertices[y * size_ + x - 1].y;
-            float nxtValueX = x + 1 > size_ - 1 ? perlinNoise_->fbm(x * scale, y * scale, octaves_, frequency_, 2.0f, persistence_, lacunarity_) * heightMultiplier_ : vertices[y * size_ + x + 1].y;
-            float centralDifferenceX = (nxtValueX - prevValueX) * 0.5f * spacingInv;
+            float prevValueX = x - 1 < 0 ? perlinNoise_->fbm(x * scale, y * scale) : vertices_[y * size_ + x - 1].y;
+            float nxtValueX = x + 1 > size_ - 1 ? perlinNoise_->fbm(x * scale, y * scale) : vertices_[y * size_ + x + 1].y;
+            float centralDifferenceX = (nxtValueX - prevValueX) * 0.5f;
 
             // if it is already calculated get it from the heightmap if not calculate it
-            float prevValueY = y - 1 < 0 ? perlinNoise_->fbm(x * scale, y * scale, octaves_, frequency_, 2.0f, persistence_, lacunarity_) * heightMultiplier_ : vertices[(y - 1) * size_ + x].y;
-            float nxtValueY = y + 1 > size_ - 1 ? perlinNoise_->fbm(x * scale, y * scale, octaves_, frequency_, 2.0f, persistence_, lacunarity_) * heightMultiplier_ : vertices[(y + 1) * size_ + x].y;
-            float centralDifferenceY = (nxtValueY - prevValueY) * 0.5f * spacingInv;
+            float prevValueY = y - 1 < 0 ? perlinNoise_->fbm(x * scale, y * scale) : vertices_[(y - 1) * size_ + x].y;
+            float nxtValueY = y + 1 > size_ - 1 ? perlinNoise_->fbm(x * scale, y * scale) : vertices_[(y + 1) * size_ + x].y;
+            float centralDifferenceY = (nxtValueY - prevValueY) * 0.5f;
 
-            vertices[i].nx = -centralDifferenceX;
-            vertices[i].ny = 1.0f;
-            vertices[i].nz = centralDifferenceY;
+            vertices_[i].nx = -centralDifferenceX;
+            vertices_[i].ny = 1.0f;
+            vertices_[i].nz = centralDifferenceY;
 
-            float normLen = std::sqrt(vertices[i].nx * vertices[i].nx + vertices[i].ny * vertices[i].ny + vertices[i].nz * vertices[i].nz);
-            vertices[i].nx /= normLen;
-            vertices[i].ny /= normLen;
-            vertices[i].nz /= normLen;
+            float normLen = std::sqrt(vertices_[i].nx * vertices_[i].nx + vertices_[i].ny * vertices_[i].ny + vertices_[i].nz * vertices_[i].nz);
+            vertices_[i].nx /= normLen;
+            vertices_[i].ny /= normLen;
+            vertices_[i].nz /= normLen;
         }
     }
 
     // calculate indices
-    uint32_t *indices = mesh_->getIndices();
     int currIndex = 0;
     for (int y = 0; y < size_ - 1; y++)
     {
@@ -118,37 +110,30 @@ void Terrain::buildTerrain()
             i = y * size_ + x;
 
             // We form two triangles from a rectangle in the perlin grid
-            indices[currIndex++] = i + 1;     // top-right vertex
-            indices[currIndex++] = i + size_; // bottom-left vertex
-            indices[currIndex++] = i;         // top-left vertex
+            indices_[currIndex++] = i + 1;     // top-right vertex
+            indices_[currIndex++] = i + size_; // bottom-left vertex
+            indices_[currIndex++] = i;         // top-left vertex
 
-            indices[currIndex++] = i + 1;         // top-right vertex
-            indices[currIndex++] = i + size_ + 1; // bottom-right vertex
-            indices[currIndex++] = i + size_;     // bottom-left vertex
+            indices_[currIndex++] = i + 1;         // top-right vertex
+            indices_[currIndex++] = i + size_ + 1; // bottom-right vertex
+            indices_[currIndex++] = i + size_;     // bottom-left vertex
         }
     }
-}
-
-void Terrain::setSpacing(float spacing)
-{
-    spacing_ = spacing;
-    regenerate();
 }
 
 void Terrain::setTextureSpacing(float textureSpacing)
 {
     textureSpacing_ = textureSpacing;
     // recalculate uvs
-    Vertex *vertices = mesh_->getVertices();
     for (int y = 0; y < size_; y++)
     {
         for (int x = 0; x < size_; x++)
         {
             int i = y * size_ + x;
-            vertices[i].u = (float)x * textureSpacing_;
-            vertices[i].v = (float)y * textureSpacing_;
+            vertices_[i].u = (float)x * textureSpacing_;
+            vertices_[i].v = (float)y * textureSpacing_;
         }
     }
     // upload to GPU
-    mesh_->setUpOpenGL();
+    setUpOpenGL();
 }

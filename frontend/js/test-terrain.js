@@ -113,11 +113,6 @@ function UjPerlinParam() {
     Module.newPerlinMap(parseInt(size.value), parseInt(seed.value), parseFloat(frequency.value), parseFloat(lacunarity.value), parseFloat(persistence.value), parseInt(oktav.value), parseFloat(mult.value));
 }
 
-function UjTerkoz() {
-    let spacing = document.getElementById("spacing");
-    Module.setMapSpacing(parseFloat(spacing.value));
-}
-
 function UjFenyIntenzitas() {
     let intensity = document.getElementById("lightIntensity");
     Module.newLightIntensity(parseInt(intensity.value));
@@ -311,6 +306,11 @@ function setTexturaMeret() {
     Module.setTextureSpacing(1.0 / parseFloat(textureSpacing.value));
 }
 
+function UjMeredekseg() {
+    let steepness = document.getElementById("steepness");
+    Module.setSteepness(parseFloat(steepness.value));
+}
+
 window.UjPerlinParam = UjPerlinParam;
 window.ujKameraMagassag = ujKameraMagassag;
 window.ujhely = ujhely;
@@ -320,7 +320,6 @@ window.mozgas = mozgas;
 window.ujElsmitas = ujElsmitas;
 window.teszt = teszt;
 window.ujArnyalas = ujArnyalas;
-window.UjTerkoz = UjTerkoz;
 window.UjFenyIntenzitas = UjFenyIntenzitas;
 window.UjFenyIrany = UjFenyIrany;
 window.ujFenyszin = ujFenyszin;
@@ -331,3 +330,4 @@ window.ujAnyag = ujAnyag;
 window.ujUrlbol = ujUrlbol;
 window.texturaTorles = texturaTorles;
 window.setTexturaMeret = setTexturaMeret;
+window.UjMeredekseg = UjMeredekseg;

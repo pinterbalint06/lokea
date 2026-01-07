@@ -156,14 +156,6 @@ void setAmbientLight(float ambientLightIntensity)
     }
 }
 
-void setMapSpacing(float mapSpacing)
-{
-    if (gEngine)
-    {
-        gEngine->setMapSpacing(mapSpacing);
-    }
-}
-
 void render()
 {
     if (gEngine)
@@ -223,6 +215,14 @@ void setTextureSpacing(float textureSpacing)
     }
 }
 
+void setSteepness(float steepness)
+{
+    if (gEngine)
+    {
+        gEngine->setSteepness(steepness);
+    }
+}
+
 EMSCRIPTEN_BINDINGS(my_module)
 {
     emscripten::function("init", &init);
@@ -243,7 +243,6 @@ EMSCRIPTEN_BINDINGS(my_module)
     emscripten::function("setLightColor", &setLightColor);
     emscripten::function("setAmbientLight", &setAmbientLight);
     emscripten::function("setShadingTechnique", &setShadingMode);
-    emscripten::function("setMapSpacing", &setMapSpacing);
     emscripten::function("render", &render);
     emscripten::function("changeFocalLength", &changeFocalLength);
     emscripten::function("startRenderingLoop", &startRenderingLoop);
@@ -251,4 +250,5 @@ EMSCRIPTEN_BINDINGS(my_module)
     emscripten::function("uploadTextureToGPU", &uploadTextureToGPU);
     emscripten::function("deleteTexture", &deleteTexture);
     emscripten::function("setTextureSpacing", &setTextureSpacing);
+    emscripten::function("setSteepness", &setSteepness);
 }

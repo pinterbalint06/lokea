@@ -13,6 +13,7 @@ Mesh::Mesh(int vertexCount, int indexCount)
     vbo_ = 0;
     vao_ = 0;
     ebo_ = 0;
+    material_ = Materials::Material::Error();
 }
 
 Mesh::~Mesh()
@@ -73,15 +74,27 @@ void Mesh::cleanup()
     if (vbo_ != 0)
     {
         glDeleteBuffers(1, &vbo_);
+        vbo_ = 0;
     }
     if (vao_ != 0)
     {
         glDeleteVertexArrays(1, &vao_);
+        vao_ = 0;
     }
     if (ebo_ != 0)
     {
         glDeleteBuffers(1, &ebo_);
+        ebo_ = 0;
     }
     vertexCount_ = 0;
     indexCount_ = 0;
+}
+
+void Mesh::resize(int vertexCount, int indexCount)
+{
+    cleanup();
+    vertexCount_ = vertexCount;
+    indexCount_ = indexCount;
+    vertices_ = (Vertex *)malloc(vertexCount_ * sizeof(Vertex));
+    indices_ = (uint32_t *)malloc(indexCount_ * sizeof(uint32_t));
 }

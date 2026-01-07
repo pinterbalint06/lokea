@@ -9,9 +9,6 @@
 class Mesh
 {
 private:
-    Vertex *vertices_;
-    uint32_t *indices_;
-
     // vertex buffer object
     GLuint vbo_;
     // element buffer object
@@ -25,11 +22,16 @@ private:
 
     Materials::Material material_;
 
+protected:
+    Vertex *vertices_;
+    uint32_t *indices_;
+
     void cleanup();
+    void resize(int vertexCount, int indexCount);
 
 public:
     Mesh(int vertexCount, int indexCount);
-    ~Mesh();
+    virtual ~Mesh();
 
     GLuint setUpOpenGL();
 

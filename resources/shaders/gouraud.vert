@@ -1,5 +1,8 @@
 #version 300 es
 
+precision highp float;
+precision highp int;
+
 layout(location = 0) in vec4 aPosition;
 layout(location = 1) in vec3 aNormal;
 layout(location = 2) in vec2 aTexCoords;
@@ -34,14 +37,16 @@ layout(std140) uniform MaterialData {
 };
 
 uniform int uUseTexture;
-uniform sampler2D texture1;
+uniform sampler2D uTexture0;
+
+uniform int uIsTerrain;
 
 out vec4 vColor;
 
 void main() {
     vec3 baseColor;
     if(uUseTexture == 1) {
-        baseColor = texture(texture1, aTexCoords).rgb;
+        baseColor = texture(uTexture0, aTexCoords).rgb;
     } else {
         baseColor = uMatAlbedo;
     }

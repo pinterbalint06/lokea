@@ -10,6 +10,7 @@
 #include "core/camera.h"
 #include "core/distantLight.h"
 #include "core/mesh.h"
+#include "core/terrain.h"
 #include "utils/mathUtils.h"
 #include "utils/fpsCounter.h"
 #include "core/vertex.h"
@@ -23,17 +24,17 @@ Renderer::Renderer(std::string &canvasID)
     rBuffer_ = 0.0f;
     gBuffer_ = 0.0f;
     bBuffer_ = 0.0f;
-    currShadingMode_ = Shaders::SHADINGMODE::GOURAUD;
+    currShadingMode_ = Shaders::SHADINGMODE::PHONG;
     EmscriptenWebGLContextAttributes attrs;
     emscripten_webgl_init_context_attributes(&attrs);
     attrs.majorVersion = 2;
-    int ctx = emscripten_webgl_create_context(("#" + canvasID).c_str(), &attrs);
-    if (!ctx)
+    ctx_ = emscripten_webgl_create_context(("#" + canvasID).c_str(), &attrs);
+    if (!ctx_)
     {
         EM_ASM(
             throw('A böngésződ nem támogatja a WebGL-t!'););
     }
-    emscripten_webgl_make_context_current(ctx);
+    emscripten_webgl_make_context_current(ctx_);
     glClearColor(rBuffer_, gBuffer_, bBuffer_, 1);
 
     // scene ubo
@@ -58,6 +59,26 @@ Renderer::Renderer(std::string &canvasID)
     fps = new fpsCounter();
 }
 
+Renderer::~Renderer()
+{
+    if (uboScene_ != 0)
+    {
+        glDeleteBuffers(1, &uboScene_);
+    }
+    if (uboMat_ != 0)
+    {
+        glDeleteBuffers(1, &uboMat_);
+    }
+    if (fps)
+    {
+        delete fps;
+    }
+    if (ctx_)
+    {
+        emscripten_webgl_destroy_context(ctx_);
+    }
+}
+
 void Renderer::createShadingPrograms()
 {
     shaderPrograms_[Shaders::SHADINGMODE::GOURAUD] =
@@ -80,9 +101,8 @@ void Renderer::setImageDimensions(int imageW, int imageH)
     imageHeight_ = imageH;
 }
 
-void Renderer::render(const Scene *scene)
+void Renderer::updateSceneUBO(const Scene *scene)
 {
-    fps->update();
     SceneData currSceneData;
     // camera
     Camera *mainCamera = scene->getCamera();
@@ -110,11 +130,14 @@ void Renderer::render(const Scene *scene)
     currSceneData.lightColorPreCalc[2] = sun->getBlueCalculated();
     currSceneData.ambientLight = scene->getAmbientLight();
 
+    // upload to GPU
     glBindBuffer(GL_UNIFORM_BUFFER, uboScene_);
     glBufferSubData(GL_UNIFORM_BUFFER, 0, sizeof(SceneData), &currSceneData);
     glBindBuffer(GL_UNIFORM_BUFFER, 0);
+}
 
-    Mesh *mesh = scene->getMesh();
+void Renderer::updateMeshUBO(Mesh *mesh)
+{
     Materials::Material meshMat = mesh->getMaterial();
     Materials::Color meshCol = meshMat.albedo;
     Materials::MaterialData currMatData;
@@ -132,23 +155,48 @@ void Renderer::render(const Scene *scene)
     {
         glActiveTexture(GL_TEXTURE0);
         glBindTexture(GL_TEXTURE_2D, meshMat.texture->getGPULoc());
+        shaderPrograms_[currShadingMode_]->setUniformInt("uTexture0", 0);
         useTexture = 1;
-    }
-    else
-    {
-        useTexture = 0;
     }
 
     shaderPrograms_[currShadingMode_]->setUniformInt("uUseTexture", useTexture);
 
+    int isTerrain = 0;
+    Terrain *terrain = dynamic_cast<Terrain *>(mesh);
+    if (terrain != nullptr)
+    {
+        isTerrain = 1;
+        glActiveTexture(GL_TEXTURE5);
+        glBindTexture(GL_TEXTURE_2D, terrain->getPermGPULoc());
+        shaderPrograms_[currShadingMode_]->setUniformInt("uPermutationTable", 5);
+        glActiveTexture(GL_TEXTURE6);
+        glBindTexture(GL_TEXTURE_2D, terrain->getGradGPULoc());
+        shaderPrograms_[currShadingMode_]->setUniformInt("uGradients", 6);
+    }
+
+    shaderPrograms_[currShadingMode_]->setUniformInt("uIsTerrain", isTerrain);
+
     glBindBuffer(GL_UNIFORM_BUFFER, uboMat_);
     glBufferSubData(GL_UNIFORM_BUFFER, 0, sizeof(Materials::MaterialData), &currMatData);
     glBindBuffer(GL_UNIFORM_BUFFER, 0);
+}
 
+void Renderer::render(const Scene *scene)
+{
+    fps->update();
+    // clear buffers
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
+    // update uniform buffer objects
+    updateSceneUBO(scene);
+    Mesh *mesh = scene->getMesh();
+    updateMeshUBO(mesh);
+
+    // bind current mesh
     glBindVertexArray(mesh->getVAO());
 
+    // draw mesh
     glDrawElements(GL_TRIANGLES, mesh->getIndexCount(), GL_UNSIGNED_INT, 0);
+    // unbind mesh
     glBindVertexArray(0);
 }

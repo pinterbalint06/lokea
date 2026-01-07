@@ -4,6 +4,7 @@
 #include <fstream>
 #include <sstream>
 #include <iostream>
+#include <vector>
 #include <emscripten/emscripten.h>
 
 namespace Shaders
@@ -27,24 +28,28 @@ namespace Shaders
 
     std::string Shader::loadHelperFiles()
     {
-        std::string hCode;
-        std::ifstream hFile;
+        std::stringstream completeBuffer;
+        std::vector<std::string> helpers = {
+            "shaders/phongReflectionModel.glsl",
+            "shaders/perlinNoise.glsl"};
 
-        hFile.exceptions(std::ifstream::failbit | std::ifstream::badbit);
-        try
+        for (int i = 0; i < helpers.size(); i++)
         {
-            hFile.open("shaders/phongReflectionModel.glsl");
-            std::stringstream hBuffer;
-            hBuffer << hFile.rdbuf();
-            hFile.close();
-            hCode = hBuffer.str();
+            std::ifstream file;
+
+            file.exceptions(std::ifstream::failbit | std::ifstream::badbit);
+            try
+            {
+                file.open(helpers[i]);
+                completeBuffer << file.rdbuf() << "\n";
+                file.close();
+            }
+            catch (std::ifstream::failure e)
+            {
+                EM_ASM({ throw("Sikertelen shader helper fájl beolvasás: " + UTF8ToString($0)); }, helpers[i].c_str());
+            }
         }
-        catch (std::ifstream::failure e)
-        {
-            EM_ASM(
-                throw("Sikertelen shader helper fájl beolvasás"));
-        }
-        return hCode;
+        return completeBuffer.str();
     }
 
     Shader::Shader(const char *pathToVertex, const char *pathToFragment)
@@ -106,6 +111,9 @@ namespace Shaders
 
         GLuint uniformBlockIndexMat = glGetUniformBlockIndex(programID_, "MaterialData");
         glUniformBlockBinding(programID_, uniformBlockIndexMat, 1);
+
+        GLuint uniformBlockIndexPerlin = glGetUniformBlockIndex(programID_, "PerlinData");
+        glUniformBlockBinding(programID_, uniformBlockIndexPerlin, 2);
     }
 
     Shader::~Shader()
