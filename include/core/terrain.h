@@ -11,7 +11,6 @@ class Terrain : public Mesh
 private:
     float *perlinHeightMap_;
     int size_;
-    float spacing_;
     float textureSpacing_;
     // Perlin parameters
     float heightMultiplier_;
@@ -39,7 +38,7 @@ public:
     void setOctaves(int octaves) { perlinNoise_->setOctaves(octaves); }
     void setSeed(int seed);
     void setSize(int size);
-    void setSpacing(float spacing);
+    void setSteepness(float steepness) { perlinNoise_->setSteepness(steepness); }
     void setTextureSpacing(float textureSpacing);
 };
 

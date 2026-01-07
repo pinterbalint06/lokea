@@ -110,12 +110,6 @@ void Engine::setAmbientLight(float ambientLightIntensity)
     scene_->setAmbientLight(ambientLightIntensity);
 }
 
-void Engine::setMapSpacing(float mapSpacing)
-{
-    terrain_->setSpacing(mapSpacing);
-    calcNewCamLoc();
-}
-
 void Engine::setFocalLength(float focal)
 {
     scene_->getCamera()->setFocalLength(focal);
@@ -125,6 +119,11 @@ void Engine::setTextureSpacing(float textureSpacing)
 {
     terrain_->setTextureSpacing(textureSpacing);
 }
+
+void Engine::setSteepness(float steepness)
+{
+    terrain_->setSteepness(steepness);
+};
 
 void Engine::moveCamera(int x, int z)
 {

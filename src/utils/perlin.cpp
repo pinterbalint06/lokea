@@ -22,7 +22,6 @@ namespace PerlinNoise
     {
         uplToGPU_ = uploadGPU;
         params_ = params;
-        params_.steepness = 4.0f;
         permuTable_ = (uint8_t *)malloc(512 * sizeof(uint8_t));
         gradients_ = (Vec2 *)malloc(256 * sizeof(Vec2));
         pcgRand pcgRandGen(params_.seed);
@@ -92,6 +91,7 @@ namespace PerlinNoise
             uploadParametersToGPU();
         }
     }
+
     void Perlin::setPersistence(float persistence)
     {
         params_.persistence = persistence;
@@ -100,6 +100,7 @@ namespace PerlinNoise
             uploadParametersToGPU();
         }
     }
+
     void Perlin::setFrequency(float frequency)
     {
         params_.frequency = frequency;
@@ -108,6 +109,7 @@ namespace PerlinNoise
             uploadParametersToGPU();
         }
     }
+
     void Perlin::setNoiseSize(float noiseSize)
     {
         params_.noiseSize = noiseSize;
@@ -116,9 +118,19 @@ namespace PerlinNoise
             uploadParametersToGPU();
         }
     }
+
     void Perlin::setOctaves(int octaves)
     {
         params_.octaveCount = octaves;
+        if (uplToGPU_)
+        {
+            uploadParametersToGPU();
+        }
+    }
+
+    void Perlin::setSteepness(float steepness)
+    {
+        params_.steepness = steepness;
         if (uplToGPU_)
         {
             uploadParametersToGPU();

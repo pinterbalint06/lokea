@@ -24,7 +24,7 @@ Renderer::Renderer(std::string &canvasID)
     rBuffer_ = 0.0f;
     gBuffer_ = 0.0f;
     bBuffer_ = 0.0f;
-    currShadingMode_ = Shaders::SHADINGMODE::GOURAUD;
+    currShadingMode_ = Shaders::SHADINGMODE::PHONG;
     EmscriptenWebGLContextAttributes attrs;
     emscripten_webgl_init_context_attributes(&attrs);
     attrs.majorVersion = 2;

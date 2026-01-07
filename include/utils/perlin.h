@@ -51,6 +51,7 @@ namespace PerlinNoise
         void setFrequency(float frequency);
         void setNoiseSize(float noiseSize);
         void setOctaves(int octaves);
+        void setSteepness(float steepness);
 
         // one octave noise
         float noise(float x, float y);

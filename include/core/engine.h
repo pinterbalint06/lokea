@@ -34,9 +34,9 @@ public:
     void setFrustum(float focal, float filmW, float filmH, int imageW, int imageH, float n, float f);
     void setLightColor(float r, float g, float b);
     void setAmbientLight(float ambientLightIntensity);
-    void setMapSpacing(float mapSpacing);
     void setFocalLength(float focal);
     void setTextureSpacing(float textureSpacing);
+    void setSteepness(float steepness);
 
     void moveCamera(int x, int z);
     void rotateCamera(float dPitch, float dYaw);

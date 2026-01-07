@@ -15,7 +15,7 @@ Terrain::Terrain(int size) : Mesh(size * size, (size - 1) * (size - 1) * 6)
     parameters.seed = 0;
     parameters.noiseSize = 150.0f;
     parameters.scaling = 1.0f / 128.0f;
-    spacing_ = 1.0f;
+    parameters.steepness = 3.5f;
     textureSpacing_ = 1.0f;
     perlinNoise_ = new PerlinNoise::Perlin(parameters, true);
 }
@@ -63,16 +63,15 @@ void Terrain::buildTerrain()
         for (int x = 0; x < size_; x++)
         {
             i = y * size_ + x;
-            vertices_[i].x = x * spacing_;
+            vertices_[i].x = x;
             vertices_[i].y = perlinNoise_->fbm(x * scale, y * scale);
-            vertices_[i].z = -y * spacing_;
+            vertices_[i].z = -y;
             vertices_[i].w = 1.0f;
             vertices_[i].u = (float)x * textureSpacing_;
             vertices_[i].v = (float)y * textureSpacing_;
         }
     }
 
-    float spacingInv = 1.0f / spacing_;
     // calculate normals
     for (int y = 0; y < size_; y++)
     {
@@ -82,12 +81,12 @@ void Terrain::buildTerrain()
             // if it is already calculated get it from the heightmap if not calculate it
             float prevValueX = x - 1 < 0 ? perlinNoise_->fbm(x * scale, y * scale) : vertices_[y * size_ + x - 1].y;
             float nxtValueX = x + 1 > size_ - 1 ? perlinNoise_->fbm(x * scale, y * scale) : vertices_[y * size_ + x + 1].y;
-            float centralDifferenceX = (nxtValueX - prevValueX) * 0.5f * spacingInv;
+            float centralDifferenceX = (nxtValueX - prevValueX) * 0.5f;
 
             // if it is already calculated get it from the heightmap if not calculate it
             float prevValueY = y - 1 < 0 ? perlinNoise_->fbm(x * scale, y * scale) : vertices_[(y - 1) * size_ + x].y;
             float nxtValueY = y + 1 > size_ - 1 ? perlinNoise_->fbm(x * scale, y * scale) : vertices_[(y + 1) * size_ + x].y;
-            float centralDifferenceY = (nxtValueY - prevValueY) * 0.5f * spacingInv;
+            float centralDifferenceY = (nxtValueY - prevValueY) * 0.5f;
 
             vertices_[i].nx = -centralDifferenceX;
             vertices_[i].ny = 1.0f;
@@ -118,12 +117,6 @@ void Terrain::buildTerrain()
             indices_[currIndex++] = i + size_;     // bottom-left vertex
         }
     }
-}
-
-void Terrain::setSpacing(float spacing)
-{
-    spacing_ = spacing;
-    regenerate();
 }
 
 void Terrain::setTextureSpacing(float textureSpacing)
