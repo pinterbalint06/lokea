@@ -111,6 +111,7 @@ vec3 calculateNoiseNormalFBM(vec2 pos) {
         amp *= persistence;
         freq *= lacunarity;
     }
-    derivatives *= scaling;
-    return normalize(vec3(-derivatives.x * noiseSize, steepness, -derivatives.y * noiseSize));
+    derivatives *= scaling * noiseSize;
+    derivatives /= maxValue;
+    return normalize(vec3(-derivatives.x, steepness, -derivatives.y));
 }

@@ -15,3 +15,4 @@
 15. Kód átnézése nem használt függvényekre, váltózokra
 16. UBO struktok átdolgozása, hogy ne kelljen mindig bemásolni egy új struktba
 17. Ekvirektanguláris textúrák felosztása 4x4-re vagy 2x2-re
+18. Domain warping
