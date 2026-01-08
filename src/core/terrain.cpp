@@ -8,14 +8,14 @@ Terrain::Terrain(int size) : Mesh(size * size, (size - 1) * (size - 1) * 6)
     size_ = size;
     PerlinNoise::PerlinParameters parameters;
     parameters.amplitude = 2.0f;
-    parameters.lacunarity = 2.0f;
-    parameters.persistence = 0.4f;
-    parameters.octaveCount = 8;
+    parameters.lacunarity = 1.95f;
+    parameters.persistence = 0.375f;
+    parameters.octaveCount = 10;
     parameters.frequency = 1.0f;
     parameters.seed = 0;
     parameters.noiseSize = 150.0f;
     parameters.scaling = 1.0f / 128.0f;
-    parameters.steepness = 3.5f;
+    parameters.steepness = 2.25f;
     textureSpacing_ = 1.0f;
     perlinNoise_ = new PerlinNoise::Perlin(parameters);
 }
