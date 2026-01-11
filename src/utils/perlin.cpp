@@ -54,7 +54,7 @@ namespace PerlinNoise
 
         permuTableTex_ = 0;
         gradientsTex_ = 0;
-        parametersUBO_ = 0;
+        parametersUBO_ = nullptr;
     }
 
     Perlin::~Perlin()

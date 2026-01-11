@@ -77,7 +77,7 @@ Renderer::Renderer(std::string &canvasID)
 
     glEnable(GL_DEPTH_TEST);
 
-    fps = new fpsCounter();
+    fps = new fpsCounter("fps");
 }
 
 Renderer::~Renderer()

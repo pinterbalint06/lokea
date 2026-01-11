@@ -7050,10 +7050,10 @@ function checkIncomingModuleAPI() {
   ignoredModuleProp('fetchSettings');
 }
 var ASM_CONSTS = {
-  111232: () => { throw('A böngésződ nem támogatja a WebGL-t!'); },  
- 111283: ($0) => { throw("Sikertelen shader fordítás: " + UTF8ToString($0)); },  
- 111347: ($0) => { throw("Sikertelen shader összekapcsolás: " + UTF8ToString($0)); },  
- 111417: ($0) => { console.log('FPS: ' + $0); }
+  109440: () => { throw('A böngésződ nem támogatja a WebGL-t!'); },  
+ 109491: ($0) => { throw("Sikertelen shader fordítás: " + UTF8ToString($0)); },  
+ 109555: ($0) => { throw("Sikertelen shader összekapcsolás: " + UTF8ToString($0)); },  
+ 109625: ($0, $1) => { let fps = document.getElementById(UTF8ToString($1)); if (fps) { fps.innerText = $0; } }
 };
 
 // Imports from the Wasm binary.

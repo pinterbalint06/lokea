@@ -32,8 +32,8 @@ public:
     int getSize() { return size_; }
     GLuint getNoisePermGPULoc() { return perlinNoise_->getPermutationGPULoc(); }
     GLuint getNoiseGradGPULoc() { return perlinNoise_->getGradientsGPULoc(); }
-    GLuint getWarpPermGPULoc() { return perlinNoise_->getPermutationGPULoc(); }
-    GLuint getWarpGradGPULoc() { return perlinNoise_->getGradientsGPULoc(); }
+    GLuint getWarpPermGPULoc() { return warpNoise_->getPermutationGPULoc(); }
+    GLuint getWarpGradGPULoc() { return warpNoise_->getGradientsGPULoc(); }
     int getIsDomainWarp() { return domainWarp_; }
 
     // setters

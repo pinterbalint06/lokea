@@ -133,11 +133,13 @@ void Engine::setTextureSpacing(float textureSpacing)
 void Engine::setSteepness(float steepness)
 {
     terrain_->setSteepness(steepness);
+    terrain_->regenerate();
 };
 
 void Engine::setDomainWarp(bool domainWarp)
 {
     terrain_->setDomainWarp(domainWarp);
+    calcNewCamLoc();
 };
 
 void Engine::moveCamera(int x, int z)

@@ -82,24 +82,23 @@ void Terrain::regenerate()
 
 float Terrain::calculateHeight(float x, float y)
 {
-    float scale = 1.0f / 128.0f;
+    float scale = perlinNoise_->getParameters().scaling;
     float noiseX = x * scale;
     float noiseY = y * scale;
 
-    float noiseValue;
     if (domainWarp_ == 1)
     {
 
-        float qx = warpNoise_->fbm(noiseX + 1.1, noiseY + 3.5);
-        float qy = warpNoise_->fbm(noiseX + 2.4, noiseY + 4.5);
+        float qx = warpNoise_->fbm(noiseX, noiseY);
+        float qy = warpNoise_->fbm(noiseX + 5.2, noiseY + 1.3);
 
-        float rx = warpNoise_->fbm(noiseX + 2.0f * qx, noiseY + 2.0f * qy);
-        float ry = warpNoise_->fbm(noiseX + 2.0f * qx, noiseY + 2.0f * qy);
+        // float rx = warpNoise_->fbm(noiseX + 2.0f * qx, noiseY + 2.0f * qy);
+        // float ry = warpNoise_->fbm(noiseX + 2.0f * qx, noiseY + 2.0f * qy);
 
-        float warpStrength = 1.5f;
+        float turbulence = 0.5f;
 
-        noiseX += rx * warpStrength;
-        noiseY += ry * warpStrength;
+        noiseX += qx * turbulence;
+        noiseY += qy * turbulence;
     }
     return perlinNoise_->fbm(noiseX, noiseY);
 }
@@ -123,23 +122,22 @@ void Terrain::buildTerrain()
     }
 
     // calculate normals
+    float epsilon = 0.01f;
     for (int y = 0; y < size_; y++)
     {
         for (int x = 0; x < size_; x++)
         {
             i = y * size_ + x;
-            // if it is already calculated get it from the heightmap if not calculate it
-            float prevValueX = x - 1 < 0 ? calculateHeight(x, y) : vertices_[y * size_ + x - 1].y;
-            float nxtValueX = x + 1 > size_ - 1 ? calculateHeight(x, y) : vertices_[y * size_ + x + 1].y;
-            float centralDifferenceX = (nxtValueX - prevValueX) * 0.5f;
+            float prevValueX = calculateHeight((float)x - epsilon, y);
+            float nxtValueX = calculateHeight((float)x + epsilon, y);
+            float centralDifferenceX = (nxtValueX - prevValueX) / (2.0f * epsilon);
 
-            // if it is already calculated get it from the heightmap if not calculate it
-            float prevValueY = y - 1 < 0 ? calculateHeight(x, y) : vertices_[(y - 1) * size_ + x].y;
-            float nxtValueY = y + 1 > size_ - 1 ? calculateHeight(x, y) : vertices_[(y + 1) * size_ + x].y;
-            float centralDifferenceY = (nxtValueY - prevValueY) * 0.5f;
+            float prevValueY = calculateHeight(x, (float)y - epsilon);
+            float nxtValueY = calculateHeight(x, (float)y + epsilon);
+            float centralDifferenceY = (nxtValueY - prevValueY) / (2.0f * epsilon);
 
             vertices_[i].nx = -centralDifferenceX;
-            vertices_[i].ny = 1.0f;
+            vertices_[i].ny = perlinNoise_->getParameters().steepness;
             vertices_[i].nz = centralDifferenceY;
 
             float normLen = std::sqrt(vertices_[i].nx * vertices_[i].nx + vertices_[i].ny * vertices_[i].ny + vertices_[i].nz * vertices_[i].nz);
