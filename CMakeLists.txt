@@ -98,30 +98,30 @@ if (COPYFILES)
     add_custom_command(TARGET testTerrainWASM POST_BUILD
         COMMAND ${CMAKE_COMMAND} -E copy_if_different 
             "${CMAKE_CURRENT_BINARY_DIR}/testTerrainWASM.js"
-            "${CMAKE_SOURCE_DIR}/frontend/js/testTerrainWASM.js"
+            "${CMAKE_SOURCE_DIR}/frontend/javascript/testTerrainWASM.js"
 
         COMMAND ${CMAKE_COMMAND} -E copy_if_different 
             "${CMAKE_CURRENT_BINARY_DIR}/testTerrainWASM.wasm"
-            "${CMAKE_SOURCE_DIR}/frontend/js/testTerrainWASM.wasm"
+            "${CMAKE_SOURCE_DIR}/frontend/javascript/testTerrainWASM.wasm"
 
-        COMMENT "Copy testTerrain to frontend/js/"
+        COMMENT "Copy testTerrain to frontend/javascript/"
     )
     
     #debug
     add_custom_command(TARGET testTerrainWASM_debug POST_BUILD
         COMMAND ${CMAKE_COMMAND} -E copy_if_different 
             "${CMAKE_CURRENT_BINARY_DIR}/testTerrainWASM_debug.js"
-            "${CMAKE_SOURCE_DIR}/frontend/js/testTerrainWASM_debug.js"
+            "${CMAKE_SOURCE_DIR}/frontend/javascript/testTerrainWASM_debug.js"
 
         COMMAND ${CMAKE_COMMAND} -E copy_if_different 
             "${CMAKE_CURRENT_BINARY_DIR}/testTerrainWASM_debug.wasm"
-            "${CMAKE_SOURCE_DIR}/frontend/js/testTerrainWASM_debug.wasm"
+            "${CMAKE_SOURCE_DIR}/frontend/javascript/testTerrainWASM_debug.wasm"
 
         COMMAND ${CMAKE_COMMAND} -E copy_if_different 
             "${CMAKE_CURRENT_BINARY_DIR}/testTerrainWASM_debug.wasm.map"
-            "${CMAKE_SOURCE_DIR}/frontend/js/testTerrainWASM_debug.wasm.map"
+            "${CMAKE_SOURCE_DIR}/frontend/javascript/testTerrainWASM_debug.wasm.map"
 
-        COMMENT "Copy testTerrain debug to frontend/js/"
+        COMMENT "Copy testTerrain debug to frontend/javascript/"
     )
     
     # ---------------------------------------------------------
@@ -132,30 +132,30 @@ if (COPYFILES)
     add_custom_command(TARGET testEquirectangularWASM POST_BUILD
         COMMAND ${CMAKE_COMMAND} -E copy_if_different 
             "${CMAKE_CURRENT_BINARY_DIR}/testEquirectangularWASM.js"
-            "${CMAKE_SOURCE_DIR}/frontend/js/testEquirectangularWASM.js"
+            "${CMAKE_SOURCE_DIR}/frontend/javascript/testEquirectangularWASM.js"
 
         COMMAND ${CMAKE_COMMAND} -E copy_if_different 
             "${CMAKE_CURRENT_BINARY_DIR}/testEquirectangularWASM.wasm"
-            "${CMAKE_SOURCE_DIR}/frontend/js/testEquirectangularWASM.wasm"
+            "${CMAKE_SOURCE_DIR}/frontend/javascript/testEquirectangularWASM.wasm"
 
-        COMMENT "Copy testEquirectangular debug to frontend/js/"
+        COMMENT "Copy testEquirectangular debug to frontend/javascript/"
     )
 
     #debug
     add_custom_command(TARGET testEquirectangularWASM_debug POST_BUILD
         COMMAND ${CMAKE_COMMAND} -E copy_if_different 
             "${CMAKE_CURRENT_BINARY_DIR}/testEquirectangularWASM_debug.js"
-            "${CMAKE_SOURCE_DIR}/frontend/js/testEquirectangularWASM_debug.js"
+            "${CMAKE_SOURCE_DIR}/frontend/javascript/testEquirectangularWASM_debug.js"
 
         COMMAND ${CMAKE_COMMAND} -E copy_if_different 
             "${CMAKE_CURRENT_BINARY_DIR}/testEquirectangularWASM_debug.wasm"
-            "${CMAKE_SOURCE_DIR}/frontend/js/testEquirectangularWASM_debug.wasm"
+            "${CMAKE_SOURCE_DIR}/frontend/javascript/testEquirectangularWASM_debug.wasm"
 
         COMMAND ${CMAKE_COMMAND} -E copy_if_different 
             "${CMAKE_CURRENT_BINARY_DIR}/testEquirectangularWASM_debug.wasm.map"
-            "${CMAKE_SOURCE_DIR}/frontend/js/testEquirectangularWASM_debug.wasm.map"
+            "${CMAKE_SOURCE_DIR}/frontend/javascript/testEquirectangularWASM_debug.wasm.map"
 
-        COMMENT "Copy testEquirectangular debug to frontend/js/"
+        COMMENT "Copy testEquirectangular debug to frontend/javascript/"
     )
     
     # ---------------------------------------------------------
@@ -166,29 +166,29 @@ if (COPYFILES)
     add_custom_command(TARGET testWebGLWASM POST_BUILD
         COMMAND ${CMAKE_COMMAND} -E copy_if_different 
             "${CMAKE_CURRENT_BINARY_DIR}/testWebGLWASM.js"
-            "${CMAKE_SOURCE_DIR}/frontend/js/testWebGLWASM.js"
+            "${CMAKE_SOURCE_DIR}/frontend/javascript/testWebGLWASM.js"
 
         COMMAND ${CMAKE_COMMAND} -E copy_if_different 
             "${CMAKE_CURRENT_BINARY_DIR}/testWebGLWASM.wasm"
-            "${CMAKE_SOURCE_DIR}/frontend/js/testWebGLWASM.wasm"
+            "${CMAKE_SOURCE_DIR}/frontend/javascript/testWebGLWASM.wasm"
 
-        COMMENT "Copy testWebGL debug to frontend/js/"
+        COMMENT "Copy testWebGL debug to frontend/javascript/"
     )
 
     #debug
     add_custom_command(TARGET testWebGLWASM_debug POST_BUILD
         COMMAND ${CMAKE_COMMAND} -E copy_if_different 
             "${CMAKE_CURRENT_BINARY_DIR}/testWebGLWASM_debug.js"
-            "${CMAKE_SOURCE_DIR}/frontend/js/testWebGLWASM_debug.js"
+            "${CMAKE_SOURCE_DIR}/frontend/javascript/testWebGLWASM_debug.js"
 
         COMMAND ${CMAKE_COMMAND} -E copy_if_different 
             "${CMAKE_CURRENT_BINARY_DIR}/testWebGLWASM_debug.wasm"
-            "${CMAKE_SOURCE_DIR}/frontend/js/testWebGLWASM_debug.wasm"
+            "${CMAKE_SOURCE_DIR}/frontend/javascript/testWebGLWASM_debug.wasm"
 
         COMMAND ${CMAKE_COMMAND} -E copy_if_different 
             "${CMAKE_CURRENT_BINARY_DIR}/testWebGLWASM_debug.wasm.map"
-            "${CMAKE_SOURCE_DIR}/frontend/js/testWebGLWASM_debug.wasm.map"
+            "${CMAKE_SOURCE_DIR}/frontend/javascript/testWebGLWASM_debug.wasm.map"
 
-        COMMENT "Copy testWebGL debug to frontend/js/"
+        COMMENT "Copy testWebGL debug to frontend/javascript/"
     )
 endif()
