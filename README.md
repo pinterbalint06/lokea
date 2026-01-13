@@ -51,18 +51,18 @@
 
 4.  **Verziók:**
 
-    #### 1. testTerrainWASM
+    #### 1. terrain
 
-    test-terrain HTML-hez használt fájlok. A domborzat generálás tesztelésének optimalizált verziója.
+    A terrain és webgl oldalakhoz használt fájlok. A domborzat generálás tesztelésének optimalizált verziója.
 
-    #### 2. testTerrainWASM_debug
+    #### 2. terrain_debug
 
-    test-terrain HTML-hez használt fájlok. A domborzat generálás tesztelésének debugolható verziója.
+    A terrain és webgl oldalakhoz használt fájlok. A domborzat generálás tesztelésének debugolható verziója.
 
-    #### 3. testEquirectangularWASM
+    #### 3. equirectangular
 
-    test-equirectangular HTML-hez használt fájlok. Az ekvirektanguláris képek megjelenítés tesztelésének optimalizált verziója.
+    Az equirectangular oldalon használt fájlok. Az ekvirektanguláris képek megjelenítés tesztelésének optimalizált verziója.
 
-    #### 4. testEquirectangularWASM_debug
+    #### 4. equirectangular_debug
 
-    test-equirectangular HTML-hez használt fájlok. Az ekvirektanguláris képek megjelenítés tesztelésének debugolható verziója.
+    Az equirectangular oldalon használt fájlok. Az ekvirektanguláris képek megjelenítés tesztelésének debugolható verziója.
