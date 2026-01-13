@@ -9,9 +9,9 @@
 #include "core/camera.h"
 #include "core/distantLight.h"
 #include "core/mesh.h"
-#include "core/terrain.h"
 #include "utils/mathUtils.h"
 #include "utils/fpsCounter.h"
+#include "utils/perlin.h"
 #include "core/vertex.h"
 #include <cstring>
 #include <map>
@@ -206,28 +206,7 @@ void Renderer::updateMeshUBO(Mesh *mesh)
     // update material
     updateMaterialUBO(mesh->getMaterial());
 
-    // if terrain upload perlin noise data for analytical normal calculation
-    int isTerrain = 0;
-    Terrain *terrain = dynamic_cast<Terrain *>(mesh);
-    if (terrain != nullptr)
-    {
-        isTerrain = 1;
-        glActiveTexture(GL_TEXTURE5);
-        glBindTexture(GL_TEXTURE_2D, terrain->getNoisePermGPULoc());
-
-        glActiveTexture(GL_TEXTURE6);
-        glBindTexture(GL_TEXTURE_2D, terrain->getNoiseGradGPULoc());
-
-        glActiveTexture(GL_TEXTURE7);
-        glBindTexture(GL_TEXTURE_2D, terrain->getWarpPermGPULoc());
-
-        glActiveTexture(GL_TEXTURE8);
-        glBindTexture(GL_TEXTURE_2D, terrain->getWarpGradGPULoc());
-
-        shaderPrograms_[currShadingMode_]->setUniformInt("uUseDomainWarp", terrain->getIsDomainWarp());
-    }
-
-    shaderPrograms_[currShadingMode_]->setUniformInt("uIsTerrain", isTerrain);
+    mesh->prepareRender(shaderPrograms_[currShadingMode_].get());
 }
 
 void Renderer::render(const Scene *scene)

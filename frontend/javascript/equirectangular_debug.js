@@ -512,7 +512,7 @@ function createExportWrapper(name, nargs) {
 var wasmBinaryFile;
 
 function findWasmBinary() {
-  return locateFile('testTerrainWASM_debug.wasm');
+  return locateFile('equirectangular_debug.wasm');
 }
 
 function getBinarySync(file) {
@@ -3752,132 +3752,6 @@ async function createWasm() {
   var __abort_js = () =>
       abort('native code called abort()');
 
-  var structRegistrations = {
-  };
-  
-  var runDestructors = (destructors) => {
-      while (destructors.length) {
-        var ptr = destructors.pop();
-        var del = destructors.pop();
-        del(ptr);
-      }
-    };
-  
-  /** @suppress {globalThis} */
-  function readPointer(pointer) {
-      return this.fromWireType(HEAPU32[((pointer)>>2)]);
-    }
-  
-  var awaitingDependencies = {
-  };
-  
-  var registeredTypes = {
-  };
-  
-  var typeDependencies = {
-  };
-  
-  var InternalError =  class InternalError extends Error { constructor(message) { super(message); this.name = 'InternalError'; }};
-  var throwInternalError = (message) => { throw new InternalError(message); };
-  var whenDependentTypesAreResolved = (myTypes, dependentTypes, getTypeConverters) => {
-      myTypes.forEach((type) => typeDependencies[type] = dependentTypes);
-  
-      function onComplete(typeConverters) {
-        var myTypeConverters = getTypeConverters(typeConverters);
-        if (myTypeConverters.length !== myTypes.length) {
-          throwInternalError('Mismatched type converter count');
-        }
-        for (var i = 0; i < myTypes.length; ++i) {
-          registerType(myTypes[i], myTypeConverters[i]);
-        }
-      }
-  
-      var typeConverters = new Array(dependentTypes.length);
-      var unregisteredTypes = [];
-      var registered = 0;
-      for (let [i, dt] of dependentTypes.entries()) {
-        if (registeredTypes.hasOwnProperty(dt)) {
-          typeConverters[i] = registeredTypes[dt];
-        } else {
-          unregisteredTypes.push(dt);
-          if (!awaitingDependencies.hasOwnProperty(dt)) {
-            awaitingDependencies[dt] = [];
-          }
-          awaitingDependencies[dt].push(() => {
-            typeConverters[i] = registeredTypes[dt];
-            ++registered;
-            if (registered === unregisteredTypes.length) {
-              onComplete(typeConverters);
-            }
-          });
-        }
-      }
-      if (0 === unregisteredTypes.length) {
-        onComplete(typeConverters);
-      }
-    };
-  var __embind_finalize_value_object = (structType) => {
-      var reg = structRegistrations[structType];
-      delete structRegistrations[structType];
-  
-      var rawConstructor = reg.rawConstructor;
-      var rawDestructor = reg.rawDestructor;
-      var fieldRecords = reg.fields;
-      var fieldTypes = fieldRecords.map((field) => field.getterReturnType).
-                concat(fieldRecords.map((field) => field.setterArgumentType));
-      whenDependentTypesAreResolved([structType], fieldTypes, (fieldTypes) => {
-        var fields = {};
-        for (var [i, field] of fieldRecords.entries()) {
-          const getterReturnType = fieldTypes[i];
-          const getter = field.getter;
-          const getterContext = field.getterContext;
-          const setterArgumentType = fieldTypes[i + fieldRecords.length];
-          const setter = field.setter;
-          const setterContext = field.setterContext;
-          fields[field.fieldName] = {
-            read: (ptr) => getterReturnType.fromWireType(getter(getterContext, ptr)),
-            write: (ptr, o) => {
-              var destructors = [];
-              setter(setterContext, ptr, setterArgumentType.toWireType(destructors, o));
-              runDestructors(destructors);
-            },
-            optional: getterReturnType.optional,
-          };
-        }
-  
-        return [{
-          name: reg.name,
-          fromWireType: (ptr) => {
-            var rv = {};
-            for (var i in fields) {
-              rv[i] = fields[i].read(ptr);
-            }
-            rawDestructor(ptr);
-            return rv;
-          },
-          toWireType: (destructors, o) => {
-            // todo: Here we have an opportunity for -O3 level "unsafe" optimizations:
-            // assume all fields are present without checking.
-            for (var fieldName in fields) {
-              if (!(fieldName in o) && !fields[fieldName].optional) {
-                throw new TypeError(`Missing field: "${fieldName}"`);
-              }
-            }
-            var ptr = rawConstructor();
-            for (fieldName in fields) {
-              fields[fieldName].write(ptr, o[fieldName]);
-            }
-            if (destructors !== null) {
-              destructors.push(rawDestructor, ptr);
-            }
-            return ptr;
-          },
-          readValueFromPointer: readPointer,
-          destructorFunction: rawDestructor,
-        }];
-      });
-    };
-
   var AsciiToString = (ptr) => {
       var str = '';
       while (1) {
@@ -3887,8 +3761,14 @@ async function createWasm() {
       }
     };
   
+  var awaitingDependencies = {
+  };
   
+  var registeredTypes = {
+  };
   
+  var typeDependencies = {
+  };
   
   var BindingError =  class BindingError extends Error { constructor(message) { super(message); this.name = 'BindingError'; }};
   var throwBindingError = (message) => { throw new BindingError(message); };
@@ -4088,6 +3968,8 @@ async function createWasm() {
       return registeredInstances[ptr];
     };
   
+  var InternalError =  class InternalError extends Error { constructor(message) { super(message); this.name = 'InternalError'; }};
+  var throwInternalError = (message) => { throw new InternalError(message); };
   
   var makeClassHandle = (prototype, record) => {
       if (!record.ptrType || !record.ptr) {
@@ -4544,6 +4426,10 @@ async function createWasm() {
     }
   
   
+  /** @suppress {globalThis} */
+  function readPointer(pointer) {
+      return this.fromWireType(HEAPU32[((pointer)>>2)]);
+    }
   
   var init_RegisteredPointer = () => {
       Object.assign(RegisteredPointer.prototype, {
@@ -4694,6 +4580,46 @@ async function createWasm() {
       throw new UnboundTypeError(`${message}: ` + unboundTypes.map(getTypeName).join([', ']));
     };
   
+  
+  
+  
+  var whenDependentTypesAreResolved = (myTypes, dependentTypes, getTypeConverters) => {
+      myTypes.forEach((type) => typeDependencies[type] = dependentTypes);
+  
+      function onComplete(typeConverters) {
+        var myTypeConverters = getTypeConverters(typeConverters);
+        if (myTypeConverters.length !== myTypes.length) {
+          throwInternalError('Mismatched type converter count');
+        }
+        for (var i = 0; i < myTypes.length; ++i) {
+          registerType(myTypes[i], myTypeConverters[i]);
+        }
+      }
+  
+      var typeConverters = new Array(dependentTypes.length);
+      var unregisteredTypes = [];
+      var registered = 0;
+      for (let [i, dt] of dependentTypes.entries()) {
+        if (registeredTypes.hasOwnProperty(dt)) {
+          typeConverters[i] = registeredTypes[dt];
+        } else {
+          unregisteredTypes.push(dt);
+          if (!awaitingDependencies.hasOwnProperty(dt)) {
+            awaitingDependencies[dt] = [];
+          }
+          awaitingDependencies[dt].push(() => {
+            typeConverters[i] = registeredTypes[dt];
+            ++registered;
+            if (registered === unregisteredTypes.length) {
+              onComplete(typeConverters);
+            }
+          });
+        }
+      }
+      if (0 === unregisteredTypes.length) {
+        onComplete(typeConverters);
+      }
+    };
   var __embind_register_class = (rawType,
                              rawPointerType,
                              rawConstPointerType,
@@ -4800,7 +4726,26 @@ async function createWasm() {
       );
     };
 
+  var heap32VectorToArray = (count, firstElement) => {
+      var array = [];
+      for (var i = 0; i < count; i++) {
+        // TODO(https://github.com/emscripten-core/emscripten/issues/17310):
+        // Find a way to hoist the `>> 2` or `>> 3` out of this loop.
+        array.push(HEAPU32[(((firstElement)+(i * 4))>>2)]);
+      }
+      return array;
+    };
   
+  
+  
+  
+  var runDestructors = (destructors) => {
+      while (destructors.length) {
+        var ptr = destructors.pop();
+        var del = destructors.pop();
+        del(ptr);
+      }
+    };
   
   
   function usesDestructorStack(argTypes) {
@@ -4953,97 +4898,6 @@ async function createWasm() {
       var invokerFn = invokerFactory(...closureArgs);
       return createNamedFunction(humanName, invokerFn);
     }
-  
-  
-  var heap32VectorToArray = (count, firstElement) => {
-      var array = [];
-      for (var i = 0; i < count; i++) {
-        // TODO(https://github.com/emscripten-core/emscripten/issues/17310):
-        // Find a way to hoist the `>> 2` or `>> 3` out of this loop.
-        array.push(HEAPU32[(((firstElement)+(i * 4))>>2)]);
-      }
-      return array;
-    };
-  
-  
-  
-  
-  
-  var getFunctionName = (signature) => {
-      signature = signature.trim();
-      const argsIndex = signature.indexOf("(");
-      if (argsIndex === -1) return signature;
-      assert(signature.endsWith(")"), "Parentheses for argument names should match.");
-      return signature.slice(0, argsIndex);
-    };
-  var __embind_register_class_class_function = (rawClassType,
-                                            methodName,
-                                            argCount,
-                                            rawArgTypesAddr,
-                                            invokerSignature,
-                                            rawInvoker,
-                                            fn,
-                                            isAsync,
-                                            isNonnullReturn) => {
-      var rawArgTypes = heap32VectorToArray(argCount, rawArgTypesAddr);
-      methodName = AsciiToString(methodName);
-      methodName = getFunctionName(methodName);
-      rawInvoker = embind__requireFunction(invokerSignature, rawInvoker, isAsync);
-      whenDependentTypesAreResolved([], [rawClassType], (classType) => {
-        classType = classType[0];
-        var humanName = `${classType.name}.${methodName}`;
-  
-        function unboundTypesHandler() {
-          throwUnboundTypeError(`Cannot call ${humanName} due to unbound types`, rawArgTypes);
-        }
-  
-        if (methodName.startsWith('@@')) {
-          methodName = Symbol[methodName.substring(2)];
-        }
-  
-        var proto = classType.registeredClass.constructor;
-        if (undefined === proto[methodName]) {
-          // This is the first function to be registered with this name.
-          unboundTypesHandler.argCount = argCount-1;
-          proto[methodName] = unboundTypesHandler;
-        } else {
-          // There was an existing function with the same name registered. Set up
-          // a function overload routing table.
-          ensureOverloadTable(proto, methodName, humanName);
-          proto[methodName].overloadTable[argCount-1] = unboundTypesHandler;
-        }
-  
-        whenDependentTypesAreResolved([], rawArgTypes, (argTypes) => {
-          // Replace the initial unbound-types-handler stub with the proper
-          // function. If multiple overloads are registered, the function handlers
-          // go into an overload table.
-          var invokerArgsArray = [argTypes[0] /* return value */, null /* no class 'this'*/].concat(argTypes.slice(1) /* actual params */);
-          var func = craftInvokerFunction(humanName, invokerArgsArray, null /* no class 'this'*/, rawInvoker, fn, isAsync);
-          if (undefined === proto[methodName].overloadTable) {
-            func.argCount = argCount-1;
-            proto[methodName] = func;
-          } else {
-            proto[methodName].overloadTable[argCount-1] = func;
-          }
-  
-          if (classType.registeredClass.__derivedClasses) {
-            for (const derivedClass of classType.registeredClass.__derivedClasses) {
-              if (!derivedClass.constructor.hasOwnProperty(methodName)) {
-                // TODO: Add support for overloads
-                derivedClass.constructor[methodName] = func;
-              }
-            }
-          }
-  
-          return [];
-        });
-        return [];
-      });
-    };
-
-  
-  
-  
   var __embind_register_class_constructor = (
       rawClassType,
       argCount,
@@ -5088,6 +4942,13 @@ async function createWasm() {
   
   
   
+  var getFunctionName = (signature) => {
+      signature = signature.trim();
+      const argsIndex = signature.indexOf("(");
+      if (argsIndex === -1) return signature;
+      assert(signature.endsWith(")"), "Parentheses for argument names should match.");
+      return signature.slice(0, argsIndex);
+    };
   var __embind_register_class_function = (rawClassType,
                                       methodName,
                                       argCount,
@@ -5156,92 +5017,6 @@ async function createWasm() {
     };
 
   
-  
-  
-  
-  
-  
-  
-  var validateThis = (this_, classType, humanName) => {
-      if (!(this_ instanceof Object)) {
-        throwBindingError(`${humanName} with invalid "this": ${this_}`);
-      }
-      if (!(this_ instanceof classType.registeredClass.constructor)) {
-        throwBindingError(`${humanName} incompatible with "this" of type ${this_.constructor.name}`);
-      }
-      if (!this_.$$.ptr) {
-        throwBindingError(`cannot call emscripten binding method ${humanName} on deleted object`);
-      }
-  
-      // todo: kill this
-      return upcastPointer(this_.$$.ptr,
-                           this_.$$.ptrType.registeredClass,
-                           classType.registeredClass);
-    };
-  var __embind_register_class_property = (classType,
-                                      fieldName,
-                                      getterReturnType,
-                                      getterSignature,
-                                      getter,
-                                      getterContext,
-                                      setterArgumentType,
-                                      setterSignature,
-                                      setter,
-                                      setterContext) => {
-      fieldName = AsciiToString(fieldName);
-      getter = embind__requireFunction(getterSignature, getter);
-  
-      whenDependentTypesAreResolved([], [classType], (classType) => {
-        classType = classType[0];
-        var humanName = `${classType.name}.${fieldName}`;
-        var desc = {
-          get() {
-            throwUnboundTypeError(`Cannot access ${humanName} due to unbound types`, [getterReturnType, setterArgumentType]);
-          },
-          enumerable: true,
-          configurable: true
-        };
-        if (setter) {
-          desc.set = () => throwUnboundTypeError(`Cannot access ${humanName} due to unbound types`, [getterReturnType, setterArgumentType]);
-        } else {
-          desc.set = (v) => throwBindingError(humanName + ' is a read-only property');
-        }
-  
-        Object.defineProperty(classType.registeredClass.instancePrototype, fieldName, desc);
-  
-        whenDependentTypesAreResolved(
-          [],
-          (setter ? [getterReturnType, setterArgumentType] : [getterReturnType]),
-        (types) => {
-          var getterReturnType = types[0];
-          var desc = {
-            get() {
-              var ptr = validateThis(this, classType, humanName + ' getter');
-              return getterReturnType.fromWireType(getter(getterContext, ptr));
-            },
-            enumerable: true
-          };
-  
-          if (setter) {
-            setter = embind__requireFunction(setterSignature, setter);
-            var setterArgumentType = types[1];
-            desc.set = function(v) {
-              var ptr = validateThis(this, classType, humanName + ' setter');
-              var destructors = [];
-              setter(setterContext, ptr, setterArgumentType.toWireType(destructors, v));
-              runDestructors(destructors);
-            };
-          }
-  
-          Object.defineProperty(classType.registeredClass.instancePrototype, fieldName, desc);
-          return [];
-        });
-  
-        return [];
-      });
-    };
-
-  
   var emval_freelist = [];
   
   var emval_handles = [0,1,,1,null,1,true,1,false,1];
@@ -5295,69 +5070,6 @@ async function createWasm() {
       // emval is passed into JS via an interface
     };
   var __embind_register_emval = (rawType) => registerType(rawType, EmValType);
-
-  
-  var enumReadValueFromPointer = (name, width, signed) => {
-      switch (width) {
-        case 1: return signed ?
-          function(pointer) { return this.fromWireType(HEAP8[pointer]) } :
-          function(pointer) { return this.fromWireType(HEAPU8[pointer]) };
-        case 2: return signed ?
-          function(pointer) { return this.fromWireType(HEAP16[((pointer)>>1)]) } :
-          function(pointer) { return this.fromWireType(HEAPU16[((pointer)>>1)]) };
-        case 4: return signed ?
-          function(pointer) { return this.fromWireType(HEAP32[((pointer)>>2)]) } :
-          function(pointer) { return this.fromWireType(HEAPU32[((pointer)>>2)]) };
-        default:
-          throw new TypeError(`invalid integer width (${width}): ${name}`);
-      }
-    };
-  
-  
-  /** @suppress {globalThis} */
-  var __embind_register_enum = (rawType, name, size, isSigned) => {
-      name = AsciiToString(name);
-  
-      function ctor() {}
-      ctor.values = {};
-  
-      registerType(rawType, {
-        name,
-        constructor: ctor,
-        fromWireType: function(c) {
-          return this.constructor.values[c];
-        },
-        toWireType: (destructors, c) => c.value,
-        readValueFromPointer: enumReadValueFromPointer(name, size, isSigned),
-        destructorFunction: null,
-      });
-      exposePublicSymbol(name, ctor);
-    };
-
-  
-  
-  
-  
-  var requireRegisteredType = (rawType, humanName) => {
-      var impl = registeredTypes[rawType];
-      if (undefined === impl) {
-        throwBindingError(`${humanName} has unknown type ${getTypeName(rawType)}`);
-      }
-      return impl;
-    };
-  var __embind_register_enum_value = (rawEnumType, name, enumValue) => {
-      var enumType = requireRegisteredType(rawEnumType, 'enum');
-      name = AsciiToString(name);
-  
-      var Enum = enumType.constructor;
-  
-      var Value = Object.create(enumType.constructor.prototype, {
-        value: {value: enumValue},
-        constructor: {value: createNamedFunction(`${enumType.name}_${name}`, function() {})},
-      });
-      Enum.values[enumValue] = Value;
-      Enum[name] = Value;
-    };
 
   var floatReadValueFromPointer = (name, width) => {
       switch (width) {
@@ -5697,49 +5409,6 @@ async function createWasm() {
         destructorFunction(ptr) {
           _free(ptr);
         }
-      });
-    };
-
-  
-  
-  var __embind_register_value_object = (
-      rawType,
-      name,
-      constructorSignature,
-      rawConstructor,
-      destructorSignature,
-      rawDestructor
-    ) => {
-      structRegistrations[rawType] = {
-        name: AsciiToString(name),
-        rawConstructor: embind__requireFunction(constructorSignature, rawConstructor),
-        rawDestructor: embind__requireFunction(destructorSignature, rawDestructor),
-        fields: [],
-      };
-    };
-
-  
-  
-  var __embind_register_value_object_field = (
-      structType,
-      fieldName,
-      getterReturnType,
-      getterSignature,
-      getter,
-      getterContext,
-      setterArgumentType,
-      setterSignature,
-      setter,
-      setterContext
-    ) => {
-      structRegistrations[structType].fields.push({
-        fieldName: AsciiToString(fieldName),
-        getterReturnType,
-        getter: embind__requireFunction(getterSignature, getter),
-        getterContext,
-        setterArgumentType,
-        setter: embind__requireFunction(setterSignature, setter),
-        setterContext,
       });
     };
 
@@ -6991,6 +6660,9 @@ async function createWasm() {
     };
   var _glVertexAttribPointer = _emscripten_glVertexAttribPointer;
 
+  var _emscripten_glViewport = (x0, x1, x2, x3) => GLctx.viewport(x0, x1, x2, x3);
+  var _glViewport = _emscripten_glViewport;
+
 
   var FS_createPath = (...args) => FS.createPath(...args);
 
@@ -7204,13 +6876,16 @@ if (Module['wasmBinary']) wasmBinary = Module['wasmBinary'];
   'stackTrace',
   'getNativeTypeSize',
   'getFunctionArgsName',
+  'requireRegisteredType',
   'createJsInvokerSignature',
   'PureVirtualError',
   'registerInheritedInstance',
   'unregisterInheritedInstance',
   'getInheritedInstanceCount',
   'getLiveInheritedInstances',
+  'enumReadValueFromPointer',
   'setDelayFunction',
+  'validateThis',
   'count_emval_handles',
   'getStringOrSymbol',
   'emval_returnValue',
@@ -7488,7 +7163,6 @@ missingLibrarySymbols.forEach(missingLibrarySymbol)
   'getTypeName',
   'getFunctionName',
   'heap32VectorToArray',
-  'requireRegisteredType',
   'usesDestructorStack',
   'checkArgCount',
   'getRequiredArgCount',
@@ -7507,7 +7181,6 @@ missingLibrarySymbols.forEach(missingLibrarySymbol)
   'registeredPointers',
   'registerType',
   'integerReadValueFromPointer',
-  'enumReadValueFromPointer',
   'floatReadValueFromPointer',
   'assertIntegerRange',
   'readPointer',
@@ -7537,7 +7210,6 @@ missingLibrarySymbols.forEach(missingLibrarySymbol)
   'shallowCopyInternalPointer',
   'downcastPointer',
   'upcastPointer',
-  'validateThis',
   'char_0',
   'char_9',
   'makeLegalFunctionName',
@@ -7559,10 +7231,10 @@ function checkIncomingModuleAPI() {
   ignoredModuleProp('fetchSettings');
 }
 var ASM_CONSTS = {
-  111000: () => { throw('A böngésződ nem támogatja a WebGL-t!'); },  
- 111051: ($0) => { throw("Sikertelen shader fordítás: " + UTF8ToString($0)); },  
- 111115: ($0) => { throw("Sikertelen shader összekapcsolás: " + UTF8ToString($0)); },  
- 111185: ($0, $1) => { let fps = document.getElementById(UTF8ToString($1)); if (fps) { fps.innerText = $0; } }
+  103624: () => { throw('A böngésződ nem támogatja a WebGL-t!'); },  
+ 103675: ($0) => { throw("Sikertelen shader fordítás: " + UTF8ToString($0)); },  
+ 103739: ($0) => { throw("Sikertelen shader összekapcsolás: " + UTF8ToString($0)); },  
+ 103809: ($0, $1) => { let fps = document.getElementById(UTF8ToString($1)); if (fps) { fps.innerText = $0; } }
 };
 
 // Imports from the Wasm binary.
@@ -7626,27 +7298,17 @@ var wasmImports = {
   /** @export */
   _abort_js: __abort_js,
   /** @export */
-  _embind_finalize_value_object: __embind_finalize_value_object,
-  /** @export */
   _embind_register_bigint: __embind_register_bigint,
   /** @export */
   _embind_register_bool: __embind_register_bool,
   /** @export */
   _embind_register_class: __embind_register_class,
   /** @export */
-  _embind_register_class_class_function: __embind_register_class_class_function,
-  /** @export */
   _embind_register_class_constructor: __embind_register_class_constructor,
   /** @export */
   _embind_register_class_function: __embind_register_class_function,
   /** @export */
-  _embind_register_class_property: __embind_register_class_property,
-  /** @export */
   _embind_register_emval: __embind_register_emval,
-  /** @export */
-  _embind_register_enum: __embind_register_enum,
-  /** @export */
-  _embind_register_enum_value: __embind_register_enum_value,
   /** @export */
   _embind_register_float: __embind_register_float,
   /** @export */
@@ -7657,10 +7319,6 @@ var wasmImports = {
   _embind_register_std_string: __embind_register_std_string,
   /** @export */
   _embind_register_std_wstring: __embind_register_std_wstring,
-  /** @export */
-  _embind_register_value_object: __embind_register_value_object,
-  /** @export */
-  _embind_register_value_object_field: __embind_register_value_object_field,
   /** @export */
   _embind_register_void: __embind_register_void,
   /** @export */
@@ -7768,7 +7426,9 @@ var wasmImports = {
   /** @export */
   glUseProgram: _glUseProgram,
   /** @export */
-  glVertexAttribPointer: _glVertexAttribPointer
+  glVertexAttribPointer: _glVertexAttribPointer,
+  /** @export */
+  glViewport: _glViewport
 };
 
 

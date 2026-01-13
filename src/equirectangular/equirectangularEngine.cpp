@@ -1,4 +1,4 @@
-#include <core/equirectangularEngine.h>
+#include <equirectangular/equirectangularEngine.h>
 #include <core/engine.h>
 #include <core/mesh.h>
 #include <core/vertex.h>

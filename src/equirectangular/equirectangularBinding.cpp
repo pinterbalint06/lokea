@@ -1,7 +1,7 @@
 #include <emscripten/emscripten.h>
 #include <emscripten/bind.h>
 #include <string>
-#include "core/equirectangularEngine.h"
+#include "equirectangular/equirectangularEngine.h"
 
 EMSCRIPTEN_BINDINGS(equirectangularEngineBinding)
 {

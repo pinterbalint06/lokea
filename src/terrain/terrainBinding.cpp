@@ -3,7 +3,7 @@
 #include "core/engine.h"
 #include "core/shader.h"
 #include "utils/perlin.h"
-#include "core/terrainEngine.h"
+#include "terrain/terrainEngine.h"
 #include "core/material.h"
 
 EMSCRIPTEN_BINDINGS(enums)

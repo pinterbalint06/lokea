@@ -2,7 +2,7 @@
 #define TERRAIN_ENGINE_H
 
 #include "core/scene.h"
-#include "core/terrain.h"
+#include "terrain/terrain.h"
 #include "core/material.h"
 #include <core/engine.h>
 #include "utils/perlin.h"
