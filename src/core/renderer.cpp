@@ -1,5 +1,4 @@
 #include <emscripten/emscripten.h>
-#include <emscripten/bind.h>
 #include <emscripten/html5.h>
 #include <emscripten/html5_webgl.h>
 #include <GLES3/gl3.h>

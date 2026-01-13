@@ -1,86 +1,30 @@
 #include <emscripten/emscripten.h>
 #include <emscripten/bind.h>
-#include <GLES3/gl3.h>
-#include <vector>
-#include <cmath>
 #include <string>
-#include "core/mesh.h"
-#include "core/scene.h"
-#include "core/vertex.h"
-#include "core/renderer.h"
-#include "core/material.h"
-#include "core/shader.h"
-#include "core/camera.h"
-#include "core/texture.h"
 #include "core/equirectangularEngine.h"
 
-EquirectangularEngine *engine = nullptr;
-int start = 0;
-
-void init()
+EMSCRIPTEN_BINDINGS(equirectangularEngineBinding)
 {
-    std::string canvasID = "canvas";
-    engine = new EquirectangularEngine(canvasID);
-}
-
-void rotateCamera(float dPitch, float dYaw)
-{
-    if (engine)
-    {
-        engine->rotateCamera(dPitch, dYaw);
-    }
-}
-
-int initTexture(int width, int height)
-{
-    uint8_t *textureRet = nullptr;
-    if (engine)
-    {
-        textureRet = engine->initTexture(width, height);
-    }
-    return (int)textureRet;
-}
-
-void uploadTextureToGPU()
-{
-    if (engine)
-    {
-        engine->uploadTextureToGPU();
-    }
-}
-
-void render()
-{
-    if (engine)
-    {
-        engine->render();
-    }
-}
-
-void changeFocalLength(float focal)
-{
-    if (engine)
-    {
-        engine->setFocalLength(focal);
-    }
-}
-
-void startRenderingLoop()
-{
-    if (start == 0)
-    {
-        emscripten_set_main_loop(render, 0, 0);
-        start++;
-    }
-}
-
-EMSCRIPTEN_BINDINGS(my_module)
-{
-    emscripten::function("init", &init);
-    emscripten::function("xyForog", &rotateCamera);
-    emscripten::function("initTexture", &initTexture);
-    emscripten::function("render", &render);
-    emscripten::function("changeFocalLength", &changeFocalLength);
-    emscripten::function("startRenderingLoop", &startRenderingLoop);
-    emscripten::function("uploadTextureToGPU", &uploadTextureToGPU);
+    emscripten::class_<Engine>("Engine");
+    emscripten::class_<EquirectangularEngine, emscripten::base<Engine>>("EquirectangularEngine")
+        .constructor<std::string>()
+        .function("setLightDirection", &EquirectangularEngine::setLightDirection)
+        .function("setLightIntensity", &EquirectangularEngine::setLightIntensity)
+        .function("setShadingMode", &EquirectangularEngine::setShadingMode)
+        .function("setFrustum", &EquirectangularEngine::setFrustum)
+        .function("setLightColor", &EquirectangularEngine::setLightColor)
+        .function("setAmbientLight", &EquirectangularEngine::setAmbientLight)
+        .function("setFocalLength", &EquirectangularEngine::setFocalLength)
+        .function("rotateCamera", &EquirectangularEngine::rotateCamera)
+        .function("setCameraRotation", &EquirectangularEngine::setCameraRotation)
+        .function("render", &EquirectangularEngine::render)
+        .function("initTexture", emscripten::optional_override(
+                                     [](EquirectangularEngine &self, int width, int height) -> int
+                                     {
+                                         return (int)self.initTexture(width, height);
+                                     }))
+        .function("uploadTextureToGPU", &EquirectangularEngine::uploadTextureToGPU)
+        .function("deleteTexture", &EquirectangularEngine::deleteTexture)
+        .function("getPitch", &EquirectangularEngine::getPitch)
+        .function("getYaw", &EquirectangularEngine::getYaw);
 }

@@ -1,6 +1,7 @@
 #include "core/mesh.h"
 #include "core/terrain.h"
 #include <cstring>
+#include <cmath>
 #include "utils/perlin.h"
 
 Terrain::Terrain(int size) : Mesh(size * size, (size - 1) * (size - 1) * 6)

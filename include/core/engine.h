@@ -1,6 +1,7 @@
 #ifndef ENGINE_H
 #define ENGINE_H
 
+#include <cstdint>
 #include "core/scene.h"
 #include "core/camera.h"
 #include "core/shader.h"

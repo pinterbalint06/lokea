@@ -2,6 +2,9 @@
 #define EQUIRECTANGULAR_ENGINE_H
 
 #include <core/engine.h>
+#include <string>
+
+class Mesh;
 
 class EquirectangularEngine : public Engine
 {

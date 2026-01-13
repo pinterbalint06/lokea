@@ -1,7 +1,4 @@
 #include "core/texture.h"
-#include <vector>
-#include <algorithm>
-#include <cmath>
 #include <cstdint>
 #include <GLES3/gl3.h>
 

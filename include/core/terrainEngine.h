@@ -3,8 +3,10 @@
 
 #include "core/scene.h"
 #include "core/terrain.h"
+#include "core/material.h"
 #include <core/engine.h>
 #include "utils/perlin.h"
+#include <string>
 
 class Mesh;
 

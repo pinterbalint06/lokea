@@ -2,6 +2,7 @@
 #include <core/engine.h>
 #include <core/vertex.h>
 #include <core/renderer.h>
+#include <core/terrain.h>
 #include <string>
 
 TerrainEngine::TerrainEngine(std::string canvID, int size) : Engine(canvID)
