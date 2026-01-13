@@ -12,10 +12,9 @@
 #include "core/shader.h"
 #include "core/camera.h"
 #include "core/texture.h"
+#include "core/engine.h"
 
-Renderer *renderer = nullptr;
-Scene *scene = nullptr;
-Texture *texture = nullptr;
+Engine *engine = nullptr;
 int start = 0;
 
 Mesh *generateSphere(int rings, int segments, float radius)
@@ -83,53 +82,53 @@ Mesh *generateSphere(int rings, int segments, float radius)
     return mesh;
 }
 
-void init(int size, float focal, float filmW, float filmH, int imageW, int imageH, float n, float f)
+void init()
 {
     std::string canvasID = "canvas";
-    renderer = new Renderer(canvasID);
-    scene = new Scene();
-    renderer->setImageDimensions(imageW, imageH);
-    scene->getCamera()->setPerspective(focal, filmW, filmH, imageW, imageH, n, f);
-    renderer->setShadingMode(Shaders::SHADINGMODE::NO_SHADING);
-    scene->addMesh(generateSphere(32, 32, 10.0f));
-    scene->getMesh(0)->setUpOpenGL();
+    engine = new Engine(canvasID);
+    engine->setShadingMode(Shaders::SHADINGMODE::NO_SHADING);
+    engine->addMesh(generateSphere(32, 32, 10.0f));
 }
 
 void rotateCamera(float dPitch, float dYaw)
 {
-    if (scene && renderer)
+    if (engine)
     {
-        scene->getCamera()->rotate(dPitch, dYaw);
+        engine->rotateCamera(dPitch, dYaw);
     }
 }
 
 int initTexture(int width, int height)
 {
-    texture = new Texture(width, height);
-    Materials::Material newTexMat = Materials::Material::Grass();
-    newTexMat.texture = texture;
-    scene->getMesh(0)->setMaterial(newTexMat);
-    return (int)texture->getImgData();
+    uint8_t *textureRet = nullptr;
+    if (engine)
+    {
+        textureRet = engine->initTexture(width, height);
+    }
+    return (int)textureRet;
 }
 
 void uploadTextureToGPU()
 {
-    texture->uploadToGPU();
+    if (engine)
+    {
+        engine->uploadTextureToGPU();
+    }
 }
 
 void render()
 {
-    if (scene && renderer)
+    if (engine)
     {
-        renderer->render(scene);
+        engine->render();
     }
 }
 
 void changeFocalLength(float focal)
 {
-    if (scene && renderer)
+    if (engine)
     {
-        scene->getCamera()->setFocalLength(focal);
+        engine->setFocalLength(focal);
     }
 }
 

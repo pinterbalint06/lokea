@@ -14,7 +14,7 @@ const canvasId = "canvas";
 
 function initModule() {
     console.log("module betoltve");
-    Module.init(256, fokuszTavolsag, filmSzel, filmMag, jsCanvasSzelesseg, jsCanvasMagassag, n, f);
+    Module.init();
     imgFromUrl("../images/cathedral.jpg");
 
     let canvas = document.getElementById(canvasId);
