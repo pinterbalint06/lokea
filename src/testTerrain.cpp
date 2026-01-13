@@ -1,262 +1,32 @@
 #include <emscripten.h>
 #include <emscripten/bind.h>
 #include "core/engine.h"
+#include "core/shader.h"
+#include "utils/perlin.h"
+#include "core/terrainEngine.h"
 
-// Game engine
-Engine *gEngine = nullptr;
+// void setMaterialGrass()
+// {
+//     if (gEngine)
+//     {
+//         gEngine->setGroundMaterial(Materials::Material::Grass());
+//     }
+// }
 
-void setFrustum(float focal, float filmW, float filmH, int imageW, int imageH, float n, float f)
+// void setMaterialDirt()
+// {
+//     if (gEngine)
+//     {
+//         gEngine->setGroundMaterial(Materials::Material::Dirt());
+//     }
+// }
+
+EMSCRIPTEN_BINDINGS(enums)
 {
-    if (gEngine)
-    {
-        gEngine->setFrustum(focal, filmW, filmH, imageW, imageH, n, f);
-    }
-}
-
-void init(int size, float focal, float filmW, float filmH, int imageW, int imageH, float n, float f)
-{
-    gEngine = new Engine(size);
-    setFrustum(focal, filmW, filmH, imageW, imageH, n, f);
-}
-
-void setTerrainParams(int size, PerlinNoise::PerlinParameters params)
-{
-    if (gEngine)
-    {
-        gEngine->setTerrainParams(size, params);
-    }
-}
-
-void setWarpParams(int size, PerlinNoise::PerlinParameters params)
-{
-    if (gEngine)
-    {
-        gEngine->setWarpParams(size, params);
-    }
-}
-
-void randomizeLocation()
-{
-    if (gEngine)
-    {
-        gEngine->randomizeLocation();
-    }
-}
-
-void setLightIntensity(float intensity)
-{
-    if (gEngine)
-    {
-        gEngine->setLightIntensity(intensity);
-    }
-}
-
-void newCameraHeight(float height)
-{
-    if (gEngine)
-    {
-        gEngine->setCameraHeight(height);
-    }
-}
-
-void setLightDirection(float x, float y)
-{
-    if (gEngine)
-    {
-        gEngine->setLightDirection(x, y, 0.0f);
-    }
-}
-
-void setGroundMaterial(int r, int g, int b, float diff, float spec, float shin)
-{
-    if (gEngine)
-    {
-        Materials::Material ground;
-        ground.albedo = Materials::Color::fromRGB(r, g, b);
-        ground.diffuseness = diff;
-        ground.specularity = spec;
-        ground.shininess = shin;
-        gEngine->setGroundMaterial(ground);
-    }
-}
-
-void setShadingMode(int shading)
-{
-    if (gEngine)
-    {
-        gEngine->setShadingMode(static_cast<Shaders::SHADINGMODE>(shading));
-    }
-}
-
-void moveCamera(int z, int x)
-{
-    if (gEngine)
-    {
-        gEngine->moveCamera(x, z);
-    }
-}
-
-void rotateCamera(float dPitch, float dYaw)
-{
-    if (gEngine)
-    {
-        gEngine->rotateCamera(dPitch, dYaw);
-    }
-}
-
-void setRotate(float pitch, float yaw)
-{
-    if (gEngine)
-    {
-        gEngine->setCameraRotation(pitch, yaw);
-    }
-}
-
-float getPitch()
-{
-    float returnValue = 0.0f;
-    if (gEngine)
-    {
-        returnValue = gEngine->getPitch();
-    }
-    return returnValue;
-}
-
-float getYaw()
-{
-    float returnValue = 0.0f;
-    if (gEngine)
-    {
-        returnValue = gEngine->getYaw();
-    }
-    return returnValue;
-}
-
-void setMaterialGrass()
-{
-    if (gEngine)
-    {
-        gEngine->setGroundMaterial(Materials::Material::Grass());
-    }
-}
-
-void setMaterialDirt()
-{
-    if (gEngine)
-    {
-        gEngine->setGroundMaterial(Materials::Material::Dirt());
-    }
-}
-
-void setLightColor(int r, int g, int b)
-{
-    if (gEngine)
-    {
-        gEngine->setLightColor(r / 255.0f, g / 255.0f, b / 255.0f);
-    }
-}
-
-void setAmbientLight(float ambientLightIntensity)
-{
-    if (gEngine)
-    {
-        gEngine->setAmbientLight(ambientLightIntensity);
-    }
-}
-
-void render()
-{
-    if (gEngine)
-    {
-        gEngine->render();
-    }
-}
-
-void changeFocalLength(float focal)
-{
-    if (gEngine)
-    {
-        gEngine->setFocalLength(focal);
-    }
-}
-
-void startRenderingLoop()
-{
-    if (gEngine)
-    {
-        emscripten_set_main_loop(render, 0, 0);
-    }
-}
-
-int initTexture(int width, int height)
-{
-    uint8_t *returnPtr = nullptr;
-    if (gEngine)
-    {
-        returnPtr = gEngine->initTexture(width, height);
-    }
-
-    return (int)returnPtr;
-}
-
-void uploadTextureToGPU()
-{
-    if (gEngine)
-    {
-        gEngine->uploadTextureToGPU();
-    }
-}
-
-void deleteTexture()
-{
-    if (gEngine)
-    {
-        gEngine->deleteTexture();
-    }
-}
-
-void setTextureSpacing(float textureSpacing)
-{
-    if (gEngine)
-    {
-        gEngine->setTextureSpacing(textureSpacing);
-    }
-}
-
-void setSteepness(float steepness)
-{
-    if (gEngine)
-    {
-        gEngine->setSteepness(steepness);
-    }
-}
-
-void setDomainWarp(bool domainWarp)
-{
-    if (gEngine)
-    {
-        gEngine->setDomainWarp(domainWarp);
-    }
-}
-
-PerlinNoise::PerlinParameters getNoiseParameters()
-{
-    PerlinNoise::PerlinParameters params;
-    if (gEngine)
-    {
-        params = gEngine->getNoiseParameters();
-    }
-    return params;
-}
-
-PerlinNoise::PerlinParameters getWarpParameters()
-{
-    PerlinNoise::PerlinParameters params;
-    if (gEngine)
-    {
-        params = gEngine->getWarpParameters();
-    }
-    return params;
+    emscripten::enum_<Shaders::SHADINGMODE>("SHADINGMODE")
+        .value("PHONG", Shaders::SHADINGMODE::PHONG)
+        .value("GOURAUD", Shaders::SHADINGMODE::GOURAUD)
+        .value("NO_SHADING", Shaders::SHADINGMODE::NO_SHADING);
 }
 
 EMSCRIPTEN_BINDINGS(structs)
@@ -274,50 +44,38 @@ EMSCRIPTEN_BINDINGS(structs)
         .field("contrast", &PerlinNoise::PerlinParameters::contrast);
 }
 
-EMSCRIPTEN_BINDINGS(core)
+EMSCRIPTEN_BINDINGS(terrainEngineBinding)
 {
-    emscripten::function("init", &init);
-    emscripten::function("startRenderingLoop", &startRenderingLoop);
-}
-
-EMSCRIPTEN_BINDINGS(camera_controls)
-{
-    emscripten::function("setFrustum", &setFrustum);
-    emscripten::function("xyForog", &rotateCamera);
-    emscripten::function("setRotate", &setRotate);
-    emscripten::function("getXForog", &getPitch);
-    emscripten::function("getYForog", &getYaw);
-    emscripten::function("newCameraHeight", &newCameraHeight);
-    emscripten::function("mozgas", &moveCamera);
-    emscripten::function("changeFocalLength", &changeFocalLength);
-}
-
-EMSCRIPTEN_BINDINGS(terrainGeneration)
-{
-    emscripten::function("ujHely", &randomizeLocation);
-    emscripten::function("setTerrainParams", &setTerrainParams);
-    emscripten::function("setWarpParams", &setWarpParams);
-    emscripten::function("setDomainWarp", &setDomainWarp);
-    emscripten::function("getNoiseParameters", &getNoiseParameters);
-    emscripten::function("getWarpParameters", &getWarpParameters);
-}
-
-EMSCRIPTEN_BINDINGS(visuals)
-{
-    emscripten::function("newLightIntensity", &setLightIntensity);
-    emscripten::function("newLightDirection", &setLightDirection);
-    emscripten::function("setLightColor", &setLightColor);
-    emscripten::function("setAmbientLight", &setAmbientLight);
-    emscripten::function("setShadingTechnique", &setShadingMode);
-}
-
-EMSCRIPTEN_BINDINGS(material)
-{
-    emscripten::function("setGroundMaterial", &setGroundMaterial);
-    emscripten::function("setMaterialGrass", &setMaterialGrass);
-    emscripten::function("setMaterialDirt", &setMaterialDirt);
-    emscripten::function("initTexture", &initTexture);
-    emscripten::function("uploadTextureToGPU", &uploadTextureToGPU);
-    emscripten::function("deleteTexture", &deleteTexture);
-    emscripten::function("setTextureSpacing", &setTextureSpacing);
+    emscripten::class_<Engine>("Engine");
+    emscripten::class_<TerrainEngine, emscripten::base<Engine>>("TerrainEngine")
+        .constructor<std::string, int>()
+        .function("getNoiseParameters", &TerrainEngine::getNoiseParameters)
+        .function("setTerrainParams", &TerrainEngine::setTerrainParams)
+        .function("getWarpParameters", &TerrainEngine::getWarpParameters)
+        .function("setWarpParams", &TerrainEngine::setWarpParams)
+        .function("setCameraHeight", &TerrainEngine::setCameraHeight)
+        .function("setTextureSpacing", &TerrainEngine::setTextureSpacing)
+        .function("setDomainWarp", &TerrainEngine::setDomainWarp)
+        .function("setGroundMaterial", &TerrainEngine::setGroundMaterial)
+        .function("randomizeLocation", &TerrainEngine::randomizeLocation)
+        .function("moveCamera", &TerrainEngine::moveCamera)
+        .function("setLightDirection", &TerrainEngine::setLightDirection)
+        .function("setLightIntensity", &TerrainEngine::setLightIntensity)
+        .function("setShadingMode", &TerrainEngine::setShadingMode)
+        .function("setFrustum", &TerrainEngine::setFrustum)
+        .function("setLightColor", &TerrainEngine::setLightColor)
+        .function("setAmbientLight", &TerrainEngine::setAmbientLight)
+        .function("setFocalLength", &TerrainEngine::setFocalLength)
+        .function("rotateCamera", &TerrainEngine::rotateCamera)
+        .function("setCameraRotation", &TerrainEngine::setCameraRotation)
+        .function("render", &TerrainEngine::render)
+        .function("initTexture", emscripten::optional_override(
+                                     [](TerrainEngine &self, int width, int height) -> int
+                                     {
+                                         return (int)self.initTexture(width, height);
+                                     }))
+        .function("uploadTextureToGPU", &TerrainEngine::uploadTextureToGPU)
+        .function("deleteTexture", &TerrainEngine::deleteTexture)
+        .function("getPitch", &TerrainEngine::getPitch)
+        .function("getYaw", &TerrainEngine::getYaw);
 }

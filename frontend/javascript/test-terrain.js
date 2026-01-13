@@ -1,32 +1,56 @@
 import { CanvasInput } from './CanvasInput.js';
 
 // kamera tulajdonsagai
-let fokuszTavolsag = 18.0; // mm focalLength
-const filmSzel = 25.4;
-const filmMag = 25.4;
+let fokuszTavolsag = 18.0;
 const jsCanvasSzelesseg = 1000;
 const jsCanvasMagassag = 1000;
-// near clipping plane - kozel vagasi sik
-const n = 0.1;
-// far clipping plane - tavol vagasi sik
-const f = 1000;
 const canvasId = "canvas";
 const meret = 256;
+let terrainEngine;
+
+function mainLoop() {
+    terrainEngine.render();
+
+    requestAnimationFrame(mainLoop);
+}
+
+function degToRad(angle) {
+    return angle * (Math.PI / 180.0);
+}
+
+function rotateCamera(pitch, yaw) {
+    terrainEngine.rotateCamera(degToRad(pitch), degToRad(yaw))
+}
+
+function mozgas(iranyZ, iranyX) {
+    let yForog = terrainEngine.getYaw();
+
+    let eloreX = Math.sin(yForog);
+    let eloreZ = Math.cos(yForog);
+
+    let jobbraX = Math.sin(yForog + Math.PI / 2);
+    let jobbraZ = Math.cos(yForog + Math.PI / 2);
+
+    let mozgasX = Math.round(iranyZ * eloreX + iranyX * jobbraX);
+    let mozgasZ = Math.round(iranyZ * eloreZ + iranyX * jobbraZ);
+
+    terrainEngine.moveCamera(mozgasX, mozgasZ);
+}
 
 function initModule() {
     console.log("module betoltve");
-    Module.init(meret, fokuszTavolsag, filmSzel, filmMag, jsCanvasSzelesseg, jsCanvasMagassag, n, f);
+    terrainEngine = new Module.TerrainEngine("canvas", meret);
+    requestAnimationFrame(mainLoop);
     ujTerkep();
-    Module.startRenderingLoop();
 
     let canvas = document.getElementById(canvasId);
     let inputControls = new CanvasInput(canvas, {
         focalLength: fokuszTavolsag,
-        onRotate: (x, y) => {
-            xyForgas(x, y);
+        onRotate: (pitch, yaw) => {
+            rotateCamera(pitch, yaw);
         },
         onZoom: (ujFokuszTavolsag) => {
-            Module.changeFocalLength(ujFokuszTavolsag);
+            terrainEngine.setFocalLength(ujFokuszTavolsag);
         }
     });
 
@@ -65,27 +89,27 @@ document.addEventListener("DOMContentLoaded", async function () {
     }
 });
 
-function xyForgas(xszoggel, yszoggel) {
-    Module.xyForog(xszoggel * (Math.PI / 180), yszoggel * (Math.PI / 180));
+function irany(pitch, yaw) {
+    terrainEngine.setCameraRotation(degToRad(pitch), degToRad(yaw));
 }
 
 // mennyi idő lenne lerenderelni a cubemapet
 function teszt() {
-    let tempX = Module.getXForog() * (180 / Math.PI);
-    let tempY = Module.getYForog() * (180 / Math.PI);
+    let tempX = terrainEngine.getPitch() * (180 / Math.PI);
+    let tempY = terrainEngine.getYaw() * (180 / Math.PI);
     let most = performance.now();
     irany(90, 0);
-    Module.render();
+    terrainEngine.render();
     irany(-90, 0);
-    Module.render();
+    terrainEngine.render();
     irany(0, 0);
-    Module.render();
+    terrainEngine.render();
     irany(0, 180);
-    Module.render();
+    terrainEngine.render();
     irany(0, 90);
-    Module.render();
+    terrainEngine.render();
     irany(0, -90);
-    Module.render();
+    terrainEngine.render();
     document.getElementById("ido").innerText = Math.round(performance.now() - most);
     irany(tempX, tempY);
 }
@@ -97,53 +121,10 @@ function ujTerkep() {
     console.log("Új térkép idő:", performance.now() - eleje)
 }
 
-function ujKameraMagassag() {
-    let cHeight = document.getElementById("kameraHeight");
-    Module.newCameraHeight(parseFloat(cHeight.value));
-}
-
-function UjPerlinParam(e) {
-    let id = "";
-    if (e) {
-        id = e.id;
-    }
-    let auto = document.getElementById("autoUpdate").checked;
-    if (id == "gomb" || auto) {
-        general();
-    }
-}
-
-function ZajParamValt() {
-    let curr = document.querySelector('input[name="noiseSettings"]:checked').value;
-    let params = {};
-    if (curr == "noise") {
-        params = Module.getNoiseParameters();
-        let noiseSize = document.getElementById("noiseSize");
-        noiseSize.setAttribute("max", 500.0);
-        noiseSize.setAttribute("min", 1.0);
-        noiseSize.setAttribute("step", 1.0);
-    } else {
-        if (curr == "warp") {
-            params = Module.getWarpParameters();
-            let noiseSize = document.getElementById("noiseSize");
-            noiseSize.setAttribute("max", 4.0);
-            noiseSize.setAttribute("min", 0.1);
-            noiseSize.setAttribute("step", 0.1);
-
-        }
-    }
-    for (const key in params) {
-        let element = document.getElementById(key);
-        if (element) {
-            element.value = params[key];
-            if (element.nextElementSibling) {
-                let ertek = params[key];
-                if (ertek % 1 != 0) {
-                    ertek = Math.round(1000 * ertek) / 1000;
-                }
-                element.nextElementSibling.value = ertek;
-            }
-        }
+function setDomainWarp() {
+    let domainWarp = document.getElementById("domainWarp");
+    if (domainWarp) {
+        terrainEngine.setDomainWarp(domainWarp.checked);
     }
 }
 
@@ -173,37 +154,14 @@ function general() {
     };
     let curr = document.querySelector('input[name="noiseSettings"]:checked').value;
     if (curr == "noise") {
-        Module.setTerrainParams(size, parameters);
-        UjDomainWarp();
+        terrainEngine.setTerrainParams(size, parameters);
+        setDomainWarp();
     } else {
         if (curr == "warp") {
-            Module.setWarpParams(size, parameters);
-            UjDomainWarp();
+            terrainEngine.setWarpParams(size, parameters);
+            setDomainWarp();
         }
     }
-}
-
-function UjFenyIntenzitas() {
-    let intensity = document.getElementById("lightIntensity");
-    Module.newLightIntensity(parseInt(intensity.value));
-}
-
-function UjFenyIrany() {
-    let angle = document.getElementById("lightDirection").value * (Math.PI / 180);
-    let x = Math.cos(angle);
-    let y = Math.sin(angle);
-    korRajzol(x, y);
-    Module.newLightDirection(x, y);
-}
-
-function ujArnyalas() {
-    let type = document.querySelector('input[name="shading"]:checked').value;
-    Module.setShadingTechnique(parseInt(type));
-}
-
-function ujElsmitas() {
-    let elsimitas = document.getElementById("antialias");
-    Module.setAntialias(parseInt(elsimitas.value));
 }
 
 function korRajzol(x, y) {
@@ -264,7 +222,7 @@ function ujAnyag() {
     let diff = document.getElementById("diffuseness");
     let spec = document.getElementById("specularity");
     let shin = document.getElementById("shininess");
-    Module.setGroundMaterial(red, green, blue, parseFloat(diff.value), parseFloat(spec.value), parseFloat(shin.value));
+    terrainEngine.setGroundMaterial(red, green, blue, parseFloat(diff.value), parseFloat(spec.value), parseFloat(shin.value));
 }
 
 function talajFu() {
@@ -278,7 +236,7 @@ function talajFu() {
     spec.nextElementSibling.value = 0.02;
     shin.value = 10.0;
     shin.nextElementSibling.value = 10.0;
-    Module.setMaterialGrass();
+    terrainEngine.setMaterialGrass();
 }
 
 function talajFold() {
@@ -292,43 +250,12 @@ function talajFold() {
     spec.nextElementSibling.value = 0.01;
     shin.value = 10.0;
     shin.nextElementSibling.value = 10.0;
-    Module.setMaterialDirt();
-}
-
-function ujhely() {
-    Module.ujHely();
-}
-
-function ujFenyszin() {
-    let color = document.getElementById("lightColor");
-    let red = fromHexaToDec(color.value[1]) * 16 + fromHexaToDec(color.value[2]);
-    let green = fromHexaToDec(color.value[3]) * 16 + fromHexaToDec(color.value[4]);
-    let blue = fromHexaToDec(color.value[5]) * 16 + fromHexaToDec(color.value[6]);
-    Module.setLightColor(red, green, blue);
+    terrainEngine.setMaterialDirt();
 }
 
 function ujKornyezetiFeny() {
     let ambient = document.getElementById("ambientLight");
-    Module.setAmbientLight(parseFloat(ambient.value));
-}
-
-function irany(x, y) {
-    Module.setRotate(x * (Math.PI / 180), y * (Math.PI / 180));
-}
-
-function mozgas(iranyZ, iranyX) {
-    let yForog = Module.getYForog();
-
-    let eloreX = Math.sin(yForog);
-    let eloreZ = Math.cos(yForog);
-
-    let jobbraX = Math.sin(yForog + Math.PI / 2);
-    let jobbraZ = Math.cos(yForog + Math.PI / 2);
-
-    let mozgasX = Math.round(iranyZ * eloreX + iranyX * jobbraX);
-    let mozgasZ = Math.round(iranyZ * eloreZ + iranyX * jobbraZ);
-
-    Module.mozgas(mozgasZ, mozgasX);
+    terrainEngine.setAmbientLight(parseFloat(ambient.value));
 }
 
 function ujUrlbol() {
@@ -347,7 +274,7 @@ function imgFromUrl(url) {
         let imgData = ctx.getImageData(0, 0, this.width, this.height);
         let rgbaData = imgData.data;
 
-        const ptr = Module.initTexture(this.width, this.height);
+        const ptr = terrainEngine.initTexture(this.width, this.height);
         let rgbData = new Uint8Array(
             Module.HEAPU8.buffer,
             ptr,
@@ -362,42 +289,136 @@ function imgFromUrl(url) {
             rgbData[index] = rgbaData[i + 2];
             index++;
         }
-        Module.uploadTextureToGPU();
+        terrainEngine.uploadTextureToGPU();
     };
     img.src = url;
 }
 
 function texturaTorles() {
-    Module.deleteTexture();
+    terrainEngine.deleteTexture();
 }
 
-function setTexturaMeret() {
-    let textureSpacing = document.getElementById("textureSpacing");
-    Module.setTextureSpacing(1.0 / parseFloat(textureSpacing.value));
-}
+window.UjPerlinParam = function (e) {
+    let id = "";
+    if (e) {
+        id = e.id;
+    }
+    let auto = document.getElementById("autoUpdate").checked;
+    if (id == "gomb" || auto) {
+        general();
+    }
+};
 
-function UjDomainWarp() {
-    let domainWarp = document.getElementById("domainWarp");
-    Module.setDomainWarp(domainWarp.checked);
-}
+window.ujKameraMagassag = function () {
+    let element = document.getElementById("kameraHeight");
+    if (element) {
+        terrainEngine.setCameraHeight(parseFloat(element.value));
+    }
+};
 
-window.UjPerlinParam = UjPerlinParam;
-window.ujKameraMagassag = ujKameraMagassag;
-window.ujhely = ujhely;
+window.ujhely = function () {
+    terrainEngine.randomizeLocation();
+};
+
 window.irany = irany;
-window.xyForgas = xyForgas;
+
+window.xyForgas = function (pitch, yaw) {
+    rotateCamera(pitch, yaw);
+};
+
 window.mozgas = mozgas;
-window.ujElsmitas = ujElsmitas;
 window.teszt = teszt;
-window.ujArnyalas = ujArnyalas;
-window.UjFenyIntenzitas = UjFenyIntenzitas;
-window.UjFenyIrany = UjFenyIrany;
-window.ujFenyszin = ujFenyszin;
+
+window.ujArnyalas = function () {
+    let typeShad = document.querySelector('input[name="shading"]:checked');
+    if (typeShad) {
+        let valu = typeShad.value;
+        let result;
+        switch (valu) {
+            case "0":
+                result = Module.SHADINGMODE.PHONG;
+                break;
+            case "1":
+                result = Module.SHADINGMODE.GOURAUD;
+                break;
+            case "2":
+                result = Module.SHADINGMODE.NO_SHADING;
+                break;
+        }
+        terrainEngine.setShadingMode(result);
+    }
+};
+
+window.UjFenyIntenzitas = function () {
+    let element = document.getElementById("lightIntensity");
+    if (element) {
+        terrainEngine.setLightIntensity(parseInt(element.value));
+    }
+};
+
+window.UjFenyIrany = function () {
+    let angle = document.getElementById("lightDirection").value * (Math.PI / 180);
+    let x = Math.cos(angle);
+    let y = Math.sin(angle);
+    korRajzol(x, y);
+    terrainEngine.setLightDirection(x, y, 0.0);
+};
+
+window.ujFenyszin = function () {
+    let color = document.getElementById("lightColor");
+    let red = fromHexaToDec(color.value[1]) * 16 + fromHexaToDec(color.value[2]);
+    let green = fromHexaToDec(color.value[3]) * 16 + fromHexaToDec(color.value[4]);
+    let blue = fromHexaToDec(color.value[5]) * 16 + fromHexaToDec(color.value[6]);
+    terrainEngine.setLightColor(red / 255.0, green / 255.0, blue / 255.0);
+};
+
 window.ujKornyezetiFeny = ujKornyezetiFeny;
 window.talajFu = talajFu;
 window.talajFold = talajFold;
 window.ujAnyag = ujAnyag;
 window.ujUrlbol = ujUrlbol;
 window.texturaTorles = texturaTorles;
-window.setTexturaMeret = setTexturaMeret;
-window.ZajParamValt = ZajParamValt;
+
+window.setTexturaMeret = function () {
+    let textureSpacing = document.getElementById("textureSpacing");
+    if (textureSpacing) {
+        terrainEngine.setTextureSpacing(1.0 / parseFloat(textureSpacing.value));
+    }
+};
+
+window.ZajParamValt = function () {
+    let curr = document.querySelector('input[name="noiseSettings"]:checked');
+    if (curr) {
+        let valu = curr.value;
+        let params = {};
+        if (valu == "noise") {
+            params = terrainEngine.getNoiseParameters();
+            let noiseSize = document.getElementById("noiseSize");
+            noiseSize.setAttribute("max", 500.0);
+            noiseSize.setAttribute("min", 1.0);
+            noiseSize.setAttribute("step", 1.0);
+        } else {
+            if (valu == "warp") {
+                params = terrainEngine.getWarpParameters();
+                let noiseSize = document.getElementById("noiseSize");
+                noiseSize.setAttribute("max", 4.0);
+                noiseSize.setAttribute("min", 0.1);
+                noiseSize.setAttribute("step", 0.1);
+
+            }
+        }
+        for (const key in params) {
+            let element = document.getElementById(key);
+            if (element) {
+                element.value = params[key];
+                if (element.nextElementSibling) {
+                    let ertek = params[key];
+                    if (ertek % 1 != 0) {
+                        ertek = Math.round(1000 * ertek) / 1000;
+                    }
+                    element.nextElementSibling.value = ertek;
+                }
+            }
+        }
+    }
+};
