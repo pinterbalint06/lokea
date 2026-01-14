@@ -72,7 +72,7 @@ Mesh *EquirectangularEngine::generateSphere(int rings, int segments, float radiu
     return mesh;
 }
 
-EquirectangularEngine::EquirectangularEngine(std::string canvasID) : Engine(canvasID)
+EquirectangularEngine::EquirectangularEngine(const std::string &canvasID) : Engine(canvasID)
 {
     setShadingMode(Shaders::SHADINGMODE::NO_SHADING);
     Mesh *sphere = generateSphere(32, 32, 10.0f);

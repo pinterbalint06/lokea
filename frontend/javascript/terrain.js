@@ -6528,6 +6528,10 @@ async function createWasm() {
       GL.deleteContext(contextHandle);
     };
 
+  
+  var _emscripten_webgl_do_get_current_context = () => GL.currentContext ? GL.currentContext.handle : 0;
+  var _emscripten_webgl_get_current_context = _emscripten_webgl_do_get_current_context;
+
   var _emscripten_webgl_make_context_current = (contextHandle) => {
       var success = GL.makeContextCurrent(contextHandle);
       return success ? 0 : -5;
@@ -7908,11 +7912,12 @@ function checkIncomingModuleAPI() {
   ignoredModuleProp('fetchSettings');
 }
 var ASM_CONSTS = {
-  110832: () => { throw('A böngésződ nem támogatja a WebGL-t!'); },  
- 110883: ($0) => { throw("Sikertelen shader fordítás: " + UTF8ToString($0)); },  
- 110947: ($0) => { throw("Sikertelen shader összekapcsolás: " + UTF8ToString($0)); },  
- 111017: ($0, $1) => { let fps = document.getElementById(UTF8ToString($1)); if (fps) { fps.innerText = $0; } }
+  110864: () => { throw('A böngésződ nem támogatja a WebGL-t!'); },  
+ 110915: ($0) => { throw("Sikertelen shader fordítás: " + UTF8ToString($0)); },  
+ 110979: ($0) => { throw("Sikertelen shader összekapcsolás: " + UTF8ToString($0)); },  
+ 111049: ($0, $1) => { let fps = document.getElementById(UTF8ToString($1)); if (fps) { fps.innerText = $0; } }
 };
+function textureFromURL(textureID,url,ctxId) { let gl = GL.contexts[ctxId].GLctx; let img = new Image(); let imgUrl = UTF8ToString(url); img.onload = function() { let texture = GL.textures[textureID]; if (texture) { gl.bindTexture(gl.TEXTURE_2D, texture); gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, img); gl.generateMipmap(gl.TEXTURE_2D); gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR_MIPMAP_LINEAR); gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR); gl.bindTexture(gl.TEXTURE_2D, null); } else { console.error("Texture failed to load (it no longer exists):\t" + imgUrl); } }; img.onerror = function() { console.error("Texture failed to load:\t" + imgUrl); }; img.src = imgUrl; }
 
 // Imports from the Wasm binary.
 var ___getTypeName = makeInvalidEarlyAccess('___getTypeName');
@@ -8039,6 +8044,8 @@ var wasmImports = {
   /** @export */
   emscripten_webgl_destroy_context: _emscripten_webgl_destroy_context,
   /** @export */
+  emscripten_webgl_get_current_context: _emscripten_webgl_get_current_context,
+  /** @export */
   emscripten_webgl_make_context_current: _emscripten_webgl_make_context_current,
   /** @export */
   environ_get: _environ_get,
@@ -8133,7 +8140,9 @@ var wasmImports = {
   /** @export */
   glViewport: _glViewport,
   /** @export */
-  proc_exit: _proc_exit
+  proc_exit: _proc_exit,
+  /** @export */
+  textureFromURL
 };
 
 

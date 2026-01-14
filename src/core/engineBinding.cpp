@@ -23,6 +23,7 @@ EMSCRIPTEN_BINDINGS(engineBinding)
                                      }))
         .function("uploadTextureToGPU", &Engine::uploadTextureToGPU)
         .function("deleteTexture", &Engine::deleteTexture)
+        .function("loadTextureFromUrl", &Engine::loadTextureFromUrl)
         .function("getPitch", &Engine::getPitch)
         .function("getYaw", &Engine::getYaw)
         .function("setCanvasSize", &Engine::setCanvasSize);

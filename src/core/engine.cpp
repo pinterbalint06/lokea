@@ -107,3 +107,16 @@ void Engine::deleteTexture()
         scene_->getMesh(0)->setMaterial(newTexMat);
     }
 }
+
+void Engine::loadTextureFromUrl(const std::string &url)
+{
+    deleteTexture();
+
+    Texture *texture = new Texture();
+
+    texture->loadFromUrl(url);
+
+    Materials::Material newTexMat = scene_->getMesh(0)->getMaterial();
+    newTexMat.texture = texture;
+    scene_->getMesh(0)->setMaterial(newTexMat);
+}

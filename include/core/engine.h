@@ -36,6 +36,7 @@ public:
     uint8_t *initTexture(int width, int height);
     void uploadTextureToGPU();
     void deleteTexture();
+    void loadTextureFromUrl(const std::string &url);
 
     float getPitch() { return scene_->getCamera()->getPitch(); }
     float getYaw() { return scene_->getCamera()->getYaw(); }

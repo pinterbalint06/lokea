@@ -12,7 +12,7 @@ private:
     Mesh *generateSphere(int rings, int segments, float radius);
 
 public:
-    EquirectangularEngine(std::string canvasID);
+    EquirectangularEngine(const std::string &canvasID);
 };
 
 #endif

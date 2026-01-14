@@ -30,7 +30,8 @@ function mainLoop() {
 function initModule() {
     console.log("module betoltve");
     equirectangularEngine = new Module.EquirectangularEngine(canvasId);
-    imgFromUrl("../images/cathedral.jpg");
+    imgFromURL("http://localhost:3000/images/cathedral.jpg");
+    requestAnimationFrame(mainLoop);
 
     let canvas = document.getElementById(canvasId);
     let inputControls = new CanvasInput(canvas, {
@@ -62,44 +63,16 @@ document.addEventListener("DOMContentLoaded", async function () {
 // | MATERIALS AND TEXTURES |
 // |------------------------|
 
-function ujUrlbol() {
-    imgFromUrl(document.getElementById("url").value);
+function imgFromURL(url) {
+    equirectangularEngine.loadTextureFromUrl(url);
 }
 
-function imgFromUrl(url) {
-    let img = new Image;
-    img.crossOrigin = "anonymous";
-    img.onload = function () {
-        let canvas = document.createElement('canvas');
-        canvas.width = this.width;
-        canvas.height = this.height;
-        let ctx = canvas.getContext('2d');
-        ctx.drawImage(img, 0, 0);
-        let imgData = ctx.getImageData(0, 0, this.width, this.height);
-        let rgbaData = imgData.data;
-
-        const ptr = equirectangularEngine.initTexture(this.width, this.height);
-        let rgbData = new Uint8Array(
-            Module.HEAPU8.buffer,
-            ptr,
-            this.width * this.height * 3
-        );
-        let index = 0;
-        for (let i = 0; i < rgbaData.length; i += 4) {
-            rgbData[index] = rgbaData[i];
-            index++;
-            rgbData[index] = rgbaData[i + 1];
-            index++;
-            rgbData[index] = rgbaData[i + 2];
-            index++;
-        }
-        equirectangularEngine.uploadTextureToGPU();
-        requestAnimationFrame(mainLoop);
-    };
-    img.src = url;
-}
-
-window.ujUrlbol = ujUrlbol;
+window.ujUrlbol = function () {
+    let element = document.getElementById("url");
+    if (element) {
+        imgFromURL(element.value);
+    }
+};
 
 // |---------------------|
 // | CAMERA AND MOVEMENT |
