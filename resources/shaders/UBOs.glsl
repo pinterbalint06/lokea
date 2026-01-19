@@ -2,6 +2,10 @@ precision highp float;
 precision highp int;
 
 layout(std140) uniform SceneData {
+    float uAmbientLight;        // 4 bytes
+};
+
+layout(std140) uniform CameraData {
     mat4 uVP;                  // View-Projection Matrix
                                 // layout 4 vec4 so 16 * 4 = 64 bytes
                                 // row 1 : 0 bytes
@@ -9,10 +13,7 @@ layout(std140) uniform SceneData {
                                 // row 3 : 32 bytes
                                 // row 4 : 48 bytes
     vec3 uCamPos;               // Camera Position
-                                // at 64 bytes -> 76 bytes
-    float uAmbientLight;        // Ambient Intensity
-                                // at 80 bytes
-                                // total size is 80 bytes
+                                // at 64 bytes -> 80 bytes
 };
 
 layout(std140) uniform MaterialData {

@@ -9,9 +9,7 @@ class Mesh;
 
 struct SceneData
 {
-    float VP[16];       // 0 -> 64
-    float camPos[3];    // 64 -> 76
-    float ambientLight; // 76 -> 80
+    float ambientLight; // 0 -> 4
 };
 
 class Scene

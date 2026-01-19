@@ -6,6 +6,14 @@
 #include <cstring>
 #include <cstdlib>
 
+struct CameraData
+{
+    float VP[16]; // 0 -> 64
+    /// @brief The coordinates of the camera's position in 3D space.
+    float camPos[3]; // 64 -> 76
+    float pad;       // 76 -> 80
+};
+
 class Camera
 {
 private:
@@ -24,8 +32,7 @@ private:
      */
     float *projMatrix_;
 
-    /// @brief The coordinates of the camera's position in 3D space.
-    float x_, y_, z_;
+    CameraData data_;
 
     /// @brief The yaw angle of the camera, representing rotation around the vertical (Y) axis, in radians.
     float yaw_;
@@ -35,6 +42,9 @@ private:
 
     /// @brief Indicates whether the camera view has to be updated
     bool newView_;
+
+    /// @brief Indicates whether the camera view projeciton has to be updated
+    bool newViewProj_;
 
     /// @brief Camera properties
     float focalLength_, filmW_, filmH_, n_, f_;
@@ -89,21 +99,21 @@ public:
      *
      * @return The x-coordinate of the camera.
      */
-    float getXPosition() { return x_; }
+    float getXPosition() { return data_.camPos[0]; }
 
     /**
      * @brief Returns the current y-coordinate of the camera.
      *
      * @return The y-coordinate of the camera.
      */
-    float getYPosition() { return y_; }
+    float getYPosition() { return data_.camPos[1]; }
 
     /**
      * @brief Returns the current z-coordinate of the camera.
      *
      * @return The z-coordinate of the camera.
      */
-    float getZPosition() { return z_; }
+    float getZPosition() { return data_.camPos[2]; }
 
     // rotation getters
     /**
@@ -119,6 +129,13 @@ public:
      * @return The pitch angle in radians.
      */
     float getPitch() const { return pitch_; }
+
+    /**
+     * @brief Returns the data of the camera in std140 layout for GPU UBOs.
+     *  Calculates the View Projection Matrix for the CameraData
+     * @return CameraData struct in std140 layout.
+     */
+    const CameraData &getUBOData() const { return data_; };
 
     // camera propery sett
     /**
@@ -178,6 +195,11 @@ public:
      * After updating, the newView flag is set to false.
      */
     void updateViewMatrix();
+
+    /**
+     * @brief Updates the camera's vp matrix by multiplying the view and projection matrices together.
+     */
+    void updateViewProjectionMatrix();
 
     /**
      * @brief Sets the camera's properties and calls updatePerspective().

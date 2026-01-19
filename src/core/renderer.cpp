@@ -48,6 +48,13 @@ Renderer::Renderer(const std::string &canvasID)
     glBindBuffer(GL_UNIFORM_BUFFER, 0);
     glBindBufferRange(GL_UNIFORM_BUFFER, 5, uboDistantLight_, 0, sizeof(DistantLightData));
 
+    // camera ubo
+    glGenBuffers(1, &uboCamera_);
+    glBindBuffer(GL_UNIFORM_BUFFER, uboCamera_);
+    glBufferData(GL_UNIFORM_BUFFER, sizeof(CameraData), NULL, GL_STATIC_DRAW);
+    glBindBuffer(GL_UNIFORM_BUFFER, 0);
+    glBindBufferRange(GL_UNIFORM_BUFFER, 6, uboCamera_, 0, sizeof(CameraData));
+
     // material ubo
     glGenBuffers(1, &uboMat_);
     glBindBuffer(GL_UNIFORM_BUFFER, uboMat_);
@@ -156,22 +163,28 @@ void Renderer::updateDistantLightUBO(const DistantLight *dLight)
     glBindBuffer(GL_UNIFORM_BUFFER, 0);
 }
 
+void Renderer::updateCameraUBO(Camera *camera)
+{
+    camera->updateViewMatrix();
+    camera->updateViewProjectionMatrix();
+    glBindBuffer(GL_UNIFORM_BUFFER, uboCamera_);
+    glBufferSubData(GL_UNIFORM_BUFFER, 0, sizeof(CameraData), &camera->getUBOData());
+    glBindBuffer(GL_UNIFORM_BUFFER, 0);
+}
+
 void Renderer::updateSceneUBO(const Scene *scene)
 {
-    SceneData currSceneData;
     // camera
     Camera *mainCamera = scene->getCamera();
-    currSceneData.camPos[0] = mainCamera->getXPosition();
-    currSceneData.camPos[1] = mainCamera->getYPosition();
-    currSceneData.camPos[2] = mainCamera->getZPosition();
-    mainCamera->updateViewMatrix();
-    currSceneData.ambientLight = scene->getAmbientLight();
-    MathUtils::multiplyMatrix(mainCamera->getViewMatrix(), mainCamera->getProjMatrix(), currSceneData.VP);
+    updateCameraUBO(mainCamera);
 
     // light
     DistantLight *sun = scene->getLight();
     updateDistantLightUBO(sun);
 
+    // scene
+    SceneData currSceneData;
+    currSceneData.ambientLight = scene->getAmbientLight();
     // upload to GPU
     glBindBuffer(GL_UNIFORM_BUFFER, uboScene_);
     glBufferSubData(GL_UNIFORM_BUFFER, 0, sizeof(SceneData), &currSceneData);

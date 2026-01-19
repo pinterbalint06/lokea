@@ -142,6 +142,12 @@ namespace Shaders
             glUniformBlockBinding(programID_, uniformBlockIndexDLight, 5);
         }
 
+        GLuint uniformBlockIndexCamera = glGetUniformBlockIndex(programID_, "CameraData");
+        if (uniformBlockIndexCamera != GL_INVALID_INDEX)
+        {
+            glUniformBlockBinding(programID_, uniformBlockIndexCamera, 6);
+        }
+
         use();
         setUniformInt("uTexture0", 0);
         setUniformInt("uNoisePermutationTable", 5);
