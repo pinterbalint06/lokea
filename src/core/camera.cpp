@@ -7,9 +7,9 @@ Camera::Camera()
     projMatrix_ = (float *)malloc(16 * sizeof(float));
     MathUtils::setIdentity(viewMatrix_);
     MathUtils::setIdentity(projMatrix_);
-    x_ = 0;
-    y_ = 0;
-    z_ = 0;
+    data_.camPos[0] = 0;
+    data_.camPos[1] = 0;
+    data_.camPos[2] = 0;
     yaw_ = 0;
     pitch_ = 0;
     newView_ = true;
@@ -29,9 +29,9 @@ Camera::~Camera()
 
 void Camera::setPosition(float x, float y, float z)
 {
-    x_ = x;
-    y_ = y;
-    z_ = z;
+    data_.camPos[0] = x;
+    data_.camPos[1] = y;
+    data_.camPos[2] = z;
     newView_ = true;
 }
 
@@ -94,12 +94,22 @@ void Camera::updateViewMatrix()
 
         // translation matrix
         MathUtils::setIdentity(translation);
-        translation[12] = -x_;
-        translation[13] = -y_;
-        translation[14] = -z_;
+        translation[12] = -data_.camPos[0];
+        translation[13] = -data_.camPos[1];
+        translation[14] = -data_.camPos[2];
 
         MathUtils::multiplyMatrix(translation, rotMatr, viewMatrix_);
         newView_ = false;
+        newViewProj_ = true;
+    }
+}
+
+void Camera::updateViewProjectionMatrix()
+{
+    if (newViewProj_)
+    {
+        MathUtils::multiplyMatrix(getViewMatrix(), getProjMatrix(), data_.VP);
+        newViewProj_ = false;
     }
 }
 
@@ -158,4 +168,5 @@ void Camera::updatePerspective()
     projMatrix_[10] = f_ / (n_ - f_);
     projMatrix_[11] = -1.0f;
     projMatrix_[14] = n_ * f_ / (n_ - f_);
+    newViewProj_ = true;
 }

@@ -91,7 +91,7 @@ uint8_t *Engine::initTexture(int width, int height, int meshIndex)
         deleteTexture(meshIndex);
         Texture *texture = new Texture(width, height);
         Materials::Material newTexMat = mesh->getMaterial();
-        newTexMat.texture = texture;
+        newTexMat.setTexture(texture);
         mesh->setMaterial(newTexMat);
         retPtr = texture->getImgData();
     }
@@ -103,7 +103,7 @@ void Engine::uploadTextureToGPU(int meshIndex)
     Mesh *mesh = scene_->getMesh(meshIndex);
     if (mesh != nullptr)
     {
-        mesh->getMaterial().texture->uploadToGPU();
+        mesh->getMaterial().getTexture()->uploadToGPU();
     }
 }
 
@@ -112,11 +112,11 @@ void Engine::deleteTexture(int meshIndex)
     Mesh *mesh = scene_->getMesh(meshIndex);
     if (mesh != nullptr)
     {
-        if (mesh->getMaterial().texture != nullptr)
+        if (mesh->getMaterial().getTexture() != nullptr)
         {
-            delete mesh->getMaterial().texture;
+            delete mesh->getMaterial().getTexture();
             Materials::Material newTexMat = mesh->getMaterial();
-            newTexMat.texture = nullptr;
+            newTexMat.setTexture(nullptr);
             mesh->setMaterial(newTexMat);
         }
     }
@@ -134,7 +134,7 @@ void Engine::loadTextureFromUrl(const std::string &url, int meshIndex)
         texture->loadFromUrl(url);
 
         Materials::Material newTexMat = mesh->getMaterial();
-        newTexMat.texture = texture;
+        newTexMat.setTexture(texture);
         mesh->setMaterial(newTexMat);
     }
 }

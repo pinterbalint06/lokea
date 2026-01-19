@@ -36,15 +36,14 @@ EMSCRIPTEN_BINDINGS(structs)
         .class_function("fromRGB", &Materials::Color::fromRGB);
 
     emscripten::class_<Materials::Material>("Material")
-        .constructor<>()
-        .property("albedo", &Materials::Material::albedo)
-        .property("diffuseness", &Materials::Material::diffuseness)
-        .property("specularity", &Materials::Material::specularity)
-        .property("shininess", &Materials::Material::shininess)
-        .property("texture", &Materials::Material::texture, emscripten::allow_raw_pointers())
+        .constructor<Materials::Color, float, float, float>()
+        .property("albedo", &Materials::Material::getAlbedo, &Materials::Material::setAlbedo)
+        .property("diffuseness", &Materials::Material::getDiffuseness, &Materials::Material::setDiffuseness)
+        .property("specularity", &Materials::Material::getSpecularity, &Materials::Material::setSpecularity)
+        .property("shininess", &Materials::Material::getShininess, &Materials::Material::setShininess)
         .class_function("Grass", &Materials::Material::Grass)
         .class_function("Dirt", &Materials::Material::Dirt)
-        .class_function("createMaterial", &Materials::Material::createMaterial);
+        .class_function("Error", &Materials::Material::Error);
 }
 
 EMSCRIPTEN_BINDINGS(terrainEngineBinding)

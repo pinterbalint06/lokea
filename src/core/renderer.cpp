@@ -41,6 +41,20 @@ Renderer::Renderer(const std::string &canvasID)
     glBindBuffer(GL_UNIFORM_BUFFER, 0);
     glBindBufferRange(GL_UNIFORM_BUFFER, 0, uboScene_, 0, sizeof(SceneData));
 
+    // distant light ubo
+    glGenBuffers(1, &uboDistantLight_);
+    glBindBuffer(GL_UNIFORM_BUFFER, uboDistantLight_);
+    glBufferData(GL_UNIFORM_BUFFER, sizeof(DistantLightData), NULL, GL_STATIC_DRAW);
+    glBindBuffer(GL_UNIFORM_BUFFER, 0);
+    glBindBufferRange(GL_UNIFORM_BUFFER, 5, uboDistantLight_, 0, sizeof(DistantLightData));
+
+    // camera ubo
+    glGenBuffers(1, &uboCamera_);
+    glBindBuffer(GL_UNIFORM_BUFFER, uboCamera_);
+    glBufferData(GL_UNIFORM_BUFFER, sizeof(CameraData), NULL, GL_STATIC_DRAW);
+    glBindBuffer(GL_UNIFORM_BUFFER, 0);
+    glBindBufferRange(GL_UNIFORM_BUFFER, 6, uboCamera_, 0, sizeof(CameraData));
+
     // material ubo
     glGenBuffers(1, &uboMat_);
     glBindBuffer(GL_UNIFORM_BUFFER, uboMat_);
@@ -82,6 +96,10 @@ Renderer::~Renderer()
     if (uboScene_ != 0)
     {
         glDeleteBuffers(1, &uboScene_);
+    }
+    if (uboDistantLight_ != 0)
+    {
+        glDeleteBuffers(1, &uboDistantLight_);
     }
     if (uboMat_ != 0)
     {
@@ -125,81 +143,73 @@ void Renderer::setShadingMode(Shaders::SHADINGMODE shadingMode)
     shaderPrograms_[currShadingMode_]->use();
 }
 
+void Renderer::setDefaultColor(float r, float g, float b)
+{
+    rBuffer_ = r / 255.0f;
+    gBuffer_ = g / 255.0f;
+    bBuffer_ = b / 255.0f;
+    glClearColor(rBuffer_, gBuffer_, bBuffer_, 1);
+};
+
 void Renderer::setImageDimensions(int imageW, int imageH)
 {
     glViewport(0, 0, imageW, imageH);
 }
 
+void Renderer::updateDistantLightUBO(const DistantLight *dLight)
+{
+    glBindBuffer(GL_UNIFORM_BUFFER, uboDistantLight_);
+    glBufferSubData(GL_UNIFORM_BUFFER, 0, sizeof(DistantLightData), &dLight->getUBOData());
+    glBindBuffer(GL_UNIFORM_BUFFER, 0);
+}
+
+void Renderer::updateCameraUBO(Camera *camera)
+{
+    camera->updateViewMatrix();
+    camera->updateViewProjectionMatrix();
+    glBindBuffer(GL_UNIFORM_BUFFER, uboCamera_);
+    glBufferSubData(GL_UNIFORM_BUFFER, 0, sizeof(CameraData), &camera->getUBOData());
+    glBindBuffer(GL_UNIFORM_BUFFER, 0);
+}
+
 void Renderer::updateSceneUBO(const Scene *scene)
 {
-    SceneData currSceneData;
     // camera
     Camera *mainCamera = scene->getCamera();
-    currSceneData.camPos[0] = mainCamera->getXPosition();
-    currSceneData.camPos[1] = mainCamera->getYPosition();
-    currSceneData.camPos[2] = mainCamera->getZPosition();
-    mainCamera->updateViewMatrix();
-    MathUtils::multiplyMatrix(mainCamera->getViewMatrix(), mainCamera->getProjMatrix(), currSceneData.VP);
+    updateCameraUBO(mainCamera);
 
     // light
     DistantLight *sun = scene->getLight();
-    float ambientLight = scene->getAmbientLight();
-    float lightVec[3];
-    const float *lightDir = sun->getDirection();
-    currSceneData.lightVec[0] = -lightDir[0];
-    currSceneData.lightVec[1] = -lightDir[1];
-    currSceneData.lightVec[2] = -lightDir[2];
+    updateDistantLightUBO(sun);
 
-    currSceneData.lightColor[0] = sun->getRed();
-    currSceneData.lightColor[1] = sun->getGreen();
-    currSceneData.lightColor[2] = sun->getBlue();
-
-    currSceneData.lightColorPreCalc[0] = sun->getRedCalculated();
-    currSceneData.lightColorPreCalc[1] = sun->getGreenCalculated();
-    currSceneData.lightColorPreCalc[2] = sun->getBlueCalculated();
-    currSceneData.ambientLight = scene->getAmbientLight();
-
-    // upload to GPU
+    // scene
     glBindBuffer(GL_UNIFORM_BUFFER, uboScene_);
-    glBufferSubData(GL_UNIFORM_BUFFER, 0, sizeof(SceneData), &currSceneData);
+    glBufferSubData(GL_UNIFORM_BUFFER, 0, sizeof(SceneData), &scene->getUBOData());
     glBindBuffer(GL_UNIFORM_BUFFER, 0);
 }
 
 void Renderer::updateMaterialUBO(const Materials::Material meshMat)
 {
-    Materials::Color meshCol = meshMat.albedo;
-    Materials::MaterialData currMatData;
-    currMatData.albedo[0] = meshCol.r;
-    currMatData.albedo[1] = meshCol.g;
-    currMatData.albedo[2] = meshCol.b;
-
-    currMatData.diffuseness = meshMat.diffuseness;
-    currMatData.specularity = meshMat.specularity;
-    currMatData.shininess = meshMat.shininess;
-
     int useTexture = 0;
 
-    if (meshMat.texture != nullptr)
+    if (meshMat.getTexture() != nullptr)
     {
-        meshMat.texture->bind(0);
+        meshMat.getTexture()->bind(0);
         useTexture = 1;
     }
 
     shaderPrograms_[currShadingMode_]->setUniformInt("uUseTexture", useTexture);
 
     glBindBuffer(GL_UNIFORM_BUFFER, uboMat_);
-    glBufferSubData(GL_UNIFORM_BUFFER, 0, sizeof(Materials::MaterialData), &currMatData);
+    glBufferSubData(GL_UNIFORM_BUFFER, 0, sizeof(Materials::MaterialData), &meshMat.getUBOData());
     glBindBuffer(GL_UNIFORM_BUFFER, 0);
 }
 
 void Renderer::updateMeshUBO(Mesh *mesh)
 {
     // update mesh data
-    MeshData currMeshData;
-    std::memcpy(currMeshData.modelMatrix, mesh->getModelMatrix(), 16 * sizeof(float));
-
     glBindBuffer(GL_UNIFORM_BUFFER, uboMesh_);
-    glBufferSubData(GL_UNIFORM_BUFFER, 0, sizeof(MeshData), &currMeshData);
+    glBufferSubData(GL_UNIFORM_BUFFER, 0, sizeof(MeshData), &mesh->getUBOData());
     glBindBuffer(GL_UNIFORM_BUFFER, 0);
 
     // update material
