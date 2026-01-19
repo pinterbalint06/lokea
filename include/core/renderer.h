@@ -35,12 +35,7 @@ public:
     GLuint *getPerlinUBOloc() { return &uboPerlin_; };
     GLuint *getWarpUBOloc() { return &uboWarp_; };
     void setShadingMode(Shaders::SHADINGMODE shadingMode);
-    void setDefaultColor(float r, float g, float b)
-    {
-        rBuffer_ = r / 255.0f;
-        gBuffer_ = g / 255.0f;
-        bBuffer_ = b / 255.0f;
-    };
+    void setDefaultColor(float r, float g, float b);
 
     void setImageDimensions(int imageW, int imageH);
     void render(const Scene *scene);

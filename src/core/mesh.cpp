@@ -12,8 +12,7 @@ Mesh::Mesh(int vertexCount, int indexCount) : material_(Materials::Material::Err
     normalCount_ = vertexCount_;
     vertices_ = (Vertex *)malloc(vertexCount_ * sizeof(Vertex));
     indices_ = (uint32_t *)malloc(indexCount_ * sizeof(uint32_t));
-    modelMatrix_ = (float *)malloc(16 * sizeof(float));
-    MathUtils::setIdentity(modelMatrix_);
+    MathUtils::setIdentity(meshData_.modelMatrix);
     vbo_ = 0;
     vao_ = 0;
     ebo_ = 0;

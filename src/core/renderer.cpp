@@ -125,6 +125,14 @@ void Renderer::setShadingMode(Shaders::SHADINGMODE shadingMode)
     shaderPrograms_[currShadingMode_]->use();
 }
 
+void Renderer::setDefaultColor(float r, float g, float b)
+{
+    rBuffer_ = r / 255.0f;
+    gBuffer_ = g / 255.0f;
+    bBuffer_ = b / 255.0f;
+    glClearColor(rBuffer_, gBuffer_, bBuffer_, 1);
+};
+
 void Renderer::setImageDimensions(int imageW, int imageH)
 {
     glViewport(0, 0, imageW, imageH);
@@ -185,11 +193,8 @@ void Renderer::updateMaterialUBO(const Materials::Material meshMat)
 void Renderer::updateMeshUBO(Mesh *mesh)
 {
     // update mesh data
-    MeshData currMeshData;
-    std::memcpy(currMeshData.modelMatrix, mesh->getModelMatrix(), 16 * sizeof(float));
-
     glBindBuffer(GL_UNIFORM_BUFFER, uboMesh_);
-    glBufferSubData(GL_UNIFORM_BUFFER, 0, sizeof(MeshData), &currMeshData);
+    glBufferSubData(GL_UNIFORM_BUFFER, 0, sizeof(MeshData), &mesh->getUBOData());
     glBindBuffer(GL_UNIFORM_BUFFER, 0);
 
     // update material

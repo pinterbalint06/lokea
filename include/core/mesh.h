@@ -31,7 +31,7 @@ private:
 protected:
     Vertex *vertices_;
     uint32_t *indices_;
-    float *modelMatrix_;
+    MeshData meshData_;
 
     void cleanup();
     void resize(int vertexCount, int indexCount);
@@ -44,18 +44,14 @@ public:
 
     // getters
     int getVertexCount() const { return vertexCount_; }
-
     int getIndexCount() const { return indexCount_; }
-
     Vertex *getVertices() const { return vertices_; }
-
     uint32_t *getIndices() const { return indices_; }
-
     Materials::Material getMaterial() const { return material_; }
-
     GLuint getVAO() const { return vao_; }
-
-    float *getModelMatrix() const { return modelMatrix_; }
+    float *getModelMatrix() { return meshData_.modelMatrix; }
+    const float *getModelMatrix() const { return meshData_.modelMatrix; }
+    MeshData &getUBOData() { return meshData_; }
 
     // setters
     void setMaterial(Materials::Material material) { material_ = material; }
