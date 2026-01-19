@@ -12,4 +12,4 @@
 12. GPU Memory leakage a meshben?
 13. Strukturálás
 14. Kód átnézése nem használt függvényekre, váltózokra
-15. UBO struktok átdolgozása, hogy ne kelljen mindig bemásolni egy új struktba
+15. UBO binding slotok átdolgozása

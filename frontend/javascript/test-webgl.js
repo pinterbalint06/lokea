@@ -3,6 +3,7 @@
 // |------------------|
 
 let terrainEngine;
+let Module;
 const canvasId = "canvas";
 const meret = 256;
 
@@ -11,13 +12,10 @@ const meret = 256;
 // |------------------------------|
 
 document.addEventListener("DOMContentLoaded", function () {
-    if (Module.calledRun) {
-        // If webassembly is ready initialize
+    createModule().then((modu) => {
+        Module = modu;
         initModule();
-    } else {
-        // Else set a callback function
-        Module.onRuntimeInitialized = initModule;
-    }
+    });
 });
 
 function initModule() {

@@ -11,7 +11,7 @@ Scene::Scene()
     // blue: 34.0 normalize -> 34.0f/255.0 = 0.13333
     light_ = new DistantLight(1.0f, 1.0f, 1.0f, 1500.0f, 0, -1, 0);
     cam_ = new Camera();
-    ambientLight_ = 4.0f;
+    data_.ambientLight = 4.0f;
 }
 
 Scene::~Scene()
@@ -26,7 +26,7 @@ Scene::~Scene()
 
 void Scene::setAmbientLight(float ambientLightIntensity)
 {
-    ambientLight_ = ambientLightIntensity;
+    data_.ambientLight = ambientLightIntensity;
 }
 
 void Scene::addMesh(Mesh *mesh)

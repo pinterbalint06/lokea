@@ -183,11 +183,8 @@ void Renderer::updateSceneUBO(const Scene *scene)
     updateDistantLightUBO(sun);
 
     // scene
-    SceneData currSceneData;
-    currSceneData.ambientLight = scene->getAmbientLight();
-    // upload to GPU
     glBindBuffer(GL_UNIFORM_BUFFER, uboScene_);
-    glBufferSubData(GL_UNIFORM_BUFFER, 0, sizeof(SceneData), &currSceneData);
+    glBufferSubData(GL_UNIFORM_BUFFER, 0, sizeof(SceneData), &scene->getUBOData());
     glBindBuffer(GL_UNIFORM_BUFFER, 0);
 }
 
