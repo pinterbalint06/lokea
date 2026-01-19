@@ -5,7 +5,7 @@
 #include <cstdint>
 #include <GLES3/gl3.h>
 
-Mesh::Mesh(int vertexCount, int indexCount)
+Mesh::Mesh(int vertexCount, int indexCount) : material_(Materials::Material::Error())
 {
     vertexCount_ = vertexCount;
     indexCount_ = indexCount;
@@ -17,7 +17,6 @@ Mesh::Mesh(int vertexCount, int indexCount)
     vbo_ = 0;
     vao_ = 0;
     ebo_ = 0;
-    material_ = Materials::Material::Error();
 }
 
 Mesh::~Mesh()

@@ -167,28 +167,18 @@ void Renderer::updateSceneUBO(const Scene *scene)
 
 void Renderer::updateMaterialUBO(const Materials::Material meshMat)
 {
-    Materials::Color meshCol = meshMat.albedo;
-    Materials::MaterialData currMatData;
-    currMatData.albedo[0] = meshCol.r;
-    currMatData.albedo[1] = meshCol.g;
-    currMatData.albedo[2] = meshCol.b;
-
-    currMatData.diffuseness = meshMat.diffuseness;
-    currMatData.specularity = meshMat.specularity;
-    currMatData.shininess = meshMat.shininess;
-
     int useTexture = 0;
 
-    if (meshMat.texture != nullptr)
+    if (meshMat.getTexture() != nullptr)
     {
-        meshMat.texture->bind(0);
+        meshMat.getTexture()->bind(0);
         useTexture = 1;
     }
 
     shaderPrograms_[currShadingMode_]->setUniformInt("uUseTexture", useTexture);
 
     glBindBuffer(GL_UNIFORM_BUFFER, uboMat_);
-    glBufferSubData(GL_UNIFORM_BUFFER, 0, sizeof(Materials::MaterialData), &currMatData);
+    glBufferSubData(GL_UNIFORM_BUFFER, 0, sizeof(Materials::MaterialData), &meshMat.getUBOData());
     glBindBuffer(GL_UNIFORM_BUFFER, 0);
 }
 

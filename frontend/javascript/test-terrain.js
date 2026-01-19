@@ -407,7 +407,7 @@ window.ujAnyag = function () {
     let shin = parseFloat(document.getElementById("shininess").value);
 
     // create material
-    let material = Module.Material.createMaterial(albedo, diff, spec, shin);
+    let material = new Module.Material(albedo, diff, spec, shin);
 
     // set material
     terrainEngine.setGroundMaterial(material);
