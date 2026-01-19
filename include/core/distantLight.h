@@ -1,20 +1,32 @@
 #ifndef DISTANT_LIGHT_H
 #define DISTANT_LIGHT_H
 
+struct DistantLightData
+{
+    /// @brief The light vector (from point to light), represented as an array of three floats (x, y, z).
+    float lightVec[3]; // 0-12
+    float pad;         // 12-16
+
+    /// @brief The color values of the light
+    float lightColor[3]; // 16-28
+    float pad2;          // 28-32
+
+    /// @brief The precalculated color values of the light. Multiplied by light intensity and the inverse of pi.
+    float lightColorPreCalc[3]; // 32-44
+    float pad3;
+};
+
 class DistantLight
 {
 private:
-    /// @brief The color values of the light
-    float red_, green_, blue_;
+    /// @brief The data of the light in std140 layout for GPU UBOs.
+    DistantLightData data_;
 
-    /// @brief The precalculated color values of the light. Multiplied by light intensity and the inverse of pi.
-    float redPreCalc_, greenPreCalc_, bluePreCalc_;
+    /// @brief The direction vector of the distant light, represented as an array of three floats (x, y, z).
+    float lightDir_[3];
 
     /// @brief The intensity of the distant light source.
     float intensity_;
-
-    /// @brief The direction vector of the distant light, represented as an array of three floats (x, y, z).
-    float direction_[3];
 
 public:
     /**
@@ -45,49 +57,56 @@ public:
      *
      * @return The value of the red component as a float.
      */
-    float getRed() const { return red_; }
-
-    /**
-     * @brief Returns the blue component of the distant light.
-     *
-     * @return The value of the blue component as a float.
-     */
-    float getBlue() const { return blue_; }
+    float getRed() const { return data_.lightColor[0]; }
 
     /**
      * @brief Returns the green component of the distant light.
      *
      * @return The value of the green component as a float.
      */
-    float getGreen() const { return green_; }
+    float getGreen() const { return data_.lightColor[1]; }
+
+    /**
+     * @brief Returns the blue component of the distant light.
+     *
+     * @return The value of the blue component as a float.
+     */
+    float getBlue() const { return data_.lightColor[2]; }
 
     /**
      * @brief Retrieves the pre-calculated red component value of the distant light.
      *
      * @return The pre-calculated red intensity as a float.
      */
-    float getRedCalculated() const { return redPreCalc_; }
-
-    /**
-     * @brief Retrieves the pre-calculated blue component value of the distant light.
-     *
-     * @return The pre-calculated blue value as a float.
-     */
-    float getBlueCalculated() const { return bluePreCalc_; }
+    float getRedCalculated() const { return data_.lightColorPreCalc[0]; }
 
     /**
      * @brief Retrieves the pre-calculated green component value of the distant light.
      *
      * @return The pre-calculated green value as a float.
      */
-    float getGreenCalculated() const { return greenPreCalc_; }
+    float getGreenCalculated() const { return data_.lightColorPreCalc[1]; }
+
+    /**
+     * @brief Retrieves the pre-calculated blue component value of the distant light.
+     *
+     * @return The pre-calculated blue value as a float.
+     */
+    float getBlueCalculated() const { return data_.lightColorPreCalc[2]; }
 
     /**
      * @brief Returns the direction vector.
      *
      * @return Pointer to the direction vector.
      */
-    const float *getDirection() const { return direction_; }
+    const float *getDirection() const { return lightDir_; }
+
+    /**
+     * @brief Returns the data of the light in std140 layout for GPU UBOs.
+     *
+     * @return DistantLightData struct in std140 layout.
+     */
+    const DistantLightData &getUBOData() const { return data_; }
 
     // setters
     /**

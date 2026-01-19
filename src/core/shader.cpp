@@ -30,6 +30,7 @@ namespace Shaders
     {
         std::stringstream completeBuffer;
         std::vector<std::string> helpers = {
+            "shaders/UBOs.glsl",
             "shaders/phongReflectionModel.glsl",
             "shaders/perlinNoise.glsl"};
 
@@ -133,6 +134,12 @@ namespace Shaders
         if (uniformBlockIndexMesh != GL_INVALID_INDEX)
         {
             glUniformBlockBinding(programID_, uniformBlockIndexMesh, 4);
+        }
+
+        GLuint uniformBlockIndexDLight = glGetUniformBlockIndex(programID_, "DistantLightData");
+        if (uniformBlockIndexDLight != GL_INVALID_INDEX)
+        {
+            glUniformBlockBinding(programID_, uniformBlockIndexDLight, 5);
         }
 
         use();

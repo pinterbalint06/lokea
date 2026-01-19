@@ -9,16 +9,9 @@ class Mesh;
 
 struct SceneData
 {
-    float VP[16];               // 0
-    float camPos[3];            // 64
-    float pad0;                 // 76
-    float lightVec[3];          // 80
-    float pad1;                 // 92
-    float lightColor[3];        // 96
-    float pad2;                 // 108
-    float lightColorPreCalc[3]; // 112
-    float ambientLight;         // 128
-    float pad4[3];              // 132->144
+    float VP[16];       // 0 -> 64
+    float camPos[3];    // 64 -> 76
+    float ambientLight; // 76 -> 80
 };
 
 class Scene

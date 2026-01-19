@@ -12,6 +12,7 @@ class Scene;
 class Camera;
 class fpsCounter;
 class Mesh;
+class DistantLight;
 
 class Renderer
 {
@@ -20,10 +21,11 @@ private:
     Shaders::SHADINGMODE currShadingMode_;
     std::map<Shaders::SHADINGMODE, std::unique_ptr<Shaders::Shader>> shaderPrograms_;
     fpsCounter *fps;
-    GLuint uboScene_, uboMat_, uboPerlin_, uboWarp_, uboMesh_;
+    GLuint uboScene_, uboDistantLight_, uboMat_, uboPerlin_, uboWarp_, uboMesh_;
     float rBuffer_, gBuffer_, bBuffer_;
 
     void createShadingPrograms();
+    void updateDistantLightUBO(const DistantLight *dLight);
     void updateSceneUBO(const Scene *scene);
     void updateMaterialUBO(const Materials::Material meshMat);
     void updateMeshUBO(Mesh *mesh);

@@ -51,7 +51,7 @@ public:
     GLuint getVAO() const { return vao_; }
     float *getModelMatrix() { return meshData_.modelMatrix; }
     const float *getModelMatrix() const { return meshData_.modelMatrix; }
-    MeshData &getUBOData() { return meshData_; }
+    const MeshData &getUBOData() const { return meshData_; }
 
     // setters
     void setMaterial(Materials::Material material) { material_ = material; }

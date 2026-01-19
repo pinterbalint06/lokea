@@ -41,6 +41,13 @@ Renderer::Renderer(const std::string &canvasID)
     glBindBuffer(GL_UNIFORM_BUFFER, 0);
     glBindBufferRange(GL_UNIFORM_BUFFER, 0, uboScene_, 0, sizeof(SceneData));
 
+    // distant light ubo
+    glGenBuffers(1, &uboDistantLight_);
+    glBindBuffer(GL_UNIFORM_BUFFER, uboDistantLight_);
+    glBufferData(GL_UNIFORM_BUFFER, sizeof(DistantLightData), NULL, GL_STATIC_DRAW);
+    glBindBuffer(GL_UNIFORM_BUFFER, 0);
+    glBindBufferRange(GL_UNIFORM_BUFFER, 5, uboDistantLight_, 0, sizeof(DistantLightData));
+
     // material ubo
     glGenBuffers(1, &uboMat_);
     glBindBuffer(GL_UNIFORM_BUFFER, uboMat_);
@@ -82,6 +89,10 @@ Renderer::~Renderer()
     if (uboScene_ != 0)
     {
         glDeleteBuffers(1, &uboScene_);
+    }
+    if (uboDistantLight_ != 0)
+    {
+        glDeleteBuffers(1, &uboDistantLight_);
     }
     if (uboMat_ != 0)
     {
@@ -138,6 +149,13 @@ void Renderer::setImageDimensions(int imageW, int imageH)
     glViewport(0, 0, imageW, imageH);
 }
 
+void Renderer::updateDistantLightUBO(const DistantLight *dLight)
+{
+    glBindBuffer(GL_UNIFORM_BUFFER, uboDistantLight_);
+    glBufferSubData(GL_UNIFORM_BUFFER, 0, sizeof(DistantLightData), &dLight->getUBOData());
+    glBindBuffer(GL_UNIFORM_BUFFER, 0);
+}
+
 void Renderer::updateSceneUBO(const Scene *scene)
 {
     SceneData currSceneData;
@@ -147,25 +165,12 @@ void Renderer::updateSceneUBO(const Scene *scene)
     currSceneData.camPos[1] = mainCamera->getYPosition();
     currSceneData.camPos[2] = mainCamera->getZPosition();
     mainCamera->updateViewMatrix();
+    currSceneData.ambientLight = scene->getAmbientLight();
     MathUtils::multiplyMatrix(mainCamera->getViewMatrix(), mainCamera->getProjMatrix(), currSceneData.VP);
 
     // light
     DistantLight *sun = scene->getLight();
-    float ambientLight = scene->getAmbientLight();
-    float lightVec[3];
-    const float *lightDir = sun->getDirection();
-    currSceneData.lightVec[0] = -lightDir[0];
-    currSceneData.lightVec[1] = -lightDir[1];
-    currSceneData.lightVec[2] = -lightDir[2];
-
-    currSceneData.lightColor[0] = sun->getRed();
-    currSceneData.lightColor[1] = sun->getGreen();
-    currSceneData.lightColor[2] = sun->getBlue();
-
-    currSceneData.lightColorPreCalc[0] = sun->getRedCalculated();
-    currSceneData.lightColorPreCalc[1] = sun->getGreenCalculated();
-    currSceneData.lightColorPreCalc[2] = sun->getBlueCalculated();
-    currSceneData.ambientLight = scene->getAmbientLight();
+    updateDistantLightUBO(sun);
 
     // upload to GPU
     glBindBuffer(GL_UNIFORM_BUFFER, uboScene_);
