@@ -8,6 +8,7 @@
 namespace MathUtils
 {
     constexpr float INV_PI = 0.318309886f;
+    constexpr double TWO_PI = M_PI * 2.0;
 
     inline float dotProduct(const float &x0, const float &y0, const float &x1, const float &y1)
     {

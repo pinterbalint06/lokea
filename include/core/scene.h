@@ -10,6 +10,7 @@ class Mesh;
 struct SceneData
 {
     float ambientLight; // 0 -> 4
+    float pad[3];       // 12 -> 16
 };
 
 class Scene

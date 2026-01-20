@@ -13,6 +13,7 @@
 #include "utils/fpsCounter.h"
 #include "utils/perlin.h"
 #include "core/vertex.h"
+#include "core/texture.h"
 #include <cstring>
 #include <map>
 
@@ -34,61 +35,35 @@ Renderer::Renderer(const std::string &canvasID)
     emscripten_webgl_make_context_current(ctx_);
     glClearColor(rBuffer_, gBuffer_, bBuffer_, 1);
 
+    noTexture_ = new Texture();
+
     // scene ubo
-    glGenBuffers(1, &uboScene_);
-    glBindBuffer(GL_UNIFORM_BUFFER, uboScene_);
-    glBufferData(GL_UNIFORM_BUFFER, sizeof(SceneData), NULL, GL_STATIC_DRAW);
-    glBindBuffer(GL_UNIFORM_BUFFER, 0);
-    glBindBufferRange(GL_UNIFORM_BUFFER, 0, uboScene_, 0, sizeof(SceneData));
+    setupUniformBuffer<SceneData>(uboScene_, 0);
 
     // distant light ubo
-    glGenBuffers(1, &uboDistantLight_);
-    glBindBuffer(GL_UNIFORM_BUFFER, uboDistantLight_);
-    glBufferData(GL_UNIFORM_BUFFER, sizeof(DistantLightData), NULL, GL_STATIC_DRAW);
-    glBindBuffer(GL_UNIFORM_BUFFER, 0);
-    glBindBufferRange(GL_UNIFORM_BUFFER, 5, uboDistantLight_, 0, sizeof(DistantLightData));
+    setupUniformBuffer<DistantLightData>(uboDistantLight_, 5);
 
     // camera ubo
-    glGenBuffers(1, &uboCamera_);
-    glBindBuffer(GL_UNIFORM_BUFFER, uboCamera_);
-    glBufferData(GL_UNIFORM_BUFFER, sizeof(CameraData), NULL, GL_STATIC_DRAW);
-    glBindBuffer(GL_UNIFORM_BUFFER, 0);
-    glBindBufferRange(GL_UNIFORM_BUFFER, 6, uboCamera_, 0, sizeof(CameraData));
+    setupUniformBuffer<CameraData>(uboCamera_, 6);
 
     // material ubo
-    glGenBuffers(1, &uboMat_);
-    glBindBuffer(GL_UNIFORM_BUFFER, uboMat_);
-    glBufferData(GL_UNIFORM_BUFFER, sizeof(Materials::MaterialData), NULL, GL_STATIC_DRAW);
-    glBindBuffer(GL_UNIFORM_BUFFER, 0);
-    glBindBufferRange(GL_UNIFORM_BUFFER, 1, uboMat_, 0, sizeof(Materials::MaterialData));
+    setupUniformBuffer<Materials::MaterialData>(uboMat_, 1);
 
     // perlin ubo
-    glGenBuffers(1, &uboPerlin_);
-    glBindBuffer(GL_UNIFORM_BUFFER, uboPerlin_);
-    glBufferData(GL_UNIFORM_BUFFER, sizeof(PerlinNoise::PerlinParameters), NULL, GL_STATIC_DRAW);
-    glBindBuffer(GL_UNIFORM_BUFFER, 0);
-    glBindBufferRange(GL_UNIFORM_BUFFER, 2, uboPerlin_, 0, sizeof(PerlinNoise::PerlinParameters));
+    setupUniformBuffer<PerlinNoise::PerlinParameters>(uboPerlin_, 2);
 
     // warp ubo
-    glGenBuffers(1, &uboWarp_);
-    glBindBuffer(GL_UNIFORM_BUFFER, uboWarp_);
-    glBufferData(GL_UNIFORM_BUFFER, sizeof(PerlinNoise::PerlinParameters), NULL, GL_STATIC_DRAW);
-    glBindBuffer(GL_UNIFORM_BUFFER, 0);
-    glBindBufferRange(GL_UNIFORM_BUFFER, 3, uboWarp_, 0, sizeof(PerlinNoise::PerlinParameters));
+    setupUniformBuffer<PerlinNoise::PerlinParameters>(uboWarp_, 3);
 
     // mesh ubo
-    glGenBuffers(1, &uboMesh_);
-    glBindBuffer(GL_UNIFORM_BUFFER, uboMesh_);
-    glBufferData(GL_UNIFORM_BUFFER, sizeof(MeshData), NULL, GL_STATIC_DRAW);
-    glBindBuffer(GL_UNIFORM_BUFFER, 0);
-    glBindBufferRange(GL_UNIFORM_BUFFER, 4, uboMesh_, 0, sizeof(MeshData));
+    setupUniformBuffer<MeshData>(uboMesh_, 4);
 
     createShadingPrograms();
     shaderPrograms_[currShadingMode_]->use();
 
     glEnable(GL_DEPTH_TEST);
 
-    fps = new fpsCounter("fps");
+    fps_ = new fpsCounter("fps_");
 }
 
 Renderer::~Renderer()
@@ -117,13 +92,36 @@ Renderer::~Renderer()
     {
         glDeleteBuffers(1, &uboMesh_);
     }
-    if (fps)
+    if (fps_)
     {
-        delete fps;
+        delete fps_;
     }
+    if (noTexture_)
+    {
+        delete noTexture_;
+    }
+
     if (ctx_)
     {
         emscripten_webgl_destroy_context(ctx_);
+    }
+}
+
+template <typename UBODataStruct>
+void Renderer::setupUniformBuffer(GLuint &ubo, int bindingSlot)
+{
+    if (ubo == 0)
+    {
+        // generate buffer ID
+        glGenBuffers(1, &ubo);
+        // bind to buffer
+        glBindBuffer(GL_UNIFORM_BUFFER, ubo);
+        // set buffer size and fill with NULL
+        glBufferData(GL_UNIFORM_BUFFER, sizeof(UBODataStruct), NULL, GL_STATIC_DRAW);
+        // link the buffer to the UBO binding slot
+        glBindBufferRange(GL_UNIFORM_BUFFER, bindingSlot, ubo, 0, sizeof(UBODataStruct));
+        // unbind buffer
+        glBindBuffer(GL_UNIFORM_BUFFER, 0);
     }
 }
 
@@ -197,6 +195,10 @@ void Renderer::updateMaterialUBO(const Materials::Material meshMat)
         meshMat.getTexture()->bind(0);
         useTexture = 1;
     }
+    else
+    {
+        noTexture_->bind(0);
+    }
 
     shaderPrograms_[currShadingMode_]->setUniformInt("uUseTexture", useTexture);
 
@@ -220,7 +222,7 @@ void Renderer::updateMeshUBO(Mesh *mesh)
 
 void Renderer::render(const Scene *scene)
 {
-    fps->update();
+    fps_->update();
     // clear buffers
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 

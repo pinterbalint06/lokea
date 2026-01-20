@@ -53,6 +53,15 @@ namespace Shaders
         return completeBuffer.str();
     }
 
+    void Shader::bindUniformBlock(const std::string &uboName, int bindingSlot)
+    {
+        GLuint uboIndex = glGetUniformBlockIndex(programID_, uboName.c_str());
+        if (uboIndex != GL_INVALID_INDEX)
+        {
+            glUniformBlockBinding(programID_, uboIndex, bindingSlot);
+        }
+    }
+
     Shader::Shader(const char *pathToVertex, const char *pathToFragment)
     {
         std::string vCode;
@@ -107,46 +116,13 @@ namespace Shaders
         glDeleteShader(vertexShader);
         glDeleteShader(fragmentShader);
 
-        GLuint uniformBlockIndexScene = glGetUniformBlockIndex(programID_, "SceneData");
-        if (uniformBlockIndexScene != GL_INVALID_INDEX)
-        {
-            glUniformBlockBinding(programID_, uniformBlockIndexScene, 0);
-        }
-
-        GLuint uniformBlockIndexMat = glGetUniformBlockIndex(programID_, "MaterialData");
-        if (uniformBlockIndexMat != GL_INVALID_INDEX)
-        {
-            glUniformBlockBinding(programID_, uniformBlockIndexMat, 1);
-        }
-
-        GLuint uniformBlockIndexPerlin = glGetUniformBlockIndex(programID_, "PerlinData");
-        if (uniformBlockIndexPerlin != GL_INVALID_INDEX)
-        {
-            glUniformBlockBinding(programID_, uniformBlockIndexPerlin, 2);
-        }
-        GLuint uniformBlockIndexWarp = glGetUniformBlockIndex(programID_, "PerlinWarpData");
-        if (uniformBlockIndexWarp != GL_INVALID_INDEX)
-        {
-            glUniformBlockBinding(programID_, uniformBlockIndexWarp, 3);
-        }
-
-        GLuint uniformBlockIndexMesh = glGetUniformBlockIndex(programID_, "MeshData");
-        if (uniformBlockIndexMesh != GL_INVALID_INDEX)
-        {
-            glUniformBlockBinding(programID_, uniformBlockIndexMesh, 4);
-        }
-
-        GLuint uniformBlockIndexDLight = glGetUniformBlockIndex(programID_, "DistantLightData");
-        if (uniformBlockIndexDLight != GL_INVALID_INDEX)
-        {
-            glUniformBlockBinding(programID_, uniformBlockIndexDLight, 5);
-        }
-
-        GLuint uniformBlockIndexCamera = glGetUniformBlockIndex(programID_, "CameraData");
-        if (uniformBlockIndexCamera != GL_INVALID_INDEX)
-        {
-            glUniformBlockBinding(programID_, uniformBlockIndexCamera, 6);
-        }
+        bindUniformBlock("SceneData", 0);
+        bindUniformBlock("MaterialData", 1);
+        bindUniformBlock("PerlinData", 2);
+        bindUniformBlock("PerlinWarpData", 3);
+        bindUniformBlock("MeshData", 4);
+        bindUniformBlock("DistantLightData", 5);
+        bindUniformBlock("CameraData", 6);
 
         use();
         setUniformInt("uTexture0", 0);

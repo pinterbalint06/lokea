@@ -1,5 +1,7 @@
 #include "core/camera.h"
 #include "utils/mathUtils.h"
+#include <cmath>
+#include <algorithm>
 
 Camera::Camera()
 {
@@ -44,8 +46,21 @@ void Camera::setRotation(float pitch, float yaw)
 
 void Camera::rotate(float dPitch, float dYaw)
 {
-    pitch_ += dPitch;
+    // clamp to [-pi/2;pi/2]
+    pitch_ = std::clamp<float>(pitch_ + dPitch, -M_PI_2, M_PI_2);
     yaw_ += dYaw;
+    // wrap to [-2pi;2pi]
+    if (yaw_ >= MathUtils::TWO_PI)
+    {
+        yaw_ -= MathUtils::TWO_PI;
+    }
+    else
+    {
+        if (yaw_ <= -MathUtils::TWO_PI)
+        {
+            yaw_ += MathUtils::TWO_PI;
+        }
+    }
     newView_ = true;
 }
 

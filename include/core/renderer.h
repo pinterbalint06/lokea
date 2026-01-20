@@ -3,7 +3,6 @@
 
 #include "core/shader.h"
 #include "core/vertex.h"
-#include <GLES3/gl3.h>
 #include <string>
 #include <map>
 
@@ -13,6 +12,9 @@ class Camera;
 class fpsCounter;
 class Mesh;
 class DistantLight;
+class Texture;
+
+typedef unsigned int GLuint;
 
 class Renderer
 {
@@ -20,11 +22,16 @@ private:
     int ctx_;
     Shaders::SHADINGMODE currShadingMode_;
     std::map<Shaders::SHADINGMODE, std::unique_ptr<Shaders::Shader>> shaderPrograms_;
-    fpsCounter *fps;
+    fpsCounter *fps_;
+    Texture *noTexture_;
     GLuint uboScene_, uboDistantLight_, uboCamera_, uboMat_, uboPerlin_, uboWarp_, uboMesh_;
     float rBuffer_, gBuffer_, bBuffer_;
 
+    template <typename UBODataStruct>
+    void setupUniformBuffer(GLuint &ubo, int bindingSlot);
+
     void createShadingPrograms();
+
     void updateDistantLightUBO(const DistantLight *dLight);
     void updateCameraUBO(Camera *camera);
     void updateSceneUBO(const Scene *scene);

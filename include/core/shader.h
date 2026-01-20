@@ -17,6 +17,7 @@ namespace Shaders
         GLuint programID_;
         GLuint compileShader(const char *src, GLuint type);
         std::string loadHelperFiles();
+        void bindUniformBlock(const std::string &uboName, int bindingSlot);
 
     public:
         Shader(const char *pathToVertex, const char *pathToFragment);
