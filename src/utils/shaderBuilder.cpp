@@ -1,8 +1,11 @@
 #include <memory>
 #include <vector>
 #include <string>
-#include <utils/fileUtils.h>
-#include <utils/shaderBuilder.h>
+
+#include "core/rendering/shader.h"
+
+#include "utils/fileUtils.h"
+#include "utils/shaderBuilder.h"
 
 namespace
 {

@@ -1,5 +1,6 @@
-#include <emscripten/emscripten.h>
 #include <emscripten/bind.h>
+#include <string>
+
 #include "core/engine.h"
 
 EMSCRIPTEN_BINDINGS(engineBinding)

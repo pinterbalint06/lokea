@@ -1,12 +1,9 @@
 #ifndef TEXTURE_H
 #define TEXTURE_H
 
-#include <emscripten/emscripten.h>
-#include <emscripten/bind.h>
 #include <cstdint>
 #include <string>
-
-typedef unsigned int GLuint;
+#include <GLES3/gl3.h>
 
 class Texture
 {

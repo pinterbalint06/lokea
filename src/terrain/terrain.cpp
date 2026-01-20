@@ -1,10 +1,14 @@
-#include "core/mesh.h"
-#include "core/shader.h"
-#include "terrain/terrain.h"
 #include <cstring>
 #include <cmath>
+
+#include "core/rendering/shader.h"
+#include "core/rendering/bindingSlots.h"
+
+#include "core/resources/mesh.h"
+
+#include "terrain/terrain.h"
+
 #include "utils/perlin.h"
-#include "core/bindingSlots.h"
 
 Terrain::Terrain(int size) : Mesh(size * size, (size - 1) * (size - 1) * 6)
 {
@@ -59,10 +63,10 @@ void Terrain::updateNoiseSeed(int seed, PerlinNoise::Perlin *&noise)
         if (parameters.seed != seed)
         {
             parameters.seed = seed;
-            GLuint *uboLoc = noise->getUBOloc();
+            GLuint uboLoc = noise->getUBOloc();
             delete noise;
             noise = new PerlinNoise::Perlin(parameters);
-            if (uboLoc)
+            if (uboLoc != 0)
             {
                 noise->setUpGPU(uboLoc);
             }
@@ -208,7 +212,7 @@ void Terrain::setTextureSpacing(float textureSpacing)
     setUpOpenGL();
 }
 
-void Terrain::setUpNoiseForGPU(GLuint *perlinLoc, GLuint *warpLoc)
+void Terrain::setUpNoiseForGPU(GLuint perlinLoc, GLuint warpLoc)
 {
     perlinNoise_->setUpGPU(perlinLoc);
     warpNoise_->setUpGPU(warpLoc);

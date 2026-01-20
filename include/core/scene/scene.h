@@ -3,9 +3,11 @@
 
 #include <vector>
 
-class Camera;
-class DistantLight;
-class Mesh;
+#include "core/scene/distantLight.h"
+
+// Forward declarations
+class Camera; // defined in "core/scene/camera.h"
+class Mesh;   // defined in "core/resources/mesh.h"
 
 struct SceneData
 {

@@ -1,9 +1,10 @@
-#include "core/texture.h"
-#include <cstdint>
-#include <string>
 #include <emscripten/html5.h>
 #include <emscripten/emscripten.h>
 #include <GLES3/gl3.h>
+#include <cstdint>
+#include <string>
+
+#include "core/resources/texture.h"
 
 namespace
 {

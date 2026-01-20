@@ -1,11 +1,22 @@
 #ifndef MESH_H
 #define MESH_H
-#include <emscripten/emscripten.h>
-#include "core/material.h"
-#include "core/shader.h"
-#include "core/vertex.h"
+
 #include <cstdint>
 #include <GLES3/gl3.h>
+
+#include "core/resources/material.h"
+#include "core/resources/vertex.h"
+
+// Forward declarations
+namespace Shaders
+{
+    class Shader; // defined in "core/rendering/shader.h"
+}
+namespace Materials
+{
+    class Material; // defined in "core/resources/material.h"
+}
+class Vertex; // defined in "core/resources/vertex.h"
 
 struct MeshData
 {

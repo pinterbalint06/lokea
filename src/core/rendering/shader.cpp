@@ -1,9 +1,8 @@
-#include <core/shader.h>
+#include <emscripten/emscripten.h>
 #include <GLES3/gl3.h>
 #include <string>
-#include <utils/fileUtils.h>
-#include <vector>
-#include <emscripten/emscripten.h>
+
+#include "core/rendering/shader.h"
 
 namespace Shaders
 {

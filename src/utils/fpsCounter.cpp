@@ -1,7 +1,8 @@
-#include <utils/fpsCounter.h>
-#include <emscripten.h>
 #include <emscripten/bind.h>
+#include <emscripten/emscripten.h>
 #include <string>
+
+#include "utils/fpsCounter.h"
 
 FPSCounter::FPSCounter(std::string id)
 {

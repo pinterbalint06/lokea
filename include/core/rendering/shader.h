@@ -1,14 +1,9 @@
 #ifndef SHADER_H
 #define SHADER_H
 
-#include "utils/mathUtils.h"
-#include "core/distantLight.h"
-#include "core/material.h"
-#include "core/vertex.h"
-#include "core/texture.h"
-#include <GLES3/gl3.h>
 #include <string>
 #include <map>
+#include <GLES3/gl3.h>
 
 namespace Shaders
 {

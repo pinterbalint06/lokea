@@ -1,14 +1,22 @@
-#include <terrain/terrainEngine.h>
-#include <core/engine.h>
-#include <core/vertex.h>
-#include <core/renderer.h>
-#include <terrain/terrain.h>
 #include <string>
+
+#include "core/rendering/renderer.h"
+#include "core/rendering/uniformBufferObject.h"
+
+#include "core/resources/vertex.h"
+#include "core/resources/material.h"
+
+#include "core/engine.h"
+
+#include "terrain/terrain.h"
+#include "terrain/terrainEngine.h"
 
 TerrainEngine::TerrainEngine(const std::string &canvID, int size) : Engine(canvID)
 {
     terrain_ = new Terrain(size);
-    terrain_->setUpNoiseForGPU(renderer_->getPerlinUBOloc(), renderer_->getWarpUBOloc());
+    uboPerlin_ = std::make_unique<UniformBufferObject<PerlinNoise::PerlinParameters>>(BindingSlots::UBO::PERLIN_DATA);
+    uboWarp_ = std::make_unique<UniformBufferObject<PerlinNoise::PerlinParameters>>(BindingSlots::UBO::PERLIN_WARP_DATA);
+    terrain_->setUpNoiseForGPU(uboPerlin_->getID(), uboWarp_->getID());
     terrain_->setMaterial(Materials::Material::Grass());
     terrain_->regenerate();
     scene_->addMesh(terrain_);

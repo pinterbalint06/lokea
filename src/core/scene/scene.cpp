@@ -1,7 +1,8 @@
-#include "core/scene.h"
-#include "core/distantLight.h"
-#include "core/mesh.h"
-#include "core/camera.h"
+#include "core/scene/scene.h"
+#include "core/scene/distantLight.h"
+#include "core/scene/camera.h"
+
+#include "core/resources/mesh.h"
 
 Scene::Scene()
 {

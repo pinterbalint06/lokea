@@ -1,14 +1,18 @@
-#include "core/engine.h"
-#include "core/mesh.h"
-#include "core/scene.h"
-#include "core/renderer.h"
-#include "core/vertex.h"
-#include "core/texture.h"
-#include "utils/shaderBuilder.h"
 #include <string>
 #include <vector>
-#include <memory>
 #include <emscripten/html5.h>
+
+#include "core/rendering/renderer.h"
+
+#include "core/scene/scene.h"
+
+#include "core/resources/mesh.h"
+#include "core/resources/texture.h"
+#include "core/resources/material.h"
+
+#include "core/engine.h"
+
+#include "utils/shaderBuilder.h"
 
 Engine::Engine(std::string canvID)
 {

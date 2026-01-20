@@ -1,12 +1,26 @@
 #ifndef TERRAIN_ENGINE_H
 #define TERRAIN_ENGINE_H
 
-#include "core/scene.h"
-#include "terrain/terrain.h"
-#include "core/material.h"
-#include <core/engine.h>
-#include "utils/perlin.h"
 #include <string>
+#include <memory>
+
+#include "core/rendering/uniformBufferObject.h"
+
+#include "core/scene/scene.h"
+
+#include "core/engine.h"
+
+#include "terrain/terrain.h"
+
+// Forward declarations
+namespace Materials
+{
+    class Material; // defined in "core/resources/material.h"
+}
+namespace PerlinNoise
+{
+    struct PerlinParameters; // defined in "utils/perlin.h"
+}
 
 class Mesh;
 
@@ -16,6 +30,9 @@ private:
     Terrain *terrain_;
     float cameraHeight_;
     int cameraLocation_;
+
+    std::unique_ptr<UniformBufferObject<PerlinNoise::PerlinParameters>> uboPerlin_;
+    std::unique_ptr<UniformBufferObject<PerlinNoise::PerlinParameters>> uboWarp_;
 
     void calcNewCamLoc();
 

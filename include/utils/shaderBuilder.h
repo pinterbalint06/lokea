@@ -4,7 +4,12 @@
 #include <memory>
 #include <vector>
 #include <string>
-#include <core/shader.h>
+
+// Forward declaration
+namespace Shaders
+{
+    class Shader; // defined in "core/rendering/shader.h"
+}
 
 namespace ShaderBuilder
 {

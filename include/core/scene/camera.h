@@ -1,11 +1,6 @@
 #ifndef CAMERA_H
 #define CAMERA_H
 
-#include <cmath>
-#include <algorithm>
-#include <cstring>
-#include <cstdlib>
-
 struct CameraData
 {
     float VP[16]; // 0 -> 64

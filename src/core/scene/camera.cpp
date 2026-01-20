@@ -1,7 +1,10 @@
-#include "core/camera.h"
-#include "utils/mathUtils.h"
 #include <cmath>
 #include <algorithm>
+#include <emscripten/emscripten.h>
+
+#include "core/scene/camera.h"
+
+#include "core/math/mathUtils.h"
 
 Camera::Camera()
 {

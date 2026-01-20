@@ -1,10 +1,12 @@
-#include "utils/perlin.h"
-#include <emscripten/emscripten.h>
+#include <GLES3/gl3.h>
 #include <cmath>
 #include <cstdint>
-#include "utils/mathUtils.h"
-#include "core/vector.h"
-#include <GLES3/gl3.h>
+#include <emscripten/emscripten.h>
+
+#include "core/math//mathUtils.h"
+#include "core/math/vector.h"
+
+#include "utils/perlin.h"
 
 namespace PerlinNoise
 {
@@ -54,7 +56,7 @@ namespace PerlinNoise
 
         permuTableTex_ = 0;
         gradientsTex_ = 0;
-        parametersUBO_ = nullptr;
+        parametersUBO_ = 0;
     }
 
     Perlin::~Perlin()
@@ -79,9 +81,9 @@ namespace PerlinNoise
         }
     }
 
-    void Perlin::setUpGPU(GLuint *uboLoc)
+    void Perlin::setUpGPU(GLuint uboLoc)
     {
-        if (uboLoc != nullptr)
+        if (uboLoc != 0)
         {
             parametersUBO_ = uboLoc;
             isGPUSet_ = true;
@@ -221,9 +223,9 @@ namespace PerlinNoise
 
     void Perlin::uploadParametersToGPU()
     {
-        if (parametersUBO_)
+        if (parametersUBO_ != 0)
         {
-            glBindBuffer(GL_UNIFORM_BUFFER, *parametersUBO_);
+            glBindBuffer(GL_UNIFORM_BUFFER, parametersUBO_);
             glBufferSubData(GL_UNIFORM_BUFFER, 0, sizeof(PerlinParameters), &params_);
             glBindBuffer(GL_UNIFORM_BUFFER, 0);
         }

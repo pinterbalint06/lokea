@@ -1,6 +1,7 @@
-#include <core/material.h>
-#include <core/texture.h>
 #include <algorithm>
+
+#include "core/resources/material.h"
+#include "core/resources/texture.h"
 
 namespace Materials
 {

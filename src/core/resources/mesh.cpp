@@ -1,9 +1,13 @@
-#include "core/mesh.h"
-#include "core/vertex.h"
-#include "utils/mathUtils.h"
-#include "core/shader.h"
-#include <cstdint>
 #include <GLES3/gl3.h>
+#include <cstdint>
+#include <emscripten/emscripten.h>
+
+#include "core/rendering/shader.h"
+
+#include "core/resources/mesh.h"
+#include "core/resources/vertex.h"
+
+#include "core/math/mathUtils.h"
 
 Mesh::Mesh(int vertexCount, int indexCount) : material_(Materials::Material::Error())
 {

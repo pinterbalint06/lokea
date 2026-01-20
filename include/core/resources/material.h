@@ -1,8 +1,10 @@
 #ifndef MATERIAL_H
 #define MATERIAL_H
+
 #include <cmath>
 
-class Texture;
+// Forward declaration
+class Texture; // defined in "core/resources/texture.h"
 
 namespace Materials
 {

@@ -1,7 +1,9 @@
 #ifndef VECTOR_H
 #define VECTOR_H
-#include "utils/mathUtils.h"
+
 #include <cmath>
+
+#include "core/math/mathUtils.h"
 
 /**
  * @brief It's a vector in 2D space.
