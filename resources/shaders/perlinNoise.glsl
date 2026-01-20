@@ -1,3 +1,5 @@
+#line 1
+
 precision highp float;
 precision highp int;
 precision mediump usampler2D;

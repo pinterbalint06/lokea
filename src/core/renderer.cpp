@@ -126,16 +126,23 @@ void Renderer::setupShader(std::unique_ptr<Shaders::Shader> &shader)
 
 void Renderer::createShadingPrograms()
 {
-    shaderPrograms_[Shaders::SHADINGMODE::GOURAUD] =
-        std::make_unique<Shaders::Shader>("shaders/gouraud.vert", "shaders/gouraud.frag");
-    setupShader(shaderPrograms_[Shaders::SHADINGMODE::GOURAUD]);
-
+    std::vector<std::string> helpers = {
+        "shaders/UBOs.glsl",
+        "shaders/phongReflectionModel.glsl",
+        "shaders/perlinNoise.glsl"};
     shaderPrograms_[Shaders::SHADINGMODE::PHONG] =
-        std::make_unique<Shaders::Shader>("shaders/phong.vert", "shaders/phong.frag");
+        std::make_unique<Shaders::Shader>("shaders/phong.vert", "shaders/phong.frag", helpers);
     setupShader(shaderPrograms_[Shaders::SHADINGMODE::PHONG]);
 
+    // "shaders/perlinNoise.glsl" is not needed in gouraud or noshader
+    helpers.pop_back();
+
+    shaderPrograms_[Shaders::SHADINGMODE::GOURAUD] =
+        std::make_unique<Shaders::Shader>("shaders/gouraud.vert", "shaders/gouraud.frag", helpers);
+    setupShader(shaderPrograms_[Shaders::SHADINGMODE::GOURAUD]);
+
     shaderPrograms_[Shaders::SHADINGMODE::NO_SHADING] =
-        std::make_unique<Shaders::Shader>("shaders/noShader.vert", "shaders/noShader.frag");
+        std::make_unique<Shaders::Shader>("shaders/noShader.vert", "shaders/noShader.frag", helpers);
     setupShader(shaderPrograms_[Shaders::SHADINGMODE::NO_SHADING]);
 }
 

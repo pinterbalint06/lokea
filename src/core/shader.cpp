@@ -1,9 +1,7 @@
 #include <core/shader.h>
 #include <GLES3/gl3.h>
 #include <string>
-#include <fstream>
-#include <sstream>
-#include <iostream>
+#include <utils/fileUtils.h>
 #include <vector>
 #include <emscripten/emscripten.h>
 
@@ -26,86 +24,58 @@ namespace Shaders
         return shader;
     }
 
-    std::string Shader::loadHelperFiles()
+    std::string Shader::loadHelperFiles(const std::vector<std::string> &helperPaths)
     {
-        std::stringstream completeBuffer;
-        std::vector<std::string> helpers = {
-            "shaders/UBOs.glsl",
-            "shaders/phongReflectionModel.glsl",
-            "shaders/perlinNoise.glsl"};
+        std::string helpers = "";
 
-        for (int i = 0; i < helpers.size(); i++)
+        for (int i = 0; i < helperPaths.size(); i++)
         {
-            std::ifstream file;
-
-            file.exceptions(std::ifstream::failbit | std::ifstream::badbit);
-            try
+            std::string helper = FileUtils::readFile(helperPaths[i]);
+            int lineLocatin = helper.find("#line 1");
+            if (lineLocatin != -1)
             {
-                file.open(helpers[i]);
-                completeBuffer << file.rdbuf() << "\n";
-                file.close();
+                // + 7 so it is added after #line 1
+                helper.insert(lineLocatin + 7, " " + std::to_string(i + 1));
             }
-            catch (std::ifstream::failure e)
-            {
-                EM_ASM({ throw("Sikertelen shader helper fájl beolvasás: " + UTF8ToString($0)); }, helpers[i].c_str());
-            }
+            helpers += helper + "\n";
         }
-        return completeBuffer.str();
+        return helpers;
     }
 
-    void Shader::bindUniformBlock(const std::string &uboName, int bindingSlot)
+    void Shader::insertHelpers(std::string &insertInto, const std::string &helper)
     {
-        GLuint uboIndex = glGetUniformBlockIndex(programID_, uboName.c_str());
-        if (uboIndex != GL_INVALID_INDEX)
-        {
-            glUniformBlockBinding(programID_, uboIndex, bindingSlot);
-        }
+        int versionLocation = insertInto.find("#version");
+        int lineAfterVersion = insertInto.find("\n", versionLocation);
+        insertInto.insert(lineAfterVersion + 1, "\n" + helper + "\n");
     }
 
-    Shader::Shader(const char *pathToVertex, const char *pathToFragment)
+    Shader::Shader(const char *pathToVertex, const char *pathToFragment, const std::vector<std::string> &helperPaths)
     {
-        std::string vCode;
-        std::string fCode;
-        std::ifstream vFile;
-        std::ifstream fFile;
+        // read files
+        std::string vCode = FileUtils::readFile(pathToVertex);
+        std::string fCode = FileUtils::readFile(pathToFragment);
+        std::string helpers = loadHelperFiles(helperPaths);
 
-        vFile.exceptions(std::ifstream::failbit | std::ifstream::badbit);
-        fFile.exceptions(std::ifstream::failbit | std::ifstream::badbit);
-        try
-        {
-            vFile.open(pathToVertex);
-            fFile.open(pathToFragment);
-            std::stringstream vBuffer, fBuffer;
-            vBuffer << vFile.rdbuf();
-            fBuffer << fFile.rdbuf();
-            vFile.close();
-            fFile.close();
-            vCode = vBuffer.str();
-            fCode = fBuffer.str();
-        }
-        catch (std::ifstream::failure e)
-        {
-            EM_ASM(
-                throw("Sikertelen shader fájl beolvasás"));
-        }
+        // insert helpers
+        insertHelpers(vCode, helpers);
+        insertHelpers(fCode, helpers);
 
-        std::string helperFiles = loadHelperFiles();
-        int vFirstEndOfLine = vCode.find("\n");
-        vCode.insert(vFirstEndOfLine + 1, helperFiles);
-        int fFirstEndOfLine = fCode.find("\n");
-        fCode.insert(fFirstEndOfLine + 1, helperFiles);
+        // compile shaders
+        GLuint vertexShader = compileShader(vCode.c_str(), GL_VERTEX_SHADER);
+        GLuint fragmentShader = compileShader(fCode.c_str(), GL_FRAGMENT_SHADER);
 
-        const char *vertSrc = vCode.c_str();
-        const char *fragSrc = fCode.c_str();
-        GLuint vertexShader = compileShader(vertSrc, GL_VERTEX_SHADER);
-        GLuint fragmentShader = compileShader(fragSrc, GL_FRAGMENT_SHADER);
-
-        int success;
+        // create program
         programID_ = glCreateProgram();
+
+        // attach shaders to program
         glAttachShader(programID_, vertexShader);
         glAttachShader(programID_, fragmentShader);
+
+        // link program
         glLinkProgram(programID_);
 
+        // get success
+        int success;
         glGetProgramiv(programID_, GL_LINK_STATUS, &success);
         if (!success)
         {
@@ -113,6 +83,8 @@ namespace Shaders
             glGetProgramInfoLog(programID_, 512, NULL, infoLog);
             EM_ASM({ throw("Sikertelen shader összekapcsolás: " + UTF8ToString($0)); }, infoLog);
         }
+
+        // delete shaders
         glDeleteShader(vertexShader);
         glDeleteShader(fragmentShader);
     }
@@ -130,9 +102,33 @@ namespace Shaders
         glUseProgram(programID_);
     }
 
-    void Shader::setUniformInt(std::string variableName, int value)
+    void Shader::bindUniformBlock(const std::string &uboName, int bindingSlot)
     {
-        int uniformLoc = glGetUniformLocation(programID_, variableName.c_str());
+        GLuint uboIndex = glGetUniformBlockIndex(programID_, uboName.c_str());
+        if (uboIndex != GL_INVALID_INDEX)
+        {
+            glUniformBlockBinding(programID_, uboIndex, bindingSlot);
+        }
+    }
+
+    int Shader::getUniformLocation(const std::string &uniformName)
+    {
+        int location;
+        if (uniformLocCache_.contains(uniformName))
+        {
+            location = uniformLocCache_[uniformName];
+        }
+        else
+        {
+            location = glGetUniformLocation(programID_, uniformName.c_str());
+            uniformLocCache_[uniformName] = location;
+        }
+        return location;
+    }
+
+    void Shader::setUniformInt(const std::string &uniformName, int value)
+    {
+        int uniformLoc = getUniformLocation(uniformName);
         if (uniformLoc != -1)
         {
             glUniform1i(uniformLoc, value);

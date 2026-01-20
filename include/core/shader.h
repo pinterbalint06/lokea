@@ -8,6 +8,7 @@
 #include "core/texture.h"
 #include <GLES3/gl3.h>
 #include <string>
+#include <map>
 
 namespace Shaders
 {
@@ -15,18 +16,21 @@ namespace Shaders
     {
     private:
         GLuint programID_;
+        std::map<std::string, int> uniformLocCache_;
         GLuint compileShader(const char *src, GLuint type);
-        std::string loadHelperFiles();
+        std::string loadHelperFiles(const std::vector<std::string> &helperPaths);
+        void insertHelpers(std::string &insertInto, const std::string &helper);
+        int getUniformLocation(const std::string &uniformName);
 
     public:
-        Shader(const char *pathToVertex, const char *pathToFragment);
+        Shader(const char *pathToVertex, const char *pathToFragment, const std::vector<std::string> &helperPaths = {});
         ~Shader();
         void use();
 
         GLuint getProgramID() { return programID_; }
 
         void bindUniformBlock(const std::string &uboName, int bindingSlot);
-        void setUniformInt(std::string variableName, int value);
+        void setUniformInt(const std::string &variableName, int value);
     };
 
     /// @brief The SHADINGMODE enum for selecting shading algorithms
