@@ -3,13 +3,14 @@
 
 #include "core/shader.h"
 #include "core/vertex.h"
+#include "core/bindingSlots.h"
 #include <string>
 #include <map>
 
 class Clipper;
 class Scene;
 class Camera;
-class fpsCounter;
+class FPSCounter;
 class Mesh;
 class DistantLight;
 class Texture;
@@ -22,14 +23,15 @@ private:
     int ctx_;
     Shaders::SHADINGMODE currShadingMode_;
     std::map<Shaders::SHADINGMODE, std::unique_ptr<Shaders::Shader>> shaderPrograms_;
-    fpsCounter *fps_;
-    Texture *noTexture_;
+    std::unique_ptr<FPSCounter> fps_;
+    std::unique_ptr<Texture> noTexture_;
     GLuint uboScene_, uboDistantLight_, uboCamera_, uboMat_, uboPerlin_, uboWarp_, uboMesh_;
     float rBuffer_, gBuffer_, bBuffer_;
 
     template <typename UBODataStruct>
-    void setupUniformBuffer(GLuint &ubo, int bindingSlot);
+    void setupUniformBuffer(GLuint &ubo, BindingSlots::UBO bindingSlot);
 
+    void setupShader(std::unique_ptr<Shaders::Shader> &shader);
     void createShadingPrograms();
 
     void updateDistantLightUBO(const DistantLight *dLight);

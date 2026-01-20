@@ -3,14 +3,14 @@
 #include <emscripten/bind.h>
 #include <string>
 
-fpsCounter::fpsCounter(std::string id)
+FPSCounter::FPSCounter(std::string id)
 {
     id_ = id;
     frameCount_ = 0;
     lastTime_ = emscripten_get_now();
 }
 
-void fpsCounter::update()
+void FPSCounter::update()
 {
     frameCount_++;
     double currentTime = emscripten_get_now();

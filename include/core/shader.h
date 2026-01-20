@@ -17,7 +17,6 @@ namespace Shaders
         GLuint programID_;
         GLuint compileShader(const char *src, GLuint type);
         std::string loadHelperFiles();
-        void bindUniformBlock(const std::string &uboName, int bindingSlot);
 
     public:
         Shader(const char *pathToVertex, const char *pathToFragment);
@@ -26,8 +25,10 @@ namespace Shaders
 
         GLuint getProgramID() { return programID_; }
 
+        void bindUniformBlock(const std::string &uboName, int bindingSlot);
         void setUniformInt(std::string variableName, int value);
     };
+
     /// @brief The SHADINGMODE enum for selecting shading algorithms
     enum SHADINGMODE
     {

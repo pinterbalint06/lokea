@@ -4,6 +4,7 @@
 #include <cstring>
 #include <cmath>
 #include "utils/perlin.h"
+#include "core/bindingSlots.h"
 
 Terrain::Terrain(int size) : Mesh(size * size, (size - 1) * (size - 1) * 6)
 {
@@ -224,16 +225,16 @@ void Terrain::setDomainWarp(bool domainWarp)
 
 void Terrain::prepareRender(Shaders::Shader *shader)
 {
-    glActiveTexture(GL_TEXTURE5);
+    glActiveTexture(GL_TEXTURE0 + (int)BindingSlots::Texture::NOISE_PERMUTATION_TABLE);
     glBindTexture(GL_TEXTURE_2D, getNoisePermGPULoc());
 
-    glActiveTexture(GL_TEXTURE6);
+    glActiveTexture(GL_TEXTURE0 + (int)BindingSlots::Texture::NOISE_GRADIENTS);
     glBindTexture(GL_TEXTURE_2D, getNoiseGradGPULoc());
 
-    glActiveTexture(GL_TEXTURE7);
+    glActiveTexture(GL_TEXTURE0 + (int)BindingSlots::Texture::WARP_PERMUTATION_TABLE);
     glBindTexture(GL_TEXTURE_2D, getWarpPermGPULoc());
 
-    glActiveTexture(GL_TEXTURE8);
+    glActiveTexture(GL_TEXTURE0 + (int)BindingSlots::Texture::WARP_GRADIENTS);
     glBindTexture(GL_TEXTURE_2D, getWarpGradGPULoc());
 
     shader->setUniformInt("uUseDomainWarp", domainWarp_);

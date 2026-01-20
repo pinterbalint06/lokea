@@ -14,6 +14,7 @@
 #include "utils/perlin.h"
 #include "core/vertex.h"
 #include "core/texture.h"
+#include "core/bindingSlots.h"
 #include <cstring>
 #include <map>
 
@@ -35,35 +36,23 @@ Renderer::Renderer(const std::string &canvasID)
     emscripten_webgl_make_context_current(ctx_);
     glClearColor(rBuffer_, gBuffer_, bBuffer_, 1);
 
-    noTexture_ = new Texture();
+    noTexture_ = std::make_unique<Texture>();
 
-    // scene ubo
-    setupUniformBuffer<SceneData>(uboScene_, 0);
-
-    // distant light ubo
-    setupUniformBuffer<DistantLightData>(uboDistantLight_, 5);
-
-    // camera ubo
-    setupUniformBuffer<CameraData>(uboCamera_, 6);
-
-    // material ubo
-    setupUniformBuffer<Materials::MaterialData>(uboMat_, 1);
-
-    // perlin ubo
-    setupUniformBuffer<PerlinNoise::PerlinParameters>(uboPerlin_, 2);
-
-    // warp ubo
-    setupUniformBuffer<PerlinNoise::PerlinParameters>(uboWarp_, 3);
-
-    // mesh ubo
-    setupUniformBuffer<MeshData>(uboMesh_, 4);
+    // setup UBOs
+    setupUniformBuffer<SceneData>(uboScene_, BindingSlots::UBO::SCENE_DATA);
+    setupUniformBuffer<DistantLightData>(uboDistantLight_, BindingSlots::UBO::DISTANT_LIGHT_DATA);
+    setupUniformBuffer<CameraData>(uboCamera_, BindingSlots::UBO::CAMERA_DATA);
+    setupUniformBuffer<Materials::MaterialData>(uboMat_, BindingSlots::UBO::MATERIAL_DATA);
+    setupUniformBuffer<PerlinNoise::PerlinParameters>(uboPerlin_, BindingSlots::UBO::PERLIN_DATA);
+    setupUniformBuffer<PerlinNoise::PerlinParameters>(uboWarp_, BindingSlots::UBO::PERLIN_WARP_DATA);
+    setupUniformBuffer<MeshData>(uboMesh_, BindingSlots::UBO::MESH_DATA);
 
     createShadingPrograms();
     shaderPrograms_[currShadingMode_]->use();
 
     glEnable(GL_DEPTH_TEST);
 
-    fps_ = new fpsCounter("fps_");
+    fps_ = std::make_unique<FPSCounter>("fps");
 }
 
 Renderer::~Renderer()
@@ -92,14 +81,6 @@ Renderer::~Renderer()
     {
         glDeleteBuffers(1, &uboMesh_);
     }
-    if (fps_)
-    {
-        delete fps_;
-    }
-    if (noTexture_)
-    {
-        delete noTexture_;
-    }
 
     if (ctx_)
     {
@@ -108,7 +89,7 @@ Renderer::~Renderer()
 }
 
 template <typename UBODataStruct>
-void Renderer::setupUniformBuffer(GLuint &ubo, int bindingSlot)
+void Renderer::setupUniformBuffer(GLuint &ubo, BindingSlots::UBO bindingSlot)
 {
     if (ubo == 0)
     {
@@ -119,20 +100,43 @@ void Renderer::setupUniformBuffer(GLuint &ubo, int bindingSlot)
         // set buffer size and fill with NULL
         glBufferData(GL_UNIFORM_BUFFER, sizeof(UBODataStruct), NULL, GL_STATIC_DRAW);
         // link the buffer to the UBO binding slot
-        glBindBufferRange(GL_UNIFORM_BUFFER, bindingSlot, ubo, 0, sizeof(UBODataStruct));
+        glBindBufferRange(GL_UNIFORM_BUFFER, (int)bindingSlot, ubo, 0, sizeof(UBODataStruct));
         // unbind buffer
         glBindBuffer(GL_UNIFORM_BUFFER, 0);
     }
+}
+
+void Renderer::setupShader(std::unique_ptr<Shaders::Shader> &shader)
+{
+    shader->bindUniformBlock("SceneData", (int)BindingSlots::UBO::SCENE_DATA);
+    shader->bindUniformBlock("MaterialData", (int)BindingSlots::UBO::MATERIAL_DATA);
+    shader->bindUniformBlock("PerlinData", (int)BindingSlots::UBO::PERLIN_DATA);
+    shader->bindUniformBlock("PerlinWarpData", (int)BindingSlots::UBO::PERLIN_WARP_DATA);
+    shader->bindUniformBlock("MeshData", (int)BindingSlots::UBO::MESH_DATA);
+    shader->bindUniformBlock("DistantLightData", (int)BindingSlots::UBO::DISTANT_LIGHT_DATA);
+    shader->bindUniformBlock("CameraData", (int)BindingSlots::UBO::CAMERA_DATA);
+
+    shader->use();
+    shader->setUniformInt("uAlbedo", (int)BindingSlots::Texture::ALBEDO);
+    shader->setUniformInt("uNoisePermutationTable", (int)BindingSlots::Texture::NOISE_PERMUTATION_TABLE);
+    shader->setUniformInt("uNoiseGradients", (int)BindingSlots::Texture::NOISE_GRADIENTS);
+    shader->setUniformInt("uWarpPermutationTable", (int)BindingSlots::Texture::WARP_PERMUTATION_TABLE);
+    shader->setUniformInt("uWarpGradients", (int)BindingSlots::Texture::WARP_GRADIENTS);
 }
 
 void Renderer::createShadingPrograms()
 {
     shaderPrograms_[Shaders::SHADINGMODE::GOURAUD] =
         std::make_unique<Shaders::Shader>("shaders/gouraud.vert", "shaders/gouraud.frag");
+    setupShader(shaderPrograms_[Shaders::SHADINGMODE::GOURAUD]);
+
     shaderPrograms_[Shaders::SHADINGMODE::PHONG] =
         std::make_unique<Shaders::Shader>("shaders/phong.vert", "shaders/phong.frag");
+    setupShader(shaderPrograms_[Shaders::SHADINGMODE::PHONG]);
+
     shaderPrograms_[Shaders::SHADINGMODE::NO_SHADING] =
         std::make_unique<Shaders::Shader>("shaders/noShader.vert", "shaders/noShader.frag");
+    setupShader(shaderPrograms_[Shaders::SHADINGMODE::NO_SHADING]);
 }
 
 void Renderer::setShadingMode(Shaders::SHADINGMODE shadingMode)
@@ -192,12 +196,12 @@ void Renderer::updateMaterialUBO(const Materials::Material meshMat)
 
     if (meshMat.getTexture() != nullptr)
     {
-        meshMat.getTexture()->bind(0);
+        meshMat.getTexture()->bind((int)BindingSlots::Texture::ALBEDO);
         useTexture = 1;
     }
     else
     {
-        noTexture_->bind(0);
+        noTexture_->bind((int)BindingSlots::Texture::ALBEDO);
     }
 
     shaderPrograms_[currShadingMode_]->setUniformInt("uUseTexture", useTexture);

@@ -8,7 +8,7 @@ in vec3 vNormal;
 in vec2 vTexCoords;
 
 uniform int uUseTexture;
-uniform sampler2D uTexture0;
+uniform sampler2D uAlbedo;
 
 uniform int uIsTerrain;
 
@@ -24,7 +24,7 @@ void main() {
     }
     vec3 baseColor;
     if(uUseTexture == 1) {
-        baseColor = texture(uTexture0, vTexCoords).rgb;
+        baseColor = texture(uAlbedo, vTexCoords).rgb;
     } else {
         baseColor = uMatAlbedo;
     }

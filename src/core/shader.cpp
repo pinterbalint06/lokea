@@ -115,21 +115,6 @@ namespace Shaders
         }
         glDeleteShader(vertexShader);
         glDeleteShader(fragmentShader);
-
-        bindUniformBlock("SceneData", 0);
-        bindUniformBlock("MaterialData", 1);
-        bindUniformBlock("PerlinData", 2);
-        bindUniformBlock("PerlinWarpData", 3);
-        bindUniformBlock("MeshData", 4);
-        bindUniformBlock("DistantLightData", 5);
-        bindUniformBlock("CameraData", 6);
-
-        use();
-        setUniformInt("uTexture0", 0);
-        setUniformInt("uNoisePermutationTable", 5);
-        setUniformInt("uNoiseGradients", 6);
-        setUniformInt("uWarpPermutationTable", 7);
-        setUniformInt("uWarpGradients", 8);
     }
 
     Shader::~Shader()
