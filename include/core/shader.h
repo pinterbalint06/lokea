@@ -18,12 +18,10 @@ namespace Shaders
         GLuint programID_;
         std::map<std::string, int> uniformLocCache_;
         GLuint compileShader(const char *src, GLuint type);
-        std::string loadHelperFiles(const std::vector<std::string> &helperPaths);
-        void insertHelpers(std::string &insertInto, const std::string &helper);
         int getUniformLocation(const std::string &uniformName);
 
     public:
-        Shader(const char *pathToVertex, const char *pathToFragment, const std::vector<std::string> &helperPaths = {});
+        Shader(std::string vertexCode, std::string fragmentCode);
         ~Shader();
         void use();
 

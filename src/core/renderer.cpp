@@ -3,6 +3,7 @@
 #include <emscripten/html5_webgl.h>
 #include <GLES3/gl3.h>
 #include <core/renderer.h>
+#include <memory>
 #include "core/shader.h"
 #include "core/scene.h"
 #include "core/material.h"
@@ -15,15 +16,12 @@
 #include "core/vertex.h"
 #include "core/texture.h"
 #include "core/bindingSlots.h"
+#include "utils/shaderBuilder.h"
 #include <cstring>
 #include <map>
 
 Renderer::Renderer(const std::string &canvasID)
 {
-    rBuffer_ = 0.0f;
-    gBuffer_ = 0.0f;
-    bBuffer_ = 0.0f;
-    currShadingMode_ = Shaders::SHADINGMODE::PHONG;
     EmscriptenWebGLContextAttributes attrs;
     emscripten_webgl_init_context_attributes(&attrs);
     attrs.majorVersion = 2;
@@ -34,7 +32,13 @@ Renderer::Renderer(const std::string &canvasID)
             throw('A böngésződ nem támogatja a WebGL-t!'););
     }
     emscripten_webgl_make_context_current(ctx_);
+
+    rBuffer_ = 0.0f;
+    gBuffer_ = 0.0f;
+    bBuffer_ = 0.0f;
     glClearColor(rBuffer_, gBuffer_, bBuffer_, 1);
+
+    lastUseTexture_ = -1;
 
     noTexture_ = std::make_unique<Texture>();
 
@@ -47,8 +51,7 @@ Renderer::Renderer(const std::string &canvasID)
     setupUniformBuffer<PerlinNoise::PerlinParameters>(uboWarp_, BindingSlots::UBO::PERLIN_WARP_DATA);
     setupUniformBuffer<MeshData>(uboMesh_, BindingSlots::UBO::MESH_DATA);
 
-    createShadingPrograms();
-    shaderPrograms_[currShadingMode_]->use();
+    currShader_ = nullptr;
 
     glEnable(GL_DEPTH_TEST);
 
@@ -116,40 +119,45 @@ void Renderer::setupShader(std::unique_ptr<Shaders::Shader> &shader)
     shader->bindUniformBlock("DistantLightData", (int)BindingSlots::UBO::DISTANT_LIGHT_DATA);
     shader->bindUniformBlock("CameraData", (int)BindingSlots::UBO::CAMERA_DATA);
 
+    // have to use shader to set uniforms
     shader->use();
     shader->setUniformInt("uAlbedo", (int)BindingSlots::Texture::ALBEDO);
     shader->setUniformInt("uNoisePermutationTable", (int)BindingSlots::Texture::NOISE_PERMUTATION_TABLE);
     shader->setUniformInt("uNoiseGradients", (int)BindingSlots::Texture::NOISE_GRADIENTS);
     shader->setUniformInt("uWarpPermutationTable", (int)BindingSlots::Texture::WARP_PERMUTATION_TABLE);
     shader->setUniformInt("uWarpGradients", (int)BindingSlots::Texture::WARP_GRADIENTS);
+    if (currShader_ != nullptr)
+    {
+        // if there was a shader in use revert to that
+        currShader_->use();
+    }
 }
 
-void Renderer::createShadingPrograms()
+void Renderer::addNewShader(Shaders::SHADINGMODE mode, std::unique_ptr<Shaders::Shader> shader)
 {
-    std::vector<std::string> helpers = {
-        "shaders/UBOs.glsl",
-        "shaders/phongReflectionModel.glsl",
-        "shaders/perlinNoise.glsl"};
-    shaderPrograms_[Shaders::SHADINGMODE::PHONG] =
-        std::make_unique<Shaders::Shader>("shaders/phong.vert", "shaders/phong.frag", helpers);
-    setupShader(shaderPrograms_[Shaders::SHADINGMODE::PHONG]);
+    shaderPrograms_[mode] = std::move(shader);
+    setupShader(shaderPrograms_[mode]);
 
-    // "shaders/perlinNoise.glsl" is not needed in gouraud or noshader
-    helpers.pop_back();
-
-    shaderPrograms_[Shaders::SHADINGMODE::GOURAUD] =
-        std::make_unique<Shaders::Shader>("shaders/gouraud.vert", "shaders/gouraud.frag", helpers);
-    setupShader(shaderPrograms_[Shaders::SHADINGMODE::GOURAUD]);
-
-    shaderPrograms_[Shaders::SHADINGMODE::NO_SHADING] =
-        std::make_unique<Shaders::Shader>("shaders/noShader.vert", "shaders/noShader.frag", helpers);
-    setupShader(shaderPrograms_[Shaders::SHADINGMODE::NO_SHADING]);
+    // if no shader is in use then use this one
+    if (currShader_ == nullptr)
+    {
+        setShadingMode(mode);
+    }
 }
 
 void Renderer::setShadingMode(Shaders::SHADINGMODE shadingMode)
 {
-    currShadingMode_ = shadingMode;
-    shaderPrograms_[currShadingMode_]->use();
+    if (shaderPrograms_.contains(shadingMode))
+    {
+        currShadingMode_ = shadingMode;
+        currShader_ = shaderPrograms_[shadingMode].get();
+        currShader_->use();
+        lastUseTexture_ = -1;
+    }
+    else
+    {
+        EM_ASM(console.error("Renderer: Tried to set non-existent shader!"));
+    }
 }
 
 void Renderer::setDefaultColor(float r, float g, float b)
@@ -211,7 +219,11 @@ void Renderer::updateMaterialUBO(const Materials::Material meshMat)
         noTexture_->bind((int)BindingSlots::Texture::ALBEDO);
     }
 
-    shaderPrograms_[currShadingMode_]->setUniformInt("uUseTexture", useTexture);
+    if (lastUseTexture_ != useTexture)
+    {
+        currShader_->setUniformInt("uUseTexture", useTexture);
+        lastUseTexture_ = useTexture;
+    }
 
     glBindBuffer(GL_UNIFORM_BUFFER, uboMat_);
     glBufferSubData(GL_UNIFORM_BUFFER, 0, sizeof(Materials::MaterialData), &meshMat.getUBOData());
@@ -228,29 +240,36 @@ void Renderer::updateMeshUBO(Mesh *mesh)
     // update material
     updateMaterialUBO(mesh->getMaterial());
 
-    mesh->prepareRender(shaderPrograms_[currShadingMode_].get());
+    mesh->prepareRender(currShader_);
 }
 
 void Renderer::render(const Scene *scene)
 {
-    fps_->update();
-    // clear buffers
-    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-
-    // update uniform buffer objects
-    updateSceneUBO(scene);
-
-    for (int i = 0; i < scene->getMeshCount(); i++)
+    if (currShader_ != nullptr)
     {
-        Mesh *currMesh = scene->getMesh(i);
-        updateMeshUBO(currMesh);
+        fps_->update();
+        // clear buffers
+        glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-        // bind current mesh
-        glBindVertexArray(currMesh->getVAO());
+        // update uniform buffer objects
+        updateSceneUBO(scene);
 
-        // draw mesh
-        glDrawElements(GL_TRIANGLES, currMesh->getIndexCount(), GL_UNSIGNED_INT, 0);
-        // unbind mesh
-        glBindVertexArray(0);
+        for (int i = 0; i < scene->getMeshCount(); i++)
+        {
+            Mesh *currMesh = scene->getMesh(i);
+            updateMeshUBO(currMesh);
+
+            // bind current mesh
+            glBindVertexArray(currMesh->getVAO());
+
+            // draw mesh
+            glDrawElements(GL_TRIANGLES, currMesh->getIndexCount(), GL_UNSIGNED_INT, 0);
+            // unbind mesh
+            glBindVertexArray(0);
+        }
+    }
+    else
+    {
+        EM_ASM(console.error("Renderer: No shader is set!"));
     }
 }

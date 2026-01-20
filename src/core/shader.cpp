@@ -24,45 +24,11 @@ namespace Shaders
         return shader;
     }
 
-    std::string Shader::loadHelperFiles(const std::vector<std::string> &helperPaths)
+    Shader::Shader(std::string vertexCode, std::string fragmentCode)
     {
-        std::string helpers = "";
-
-        for (int i = 0; i < helperPaths.size(); i++)
-        {
-            std::string helper = FileUtils::readFile(helperPaths[i]);
-            int lineLocatin = helper.find("#line 1");
-            if (lineLocatin != -1)
-            {
-                // + 7 so it is added after #line 1
-                helper.insert(lineLocatin + 7, " " + std::to_string(i + 1));
-            }
-            helpers += helper + "\n";
-        }
-        return helpers;
-    }
-
-    void Shader::insertHelpers(std::string &insertInto, const std::string &helper)
-    {
-        int versionLocation = insertInto.find("#version");
-        int lineAfterVersion = insertInto.find("\n", versionLocation);
-        insertInto.insert(lineAfterVersion + 1, "\n" + helper + "\n");
-    }
-
-    Shader::Shader(const char *pathToVertex, const char *pathToFragment, const std::vector<std::string> &helperPaths)
-    {
-        // read files
-        std::string vCode = FileUtils::readFile(pathToVertex);
-        std::string fCode = FileUtils::readFile(pathToFragment);
-        std::string helpers = loadHelperFiles(helperPaths);
-
-        // insert helpers
-        insertHelpers(vCode, helpers);
-        insertHelpers(fCode, helpers);
-
         // compile shaders
-        GLuint vertexShader = compileShader(vCode.c_str(), GL_VERTEX_SHADER);
-        GLuint fragmentShader = compileShader(fCode.c_str(), GL_FRAGMENT_SHADER);
+        GLuint vertexShader = compileShader(vertexCode.c_str(), GL_VERTEX_SHADER);
+        GLuint fragmentShader = compileShader(fragmentCode.c_str(), GL_FRAGMENT_SHADER);
 
         // create program
         programID_ = glCreateProgram();

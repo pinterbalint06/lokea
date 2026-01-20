@@ -6,6 +6,7 @@
 #include "core/bindingSlots.h"
 #include <string>
 #include <map>
+#include <memory>
 
 class Clipper;
 class Scene;
@@ -22,17 +23,18 @@ class Renderer
 private:
     int ctx_;
     Shaders::SHADINGMODE currShadingMode_;
+    Shaders::Shader *currShader_;
     std::map<Shaders::SHADINGMODE, std::unique_ptr<Shaders::Shader>> shaderPrograms_;
     std::unique_ptr<FPSCounter> fps_;
     std::unique_ptr<Texture> noTexture_;
     GLuint uboScene_, uboDistantLight_, uboCamera_, uboMat_, uboPerlin_, uboWarp_, uboMesh_;
     float rBuffer_, gBuffer_, bBuffer_;
+    int lastUseTexture_;
 
     template <typename UBODataStruct>
     void setupUniformBuffer(GLuint &ubo, BindingSlots::UBO bindingSlot);
 
     void setupShader(std::unique_ptr<Shaders::Shader> &shader);
-    void createShadingPrograms();
 
     void updateDistantLightUBO(const DistantLight *dLight);
     void updateCameraUBO(Camera *camera);
@@ -50,6 +52,7 @@ public:
     void setDefaultColor(float r, float g, float b);
 
     void setImageDimensions(int imageW, int imageH);
+    void addNewShader(Shaders::SHADINGMODE mode, std::unique_ptr<Shaders::Shader> shader);
     void render(const Scene *scene);
 };
 
