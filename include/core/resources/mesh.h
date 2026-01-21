@@ -1,0 +1,76 @@
+#ifndef MESH_H
+#define MESH_H
+
+#include <cstdint>
+#include <GLES3/gl3.h>
+
+#include "core/resources/material.h"
+#include "core/resources/vertex.h"
+
+// Forward declarations
+namespace Shaders
+{
+    class Shader; // defined in "core/rendering/shader.h"
+}
+namespace Materials
+{
+    class Material; // defined in "core/resources/material.h"
+}
+class Vertex; // defined in "core/resources/vertex.h"
+
+struct MeshData
+{
+    float modelMatrix[16]; // 16 bytes
+};
+
+class Mesh
+{
+private:
+    // vertex buffer object
+    GLuint vbo_;
+    // element buffer object
+    GLuint ebo_;
+    // vertax array object
+    GLuint vao_;
+
+    int vertexCount_;
+    int indexCount_;
+    int normalCount_;
+
+    Materials::Material material_;
+
+protected:
+    Vertex *vertices_;
+    uint32_t *indices_;
+    MeshData meshData_;
+
+    void cleanup();
+    void resize(int vertexCount, int indexCount);
+
+public:
+    Mesh(int vertexCount, int indexCount);
+    virtual ~Mesh();
+
+    GLuint setUpOpenGL();
+
+    // getters
+    int getVertexCount() const { return vertexCount_; }
+    int getIndexCount() const { return indexCount_; }
+    Vertex *getVertices() const { return vertices_; }
+    uint32_t *getIndices() const { return indices_; }
+    Materials::Material getMaterial() const { return material_; }
+    GLuint getVAO() const { return vao_; }
+    float *getModelMatrix() { return meshData_.modelMatrix; }
+    const float *getModelMatrix() const { return meshData_.modelMatrix; }
+    const MeshData &getUBOData() const { return meshData_; }
+
+    // setters
+    void setMaterial(Materials::Material material) { material_ = material; }
+
+    virtual void prepareRender(Shaders::Shader *shader);
+
+    Mesh(const Mesh &) = delete;
+    Mesh &operator=(const Mesh &) = delete;
+};
+
+#endif

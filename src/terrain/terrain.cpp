@@ -1,8 +1,13 @@
-#include "core/mesh.h"
-#include "core/shader.h"
-#include "terrain/terrain.h"
 #include <cstring>
 #include <cmath>
+
+#include "core/rendering/shader.h"
+#include "core/rendering/bindingSlots.h"
+
+#include "core/resources/mesh.h"
+
+#include "terrain/terrain.h"
+
 #include "utils/perlin.h"
 
 Terrain::Terrain(int size) : Mesh(size * size, (size - 1) * (size - 1) * 6)
@@ -58,10 +63,10 @@ void Terrain::updateNoiseSeed(int seed, PerlinNoise::Perlin *&noise)
         if (parameters.seed != seed)
         {
             parameters.seed = seed;
-            GLuint *uboLoc = noise->getUBOloc();
+            GLuint uboLoc = noise->getUBOloc();
             delete noise;
             noise = new PerlinNoise::Perlin(parameters);
-            if (uboLoc)
+            if (uboLoc != 0)
             {
                 noise->setUpGPU(uboLoc);
             }
@@ -207,7 +212,7 @@ void Terrain::setTextureSpacing(float textureSpacing)
     setUpOpenGL();
 }
 
-void Terrain::setUpNoiseForGPU(GLuint *perlinLoc, GLuint *warpLoc)
+void Terrain::setUpNoiseForGPU(GLuint perlinLoc, GLuint warpLoc)
 {
     perlinNoise_->setUpGPU(perlinLoc);
     warpNoise_->setUpGPU(warpLoc);
@@ -224,16 +229,16 @@ void Terrain::setDomainWarp(bool domainWarp)
 
 void Terrain::prepareRender(Shaders::Shader *shader)
 {
-    glActiveTexture(GL_TEXTURE5);
+    glActiveTexture(GL_TEXTURE0 + (int)BindingSlots::Texture::NOISE_PERMUTATION_TABLE);
     glBindTexture(GL_TEXTURE_2D, getNoisePermGPULoc());
 
-    glActiveTexture(GL_TEXTURE6);
+    glActiveTexture(GL_TEXTURE0 + (int)BindingSlots::Texture::NOISE_GRADIENTS);
     glBindTexture(GL_TEXTURE_2D, getNoiseGradGPULoc());
 
-    glActiveTexture(GL_TEXTURE7);
+    glActiveTexture(GL_TEXTURE0 + (int)BindingSlots::Texture::WARP_PERMUTATION_TABLE);
     glBindTexture(GL_TEXTURE_2D, getWarpPermGPULoc());
 
-    glActiveTexture(GL_TEXTURE8);
+    glActiveTexture(GL_TEXTURE0 + (int)BindingSlots::Texture::WARP_GRADIENTS);
     glBindTexture(GL_TEXTURE_2D, getWarpGradGPULoc());
 
     shader->setUniformInt("uUseDomainWarp", domainWarp_);

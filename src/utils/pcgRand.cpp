@@ -1,5 +1,6 @@
-#include "utils/pcgRand.h"
 #include <cstdint>
+
+#include "utils/pcgRand.h"
 
 void pcgRand::LCG()
 {

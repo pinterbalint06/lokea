@@ -3,7 +3,7 @@
 
 #include <string>
 
-class fpsCounter
+class FPSCounter
 {
 private:
     int frameCount_;
@@ -11,7 +11,7 @@ private:
     std::string id_;
 
 public:
-    fpsCounter(std::string id);
+    FPSCounter(std::string id);
     void update();
 };
 

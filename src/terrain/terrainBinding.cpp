@@ -1,10 +1,14 @@
-#include <emscripten.h>
 #include <emscripten/bind.h>
+
+#include "core/rendering/shader.h"
+
+#include "core/resources/material.h"
+
 #include "core/engine.h"
-#include "core/shader.h"
-#include "utils/perlin.h"
+
 #include "terrain/terrainEngine.h"
-#include "core/material.h"
+
+#include "utils/perlin.h"
 
 EMSCRIPTEN_BINDINGS(enums)
 {

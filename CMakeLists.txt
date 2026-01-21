@@ -5,7 +5,7 @@ project(3DRendererForWeb)
 # move files to frontend/js off by default
 option(COPYFILES "Move output files to frontend/js directory" OFF)
 
-set(CMAKE_CXX_STANDARD 17)
+set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED True)
 
 # headers

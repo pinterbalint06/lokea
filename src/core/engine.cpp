@@ -1,17 +1,37 @@
-#include "core/engine.h"
-#include "core/mesh.h"
-#include "core/scene.h"
-#include "core/renderer.h"
-#include "core/vertex.h"
-#include "core/texture.h"
 #include <string>
+#include <vector>
 #include <emscripten/html5.h>
+
+#include "core/rendering/renderer.h"
+
+#include "core/scene/scene.h"
+
+#include "core/resources/mesh.h"
+#include "core/resources/texture.h"
+#include "core/resources/material.h"
+
+#include "core/engine.h"
+
+#include "utils/shaderBuilder.h"
 
 Engine::Engine(std::string canvID)
 {
     canvas_ = canvID;
     scene_ = new Scene();
     renderer_ = new Renderer(canvas_);
+
+    std::vector<std::string> helpers = {
+        "shaders/helpers/UBOs.glsl",
+        "shaders/helpers/phongReflectionModel.glsl",
+        "shaders/helpers/perlinNoise.glsl"};
+    renderer_->addNewShader(Shaders::SHADINGMODE::PHONG, ShaderBuilder::createShader("shaders/phong/phong.vert", "shaders/phong/phong.frag", helpers));
+
+    // "shaders/perlinNoise.glsl" is not needed in gouraud or noshader
+    helpers.pop_back();
+
+    renderer_->addNewShader(Shaders::SHADINGMODE::GOURAUD, ShaderBuilder::createShader("shaders/gouraud/gouraud.vert", "shaders/gouraud/gouraud.frag", helpers));
+    renderer_->addNewShader(Shaders::SHADINGMODE::NO_SHADING, ShaderBuilder::createShader("shaders/noShader/noShader.vert", "shaders/noShader/noShader.frag", helpers));
+
     setFrustum(18.0f, 25.4f, 25.4f, 1000, 1000, 0.1f, 1000.0f);
 }
 

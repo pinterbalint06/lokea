@@ -1,15 +1,20 @@
-#include <equirectangular/equirectangularEngine.h>
 #include <emscripten/html5.h>
 #include <emscripten/emscripten.h>
-#include <core/engine.h>
-#include <core/mesh.h>
-#include <core/vertex.h>
-#include <core/material.h>
-#include <utils/mathUtils.h>
+#include <emscripten/val.h>
 #include <string>
 #include <cmath>
 #include <cstdint>
-#include <emscripten/val.h>
+
+#include "core/resources/mesh.h"
+#include "core/resources/vertex.h"
+#include "core/resources/material.h"
+#include "core/resources/texture.h"
+
+#include "core/engine.h"
+
+#include "equirectangular/equirectangularEngine.h"
+
+#include "core/math/mathUtils.h"
 
 EM_JS(void, equirectangularFromURL, (const char *url, int ctxId, int tiles, emscripten::EM_VAL textureIdsHandle), {
     let gl = GL.contexts[ctxId].GLctx;

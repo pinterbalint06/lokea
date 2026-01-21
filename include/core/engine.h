@@ -2,12 +2,16 @@
 #define ENGINE_H
 
 #include <cstdint>
-#include "core/scene.h"
-#include "core/camera.h"
-#include "core/shader.h"
-#include "core/renderer.h"
+#include <string>
 
-class Mesh;
+#include "core/rendering/shader.h"
+#include "core/rendering/renderer.h"
+
+#include "core/scene/scene.h"
+#include "core/scene/camera.h"
+
+// Forward declaration
+class Mesh; // defined in "core/resources/mesh.h"
 
 class Engine
 {

@@ -1,11 +1,13 @@
 #ifndef EQUIRECTANGULAR_ENGINE_H
 #define EQUIRECTANGULAR_ENGINE_H
 
-#include <core/engine.h>
 #include <string>
 #include <vector>
 
-class Mesh;
+#include "core/engine.h"
+
+// Forward declaration
+class Mesh; // defined in "core/resources/mesh.h"
 
 enum EQUIRECTANGULARMODE
 {

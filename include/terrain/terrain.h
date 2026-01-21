@@ -1,11 +1,17 @@
 #ifndef TERRAIN_H
 #define TERRAIN_H
 
-#include "utils/perlin.h"
-#include "core/mesh.h"
-#include "core/shader.h"
+#include <GLES3/gl3.h>
 
-typedef unsigned int GLuint;
+#include "core/resources/mesh.h"
+
+#include "utils/perlin.h"
+
+// Forward declaration
+namespace Shaders
+{
+    class Shader; // defined in "core/rendering/shader.h"
+}
 
 class Terrain : public Mesh
 {
@@ -54,7 +60,7 @@ public:
     void setSteepness(float steepness) { perlinNoise_->setSteepness(steepness); }
     void setContrast(int contrast) { perlinNoise_->setContrast(contrast); }
     void setTextureSpacing(float textureSpacing);
-    void setUpNoiseForGPU(GLuint *perlinLoc, GLuint *warpLoc);
+    void setUpNoiseForGPU(GLuint perlinLoc, GLuint warpLoc);
     void setDomainWarp(bool domainWarp);
 
     void prepareRender(Shaders::Shader *shader) override;

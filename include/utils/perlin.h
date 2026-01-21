@@ -1,10 +1,12 @@
 #ifndef PERLIN_NOISE_H
 #define PERLIN_NOISE_H
 
+#include <GLES3/gl3.h>
 #include <cstdint>
-class pcgRand;
-struct Vec2;
-typedef unsigned int GLuint;
+
+// Forward declarations
+class pcgRand; // defined in "utils/pcgRand.h"
+struct Vec2;   // defined in "core/math/vector.h"
 
 namespace PerlinNoise
 {
@@ -30,7 +32,7 @@ namespace PerlinNoise
         Vec2 *gradients_;
         GLuint permuTableTex_;
         GLuint gradientsTex_;
-        GLuint *parametersUBO_;
+        GLuint parametersUBO_;
         PerlinParameters params_;
         bool isGPUSet_;
 
@@ -46,7 +48,7 @@ namespace PerlinNoise
         PerlinParameters getParameters() const { return params_; }
         GLuint getPermutationGPULoc() const { return permuTableTex_; }
         GLuint getGradientsGPULoc() const { return gradientsTex_; }
-        GLuint *getUBOloc() { return parametersUBO_; };
+        GLuint getUBOloc() { return parametersUBO_; };
 
         // setters
         void setLacunarity(float lacunarity);
@@ -66,7 +68,7 @@ namespace PerlinNoise
 
         void uploadParametersToGPU();
         void uploadToGPU();
-        void setUpGPU(GLuint *uboLoc);
+        void setUpGPU(GLuint uboLoc);
     };
 }
 
