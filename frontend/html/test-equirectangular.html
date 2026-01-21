@@ -12,54 +12,26 @@
 
 <body>
     <div class="row w100 around wrapreverse">
-        <div class="row wrap gap">
-            <div class="col">
-                <p>FPS: <span id="fps"></span></p>
-                <label for="antialias">Élsimítás:</label>
-                <select name="antialias" id="antialias" onchange="ujElsmitas();">
-                    <option value="1" selected>1x</option>
-                    <option value="4">4x</option>
-                    <option value="9">9x</option>
-                    <option value="16">16x</option>
-                </select>
+        <div class="col wrap gap">
+            <div class="col center">
                 <div>
-                    <label for="url">Kép link</label>
-                    <input type="text" id="url">
-                    <button onclick="ujUrlbol();">betölt</button>
-                </div>
-                <p class="m0">Forgás</p>
-                <div class="wfit col btns">
-                    <div class="row wfit flex1">
-                        <div class="flex1 center"><button onclick="xyForgas(-10, -10)">
-                                <p class="felforogPoz">&lt;</p>
-                            </button></div>
-                        <div class="flex1 center"><button onclick="xyForgas(-10, 0)">
-                                <p class="forog">&lt;</p>
-                            </button></div>
-                        <div class="flex1 center"><button onclick="xyForgas(-10, 10)">
-                                <p class="felforogNeg">&gt;</p>
-                            </button></div>
+                    <p>FPS: <span id="fps"></span></p>
+                    <div>
+                        <label for="kepek">Képek: </label>
+                        <select name="kepek" id="kepek">
+                        </select>
                     </div>
-                    <div class="row wfit flex1">
-                        <div class="flex1 center"><button onclick="xyForgas(0, -10)">&lt;</button></div>
-                        <div></div>
-                        <div class="flex1 center"><button onclick="xyForgas(0, 10)">&gt;</button></div>
+                    <div class="row center">
+                        <button onclick="fullScreen();">Teljes képernyő</button>
                     </div>
-                    <div class="row wfit flex1">
-                        <div class="flex1 center"><button onclick="xyForgas(10, -10)">
-                                <p class="felforogNeg">&lt;</p>
-                            </button></div>
-                        <div class="flex1 center"><button onclick="xyForgas(10, 0)">
-                                <p class="forog">&gt;</p>
-                            </button></div>
-                        <div class="flex1 center"><button onclick="xyForgas(10, 10)">
-                                <p class="felforogPoz">&gt;</p>
-                            </button></div>
+                    <div class="row center">
+                        <label for="autoRotate">Automatikus forgatás:</label>
+                        <input type="checkbox" name="autoRotate" id="autoRotate">
                     </div>
                 </div>
             </div>
             <div class="col">
-                <canvas id="canvas"></canvas>
+                <canvas id="canvas" class="border"></canvas>
             </div>
         </div>
     </div>

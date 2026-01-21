@@ -81,6 +81,13 @@ function korRajzol(x, y) {
     ctx.stroke();
 }
 
+function fullScreen() {
+    let canvas = document.getElementById(canvasId);
+    canvas.requestFullscreen();
+}
+
+window.fullScreen = fullScreen;
+
 // |------------------------------|
 // | MAIN LOOP AND INITIALIZATION |
 // |------------------------------|
@@ -98,6 +105,22 @@ document.addEventListener("DOMContentLoaded", async function () {
     let seed = Math.floor(Math.random() * 10000) + 1;
     sd.value = seed;
     sd.nextElementSibling.value = sd.value;
+
+    canvas.addEventListener("fullscreenchange", function () {
+        if (canvas != document.fullscreenElement) {
+            canvas.classList.add("border");
+            terrainEngine.setCanvasSize(jsCanvasSzelesseg, jsCanvasMagassag);
+        } else {
+            canvas.classList.remove("border");
+            terrainEngine.setCanvasSize(window.innerWidth, window.innerHeight);
+        }
+    });
+
+    window.addEventListener("resize", function () {
+        if (document.fullscreenElement) {
+            terrainEngine.setCanvasSize(window.innerWidth, window.innerHeight);
+        }
+    });
 
     createModule().then((modu) => {
         Module = modu;
@@ -146,6 +169,9 @@ function initModule() {
 }
 
 function mainLoop() {
+    if (document.getElementById('autoRotate').checked) {
+        rotateCamera(0, 0.1);
+    }
     terrainEngine.render();
     requestAnimationFrame(mainLoop);
 }

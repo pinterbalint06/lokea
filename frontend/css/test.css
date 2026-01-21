@@ -174,5 +174,8 @@ select, input[type="text"], output {
 
 canvas {
     touch-action: none;
+}
+
+.border {
     border: solid gray 2px;
 }
