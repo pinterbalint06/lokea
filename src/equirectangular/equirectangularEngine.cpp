@@ -184,7 +184,7 @@ void EquirectangularEngine::generateSphere()
     {
         for (int y = 0; y < tiles; y++)
         {
-            Mesh *sphereSegment = generateSphereSegment(rings, segs, rad, rec * x, rec * (x + 1), rec * y, rec * (y + 1));
+            Mesh *sphereSegment = generateSphereSegment(rings / tiles, segs / tiles, rad, rec * x, rec * (x + 1), rec * y, rec * (y + 1));
             Materials::Material defaultMat = Materials::Material::Error();
             defaultMat.setTexture(imageTiles_[i]);
             sphereSegment->setMaterial(defaultMat);

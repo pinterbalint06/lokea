@@ -29,37 +29,7 @@
                 <button type="button" onclick="irany(0, -90);">Balra</button>
             </div>
             <div class="col gap">
-                <h2>Hely, forgás:</h2>
-                <p class="m0">Forgás</p>
-                <div class="wfit col btns">
-                    <div class="row wfit flex1">
-                        <div class="flex1 center"><button onclick="xyForgas(-10, -10)">
-                                <p class="felforogPoz">&lt;</p>
-                            </button></div>
-                        <div class="flex1 center"><button onclick="xyForgas(-10, 0)">
-                                <p class="forog">&lt;</p>
-                            </button></div>
-                        <div class="flex1 center"><button onclick="xyForgas(-10, 10)">
-                                <p class="felforogNeg">&gt;</p>
-                            </button></div>
-                    </div>
-                    <div class="row wfit flex1">
-                        <div class="flex1 center"><button onclick="xyForgas(0, -10)">&lt;</button></div>
-                        <div></div>
-                        <div class="flex1 center"><button onclick="xyForgas(0, 10)">&gt;</button></div>
-                    </div>
-                    <div class="row wfit flex1">
-                        <div class="flex1 center"><button onclick="xyForgas(10, -10)">
-                                <p class="felforogNeg">&lt;</p>
-                            </button></div>
-                        <div class="flex1 center"><button onclick="xyForgas(10, 0)">
-                                <p class="forog">&gt;</p>
-                            </button></div>
-                        <div class="flex1 center"><button onclick="xyForgas(10, 10)">
-                                <p class="felforogPoz">&gt;</p>
-                            </button></div>
-                    </div>
-                </div>
+                <h2>Hely:</h2>
                 <p class="m0">Mozgás</p>
                 <div class="wfit col btns">
                     <div class="row wfit flex1">
@@ -93,6 +63,11 @@
             </div>
             <div class="col gap">
                 <h2>Renderelés:</h2>
+                <button onclick="fullScreen();">Teljes képernyő</button>
+                <div class="row">
+                    <label for="autoRotate">Automatikus forgatás:</label>
+                    <input type="checkbox" name="autoRotate" id="autoRotate">
+                </div>
                 <p>FPS: <span id="fps"></span></p>
                 <!-- <label for="antialias">Élsimítás:</label>
                 <select name="antialias" id="antialias" onchange="ujElsmitas();">
@@ -228,7 +203,7 @@
                 <output>1500</output>
                 <label for="lightDirection">Fény irány:</label>
                 <input type="range" id="lightDirection" min="0" max="360" value="270" step="1" oninput="UjFenyIrany();">
-                <canvas id="canvasAngle" width="250" height="250"></canvas>
+                <canvas id="canvasAngle" class="border" width="250" height="250"></canvas>
                 <div>
                     <label for="lightColor">Fény színe:</label>
                     <input type="color" name="color" id="lightColor" value="#ffffff" oninput="ujFenyszin();">
@@ -271,7 +246,7 @@
             </div>
         </div>
         <div class="col">
-            <canvas id="canvas"></canvas>
+            <canvas id="canvas" class="border"></canvas>
         </div>
     </div>
 </body>
