@@ -55,7 +55,7 @@ public:
     ~Renderer();
 
     void setShadingMode(Shaders::SHADINGMODE shadingMode);
-    void setDefaultColor(float r, float g, float b);
+    void setDefaultColor(uint8_t r, uint8_t g, uint8_t b);
 
     void setImageDimensions(int imageW, int imageH);
     void addNewShader(Shaders::SHADINGMODE mode, std::unique_ptr<Shaders::Shader> shader);

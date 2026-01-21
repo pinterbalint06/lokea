@@ -116,11 +116,11 @@ void Renderer::setShadingMode(Shaders::SHADINGMODE shadingMode)
     }
 }
 
-void Renderer::setDefaultColor(float r, float g, float b)
+void Renderer::setDefaultColor(uint8_t r, uint8_t g, uint8_t b)
 {
-    rBuffer_ = r / 255.0f;
-    gBuffer_ = g / 255.0f;
-    bBuffer_ = b / 255.0f;
+    rBuffer_ = (float)r / 255.0f;
+    gBuffer_ = (float)g / 255.0f;
+    bBuffer_ = (float)b / 255.0f;
     glClearColor(rBuffer_, gBuffer_, bBuffer_, 1);
 };
 
@@ -205,9 +205,9 @@ void Renderer::render(const Scene *scene)
 
             // draw mesh
             glDrawElements(GL_TRIANGLES, currMesh->getIndexCount(), GL_UNSIGNED_INT, 0);
-            // unbind mesh
-            glBindVertexArray(0);
         }
+        // unbind mesh
+        glBindVertexArray(0);
     }
     else
     {
