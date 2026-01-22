@@ -53,4 +53,55 @@ router.get('/testsql', async (request, response) => {
     }
 });
 
+router.post("/signup",
+    [
+    body("username")
+        .isLength({ max: 20}).withMessage("Felhasználónév hossza nem megfelelő!"),
+    body("email")
+        .isEmail().withMessage("Hibás email formátum")
+        .isLength({ max: 250 }).withMessage("Email max 250 karakter"),
+
+    body("password")
+        .isLength({ min: 8, max: 50 }).withMessage("Jelszó hossza 8-50")
+        .matches(/\d/).withMessage("Kell benne szám")
+        .matches(/[A-Z]/).withMessage("Kell benne nagybetű")
+    ],
+    async (request, response) => {
+        const errors = validationResult(request);
+        if (!errors.isEmpty()) {
+            return response.status(400).json({ 
+                success: false,
+                error: errors.array() 
+            });
+    }
+
+    const { username, email, password } = request.body;
+
+    // Jelszó hash
+    const hashedPassword = await bcrypt.hash(password, 10);
+    try {
+        await pool.query(
+            "INSERT INTO users (username, email, password) VALUES (?, ?, ?)",
+            [username, email, hashedPassword]
+        );
+    } 
+    catch (error) {
+        if (error.code === "ER_DUP_ENTRY") {
+            return response.status(400).json({
+                error: "A felhasználónév vagy email már foglalt!"
+            });
+        }
+        else {
+            return response.status(500).json({ error: "Hiba az adatbázis művelet során!" });
+        }
+    }
+    
+
+    response.status(201).json({ 
+        success: true,
+        message: "Sikeres regisztráció" 
+    });
+  }
+);
+
 module.exports = router;
