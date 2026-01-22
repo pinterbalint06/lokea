@@ -2,10 +2,21 @@ const express = require('express');
 const router = express.Router();
 const database = require('../sql/database.js');
 const fs = require('fs/promises');
+const bcrypt = require('bcrypt');
+const { body, validationResult } = require("express-validator");
 
 //!Multer
 const multer = require('multer'); //?npm install multer
 const path = require('path');
+
+const pool = mysql.createPool({
+    host: "localhost",
+    user: "root",
+    password: "",
+    database: "bigprojekt_db",
+    waitForConnections: true,
+    connectionLimit: 10
+});
 
 const storage = multer.diskStorage({
     destination: (request, file, callback) => {

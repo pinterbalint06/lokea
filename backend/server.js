@@ -2,6 +2,8 @@
 const express = require('express'); //?npm install express
 const session = require('express-session'); //?npm install express-session
 const path = require('path');
+const cors = require('cors');
+const mysql = require('mysql2/promise');
 
 //!Beállítások
 const app = express();
