@@ -4,6 +4,7 @@ const database = require('../sql/database.js');
 const fs = require('fs/promises');
 const bcrypt = require('bcrypt');
 const { body, validationResult } = require("express-validator");
+const mysql = require('mysql2/promise');
 
 //!Multer
 const multer = require('multer'); //?npm install multer
