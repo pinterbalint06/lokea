@@ -20,6 +20,29 @@ namespace PerlinNoise
         return permuTable_[permuTable_[x] + y];
     }
 
+    void Perlin::createPermutationTable(uint8_t *permutationTable, pcgRand &rand)
+    {
+        // setup permutation table
+        for (int i = 0; i < 256; i++)
+        {
+            permutationTable[i] = i;
+        }
+
+        // shuffle the permutation table
+        for (int i = 255; i > 0; i--)
+        {
+            uint8_t j = rand.random() % (i + 1);
+            uint8_t temp = permutationTable[i];
+            permutationTable[i] = permutationTable[j];
+            permutationTable[j] = temp;
+        }
+
+        for (int i = 0; i < 256; i++)
+        {
+            permutationTable[i + 256] = permutationTable[i];
+        }
+    }
+
     Perlin::Perlin(PerlinParameters params)
     {
         isGPUSet_ = false;
@@ -28,25 +51,7 @@ namespace PerlinNoise
         gradients_ = (Vec2 *)malloc(256 * sizeof(Vec2));
         pcgRand pcgRandGen(params_.seed);
 
-        // setup permutation table
-        for (int i = 0; i < 256; i++)
-        {
-            permuTable_[i] = i;
-        }
-
-        // shuffle the permutation table
-        for (int i = 255; i > 0; i--)
-        {
-            uint8_t j = pcgRandGen.random() % (i + 1);
-            uint8_t temp = permuTable_[i];
-            permuTable_[i] = permuTable_[j];
-            permuTable_[j] = temp;
-        }
-
-        for (int i = 0; i < 256; i++)
-        {
-            permuTable_[i + 256] = permuTable_[i];
-        }
+        createPermutationTable(permuTable_, pcgRandGen);
 
         // generate gradients
         for (int i = 0; i < 256; i++)

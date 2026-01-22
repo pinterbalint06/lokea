@@ -7,7 +7,43 @@
 \usepackage{fontspec}
 \setmainfont{Times New Roman}
 
-\title{Perlin zaj}
+\usepackage[linesnumbered,ruled,plain,longend]{algorithm2e}
+
+\newcommand{\assign}{\leftarrow}
+
+% Algoritmus név
+\SetAlgorithmName{Algoritmus}{Algoritmusok}{Algoritmus}
+\SetAlgoCaptionSeparator{:} 
+\makeatletter
+\renewcommand{\fnum@algocf}{\AlCapSty{\AlCapFnt\thealgocf.\nobreakspace\algorithmcfname}}
+\makeatother
+
+% Függvények
+\SetKwProg{Eljaras}{Eljárás}{:}{Eljárás vége}
+\SetKwProg{Fuggveny}{Függvény}{:}{Függvény vége}
+
+% Változók
+\SetKwInput{Valtozok}{Változók}
+\SetKwInput{Konstansok}{Konstansok}
+\SetKwInput{Be}{Be}
+\SetKwInput{Ki}{Ki}
+
+% Ciklusok
+\SetKwFor{Ciklus}{Ciklus}{}{Ciklus vége}
+\SetKwFor{CiklusAmig}{Ciklus amíg}{}{vége}
+
+% Elágazás
+\SetKwIF{Ha}{}{Kulonben}{Elágazás}{akkor}{Különben}{}{Elágazás vége}
+
+% Logikai operátorok
+\SetKw{Es}{$\wedge$}
+\SetKw{Vagy}{$\vee$}
+\SetKw{Nem}{$\neg$}
+
+% Tömb
+\SetKw{Tomb}{tömb}
+
+\title{Perlin-zaj}
 \author{Pintér Bálint}
 \renewcommand{\contentsname}{Tartalomjegyzék}
 
@@ -17,5 +53,45 @@
 \tableofcontents
 \newpage
 
-\section{Bevezetés}
+\section{Perlin-zaj}
+A Perlin-zaj egy olyan zaj, amely sima természetesen változó zajt generál. Így
+használható természetbeli dolgok leszimulálására mint például egy domborzat.
+Bármennyi dimenzióra létrehozható, de jellemzően az elsőtől a negyedik
+dimenzióig alkalmazzák. A mi kódunkban egy két dimenziós Perlin-zaj van
+implementálva.
+\section{Előkészítés}
+A Perlin-zajnak szüksége van egy gradiens táblára és egy permutációs táblára.
+\subsection{Gradiens tábla}
+A gradiens tábla vektorokat tárol a zaj dimenzióinak megfelelően. (Két
+dimenziós zaj -> két dimenziós vektor)
+\subsection{Permutációs tábla}
+A permutációs tábla kezdetileg 0-tól 255-ig tartalmazza a számokat, majd ezeket
+összekeverjük és megduplázzuk (így egy 512 elemű tömböt kapunk). Így a
+hashelésnél nem kell odafigyelni a túlindexelésre.
+\begin{algorithm}
+    \caption{Permutációs tábla létrehozása}
+    \DontPrintSemicolon
+
+    \Eljaras{PermutaciosTablaGeneral (PermutaciosTabla, MaxP, Rand)}{
+
+        % Változók
+        \Konstansok{MaxP=512}
+
+        \Ciklus{$i \coloneqq 1$-től $256$-ig}{
+            PermutaciosTabla[$i$] $\coloneqq$ i
+        }
+
+        \Ciklus{$i \coloneqq 256$-től $1$-ig}{
+            j $\coloneqq$ Rand(1, 256)  \\
+            temp $\coloneqq$ PermutaciosTabla[$i$] \\
+            PermutaciosTabla[$i$] $\coloneqq$ PermutaciosTabla[$j$] \\
+            PermutaciosTabla[$j$] $\coloneqq$ temp \\
+        }
+
+        \Ciklus{$i \coloneqq 1$-től $256$-ig}{
+            PermutaciosTabla[$i + 256$] $\coloneqq$ i
+        }
+    }
+\end{algorithm}
+
 \end{document}

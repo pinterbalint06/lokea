@@ -37,6 +37,7 @@ namespace PerlinNoise
         bool isGPUSet_;
 
         static float dotProduct(const Vec2 &grad, const float x, const float y);
+        static void createPermutationTable(uint8_t *permutationTable, pcgRand &rand);
         uint8_t hash(const int x, const int y);
 
     public:
