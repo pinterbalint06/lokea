@@ -3,6 +3,7 @@ const router = express.Router();
 const database = require('../sql/database.js');
 const fs = require('fs/promises');
 const bcrypt = require('bcrypt');
+const validator = require('validator');
 const { body, validationResult } = require("express-validator");
 const mysql = require('mysql2/promise');
 
@@ -103,5 +104,40 @@ router.post("/signup",
     });
   }
 );
+
+router.post("/login", async (request, response) => {
+    const { username, password } = request.body;
+    try {
+        let rows;
+        if (validator.isEmail(username)) {
+            [rows] = await pool.query(
+                `SELECT users.password FROM users WHERE users.email = ?`,
+                [username]
+            );
+        }
+        else {
+            [rows] = await pool.query(
+                `SELECT users.password FROM users WHERE users.username = ?`,
+                [username]
+            );
+        }
+
+        if (!rows || rows.length === 0) {
+            return response.status(401).json({ message: "Hibás email vagy jelszó" });
+        }
+
+        let sPass = rows[0].password;
+        console.log(password, sPass);
+        let egyezes = await bcrypt.compare(password, sPass);
+
+        if (!egyezes) {
+            return response.status(401).json({ message: "Hibás email vagy jelszó" });
+        }
+
+        response.status(200).json({ message: "Sikeres bejelentkezés" });
+    } catch (error) {
+        response.status(500).json({ message: error})
+    }
+});
 
 module.exports = router;

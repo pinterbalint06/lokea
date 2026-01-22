@@ -37,6 +37,27 @@ document.addEventListener("DOMContentLoaded", async function() {
             alert(`hálózati hiba: ${error}`);
         }
     });
+    document.getElementById('login').addEventListener("click", async function() {
+        let username = document.getElementById('logUser');
+        let jelszo = document.getElementById('logPass');
+
+        try {
+            let response = await fetch("/api/login", {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json"
+                },
+                body: JSON.stringify({
+                    username: username.value,
+                    password: jelszo.value
+                })
+            });
+            let data = await response.json();
+            console.log(data);
+        } catch (error) {
+            alert(`hálózati hiba: ${error}`);
+        }
+    });
 });
 
 // function ell() {
