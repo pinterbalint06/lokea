@@ -1,5 +1,6 @@
 \documentclass[12pt]{article}
-\usepackage{mathtools}
+\usepackage{mathtools,amssymb, amsthm, tikz}
+\usetikzlibrary{angles, quotes, decorations.pathreplacing}
 \usepackage[margin=1in]{geometry}
 \usepackage[T1]{fontenc}
 \usepackage[utf8]{inputenc}
@@ -54,21 +55,73 @@
 \newpage
 
 \section{Perlin-zaj}
-A Perlin-zaj egy olyan zaj, amely sima természetesen változó zajt generál. Így
-használható természetbeli dolgok leszimulálására mint például egy domborzat.
-Bármennyi dimenzióra létrehozható, de jellemzően az elsőtől a negyedik
-dimenzióig alkalmazzák. A mi kódunkban egy két dimenziós Perlin-zaj van
-implementálva.
+A Perlin-zaj egy zajgeneráló algoritmus, amely véletlenszerű, de összefüggő
+zajt generál. Így a természetben előforduló véletlenszerű jelenségeket jól
+lehet vele szimulálni, mint például domborzatok, felhők vagy a víz hullámzása.
+Tetszőleges $n$ dimenzióra létrehozható, de jellemzően az 1-től a 4. dimenzióig
+alkalmazzák. A kódban egy kétdimenziós Perlin-zaj van implementálva.
 \section{Előkészítés}
-A Perlin-zajnak szüksége van egy gradiens táblára és egy permutációs táblára.
+A Perlin-zaj hatékony generálásához két adat inicializálására van szükség: egy
+gradiens táblára és egy permutációs táblára.
 \subsection{Gradiens tábla}
-A gradiens tábla vektorokat tárol a zaj dimenzióinak megfelelően. (Két
-dimenziós zaj -> két dimenziós vektor)
+A Perlin-zaj egy úgynevezett gradiens-zaj. Eszerint rácspontokat határozunk
+meg, amikhez egy véletlenszerű vektort rendelünk. A gradiens tábla ezeket a
+véletlenszerű vektorokat tárolja. A vektorok dimenziószáma megegyezik a zaj
+dimenziószámával. (Kétdimenziós zaj $\rightarrow$ kétdimenziós vektor)
+\begin{center}
+    \begin{tikzpicture}[scale=0.85]
+        \pgfmathsetseed{\time}
+        \foreach \i in {0, 2, ..., 10} {
+                \draw (\i, 0) -- (\i, 10);
+                \draw (0, \i) -- (10, \i);
+                \foreach \x in {0, 2, ..., 10} {
+                        \draw[->, blue] (\x,\i) -- ++(rnd*360:1.5);
+                        \fill[blue] (\x,\i) circle (2pt);
+                    }
+            }
+
+    \end{tikzpicture}
+    \\
+    \textbf{1. Ábra:}\\A záj rácsainák szemléltetése.
+\end{center}
+\newpage
+\subsubsection{Vektor generálás}
+Generálunk egy véletlenszerű számot $[0;2\pi[$ intervallumban. Majd egyszerű
+trigonometriával a szöget egy vektorrá alakítjuk, ahol a vektor $x$ komponense
+a véletlen szög koszinusza, és az $y$ komponense a szög szinusza.
+\begin{center}
+    \begin{tikzpicture}[scale=4.5]
+        \coordinate (O) at (0,0);
+        \draw (O) circle (1cm);
+        \pgfmathsetmacro{\angle}{60}
+        \pgfmathsetmacro{\x}{cos(\angle)}
+        \pgfmathsetmacro{\y}{sin(\angle)}
+        \fill[black] (\x,0) circle (0.15mm);
+        \draw[->, black] (O) -- (\x, \y);
+        \coordinate (A) at (\x, \y);
+        \coordinate (B) at (\x, 0);
+        \draw pic ["$\alpha$", draw=black, angle radius=5mm] {angle = A--B--O};
+        \draw[dashed] (O) -- (B);
+        \draw[decorate, decoration={brace, mirror, amplitude=7pt}]
+        (O) -- (B) node[midway, below=7pt] {$\cos(\alpha)$};
+        \draw[dashed] (B) -- (A);
+        \draw[decorate, decoration={brace, mirror, amplitude=7pt}]
+        (B) -- (A) node[midway, right=7pt] {$\sin(\alpha)$};
+
+        \node[left] at (O) {$O$};
+
+    \end{tikzpicture}
+    \\
+    \textbf{2. Ábra:}\\A vektorok előállításának szemléltetése.
+\end{center}
+\newpage
 \subsection{Permutációs tábla}
-A permutációs tábla kezdetileg 0-tól 255-ig tartalmazza a számokat, majd ezeket
-összekeverjük és megduplázzuk (így egy 512 elemű tömböt kapunk). Így a
-hashelésnél nem kell odafigyelni a túlindexelésre.
-\begin{algorithm}
+A permutációs tábla kezdetben 0-tól 255-ig tartalmazza a számokat növekvő
+sorrendben. Ezt a listát egy véletlenszám-generátor segítségével összekeverjük
+és önmaga után fűzzük (ezzel egy 512 elemű tömböt kapunk). Így a hashelésnél
+elkerülhető a túlindexelés, ami gyorsítja a zajgenerálást, mivel elhagyható a
+túlindexelésre való ellenőrzés. \\
+\begin{algorithm}[H]
     \caption{Permutációs tábla létrehozása}
     \DontPrintSemicolon
 
@@ -81,17 +134,18 @@ hashelésnél nem kell odafigyelni a túlindexelésre.
             PermutaciosTabla[$i$] $\coloneqq$ i
         }
 
-        \Ciklus{$i \coloneqq 256$-től $1$-ig}{
-            j $\coloneqq$ Rand(1, 256)  \\
+        \Ciklus{$i \coloneqq 256$-tól $1$-ig}{
+            j $\coloneqq$ Rand(1, i)  \\
             temp $\coloneqq$ PermutaciosTabla[$i$] \\
             PermutaciosTabla[$i$] $\coloneqq$ PermutaciosTabla[$j$] \\
             PermutaciosTabla[$j$] $\coloneqq$ temp \\
         }
 
         \Ciklus{$i \coloneqq 1$-től $256$-ig}{
-            PermutaciosTabla[$i + 256$] $\coloneqq$ i
+            PermutaciosTabla[$i + 256$] $\coloneqq$ PermutaciosTabla[$i$]
         }
     }
 \end{algorithm}
+\section{Zajszámítás}
 
 \end{document}
