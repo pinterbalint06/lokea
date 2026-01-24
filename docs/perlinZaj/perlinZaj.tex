@@ -4,12 +4,23 @@
 \usepackage[margin=1in]{geometry}
 \usepackage[T1]{fontenc}
 \usepackage[utf8]{inputenc}
+\usepackage[magyar]{babel}
 \usepackage{lmodern}
 \usepackage{fontspec}
 \setmainfont{Times New Roman}
 \usepackage[linesnumbered,ruled,plain,longend]{algorithm2e}
 \usepackage[hidelinks]{hyperref} 
 \usepackage{wrapfig}
+\usepackage{enumitem}
+\usepackage{caption}
+
+\captionsetup[figure]{
+    labelfont=bf,
+    name=Ábra,
+    labelsep=newline,
+    justification=centering,
+    singlelinecheck=false
+}
 
 \newcommand{\assign}{\leftarrow}
 
@@ -57,70 +68,80 @@
 \newpage
 
 \section{Perlin-zaj}
-A Perlin-zaj egy zajgeneráló algoritmus, amely véletlenszerű, de összefüggő
-zajt generál. Így a természetben előforduló véletlenszerű jelenségeket jól
-lehet vele szimulálni, mint például domborzatok, felhők vagy a víz hullámzása.
-Tetszőleges $n$ dimenzióra létrehozható, de jellemzően az 1-től a 4. dimenzióig
-alkalmazzák. A kódban egy kétdimenziós Perlin-zaj van implementálva.
+A Perlin-zaj egy gradiens alapú zajgenerálási algoritmus, amelynek a célja a
+véletlenszerű, de összefüggő zaj létrehozása. Segítségével a természetben
+előforduló véletlenszerű jelenségeket jól lehet szimulálni, mint például
+domborzatok, felhők vagy a víz hullámzása. Tetszőleges $n$ dimenzióra
+létrehozható, de jellemzően az $1$-től a $4$. dimenzióig alkalmazzák. A kódban
+egy kétdimenziós Perlin-zaj van implementálva.
+\subsection{Működése összefoglalva}
+\begin{enumerate}[noitemsep]
+    \item \textbf{Rács meghatározása:} A zaj dimenziójában egy szabályos rácsot határozunk meg, amelynek minden sarkához egy véletlenszerűen generált egységvektort rendelünk. A rácsvonalak jellemzően az egész koordinátáknál helyezkednek el.
+    \item \textbf{Rácsnégyzeten belüli vektorok kiszámítása:} Kiszámoljuk a rácsnégyzetén belüli pontba a rács sarkaiból mutató vektorokat.
+    \item \textbf{Skaláris szorzás:} Az adott sarokból a pontba mutató vektornak és az adott sarokhoz rendelt vektornak vesszük a skaláris szorzatát.
+    \item \textbf{Interpoláció:} A kapott skaláris szorzatokat végül tengelyekként interpoláljuk egy simító függvénnyel. Például a kétdimenziós zajnál először az $x$ tengely mentén interpolálunk majd a kapott részeredményeket az $y$ tengely mentén interpoláljuk.
+\end{enumerate}
 \section{Előkészítés}
 A Perlin-zaj hatékony generálásához két adat inicializálására van szükség: egy
 gradiens táblára és egy permutációs táblára.
 \subsection{Gradiens tábla}
-A Perlin-zaj egy úgynevezett gradiens-zaj. Eszerint rácspontokat határozunk
-meg, amikhez egy véletlenszerű vektort rendelünk. A gradiens tábla ezeket a
-véletlenszerű vektorokat tárolja. A vektorok dimenziószáma megegyezik a zaj
-dimenziószámával. (Kétdimenziós zaj $\rightarrow$ kétdimenziós vektor)
-\begin{center}
-    \begin{tikzpicture}[scale=0.85]
-        \pgfmathsetseed{\time}
+\begin{wrapfigure}[7]{r}{0.45\textwidth}
+    \centering
+    \vspace{-40pt}
+    \begin{tikzpicture}[scale=0.65]
+        \pgfmathsetseed{3432}
         \foreach \i in {0, 2, ..., 10} {
                 \draw (\i, 0) -- (\i, 10);
                 \draw (0, \i) -- (10, \i);
                 \foreach \x in {0, 2, ..., 10} {
-                        \draw[->, blue] (\x,\i) -- ++(rnd*360:1.5);
-                        \fill[blue] (\x,\i) circle (2pt);
+                        \draw[->, red] (\x,\i) -- ++(rnd*360:1.5);
+                        \fill[red] (\x,\i) circle (2pt);
                     }
             }
 
     \end{tikzpicture}
-    \\
-    \textbf{1. Ábra:}\\A záj rácsainák szemléltetése.
-\end{center}
+    \caption{A záj rácsainák szemléltetése.}
+\end{wrapfigure}
+A Perlin-zaj egy úgynevezett gradiens-zaj. Eszerint rácspontokat határozunk
+meg, amikhez egy véletlenszerű vektort rendelünk. A gradiens tábla ezeket a
+véletlenszerű vektorokat tárolja. A vektorok dimenziószáma megegyezik a zaj
+dimenziószámával. (Kétdimenziós zaj $\rightarrow$ kétdimenziós vektor)
 \newpage
 \subsubsection{Vektor generálás}
-Generálunk egy véletlenszerű számot $[0;2\pi[$ intervallumban. Majd egyszerű
-trigonometriával a szöget egy vektorrá alakítjuk, ahol a vektor $x$ komponense
-a véletlen szög koszinusza, és az $y$ komponense a szög szinusza.
-\begin{center}
-    \begin{tikzpicture}[scale=4.5]
+\begin{wrapfigure}[5]{r}{0.4\textwidth}
+    \centering
+    \vspace{-40pt}
+    \hspace*{1.2cm}
+    \begin{tikzpicture}[scale=2]
         \coordinate (O) at (0,0);
         \draw (O) circle (1cm);
-        \pgfmathsetmacro{\angle}{60}
+        \pgfmathsetmacro{\angle}{45}
         \pgfmathsetmacro{\x}{cos(\angle)}
         \pgfmathsetmacro{\y}{sin(\angle)}
         \fill[black] (\x,0) circle (0.15mm);
         \draw[->, black] (O) -- (\x, \y);
         \coordinate (A) at (\x, \y);
         \coordinate (B) at (\x, 0);
-        \draw pic ["$\alpha$", draw=black, angle radius=5mm] {angle = A--B--O};
+        \draw pic ["$\alpha$", draw=black, angle radius=5mm] {angle = B--O--A};
         \draw[dashed] (O) -- (B);
         \draw[decorate, decoration={brace, mirror, amplitude=7pt}]
         (O) -- (B) node[midway, below=7pt] {$\cos(\alpha)$};
         \draw[dashed] (B) -- (A);
-        \draw[decorate, decoration={brace, mirror, amplitude=7pt}]
-        (B) -- (A) node[midway, right=7pt] {$\sin(\alpha)$};
+        \draw[decorate, decoration={brace, mirror, amplitude=12pt}]
+        (B) -- (A) node[midway, right=12pt] {$\sin(\alpha)$};
 
         \node[left] at (O) {$O$};
-
     \end{tikzpicture}
-    \\
-    \textbf{2. Ábra:}\\A vektorok előállításának szemléltetése.
-\end{center}
-\newpage
+    \caption{A vektorok előállításának szemléltetése.}
+\end{wrapfigure}
+Generálunk egy véletlenszerű számot $[0;2\pi[$ intervallumban. Majd egyszerű
+trigonometriával a szöget egy vektorrá alakítjuk, ahol a vektor $x$ komponense
+a véletlen szög koszinusza, és az $y$ komponense a szög szinusza.
+\vspace{2cm}
 \subsection{Permutációs tábla}
-A permutációs tábla kezdetben 0-tól 255-ig tartalmazza a számokat növekvő
+A permutációs tábla kezdetben $0$-tól $255$-ig tartalmazza a számokat növekvő
 sorrendben. Ezt a listát egy véletlenszám-generátor segítségével összekeverjük
-és önmaga után fűzzük (ezzel egy 512 elemű tömböt kapunk). Így a hashelésnél
+és önmaga után fűzzük (ezzel egy $512$ elemű tömböt kapunk). Így a hashelésnél
 elkerülhető a túlindexelés, ami gyorsítja a zajgenerálást, mivel elhagyható a
 túlindexelésre való ellenőrzés. \\
 \begin{algorithm}[H]
@@ -169,8 +190,8 @@ túlindexelésre való ellenőrzés. \\
                 \draw (\i, 0) -- (\i, \racsok);
                 \draw (0, \i) -- (\racsok, \i);
                 \foreach \x in {0, \meret, ..., \racsok} {
-                        \draw[->, blue] (\x,\i) -- ++(rnd*360:{\meret*0.66});
-                        \fill[blue] (\x,\i) circle (2pt);
+                        \draw[->, red] (\x,\i) -- ++(rnd*360:{\meret*0.66});
+                        \fill[red] (\x,\i) circle (2pt);
                     }
             }
 
@@ -192,7 +213,7 @@ túlindexelésre való ellenőrzés. \\
         ({\meret + \meret * 0.5}, 0.0) -- (A) node[midway, right=7pt] {$0,7$};
     \end{tikzpicture}
     \\
-    \textbf{3. Ábra:}\\A rácspont koordinátáainak szemléltetése.
+    \caption{A rácspont koordinátáainak szemléltetése.}
     \vspace{10pt}
 \end{wrapfigure}
 Először meghatározzuk, hogy az adott ($x$, $y$) pont melyik négyzetbe tartozik
@@ -207,7 +228,7 @@ Pszeudókódban megvalósítva:
 \begin{algorithm}
     \caption{Rácspontok és négyzeten belüli koordináták kiszámolása}
 
-    \Tipus{Rácspont=Strukt (\\
+    \Tipus{Rácspont=Rekord (\\
         \setlength\parindent{24pt} balAlsóPontX, balAlsóPontY:Egész\\
         \setlength\parindent{24pt} jobbFelsőPontX, jobbFelsőPontY:Egész\\
         \setlength\parindent{24pt} relatívX, relatívY :Valós\\
@@ -224,7 +245,31 @@ Pszeudókódban megvalósítva:
         jelenlegiRácspont.relatívX $\coloneqq x -$ floor($x$) \\
         jelenlegiRácspont.relatívY $\coloneqq y -$ floor($y$)
         ~\\
-        \textbf{RacspontKiszamolasa} $\coloneqq$ jelenlegiRácspont }
+        \textbf{RacspontKiszamolasa} $\coloneqq$ jelenlegiRácspont
+    }
+\end{algorithm}
+\subsection{Gradiens vektorok kiválasztása}
+A gradiens vektorokat a permutációs tábla segítségével válasszuk ki. Vesszük a
+permutációs tábla $x$-edik elemét, hozzáadjuk az $y$ értékét, majd az így
+kapott összeget használjuk indexként a permutációs táblában. Az így kapott
+eredmény lesz az indexe a gradiens vektornak a gradiens táblából.
+\begin{algorithm}
+    \caption{Gradiens vektor kiválasztása}
+    \Tipus{Vektor=Rekord (\\
+        \setlength\parindent{24pt} x:Egész\\
+        \setlength\parindent{24pt} y:Egész\\
+        )}
+    \Konstansok{MaxP=$512$, MaxG=$256$}
+    \Valtozok{PermutaciosTabla:Tömb($1$..MaxP:Egész)}
+    \Valtozok{GradiensTabla:Tömb($1$..MaxG:Egész)\\~\\}
+
+    \Fuggveny{Hash(\textbf{Konstans}: $x$, $y$: Egész) : Egész}{
+        \textbf{Hash} $\coloneqq$ PermutaciosTabla[PermutaciosTabla[$x$] + $y$]
+    }
+    ~\\
+    \Fuggveny{GradiensVektorKivalaszt(\textbf{Konstans}: $x$, $y$: Egész) : Vektor}{
+        \textbf{GradiensVektorKivalaszt} $\coloneqq$ GradiensTabla[hash($x$, $y$)]
+    }
 \end{algorithm}
 
 \end{document}

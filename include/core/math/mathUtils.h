@@ -26,7 +26,7 @@ namespace MathUtils
         return vec0[0] * vec1[0] + vec0[1] * vec1[1] + vec0[2] * vec1[2];
     }
 
-    inline float smoothingFunction(const float &d)
+    inline float quintic(const float &d)
     {
         //  6 * t^5 - 15 * t^4 + 10 * t^3 = t * t * t * (t * (t * 6 - 15) + 10);
         // Horner's method

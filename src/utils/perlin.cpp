@@ -39,7 +39,13 @@ namespace PerlinNoise
 
     inline uint8_t Perlin::hash(const int x, const int y) const
     {
+        // permutationTable_[index] is a value between 0-GRADIENTS_MASK
         return permutationTable_[permutationTable_[x] + y];
+    }
+
+    inline const Vec2 &Perlin::getGradientVector(const int x, const int y) const
+    {
+        return gradients_[hash(x, y)];
     }
 
     void Perlin::createPermutationTable(pcgRand &rand)
@@ -161,16 +167,12 @@ namespace PerlinNoise
     float Perlin::noise(float x, float y) const
     {
         GridPoint currGridPoint = calculateGridPoint(x, y);
-        // fade
-        float u = MathUtils::smoothingFunction(currGridPoint.relativeX);
-        float v = MathUtils::smoothingFunction(currGridPoint.relativeY);
 
-        // find gradients_ based on hashed value
-        // permutationTable_[index] is a value between 0-GRADIENTS_MASK
-        Vec2 g00 = gradients_[hash(currGridPoint.bottomLeftX, currGridPoint.bottomLeftY)];
-        Vec2 g10 = gradients_[hash(currGridPoint.topRightX, currGridPoint.bottomLeftY)];
-        Vec2 g01 = gradients_[hash(currGridPoint.bottomLeftX, currGridPoint.topRightY)];
-        Vec2 g11 = gradients_[hash(currGridPoint.topRightX, currGridPoint.topRightY)];
+        // get gradient vectors based on hashed value
+        Vec2 g00 = getGradientVector(currGridPoint.bottomLeftX, currGridPoint.bottomLeftY);
+        Vec2 g10 = getGradientVector(currGridPoint.topRightX, currGridPoint.bottomLeftY);
+        Vec2 g01 = getGradientVector(currGridPoint.bottomLeftX, currGridPoint.topRightY);
+        Vec2 g11 = getGradientVector(currGridPoint.topRightX, currGridPoint.topRightY);
 
         // calculate components from grid corners to point
         float leftToPoint = currGridPoint.relativeX;
@@ -181,6 +183,10 @@ namespace PerlinNoise
         Vec2 p10 = Vec2(rightToPoint, bottomToPoint);
         Vec2 p01 = Vec2(leftToPoint, topToPoint);
         Vec2 p11 = Vec2(rightToPoint, topToPoint);
+
+        // fade
+        float u = MathUtils::quintic(currGridPoint.relativeX);
+        float v = MathUtils::quintic(currGridPoint.relativeY);
 
         float a = MathUtils::interpolation(Vec2::dotProduct(g00, p00), Vec2::dotProduct(g10, p10), u);
         float b = MathUtils::interpolation(Vec2::dotProduct(g01, p01), Vec2::dotProduct(g11, p11), u);
