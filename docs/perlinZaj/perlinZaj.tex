@@ -9,6 +9,7 @@
 \setmainfont{Times New Roman}
 \usepackage[linesnumbered,ruled,plain,longend]{algorithm2e}
 \usepackage[hidelinks]{hyperref} 
+\usepackage{wrapfig}
 
 \newcommand{\assign}{\leftarrow}
 
@@ -125,35 +126,105 @@ túlindexelésre való ellenőrzés. \\
 \begin{algorithm}[H]
     \caption{Permutációs tábla létrehozása}
     \DontPrintSemicolon
-    \Konstansok{MaxP=512}
+    \Konstansok{MaxP=$512$}
     \Tipus{VéletlenSzámGenerátor=Osztály (\\
         \setlength\parindent{24pt} jelenlegiSzám:Egész\\
         \setlength\parindent{24pt} \textbf{Függvény} Következő:Egész\\
         )}
 
-    \Eljaras{PermutaciosTablaGeneral ( \Valtozok{PermutaciosTabla:Tömb(1..MaxP:Egész), \\
-            Rand:VéletlenSzámGenerátor}
+    \Eljaras{PermutaciosTablaGeneral (\textbf{Változó}: PermutaciosTabla:Tömb($1$..MaxP:Egész), \\
+        Rand:VéletlenSzámGenerátor
         )}{
-
         % Változók
-        \Valtozok{i, j, temp:Egész}
-
+        \Valtozok{$i$, $j$, temp:Egész}
+        ~\\
         \Ciklus{$i \coloneqq 1$-től $256$-ig}{
             PermutaciosTabla[$i$] $\coloneqq$ i
         }
-
+        ~\\
         \Ciklus{$i \coloneqq 256$-tól $2$-ig $-1$-esével}{
-            j $\coloneqq$ Rand.Következő() Mod (i + 1)  \\
+            j $\coloneqq$ Rand.Következő() Mod ($i + 1$)  \\
             temp $\coloneqq$ PermutaciosTabla[$i$] \\
             PermutaciosTabla[$i$] $\coloneqq$ PermutaciosTabla[$j$] \\
             PermutaciosTabla[$j$] $\coloneqq$ temp \\
         }
-
+        ~\\
         \Ciklus{$i \coloneqq 1$-től $256$-ig}{
             PermutaciosTabla[$i + 256$] $\coloneqq$ PermutaciosTabla[$i$]
         }
     }
 \end{algorithm}
+\newpage
 \section{Zajszámítás}
+\subsection{Rácspontok meghatározása}
+\begin{wrapfigure}{r}{0.6\textwidth}
+    \centering
+    \vspace{-40pt}
+    \begin{tikzpicture}[scale=0.6]
+        \pgfmathsetseed{10}
+        \pgfmathsetmacro{\racsok}{8}
+        \pgfmathsetmacro{\racsokSzama}{2}
+        \pgfmathsetmacro{\meret}{4}
+        \foreach \i in {0, \meret, ..., \racsok} {
+                \draw (\i, 0) -- (\i, \racsok);
+                \draw (0, \i) -- (\racsok, \i);
+                \foreach \x in {0, \meret, ..., \racsok} {
+                        \draw[->, blue] (\x,\i) -- ++(rnd*360:{\meret*0.66});
+                        \fill[blue] (\x,\i) circle (2pt);
+                    }
+            }
+
+        \coordinate (A) at ({\meret + \meret * 0.5}, {\meret * 0.7});
+        \fill (A) circle (3pt);
+        \node[above] at (A) {$A(1,5;0,7)$};
+        \coordinate (B) at (\meret, 0.0);
+        \fill (B) circle (3pt);
+        \node[above left] at (B) {$BL(1;0)$};
+        \coordinate (C) at ({\meret * 2}, \meret);
+        \fill (C) circle (3pt);
+        \node[right] at (C) {$FJ(2;1)$};
+
+        \draw[dashed] (\meret, {\meret * 0.7}) -- (A);
+        \draw[decorate, decoration={brace, mirror, amplitude=7pt}]
+        (\meret, {\meret * 0.7}) -- (A) node[midway, below=7pt] {$0,5$};
+        \draw[dashed] ({\meret + \meret * 0.5}, 0.0) -- (A);
+        \draw[decorate, decoration={brace, mirror, amplitude=7pt}]
+        ({\meret + \meret * 0.5}, 0.0) -- (A) node[midway, right=7pt] {$0,7$};
+    \end{tikzpicture}
+    \\
+    \textbf{3. Ábra:}\\A rácspont koordinátáainak szemléltetése.
+    \vspace{10pt}
+\end{wrapfigure}
+Először meghatározzuk, hogy az adott ($x$, $y$) pont melyik négyzetbe tartozik
+ezt a bitenkénti ÉS $255$ művelettel tesszük, így az eredmény a $[0;255]$
+tartományba fog esni: ha az érték nagyobb $255$-től, akkor visszafordul az
+intervallum elejére (pl. $256$-ból $0$ lesz). Ezt elvégezve az $x$-re és $y$-ra
+megkapjuk a bal alsó rácspont koordinátáit. A bal alsó rácspont
+koordinátáihoz hozzáadva egyet majd egy bitenkénti ÉS $255$ művelettel
+megkapjuk a jobb felső rácspont koordinátáit. A négyzeten belüli pontot úgy
+kapjuk meg, hogy a szám egész részét elhagyjuk. \\ \\
+Pszeudókódban megvalósítva:
+\begin{algorithm}
+    \caption{Rácspontok és négyzeten belüli koordináták kiszámolása}
+
+    \Tipus{Rácspont=Strukt (\\
+        \setlength\parindent{24pt} balAlsóPontX, balAlsóPontY:Egész\\
+        \setlength\parindent{24pt} jobbFelsőPontX, jobbFelsőPontY:Egész\\
+        \setlength\parindent{24pt} relatívX, relatívY :Valós\\
+        )}
+    \Fuggveny{RacspontKiszamolasa(\textbf{Konstans}: $x$, $y$: Valós) : Rácspont}{
+        \Valtozok{jelenlegiRácspont: Rácspont}
+        jelenlegiRácspont.balAlsóPontX $\coloneqq$ (Egész)floor($x$) \& $256$ + $1$ \\
+        jelenlegiRácspont.balAlsóPontY $\coloneqq$ (Egész)floor($y$) \& $256$ + $1$ \\
+        ~\\
+        jelenlegiRácspont.jobbAlsóPontX $\coloneqq$ (jelenlegiRácspont.balFelsőPontX
+        $+$ $1$) \& $256$ \\ jelenlegiRácspont.jobbAlsóPontY $\coloneqq$
+        (jelenlegiRácspont.balFelsőPontY $+$ $1$) \& $256$ \\
+        ~\\
+        jelenlegiRácspont.relatívX $\coloneqq x -$ floor($x$) \\
+        jelenlegiRácspont.relatívY $\coloneqq y -$ floor($y$)
+        ~\\
+        \textbf{RacspontKiszamolasa} $\coloneqq$ jelenlegiRácspont }
+\end{algorithm}
 
 \end{document}

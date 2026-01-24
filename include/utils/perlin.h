@@ -3,6 +3,7 @@
 
 #include <GLES3/gl3.h>
 #include <cstdint>
+#include <vector>
 
 // Forward declarations
 class pcgRand; // defined in "utils/pcgRand.h"
@@ -28,17 +29,19 @@ namespace PerlinNoise
     class Perlin
     {
     private:
-        uint8_t *permuTable_;
-        Vec2 *gradients_;
+        struct GridPoint;
+
+        std::vector<uint8_t> permutationTable_;
+        std::vector<Vec2> gradients_;
         GLuint permuTableTex_;
         GLuint gradientsTex_;
         GLuint parametersUBO_;
         PerlinParameters params_;
         bool isGPUSet_;
 
-        static float dotProduct(const Vec2 &grad, const float x, const float y);
-        static void createPermutationTable(uint8_t *permutationTable, pcgRand &rand);
-        uint8_t hash(const int x, const int y);
+        GridPoint calculateGridPoint(const float x, const float y) const;
+        void createPermutationTable(pcgRand &rand);
+        uint8_t hash(const int x, const int y) const;
 
     public:
         Perlin(PerlinParameters params);
@@ -62,10 +65,10 @@ namespace PerlinNoise
         void setParams(PerlinParameters &params);
 
         // one octave noise
-        float noise(float x, float y);
+        float noise(float x, float y) const;
 
         // Fractal Brownian Motion
-        float fbm(const float x, const float y);
+        float fbm(const float x, const float y) const;
 
         void uploadParametersToGPU();
         void uploadToGPU();
