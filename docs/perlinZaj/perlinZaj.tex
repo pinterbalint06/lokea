@@ -24,8 +24,9 @@
 \SetKwProg{Fuggveny}{Függvény}{:}{Függvény vége}
 
 % Változók
-\SetKwInput{Valtozok}{Változók}
-\SetKwInput{Konstansok}{Konstansok}
+\SetKwInput{Valtozok}{Változó}
+\SetKwInput{Konstansok}{Konstans}
+\SetKwInput{Tipus}{Típus}
 \SetKwInput{Be}{Be}
 \SetKwInput{Ki}{Ki}
 
@@ -124,18 +125,25 @@ túlindexelésre való ellenőrzés. \\
 \begin{algorithm}[H]
     \caption{Permutációs tábla létrehozása}
     \DontPrintSemicolon
+    \Konstansok{MaxP=512}
+    \Tipus{VéletlenSzámGenerátor=Osztály (\\
+        \setlength\parindent{24pt} jelenlegiSzám:Egész\\
+        \setlength\parindent{24pt} \textbf{Függvény} Következő:Egész\\
+        )}
 
-    \Eljaras{PermutaciosTablaGeneral (PermutaciosTabla, MaxP, Rand)}{
+    \Eljaras{PermutaciosTablaGeneral ( \Valtozok{ \setlength\parindent{52pt}PermutaciosTabla:Tömb(1..MaxP:Egész), \\
+            \setlength\parindent{52pt}Rand:VéletlenSzámGenerátor}
+        )}{
 
         % Változók
-        \Konstansok{MaxP=512}
+        \Valtozok{i, j, temp:Egész}
 
         \Ciklus{$i \coloneqq 1$-től $256$-ig}{
             PermutaciosTabla[$i$] $\coloneqq$ i
         }
 
-        \Ciklus{$i \coloneqq 256$-tól $1$-ig}{
-            j $\coloneqq$ Rand(1, i)  \\
+        \Ciklus{$i \coloneqq 256$-tól $2$-ig $-1$-esével}{
+            j $\coloneqq$ Rand.Következő() Mod (i + 1)  \\
             temp $\coloneqq$ PermutaciosTabla[$i$] \\
             PermutaciosTabla[$i$] $\coloneqq$ PermutaciosTabla[$j$] \\
             PermutaciosTabla[$j$] $\coloneqq$ temp \\
