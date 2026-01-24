@@ -1,0 +1,15 @@
+body {
+
+}
+
+a{
+    color: black;
+}
+
+a svg{
+    color: gray;
+}
+
+a svg:hover {
+    color: black;
+}
