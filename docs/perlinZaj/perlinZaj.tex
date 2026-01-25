@@ -1,6 +1,6 @@
 \documentclass[12pt]{article}
 \usepackage{mathtools,amssymb, amsthm, tikz}
-\usetikzlibrary{angles, quotes, decorations.pathreplacing}
+\usetikzlibrary{angles, quotes, decorations.pathreplacing, arrows.meta}
 \usepackage[margin=1in]{geometry}
 \usepackage[T1]{fontenc}
 \usepackage[utf8]{inputenc}
@@ -13,6 +13,11 @@
 \usepackage{wrapfig}
 \usepackage{enumitem}
 \usepackage{caption}
+\usepackage{tabto}
+\usepackage[style=numeric, backend=biber]{biblatex}
+\addbibresource{forrasok.bib}
+\usepackage{pgfplots}
+\pgfplotsset{compat=1.18}
 
 \captionsetup[figure]{
     labelfont=bf,
@@ -69,17 +74,17 @@
 
 \section{Perlin-zaj}
 A Perlin-zaj egy gradiens alapú zajgenerálási algoritmus, amelynek a célja a
-véletlenszerű, de összefüggő zaj létrehozása. Segítségével a természetben
-előforduló véletlenszerű jelenségeket jól lehet szimulálni, mint például
-domborzatok, felhők vagy a víz hullámzása. Tetszőleges $n$ dimenzióra
-létrehozható, de jellemzően az $1$-től a $4$. dimenzióig alkalmazzák. A kódban
-egy kétdimenziós Perlin-zaj van implementálva.
+véletlenszerű, de összefüggő zaj létrehozása. \cite{10.1145/325165.325247}
+Segítségével a természetben előforduló véletlenszerű jelenségeket jól lehet
+szimulálni, mint például domborzatok, felhők vagy a víz hullámzása. Tetszőleges
+$n$ dimenzióra létrehozható, de jellemzően az $1$-től a $4$. dimenzióig
+alkalmazzák. A kódban egy kétdimenziós Perlin-zaj van implementálva.
 \subsection{Működése összefoglalva}
 \begin{enumerate}[noitemsep]
     \item \textbf{Rács meghatározása:} A zaj dimenziójában egy szabályos rácsot határozunk meg, amelynek minden sarkához egy véletlenszerűen generált egységvektort rendelünk. A rácsvonalak jellemzően az egész koordinátáknál helyezkednek el.
     \item \textbf{Rácsnégyzeten belüli vektorok kiszámítása:} Kiszámoljuk a rácsnégyzetén belüli pontba a rács sarkaiból mutató vektorokat.
     \item \textbf{Skaláris szorzás:} Az adott sarokból a pontba mutató vektornak és az adott sarokhoz rendelt vektornak vesszük a skaláris szorzatát.
-    \item \textbf{Interpoláció:} A kapott skaláris szorzatokat végül tengelyekként interpoláljuk egy simító függvénnyel. Például a kétdimenziós zajnál először az $x$ tengely mentén interpolálunk majd a kapott részeredményeket az $y$ tengely mentén interpoláljuk.
+    \item \textbf{Interpoláció:} A kapott skaláris szorzatokat végül tengelyekként interpoláljuk egy simítófüggvénnyel. Például a kétdimenziós zajnál először az $x$ tengely mentén interpolálunk majd a kapott részeredményeket az $y$ tengely mentén interpoláljuk.
 \end{enumerate}
 \section{Előkészítés}
 A Perlin-zaj hatékony generálásához két adat inicializálására van szükség: egy
@@ -91,13 +96,13 @@ gradiens táblára és egy permutációs táblára.
     \begin{tikzpicture}[scale=0.65]
         \pgfmathsetseed{3432}
         \foreach \i in {0, 2, ..., 10} {
-                \draw (\i, 0) -- (\i, 10);
-                \draw (0, \i) -- (10, \i);
-                \foreach \x in {0, 2, ..., 10} {
-                        \draw[->, red] (\x,\i) -- ++(rnd*360:1.5);
-                        \fill[red] (\x,\i) circle (2pt);
-                    }
-            }
+        \draw (\i, 0) -- (\i, 10);
+        \draw (0, \i) -- (10, \i);
+        \foreach \x in {0, 2, ..., 10} {
+        \draw[-{Stealth}, red, thick] (\x,\i) -- ++(rnd*360:1.5);
+        \fill[red] (\x,\i) circle (2pt);
+        }
+        }
 
     \end{tikzpicture}
     \caption{A záj rácsainák szemléltetése.}
@@ -119,7 +124,7 @@ dimenziószámával. (Kétdimenziós zaj $\rightarrow$ kétdimenziós vektor)
         \pgfmathsetmacro{\x}{cos(\angle)}
         \pgfmathsetmacro{\y}{sin(\angle)}
         \fill[black] (\x,0) circle (0.15mm);
-        \draw[->, black] (O) -- (\x, \y);
+        \draw[-{Stealth}, black, thick] (O) -- (\x, \y);
         \coordinate (A) at (\x, \y);
         \coordinate (B) at (\x, 0);
         \draw pic ["$\alpha$", draw=black, angle radius=5mm] {angle = B--O--A};
@@ -187,23 +192,23 @@ túlindexelésre való ellenőrzés. \\
         \pgfmathsetmacro{\racsokSzama}{2}
         \pgfmathsetmacro{\meret}{4}
         \foreach \i in {0, \meret, ..., \racsok} {
-                \draw (\i, 0) -- (\i, \racsok);
-                \draw (0, \i) -- (\racsok, \i);
-                \foreach \x in {0, \meret, ..., \racsok} {
-                        \draw[->, red] (\x,\i) -- ++(rnd*360:{\meret*0.66});
-                        \fill[red] (\x,\i) circle (2pt);
-                    }
-            }
+        \draw (\i, 0) -- (\i, \racsok);
+        \draw (0, \i) -- (\racsok, \i);
+        \foreach \x in {0, \meret, ..., \racsok} {
+        \draw[-{Stealth}, red, thick] (\x,\i) -- ++(rnd*360:{\meret*0.66});
+        \fill[red] (\x,\i) circle (2pt);
+        }
+        }
 
         \coordinate (A) at ({\meret + \meret * 0.5}, {\meret * 0.7});
         \fill (A) circle (3pt);
         \node[above] at (A) {$A(1,5;0,7)$};
         \coordinate (B) at (\meret, 0.0);
         \fill (B) circle (3pt);
-        \node[above left] at (B) {$BL(1;0)$};
+        \node[above left] at (B) {$BA(1;0)$};
         \coordinate (C) at ({\meret * 2}, \meret);
         \fill (C) circle (3pt);
-        \node[right] at (C) {$FJ(2;1)$};
+        \node[right] at (C) {$JF(2;1)$};
 
         \draw[dashed] (\meret, {\meret * 0.7}) -- (A);
         \draw[decorate, decoration={brace, mirror, amplitude=7pt}]
@@ -221,7 +226,7 @@ ezt a bitenkénti ÉS $255$ művelettel tesszük, így az eredmény a $[0;255]$
 tartományba fog esni: ha az érték nagyobb $255$-től, akkor visszafordul az
 intervallum elejére (pl. $256$-ból $0$ lesz). Ezt elvégezve az $x$-re és $y$-ra
 megkapjuk a bal alsó rácspont koordinátáit. A bal alsó rácspont
-koordinátáihoz hozzáadva egyet majd egy bitenkénti ÉS $255$ művelettel
+koordinátáihoz hozzáadva $1$-et majd egy bitenkénti ÉS $255$ művelettel
 megkapjuk a jobb felső rácspont koordinátáit. A négyzeten belüli pontot úgy
 kapjuk meg, hogy a szám egész részét elhagyjuk. \\ \\
 Pszeudókódban megvalósítva:
@@ -248,7 +253,8 @@ Pszeudókódban megvalósítva:
         \textbf{RacspontKiszamolasa} $\coloneqq$ jelenlegiRácspont
     }
 \end{algorithm}
-\subsection{Gradiens vektorok kiválasztása}
+\subsection{Skaláris szorzat kiszámítása}
+\subsubsection{Gradiens vektorok kiválasztása}
 A gradiens vektorokat a permutációs tábla segítségével válasszuk ki. Vesszük a
 permutációs tábla $x$-edik elemét, hozzáadjuk az $y$ értékét, majd az így
 kapott összeget használjuk indexként a permutációs táblában. Az így kapott
@@ -271,5 +277,121 @@ eredmény lesz az indexe a gradiens vektornak a gradiens táblából.
         \textbf{GradiensVektorKivalaszt} $\coloneqq$ GradiensTabla[hash($x$, $y$)]
     }
 \end{algorithm}
+\subsubsection{A sarkokból a pontba mutató vektorok kiszámítása}
+Legyen a négyzeten belüli $P$ pont relatív koordinátái $(x_{0}, y_{0})$, ahol
+$x_{0}, y_{0} \in [0;1]$. A rácsnégyzet sarkai legyen $A, B, C, D$.\\ Így a
+sarkokból a pontba mutató vektorok:
 
+\noindent
+\begin{minipage}[t]{0.5\textwidth}
+    \vspace{0pt}
+    \begin{itemize}[noitemsep, leftmargin=*]
+        \item \textbf{Bal alsó:} \tabto{3cm} $\vec{v}_{AP}(x_{0}, y_{0})$
+        \item \textbf{Jobb alsó:} \tabto{3cm} $\vec{v}_{BP}(x_{0}-1, y_{0})$
+        \item \textbf{Bal felső:} \tabto{3cm} $\vec{v}_{CP}(x_{0}, y_{0}-1)$
+        \item \textbf{Jobb felső:} \tabto{3cm} $\vec{v}_{DP}(x_{0}-1, y_{0}-1)$
+    \end{itemize}
+\end{minipage}
+\begin{minipage}[t]{0.5\textwidth}
+    \vspace{0pt}
+    \centering
+    \begin{tikzpicture}
+        \pgfmathsetseed{3432}
+        \pgfmathsetmacro{\meret}{4}
+        \coordinate (A) at (0, 0);
+        \node[below left] at (A) {$A$};
+        \coordinate (B) at (\meret, 0);
+        \node[below right] at (B) {$B$};
+        \coordinate (C) at (\meret, \meret);
+        \node[above right] at (C) {$C$};
+        \coordinate (D) at (0, \meret);
+        \node[above left] at (D) {$D$};
+        \draw (A) -- (B) -- (C) -- (D) -- cycle;
+
+        \coordinate (P) at (1.4, 3.2);
+        \fill (P) circle (2pt);
+        \node[above] at (P) {$P (x_{0}, y_{0})$};
+        \draw[-{Stealth}, red, thick] (A) -- (P);
+        \draw[-{Stealth}, red, thick] (B) -- (P);
+        \draw[-{Stealth}, red, thick] (C) -- (P);
+        \draw[-{Stealth}, red, thick] (D) -- (P);
+
+    \end{tikzpicture}
+    \captionof{figure}{Relatív vektorok.}
+\end{minipage}
+\newpage
+\subsubsection{Skaláris szorzat kiszámítása}
+A vektorok meghatározása után kiszámítjuk az adott sarokhoz tartozó gradiens-
+és relatív vektorok skaláris szorzatát. A skaláris szorzatot a matematikai
+definíció alapján végezzük: $\vec{a} \cdot \vec{b} = x_{a}\times x_{b} +
+    y_{a}\times y_{b} $"fade" vagy "quintic"
+\begin{algorithm}
+    \caption{Skaláris szorzat}
+    \Tipus{Vektor=Rekord (\\
+        \setlength\parindent{24pt} x:Egész\\
+        \setlength\parindent{24pt} y:Egész\\
+        )}
+
+    \Fuggveny{SkalarisSzorzat(\textbf{Konstans}: $v1$, $v2$: Vektor) : Valós}{
+        \textbf{SkalarisSzorzat} $\coloneqq$ v1.x * v2.x + v1.y * v2.y
+    }
+\end{algorithm}
+\subsection{Interpoláció}
+A kapott skalárszorzatokat végül egy simítófüggvény segítségével interpoláljuk
+a tengelyek mentén.
+\subsubsection{Simítófüggvény}
+Simítófüggvényként a Ken Perlin által 2002-ben, az `Improved Noise'-ban
+bevezetett függvényt hasznájuk. \cite{10.1145/566654.566636}
+\[
+    s(t) = 6t^{5} - 15t^{4} + 10t^{3}
+\]
+A függvény fontos jellemzője, hogy az első deriváltja és második deriváltja is
+egyenlő 0-val $t=0$ és $t=1$ esetén is, így sima, folyamatos átmenet van a
+rácsnégyzetei közt.\\
+\begin{tikzpicture}[scale=0.675]
+    \begin{axis}[
+            axis lines = middle,
+            xlabel = $t$,
+            ylabel = {$s(t)$},
+            legend pos = south east
+        ]
+        \addplot [
+            domain=0:1,
+            samples=100,
+            color=blue,
+        ] {6*x^5 - 15*x^4 + 10*x^3};
+        \addlegendentry{$6t^{5} - 15t^{4} + 10t^{3}$}
+    \end{axis}
+\end{tikzpicture}
+\begin{tikzpicture}[scale=0.675]
+    \begin{axis}[
+            axis lines = middle,
+            xlabel = $t$,
+            ylabel = {$s'(t)$},
+            legend pos = south east
+        ]
+        \addplot [
+            domain=0:1,
+            samples=100,
+            color=blue,
+        ] {30*x^4 - 60*x^3 + 30*x^2};
+        \addlegendentry{$30t^{4} - 60t^{3} + 30t^{2}$}
+    \end{axis}
+\end{tikzpicture}
+\begin{tikzpicture}[scale=0.675]
+    \begin{axis}[
+            axis lines = middle,
+            xlabel = $t$,
+            ylabel = {$s''(t)$},
+            legend pos = north east
+        ]
+        \addplot [
+            domain=0:1,
+            samples=100,
+            color=blue,
+        ] {120*x^3 - 180*x^2 + 60*x};
+        \addlegendentry{$120t^{3} - 180x^{2} + 60t$}
+    \end{axis}
+\end{tikzpicture}
+\newpage \printbibliography[heading=bibintoc,title={Forrásjegyzék}]
 \end{document}
