@@ -62,6 +62,9 @@
 % Tömb
 \SetKw{Tomb}{tömb}
 
+% Komment
+\SetKwComment{Komment}{[}{]}
+
 \title{Perlin-zaj}
 \author{Pintér Bálint}
 \renewcommand{\contentsname}{Tartalomjegyzék}
@@ -262,8 +265,8 @@ eredmény lesz az indexe a gradiens vektornak a gradiens táblából.
 \begin{algorithm}
     \caption{Gradiens vektor kiválasztása}
     \Tipus{Vektor=Rekord (\\
-        \setlength\parindent{24pt} x:Egész\\
-        \setlength\parindent{24pt} y:Egész\\
+        \setlength\parindent{24pt} x:Valós\\
+        \setlength\parindent{24pt} y:Valós\\
         )}
     \Konstansok{MaxP=$512$, MaxG=$256$}
     \Valtozok{PermutaciosTabla:Tömb($1$..MaxP:Egész)}
@@ -328,8 +331,8 @@ definíció alapján végezzük: $\vec{a} \cdot \vec{b} = x_{a}\times x_{b} +
 \begin{algorithm}
     \caption{Skaláris szorzat}
     \Tipus{Vektor=Rekord (\\
-        \setlength\parindent{24pt} x:Egész\\
-        \setlength\parindent{24pt} y:Egész\\
+        \setlength\parindent{24pt} x:Valós\\
+        \setlength\parindent{24pt} y:Valós\\
         )}
 
     \Fuggveny{SkalarisSzorzat(\textbf{Konstans}: $v1$, $v2$: Vektor) : Valós}{
@@ -393,5 +396,74 @@ rácsnégyzetei közt.\\
         \addlegendentry{$120t^{3} - 180x^{2} + 60t$}
     \end{axis}
 \end{tikzpicture}
-\newpage \printbibliography[heading=bibintoc,title={Forrásjegyzék}]
+\begin{algorithm}
+    \caption{Simítófüggvény}
+    \Fuggveny{Simitofuggveny(\textbf{Konstans}: t: Valós) : Valós}{
+        \textbf{Simitofuggveny} $\coloneqq$ $6t^{5} - 15t^{4} + 10t^{3}$
+    }
+\end{algorithm}
+\subsubsection{Interpoláció}
+A végeredményt a skaláris szorzatok interpolálásával kapjuk. Kétdimenzió esetén
+először kiszámoljuk a relatív x-koordináta simítófüggvénybeli értékét majd
+eszerint interpoláljuk a skaláris szorzatokat az x tengely mentén, tehát a
+felső skaláris szoraztokat és az alsó skaláris szorzatokat. Majd kiszámoljuk a
+relatív y-koordináta simítófüggvénybeli értékét és eszerint interpoláljuk az
+előző kettő interpolált részeredményt.
+\begin{algorithm}
+    \caption{Interpoláció}
+    \Fuggveny{Interpolacio(\textbf{Konstans}: a, b, t: Valós) : Valós}{
+        \textbf{Interpolacio} $\coloneqq$ $a + t \times (b - a)$
+    }
+\end{algorithm}
+\newpage
+\section{Teljes zajfüggvény}
+Először kiszámoljuk a vizsgált pontot tartalmazó rácsnégyzet koordinátáit és a
+ponton belüli relatív helyzetét a \textit{RacspontKiszamolasa} függvénnyel. Ezt
+követően lekérjük a négy sarokhoz tartozó vektorokat a
+\textit{GradiensVektorKivalaszt} függvénnyel, majd kiszámítjuk a sarkokból a
+pontba mutató távolságvektorokat. Végül kiszámoljuk a skaláris szorzatukat az
+adott sarkokhoz való vektoroknak a \textit{SkalarisSzorzat} segítségével. Végül
+interpoláljuk a skaláris szorzatokat az \textit{Interpolacio} függvénnyel.
+\begin{algorithm}
+    \linespread{0.925}\selectfont
+    \caption{Teljes zajfüggvény}
+    \Tipus{Vektor=Rekord (x, y: Valós)}
+    \Tipus{Rácspont=Rekord (\\
+        \setlength\parindent{24pt} balAlsóPontX, balAlsóPontY:Egész\\
+        \setlength\parindent{24pt} jobbFelsőPontX, jobbFelsőPontY:Egész\\
+        \setlength\parindent{24pt} relatívX, relatívY :Valós\\
+        )}
+
+    \Fuggveny{Zaj(\textbf{Konstans}: $x$, $y$: Valós) : Valós}{
+        \Valtozok{rácspont: Rácspont}
+        \Valtozok{g00, g10, g01, g11: Vektor}
+        \Valtozok{p00, p10, p01, p11: Vektor}
+        \Valtozok{u, v, a, b: Valós}
+        \Komment{1. Rácspont és relatív koordináták kiszámítása}
+        rácspont $\coloneqq$ RacspontKiszamolasa($x$, $y$)\\
+        \Komment{2. Gradiens vektorok lekérdezése}
+        g00 $\coloneqq$ GradiensVektorKivalaszt(rácspont.balAlsóPontX, rácspont.balAlsóPontY)\\
+        g10 $\coloneqq$ GradiensVektorKivalaszt(rácspont.jobbFelsőPontX, rácspont.balAlsóPontY)\\
+        g01 $\coloneqq$ GradiensVektorKivalaszt(rácspont.balAlsóPontX, rácspont.jobbFelsőPontY)\\
+        g11 $\coloneqq$ GradiensVektorKivalaszt(rácspont.jobbFelsőPontX, rácspont.jobbFelsőPontY)\\
+        \Komment{3. Relatív vektorok definiálása}
+        p00.x $\coloneqq$ rácspont.relatívX\\
+        p00.y $\coloneqq$ rácspont.relatívY\\
+        p10.x $\coloneqq$ rácspont.relatívX - $1.0$\\
+        p10.y $\coloneqq$ rácspont.relatívY\\
+        p01.x $\coloneqq$ rácspont.relatívX\\
+        p01.y $\coloneqq$ rácspont.relatívY - $1.0$\\
+        p11.x $\coloneqq$ rácspont.relatívX - $1.0$\\
+        p11.y $\coloneqq$ rácspont.relatívY - $1.0$\\
+        \Komment{4. Simítófüggvény alkalmazása}
+        u $\coloneqq$ Simitofuggveny(rácspont.relatívX)\\
+        v $\coloneqq$ Simitofuggveny(rácspont.relatívY)\\
+        \Komment{5. Skaláris szorzatok kiszámítása és interpolálásuk}
+        a $\coloneqq$ Interpolacio(SkalarisSzorzat(g00, p00), SkalarisSzorzat(g10, p10), u)\\
+        b $\coloneqq$ Interpolacio(SkalarisSzorzat(g01, p01), SkalarisSzorzat(g11, p11), u)\\
+        \textbf{Zaj} $\coloneqq$ Interpolacio(a, b, v)
+    }
+\end{algorithm}
+\section{\textbf{F}ractal \textbf{B}rownian \textbf{M}otion (Fraktál zaj)} \newpage
+\printbibliography[heading=bibintoc,title={Forrásjegyzék}]
 \end{document}
