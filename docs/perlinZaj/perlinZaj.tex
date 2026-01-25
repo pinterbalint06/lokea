@@ -355,7 +355,11 @@ rácsnégyzetetek közt.\\
             axis lines = middle,
             xlabel = $t$,
             ylabel = {$s(t)$},
-            legend pos = south east
+            legend style={
+                    at={(0.5,-0.15)},
+                    anchor=north,
+                    legend columns=-1
+                }
         ]
         \addplot [
             domain=0:1,
@@ -370,7 +374,11 @@ rácsnégyzetetek közt.\\
             axis lines = middle,
             xlabel = $t$,
             ylabel = {$s'(t)$},
-            legend pos = south east
+            legend style={
+                    at={(0.5,-0.15)},
+                    anchor=north,
+                    legend columns=-1
+                }
         ]
         \addplot [
             domain=0:1,
@@ -385,7 +393,11 @@ rácsnégyzetetek közt.\\
             axis lines = middle,
             xlabel = $t$,
             ylabel = {$s''(t)$},
-            legend pos = north east
+            legend style={
+                    at={(0.5,-0.15)},
+                    anchor=north,
+                    legend columns=-1
+                }
         ]
         \addplot [
             domain=0:1,
@@ -463,6 +475,109 @@ interpoláljuk a skaláris szorzatokat az \textit{Interpolacio} függvénnyel.
         \textbf{Zaj} $\coloneqq$ Interpolacio(a, b, v)
     }
 \end{algorithm}
-\section{\textbf{F}ractal \textbf{B}rownian \textbf{M}otion (Fraktál zaj)} WIP \newpage
-\printbibliography[heading=bibintoc,title={Forrásjegyzék}]
+\section{Fractal Brownian Motion (Fraktálzaj)}
+
+A Perlin-zaj önmagában túl sima, és hiányoznak belőle az apró részletek. Ezt a
+\textbf{Fractal Brownian Motion (FBM)} segítségével oldhatjuk meg. A módszer
+lényege, hogy több réteg (úgynevezett \textit{oktáv}) Perlin-zajt generálunk és
+adunk össze, ahol minden újabb réteg nagyobb frekvenciával és kisebb
+amplitudóval rendelkezik.
+
+\subsection{Paraméterei}
+A fraktál zaj finomhangolható a következő paraméterekkel:
+
+\begin{itemize}[noitemsep]
+    \item \textbf{Oktávok:} Azt határozza meg, hány réteg zajt adunk össze. Minél magasabb ez a szám, annál részletesebb a végeredmény, de annál többször kell lefutattni a zajgenerálást.
+    \item \textbf{Amplitudó (nagyság):} A zaj kezdeti magassága.
+    \item \textbf{Frekvencia:} A zaj kezdeti sűrűsége.
+    \item \textbf{Lacunarity:} Azt határozza meg, hogy az oktávok között hogyan változik a frekvencia. Az értéke általában $2.0$, tehát minden következő réteg kétszer olyan sűrű, mint az előző.
+    \item \textbf{Persistence:} Azt határozza meg, hogy az oktávok között hogyan csökken a amplitudó. Az értéke általában $0.5$, tehát minden következő réteg fele olyan magas, mint az előző.
+\end{itemize}
+
+\subsection{FBM matematikailag és szemléltetése}
+A végső zajfüggvényt matematikailag így írhatjuk fel:
+\[
+    FBM(x, y) = \sum_{i=0}^{n-1} A \cdot P^i \cdot \text{zaj}(x \cdot F \cdot L^i, y \cdot F \cdot L^i)
+\]
+Ahol az oktávok száma \textbf{$n$}, a kezdeti amplitudó \textbf{$A$}, a
+persistence \textbf{$P$}, a lacunarity \textbf{$L$}, a frekvencia pedig
+\textbf{$F$}.
+
+\begin{figure}[h]
+    \centering
+    \begin{tikzpicture}[scale=1]
+        \begin{axis}[
+                width=0.75\textwidth,
+                height=4.9cm,
+                axis lines = middle,
+                xlabel = $x$,
+                ylabel = $y$,
+                yticklabels={,,},
+                xtick={1.5708, 3.14159, 4.71239, 6.28318},
+                xticklabels={$\frac{\pi}{2}$, $\pi$, $\frac{3\pi}{2}$, $2\pi$},
+                legend style={
+                        at={(0.5,-0.15)}, anchor=north, font=\small } ]
+
+            \addplot [domain=0:6.28, samples=100, color=red, dashed] {1.0 * sin(deg(x))};
+            \addlegendentry{1. Oktáv ($f=1, A=1$)}
+
+            \addplot [domain=0:6.28, samples=100, color=blue, dashed] {0.5 * sin(deg(x * 2))};
+            \addlegendentry{2. Oktáv ($f=2, A=0.5$)}
+
+            \addplot [domain=0:6.28, samples=100, color=green, dashed] {0.25 * sin(deg(x * 4))};
+            \addlegendentry{3. Oktáv ($f=4, A=0.25$)}
+
+            \addplot [domain=0:6.28, samples=100, color=orange, dashed] {0.125 * sin(deg(x * 8))};
+            \addlegendentry{4. Oktáv ($f=8, A=0.125$)}
+
+            \addplot [domain=0:6.28, samples=200, color=black, thick]
+            {1.0 * sin(deg(x)) + 0.5 * sin(deg(x * 2)) + 0.25 * sin(deg(x * 4)) + 0.125 * sin(deg(x * 8))};
+            \addlegendentry{Összeg (FBM)}
+        \end{axis}
+    \end{tikzpicture}
+    \caption{Az oktávok összegzésének szemléltetése 1 dimenzióban a szinuszfüggvénnyel.}
+\end{figure}
+\subsection{FBM pszeudókód}
+A megvalósított kódban a fraktálzajt normalizáljuk a $[-1;1]$ intervallumra a
+maximális lehetséges értékkel való osztással. A normalizálás után kettő saját
+paramétert alkalmazunk.
+\begin{itemize}[noitemsep]
+    \item \textbf{Kontraszt:} A normalizált értéket erre az értékre emeli az eredeti előjel megtartásával. Így nagyobb lesz a kontraszt a nagyságok között.
+    \item \textbf{Zajméret:} A kontraszt alkalmazása után egy adott értékkel megszorozza a zajt.
+\end{itemize}
+A fraktálzaj pszeudókódban megvalósítva:
+
+\begin{algorithm}
+    \linespread{1.0}\selectfont
+    \caption{Fractal Brownian Motion (FBM)}
+    \Komment{A zaj paraméterei:}
+    \Konstansok{oktavok, kontraszt:Egész}
+    \Konstansok{frekvencia, amplitudo, persistence, lacunarity, zajMeret:Valós}
+    ~\\
+    \Fuggveny{FBM(\textbf{Konstans}: $x, y$: Valós) : Valós}{
+        \Valtozok{zajErtek, maxErtek, jelenlegiAmplitudo, jelenlegiFrekvencia, zajElojel: Valós}
+        \Valtozok{i: Egész}
+        zajErtek $\coloneqq 0$\\
+        maxErtek $\coloneqq 0$\\
+        jelenlegiAmplitudo $\coloneqq$ amplitudo\\
+        jelenlegiFrekvencia $\coloneqq$ frekvencia\\
+        ~\\
+        \Ciklus{$i \coloneqq 1$-tól $oktavok$-ig}{
+            \Komment{Zaj hozzáadása az aktuális frekvenciával és amplitúdóval}
+            zajErtek $\coloneqq$ zajErtek + Zaj($x \times jelenlegiFrekvencia$, $y \times jelenlegiFrekvencia$) $\times$ jelenlegiAmplitudo\\
+            ~\\
+            \Komment{Maximális lehetséges érték}
+            maxErtek $\coloneqq$ maxErtek + jelenlegiAmplitudo\\
+            ~\\
+            \Komment{Paraméterek frissítése a következő oktávhoz}
+            jelenlegiAmplitudo $\coloneqq$ jelenlegiAmplitudo $\times$ persistence\\
+            jelenlegiFrekvencia $\coloneqq$ jelenlegiFrekvencia $\times$ lacunarity
+        }
+        ~\\
+        \Komment{Normalizálás, kontraszt alkalmazása és méretezés}
+        zajElojel $\coloneqq$ elojel(zajErtek) \\
+        \textbf{FBM} $\coloneqq$ $(abszolutErtek(zajErtek / maxErtek))^{kontraszt} \times zajElojel \times zajMeret$
+    }
+\end{algorithm}
+
 \end{document}

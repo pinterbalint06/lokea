@@ -209,7 +209,7 @@ namespace PerlinNoise
             freq *= params_.lacunarity;
         }
 
-        return std::pow((total / maxValue), params_.contrast) * params_.noiseSize;
+        return std::pow(std::abs(total / maxValue), params_.contrast) * MathUtils::sign(total) * params_.noiseSize;
     }
 
     void Perlin::uploadParametersToGPU()

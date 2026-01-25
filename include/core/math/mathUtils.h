@@ -64,6 +64,11 @@ namespace MathUtils
         m[10] = 1.0f;
         m[15] = 1.0f;
     }
+
+    inline float sign(float val)
+    {
+        return static_cast<float>((val > 0.0f) - (val < 0.0f));
+    }
 }
 
 #endif
