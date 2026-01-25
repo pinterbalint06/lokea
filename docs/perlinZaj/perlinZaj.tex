@@ -85,7 +85,7 @@ alkalmazzák. A kódban egy kétdimenziós Perlin-zaj van implementálva.
 \subsection{Működése összefoglalva}
 \begin{enumerate}[noitemsep]
     \item \textbf{Rács meghatározása:} A zaj dimenziójában egy szabályos rácsot határozunk meg, amelynek minden sarkához egy véletlenszerűen generált egységvektort rendelünk. A rácsvonalak jellemzően az egész koordinátáknál helyezkednek el.
-    \item \textbf{Rácsnégyzeten belüli vektorok kiszámítása:} Kiszámoljuk a rácsnégyzetén belüli pontba a rács sarkaiból mutató vektorokat.
+    \item \textbf{Rácsnégyzeten belüli vektorok kiszámítása:} Kiszámoljuk a rácsnégyzeten belüli pontba a rács sarkaiból mutató vektorokat.
     \item \textbf{Skaláris szorzás:} Az adott sarokból a pontba mutató vektornak és az adott sarokhoz rendelt vektornak vesszük a skaláris szorzatát.
     \item \textbf{Interpoláció:} A kapott skaláris szorzatokat végül tengelyekként interpoláljuk egy simítófüggvénnyel. Például a kétdimenziós zajnál először az $x$ tengely mentén interpolálunk majd a kapott részeredményeket az $y$ tengely mentén interpoláljuk.
 \end{enumerate}
@@ -108,14 +108,14 @@ gradiens táblára és egy permutációs táblára.
         }
 
     \end{tikzpicture}
-    \caption{A záj rácsainák szemléltetése.}
+    \caption{A zaj rácsának szemléltetése.}
 \end{wrapfigure}
 A Perlin-zaj egy úgynevezett gradiens-zaj. Eszerint rácspontokat határozunk
 meg, amikhez egy véletlenszerű vektort rendelünk. A gradiens tábla ezeket a
 véletlenszerű vektorokat tárolja. A vektorok dimenziószáma megegyezik a zaj
 dimenziószámával. (Kétdimenziós zaj $\rightarrow$ kétdimenziós vektor)
 \newpage
-\subsubsection{Vektor generálás}
+\subsubsection{Vektorgenerálás}
 \begin{wrapfigure}[5]{r}{0.4\textwidth}
     \centering
     \vspace{-40pt}
@@ -221,12 +221,12 @@ túlindexelésre való ellenőrzés. \\
         ({\meret + \meret * 0.5}, 0.0) -- (A) node[midway, right=7pt] {$0,7$};
     \end{tikzpicture}
     \\
-    \caption{A rácspont koordinátáainak szemléltetése.}
+    \caption{A rácspont koordinátáinak szemléltetése.}
     \vspace{10pt}
 \end{wrapfigure}
 Először meghatározzuk, hogy az adott ($x$, $y$) pont melyik négyzetbe tartozik
 ezt a bitenkénti ÉS $255$ művelettel tesszük, így az eredmény a $[0;255]$
-tartományba fog esni: ha az érték nagyobb $255$-től, akkor visszafordul az
+tartományba fog esni: ha az érték nagyobb, mint $255$, akkor visszafordul az
 intervallum elejére (pl. $256$-ból $0$ lesz). Ezt elvégezve az $x$-re és $y$-ra
 megkapjuk a bal alsó rácspont koordinátáit. A bal alsó rácspont
 koordinátáihoz hozzáadva $1$-et majd egy bitenkénti ÉS $255$ művelettel
@@ -243,12 +243,12 @@ Pszeudókódban megvalósítva:
         )}
     \Fuggveny{RacspontKiszamolasa(\textbf{Konstans}: $x$, $y$: Valós) : Rácspont}{
         \Valtozok{jelenlegiRácspont: Rácspont}
-        jelenlegiRácspont.balAlsóPontX $\coloneqq$ (Egész)floor($x$) \& $256$ + $1$ \\
-        jelenlegiRácspont.balAlsóPontY $\coloneqq$ (Egész)floor($y$) \& $256$ + $1$ \\
+        jelenlegiRácspont.balAlsóPontX $\coloneqq$ ((Egész)floor($x$)) \& $256$ + $1$ \\
+        jelenlegiRácspont.balAlsóPontY $\coloneqq$ ((Egész)floor($y$)) \& $256$ + $1$ \\
         ~\\
-        jelenlegiRácspont.jobbAlsóPontX $\coloneqq$ (jelenlegiRácspont.balFelsőPontX
-        $+$ $1$) \& $256$ \\ jelenlegiRácspont.jobbAlsóPontY $\coloneqq$
-        (jelenlegiRácspont.balFelsőPontY $+$ $1$) \& $256$ \\
+        jelenlegiRácspont.jobbFelsőPontX $\coloneqq$ (jelenlegiRácspont.balAlsóPontX
+        $+ 1$) \& $256$ \\ jelenlegiRácspont.jobbFelsőPontY $\coloneqq$
+        (jelenlegiRácspont.balAlsóPontY $+ 1$) \& $256$ \\
         ~\\
         jelenlegiRácspont.relatívX $\coloneqq x -$ floor($x$) \\
         jelenlegiRácspont.relatívY $\coloneqq y -$ floor($y$)
@@ -258,7 +258,7 @@ Pszeudókódban megvalósítva:
 \end{algorithm}
 \subsection{Skaláris szorzat kiszámítása}
 \subsubsection{Gradiens vektorok kiválasztása}
-A gradiens vektorokat a permutációs tábla segítségével válasszuk ki. Vesszük a
+A gradiens vektorokat a permutációs tábla segítségével választjuk ki. Vesszük a
 permutációs tábla $x$-edik elemét, hozzáadjuk az $y$ értékét, majd az így
 kapott összeget használjuk indexként a permutációs táblában. Az így kapott
 eredmény lesz az indexe a gradiens vektornak a gradiens táblából.
@@ -326,8 +326,7 @@ sarkokból a pontba mutató vektorok:
 \subsubsection{Skaláris szorzat kiszámítása}
 A vektorok meghatározása után kiszámítjuk az adott sarokhoz tartozó gradiens-
 és relatív vektorok skaláris szorzatát. A skaláris szorzatot a matematikai
-definíció alapján végezzük: $\vec{a} \cdot \vec{b} = x_{a}\times x_{b} +
-    y_{a}\times y_{b} $"fade" vagy "quintic"
+definíció alapján végezzük: $\vec{a} \cdot \vec{b} = x_{a}x_{b} + y_{a}y_{b} $
 \begin{algorithm}
     \caption{Skaláris szorzat}
     \Tipus{Vektor=Rekord (\\
@@ -349,8 +348,8 @@ bevezetett függvényt hasznájuk. \cite{10.1145/566654.566636}
     s(t) = 6t^{5} - 15t^{4} + 10t^{3}
 \]
 A függvény fontos jellemzője, hogy az első deriváltja és második deriváltja is
-egyenlő 0-val $t=0$ és $t=1$ esetén is, így sima, folyamatos átmenet van a
-rácsnégyzetei közt.\\
+egyenlő 0-val $t=0$ és $t=1$ esetén is, így sima, folyamatos átmenet lesz a
+rácsnégyzetetek közt.\\
 \begin{tikzpicture}[scale=0.675]
     \begin{axis}[
             axis lines = middle,
@@ -404,10 +403,10 @@ rácsnégyzetei közt.\\
 \end{algorithm}
 \subsubsection{Interpoláció}
 A végeredményt a skaláris szorzatok interpolálásával kapjuk. Kétdimenzió esetén
-először kiszámoljuk a relatív x-koordináta simítófüggvénybeli értékét majd
+először kiszámoljuk a relatív x-koordináta simítófüggvénybeli értékét, majd
 eszerint interpoláljuk a skaláris szorzatokat az x tengely mentén, tehát a
-felső skaláris szoraztokat és az alsó skaláris szorzatokat. Majd kiszámoljuk a
-relatív y-koordináta simítófüggvénybeli értékét és eszerint interpoláljuk az
+felső skaláris szorzatokat és az alsó skaláris szorzatokat. Majd kiszámoljuk a
+relatív y-koordináta simítófüggvénybeli értékét, és eszerint interpoláljuk az
 előző kettő interpolált részeredményt.
 \begin{algorithm}
     \caption{Interpoláció}
@@ -431,7 +430,7 @@ interpoláljuk a skaláris szorzatokat az \textit{Interpolacio} függvénnyel.
     \Tipus{Rácspont=Rekord (\\
         \setlength\parindent{24pt} balAlsóPontX, balAlsóPontY:Egész\\
         \setlength\parindent{24pt} jobbFelsőPontX, jobbFelsőPontY:Egész\\
-        \setlength\parindent{24pt} relatívX, relatívY :Valós\\
+        \setlength\parindent{24pt} relatívX, relatívY:Valós\\
         )}
 
     \Fuggveny{Zaj(\textbf{Konstans}: $x$, $y$: Valós) : Valós}{
@@ -464,6 +463,6 @@ interpoláljuk a skaláris szorzatokat az \textit{Interpolacio} függvénnyel.
         \textbf{Zaj} $\coloneqq$ Interpolacio(a, b, v)
     }
 \end{algorithm}
-\section{\textbf{F}ractal \textbf{B}rownian \textbf{M}otion (Fraktál zaj)} \newpage
+\section{\textbf{F}ractal \textbf{B}rownian \textbf{M}otion (Fraktál zaj)} WIP \newpage
 \printbibliography[heading=bibintoc,title={Forrásjegyzék}]
 \end{document}
