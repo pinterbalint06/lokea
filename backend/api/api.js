@@ -57,10 +57,10 @@ router.get('/testsql', async (request, response) => {
 router.post("/signup",
     [
         body("username")
-            .isLength({ max: 20 }).withMessage("Felhasználónév hossza nem megfelelő!"),
+            .isLength({ min: 1, max: 20 }).withMessage("Felhasználónév hossza nem megfelelő!"),
         body("email")
             .isEmail().withMessage("Hibás email formátum")
-            .isLength({ max: 250 }).withMessage("Email max 250 karakter"),
+            .isLength({ min: 5, max: 250 }).withMessage("Email max 250 karakter"),
 
         body("password")
             .isLength({ min: 8, max: 50 }).withMessage("Jelszó hossza 8-50")
