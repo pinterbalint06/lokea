@@ -2,6 +2,8 @@ CREATE DATABASE IF NOT EXISTS bigprojekt_db
 DEFAULT CHARACTER SET utf8
 COLLATE utf8_hungarian_ci;
 
+USE bigprojekt_db;
+
 CREATE TABLE users (
     userid INT AUTO_INCREMENT PRIMARY KEY,
     username VARCHAR(20) NOT NULL UNIQUE,
