@@ -12,23 +12,23 @@ CREATE TABLE users (
     created TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
-CREATE TABLE pictures {
+CREATE TABLE pictures (
     picid int AUTO_INCREMENT PRIMARY KEY NOT NULL,
     width int NOT NULL,
     height int NOT NULL,
     filepath varchar(255) NOT NULL
-};
+);
 
-CREATE TABLE map {
+CREATE TABLE map (
     mapid int AUTO_INCREMENT PRIMARY KEY NOT NULL,
     creatorid int,
     name varchar(50) NOT NULL,
     picid int,
     foreign key (creatorid) references users(userid) ON DELETE SET NULL,
     foreign key (picid) references pictures(picid) ON DELETE SET NULL
-};
+);
 
-CREATE TABLE points {
+CREATE TABLE points (
     pointid int AUTO_INCREMENT PRIMARY KEY NOT NULL,
     mapid int,
     pointx int NOT NULL,
@@ -36,4 +36,4 @@ CREATE TABLE points {
     picid int,
     foreign key (mapid) references map(mapid) ON DELETE SET NULL,
     foreign key (picid) references pictures(picid) ON DELETE SET NULL
-};
+);
