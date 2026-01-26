@@ -41,6 +41,7 @@ namespace PerlinNoise
 
         GridPoint calculateGridPoint(const float x, const float y) const;
         void createPermutationTable(pcgRand &rand);
+        void createGradientTable(pcgRand &rand);
         uint8_t hash(const int x, const int y) const;
         const Vec2 &getGradientVector(const int x, const int y) const;
 

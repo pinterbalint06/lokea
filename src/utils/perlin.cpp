@@ -71,6 +71,15 @@ namespace PerlinNoise
         }
     }
 
+    void Perlin::createGradientTable(pcgRand &rand)
+    {
+        // setup gradient table
+        for (int i = 0; i < GRADIENTS_SIZE; i++)
+        {
+            gradients_[i] = Vec2::randVector(rand);
+        }
+    }
+
     Perlin::Perlin(PerlinParameters params)
     {
         isGPUSet_ = false;
@@ -81,11 +90,7 @@ namespace PerlinNoise
 
         createPermutationTable(pcgRandGen);
 
-        // generate gradients
-        for (int i = 0; i < GRADIENTS_SIZE; i++)
-        {
-            gradients_[i] = Vec2::randVector(pcgRandGen);
-        }
+        createGradientTable(pcgRandGen);
 
         permuTableTex_ = 0;
         gradientsTex_ = 0;

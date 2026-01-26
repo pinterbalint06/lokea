@@ -91,12 +91,46 @@ alkalmazzák. A kódban egy kétdimenziós Perlin-zaj van implementálva.
 \end{enumerate}
 \section{Előkészítés}
 A Perlin-zaj hatékony generálásához két adat inicializálására van szükség: egy
-gradiens táblára és egy permutációs táblára.
+gradiens táblára és egy permutációs táblára. \newpage
 \subsection{Gradiens tábla}
-\begin{wrapfigure}[7]{r}{0.45\textwidth}
+A Perlin-zaj egy úgynevezett gradiens-zaj. Eszerint rácspontokat határozunk
+meg, amikhez véletlenszerű vektorokat rendelünk. A gradiens tábla 256 darab
+ilyen vektort tárol el. A vektorok dimenziószáma megegyezik a zaj
+dimenziószámával. (Kétdimenziós zaj $\rightarrow$ kétdimenziós vektor)\\
+\begin{minipage}[t]{0.6\textwidth}
+    \vspace{0pt}
+    \begin{algorithm}[H]
+        \linespread{0.65}\selectfont
+        \caption{Gradiens tábla létrehozása}
+        \DontPrintSemicolon
+        \Konstansok{MaxG=$256$}
+        \Tipus{VéletlenSzámGenerátor=Osztály (\\
+            \setlength\parindent{24pt} jelenlegiSzám:Egész\\
+            \setlength\parindent{24pt} \textbf{Függvény} Következő:Egész\\
+            \setlength\parindent{24pt} \textbf{Függvény} KövetkezőValós:Valós\\
+            )}
+
+        \Tipus{Vektor=Rekord (\\
+            \setlength\parindent{24pt} x:Valós\\
+            \setlength\parindent{24pt} y:Valós\\
+            )}
+
+        \Eljaras{GradiensTablaGeneral (\textbf{Változó}: GradiensTabla:Tömb($1$..MaxG:Vektor),
+            Rand:VéletlenSzámGenerátor
+            )}{
+            % Változók
+            \Valtozok{$i$:Egész}
+            \Ciklus{$i \coloneqq 1$-től $256$-ig}{
+                GradiensTabla[$i$] $\coloneqq$ veletlenVektorGeneral(Rand)
+            }
+        }
+    \end{algorithm}
+\end{minipage}
+\hfill
+\begin{minipage}[t]{0.4\textwidth}
+    \vspace{0pt}
     \centering
-    \vspace{-40pt}
-    \begin{tikzpicture}[scale=0.65]
+    \begin{tikzpicture}[scale=0.55]
         \pgfmathsetseed{3432}
         \foreach \i in {0, 2, ..., 10} {
         \draw (\i, 0) -- (\i, 10);
@@ -108,18 +142,43 @@ gradiens táblára és egy permutációs táblára.
         }
 
     \end{tikzpicture}
-    \caption{A zaj rácsának szemléltetése.}
-\end{wrapfigure}
-A Perlin-zaj egy úgynevezett gradiens-zaj. Eszerint rácspontokat határozunk
-meg, amikhez egy véletlenszerű vektort rendelünk. A gradiens tábla ezeket a
-véletlenszerű vektorokat tárolja. A vektorok dimenziószáma megegyezik a zaj
-dimenziószámával. (Kétdimenziós zaj $\rightarrow$ kétdimenziós vektor)
-\newpage
+    \captionof{figure}{A zaj rácsának szemléltetése.}
+\end{minipage}
 \subsubsection{Vektorgenerálás}
-\begin{wrapfigure}[5]{r}{0.4\textwidth}
+Generálunk egy véletlenszerű számot $[0;2\pi[$ intervallumban. Majd egyszerű
+trigonometriával a szöget egy vektorrá alakítjuk, ahol a vektor $x$ komponense
+a véletlen szög koszinusza, és az $y$ komponense a szög szinusza. \\
+\begin{minipage}[t]{0.7\textwidth}
+    \vspace{0pt}
+    \begin{algorithm}[H]
+        \linespread{0.65}\selectfont
+        \caption{Véletlenszerű vektor generálás}
+        \DontPrintSemicolon
+        \Tipus{VéletlenSzámGenerátor=Osztály (\\
+            \setlength\parindent{24pt} jelenlegiSzám:Egész\\
+            \setlength\parindent{24pt} \textbf{Függvény} Következő:Egész\\
+            \setlength\parindent{24pt} \textbf{Függvény} KövetkezőValós:Valós\\
+            )}
+        \Tipus{Vektor=Rekord (\\
+            \setlength\parindent{24pt} x:Valós\\
+            \setlength\parindent{24pt} y:Valós\\
+            )}
+
+        \Eljaras{veletlenVektorGeneral (\textbf{Változó}: Rand:VéletlenSzámGenerátor )}{
+            \Valtozok{szog:Valós}
+            \Valtozok{vektor:Vektor}
+            szog $\coloneqq$ Rand.KövetkezőValós () * 2 * $\pi$\\
+            vektor.x = $\cos(\text{szog})$\\
+            vektor.y = $\sin(\text{szog})$\\
+            \textbf{veletlenVektorGeneral} $\coloneqq$ vektor
+        }
+    \end{algorithm}
+\end{minipage}
+\hfill
+\begin{minipage}[t]{0.3\textwidth}
+    \vspace{0pt}
     \centering
-    \vspace{-40pt}
-    \hspace*{1.2cm}
+    \hspace*{0.6cm}
     \begin{tikzpicture}[scale=2]
         \coordinate (O) at (0,0);
         \draw (O) circle (1cm);
@@ -140,12 +199,9 @@ dimenziószámával. (Kétdimenziós zaj $\rightarrow$ kétdimenziós vektor)
 
         \node[left] at (O) {$O$};
     \end{tikzpicture}
-    \caption{A vektorok előállításának szemléltetése.}
-\end{wrapfigure}
-Generálunk egy véletlenszerű számot $[0;2\pi[$ intervallumban. Majd egyszerű
-trigonometriával a szöget egy vektorrá alakítjuk, ahol a vektor $x$ komponense
-a véletlen szög koszinusza, és az $y$ komponense a szög szinusza.
-\vspace{2cm}
+    \captionof{figure}{A vektorok előállításának szemléltetése.}
+\end{minipage}
+\newpage
 \subsection{Permutációs tábla}
 A permutációs tábla kezdetben $0$-tól $255$-ig tartalmazza a számokat növekvő
 sorrendben. Ezt a listát egy véletlenszám-generátor segítségével összekeverjük
@@ -159,20 +215,20 @@ túlindexelésre való ellenőrzés. \\
     \Tipus{VéletlenSzámGenerátor=Osztály (\\
         \setlength\parindent{24pt} jelenlegiSzám:Egész\\
         \setlength\parindent{24pt} \textbf{Függvény} Következő:Egész\\
+        \setlength\parindent{24pt} \textbf{Függvény} KövetkezőValós:Valós\\
         )}
 
-    \Eljaras{PermutaciosTablaGeneral (\textbf{Változó}: PermutaciosTabla:Tömb($1$..MaxP:Egész), \\
+    \Eljaras{PermutaciosTablaGeneral (\textbf{Változó}: PermutaciosTabla:Tömb($1$..MaxP:Egész),
         Rand:VéletlenSzámGenerátor
         )}{
         % Változók
         \Valtozok{$i$, $j$, temp:Egész}
-        ~\\
         \Ciklus{$i \coloneqq 1$-től $256$-ig}{
-            PermutaciosTabla[$i$] $\coloneqq$ i
+            PermutaciosTabla[$i$] $\coloneqq i$
         }
         ~\\
         \Ciklus{$i \coloneqq 256$-tól $2$-ig $-1$-esével}{
-            j $\coloneqq$ Rand.Következő() Mod ($i + 1$)  \\
+            j $\coloneqq$ (Rand.Következő() Mod $i$) + 1  \\
             temp $\coloneqq$ PermutaciosTabla[$i$] \\
             PermutaciosTabla[$i$] $\coloneqq$ PermutaciosTabla[$j$] \\
             PermutaciosTabla[$j$] $\coloneqq$ temp \\
@@ -243,12 +299,11 @@ Pszeudókódban megvalósítva:
         )}
     \Fuggveny{RacspontKiszamolasa(\textbf{Konstans}: $x$, $y$: Valós) : Rácspont}{
         \Valtozok{jelenlegiRácspont: Rácspont}
-        jelenlegiRácspont.balAlsóPontX $\coloneqq$ ((Egész)floor($x$)) \& $256$ + $1$ \\
-        jelenlegiRácspont.balAlsóPontY $\coloneqq$ ((Egész)floor($y$)) \& $256$ + $1$ \\
-        ~\\
-        jelenlegiRácspont.jobbFelsőPontX $\coloneqq$ (jelenlegiRácspont.balAlsóPontX
-        $+ 1$) \& $256$ \\ jelenlegiRácspont.jobbFelsőPontY $\coloneqq$
-        (jelenlegiRácspont.balAlsóPontY $+ 1$) \& $256$ \\
+        \Komment{Pszeudókódban $1$-től kezdődik az indexelés}
+        jelenlegiRácspont.balAlsóPontX $\coloneqq$ (((Egész)floor($x$)) \& $255$) + $1$ \\
+        jelenlegiRácspont.balAlsóPontY $\coloneqq$ (((Egész)floor($y$)) \& $255$) + $1$ \\
+        jelenlegiRácspont.jobbFelsőPontX $\coloneqq$ (jelenlegiRácspont.balAlsóPontX \& $255$) $+ 1$ \\ jelenlegiRácspont.jobbFelsőPontY $\coloneqq$
+        (jelenlegiRácspont.balAlsóPontY \& $255$) $+ 1$ \\
         ~\\
         jelenlegiRácspont.relatívX $\coloneqq x -$ floor($x$) \\
         jelenlegiRácspont.relatívY $\coloneqq y -$ floor($y$)
@@ -350,7 +405,7 @@ bevezetett függvényt hasznájuk. \cite{10.1145/566654.566636}
 A függvény fontos jellemzője, hogy az első deriváltja és második deriváltja is
 egyenlő 0-val $t=0$ és $t=1$ esetén is, így sima, folyamatos átmenet lesz a
 rácsnégyzetetek közt.\\
-\begin{tikzpicture}[scale=0.675]
+\begin{tikzpicture}[scale=0.65]
     \begin{axis}[
             axis lines = middle,
             xlabel = $t$,
@@ -369,7 +424,7 @@ rácsnégyzetetek közt.\\
         \addlegendentry{$6t^{5} - 15t^{4} + 10t^{3}$}
     \end{axis}
 \end{tikzpicture}
-\begin{tikzpicture}[scale=0.675]
+\begin{tikzpicture}[scale=0.65]
     \begin{axis}[
             axis lines = middle,
             xlabel = $t$,
@@ -388,7 +443,7 @@ rácsnégyzetetek közt.\\
         \addlegendentry{$30t^{4} - 60t^{3} + 30t^{2}$}
     \end{axis}
 \end{tikzpicture}
-\begin{tikzpicture}[scale=0.675]
+\begin{tikzpicture}[scale=0.65]
     \begin{axis}[
             axis lines = middle,
             xlabel = $t$,
@@ -410,7 +465,8 @@ rácsnégyzetetek közt.\\
 \begin{algorithm}
     \caption{Simítófüggvény}
     \Fuggveny{Simitofuggveny(\textbf{Konstans}: t: Valós) : Valós}{
-        \textbf{Simitofuggveny} $\coloneqq$ $6t^{5} - 15t^{4} + 10t^{3}$
+        \Komment{Horner-elrendezésben ($12$ szorzása helyett csak $5$ szorzás):}
+        \textbf{Simitofuggveny} $\coloneqq$ $t * t * t * (t * (6 * t - 15) + 10)$
     }
 \end{algorithm}
 \subsubsection{Interpoláció}
