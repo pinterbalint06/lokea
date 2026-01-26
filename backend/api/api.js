@@ -162,7 +162,7 @@ router.post("/login",
         }
     });
 
-router.post('/kijelentkezes', (request, response) => {
+router.post('/signout', (request, response) => {
     request.session.destroy(error => { 
         if (error) {
             response.status(500).json({success: false, error: error});

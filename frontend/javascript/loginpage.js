@@ -11,7 +11,9 @@ document.addEventListener("DOMContentLoaded", async function () {
         let username = document.getElementById('logUser');
         let jelszo = document.getElementById('logPass');
         if (!validalvaBej(username, jelszo)) {
-            bejelentkezes(username, jelszo);
+            if (bejelentkezes(username, jelszo)) {
+                kijelentkezesgomb();
+            }
         }
     });
 });
@@ -110,12 +112,37 @@ async function bejelentkezes(username, jelszo) {
             })
         });
         let data = await response.json();
-        console.log(data);
-        let a = document.createElement('a');
-        a.href = "localhost:3000/api/terrain";
-        a.innerText = "terrainra";
-        document.getElementById('buttons').appendChild(a);
+        return true;
     } catch (error) {
         alert(`hálózati hiba: ${error}`);
     }
+}
+
+function kijelentkezesgomb() {
+    let a = document.createElement('button');
+    a.innerText = "kijelentkezes";
+    a.id = 'signoutbutton';
+    a.classList.add("btn", "btn-primary");
+    a.addEventListener("click", async function () {
+        try {
+        let response = await fetch("/api/signout", {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json"
+            }
+        });
+        let data = await response.json();
+        if (data.success) {
+            a.remove();
+            //window.location.href = '/home';
+        }
+        else {
+            console.log("baj a kijelentkezésben, baj: " + data.error);
+        }
+        
+    } catch (error) {
+        console.log(`hálózati hiba: ${error}`);
+    }
+    })
+    document.getElementById('buttons').appendChild(a);
 }
