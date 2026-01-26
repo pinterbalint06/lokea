@@ -37,3 +37,12 @@ CREATE TABLE points (
     foreign key (mapid) references map(mapid) ON DELETE SET NULL,
     foreign key (picid) references pictures(picid) ON DELETE SET NULL
 );
+
+CREATE TABLE scores (
+    scoreid int AUTO_INCREMENT PRIMARY KEY NOT NULL,
+    userid int,
+    mapid int,
+    score int NOT NULL,
+    foreign key (userid) references users(userid) ON DELETE CASCADE,
+    foreign key (mapid) references map(mapid) ON DELETE CASCADE
+)
