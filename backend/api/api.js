@@ -146,7 +146,7 @@ router.post("/login",
 
                         if (sesRole.role === 'ADMIN') {
                             request.session.cookie.maxAge = 15 * 60 * 1000;
-                        } 
+                        }
                         else {
                             request.session.cookie.maxAge = 2 * 60 * 60 * 1000;
                         }
@@ -161,5 +161,17 @@ router.post("/login",
             response.status(500).json({ message: error })
         }
     });
+
+router.post('/kijelentkezes', (request, response) => {
+    request.session.destroy(error => { 
+        if (error) {
+            response.status(500).json({success: false, error: error});
+        }
+        else {
+            response.clearCookie('geo.sid');
+            response.status(200).json({success: true});
+        }
+    });
+});
 
 module.exports = router;
