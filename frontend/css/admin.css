@@ -4,8 +4,8 @@
 }
 
 #sidebardiv {
-    height: 100vh; /* teljes viewport magasság */
-    top: 0;        /* a sticky teteje */
+    height: 100vh;
+    top: 0;
     overflow-y: auto;
 }
 
