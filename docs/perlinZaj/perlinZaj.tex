@@ -5,6 +5,7 @@
 \usepackage[T1]{fontenc}
 \usepackage[utf8]{inputenc}
 \usepackage[magyar]{babel}
+\usepackage{icomma}
 \usepackage{lmodern}
 \usepackage{fontspec}
 \setmainfont{Times New Roman}
@@ -38,7 +39,7 @@
 
 % Függvények
 \SetKwProg{Eljaras}{Eljárás}{:}{Eljárás vége}
-\SetKwProg{Fuggveny}{Függvény}{:}{Függvény vége}
+\SetKwProg{Fuggveny}{Függvény}{}{Függvény vége}
 
 % Változók
 \SetKwInput{Valtozok}{Változó}
@@ -76,52 +77,52 @@
 \newpage
 
 \section{Perlin-zaj}
-A Perlin-zaj egy gradiens alapú zajgenerálási algoritmus, amelynek a célja a
-véletlenszerű, de összefüggő zaj létrehozása. \cite{10.1145/325165.325247}
-Segítségével a természetben előforduló véletlenszerű jelenségeket jól lehet
-szimulálni, mint például domborzatok, felhők vagy a víz hullámzása. Tetszőleges
-$n$ dimenzióra létrehozható, de jellemzően az $1$-től a $4$. dimenzióig
-alkalmazzák. A kódban egy kétdimenziós Perlin-zaj van implementálva.
+A Perlin-zaj \textsuperscript{\cite{10.1145/325165.325247}} egy gradiens alapú
+zajgenerálási algoritmus, amelynek a célja a véletlenszerű, de összefüggő zaj
+létrehozása. Segítségével a természetben előforduló véletlenszerű jelenségeket
+jól lehet szimulálni, mint például domborzatok, felhők vagy a víz hullámzása.
+Tetszőleges $n$ dimenzióra létrehozható, de jellemzően az elsőtől a negyedik
+dimenzióig alkalmazzák. A kódban egy kétdimenziós Perlin-zaj van implementálva.
 \subsection{Működése összefoglalva}
 \begin{enumerate}[noitemsep]
-    \item \textbf{Rács meghatározása:} A zaj dimenziójában egy szabályos rácsot határozunk meg, amelynek minden sarkához egy véletlenszerűen generált egységvektort rendelünk. A rácsvonalak jellemzően az egész koordinátáknál helyezkednek el.
-    \item \textbf{Rácsnégyzeten belüli vektorok kiszámítása:} Kiszámoljuk a rácsnégyzeten belüli pontba a rács sarkaiból mutató vektorokat.
+    \item \textbf{Rács meghatározása:} A zaj dimenziójában egy egész koordináták által kijelölt elméleti rácsot használunk, amelynek minden sarkához egy véletlenszerűen kiválasztott egységvektort rendelünk.
+    \item \textbf{Rácsnégyzeten belüli vektorok kiszámítása:} Meghatározzuk a sarkokból a belső pontba mutató vektorokat.
     \item \textbf{Skaláris szorzás:} Az adott sarokból a pontba mutató vektornak és az adott sarokhoz rendelt vektornak vesszük a skaláris szorzatát.
-    \item \textbf{Interpoláció:} A kapott skaláris szorzatokat végül tengelyekként interpoláljuk egy simítófüggvénnyel. Például a kétdimenziós zajnál először az $x$ tengely mentén interpolálunk majd a kapott részeredményeket az $y$ tengely mentén interpoláljuk.
+    \item \textbf{Interpoláció:} A kapott skaláris szorzatokat végül tengelyenként interpoláljuk. Az interpoláció súlyozásához egy simítófüggvényt használunk. Például a kétdimenziós zajnál először az $x$ tengely mentén interpolálunk, majd a kapott részeredményeket az $y$ tengely mentén interpoláljuk.
 \end{enumerate}
 \section{Előkészítés}
 A Perlin-zaj hatékony generálásához két adat inicializálására van szükség: egy
-gradiens táblára és egy permutációs táblára. \newpage
-\subsection{Gradiens tábla}
-A Perlin-zaj egy úgynevezett gradiens-zaj. Eszerint rácspontokat határozunk
-meg, amikhez véletlenszerű vektorokat rendelünk. A gradiens tábla 256 darab
-ilyen vektort tárol el. A vektorok dimenziószáma megegyezik a zaj
-dimenziószámával. (Kétdimenziós zaj $\rightarrow$ kétdimenziós vektor)\\
+gradienstáblára és egy permutációs táblára. \newpage
+\subsection{Gradienstábla}
+A Perlin-zaj egy úgynevezett gradiens alapú zaj. Eszerint rácspontokat
+határozunk meg, amelyekhez véletlenszerű vektorokat rendelünk. A gradienstábla
+256 darab ilyen vektort tárol el. A vektorok dimenziószáma megegyezik a zaj
+dimenziószámával. (Például: Kétdimenziós zaj esetén kétdimenziós vektorokat
+használunk.)\\ \vspace{-8pt}
 \begin{minipage}[t]{0.6\textwidth}
     \vspace{0pt}
     \begin{algorithm}[H]
         \linespread{0.65}\selectfont
-        \caption{Gradiens tábla létrehozása}
+        \caption{Gradienstábla létrehozása}
         \DontPrintSemicolon
-        \Konstansok{MaxG=$256$}
-        \Tipus{VéletlenSzámGenerátor=Osztály (\\
-            \setlength\parindent{24pt} jelenlegiSzám:Egész\\
-            \setlength\parindent{24pt} \textbf{Függvény} Következő:Egész\\
-            \setlength\parindent{24pt} \textbf{Függvény} KövetkezőValós:Valós\\
+        \Konstansok{MaxG = $256$}
+        \Tipus{VéletlenSzámGenerátor = Osztály (\\
+            \setlength\parindent{24pt} jelenlegiSzám: Egész\\
+            \setlength\parindent{24pt} \textbf{Függvény} Következő: Egész\\
+            \setlength\parindent{24pt} \textbf{Függvény} KövetkezőValós: Valós\\
             )}
 
-        \Tipus{Vektor=Rekord (\\
-            \setlength\parindent{24pt} x:Valós\\
-            \setlength\parindent{24pt} y:Valós\\
+        \Tipus{Vektor = Rekord (\\
+            \setlength\parindent{24pt} x: Valós\\
+            \setlength\parindent{24pt} y: Valós\\
             )}
 
-        \Eljaras{GradiensTablaGeneral (\textbf{Változó}: GradiensTabla:Tömb($1$..MaxG:Vektor),
-            Rand:VéletlenSzámGenerátor
-            )}{
+        \Eljaras{GradiensTablaGeneral (\textbf{Változó}: GradiensTabla:Tömb($1$..MaxG: Vektor),
+            Rand: VéletlenSzámGenerátor)}{
             % Változók
             \Valtozok{$i$:Egész}
             \Ciklus{$i \coloneqq 1$-től $256$-ig}{
-                GradiensTabla[$i$] $\coloneqq$ veletlenVektorGeneral(Rand)
+                GradiensTabla[$i$] $\coloneqq$ VeletlenVektorGeneral(Rand)
             }
         }
     \end{algorithm}
@@ -144,33 +145,35 @@ dimenziószámával. (Kétdimenziós zaj $\rightarrow$ kétdimenziós vektor)\\
     \end{tikzpicture}
     \captionof{figure}{A zaj rácsának szemléltetése.}
 \end{minipage}
+\vspace{-12pt}
 \subsubsection{Vektorgenerálás}
 Generálunk egy véletlenszerű számot $[0;2\pi[$ intervallumban. Majd egyszerű
 trigonometriával a szöget egy vektorrá alakítjuk, ahol a vektor $x$ komponense
 a véletlen szög koszinusza, és az $y$ komponense a szög szinusza. \\
+\vspace{-5pt}
 \begin{minipage}[t]{0.7\textwidth}
     \vspace{0pt}
     \begin{algorithm}[H]
         \linespread{0.65}\selectfont
         \caption{Véletlenszerű vektor generálás}
         \DontPrintSemicolon
-        \Tipus{VéletlenSzámGenerátor=Osztály (\\
-            \setlength\parindent{24pt} jelenlegiSzám:Egész\\
-            \setlength\parindent{24pt} \textbf{Függvény} Következő:Egész\\
-            \setlength\parindent{24pt} \textbf{Függvény} KövetkezőValós:Valós\\
+        \Tipus{VéletlenSzámGenerátor = Osztály (\\
+            \setlength\parindent{24pt} jelenlegiSzám: Egész\\
+            \setlength\parindent{24pt} \textbf{Függvény} Következő: Egész\\
+            \setlength\parindent{24pt} \textbf{Függvény} KövetkezőValós: Valós\\
             )}
-        \Tipus{Vektor=Rekord (\\
-            \setlength\parindent{24pt} x:Valós\\
-            \setlength\parindent{24pt} y:Valós\\
+        \Tipus{Vektor = Rekord (\\
+            \setlength\parindent{24pt} x: Valós\\
+            \setlength\parindent{24pt} y: Valós\\
             )}
 
-        \Eljaras{veletlenVektorGeneral (\textbf{Változó}: Rand:VéletlenSzámGenerátor )}{
+        \Fuggveny{VeletlenVektorGeneral (\textbf{Változó}: Rand: VéletlenSzámGenerátor): Vektor}{
             \Valtozok{szog:Valós}
             \Valtozok{vektor:Vektor}
-            szog $\coloneqq$ Rand.KövetkezőValós () * 2 * $\pi$\\
-            vektor.x = $\cos(\text{szog})$\\
-            vektor.y = $\sin(\text{szog})$\\
-            \textbf{veletlenVektorGeneral} $\coloneqq$ vektor
+            szog $\coloneqq$ Rand.KövetkezőValós() * 2 * $\pi$\\
+            vektor.x $\coloneqq \cos(\text{szog})$\\
+            vektor.y $\coloneqq \sin(\text{szog})$\\
+            \textit{VeletlenVektorGeneral} $\coloneqq$ vektor
         }
     \end{algorithm}
 \end{minipage}
@@ -206,25 +209,24 @@ a véletlen szög koszinusza, és az $y$ komponense a szög szinusza. \\
 A permutációs tábla kezdetben $0$-tól $255$-ig tartalmazza a számokat növekvő
 sorrendben. Ezt a listát egy véletlenszám-generátor segítségével összekeverjük
 és önmaga után fűzzük (ezzel egy $512$ elemű tömböt kapunk). Így a hashelésnél
-elkerülhető a túlindexelés, ami gyorsítja a zajgenerálást, mivel elhagyható a
-túlindexelésre való ellenőrzés. \\
+elkerülhető a túlindexelés, amely gyorsítja a zajgenerálást, mivel elhagyható a
+határellenőrzés. \\
 \begin{algorithm}[H]
     \caption{Permutációs tábla létrehozása}
     \DontPrintSemicolon
-    \Konstansok{MaxP=$512$}
-    \Tipus{VéletlenSzámGenerátor=Osztály (\\
-        \setlength\parindent{24pt} jelenlegiSzám:Egész\\
-        \setlength\parindent{24pt} \textbf{Függvény} Következő:Egész\\
-        \setlength\parindent{24pt} \textbf{Függvény} KövetkezőValós:Valós\\
+    \Konstansok{MaxP = $512$}
+    \Tipus{VéletlenSzámGenerátor = Osztály (\\
+        \setlength\parindent{24pt} jelenlegiSzám: Egész\\
+        \setlength\parindent{24pt} \textbf{Függvény} Következő: Egész\\
+        \setlength\parindent{24pt} \textbf{Függvény} KövetkezőValós: Valós\\
         )}
 
-    \Eljaras{PermutaciosTablaGeneral (\textbf{Változó}: PermutaciosTabla:Tömb($1$..MaxP:Egész),
-        Rand:VéletlenSzámGenerátor
-        )}{
+    \Eljaras{PermutaciosTablaGeneral (\textbf{Változó}: PermutaciosTabla: Tömb($1$..MaxP: Egész),
+        Rand: VéletlenSzámGenerátor)}{
         % Változók
-        \Valtozok{$i$, $j$, temp:Egész}
+        \Valtozok{$i$, $j$, temp: Egész}
         \Ciklus{$i \coloneqq 1$-től $256$-ig}{
-            PermutaciosTabla[$i$] $\coloneqq i$
+            PermutaciosTabla[$i$] $\coloneqq i - 1$
         }
         ~\\
         \Ciklus{$i \coloneqq 256$-tól $2$-ig $-1$-esével}{
@@ -280,59 +282,64 @@ túlindexelésre való ellenőrzés. \\
     \caption{A rácspont koordinátáinak szemléltetése.}
     \vspace{10pt}
 \end{wrapfigure}
-Először meghatározzuk, hogy az adott ($x$, $y$) pont melyik négyzetbe tartozik
-ezt a bitenkénti ÉS $255$ művelettel tesszük, így az eredmény a $[0;255]$
+Először meghatározzuk, hogy az adott ($x$, $y$) pont melyik négyzetbe tartozik.
+Ezt a szám lefele kerekítése utáni bitenkénti ÉS (AND) $255$ művelettel tesszük, így az eredmény a $[0;255]$
 tartományba fog esni: ha az érték nagyobb, mint $255$, akkor visszafordul az
-intervallum elejére (pl. $256$-ból $0$ lesz). Ezt elvégezve az $x$-re és $y$-ra
+intervallum elejére (pl. $256$-ból $0$ lesz és $257$-ből $1$ lesz). Ezt elvégezve az $x$-re és $y$-ra
 megkapjuk a bal alsó rácspont koordinátáit. A bal alsó rácspont
-koordinátáihoz hozzáadva $1$-et majd egy bitenkénti ÉS $255$ művelettel
+koordinátáihoz hozzáadva $1$-et, majd egy bitenkénti ÉS (AND) $255$ művelettel (a túlcsordulás miatt)
 megkapjuk a jobb felső rácspont koordinátáit. A négyzeten belüli pontot úgy
-kapjuk meg, hogy a szám egész részét elhagyjuk. \\ \\
+kapjuk meg, hogy a számból kivonjuk annak lefelé kerekített értékét. \\ \\
 Pszeudókódban megvalósítva:
 \begin{algorithm}
-    \caption{Rácspontok és négyzeten belüli koordináták kiszámolása}
+    \caption{Rácspontok és négyzeten belüli koordináták kiszámítása}
 
-    \Tipus{Rácspont=Rekord (\\
-        \setlength\parindent{24pt} balAlsóPontX, balAlsóPontY:Egész\\
-        \setlength\parindent{24pt} jobbFelsőPontX, jobbFelsőPontY:Egész\\
-        \setlength\parindent{24pt} relatívX, relatívY :Valós\\
+    \Tipus{Rácspont = Rekord (\\
+        \setlength\parindent{24pt} balAlsóPontX, balAlsóPontY: Egész\\
+        \setlength\parindent{24pt} jobbFelsőPontX, jobbFelsőPontY: Egész\\
+        \setlength\parindent{24pt} relatívX, relatívY: Valós\\
         )}
     \Fuggveny{RacspontKiszamolasa(\textbf{Konstans}: $x$, $y$: Valós) : Rácspont}{
         \Valtozok{jelenlegiRácspont: Rácspont}
-        \Komment{Pszeudókódban $1$-től kezdődik az indexelés}
-        jelenlegiRácspont.balAlsóPontX $\coloneqq$ (((Egész)floor($x$)) \& $255$) + $1$ \\
-        jelenlegiRácspont.balAlsóPontY $\coloneqq$ (((Egész)floor($y$)) \& $255$) + $1$ \\
-        jelenlegiRácspont.jobbFelsőPontX $\coloneqq$ (jelenlegiRácspont.balAlsóPontX \& $255$) $+ 1$ \\ jelenlegiRácspont.jobbFelsőPontY $\coloneqq$
-        (jelenlegiRácspont.balAlsóPontY \& $255$) $+ 1$ \\
+        jelenlegiRácspont.balAlsóPontX $\coloneqq$ floor($x$) \& $255$ \\
+        jelenlegiRácspont.balAlsóPontY $\coloneqq$ floor($y$) \& $255$ \\
+        jelenlegiRácspont.jobbFelsőPontX $\coloneqq$ (jelenlegiRácspont.balAlsóPontX $+ 1$) \& $255$ \\ jelenlegiRácspont.jobbFelsőPontY $\coloneqq$
+        (jelenlegiRácspont.balAlsóPontY $+ 1$) \& $255$ \\
         ~\\
         jelenlegiRácspont.relatívX $\coloneqq x -$ floor($x$) \\
         jelenlegiRácspont.relatívY $\coloneqq y -$ floor($y$)
         ~\\
-        \textbf{RacspontKiszamolasa} $\coloneqq$ jelenlegiRácspont
+        \textit{RacspontKiszamolasa} $\coloneqq$ jelenlegiRácspont
     }
 \end{algorithm}
 \subsection{Skaláris szorzat kiszámítása}
 \subsubsection{Gradiens vektorok kiválasztása}
-A gradiens vektorokat a permutációs tábla segítségével választjuk ki. Vesszük a
-permutációs tábla $x$-edik elemét, hozzáadjuk az $y$ értékét, majd az így
-kapott összeget használjuk indexként a permutációs táblában. Az így kapott
-eredmény lesz az indexe a gradiens vektornak a gradiens táblából.
+A gradiens vektorokat a permutációs tábla és a \textit{Hash} függvény
+segítségével választjuk ki. Vesszük a permutációs tábla $x$-edik elemét,
+hozzáadjuk az $y$ értékét, majd az így kapott összeget használjuk indexként a
+permutációs táblában. Az így kapott eredmény lesz az indexe a gradiens
+vektornak a gradienstáblából.
 \begin{algorithm}
+    \linespread{0.75}\selectfont
     \caption{Gradiens vektor kiválasztása}
-    \Tipus{Vektor=Rekord (\\
-        \setlength\parindent{24pt} x:Valós\\
-        \setlength\parindent{24pt} y:Valós\\
+    \Tipus{Vektor = Rekord (\\
+        \setlength\parindent{24pt} x: Valós\\
+        \setlength\parindent{24pt} y: Valós\\
         )}
-    \Konstansok{MaxP=$512$, MaxG=$256$}
-    \Valtozok{PermutaciosTabla:Tömb($1$..MaxP:Egész)}
-    \Valtozok{GradiensTabla:Tömb($1$..MaxG:Egész)\\~\\}
+    \Konstansok{MaxP = $512$, MaxG = $256$}
+    \Valtozok{PermutaciosTabla:Tömb($1$..MaxP: Egész)}
+    \Valtozok{GradiensTabla:Tömb($1$..MaxG: Vektor)\\~\\}
 
     \Fuggveny{Hash(\textbf{Konstans}: $x$, $y$: Egész) : Egész}{
-        \textbf{Hash} $\coloneqq$ PermutaciosTabla[PermutaciosTabla[$x$] + $y$]
+        \Komment{A permutációs tábla 0-tól 255-ig tartalmazza a számokat}
+        \Komment{Azonban a pszeudókód 1-től kezdi az indexelést, ezért hozzáadunk egyet}
+        \textit{Hash} $\coloneqq$ PermutaciosTabla[(PermutaciosTabla[$x$] + 1) + $y$] + 1
     }
     ~\\
     \Fuggveny{GradiensVektorKivalaszt(\textbf{Konstans}: $x$, $y$: Egész) : Vektor}{
-        \textbf{GradiensVektorKivalaszt} $\coloneqq$ GradiensTabla[hash($x$, $y$)]
+        \Komment{A rácspont koordináták $[0;255]$ intervallumba esnek}
+        \Komment{Azonban a pszeudókód 1-től kezdi az indexelést, ezért hozzáadunk egyet}
+        \textit{GradiensVektorKivalaszt} $\coloneqq$ GradiensTabla[Hash($x + 1$, $y + 1$)]
     }
 \end{algorithm}
 \subsubsection{A sarkokból a pontba mutató vektorok kiszámítása}
@@ -346,14 +353,14 @@ sarkokból a pontba mutató vektorok:
     \begin{itemize}[noitemsep, leftmargin=*]
         \item \textbf{Bal alsó:} \tabto{3cm} $\vec{v}_{AP}(x_{0}, y_{0})$
         \item \textbf{Jobb alsó:} \tabto{3cm} $\vec{v}_{BP}(x_{0}-1, y_{0})$
-        \item \textbf{Bal felső:} \tabto{3cm} $\vec{v}_{CP}(x_{0}, y_{0}-1)$
-        \item \textbf{Jobb felső:} \tabto{3cm} $\vec{v}_{DP}(x_{0}-1, y_{0}-1)$
+        \item \textbf{Bal felső:} \tabto{3cm} $\vec{v}_{DP}(x_{0}, y_{0}-1)$
+        \item \textbf{Jobb felső:} \tabto{3cm} $\vec{v}_{CP}(x_{0}-1, y_{0}-1)$
     \end{itemize}
 \end{minipage}
 \begin{minipage}[t]{0.5\textwidth}
-    \vspace{0pt}
+    \vspace{-15pt}
     \centering
-    \begin{tikzpicture}
+    \begin{tikzpicture}[scale=0.9]
         \pgfmathsetseed{3432}
         \pgfmathsetmacro{\meret}{4}
         \coordinate (A) at (0, 0);
@@ -368,11 +375,11 @@ sarkokból a pontba mutató vektorok:
 
         \coordinate (P) at (1.4, 3.2);
         \fill (P) circle (2pt);
-        \node[above] at (P) {$P (x_{0}, y_{0})$};
         \draw[-{Stealth}, red, thick] (A) -- (P);
         \draw[-{Stealth}, red, thick] (B) -- (P);
         \draw[-{Stealth}, red, thick] (C) -- (P);
         \draw[-{Stealth}, red, thick] (D) -- (P);
+        \node[above] at (P) {$P (x_{0}, y_{0})$};
 
     \end{tikzpicture}
     \captionof{figure}{Relatív vektorok.}
@@ -381,30 +388,29 @@ sarkokból a pontba mutató vektorok:
 \subsubsection{Skaláris szorzat kiszámítása}
 A vektorok meghatározása után kiszámítjuk az adott sarokhoz tartozó gradiens-
 és relatív vektorok skaláris szorzatát. A skaláris szorzatot a matematikai
-definíció alapján végezzük: $\vec{a} \cdot \vec{b} = x_{a}x_{b} + y_{a}y_{b} $
-\begin{algorithm}
+tétel alapján végezzük: $\vec{a} \cdot \vec{b} = x_{a}x_{b} + y_{a}y_{b} $
+\begin{algorithm}[H]
     \caption{Skaláris szorzat}
-    \Tipus{Vektor=Rekord (\\
-        \setlength\parindent{24pt} x:Valós\\
-        \setlength\parindent{24pt} y:Valós\\
+    \Tipus{Vektor = Rekord (\\
+        \setlength\parindent{24pt} x: Valós\\
+        \setlength\parindent{24pt} y: Valós\\
         )}
-
     \Fuggveny{SkalarisSzorzat(\textbf{Konstans}: $v1$, $v2$: Vektor) : Valós}{
-        \textbf{SkalarisSzorzat} $\coloneqq$ v1.x * v2.x + v1.y * v2.y
+        \textit{SkalarisSzorzat} $\coloneqq$ v1.x * v2.x + v1.y * v2.y
     }
 \end{algorithm}
 \subsection{Interpoláció}
-A kapott skalárszorzatokat végül egy simítófüggvény segítségével interpoláljuk
-a tengelyek mentén.
+A kapott skalárszorzatokat végül a simítófüggvény által módosított
+súlytényezővel interpoláljuk a tengelyek mentén.
 \subsubsection{Simítófüggvény}
 Simítófüggvényként a Ken Perlin által 2002-ben, az `Improved Noise'-ban
-bevezetett függvényt hasznájuk. \cite{10.1145/566654.566636}
+\textsuperscript{\cite{10.1145/566654.566636}} bevezetett függvényt hasznájuk.
 \[
     s(t) = 6t^{5} - 15t^{4} + 10t^{3}
 \]
 A függvény fontos jellemzője, hogy az első deriváltja és második deriváltja is
 egyenlő 0-val $t=0$ és $t=1$ esetén is, így sima, folyamatos átmenet lesz a
-rácsnégyzetetek közt.\\
+rácsnégyzetek közt.\\
 \begin{tikzpicture}[scale=0.65]
     \begin{axis}[
             axis lines = middle,
@@ -465,47 +471,49 @@ rácsnégyzetetek közt.\\
 \begin{algorithm}
     \caption{Simítófüggvény}
     \Fuggveny{Simitofuggveny(\textbf{Konstans}: t: Valós) : Valós}{
-        \Komment{Horner-elrendezésben ($12$ szorzása helyett csak $5$ szorzás):}
-        \textbf{Simitofuggveny} $\coloneqq$ $t * t * t * (t * (6 * t - 15) + 10)$
+        \Komment{Horner-elrendezésben ($12$ szorzás helyett csak $5$ szorzás):}
+        \textit{Simitofuggveny} $\coloneqq$ $t * t * t * (10 + t * ((-15) + t * 6))$
     }
 \end{algorithm}
 \subsubsection{Interpoláció}
-A végeredményt a skaláris szorzatok interpolálásával kapjuk. Kétdimenzió esetén
-először kiszámoljuk a relatív x-koordináta simítófüggvénybeli értékét, majd
-eszerint interpoláljuk a skaláris szorzatokat az x tengely mentén, tehát a
-felső skaláris szorzatokat és az alsó skaláris szorzatokat. Majd kiszámoljuk a
-relatív y-koordináta simítófüggvénybeli értékét, és eszerint interpoláljuk az
-előző kettő interpolált részeredményt.
+A végeredményt a skaláris szorzatok interpolálásával kapjuk. Kétdimenziós
+esetben először kiszámítjuk a relatív x-koordináta simítófüggvénybeli értékét,
+majd eszerint interpoláljuk a skaláris szorzatokat az x tengely mentén, tehát a
+felső két sarokhoz, illetve az alsó két sarokhoz tartozó skaláris szorzatokat
+interpoláljuk egymással. Majd meghatározzuk a relatív y-koordináta
+simítófüggvénybeli értékét, és eszerint interpoláljuk az előző két interpolált
+részeredményt.
 \begin{algorithm}
     \caption{Interpoláció}
     \Fuggveny{Interpolacio(\textbf{Konstans}: a, b, t: Valós) : Valós}{
-        \textbf{Interpolacio} $\coloneqq$ $a + t \times (b - a)$
+        \textit{Interpolacio} $\coloneqq$ $a + t * (b - a)$
     }
 \end{algorithm}
 \newpage
 \section{Teljes zajfüggvény}
-Először kiszámoljuk a vizsgált pontot tartalmazó rácsnégyzet koordinátáit és a
-ponton belüli relatív helyzetét a \textit{RacspontKiszamolasa} függvénnyel. Ezt
-követően lekérjük a négy sarokhoz tartozó vektorokat a
+Először meghatározzuk a vizsgált pontot tartalmazó rácsnégyzet koordinátáit és
+a ponton belüli relatív helyzetét a \textit{RacspontKiszamolasa} függvénnyel.
+Ezt követően lekérjük a négy sarokhoz tartozó vektorokat a
 \textit{GradiensVektorKivalaszt} függvénnyel, majd kiszámítjuk a sarkokból a
-pontba mutató távolságvektorokat. Végül kiszámoljuk a skaláris szorzatukat az
-adott sarkokhoz való vektoroknak a \textit{SkalarisSzorzat} segítségével. Végül
-interpoláljuk a skaláris szorzatokat az \textit{Interpolacio} függvénnyel.
+pontba mutató távolságvektorokat. Végül a \textit{SkalarisSzorzat} függvény
+segítségével kiszámítjuk az egyes sarkokhoz tartozó relatív és gradiens
+vektorok skaláris szorzatát. Legvégül interpoláljuk a skaláris szorzatokat az
+\textit{Interpolacio} függvénnyel.
 \begin{algorithm}
     \linespread{0.925}\selectfont
     \caption{Teljes zajfüggvény}
-    \Tipus{Vektor=Rekord (x, y: Valós)}
-    \Tipus{Rácspont=Rekord (\\
-        \setlength\parindent{24pt} balAlsóPontX, balAlsóPontY:Egész\\
-        \setlength\parindent{24pt} jobbFelsőPontX, jobbFelsőPontY:Egész\\
-        \setlength\parindent{24pt} relatívX, relatívY:Valós\\
+    \Tipus{Vektor = Rekord (x, y: Valós)}
+    \Tipus{Rácspont = Rekord (\\
+        \setlength\parindent{24pt} balAlsóPontX, balAlsóPontY: Egész\\
+        \setlength\parindent{24pt} jobbFelsőPontX, jobbFelsőPontY: Egész\\
+        \setlength\parindent{24pt} relatívX, relatívY: Valós\\
         )}
 
     \Fuggveny{Zaj(\textbf{Konstans}: $x$, $y$: Valós) : Valós}{
         \Valtozok{rácspont: Rácspont}
         \Valtozok{g00, g10, g01, g11: Vektor}
-        \Valtozok{p00, p10, p01, p11: Vektor}
-        \Valtozok{u, v, a, b: Valós}
+        \Valtozok{v00, v10, v01, v11: Vektor}
+        \Valtozok{tX, tY, a, b: Valós}
         \Komment{1. Rácspont és relatív koordináták kiszámítása}
         rácspont $\coloneqq$ RacspontKiszamolasa($x$, $y$)\\
         \Komment{2. Gradiens vektorok lekérdezése}
@@ -514,21 +522,21 @@ interpoláljuk a skaláris szorzatokat az \textit{Interpolacio} függvénnyel.
         g01 $\coloneqq$ GradiensVektorKivalaszt(rácspont.balAlsóPontX, rácspont.jobbFelsőPontY)\\
         g11 $\coloneqq$ GradiensVektorKivalaszt(rácspont.jobbFelsőPontX, rácspont.jobbFelsőPontY)\\
         \Komment{3. Relatív vektorok definiálása}
-        p00.x $\coloneqq$ rácspont.relatívX\\
-        p00.y $\coloneqq$ rácspont.relatívY\\
-        p10.x $\coloneqq$ rácspont.relatívX - $1.0$\\
-        p10.y $\coloneqq$ rácspont.relatívY\\
-        p01.x $\coloneqq$ rácspont.relatívX\\
-        p01.y $\coloneqq$ rácspont.relatívY - $1.0$\\
-        p11.x $\coloneqq$ rácspont.relatívX - $1.0$\\
-        p11.y $\coloneqq$ rácspont.relatívY - $1.0$\\
+        v00.x $\coloneqq$ rácspont.relatívX\\
+        v00.y $\coloneqq$ rácspont.relatívY\\
+        v10.x $\coloneqq$ rácspont.relatívX - $1.0$\\
+        v10.y $\coloneqq$ rácspont.relatívY\\
+        v01.x $\coloneqq$ rácspont.relatívX\\
+        v01.y $\coloneqq$ rácspont.relatívY - $1.0$\\
+        v11.x $\coloneqq$ rácspont.relatívX - $1.0$\\
+        v11.y $\coloneqq$ rácspont.relatívY - $1.0$\\
         \Komment{4. Simítófüggvény alkalmazása}
-        u $\coloneqq$ Simitofuggveny(rácspont.relatívX)\\
-        v $\coloneqq$ Simitofuggveny(rácspont.relatívY)\\
+        tX $\coloneqq$ Simitofuggveny(rácspont.relatívX)\\
+        tY $\coloneqq$ Simitofuggveny(rácspont.relatívY)\\
         \Komment{5. Skaláris szorzatok kiszámítása és interpolálásuk}
-        a $\coloneqq$ Interpolacio(SkalarisSzorzat(g00, p00), SkalarisSzorzat(g10, p10), u)\\
-        b $\coloneqq$ Interpolacio(SkalarisSzorzat(g01, p01), SkalarisSzorzat(g11, p11), u)\\
-        \textbf{Zaj} $\coloneqq$ Interpolacio(a, b, v)
+        a $\coloneqq$ Interpolacio(SkalarisSzorzat(g00, v00), SkalarisSzorzat(g10, v10), tX)\\
+        b $\coloneqq$ Interpolacio(SkalarisSzorzat(g01, v01), SkalarisSzorzat(g11, v11), tX)\\
+        \textit{Zaj} $\coloneqq$ Interpolacio(a, b, tY)
     }
 \end{algorithm}
 \section{Fractal Brownian Motion (Fraktálzaj)}
@@ -537,17 +545,17 @@ A Perlin-zaj önmagában túl sima, és hiányoznak belőle az apró részletek.
 \textbf{Fractal Brownian Motion (FBM)} segítségével oldhatjuk meg. A módszer
 lényege, hogy több réteg (úgynevezett \textit{oktáv}) Perlin-zajt generálunk és
 adunk össze, ahol minden újabb réteg nagyobb frekvenciával és kisebb
-amplitudóval rendelkezik.
+amplitúdóval rendelkezik.
 
 \subsection{Paraméterei}
-A fraktál zaj finomhangolható a következő paraméterekkel:
+A fraktálzaj finomhangolható a következő paraméterekkel:
 
 \begin{itemize}[noitemsep]
-    \item \textbf{Oktávok:} Azt határozza meg, hány réteg zajt adunk össze. Minél magasabb ez a szám, annál részletesebb a végeredmény, de annál többször kell lefutattni a zajgenerálást.
-    \item \textbf{Amplitudó (nagyság):} A zaj kezdeti magassága.
+    \item \textbf{Oktávok:} Azt határozza meg, hány réteg zajt adunk össze. Minél magasabb ez a szám, annál részletesebb a végeredmény, de annál többször kell lefuttatni a zajgenerálást.
+    \item \textbf{Amplitúdó (nagyság):} A zaj kezdeti magassága.
     \item \textbf{Frekvencia:} A zaj kezdeti sűrűsége.
-    \item \textbf{Lacunarity:} Azt határozza meg, hogy az oktávok között hogyan változik a frekvencia. Az értéke általában $2.0$, tehát minden következő réteg kétszer olyan sűrű, mint az előző.
-    \item \textbf{Persistence:} Azt határozza meg, hogy az oktávok között hogyan csökken a amplitudó. Az értéke általában $0.5$, tehát minden következő réteg fele olyan magas, mint az előző.
+    \item \textbf{Lacunarity:} Azt határozza meg, hogy az oktávok között hogyan változik a frekvencia. Az értéke általában $2,0$, tehát minden következő réteg kétszer olyan sűrű, mint az előző.
+    \item \textbf{Persistence:} Azt határozza meg, hogy az oktávok között hogyan csökken az amplitúdó. Az értéke általában $0,5$, tehát minden következő réteg fele olyan magas, mint az előző.
 \end{itemize}
 
 \subsection{FBM matematikailag és szemléltetése}
@@ -555,7 +563,7 @@ A végső zajfüggvényt matematikailag így írhatjuk fel:
 \[
     FBM(x, y) = \sum_{i=0}^{n-1} A \cdot P^i \cdot \text{zaj}(x \cdot F \cdot L^i, y \cdot F \cdot L^i)
 \]
-Ahol az oktávok száma \textbf{$n$}, a kezdeti amplitudó \textbf{$A$}, a
+Ahol az oktávok száma \textbf{$n$}, a kezdeti amplitúdó \textbf{$A$}, a
 persistence \textbf{$P$}, a lacunarity \textbf{$L$}, a frekvencia pedig
 \textbf{$F$}.
 
@@ -591,14 +599,14 @@ persistence \textbf{$P$}, a lacunarity \textbf{$L$}, a frekvencia pedig
             \addlegendentry{Összeg (FBM)}
         \end{axis}
     \end{tikzpicture}
-    \caption{Az oktávok összegzésének szemléltetése 1 dimenzióban a szinuszfüggvénnyel.}
+    \caption{Az oktávok összegzésének szemléltetése egy dimenzióban a szinuszfüggvénnyel.}
 \end{figure}
 \subsection{FBM pszeudókód}
 A megvalósított kódban a fraktálzajt normalizáljuk a $[-1;1]$ intervallumra a
-maximális lehetséges értékkel való osztással. A normalizálás után kettő saját
+maximális lehetséges értékkel való osztással. A normalizálás után két saját
 paramétert alkalmazunk.
 \begin{itemize}[noitemsep]
-    \item \textbf{Kontraszt:} A normalizált értéket erre az értékre emeli az eredeti előjel megtartásával. Így nagyobb lesz a kontraszt a nagyságok között.
+    \item \textbf{Kontraszt:} A normalizált érték abszolútértékét erre a hatványra emeli az eredeti előjel megtartásával. Így nagyobb lesz a kontraszt a nagyságok között.
     \item \textbf{Zajméret:} A kontraszt alkalmazása után egy adott értékkel megszorozza a zajt.
 \end{itemize}
 A fraktálzaj pszeudókódban megvalósítva:
@@ -607,8 +615,8 @@ A fraktálzaj pszeudókódban megvalósítva:
     \linespread{1.0}\selectfont
     \caption{Fractal Brownian Motion (FBM)}
     \Komment{A zaj paraméterei:}
-    \Konstansok{oktavok, kontraszt:Egész}
-    \Konstansok{frekvencia, amplitudo, persistence, lacunarity, zajMeret:Valós}
+    \Konstansok{oktavok, kontraszt: Egész}
+    \Konstansok{frekvencia, amplitudo, persistence, lacunarity, zajMeret: Valós}
     ~\\
     \Fuggveny{FBM(\textbf{Konstans}: $x, y$: Valós) : Valós}{
         \Valtozok{zajErtek, maxErtek, jelenlegiAmplitudo, jelenlegiFrekvencia, zajElojel: Valós}
@@ -620,19 +628,19 @@ A fraktálzaj pszeudókódban megvalósítva:
         ~\\
         \Ciklus{$i \coloneqq 1$-tól $oktavok$-ig}{
             \Komment{Zaj hozzáadása az aktuális frekvenciával és amplitúdóval}
-            zajErtek $\coloneqq$ zajErtek + Zaj($x \times jelenlegiFrekvencia$, $y \times jelenlegiFrekvencia$) $\times$ jelenlegiAmplitudo\\
+            zajErtek $\coloneqq$ zajErtek + Zaj($x * jelenlegiFrekvencia$, $y * jelenlegiFrekvencia$) $*$ jelenlegiAmplitudo\\
             ~\\
             \Komment{Maximális lehetséges érték}
             maxErtek $\coloneqq$ maxErtek + jelenlegiAmplitudo\\
             ~\\
             \Komment{Paraméterek frissítése a következő oktávhoz}
-            jelenlegiAmplitudo $\coloneqq$ jelenlegiAmplitudo $\times$ persistence\\
-            jelenlegiFrekvencia $\coloneqq$ jelenlegiFrekvencia $\times$ lacunarity
+            jelenlegiAmplitudo $\coloneqq$ jelenlegiAmplitudo $*$ persistence\\
+            jelenlegiFrekvencia $\coloneqq$ jelenlegiFrekvencia $*$ lacunarity
         }
         ~\\
         \Komment{Normalizálás, kontraszt alkalmazása és méretezés}
         zajElojel $\coloneqq$ elojel(zajErtek) \\
-        \textbf{FBM} $\coloneqq$ $(abszolutErtek(zajErtek / maxErtek))^{kontraszt} \times zajElojel \times zajMeret$
+        \textit{FBM} $\coloneqq$ $(Abs(zajErtek / maxErtek))^{kontraszt} * zajElojel * zajMeret$
     }
 \end{algorithm}
 \newpage

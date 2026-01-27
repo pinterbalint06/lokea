@@ -26,11 +26,11 @@ namespace MathUtils
         return vec0[0] * vec1[0] + vec0[1] * vec1[1] + vec0[2] * vec1[2];
     }
 
-    inline float quintic(const float &d)
+    inline float quintic(const float &t)
     {
         //  6 * t^5 - 15 * t^4 + 10 * t^3 = t * t * t * (t * (t * 6 - 15) + 10);
         // Horner's method
-        return d * d * d * (d * (d * 6.0f - 15.0f) + 10.0f);
+        return t * t * t * (10.0f + t * ((-15.0f) + t * 6.0f));
     }
 
     inline float interpolation(const float &a1, const float &a2, const float &d)

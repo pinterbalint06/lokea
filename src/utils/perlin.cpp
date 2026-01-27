@@ -184,19 +184,19 @@ namespace PerlinNoise
         float rightToPoint = currGridPoint.relativeX - 1.0f;
         float bottomToPoint = currGridPoint.relativeY;
         float topToPoint = currGridPoint.relativeY - 1.0f;
-        Vec2 p00 = Vec2(leftToPoint, bottomToPoint);
-        Vec2 p10 = Vec2(rightToPoint, bottomToPoint);
-        Vec2 p01 = Vec2(leftToPoint, topToPoint);
-        Vec2 p11 = Vec2(rightToPoint, topToPoint);
+        Vec2 v00 = Vec2(leftToPoint, bottomToPoint);
+        Vec2 v10 = Vec2(rightToPoint, bottomToPoint);
+        Vec2 v01 = Vec2(leftToPoint, topToPoint);
+        Vec2 v11 = Vec2(rightToPoint, topToPoint);
 
         // fade
-        float u = MathUtils::quintic(currGridPoint.relativeX);
-        float v = MathUtils::quintic(currGridPoint.relativeY);
+        float tX = MathUtils::quintic(currGridPoint.relativeX);
+        float tY = MathUtils::quintic(currGridPoint.relativeY);
 
-        float a = MathUtils::interpolation(Vec2::dotProduct(g00, p00), Vec2::dotProduct(g10, p10), u);
-        float b = MathUtils::interpolation(Vec2::dotProduct(g01, p01), Vec2::dotProduct(g11, p11), u);
+        float a = MathUtils::interpolation(Vec2::dotProduct(g00, v00), Vec2::dotProduct(g10, v10), tX);
+        float b = MathUtils::interpolation(Vec2::dotProduct(g01, v01), Vec2::dotProduct(g11, v11), tX);
 
-        return MathUtils::interpolation(a, b, v);
+        return MathUtils::interpolation(a, b, tY);
     }
 
     float Perlin::fbm(const float x, const float y) const
