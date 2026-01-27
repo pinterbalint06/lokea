@@ -80,7 +80,7 @@
 A Perlin-zaj \textsuperscript{\cite{10.1145/325165.325247}} egy gradiensalapú
 zajgenerálási algoritmus, amelynek a célja véletlenszerű, mégis összefüggő zaj
 létrehozása. Segítségével a természetben előforduló véletlenszerű jelenségeket
-jól lehet szimulálni, mint például domborzatokat, felhőket vagy a víz
+lehet jól szimulálni, mint például domborzatokat, felhőket vagy a víz
 hullámzását. Tetszőleges $n$ dimenzióra létrehozható, de jellemzően az elsőtől
 a negyedik dimenzióig alkalmazzák. A kódban egy kétdimenziós Perlin-zaj van
 implementálva.
@@ -284,7 +284,7 @@ határellenőrzés. \\
     \vspace{10pt}
 \end{wrapfigure}
 Először meghatározzuk, hogy az adott ($x$, $y$) pont melyik négyzetbe esik. Ehhez a koordinátákat lefelé kerekítjük, majd az
-eredményen elvégezünk egy $255$-tel való bitenkénti ÉS (AND) műveletet. Ez a művelet az eredményt a $[0;255]$
+eredményen elvégzünk egy $255$-tel való bitenkénti ÉS (AND) műveletet. Ez a művelet az eredményt a $[0;255]$
 tartományba hozza: ha az érték nagyobb, mint $255$, akkor visszafordul az
 intervallum elejére (pl. $256$-ból $0$ lesz, $257$-ből $1$ lesz). Ezt elvégezve az $x$-re és $y$-ra
 megkapjuk a bal alsó rácspont koordinátáit.\\
@@ -565,7 +565,7 @@ A fraktálzaj finomhangolható a következő paraméterekkel:
     \item \textbf{Persistence:} Azt határozza meg, hogy az oktávok között hogyan csökken az amplitúdó. Az értéke általában $0,5$, tehát minden következő réteg fele olyan magas, mint az előző.
 \end{itemize}
 
-\subsection{FBM matematikailag és szemléltetése}
+\subsection{FBM matematikai leírása és szemléltetése}
 A végső zajfüggvényt matematikailag így írhatjuk fel:
 \[
     FBM(x, y) = \sum_{i=0}^{n-1} A \cdot P^i \cdot \text{zaj}(x \cdot F \cdot L^i, y \cdot F \cdot L^i)
