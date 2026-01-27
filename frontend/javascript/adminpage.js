@@ -7,9 +7,10 @@ document.addEventListener("DOMContentLoaded", function () {
     });
     let navlinkek = document.querySelectorAll(".nav-link[data-route]");
     navlinkek.forEach(element => {
-        element.addEventListener("click", function () {
+        element.addEventListener("click", async function () {
             aktivEltuntet();
             this.classList.add("active");
+            await melyikValaszt(element.dataset.route);
         })
     })
 
@@ -69,6 +70,104 @@ function aktivEltuntet() {
     aktivok.forEach(element => {
         element.classList.remove("active");
     })
+}
+
+async function melyikValaszt(melyik) {
+    let display = document.getElementById('content');
+    display.innerHTML = ""; 
+    switch (melyik) {
+        case "dashboard":
+            display.appendChild(dashboardDisplayre());
+            break;
+        case "users":
+            display.appendChild(await usersDisplayre());
+            break;
+        case "files":
+            display.appendChild(await filesDisplayre());
+            break;
+        case "transactions":
+            display.appendChild(await transactionsDisplayre());
+            break;
+        case "logs":
+            display.appendChild(await logsDisplayre());
+            break;
+        case "settings":
+            display.appendChild(await settingsDisplayre());
+            break;
+        case "devlog":
+            display.appendChild(await devlogDisplayre());
+            break;
+        case "ttools":
+            display.appendChild(await testToolsDisplayre());
+            break;
+        case "fflags":
+            display.appendChild(await featureFlagsDisplayre());
+            break;
+            
+    }
+}
+
+function dashboardDisplayre() {
+    let h1 = document.createElement('h1');
+    h1.classList.add("h2", "m-5", "text-center");
+    h1.innerText = "404 Egyenlőre nincs itt semmi... tenyleg nincs";
+    return h1;
+}
+
+async function usersDisplayre() {
+    let h1 = document.createElement('h1');
+    h1.classList.add("h2", "m-5", "text-center");
+    h1.innerText = "404 Egyenlőre nincs itt semmi... de itt lenne a users";
+    return h1;
+}
+
+async function filesDisplayre() {
+    let h1 = document.createElement('h1');
+    h1.classList.add("h2", "m-5", "text-center");
+    h1.innerText = "404 Egyenlőre nincs itt semmi... de itt lenne a files";
+    return h1;
+}
+
+async function transactionsDisplayre() {
+    let h1 = document.createElement('h1');
+    h1.classList.add("h2", "m-5", "text-center");
+    h1.innerText = "404 Egyenlőre nincs itt semmi... de itt lenne a tranzakciok";
+    return h1;
+}
+
+async function logsDisplayre() {
+    let h1 = document.createElement('h1');
+    h1.classList.add("h2", "m-5", "text-center");
+    h1.innerText = "404 Egyenlőre nincs itt semmi... de itt lenne a logs";
+    return h1;
+}
+
+async function settingsDisplayre() {
+    let h1 = document.createElement('h1');
+    h1.classList.add("h2", "m-5", "text-center");
+    h1.innerText = "404 Egyenlőre nincs itt semmi... de itt lenne a settings";
+    return h1;
+}
+
+async function devlogDisplayre() {
+    let h1 = document.createElement('h1');
+    h1.classList.add("h2", "m-5", "text-center");
+    h1.innerText = "404 Egyenlőre nincs itt semmi... de itt lenne a devlog";
+    return h1;
+}
+
+async function testToolsDisplayre() {
+    let h1 = document.createElement('h1');
+    h1.classList.add("h2", "m-5", "text-center");
+    h1.innerText = "404 Egyenlőre nincs itt semmi... de itt lenne a testtools";
+    return h1;
+}
+
+async function featureFlagsDisplayre() {
+    let h1 = document.createElement('h1');
+    h1.classList.add("h2", "m-5", "text-center");
+    h1.innerText = "404 Egyenlőre nincs itt semmi... de itt lenne a featureflags";
+    return h1;
 }
 
 
