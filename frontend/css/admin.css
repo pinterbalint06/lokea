@@ -1,15 +1,39 @@
-body {
-
+.sidebar {
+    transition: width 0.3s ease;
+    height: 100%;
 }
 
-a{
-    color: black;
+#sidebardiv {
+    height: 100vh; /* teljes viewport magasság */
+    top: 0;        /* a sticky teteje */
+    overflow-y: auto;
 }
 
-a svg{
-    color: gray;
+.sticky {
+    position: sticky;
+    top: 0;
+    left: 0;
+    height: 100vh;
 }
 
-a svg:hover {
-    color: black;
+.sidebar .nav-link {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    color: #adb5bd;
+}
+
+.sidebar .nav-link:hover {
+    background-color: #343a40;
+    color: #fff;
+}
+
+.sidebar .nav-link.active {
+    background-color: #0d6efd;
+    color: #fff;
+}
+
+.sidebar.collapsed .nav-link svg {
+    display: block;
+    margin: 0 auto;
 }

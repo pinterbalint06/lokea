@@ -51,6 +51,9 @@ router.get('/webgl', (request, response) => {
 router.get('/login_page', (request, response) => {
     response.sendFile(path.join(__dirname, '../frontend/html/login.html'));
 });
+router.get('/admin', (request, response) => {
+    response.sendFile(path.join(__dirname, '../frontend/html/admin.html'));
+});
 
 //!API endpoints
 app.use('/', router);
