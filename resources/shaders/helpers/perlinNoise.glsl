@@ -106,7 +106,8 @@ float fbm(vec2 pos, PerlinParameters params, sampler2D gradients, usampler2D per
         freq *= params.lacunarity;
     }
     noiseValue /= maxValue;
-    noiseValue = power(noiseValue, params.contrast);
+    float signNoise = sign(noiseValue);
+    noiseValue = power(abs(noiseValue), params.contrast) * signNoise;
     return noiseValue * params.size;
 }
 

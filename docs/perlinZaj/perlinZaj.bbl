@@ -1,0 +1,121 @@
+% $ biblatex auxiliary file $
+% $ biblatex bbl format version 3.3 $
+% Do not modify the above lines!
+%
+% This is an auxiliary file used by the 'biblatex' package.
+% This file may safely be deleted. It will be recreated by
+% biber as required.
+%
+\begingroup
+\makeatletter
+\@ifundefined{ver@biblatex.sty}
+  {\@latex@error
+     {Missing 'biblatex' package}
+     {The bibliography requires the 'biblatex' package.}
+      \aftergroup\endinput}
+  {}
+\endgroup
+
+
+\refsection{0}
+  \datalist[entry]{nty/global//global/global/global}
+    \entry{10.1145/325165.325247}{article}{}{}
+      \name{author}{1}{}{%
+        {{hash=d909d34e62b8c30430690affc20c3ebc}{%
+           family={Perlin},
+           familyi={P\bibinitperiod},
+           given={Ken},
+           giveni={K\bibinitperiod}}}%
+      }
+      \list{location}{1}{%
+        {New York, NY, USA}%
+      }
+      \list{publisher}{1}{%
+        {Association for Computing Machinery}%
+      }
+      \strng{namehash}{d909d34e62b8c30430690affc20c3ebc}
+      \strng{fullhash}{d909d34e62b8c30430690affc20c3ebc}
+      \strng{fullhashraw}{d909d34e62b8c30430690affc20c3ebc}
+      \strng{bibnamehash}{d909d34e62b8c30430690affc20c3ebc}
+      \strng{authorbibnamehash}{d909d34e62b8c30430690affc20c3ebc}
+      \strng{authornamehash}{d909d34e62b8c30430690affc20c3ebc}
+      \strng{authorfullhash}{d909d34e62b8c30430690affc20c3ebc}
+      \strng{authorfullhashraw}{d909d34e62b8c30430690affc20c3ebc}
+      \field{extraname}{1}
+      \field{sortinit}{P}
+      \field{sortinithash}{ff3bcf24f47321b42cb156c2cc8a8422}
+      \field{labelnamesource}{author}
+      \field{labeltitlesource}{title}
+      \field{abstract}{We introduce the concept of a Pixel Stream Editor. This forms the basis for an interactive synthesizer for designing highly realistic Computer Generated Imagery. The designer works in an interactive Very High Level programming environment which provides a very fast concept/implement/view iteration cycle.Naturalistic visual complexity is built up by composition of non-linear functions, as opposed to the more conventional texture mapping or growth model algorithms. Powerful primitives are included for creating controlled stochastic effects. We introduce the concept of "solid texture" to the field of CGI.We have used this system to create very convincing representations of clouds, fire, water, stars, marble, wood, rock, soap films and crystal. The algorithms created with this paradigm are generally extremely fast, highly realistic, and asynchronously parallelizable at the pixel level.}
+      \field{issn}{0097-8930}
+      \field{journaltitle}{SIGGRAPH Comput. Graph.}
+      \field{month}{7}
+      \field{number}{3}
+      \field{title}{An image synthesizer}
+      \field{volume}{19}
+      \field{year}{1985}
+      \field{pages}{287\bibrangedash 296}
+      \range{pages}{10}
+      \verb{doi}
+      \verb 10.1145/325165.325247
+      \endverb
+      \verb{urlraw}
+      \verb https://doi.org/10.1145/325165.325247
+      \endverb
+      \verb{url}
+      \verb https://doi.org/10.1145/325165.325247
+      \endverb
+      \keyw{waves,turbulence,stochastic modelling,space function,solid texture,pixel stream editor,interactive,functional composition,fire,algorithm development}
+    \endentry
+    \entry{10.1145/566654.566636}{article}{}{}
+      \name{author}{1}{}{%
+        {{hash=d909d34e62b8c30430690affc20c3ebc}{%
+           family={Perlin},
+           familyi={P\bibinitperiod},
+           given={Ken},
+           giveni={K\bibinitperiod}}}%
+      }
+      \list{location}{1}{%
+        {New York, NY, USA}%
+      }
+      \list{publisher}{1}{%
+        {Association for Computing Machinery}%
+      }
+      \strng{namehash}{d909d34e62b8c30430690affc20c3ebc}
+      \strng{fullhash}{d909d34e62b8c30430690affc20c3ebc}
+      \strng{fullhashraw}{d909d34e62b8c30430690affc20c3ebc}
+      \strng{bibnamehash}{d909d34e62b8c30430690affc20c3ebc}
+      \strng{authorbibnamehash}{d909d34e62b8c30430690affc20c3ebc}
+      \strng{authornamehash}{d909d34e62b8c30430690affc20c3ebc}
+      \strng{authorfullhash}{d909d34e62b8c30430690affc20c3ebc}
+      \strng{authorfullhashraw}{d909d34e62b8c30430690affc20c3ebc}
+      \field{extraname}{2}
+      \field{sortinit}{P}
+      \field{sortinithash}{ff3bcf24f47321b42cb156c2cc8a8422}
+      \field{labelnamesource}{author}
+      \field{labeltitlesource}{title}
+      \field{abstract}{Two deficiencies in the original Noise algorithm are corrected: second order interpolation discontinuity and unoptimal gradient computation. With these defects corrected, Noise both looks better and runs faster. The latter change also makes it easier to define a uniform mathematical reference standard.}
+      \field{issn}{0730-0301}
+      \field{journaltitle}{ACM Trans. Graph.}
+      \field{month}{7}
+      \field{number}{3}
+      \field{title}{Improving noise}
+      \field{volume}{21}
+      \field{year}{2002}
+      \field{pages}{681\bibrangedash 682}
+      \range{pages}{2}
+      \verb{doi}
+      \verb 10.1145/566654.566636
+      \endverb
+      \verb{urlraw}
+      \verb https://doi.org/10.1145/566654.566636
+      \endverb
+      \verb{url}
+      \verb https://doi.org/10.1145/566654.566636
+      \endverb
+      \keyw{procedural texture}
+    \endentry
+  \enddatalist
+\endrefsection
+\endinput
+

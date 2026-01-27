@@ -10,49 +10,87 @@
 
 namespace PerlinNoise
 {
-    float Perlin::dotProduct(const Vec2 &grad, const float x, const float y)
+    constexpr int GRADIENTS_SIZE = 256;
+    constexpr int GRADIENTS_MASK = GRADIENTS_SIZE - 1;
+    constexpr int PERMUTATION_TABLE_SIZE = GRADIENTS_SIZE * 2;
+
+    struct Perlin::GridPoint
     {
-        return grad.x * x + grad.y * y;
+        int bottomLeftX, bottomLeftY; ///< bottom-left grid coordinates
+        int topRightX, topRightY;     ///< top-right grid coordinates
+        float relativeX, relativeY;   ///< coordinates within that grid
+    };
+
+    inline Perlin::GridPoint Perlin::calculateGridPoint(const float x, const float y) const
+    {
+        GridPoint currentGridPoint;
+        // wrap to 0-GRADIENTS_MASK
+        currentGridPoint.bottomLeftX = (static_cast<int>(std::floor(x))) & GRADIENTS_MASK;
+        currentGridPoint.bottomLeftY = (static_cast<int>(std::floor(y))) & GRADIENTS_MASK;
+
+        currentGridPoint.topRightX = (currentGridPoint.bottomLeftX + 1) & GRADIENTS_MASK;
+        currentGridPoint.topRightY = (currentGridPoint.bottomLeftY + 1) & GRADIENTS_MASK;
+
+        // drop the integer part. this is the location in the grid
+        currentGridPoint.relativeX = x - std::floor(x);
+        currentGridPoint.relativeY = y - std::floor(y);
+        return currentGridPoint;
     }
 
-    uint8_t Perlin::hash(const int x, const int y)
+    inline uint8_t Perlin::hash(const int x, const int y) const
     {
-        return permuTable_[permuTable_[x] + y];
+        // permutationTable_[index] is a value between 0-GRADIENTS_MASK
+        return permutationTable_[permutationTable_[x] + y];
+    }
+
+    inline const Vec2 &Perlin::getGradientVector(const int x, const int y) const
+    {
+        return gradients_[hash(x, y)];
+    }
+
+    void Perlin::createPermutationTable(pcgRand &rand)
+    {
+        // setup permutation table
+        for (int i = 0; i < GRADIENTS_SIZE; i++)
+        {
+            permutationTable_[i] = i;
+        }
+
+        // shuffle the permutation table
+        for (int i = GRADIENTS_MASK; i > 0; i--)
+        {
+            uint8_t j = rand.random() % (i + 1);
+            uint8_t temp = permutationTable_[i];
+            permutationTable_[i] = permutationTable_[j];
+            permutationTable_[j] = temp;
+        }
+
+        for (int i = 0; i < GRADIENTS_SIZE; i++)
+        {
+            permutationTable_[i + GRADIENTS_SIZE] = permutationTable_[i];
+        }
+    }
+
+    void Perlin::createGradientTable(pcgRand &rand)
+    {
+        // setup gradient table
+        for (int i = 0; i < GRADIENTS_SIZE; i++)
+        {
+            gradients_[i] = Vec2::randVector(rand);
+        }
     }
 
     Perlin::Perlin(PerlinParameters params)
     {
         isGPUSet_ = false;
         params_ = params;
-        permuTable_ = (uint8_t *)malloc(512 * sizeof(uint8_t));
-        gradients_ = (Vec2 *)malloc(256 * sizeof(Vec2));
+        permutationTable_.resize(PERMUTATION_TABLE_SIZE);
+        gradients_.resize(GRADIENTS_SIZE);
         pcgRand pcgRandGen(params_.seed);
 
-        // setup permutation table
-        for (int i = 0; i < 256; i++)
-        {
-            permuTable_[i] = i;
-        }
+        createPermutationTable(pcgRandGen);
 
-        // shuffle the permutation table
-        for (int i = 255; i > 0; i--)
-        {
-            uint8_t j = pcgRandGen.random() % (i + 1);
-            uint8_t temp = permuTable_[i];
-            permuTable_[i] = permuTable_[j];
-            permuTable_[j] = temp;
-        }
-
-        for (int i = 0; i < 256; i++)
-        {
-            permuTable_[i + 256] = permuTable_[i];
-        }
-
-        // generate gradients
-        for (int i = 0; i < 256; i++)
-        {
-            gradients_[i] = Vec2::randVector(pcgRandGen);
-        }
+        createGradientTable(pcgRandGen);
 
         permuTableTex_ = 0;
         gradientsTex_ = 0;
@@ -61,14 +99,6 @@ namespace PerlinNoise
 
     Perlin::~Perlin()
     {
-        if (permuTable_)
-        {
-            free(permuTable_);
-        }
-        if (gradients_)
-        {
-            free(gradients_);
-        }
         if (permuTableTex_ != 0)
         {
             glDeleteTextures(1, &permuTableTex_);
@@ -94,116 +124,82 @@ namespace PerlinNoise
     void Perlin::setLacunarity(float lacunarity)
     {
         params_.lacunarity = lacunarity;
-        if (isGPUSet_)
-        {
-            uploadParametersToGPU();
-        }
+        uploadParametersToGPU();
     }
 
     void Perlin::setPersistence(float persistence)
     {
         params_.persistence = persistence;
-        if (isGPUSet_)
-        {
-            uploadParametersToGPU();
-        }
+        uploadParametersToGPU();
     }
 
     void Perlin::setFrequency(float frequency)
     {
         params_.frequency = frequency;
-        if (isGPUSet_)
-        {
-            uploadParametersToGPU();
-        }
+        uploadParametersToGPU();
     }
 
     void Perlin::setNoiseSize(float noiseSize)
     {
         params_.noiseSize = noiseSize;
-        if (isGPUSet_)
-        {
-            uploadParametersToGPU();
-        }
+        uploadParametersToGPU();
     }
 
     void Perlin::setOctaves(int octaves)
     {
         params_.octaveCount = octaves;
-        if (isGPUSet_)
-        {
-            uploadParametersToGPU();
-        }
+        uploadParametersToGPU();
     }
 
     void Perlin::setSteepness(float steepness)
     {
         params_.steepness = steepness;
-        if (isGPUSet_)
-        {
-            uploadParametersToGPU();
-        }
+        uploadParametersToGPU();
     }
 
     void Perlin::setContrast(int contrast)
     {
         params_.contrast = contrast;
-        if (isGPUSet_)
-        {
-            uploadParametersToGPU();
-        }
+        uploadParametersToGPU();
     }
 
     void Perlin::setParams(PerlinParameters &params)
     {
         params_ = params;
-        if (isGPUSet_)
-        {
-            uploadParametersToGPU();
-        }
+        uploadParametersToGPU();
     }
 
-    float Perlin::noise(float x, float y)
+    float Perlin::noise(float x, float y) const
     {
-        // wrap to 0-255
-        int x0 = ((int)std::floor(x)) & 255;
-        int y0 = ((int)std::floor(y)) & 255;
+        GridPoint currGridPoint = calculateGridPoint(x, y);
 
-        int x1 = (x0 + 1) & 255;
-        int y1 = (y0 + 1) & 255;
-
-        // drop the integer part this is the location in the grid
-        float px = x - std::floor(x);
-        float py = y - std::floor(y);
-
-        // fade
-        float u = MathUtils::smoothingFunction(px);
-        float v = MathUtils::smoothingFunction(py);
-
-        // find gradients_ based on hashed value
-        // permuTable_[index] is a value between 0-255
-        Vec2 g00 = gradients_[hash(x0, y0)];
-        Vec2 g10 = gradients_[hash(x1, y0)];
-        Vec2 g01 = gradients_[hash(x0, y1)];
-        Vec2 g11 = gradients_[hash(x1, y1)];
+        // get gradient vectors based on hashed value
+        Vec2 g00 = getGradientVector(currGridPoint.bottomLeftX, currGridPoint.bottomLeftY);
+        Vec2 g10 = getGradientVector(currGridPoint.topRightX, currGridPoint.bottomLeftY);
+        Vec2 g01 = getGradientVector(currGridPoint.bottomLeftX, currGridPoint.topRightY);
+        Vec2 g11 = getGradientVector(currGridPoint.topRightX, currGridPoint.topRightY);
 
         // calculate components from grid corners to point
-        float leftToPoint = px;
-        float rightToPoint = px - 1.0f;
-        float bottomToPoint = py;
-        float topToPoint = py - 1.0f;
-        Vec2 p00 = Vec2(leftToPoint, bottomToPoint);
-        Vec2 p10 = Vec2(rightToPoint, bottomToPoint);
-        Vec2 p01 = Vec2(leftToPoint, topToPoint);
-        Vec2 p11 = Vec2(rightToPoint, topToPoint);
+        float leftToPoint = currGridPoint.relativeX;
+        float rightToPoint = currGridPoint.relativeX - 1.0f;
+        float bottomToPoint = currGridPoint.relativeY;
+        float topToPoint = currGridPoint.relativeY - 1.0f;
+        Vec2 v00 = Vec2(leftToPoint, bottomToPoint);
+        Vec2 v10 = Vec2(rightToPoint, bottomToPoint);
+        Vec2 v01 = Vec2(leftToPoint, topToPoint);
+        Vec2 v11 = Vec2(rightToPoint, topToPoint);
 
-        float a = MathUtils::interpolation(Vec2::dotProduct(g00, p00), Vec2::dotProduct(g10, p10), u);
-        float b = MathUtils::interpolation(Vec2::dotProduct(g01, p01), Vec2::dotProduct(g11, p11), u);
+        // fade
+        float tX = MathUtils::quintic(currGridPoint.relativeX);
+        float tY = MathUtils::quintic(currGridPoint.relativeY);
 
-        return MathUtils::interpolation(a, b, v);
+        float a = MathUtils::interpolation(Vec2::dotProduct(g00, v00), Vec2::dotProduct(g10, v10), tX);
+        float b = MathUtils::interpolation(Vec2::dotProduct(g01, v01), Vec2::dotProduct(g11, v11), tX);
+
+        return MathUtils::interpolation(a, b, tY);
     }
 
-    float Perlin::fbm(const float x, const float y)
+    float Perlin::fbm(const float x, const float y) const
     {
         float total = 0;
         float maxValue = 0;
@@ -218,12 +214,12 @@ namespace PerlinNoise
             freq *= params_.lacunarity;
         }
 
-        return std::pow((total / maxValue), params_.contrast) * params_.noiseSize;
+        return std::pow(std::abs(total / maxValue), params_.contrast) * MathUtils::sign(total) * params_.noiseSize;
     }
 
     void Perlin::uploadParametersToGPU()
     {
-        if (parametersUBO_ != 0)
+        if (isGPUSet_ && parametersUBO_ != 0)
         {
             glBindBuffer(GL_UNIFORM_BUFFER, parametersUBO_);
             glBufferSubData(GL_UNIFORM_BUFFER, 0, sizeof(PerlinParameters), &params_);
@@ -239,19 +235,20 @@ namespace PerlinNoise
         }
         glBindTexture(GL_TEXTURE_2D, permuTableTex_);
 
-        glTexImage2D(GL_TEXTURE_2D, 0, GL_R8UI, 512, 1, 0, GL_RED_INTEGER, GL_UNSIGNED_BYTE, permuTable_);
+        glTexImage2D(GL_TEXTURE_2D, 0, GL_R8UI, PERMUTATION_TABLE_SIZE, 1, 0, GL_RED_INTEGER, GL_UNSIGNED_BYTE, permutationTable_.data());
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
 
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
+        glBindTexture(GL_TEXTURE_2D, 0);
 
         if (gradientsTex_ == 0)
         {
             glGenTextures(1, &gradientsTex_);
         }
         glBindTexture(GL_TEXTURE_2D, gradientsTex_);
-        glTexImage2D(GL_TEXTURE_2D, 0, GL_RG32F, 256, 1, 0, GL_RG, GL_FLOAT, gradients_);
+        glTexImage2D(GL_TEXTURE_2D, 0, GL_RG32F, GRADIENTS_SIZE, 1, 0, GL_RG, GL_FLOAT, gradients_.data());
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
         glBindTexture(GL_TEXTURE_2D, 0);
