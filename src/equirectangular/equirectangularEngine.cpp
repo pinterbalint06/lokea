@@ -17,11 +17,14 @@
 
 #include "core/math/mathUtils.h"
 
-EM_JS(void, equirectangularFromURL, (const char *url, int ctxId, int tiles, emscripten::EM_VAL textureIdsHandle), {
+EM_JS(void, equirectangularFromURL, (const char *url, int ctxId, int tiles, emscripten::EM_VAL textureIdsHandle, emscripten::EM_VAL onSuccessHandle, emscripten::EM_VAL onErrorHandle), {
     let gl = GL.contexts[ctxId].GLctx;
     let img = new Image();
     let imgUrl = UTF8ToString(url);
     let textureIds = Emval.toValue(textureIdsHandle);
+
+    let onSuccess = Emval.toValue(onSuccessHandle);
+    let onError = Emval.toValue(onErrorHandle);
 
     img.onload = function()
     {
@@ -63,16 +66,19 @@ EM_JS(void, equirectangularFromURL, (const char *url, int ctxId, int tiles, emsc
                     i++;
                 }
             }
+            onSuccess();
         }
         else
         {
             console.error("Texture failed to load (it no longer exists):\t" + imgUrl);
+            onError();
         }
     };
 
     img.onerror = function()
     {
         console.error("Texture failed to load:\t" + imgUrl);
+        onError();
     };
 
     img.src = imgUrl;
@@ -223,7 +229,7 @@ void EquirectangularEngine::changeImageMode(EQUIRECTANGULARMODE mode)
     }
 }
 
-void EquirectangularEngine::uploadTiles(const std::string &url, int ctx)
+void EquirectangularEngine::uploadTiles(const std::string &url, int ctx, emscripten::val onSuccess, emscripten::val onError)
 {
     int tiles = currMode_;
     emscripten::val textureIds = emscripten::val::global("Uint32Array").new_(tiles * tiles);
@@ -232,10 +238,10 @@ void EquirectangularEngine::uploadTiles(const std::string &url, int ctx)
     {
         textureIds.set(i, imageTiles_[i]->getTextureIndex());
     }
-    equirectangularFromURL(url.c_str(), ctx, tiles, textureIds.as_handle());
+    equirectangularFromURL(url.c_str(), ctx, tiles, textureIds.as_handle(), onSuccess.as_handle(), onError.as_handle());
 }
 
-void EquirectangularEngine::loadEquirectangularImage(const std::string &url, int width, int height)
+void EquirectangularEngine::loadEquirectangularImage(const std::string &url, int width, int height, emscripten::val onSuccess, emscripten::val onError)
 {
     int ctx = emscripten_webgl_get_current_context();
 
@@ -247,7 +253,7 @@ void EquirectangularEngine::loadEquirectangularImage(const std::string &url, int
         {
             EM_ASM(console.log("full"));
             changeImageMode(EQUIRECTANGULARMODE::FULL);
-            loadTextureFromUrl(url, 0);
+            imageTiles_[0]->loadFromUrl(url, onSuccess, onError);
         }
         else
         {
@@ -255,7 +261,7 @@ void EquirectangularEngine::loadEquirectangularImage(const std::string &url, int
             {
                 EM_ASM(console.log("2x2"));
                 changeImageMode(EQUIRECTANGULARMODE::SPLIT_2X2);
-                uploadTiles(url, ctx);
+                uploadTiles(url, ctx, onSuccess, onError);
             }
             else
             {
@@ -263,7 +269,7 @@ void EquirectangularEngine::loadEquirectangularImage(const std::string &url, int
                 {
                     EM_ASM(console.log("4x4"));
                     changeImageMode(EQUIRECTANGULARMODE::SPLIT_4X4);
-                    uploadTiles(url, ctx);
+                    uploadTiles(url, ctx, onSuccess, onError);
                 }
                 else
                 {

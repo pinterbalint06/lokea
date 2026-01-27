@@ -58,9 +58,13 @@ function createOptionsForImageList() {
             opti.setAttribute("value", i);
             select.appendChild(opti);
         }
-        select.addEventListener("change", function () {
+        select.addEventListener("change", async function () {
             if (imageList[select.value]) {
-                equirectangularViewer.loadImage(imageList[select.value].url, imageList[select.value].width, imageList[select.value].height);
+                equirectangularViewer.loadImage(imageList[select.value].url, imageList[select.value].width, imageList[select.value].height).then(function () {
+                    console.log("image loaded");
+                }).catch(function (e) {
+                    console.log(e)
+                });
             }
         });
     }

@@ -27,12 +27,12 @@ private:
     EQUIRECTANGULARMODE currMode_;
 
     void changeImageMode(EQUIRECTANGULARMODE mode);
-    void uploadTiles(const std::string &url, int ctx);
+    void uploadTiles(const std::string &url, int ctx, emscripten::val onSuccess, emscripten::val onError);
 
 public:
     EquirectangularEngine(const std::string &canvasID);
     ~EquirectangularEngine();
-    void loadEquirectangularImage(const std::string &url, int width, int height);
+    void loadEquirectangularImage(const std::string &url, int width, int height, emscripten::val onSuccess, emscripten::val onError);
 };
 
 #endif

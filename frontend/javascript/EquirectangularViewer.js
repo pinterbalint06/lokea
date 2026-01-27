@@ -44,21 +44,28 @@ export class EquirectangularViewer {
     // |------------------|
     // | PUBLIC FUNCTIONS |
     // |------------------|
+
     /**
-     * Asynchronously loads an equirectangular image into the viewer engine.
+     * Loads an equirectangular image to the engine.
      *
      * @async
      * @param {string} url - The URL of the image to load.
-     * @param {number} width - The width of the image in pixels.
-     * @param {number} height - The height of the image in pixels.
-     * @returns {Promise<void>} Resolves when the image is loaded, or throws an error if the engine initialization was unsuccessful.
+     * @param {number} width - The width of the image.
+     * @param {number} height - The height of the image.
+     * @returns {Promise<void>} A promise that resolves when the image is loaded, or rejects if loading fails.
      * @throws {Error} If the engine initialization was unsuccessful.
      */
     async loadImage(url, width, height) {
         let success = await this.#engineInitPromise;
 
         if (success) {
-            this.#engine.loadEquirectangularImage(url, width, height);
+            return new Promise((resolve, reject) => {
+                try {
+                    this.#engine.loadEquirectangularImage(url, width, height, resolve, reject);
+                } catch (e) {
+                    reject(e);
+                }
+            });
         } else {
             throw new Error("loadImage: Engine initialization was unsuccessful!");
         }

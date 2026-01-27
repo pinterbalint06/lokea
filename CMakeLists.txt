@@ -36,6 +36,10 @@ set(COMMON_WASM_FLAGS
     -sEXPORTED_RUNTIME_METHODS=["HEAPU8"]
     -sMAX_WEBGL_VERSION=2
     -sMIN_WEBGL_VERSION=2
+    -sGL_SUPPORT_AUTOMATIC_ENABLE_EXTENSIONS=0
+    -sINCOMING_MODULE_JS_API=[]
+    -sGL_POOL_TEMP_BUFFERS=0
+    -sGL_ENABLE_GET_PROC_ADDRESS=0
     --embed-file ${CMAKE_SOURCE_DIR}/resources/shaders@shaders
     --closure=1
 )
@@ -46,15 +50,28 @@ set(COMMON_WASM_COMPILATION
 # ---------------------------------------------------------
 # optimized
 # ---------------------------------------------------------
-set(RELEASE_COMPILE_FLAGS -O3 -flto)
+set(RELEASE_COMPILE_FLAGS
+    -O3
+    -flto
+)
 
-set(RELEASE_LINK_FLAGS -flto -sFULL_ES2)
+set(RELEASE_LINK_FLAGS
+    -flto
+    -sGL_TRACK_ERRORS=0
+)
 # ---------------------------------------------------------
 # debug
 # ---------------------------------------------------------
 # for debug js runs in frontend/js source location is two directories back fro m there
-set(DEBUG_COMPILE_FLAGS -g -fsanitize=address)
-set(DEBUG_LINK_FLAGS -g --source-map-base "http://localhost:3000/" -fsanitize=address)
+set(DEBUG_COMPILE_FLAGS
+    -g
+    -fsanitize=address
+    )
+set(DEBUG_LINK_FLAGS
+    -g
+    --source-map-base "http://localhost:3000/"
+    -fsanitize=address
+)
 
 # ---------------------------------------------------------
 # Test terrain
