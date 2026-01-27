@@ -53,8 +53,8 @@ set(RELEASE_LINK_FLAGS -flto -sFULL_ES2)
 # debug
 # ---------------------------------------------------------
 # for debug js runs in frontend/js source location is two directories back fro m there
-set(DEBUG_COMPILE_FLAGS -g -gsource-map "SHELL:-fdebug-prefix-map=${CMAKE_SOURCE_DIR}=../../")
-set(DEBUG_LINK_FLAGS -g -gsource-map "SHELL:-fdebug-prefix-map=${CMAKE_SOURCE_DIR}=../../")
+set(DEBUG_COMPILE_FLAGS -g -fsanitize=address)
+set(DEBUG_LINK_FLAGS -g --source-map-base "http://localhost:3000/" -fsanitize=address)
 
 # ---------------------------------------------------------
 # Test terrain

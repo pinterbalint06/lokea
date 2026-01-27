@@ -98,6 +98,7 @@ void Texture::loadFromUrl(const std::string &url)
     if (imgData_)
     {
         free(imgData_);
+        imgData_ = nullptr;
     }
     width_ = 0;
     height_ = 0;

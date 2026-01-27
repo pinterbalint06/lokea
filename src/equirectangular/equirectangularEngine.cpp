@@ -4,6 +4,7 @@
 #include <string>
 #include <cmath>
 #include <cstdint>
+#include <memory>
 
 #include "core/resources/mesh.h"
 #include "core/resources/vertex.h"
@@ -186,7 +187,7 @@ void EquirectangularEngine::generateSphere()
         {
             Mesh *sphereSegment = generateSphereSegment(rings / tiles, segs / tiles, rad, rec * x, rec * (x + 1), rec * y, rec * (y + 1));
             Materials::Material defaultMat = Materials::Material::Error();
-            defaultMat.setTexture(imageTiles_[i]);
+            defaultMat.setTexture(imageTiles_[i].get());
             sphereSegment->setMaterial(defaultMat);
             addMesh(sphereSegment);
             i++;
@@ -202,8 +203,7 @@ EquirectangularEngine::EquirectangularEngine(const std::string &canvasID) : Engi
     imageTiles_.reserve(maxTextures);
     for (int i = 0; i < maxTextures; i++)
     {
-        Texture *tileTexture = new Texture();
-        imageTiles_.push_back(tileTexture);
+        imageTiles_.push_back(std::make_shared<Texture>());
     }
 
     currMode_ = EQUIRECTANGULARMODE::FULL;
@@ -212,13 +212,6 @@ EquirectangularEngine::EquirectangularEngine(const std::string &canvasID) : Engi
 
 EquirectangularEngine::~EquirectangularEngine()
 {
-    for (int i = 0; i < imageTiles_.size(); i++)
-    {
-        if (imageTiles_[i])
-        {
-            delete imageTiles_[i];
-        }
-    }
 }
 
 void EquirectangularEngine::changeImageMode(EQUIRECTANGULARMODE mode)

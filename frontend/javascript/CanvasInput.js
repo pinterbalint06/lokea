@@ -1,12 +1,22 @@
+const DEFAULT_FOCAL_LENGTH = 18.0;
+const DEFAULT_MIN_FOCAL_LENGTH = 10.5;
+const DEFAULT_MAX_FOCAL_LENGTH = 150.0;
+const DEFAULT_ZOOM_SPEED = 0.05;
+const DEFAULT_SENSITIVITY = 0.10;
+
 export class CanvasInput {
+    /**
+     * @param {string} canvasId - The HTML ID of the canvas.
+     * @param {object} options - The options for default max and min focal length, sensitivity, zoom speed and onRotate and onZoom functions.
+     */
     constructor(canvas, options = {}) {
         this.canvas = canvas;
 
-        this.focalLength = options.focalLength ? options.focalLength : 18.0;
-        this.minFocal = options.minFocal ? options.minFocal : 10.5;
-        this.maxFocal = options.maxFocal ? options.maxFocal : 150.0;
-        this.zoomSpeed = options.zoomSpeed ? options.zoomSpeed : 0.05;
-        this.sensitivity = options.sensitivity ? options.sensitivity : 0.2;
+        this.focalLength = options.focalLength ? options.focalLength : DEFAULT_FOCAL_LENGTH;
+        this.minFocal = options.minFocal ? options.minFocal : DEFAULT_MIN_FOCAL_LENGTH;
+        this.maxFocal = options.maxFocal ? options.maxFocal : DEFAULT_MAX_FOCAL_LENGTH;
+        this.zoomSpeed = options.zoomSpeed ? options.zoomSpeed : DEFAULT_ZOOM_SPEED;
+        this.sensitivity = options.sensitivity ? options.sensitivity : DEFAULT_SENSITIVITY;
 
         this.onRotate = options.onRotate ? options.onRotate : (() => { });
         this.onZoom = options.onZoom ? options.onZoom : (() => { });
@@ -17,17 +27,24 @@ export class CanvasInput {
         this.prevDiff = 0;
 
         this.canvas.style.cursor = "grab";
-        this._addListeners();
+        this.#addListeners();
     }
 
-    _addListeners() {
-        this.canvas.addEventListener('pointerdown', (e) => this._pointerDown(e));
-        this.canvas.addEventListener('pointerup', (e) => this._pointerUp(e));
-        this.canvas.addEventListener('pointermove', (e) => this._pointerMove(e));
-        this.canvas.addEventListener('wheel', (e) => this._wheel(e));
+    removeListeners() {
+        this.canvas.removeEventListener('pointerdown', (e) => this.#pointerDown(e));
+        this.canvas.removeEventListener('pointerup', (e) => this.#pointerUp(e));
+        this.canvas.removeEventListener('pointermove', (e) => this.#pointerMove(e));
+        this.canvas.removeEventListener('wheel', (e) => this.#wheel(e));
     }
 
-    _pointerDown(e) {
+    #addListeners() {
+        this.canvas.addEventListener('pointerdown', (e) => this.#pointerDown(e));
+        this.canvas.addEventListener('pointerup', (e) => this.#pointerUp(e));
+        this.canvas.addEventListener('pointermove', (e) => this.#pointerMove(e));
+        this.canvas.addEventListener('wheel', (e) => this.#wheel(e));
+    }
+
+    #pointerDown(e) {
         this.canvas.setPointerCapture(e.pointerId);
 
         if (this.pointers.length < 2) {
@@ -37,14 +54,14 @@ export class CanvasInput {
                 this.lastY = e.clientY;
             } else {
                 if (this.pointers.length == 2) {
-                    this.prevDiff = this._calcDiff(this.pointers[0], this.pointers[1]);
+                    this.prevDiff = this.#calcDiff(this.pointers[0], this.pointers[1]);
                 }
             }
         }
-        this._updateCursor();
+        this.#updateCursor();
     }
 
-    _pointerUp(e) {
+    #pointerUp(e) {
         this.canvas.releasePointerCapture(e.pointerId);
         let i = 0;
         while (i < this.pointers.length && this.pointers[i].pointerId != e.pointerId) {
@@ -59,10 +76,10 @@ export class CanvasInput {
             this.lastX = this.pointers[0].clientX;
             this.lastY = this.pointers[0].clientY;
         }
-        this._updateCursor();
+        this.#updateCursor();
     }
 
-    _pointerMove(e) {
+    #pointerMove(e) {
         // Update the pointer record in our array
         let i = 0;
         while (i < this.pointers.length && this.pointers[i].pointerId != e.pointerId) {
@@ -89,22 +106,22 @@ export class CanvasInput {
         } else {
             if (this.pointers.length === 2) {
                 // zooming with pinching
-                let currDiff = this._calcDiff(this.pointers[0], this.pointers[1]);
+                let currDiff = this.#calcDiff(this.pointers[0], this.pointers[1]);
                 let valtozas = (currDiff - this.prevDiff) * this.sensitivity;
 
                 this.prevDiff = currDiff;
-                this._applyZoom(valtozas);
+                this.#applyZoom(valtozas);
             }
         }
     }
 
-    _wheel(e) {
+    #wheel(e) {
         e.preventDefault();
         const d = e.deltaY * -this.zoomSpeed;
-        this._applyZoom(d);
+        this.#applyZoom(d);
     }
 
-    _applyZoom(d) {
+    #applyZoom(d) {
         this.focalLength += d;
 
         if (this.focalLength < this.minFocal) {
@@ -117,14 +134,14 @@ export class CanvasInput {
         this.onZoom(this.focalLength);
     }
 
-    _calcDiff(p1, p2) {
+    #calcDiff(p1, p2) {
         return Math.sqrt(
             Math.pow(p1.clientX - p2.clientX, 2) +
             Math.pow(p1.clientY - p2.clientY, 2)
         );
     }
 
-    _updateCursor() {
+    #updateCursor() {
         this.canvas.style.cursor = this.pointers.length === 1 ? "grabbing" : "grab";
     }
 }

@@ -25,10 +25,10 @@ var createModule = (() => {
     throw Error("not compiled for this environment (did you build to HTML and try to run it not on the web, or set ENVIRONMENT to something - like node - and run it someplace else - like on the web?)");
   }
   if (2147483647 > $currentChromeVersion_currentFirefoxVersion_currentNodeVersion_currentSafariVersion$$) {
-    throw Error(`This emscripten-generated code requires node v${"214748.36.47"} (detected v${[$currentChromeVersion_currentFirefoxVersion_currentNodeVersion_currentSafariVersion$$ / 10000 | 0, ($currentChromeVersion_currentFirefoxVersion_currentNodeVersion_currentSafariVersion$$ / 100 | 0) % 100, $currentChromeVersion_currentFirefoxVersion_currentNodeVersion_currentSafariVersion$$ % 100].join(".")})`);
+    throw Error(`This emscripten-generated code requires node v${"214748.36.47"} (detected v${[$currentChromeVersion_currentFirefoxVersion_currentNodeVersion_currentSafariVersion$$ / 1e4 | 0, ($currentChromeVersion_currentFirefoxVersion_currentNodeVersion_currentSafariVersion$$ / 100 | 0) % 100, $currentChromeVersion_currentFirefoxVersion_currentNodeVersion_currentSafariVersion$$ % 100].join(".")})`);
   }
   $currentChromeVersion_currentFirefoxVersion_currentNodeVersion_currentSafariVersion$$ = "undefined" !== typeof navigator && navigator.userAgent?.includes("Safari/") && navigator.userAgent.match(/Version\/(\d+\.?\d*\.?\d*)/) ? $humanReadableVersionToPacked$$(navigator.userAgent.match(/Version\/(\d+\.?\d*\.?\d*)/)[1]) : 2147483647;
-  if (150000 > $currentChromeVersion_currentFirefoxVersion_currentNodeVersion_currentSafariVersion$$) {
+  if (15e4 > $currentChromeVersion_currentFirefoxVersion_currentNodeVersion_currentSafariVersion$$) {
     throw Error(`This emscripten-generated code requires Safari v${"15.0.0"} (detected v${$currentChromeVersion_currentFirefoxVersion_currentNodeVersion_currentSafariVersion$$})`);
   }
   $currentChromeVersion_currentFirefoxVersion_currentNodeVersion_currentSafariVersion$$ = "undefined" !== typeof navigator && navigator.userAgent?.match(/Firefox\/(\d+(?:\.\d+)?)/) ? parseFloat(navigator.userAgent.match(/Firefox\/(\d+(?:\.\d+)?)/)[1]) : 2147483647;
@@ -71,17 +71,15 @@ function $writeStackCookie$$() {
   var $max$$ = $_emscripten_stack_get_end$$();
   $assert$$(0 == ($max$$ & 3));
   0 == $max$$ && ($max$$ += 4);
-  $HEAPU32$$[$max$$ >> 2] = 34821223;
-  $HEAPU32$$[$max$$ + 4 >> 2] = 2310721022;
-  $HEAPU32$$[0] = 1668509029;
+  $HEAPU32$$[$_asan_js_check_index$$($HEAPU32$$, $max$$ >> 2, $___asan_storeN$$)] = 34821223;
+  $HEAPU32$$[$_asan_js_check_index$$($HEAPU32$$, $max$$ + 4 >> 2, $___asan_storeN$$)] = 2310721022;
 }
 function $checkStackCookie$$() {
   if (!$ABORT$$) {
     var $max$jscomp$1$$ = $_emscripten_stack_get_end$$();
     0 == $max$jscomp$1$$ && ($max$jscomp$1$$ += 4);
-    var $cookie1$$ = $HEAPU32$$[$max$jscomp$1$$ >> 2], $cookie2$$ = $HEAPU32$$[$max$jscomp$1$$ + 4 >> 2];
+    var $cookie1$$ = $HEAPU32$$[$_asan_js_check_index$$($HEAPU32$$, $max$jscomp$1$$ >> 2, $___asan_loadN$$)], $cookie2$$ = $HEAPU32$$[$_asan_js_check_index$$($HEAPU32$$, $max$jscomp$1$$ + 4 >> 2, $___asan_loadN$$)];
     34821223 == $cookie1$$ && 2310721022 == $cookie2$$ || $abort$$(`Stack overflow! Stack cookie has been overwritten at ${$ptrToString$$($max$jscomp$1$$)}, expected hex dwords 0x89BACDFE and 0x2135467, but received ${$ptrToString$$($cookie2$$)} ${$ptrToString$$($cookie1$$)}`);
-    1668509029 != $HEAPU32$$[0] && $abort$$("Runtime error: The application has corrupted its heap memory area (address zero)!");
   }
 }
 var $h16$jscomp$inline_62$$ = new Int16Array(1), $h8$jscomp$inline_63$$ = new Int8Array($h16$jscomp$inline_62$$.buffer);
@@ -102,7 +100,11 @@ function $unexportedRuntimeSymbol$$($sym$jscomp$3$$) {
     $abort$$($msg$$);
   }});
 }
-var $readyPromiseResolve$$, $readyPromiseReject$$, $HEAP8$$, $HEAPU8$$, $HEAP16$$, $HEAPU16$$, $HEAP32$$, $HEAPU32$$, $HEAPF32$$, $HEAPF64$$, $HEAP64$$, $HEAPU64$$, $runtimeInitialized$$ = !1;
+function $_asan_js_check_index$$($arr$jscomp$2_elemSize$$, $index$jscomp$103$$, $asanFn$$) {
+  $runtimeInitialized$$ && !$runtimeExited$$ && ($arr$jscomp$2_elemSize$$ = $arr$jscomp$2_elemSize$$.BYTES_PER_ELEMENT, $asanFn$$($index$jscomp$103$$ * $arr$jscomp$2_elemSize$$, $arr$jscomp$2_elemSize$$));
+  return $index$jscomp$103$$;
+}
+var $readyPromiseResolve$$, $readyPromiseReject$$, $HEAP8$$, $HEAPU8$$, $HEAP16$$, $HEAPU16$$, $HEAP32$$, $HEAPU32$$, $HEAPF32$$, $HEAPF64$$, $HEAP64$$, $HEAPU64$$, $runtimeInitialized$$ = !1, $runtimeExited$$ = !1;
 function $updateMemoryViews$$() {
   var $b$jscomp$1$$ = $wasmMemory$$.buffer;
   $HEAP8$$ = new Int8Array($b$jscomp$1$$);
@@ -126,12 +128,13 @@ function $abort$$($e$jscomp$7_what$$) {
   $readyPromiseReject$$?.($e$jscomp$7_what$$);
   throw $e$jscomp$7_what$$;
 }
-function $createExportWrapper$$($name$jscomp$76$$) {
+function $createExportWrapper$$($name$jscomp$76$$, $nargs$$) {
   return (...$args$jscomp$4$$) => {
     $assert$$($runtimeInitialized$$, `native function \`${$name$jscomp$76$$}\` called before runtime initialization`);
+    $assert$$(!$runtimeExited$$, `native function \`${$name$jscomp$76$$}\` called after runtime exit (use NO_EXIT_RUNTIME to keep it alive after main() exits)`);
     var $f$jscomp$1$$ = $wasmExports$$[$name$jscomp$76$$];
     $assert$$($f$jscomp$1$$, `exported native function \`${$name$jscomp$76$$}\` not found`);
-    $assert$$(1 >= $args$jscomp$4$$.length, `native function \`${$name$jscomp$76$$}\` called with ${$args$jscomp$4$$.length} args but expects ${1}`);
+    $assert$$($args$jscomp$4$$.length <= $nargs$$, `native function \`${$name$jscomp$76$$}\` called with ${$args$jscomp$4$$.length} args but expects ${$nargs$$}`);
     return $f$jscomp$1$$(...$args$jscomp$4$$);
   };
 }
@@ -171,6 +174,13 @@ async function $instantiateAsync$$($imports$jscomp$1$$) {
   }
   return $instantiateArrayBuffer$$($binaryFile$jscomp$2$$, $imports$jscomp$1$$);
 }
+class $ExitStatus$$ {
+  name="ExitStatus";
+  constructor($status$jscomp$1$$) {
+    this.message = `Program terminated with exit(${$status$jscomp$1$$})`;
+    this.status = $status$jscomp$1$$;
+  }
+}
 var $callRuntimeCallbacks$$ = $callbacks$$ => {
   for (; 0 < $callbacks$$.length;) {
     $callbacks$$.shift()($Module$$);
@@ -178,24 +188,52 @@ var $callRuntimeCallbacks$$ = $callbacks$$ => {
 }, $onPostRuns$$ = [], $onPreRuns$$ = [], $addOnPreRun$$ = () => {
   var $cb$jscomp$1$$ = $Module$$.preRun.shift();
   $onPreRuns$$.push($cb$jscomp$1$$);
-}, $ptrToString$$ = $ptr$jscomp$1$$ => {
+}, $noExitRuntime$$ = !1, $ptrToString$$ = $ptr$jscomp$1$$ => {
   $assert$$("number" === typeof $ptr$jscomp$1$$, `ptrToString expects a number, got ${typeof $ptr$jscomp$1$$}`);
   return "0x" + ($ptr$jscomp$1$$ >>> 0).toString(16).padStart(8, "0");
 }, $warnOnce$$ = $text$jscomp$13$$ => {
   $warnOnce$$.$shown$ || ($warnOnce$$.$shown$ = {});
   $warnOnce$$.$shown$[$text$jscomp$13$$] || ($warnOnce$$.$shown$[$text$jscomp$13$$] = 1, $err$$($text$jscomp$13$$));
+}, $UTF8Decoder$$ = globalThis.TextDecoder && new TextDecoder(), $findStringEnd$$ = ($heapOrArray$$, $idx$$, $maxBytesToRead_maxIdx$$, $ignoreNul$$) => {
+  $maxBytesToRead_maxIdx$$ = $idx$$ + $maxBytesToRead_maxIdx$$;
+  if ($ignoreNul$$) {
+    return $maxBytesToRead_maxIdx$$;
+  }
+  for (; $heapOrArray$$[$idx$$] && !($idx$$ >= $maxBytesToRead_maxIdx$$);) {
+    ++$idx$$;
+  }
+  return $idx$$;
+}, $UTF8ArrayToString$$ = ($heapOrArray$jscomp$1$$, $idx$jscomp$1$$ = 0, $endPtr_maxBytesToRead$jscomp$1$$, $ignoreNul$jscomp$1_str$jscomp$7$$) => {
+  $endPtr_maxBytesToRead$jscomp$1$$ = $findStringEnd$$($heapOrArray$jscomp$1$$, $idx$jscomp$1$$, $endPtr_maxBytesToRead$jscomp$1$$, $ignoreNul$jscomp$1_str$jscomp$7$$);
+  if (16 < $endPtr_maxBytesToRead$jscomp$1$$ - $idx$jscomp$1$$ && $heapOrArray$jscomp$1$$.buffer && $UTF8Decoder$$) {
+    return $UTF8Decoder$$.decode($heapOrArray$jscomp$1$$.subarray($idx$jscomp$1$$, $endPtr_maxBytesToRead$jscomp$1$$));
+  }
+  for ($ignoreNul$jscomp$1_str$jscomp$7$$ = ""; $idx$jscomp$1$$ < $endPtr_maxBytesToRead$jscomp$1$$;) {
+    var $ch_u0$$ = $heapOrArray$jscomp$1$$[$idx$jscomp$1$$++];
+    if ($ch_u0$$ & 128) {
+      var $u1$$ = $heapOrArray$jscomp$1$$[$idx$jscomp$1$$++] & 63;
+      if (192 == ($ch_u0$$ & 224)) {
+        $ignoreNul$jscomp$1_str$jscomp$7$$ += String.fromCharCode(($ch_u0$$ & 31) << 6 | $u1$$);
+      } else {
+        var $u2$$ = $heapOrArray$jscomp$1$$[$idx$jscomp$1$$++] & 63;
+        224 == ($ch_u0$$ & 240) ? $ch_u0$$ = ($ch_u0$$ & 15) << 12 | $u1$$ << 6 | $u2$$ : (240 != ($ch_u0$$ & 248) && $warnOnce$$("Invalid UTF-8 leading byte " + $ptrToString$$($ch_u0$$) + " encountered when deserializing a UTF-8 string in wasm memory to a JS string!"), $ch_u0$$ = ($ch_u0$$ & 7) << 18 | $u1$$ << 12 | $u2$$ << 6 | $heapOrArray$jscomp$1$$[$idx$jscomp$1$$++] & 63);
+        65536 > $ch_u0$$ ? $ignoreNul$jscomp$1_str$jscomp$7$$ += String.fromCharCode($ch_u0$$) : ($ch_u0$$ -= 65536, $ignoreNul$jscomp$1_str$jscomp$7$$ += String.fromCharCode(55296 | $ch_u0$$ >> 10, 56320 | $ch_u0$$ & 1023));
+      }
+    } else {
+      $ignoreNul$jscomp$1_str$jscomp$7$$ += String.fromCharCode($ch_u0$$);
+    }
+  }
+  return $ignoreNul$jscomp$1_str$jscomp$7$$;
+}, $UTF8ToString$$ = ($ptr$jscomp$3$$, $maxBytesToRead$jscomp$2$$, $ignoreNul$jscomp$2$$) => {
+  $assert$$("number" == typeof $ptr$jscomp$3$$, `UTF8ToString expects a number (got ${typeof $ptr$jscomp$3$$})`);
+  return $ptr$jscomp$3$$ ? $UTF8ArrayToString$$($HEAPU8$$, $ptr$jscomp$3$$, $maxBytesToRead$jscomp$2$$, $ignoreNul$jscomp$2$$) : "";
 };
 class $ExceptionInfo$$ {
   constructor($excPtr$$) {
     this.$ptr$ = $excPtr$$ - 24;
   }
 }
-var $uncaughtExceptionCount$$ = 0, $syscallGetVarargI$$ = () => {
-  $assert$$(void 0 != $SYSCALLS$varargs$$);
-  var $ret$$ = $HEAP32$$[+$SYSCALLS$varargs$$ >> 2];
-  $SYSCALLS$varargs$$ += 4;
-  return $ret$$;
-}, $PATH$normalizeArray$$ = ($parts$$, $allowAboveRoot$$) => {
+var $uncaughtExceptionCount$$ = 0, $PATH$normalizeArray$$ = ($parts$$, $allowAboveRoot$$) => {
   for (var $up$$ = 0, $i$jscomp$4$$ = $parts$$.length - 1; 0 <= $i$jscomp$4$$; $i$jscomp$4$$--) {
     var $last$$ = $parts$$[$i$jscomp$4$$];
     "." === $last$$ ? $parts$$.splice($i$jscomp$4$$, 1) : ".." === $last$$ ? ($parts$$.splice($i$jscomp$4$$, 1), $up$$++) : $up$$ && ($parts$$.splice($i$jscomp$4$$, 1), $up$$--);
@@ -236,36 +274,6 @@ var $uncaughtExceptionCount$$ = 0, $syscallGetVarargI$$ = () => {
   }
   $resolvedPath$$ = $PATH$normalizeArray$$($resolvedPath$$.split("/").filter($p$jscomp$1$$ => !!$p$jscomp$1$$), !$path$jscomp$10_resolvedAbsolute$$).join("/");
   return ($path$jscomp$10_resolvedAbsolute$$ ? "/" : "") + $resolvedPath$$ || ".";
-}, $UTF8Decoder$$ = globalThis.TextDecoder && new TextDecoder(), $findStringEnd$$ = ($heapOrArray$$, $idx$$, $maxBytesToRead_maxIdx$$, $ignoreNul$$) => {
-  $maxBytesToRead_maxIdx$$ = $idx$$ + $maxBytesToRead_maxIdx$$;
-  if ($ignoreNul$$) {
-    return $maxBytesToRead_maxIdx$$;
-  }
-  for (; $heapOrArray$$[$idx$$] && !($idx$$ >= $maxBytesToRead_maxIdx$$);) {
-    ++$idx$$;
-  }
-  return $idx$$;
-}, $UTF8ArrayToString$$ = ($heapOrArray$jscomp$1$$, $idx$jscomp$1$$ = 0, $endPtr_maxBytesToRead$jscomp$1$$, $ignoreNul$jscomp$1_str$jscomp$7$$) => {
-  $endPtr_maxBytesToRead$jscomp$1$$ = $findStringEnd$$($heapOrArray$jscomp$1$$, $idx$jscomp$1$$, $endPtr_maxBytesToRead$jscomp$1$$, $ignoreNul$jscomp$1_str$jscomp$7$$);
-  if (16 < $endPtr_maxBytesToRead$jscomp$1$$ - $idx$jscomp$1$$ && $heapOrArray$jscomp$1$$.buffer && $UTF8Decoder$$) {
-    return $UTF8Decoder$$.decode($heapOrArray$jscomp$1$$.subarray($idx$jscomp$1$$, $endPtr_maxBytesToRead$jscomp$1$$));
-  }
-  for ($ignoreNul$jscomp$1_str$jscomp$7$$ = ""; $idx$jscomp$1$$ < $endPtr_maxBytesToRead$jscomp$1$$;) {
-    var $ch_u0$$ = $heapOrArray$jscomp$1$$[$idx$jscomp$1$$++];
-    if ($ch_u0$$ & 128) {
-      var $u1$$ = $heapOrArray$jscomp$1$$[$idx$jscomp$1$$++] & 63;
-      if (192 == ($ch_u0$$ & 224)) {
-        $ignoreNul$jscomp$1_str$jscomp$7$$ += String.fromCharCode(($ch_u0$$ & 31) << 6 | $u1$$);
-      } else {
-        var $u2$$ = $heapOrArray$jscomp$1$$[$idx$jscomp$1$$++] & 63;
-        224 == ($ch_u0$$ & 240) ? $ch_u0$$ = ($ch_u0$$ & 15) << 12 | $u1$$ << 6 | $u2$$ : (240 != ($ch_u0$$ & 248) && $warnOnce$$("Invalid UTF-8 leading byte " + $ptrToString$$($ch_u0$$) + " encountered when deserializing a UTF-8 string in wasm memory to a JS string!"), $ch_u0$$ = ($ch_u0$$ & 7) << 18 | $u1$$ << 12 | $u2$$ << 6 | $heapOrArray$jscomp$1$$[$idx$jscomp$1$$++] & 63);
-        65536 > $ch_u0$$ ? $ignoreNul$jscomp$1_str$jscomp$7$$ += String.fromCharCode($ch_u0$$) : ($ch_u0$$ -= 65536, $ignoreNul$jscomp$1_str$jscomp$7$$ += String.fromCharCode(55296 | $ch_u0$$ >> 10, 56320 | $ch_u0$$ & 1023));
-      }
-    } else {
-      $ignoreNul$jscomp$1_str$jscomp$7$$ += String.fromCharCode($ch_u0$$);
-    }
-  }
-  return $ignoreNul$jscomp$1_str$jscomp$7$$;
 }, $FS_stdin_getChar_buffer$$ = [], $lengthBytesUTF8$$ = $str$jscomp$8$$ => {
   for (var $len$$ = 0, $i$jscomp$7$$ = 0; $i$jscomp$7$$ < $str$jscomp$8$$.length; ++$i$jscomp$7$$) {
     var $c$$ = $str$jscomp$8$$.charCodeAt($i$jscomp$7$$);
@@ -396,8 +404,14 @@ var $TTY$stream_ops$$ = {open($stream$jscomp$4$$) {
   null === $val$jscomp$2$$ || 10 === $val$jscomp$2$$ ? ($err$$($UTF8ArrayToString$$($tty$jscomp$7$$.output)), $tty$jscomp$7$$.output = []) : 0 != $val$jscomp$2$$ && $tty$jscomp$7$$.output.push($val$jscomp$2$$);
 }, $fsync$($tty$jscomp$8$$) {
   0 < $tty$jscomp$8$$.output?.length && ($err$$($UTF8ArrayToString$$($tty$jscomp$8$$.output)), $tty$jscomp$8$$.output = []);
-}}, $mmapAlloc$$ = () => {
-  $abort$$("internal error: mmapAlloc called but `emscripten_builtin_memalign` native symbol not exported");
+}}, $alignMemory$$ = $size$jscomp$22$$ => {
+  $assert$$(65536, "alignment argument is required");
+  return 65536 * Math.ceil($size$jscomp$22$$ / 65536);
+}, $mmapAlloc$$ = $size$jscomp$23$$ => {
+  $size$jscomp$23$$ = $alignMemory$$($size$jscomp$23$$);
+  var $ptr$jscomp$6$$ = $_emscripten_builtin_memalign$$(65536, $size$jscomp$23$$);
+  $ptr$jscomp$6$$ && $HEAPU8$$.fill(0, $ptr$jscomp$6$$, $ptr$jscomp$6$$ + $size$jscomp$23$$);
+  return $ptr$jscomp$6$$;
 }, $MEMFS$$ = {$ops_table$:null, $mount$() {
   return $MEMFS$$.createNode(null, "/", 16895, 0);
 }, createNode($parent$jscomp$4$$, $name$jscomp$77$$, $mode$jscomp$15_node$jscomp$5$$, $dev$jscomp$1$$) {
@@ -430,12 +444,12 @@ var $TTY$stream_ops$$ = {open($stream$jscomp$4$$) {
   $attr$$.$blksize$ = 4096;
   $attr$$.$blocks$ = Math.ceil($attr$$.size / $attr$$.$blksize$);
   return $attr$$;
-}, $setattr$($node$jscomp$10$$, $attr$jscomp$1_newSize$jscomp$inline_70$$) {
-  for (var $key$jscomp$39_oldContents$jscomp$inline_72$$ of ["mode", "atime", "mtime", "ctime"]) {
-    null != $attr$jscomp$1_newSize$jscomp$inline_70$$[$key$jscomp$39_oldContents$jscomp$inline_72$$] && ($node$jscomp$10$$[$key$jscomp$39_oldContents$jscomp$inline_72$$] = $attr$jscomp$1_newSize$jscomp$inline_70$$[$key$jscomp$39_oldContents$jscomp$inline_72$$]);
+}, $setattr$($node$jscomp$10$$, $attr$jscomp$1_newSize$jscomp$inline_73$$) {
+  for (var $key$jscomp$39_oldContents$jscomp$inline_75$$ of ["mode", "atime", "mtime", "ctime"]) {
+    null != $attr$jscomp$1_newSize$jscomp$inline_73$$[$key$jscomp$39_oldContents$jscomp$inline_75$$] && ($node$jscomp$10$$[$key$jscomp$39_oldContents$jscomp$inline_75$$] = $attr$jscomp$1_newSize$jscomp$inline_73$$[$key$jscomp$39_oldContents$jscomp$inline_75$$]);
   }
-  void 0 !== $attr$jscomp$1_newSize$jscomp$inline_70$$.size && ($attr$jscomp$1_newSize$jscomp$inline_70$$ = $attr$jscomp$1_newSize$jscomp$inline_70$$.size, $node$jscomp$10$$.$usedBytes$ != $attr$jscomp$1_newSize$jscomp$inline_70$$ && (0 == $attr$jscomp$1_newSize$jscomp$inline_70$$ ? ($node$jscomp$10$$.$contents$ = null, $node$jscomp$10$$.$usedBytes$ = 0) : ($key$jscomp$39_oldContents$jscomp$inline_72$$ = $node$jscomp$10$$.$contents$, $node$jscomp$10$$.$contents$ = new Uint8Array($attr$jscomp$1_newSize$jscomp$inline_70$$), 
-  $key$jscomp$39_oldContents$jscomp$inline_72$$ && $node$jscomp$10$$.$contents$.set($key$jscomp$39_oldContents$jscomp$inline_72$$.subarray(0, Math.min($attr$jscomp$1_newSize$jscomp$inline_70$$, $node$jscomp$10$$.$usedBytes$))), $node$jscomp$10$$.$usedBytes$ = $attr$jscomp$1_newSize$jscomp$inline_70$$)));
+  void 0 !== $attr$jscomp$1_newSize$jscomp$inline_73$$.size && ($attr$jscomp$1_newSize$jscomp$inline_73$$ = $attr$jscomp$1_newSize$jscomp$inline_73$$.size, $node$jscomp$10$$.$usedBytes$ != $attr$jscomp$1_newSize$jscomp$inline_73$$ && (0 == $attr$jscomp$1_newSize$jscomp$inline_73$$ ? ($node$jscomp$10$$.$contents$ = null, $node$jscomp$10$$.$usedBytes$ = 0) : ($key$jscomp$39_oldContents$jscomp$inline_75$$ = $node$jscomp$10$$.$contents$, $node$jscomp$10$$.$contents$ = new Uint8Array($attr$jscomp$1_newSize$jscomp$inline_73$$), 
+  $key$jscomp$39_oldContents$jscomp$inline_75$$ && $node$jscomp$10$$.$contents$.set($key$jscomp$39_oldContents$jscomp$inline_75$$.subarray(0, Math.min($attr$jscomp$1_newSize$jscomp$inline_73$$, $node$jscomp$10$$.$usedBytes$))), $node$jscomp$10$$.$usedBytes$ = $attr$jscomp$1_newSize$jscomp$inline_73$$)));
 }, $lookup$() {
   throw new $FS$ErrnoError$$(44);
 }, $mknod$($parent$jscomp$6$$, $name$jscomp$79$$, $mode$jscomp$16$$, $dev$jscomp$2$$) {
@@ -478,31 +492,31 @@ var $TTY$stream_ops$$ = {open($stream$jscomp$4$$) {
     throw new $FS$ErrnoError$$(28);
   }
   return $node$jscomp$14$$.link;
-}}, $stream_ops$:{read($size$jscomp$22_stream$jscomp$9$$, $buffer$jscomp$20$$, $offset$jscomp$28$$, $i$jscomp$13_length$jscomp$20$$, $position$jscomp$1$$) {
-  var $contents$jscomp$2$$ = $size$jscomp$22_stream$jscomp$9$$.node.$contents$;
-  if ($position$jscomp$1$$ >= $size$jscomp$22_stream$jscomp$9$$.node.$usedBytes$) {
+}}, $stream_ops$:{read($size$jscomp$24_stream$jscomp$9$$, $buffer$jscomp$20$$, $offset$jscomp$28$$, $i$jscomp$13_length$jscomp$20$$, $position$jscomp$1$$) {
+  var $contents$jscomp$2$$ = $size$jscomp$24_stream$jscomp$9$$.node.$contents$;
+  if ($position$jscomp$1$$ >= $size$jscomp$24_stream$jscomp$9$$.node.$usedBytes$) {
     return 0;
   }
-  $size$jscomp$22_stream$jscomp$9$$ = Math.min($size$jscomp$22_stream$jscomp$9$$.node.$usedBytes$ - $position$jscomp$1$$, $i$jscomp$13_length$jscomp$20$$);
-  $assert$$(0 <= $size$jscomp$22_stream$jscomp$9$$);
-  if (8 < $size$jscomp$22_stream$jscomp$9$$ && $contents$jscomp$2$$.subarray) {
-    $buffer$jscomp$20$$.set($contents$jscomp$2$$.subarray($position$jscomp$1$$, $position$jscomp$1$$ + $size$jscomp$22_stream$jscomp$9$$), $offset$jscomp$28$$);
+  $size$jscomp$24_stream$jscomp$9$$ = Math.min($size$jscomp$24_stream$jscomp$9$$.node.$usedBytes$ - $position$jscomp$1$$, $i$jscomp$13_length$jscomp$20$$);
+  $assert$$(0 <= $size$jscomp$24_stream$jscomp$9$$);
+  if (8 < $size$jscomp$24_stream$jscomp$9$$ && $contents$jscomp$2$$.subarray) {
+    $buffer$jscomp$20$$.set($contents$jscomp$2$$.subarray($position$jscomp$1$$, $position$jscomp$1$$ + $size$jscomp$24_stream$jscomp$9$$), $offset$jscomp$28$$);
   } else {
-    for ($i$jscomp$13_length$jscomp$20$$ = 0; $i$jscomp$13_length$jscomp$20$$ < $size$jscomp$22_stream$jscomp$9$$; $i$jscomp$13_length$jscomp$20$$++) {
+    for ($i$jscomp$13_length$jscomp$20$$ = 0; $i$jscomp$13_length$jscomp$20$$ < $size$jscomp$24_stream$jscomp$9$$; $i$jscomp$13_length$jscomp$20$$++) {
       $buffer$jscomp$20$$[$offset$jscomp$28$$ + $i$jscomp$13_length$jscomp$20$$] = $contents$jscomp$2$$[$position$jscomp$1$$ + $i$jscomp$13_length$jscomp$20$$];
     }
   }
-  return $size$jscomp$22_stream$jscomp$9$$;
-}, write($node$jscomp$15_stream$jscomp$10$$, $buffer$jscomp$21$$, $offset$jscomp$29$$, $length$jscomp$21$$, $position$jscomp$2$$, $canOwn_i$jscomp$14_newCapacity$jscomp$inline_75$$) {
+  return $size$jscomp$24_stream$jscomp$9$$;
+}, write($node$jscomp$15_stream$jscomp$10$$, $buffer$jscomp$21$$, $offset$jscomp$29$$, $length$jscomp$21$$, $position$jscomp$2$$, $canOwn_i$jscomp$14_newCapacity$jscomp$inline_78$$) {
   $assert$$(!($buffer$jscomp$21$$ instanceof ArrayBuffer));
-  $buffer$jscomp$21$$.buffer === $HEAP8$$.buffer && ($canOwn_i$jscomp$14_newCapacity$jscomp$inline_75$$ = !1);
+  $buffer$jscomp$21$$.buffer === $HEAP8$$.buffer && ($canOwn_i$jscomp$14_newCapacity$jscomp$inline_78$$ = !1);
   if (!$length$jscomp$21$$) {
     return 0;
   }
   $node$jscomp$15_stream$jscomp$10$$ = $node$jscomp$15_stream$jscomp$10$$.node;
   $node$jscomp$15_stream$jscomp$10$$.$mtime$ = $node$jscomp$15_stream$jscomp$10$$.$ctime$ = Date.now();
   if ($buffer$jscomp$21$$.subarray && (!$node$jscomp$15_stream$jscomp$10$$.$contents$ || $node$jscomp$15_stream$jscomp$10$$.$contents$.subarray)) {
-    if ($canOwn_i$jscomp$14_newCapacity$jscomp$inline_75$$) {
+    if ($canOwn_i$jscomp$14_newCapacity$jscomp$inline_78$$) {
       return $assert$$(0 === $position$jscomp$2$$, "canOwn must imply no weird position inside the file"), $node$jscomp$15_stream$jscomp$10$$.$contents$ = $buffer$jscomp$21$$.subarray($offset$jscomp$29$$, $offset$jscomp$29$$ + $length$jscomp$21$$), $node$jscomp$15_stream$jscomp$10$$.$usedBytes$ = $length$jscomp$21$$;
     }
     if (0 === $node$jscomp$15_stream$jscomp$10$$.$usedBytes$ && 0 === $position$jscomp$2$$) {
@@ -512,16 +526,16 @@ var $TTY$stream_ops$$ = {open($stream$jscomp$4$$) {
       return $node$jscomp$15_stream$jscomp$10$$.$contents$.set($buffer$jscomp$21$$.subarray($offset$jscomp$29$$, $offset$jscomp$29$$ + $length$jscomp$21$$), $position$jscomp$2$$), $length$jscomp$21$$;
     }
   }
-  $canOwn_i$jscomp$14_newCapacity$jscomp$inline_75$$ = $position$jscomp$2$$ + $length$jscomp$21$$;
-  var $oldContents$jscomp$inline_78_prevCapacity$jscomp$inline_77$$ = $node$jscomp$15_stream$jscomp$10$$.$contents$ ? $node$jscomp$15_stream$jscomp$10$$.$contents$.length : 0;
-  $oldContents$jscomp$inline_78_prevCapacity$jscomp$inline_77$$ >= $canOwn_i$jscomp$14_newCapacity$jscomp$inline_75$$ || ($canOwn_i$jscomp$14_newCapacity$jscomp$inline_75$$ = Math.max($canOwn_i$jscomp$14_newCapacity$jscomp$inline_75$$, $oldContents$jscomp$inline_78_prevCapacity$jscomp$inline_77$$ * (1048576 > $oldContents$jscomp$inline_78_prevCapacity$jscomp$inline_77$$ ? 2.0 : 1.125) >>> 0), 0 != $oldContents$jscomp$inline_78_prevCapacity$jscomp$inline_77$$ && ($canOwn_i$jscomp$14_newCapacity$jscomp$inline_75$$ = 
-  Math.max($canOwn_i$jscomp$14_newCapacity$jscomp$inline_75$$, 256)), $oldContents$jscomp$inline_78_prevCapacity$jscomp$inline_77$$ = $node$jscomp$15_stream$jscomp$10$$.$contents$, $node$jscomp$15_stream$jscomp$10$$.$contents$ = new Uint8Array($canOwn_i$jscomp$14_newCapacity$jscomp$inline_75$$), 0 < $node$jscomp$15_stream$jscomp$10$$.$usedBytes$ && $node$jscomp$15_stream$jscomp$10$$.$contents$.set($oldContents$jscomp$inline_78_prevCapacity$jscomp$inline_77$$.subarray(0, $node$jscomp$15_stream$jscomp$10$$.$usedBytes$), 
+  $canOwn_i$jscomp$14_newCapacity$jscomp$inline_78$$ = $position$jscomp$2$$ + $length$jscomp$21$$;
+  var $oldContents$jscomp$inline_81_prevCapacity$jscomp$inline_80$$ = $node$jscomp$15_stream$jscomp$10$$.$contents$ ? $node$jscomp$15_stream$jscomp$10$$.$contents$.length : 0;
+  $oldContents$jscomp$inline_81_prevCapacity$jscomp$inline_80$$ >= $canOwn_i$jscomp$14_newCapacity$jscomp$inline_78$$ || ($canOwn_i$jscomp$14_newCapacity$jscomp$inline_78$$ = Math.max($canOwn_i$jscomp$14_newCapacity$jscomp$inline_78$$, $oldContents$jscomp$inline_81_prevCapacity$jscomp$inline_80$$ * (1048576 > $oldContents$jscomp$inline_81_prevCapacity$jscomp$inline_80$$ ? 2 : 1.125) >>> 0), 0 != $oldContents$jscomp$inline_81_prevCapacity$jscomp$inline_80$$ && ($canOwn_i$jscomp$14_newCapacity$jscomp$inline_78$$ = 
+  Math.max($canOwn_i$jscomp$14_newCapacity$jscomp$inline_78$$, 256)), $oldContents$jscomp$inline_81_prevCapacity$jscomp$inline_80$$ = $node$jscomp$15_stream$jscomp$10$$.$contents$, $node$jscomp$15_stream$jscomp$10$$.$contents$ = new Uint8Array($canOwn_i$jscomp$14_newCapacity$jscomp$inline_78$$), 0 < $node$jscomp$15_stream$jscomp$10$$.$usedBytes$ && $node$jscomp$15_stream$jscomp$10$$.$contents$.set($oldContents$jscomp$inline_81_prevCapacity$jscomp$inline_80$$.subarray(0, $node$jscomp$15_stream$jscomp$10$$.$usedBytes$), 
   0));
   if ($node$jscomp$15_stream$jscomp$10$$.$contents$.subarray && $buffer$jscomp$21$$.subarray) {
     $node$jscomp$15_stream$jscomp$10$$.$contents$.set($buffer$jscomp$21$$.subarray($offset$jscomp$29$$, $offset$jscomp$29$$ + $length$jscomp$21$$), $position$jscomp$2$$);
   } else {
-    for ($canOwn_i$jscomp$14_newCapacity$jscomp$inline_75$$ = 0; $canOwn_i$jscomp$14_newCapacity$jscomp$inline_75$$ < $length$jscomp$21$$; $canOwn_i$jscomp$14_newCapacity$jscomp$inline_75$$++) {
-      $node$jscomp$15_stream$jscomp$10$$.$contents$[$position$jscomp$2$$ + $canOwn_i$jscomp$14_newCapacity$jscomp$inline_75$$] = $buffer$jscomp$21$$[$offset$jscomp$29$$ + $canOwn_i$jscomp$14_newCapacity$jscomp$inline_75$$];
+    for ($canOwn_i$jscomp$14_newCapacity$jscomp$inline_78$$ = 0; $canOwn_i$jscomp$14_newCapacity$jscomp$inline_78$$ < $length$jscomp$21$$; $canOwn_i$jscomp$14_newCapacity$jscomp$inline_78$$++) {
+      $node$jscomp$15_stream$jscomp$10$$.$contents$[$position$jscomp$2$$ + $canOwn_i$jscomp$14_newCapacity$jscomp$inline_78$$] = $buffer$jscomp$21$$[$offset$jscomp$29$$ + $canOwn_i$jscomp$14_newCapacity$jscomp$inline_78$$];
     }
   }
   $node$jscomp$15_stream$jscomp$10$$.$usedBytes$ = Math.max($node$jscomp$15_stream$jscomp$10$$.$usedBytes$, $position$jscomp$2$$ + $length$jscomp$21$$);
@@ -532,27 +546,27 @@ var $TTY$stream_ops$$ = {open($stream$jscomp$4$$) {
     throw new $FS$ErrnoError$$(28);
   }
   return $offset$jscomp$30_position$jscomp$3$$;
-}, $mmap$($contents$jscomp$3_stream$jscomp$12$$, $length$jscomp$22$$, $position$jscomp$4$$, $allocated_prot$$, $flags$jscomp$6_ptr$jscomp$4$$) {
+}, $mmap$($contents$jscomp$3_stream$jscomp$12$$, $length$jscomp$22$$, $position$jscomp$4$$, $allocated_prot$$, $flags$jscomp$6_ptr$jscomp$7$$) {
   if (32768 !== ($contents$jscomp$3_stream$jscomp$12$$.node.mode & 61440)) {
     throw new $FS$ErrnoError$$(43);
   }
   $contents$jscomp$3_stream$jscomp$12$$ = $contents$jscomp$3_stream$jscomp$12$$.node.$contents$;
-  if ($flags$jscomp$6_ptr$jscomp$4$$ & 2 || !$contents$jscomp$3_stream$jscomp$12$$ || $contents$jscomp$3_stream$jscomp$12$$.buffer !== $HEAP8$$.buffer) {
+  if ($flags$jscomp$6_ptr$jscomp$7$$ & 2 || !$contents$jscomp$3_stream$jscomp$12$$ || $contents$jscomp$3_stream$jscomp$12$$.buffer !== $HEAP8$$.buffer) {
     $allocated_prot$$ = !0;
-    $flags$jscomp$6_ptr$jscomp$4$$ = $mmapAlloc$$();
-    if (!$flags$jscomp$6_ptr$jscomp$4$$) {
+    $flags$jscomp$6_ptr$jscomp$7$$ = $mmapAlloc$$($length$jscomp$22$$);
+    if (!$flags$jscomp$6_ptr$jscomp$7$$) {
       throw new $FS$ErrnoError$$(48);
     }
     if ($contents$jscomp$3_stream$jscomp$12$$) {
       if (0 < $position$jscomp$4$$ || $position$jscomp$4$$ + $length$jscomp$22$$ < $contents$jscomp$3_stream$jscomp$12$$.length) {
         $contents$jscomp$3_stream$jscomp$12$$.subarray ? $contents$jscomp$3_stream$jscomp$12$$ = $contents$jscomp$3_stream$jscomp$12$$.subarray($position$jscomp$4$$, $position$jscomp$4$$ + $length$jscomp$22$$) : $contents$jscomp$3_stream$jscomp$12$$ = Array.prototype.slice.call($contents$jscomp$3_stream$jscomp$12$$, $position$jscomp$4$$, $position$jscomp$4$$ + $length$jscomp$22$$);
       }
-      $HEAP8$$.set($contents$jscomp$3_stream$jscomp$12$$, $flags$jscomp$6_ptr$jscomp$4$$);
+      $HEAP8$$.set($contents$jscomp$3_stream$jscomp$12$$, $flags$jscomp$6_ptr$jscomp$7$$);
     }
   } else {
-    $allocated_prot$$ = !1, $flags$jscomp$6_ptr$jscomp$4$$ = $contents$jscomp$3_stream$jscomp$12$$.byteOffset;
+    $allocated_prot$$ = !1, $flags$jscomp$6_ptr$jscomp$7$$ = $contents$jscomp$3_stream$jscomp$12$$.byteOffset;
   }
-  return {$ptr$:$flags$jscomp$6_ptr$jscomp$4$$, $allocated$:$allocated_prot$$};
+  return {$ptr$:$flags$jscomp$6_ptr$jscomp$7$$, $allocated$:$allocated_prot$$};
 }, $msync$($stream$jscomp$13$$, $buffer$jscomp$22$$, $offset$jscomp$31$$, $length$jscomp$23$$) {
   $MEMFS$$.$stream_ops$.write($stream$jscomp$13$$, $buffer$jscomp$22$$, 0, $length$jscomp$23$$, $offset$jscomp$31$$, !1);
   return 0;
@@ -561,9 +575,6 @@ var $TTY$stream_ops$$ = {open($stream$jscomp$4$$) {
   $canRead$$ && ($mode$jscomp$17$$ |= 365);
   $canWrite$$ && ($mode$jscomp$17$$ |= 146);
   return $mode$jscomp$17$$;
-}, $UTF8ToString$$ = ($ptr$jscomp$5$$, $maxBytesToRead$jscomp$2$$, $ignoreNul$jscomp$2$$) => {
-  $assert$$("number" == typeof $ptr$jscomp$5$$, `UTF8ToString expects a number (got ${typeof $ptr$jscomp$5$$})`);
-  return $ptr$jscomp$5$$ ? $UTF8ArrayToString$$($HEAPU8$$, $ptr$jscomp$5$$, $maxBytesToRead$jscomp$2$$, $ignoreNul$jscomp$2$$) : "";
 }, $ERRNO_CODES$$ = {EPERM:63, ENOENT:44, ESRCH:71, EINTR:27, EIO:29, ENXIO:60, E2BIG:1, ENOEXEC:45, EBADF:8, ECHILD:12, EAGAIN:6, EWOULDBLOCK:6, ENOMEM:48, EACCES:2, EFAULT:21, ENOTBLK:105, EBUSY:10, EEXIST:20, EXDEV:75, ENODEV:43, ENOTDIR:54, EISDIR:31, EINVAL:28, ENFILE:41, EMFILE:33, ENOTTY:59, ETXTBSY:74, EFBIG:22, ENOSPC:51, ESPIPE:70, EROFS:69, EMLINK:34, EPIPE:64, EDOM:18, ERANGE:68, ENOMSG:49, EIDRM:24, ECHRNG:106, EL2NSYNC:156, EL3HLT:107, EL3RST:108, ELNRNG:109, EUNATCH:110, ENOCSI:111, 
 EL2HLT:112, EDEADLK:16, ENOLCK:46, EBADE:113, EBADR:114, EXFULL:115, ENOANO:104, EBADRQC:103, EBADSLT:102, EDEADLOCK:16, EBFONT:101, ENOSTR:100, ENODATA:116, ETIME:117, ENOSR:118, ENONET:119, ENOPKG:120, EREMOTE:121, ENOLINK:47, EADV:122, ESRMNT:123, ECOMM:124, EPROTO:65, EMULTIHOP:36, EDOTDOT:125, EBADMSG:9, ENOTUNIQ:126, EBADFD:127, EREMCHG:128, ELIBACC:129, ELIBBAD:130, ELIBSCN:131, ELIBMAX:132, ELIBEXEC:133, ENOSYS:52, ENOTEMPTY:55, ENAMETOOLONG:37, ELOOP:32, EOPNOTSUPP:138, EPFNOSUPPORT:139, 
 ECONNRESET:15, ENOBUFS:42, EAFNOSUPPORT:5, EPROTOTYPE:67, ENOTSOCK:57, ENOPROTOOPT:50, ESHUTDOWN:140, ECONNREFUSED:14, EADDRINUSE:3, ECONNABORTED:13, ENETUNREACH:40, ENETDOWN:38, ETIMEDOUT:73, EHOSTDOWN:142, EHOSTUNREACH:23, EINPROGRESS:26, EALREADY:7, EDESTADDRREQ:17, EMSGSIZE:35, EPROTONOSUPPORT:66, ESOCKTNOSUPPORT:137, EADDRNOTAVAIL:4, ENETRESET:39, EISCONN:30, ENOTCONN:53, ETOOMANYREFS:141, EUSERS:136, EDQUOT:19, ESTALE:72, ENOTSUP:138, ENOMEDIUM:148, EILSEQ:25, EOVERFLOW:61, ECANCELED:11, ENOTRECOVERABLE:56, 
@@ -594,13 +605,13 @@ EOWNERDEAD:62, ESTRPIPE:135}, $asyncLoad$$ = async $url$jscomp$25$$ => {
       }
       $shown$$ && $err$$("(end of list)");
     }
-  }, 10000));
+  }, 1e4));
 }, $preloadPlugins$$ = [], $FS_handledByPreloadPlugin$$ = async($byteArray$$, $fullname$$) => {
   if ("undefined" != typeof Browser) {
-    var $JSCompiler_StaticMethods_init$self$jscomp$inline_80$$ = Browser;
-    $HEAPU32$$[$JSCompiler_StaticMethods_init$self$jscomp$inline_80$$.$ptr$ + 16 >> 2] = 0;
-    $HEAPU32$$[$JSCompiler_StaticMethods_init$self$jscomp$inline_80$$.$ptr$ + 4 >> 2] = void 0;
-    $HEAPU32$$[$JSCompiler_StaticMethods_init$self$jscomp$inline_80$$.$ptr$ + 8 >> 2] = void 0;
+    var $JSCompiler_StaticMethods_init$self$jscomp$inline_83$$ = Browser;
+    $HEAPU32$$[$_asan_js_check_index$$($HEAPU32$$, $JSCompiler_StaticMethods_init$self$jscomp$inline_83$$.$ptr$ + 16 >> 2, $___asan_storeN$$)] = 0;
+    $HEAPU32$$[$_asan_js_check_index$$($HEAPU32$$, $JSCompiler_StaticMethods_init$self$jscomp$inline_83$$.$ptr$ + 4 >> 2, $___asan_storeN$$)] = void 0;
+    $HEAPU32$$[$_asan_js_check_index$$($HEAPU32$$, $JSCompiler_StaticMethods_init$self$jscomp$inline_83$$.$ptr$ + 8 >> 2, $___asan_storeN$$)] = void 0;
   }
   for (var $plugin$$ of $preloadPlugins$$) {
     if ($plugin$$.canHandle($fullname$$)) {
@@ -748,24 +759,24 @@ function $FS$hashRemoveNode$$($node$jscomp$18$$) {
   }
 }
 function $FS$lookupNode$$($parent$jscomp$13$$, $name$jscomp$86$$) {
-  var $errCode_errCode$jscomp$inline_85_node$jscomp$19$$ = $FS$isDir$$($parent$jscomp$13$$.mode) ? ($errCode_errCode$jscomp$inline_85_node$jscomp$19$$ = $FS$nodePermissions$$($parent$jscomp$13$$, "x")) ? $errCode_errCode$jscomp$inline_85_node$jscomp$19$$ : $parent$jscomp$13$$.$node_ops$.$lookup$ ? 0 : 2 : 54;
-  if ($errCode_errCode$jscomp$inline_85_node$jscomp$19$$) {
-    throw new $FS$ErrnoError$$($errCode_errCode$jscomp$inline_85_node$jscomp$19$$);
+  var $errCode_errCode$jscomp$inline_88_node$jscomp$19$$ = $FS$isDir$$($parent$jscomp$13$$.mode) ? ($errCode_errCode$jscomp$inline_88_node$jscomp$19$$ = $FS$nodePermissions$$($parent$jscomp$13$$, "x")) ? $errCode_errCode$jscomp$inline_88_node$jscomp$19$$ : $parent$jscomp$13$$.$node_ops$.$lookup$ ? 0 : 2 : 54;
+  if ($errCode_errCode$jscomp$inline_88_node$jscomp$19$$) {
+    throw new $FS$ErrnoError$$($errCode_errCode$jscomp$inline_88_node$jscomp$19$$);
   }
-  for ($errCode_errCode$jscomp$inline_85_node$jscomp$19$$ = $FS$nameTable$$[$FS$hashName$$($parent$jscomp$13$$.id, $name$jscomp$86$$)]; $errCode_errCode$jscomp$inline_85_node$jscomp$19$$; $errCode_errCode$jscomp$inline_85_node$jscomp$19$$ = $errCode_errCode$jscomp$inline_85_node$jscomp$19$$.$name_next$) {
-    var $nodeName$$ = $errCode_errCode$jscomp$inline_85_node$jscomp$19$$.name;
-    if ($errCode_errCode$jscomp$inline_85_node$jscomp$19$$.parent.id === $parent$jscomp$13$$.id && $nodeName$$ === $name$jscomp$86$$) {
-      return $errCode_errCode$jscomp$inline_85_node$jscomp$19$$;
+  for ($errCode_errCode$jscomp$inline_88_node$jscomp$19$$ = $FS$nameTable$$[$FS$hashName$$($parent$jscomp$13$$.id, $name$jscomp$86$$)]; $errCode_errCode$jscomp$inline_88_node$jscomp$19$$; $errCode_errCode$jscomp$inline_88_node$jscomp$19$$ = $errCode_errCode$jscomp$inline_88_node$jscomp$19$$.$name_next$) {
+    var $nodeName$$ = $errCode_errCode$jscomp$inline_88_node$jscomp$19$$.name;
+    if ($errCode_errCode$jscomp$inline_88_node$jscomp$19$$.parent.id === $parent$jscomp$13$$.id && $nodeName$$ === $name$jscomp$86$$) {
+      return $errCode_errCode$jscomp$inline_88_node$jscomp$19$$;
     }
   }
   return $parent$jscomp$13$$.$node_ops$.$lookup$($parent$jscomp$13$$, $name$jscomp$86$$);
 }
-function $FS$createNode$$($node$jscomp$20_parent$jscomp$14$$, $hash$jscomp$inline_88_name$jscomp$87$$, $mode$jscomp$19$$, $rdev$jscomp$1$$) {
+function $FS$createNode$$($node$jscomp$20_parent$jscomp$14$$, $hash$jscomp$inline_91_name$jscomp$87$$, $mode$jscomp$19$$, $rdev$jscomp$1$$) {
   $assert$$("object" == typeof $node$jscomp$20_parent$jscomp$14$$);
-  $node$jscomp$20_parent$jscomp$14$$ = new $FS$FSNode$$($node$jscomp$20_parent$jscomp$14$$, $hash$jscomp$inline_88_name$jscomp$87$$, $mode$jscomp$19$$, $rdev$jscomp$1$$);
-  $hash$jscomp$inline_88_name$jscomp$87$$ = $FS$hashName$$($node$jscomp$20_parent$jscomp$14$$.parent.id, $node$jscomp$20_parent$jscomp$14$$.name);
-  $node$jscomp$20_parent$jscomp$14$$.$name_next$ = $FS$nameTable$$[$hash$jscomp$inline_88_name$jscomp$87$$];
-  return $FS$nameTable$$[$hash$jscomp$inline_88_name$jscomp$87$$] = $node$jscomp$20_parent$jscomp$14$$;
+  $node$jscomp$20_parent$jscomp$14$$ = new $FS$FSNode$$($node$jscomp$20_parent$jscomp$14$$, $hash$jscomp$inline_91_name$jscomp$87$$, $mode$jscomp$19$$, $rdev$jscomp$1$$);
+  $hash$jscomp$inline_91_name$jscomp$87$$ = $FS$hashName$$($node$jscomp$20_parent$jscomp$14$$.parent.id, $node$jscomp$20_parent$jscomp$14$$.name);
+  $node$jscomp$20_parent$jscomp$14$$.$name_next$ = $FS$nameTable$$[$hash$jscomp$inline_91_name$jscomp$87$$];
+  return $FS$nameTable$$[$hash$jscomp$inline_91_name$jscomp$87$$] = $node$jscomp$20_parent$jscomp$14$$;
 }
 function $FS$isDir$$($mode$jscomp$21$$) {
   return 16384 === ($mode$jscomp$21$$ & 61440);
@@ -798,6 +809,12 @@ function $FS$mayCreate$$($dir$jscomp$2$$, $name$jscomp$88$$) {
   }
   return $FS$nodePermissions$$($dir$jscomp$2$$, "wx");
 }
+function $FS$checkOpExists$$($op$$) {
+  if (!$op$$) {
+    throw new $FS$ErrnoError$$(63);
+  }
+  return $op$$;
+}
 function $FS$getStreamChecked$$($fd$jscomp$1_stream$jscomp$14$$) {
   $fd$jscomp$1_stream$jscomp$14$$ = $FS$streams$$[$fd$jscomp$1_stream$jscomp$14$$];
   if (!$fd$jscomp$1_stream$jscomp$14$$) {
@@ -805,21 +822,21 @@ function $FS$getStreamChecked$$($fd$jscomp$1_stream$jscomp$14$$) {
   }
   return $fd$jscomp$1_stream$jscomp$14$$;
 }
-function $FS$createStream$$($stream$jscomp$15$$, $fd$jscomp$3_fd$jscomp$inline_90$$ = -1) {
-  $assert$$(-1 <= $fd$jscomp$3_fd$jscomp$inline_90$$);
+function $FS$createStream$$($stream$jscomp$15$$, $fd$jscomp$3_fd$jscomp$inline_93$$ = -1) {
+  $assert$$(-1 <= $fd$jscomp$3_fd$jscomp$inline_93$$);
   $stream$jscomp$15$$ = Object.assign(new $FS$FSStream$$(), $stream$jscomp$15$$);
-  if (-1 == $fd$jscomp$3_fd$jscomp$inline_90$$) {
+  if (-1 == $fd$jscomp$3_fd$jscomp$inline_93$$) {
     a: {
-      for ($fd$jscomp$3_fd$jscomp$inline_90$$ = 0; 4096 >= $fd$jscomp$3_fd$jscomp$inline_90$$; $fd$jscomp$3_fd$jscomp$inline_90$$++) {
-        if (!$FS$streams$$[$fd$jscomp$3_fd$jscomp$inline_90$$]) {
+      for ($fd$jscomp$3_fd$jscomp$inline_93$$ = 0; 4096 >= $fd$jscomp$3_fd$jscomp$inline_93$$; $fd$jscomp$3_fd$jscomp$inline_93$$++) {
+        if (!$FS$streams$$[$fd$jscomp$3_fd$jscomp$inline_93$$]) {
           break a;
         }
       }
       throw new $FS$ErrnoError$$(33);
     }
   }
-  $stream$jscomp$15$$.$fd$ = $fd$jscomp$3_fd$jscomp$inline_90$$;
-  return $FS$streams$$[$fd$jscomp$3_fd$jscomp$inline_90$$] = $stream$jscomp$15$$;
+  $stream$jscomp$15$$.$fd$ = $fd$jscomp$3_fd$jscomp$inline_93$$;
+  return $FS$streams$$[$fd$jscomp$3_fd$jscomp$inline_93$$] = $stream$jscomp$15$$;
 }
 function $FS$dupStream$$($origStream_stream$jscomp$16$$, $fd$jscomp$5$$ = -1) {
   $origStream_stream$jscomp$16$$ = $FS$createStream$$($origStream_stream$jscomp$16$$, $fd$jscomp$5$$);
@@ -829,9 +846,7 @@ function $FS$dupStream$$($origStream_stream$jscomp$16$$, $fd$jscomp$5$$ = -1) {
 function $FS$doSetAttr$$($node$jscomp$28$$, $attr$jscomp$2$$) {
   var $setattr$$ = null?.$stream_ops$.$setattr$, $arg$jscomp$8$$ = $setattr$$ ? null : $node$jscomp$28$$;
   $setattr$$ ??= $node$jscomp$28$$.$node_ops$.$setattr$;
-  if (!$setattr$$) {
-    throw new $FS$ErrnoError$$(63);
-  }
+  $FS$checkOpExists$$($setattr$$);
   $setattr$$($arg$jscomp$8$$, $attr$jscomp$2$$);
 }
 var $FS$chrdev_stream_ops$$ = {open($stream$jscomp$18$$) {
@@ -889,8 +904,8 @@ function $FS$mknod$$($name$jscomp$91_path$jscomp$13$$, $mode$jscomp$27$$, $dev$j
 function $FS$create$$($path$jscomp$15$$, $mode$jscomp$28$$ = 438) {
   return $FS$mknod$$($path$jscomp$15$$, $mode$jscomp$28$$ & 4095 | 32768, 0);
 }
-function $FS$mkdir$$($path$jscomp$16$$) {
-  return $FS$mknod$$($path$jscomp$16$$, 16895, 0);
+function $FS$mkdir$$($path$jscomp$16$$, $mode$jscomp$29$$ = 511) {
+  return $FS$mknod$$($path$jscomp$16$$, $mode$jscomp$29$$ & 1023 | 16384, 0);
 }
 function $FS$mkdev$$($path$jscomp$18$$, $mode$jscomp$31$$, $dev$jscomp$8$$) {
   "undefined" == typeof $dev$jscomp$8$$ && ($dev$jscomp$8$$ = $mode$jscomp$31$$, $mode$jscomp$31$$ = 438);
@@ -923,16 +938,16 @@ function $FS$unlink$$($name$jscomp$93_path$jscomp$21$$) {
   var $node$jscomp$34$$ = $FS$lookupNode$$($parent$jscomp$19$$, $name$jscomp$93_path$jscomp$21$$);
   a: {
     try {
-      var $errCode$jscomp$9_node$jscomp$inline_381$$ = $FS$lookupNode$$($parent$jscomp$19$$, $name$jscomp$93_path$jscomp$21$$);
-    } catch ($e$jscomp$inline_383$$) {
-      $errCode$jscomp$9_node$jscomp$inline_381$$ = $e$jscomp$inline_383$$.$errno$;
+      var $errCode$jscomp$9_node$jscomp$inline_396$$ = $FS$lookupNode$$($parent$jscomp$19$$, $name$jscomp$93_path$jscomp$21$$);
+    } catch ($e$jscomp$inline_398$$) {
+      $errCode$jscomp$9_node$jscomp$inline_396$$ = $e$jscomp$inline_398$$.$errno$;
       break a;
     }
-    var $errCode$jscomp$inline_382$$ = $FS$nodePermissions$$($parent$jscomp$19$$, "wx");
-    $errCode$jscomp$9_node$jscomp$inline_381$$ = $errCode$jscomp$inline_382$$ ? $errCode$jscomp$inline_382$$ : $FS$isDir$$($errCode$jscomp$9_node$jscomp$inline_381$$.mode) ? 31 : 0;
+    var $errCode$jscomp$inline_397$$ = $FS$nodePermissions$$($parent$jscomp$19$$, "wx");
+    $errCode$jscomp$9_node$jscomp$inline_396$$ = $errCode$jscomp$inline_397$$ ? $errCode$jscomp$inline_397$$ : $FS$isDir$$($errCode$jscomp$9_node$jscomp$inline_396$$.mode) ? 31 : 0;
   }
-  if ($errCode$jscomp$9_node$jscomp$inline_381$$) {
-    throw new $FS$ErrnoError$$($errCode$jscomp$9_node$jscomp$inline_381$$);
+  if ($errCode$jscomp$9_node$jscomp$inline_396$$) {
+    throw new $FS$ErrnoError$$($errCode$jscomp$9_node$jscomp$inline_396$$);
   }
   if (!$parent$jscomp$19$$.$node_ops$.$unlink$) {
     throw new $FS$ErrnoError$$(63);
@@ -943,38 +958,42 @@ function $FS$unlink$$($name$jscomp$93_path$jscomp$21$$) {
   $parent$jscomp$19$$.$node_ops$.$unlink$($parent$jscomp$19$$, $name$jscomp$93_path$jscomp$21$$);
   $FS$hashRemoveNode$$($node$jscomp$34$$);
 }
+function $FS$stat$$($node$jscomp$35_path$jscomp$23$$, $dontFollow$$) {
+  $node$jscomp$35_path$jscomp$23$$ = $FS$lookupPath$$($node$jscomp$35_path$jscomp$23$$, {$follow$:!$dontFollow$$}).node;
+  return $FS$checkOpExists$$($node$jscomp$35_path$jscomp$23$$.$node_ops$.$getattr$)($node$jscomp$35_path$jscomp$23$$);
+}
 function $FS$chmod$$($node$jscomp$38_path$jscomp$25$$, $mode$jscomp$33$$) {
   $node$jscomp$38_path$jscomp$25$$ = "string" == typeof $node$jscomp$38_path$jscomp$25$$ ? $FS$lookupPath$$($node$jscomp$38_path$jscomp$25$$, {$follow$:!0}).node : $node$jscomp$38_path$jscomp$25$$;
   $FS$doSetAttr$$($node$jscomp$38_path$jscomp$25$$, {mode:$mode$jscomp$33$$ & 4095 | $node$jscomp$38_path$jscomp$25$$.mode & -4096, $ctime$:Date.now(), $dontFollow$:void 0});
 }
-function $FS$open$$($lookup$jscomp$14_path$jscomp$31$$, $JSCompiler_temp$jscomp$4_flags$jscomp$9$$, $mode$jscomp$36$$ = 438) {
+function $FS$open$$($lookup$jscomp$14_path$jscomp$31$$, $JSCompiler_temp$jscomp$5_flags$jscomp$9$$, $mode$jscomp$36$$ = 438) {
   if ("" === $lookup$jscomp$14_path$jscomp$31$$) {
     throw new $FS$ErrnoError$$(44);
   }
-  if ("string" == typeof $JSCompiler_temp$jscomp$4_flags$jscomp$9$$) {
-    var $flags$jscomp$inline_103_node$jscomp$44$$ = {r:0, "r+":2, w:577, "w+":578, a:1089, "a+":1090}[$JSCompiler_temp$jscomp$4_flags$jscomp$9$$];
+  if ("string" == typeof $JSCompiler_temp$jscomp$5_flags$jscomp$9$$) {
+    var $flags$jscomp$inline_103_node$jscomp$44$$ = {r:0, "r+":2, w:577, "w+":578, a:1089, "a+":1090}[$JSCompiler_temp$jscomp$5_flags$jscomp$9$$];
     if ("undefined" == typeof $flags$jscomp$inline_103_node$jscomp$44$$) {
-      throw Error(`Unknown file open mode: ${$JSCompiler_temp$jscomp$4_flags$jscomp$9$$}`);
+      throw Error(`Unknown file open mode: ${$JSCompiler_temp$jscomp$5_flags$jscomp$9$$}`);
     }
-    $JSCompiler_temp$jscomp$4_flags$jscomp$9$$ = $flags$jscomp$inline_103_node$jscomp$44$$;
+    $JSCompiler_temp$jscomp$5_flags$jscomp$9$$ = $flags$jscomp$inline_103_node$jscomp$44$$;
   }
-  $mode$jscomp$36$$ = $JSCompiler_temp$jscomp$4_flags$jscomp$9$$ & 64 ? $mode$jscomp$36$$ & 4095 | 32768 : 0;
+  $mode$jscomp$36$$ = $JSCompiler_temp$jscomp$5_flags$jscomp$9$$ & 64 ? $mode$jscomp$36$$ & 4095 | 32768 : 0;
   if ("object" == typeof $lookup$jscomp$14_path$jscomp$31$$) {
     $flags$jscomp$inline_103_node$jscomp$44$$ = $lookup$jscomp$14_path$jscomp$31$$;
   } else {
-    var $errCode$jscomp$11_isDirPath_node$jscomp$inline_385_path$jscomp$inline_105_stream$jscomp$27$$ = $lookup$jscomp$14_path$jscomp$31$$.endsWith("/");
-    $lookup$jscomp$14_path$jscomp$31$$ = $FS$lookupPath$$($lookup$jscomp$14_path$jscomp$31$$, {$follow$:!($JSCompiler_temp$jscomp$4_flags$jscomp$9$$ & 131072), $noent_okay$:!0});
+    var $errCode$jscomp$11_isDirPath_node$jscomp$inline_400_path$jscomp$inline_105_stream$jscomp$27$$ = $lookup$jscomp$14_path$jscomp$31$$.endsWith("/");
+    $lookup$jscomp$14_path$jscomp$31$$ = $FS$lookupPath$$($lookup$jscomp$14_path$jscomp$31$$, {$follow$:!($JSCompiler_temp$jscomp$5_flags$jscomp$9$$ & 131072), $noent_okay$:!0});
     $flags$jscomp$inline_103_node$jscomp$44$$ = $lookup$jscomp$14_path$jscomp$31$$.node;
     $lookup$jscomp$14_path$jscomp$31$$ = $lookup$jscomp$14_path$jscomp$31$$.path;
   }
   var $created$$ = !1;
-  if ($JSCompiler_temp$jscomp$4_flags$jscomp$9$$ & 64) {
+  if ($JSCompiler_temp$jscomp$5_flags$jscomp$9$$ & 64) {
     if ($flags$jscomp$inline_103_node$jscomp$44$$) {
-      if ($JSCompiler_temp$jscomp$4_flags$jscomp$9$$ & 128) {
+      if ($JSCompiler_temp$jscomp$5_flags$jscomp$9$$ & 128) {
         throw new $FS$ErrnoError$$(20);
       }
     } else {
-      if ($errCode$jscomp$11_isDirPath_node$jscomp$inline_385_path$jscomp$inline_105_stream$jscomp$27$$) {
+      if ($errCode$jscomp$11_isDirPath_node$jscomp$inline_400_path$jscomp$inline_105_stream$jscomp$27$$) {
         throw new $FS$ErrnoError$$(31);
       }
       $flags$jscomp$inline_103_node$jscomp$44$$ = $FS$mknod$$($lookup$jscomp$14_path$jscomp$31$$, $mode$jscomp$36$$ | 511, 0);
@@ -984,35 +1003,35 @@ function $FS$open$$($lookup$jscomp$14_path$jscomp$31$$, $JSCompiler_temp$jscomp$
   if (!$flags$jscomp$inline_103_node$jscomp$44$$) {
     throw new $FS$ErrnoError$$(44);
   }
-  8192 === ($flags$jscomp$inline_103_node$jscomp$44$$.mode & 61440) && ($JSCompiler_temp$jscomp$4_flags$jscomp$9$$ &= -513);
-  if ($JSCompiler_temp$jscomp$4_flags$jscomp$9$$ & 65536 && !$FS$isDir$$($flags$jscomp$inline_103_node$jscomp$44$$.mode)) {
+  8192 === ($flags$jscomp$inline_103_node$jscomp$44$$.mode & 61440) && ($JSCompiler_temp$jscomp$5_flags$jscomp$9$$ &= -513);
+  if ($JSCompiler_temp$jscomp$5_flags$jscomp$9$$ & 65536 && !$FS$isDir$$($flags$jscomp$inline_103_node$jscomp$44$$.mode)) {
     throw new $FS$ErrnoError$$(54);
   }
-  if (!$created$$ && ($errCode$jscomp$11_isDirPath_node$jscomp$inline_385_path$jscomp$inline_105_stream$jscomp$27$$ = $flags$jscomp$inline_103_node$jscomp$44$$ ? 40960 === ($flags$jscomp$inline_103_node$jscomp$44$$.mode & 61440) ? 32 : $FS$isDir$$($flags$jscomp$inline_103_node$jscomp$44$$.mode) && ("r" !== $FS$flagsToPermissionString$$($JSCompiler_temp$jscomp$4_flags$jscomp$9$$) || $JSCompiler_temp$jscomp$4_flags$jscomp$9$$ & 576) ? 31 : $FS$nodePermissions$$($flags$jscomp$inline_103_node$jscomp$44$$, 
-  $FS$flagsToPermissionString$$($JSCompiler_temp$jscomp$4_flags$jscomp$9$$)) : 44)) {
-    throw new $FS$ErrnoError$$($errCode$jscomp$11_isDirPath_node$jscomp$inline_385_path$jscomp$inline_105_stream$jscomp$27$$);
+  if (!$created$$ && ($errCode$jscomp$11_isDirPath_node$jscomp$inline_400_path$jscomp$inline_105_stream$jscomp$27$$ = $flags$jscomp$inline_103_node$jscomp$44$$ ? 40960 === ($flags$jscomp$inline_103_node$jscomp$44$$.mode & 61440) ? 32 : $FS$isDir$$($flags$jscomp$inline_103_node$jscomp$44$$.mode) && ("r" !== $FS$flagsToPermissionString$$($JSCompiler_temp$jscomp$5_flags$jscomp$9$$) || $JSCompiler_temp$jscomp$5_flags$jscomp$9$$ & 576) ? 31 : $FS$nodePermissions$$($flags$jscomp$inline_103_node$jscomp$44$$, 
+  $FS$flagsToPermissionString$$($JSCompiler_temp$jscomp$5_flags$jscomp$9$$)) : 44)) {
+    throw new $FS$ErrnoError$$($errCode$jscomp$11_isDirPath_node$jscomp$inline_400_path$jscomp$inline_105_stream$jscomp$27$$);
   }
-  if ($JSCompiler_temp$jscomp$4_flags$jscomp$9$$ & 512 && !$created$$) {
-    $errCode$jscomp$11_isDirPath_node$jscomp$inline_385_path$jscomp$inline_105_stream$jscomp$27$$ = $flags$jscomp$inline_103_node$jscomp$44$$;
-    $errCode$jscomp$11_isDirPath_node$jscomp$inline_385_path$jscomp$inline_105_stream$jscomp$27$$ = "string" == typeof $errCode$jscomp$11_isDirPath_node$jscomp$inline_385_path$jscomp$inline_105_stream$jscomp$27$$ ? $FS$lookupPath$$($errCode$jscomp$11_isDirPath_node$jscomp$inline_385_path$jscomp$inline_105_stream$jscomp$27$$, {$follow$:!0}).node : $errCode$jscomp$11_isDirPath_node$jscomp$inline_385_path$jscomp$inline_105_stream$jscomp$27$$;
-    if ($FS$isDir$$($errCode$jscomp$11_isDirPath_node$jscomp$inline_385_path$jscomp$inline_105_stream$jscomp$27$$.mode)) {
+  if ($JSCompiler_temp$jscomp$5_flags$jscomp$9$$ & 512 && !$created$$) {
+    $errCode$jscomp$11_isDirPath_node$jscomp$inline_400_path$jscomp$inline_105_stream$jscomp$27$$ = $flags$jscomp$inline_103_node$jscomp$44$$;
+    $errCode$jscomp$11_isDirPath_node$jscomp$inline_400_path$jscomp$inline_105_stream$jscomp$27$$ = "string" == typeof $errCode$jscomp$11_isDirPath_node$jscomp$inline_400_path$jscomp$inline_105_stream$jscomp$27$$ ? $FS$lookupPath$$($errCode$jscomp$11_isDirPath_node$jscomp$inline_400_path$jscomp$inline_105_stream$jscomp$27$$, {$follow$:!0}).node : $errCode$jscomp$11_isDirPath_node$jscomp$inline_400_path$jscomp$inline_105_stream$jscomp$27$$;
+    if ($FS$isDir$$($errCode$jscomp$11_isDirPath_node$jscomp$inline_400_path$jscomp$inline_105_stream$jscomp$27$$.mode)) {
       throw new $FS$ErrnoError$$(31);
     }
-    if (32768 !== ($errCode$jscomp$11_isDirPath_node$jscomp$inline_385_path$jscomp$inline_105_stream$jscomp$27$$.mode & 61440)) {
+    if (32768 !== ($errCode$jscomp$11_isDirPath_node$jscomp$inline_400_path$jscomp$inline_105_stream$jscomp$27$$.mode & 61440)) {
       throw new $FS$ErrnoError$$(28);
     }
-    var $errCode$jscomp$inline_387$$ = $FS$nodePermissions$$($errCode$jscomp$11_isDirPath_node$jscomp$inline_385_path$jscomp$inline_105_stream$jscomp$27$$, "w");
-    if ($errCode$jscomp$inline_387$$) {
-      throw new $FS$ErrnoError$$($errCode$jscomp$inline_387$$);
+    var $errCode$jscomp$inline_402$$ = $FS$nodePermissions$$($errCode$jscomp$11_isDirPath_node$jscomp$inline_400_path$jscomp$inline_105_stream$jscomp$27$$, "w");
+    if ($errCode$jscomp$inline_402$$) {
+      throw new $FS$ErrnoError$$($errCode$jscomp$inline_402$$);
     }
-    $FS$doSetAttr$$($errCode$jscomp$11_isDirPath_node$jscomp$inline_385_path$jscomp$inline_105_stream$jscomp$27$$, {size:0, timestamp:Date.now()});
+    $FS$doSetAttr$$($errCode$jscomp$11_isDirPath_node$jscomp$inline_400_path$jscomp$inline_105_stream$jscomp$27$$, {size:0, timestamp:Date.now()});
   }
-  $JSCompiler_temp$jscomp$4_flags$jscomp$9$$ &= -131713;
-  $errCode$jscomp$11_isDirPath_node$jscomp$inline_385_path$jscomp$inline_105_stream$jscomp$27$$ = $FS$createStream$$({node:$flags$jscomp$inline_103_node$jscomp$44$$, path:$FS$getPath$$($flags$jscomp$inline_103_node$jscomp$44$$), flags:$JSCompiler_temp$jscomp$4_flags$jscomp$9$$, seekable:!0, position:0, $stream_ops$:$flags$jscomp$inline_103_node$jscomp$44$$.$stream_ops$, $ungotten$:[], error:!1});
-  $errCode$jscomp$11_isDirPath_node$jscomp$inline_385_path$jscomp$inline_105_stream$jscomp$27$$.$stream_ops$.open && $errCode$jscomp$11_isDirPath_node$jscomp$inline_385_path$jscomp$inline_105_stream$jscomp$27$$.$stream_ops$.open($errCode$jscomp$11_isDirPath_node$jscomp$inline_385_path$jscomp$inline_105_stream$jscomp$27$$);
+  $JSCompiler_temp$jscomp$5_flags$jscomp$9$$ &= -131713;
+  $errCode$jscomp$11_isDirPath_node$jscomp$inline_400_path$jscomp$inline_105_stream$jscomp$27$$ = $FS$createStream$$({node:$flags$jscomp$inline_103_node$jscomp$44$$, path:$FS$getPath$$($flags$jscomp$inline_103_node$jscomp$44$$), flags:$JSCompiler_temp$jscomp$5_flags$jscomp$9$$, seekable:!0, position:0, $stream_ops$:$flags$jscomp$inline_103_node$jscomp$44$$.$stream_ops$, $ungotten$:[], error:!1});
+  $errCode$jscomp$11_isDirPath_node$jscomp$inline_400_path$jscomp$inline_105_stream$jscomp$27$$.$stream_ops$.open && $errCode$jscomp$11_isDirPath_node$jscomp$inline_400_path$jscomp$inline_105_stream$jscomp$27$$.$stream_ops$.open($errCode$jscomp$11_isDirPath_node$jscomp$inline_400_path$jscomp$inline_105_stream$jscomp$27$$);
   $created$$ && $FS$chmod$$($flags$jscomp$inline_103_node$jscomp$44$$, $mode$jscomp$36$$ & 511);
-  !$Module$$.logReadFiles || $JSCompiler_temp$jscomp$4_flags$jscomp$9$$ & 1 || $lookup$jscomp$14_path$jscomp$31$$ in $FS$readFiles$$ || ($FS$readFiles$$[$lookup$jscomp$14_path$jscomp$31$$] = 1);
-  return $errCode$jscomp$11_isDirPath_node$jscomp$inline_385_path$jscomp$inline_105_stream$jscomp$27$$;
+  !$Module$$.logReadFiles || $JSCompiler_temp$jscomp$5_flags$jscomp$9$$ & 1 || $lookup$jscomp$14_path$jscomp$31$$ in $FS$readFiles$$ || ($FS$readFiles$$[$lookup$jscomp$14_path$jscomp$31$$] = 1);
+  return $errCode$jscomp$11_isDirPath_node$jscomp$inline_400_path$jscomp$inline_105_stream$jscomp$27$$;
 }
 function $FS$close$$($stream$jscomp$28$$) {
   if (null === $stream$jscomp$28$$.$fd$) {
@@ -1091,24 +1110,24 @@ function $FS$createFile$$($parent$jscomp$22_path$jscomp$38$$, $name$jscomp$95$$,
   $parent$jscomp$22_path$jscomp$38$$ = $PATH$normalize$$(("string" == typeof $parent$jscomp$22_path$jscomp$38$$ ? $parent$jscomp$22_path$jscomp$38$$ : $FS$getPath$$($parent$jscomp$22_path$jscomp$38$$)) + "/" + $name$jscomp$95$$);
   return $FS$create$$($parent$jscomp$22_path$jscomp$38$$, $FS_getMode$$($canRead$jscomp$4$$, $canWrite$jscomp$4$$));
 }
-function $FS$createDataFile$$($mode$jscomp$38_parent$jscomp$23$$, $arr$jscomp$3_name$jscomp$96_stream$jscomp$41$$, $data$jscomp$83$$, $canRead$jscomp$5_i$jscomp$17$$, $canWrite$jscomp$5_len$jscomp$5$$, $canOwn$jscomp$4$$) {
-  var $node$jscomp$46_path$jscomp$39$$ = $arr$jscomp$3_name$jscomp$96_stream$jscomp$41$$;
-  $mode$jscomp$38_parent$jscomp$23$$ && ($mode$jscomp$38_parent$jscomp$23$$ = "string" == typeof $mode$jscomp$38_parent$jscomp$23$$ ? $mode$jscomp$38_parent$jscomp$23$$ : $FS$getPath$$($mode$jscomp$38_parent$jscomp$23$$), $node$jscomp$46_path$jscomp$39$$ = $arr$jscomp$3_name$jscomp$96_stream$jscomp$41$$ ? $PATH$normalize$$($mode$jscomp$38_parent$jscomp$23$$ + "/" + $arr$jscomp$3_name$jscomp$96_stream$jscomp$41$$) : $mode$jscomp$38_parent$jscomp$23$$);
+function $FS$createDataFile$$($mode$jscomp$38_parent$jscomp$23$$, $arr$jscomp$4_name$jscomp$96_stream$jscomp$41$$, $data$jscomp$83$$, $canRead$jscomp$5_i$jscomp$17$$, $canWrite$jscomp$5_len$jscomp$5$$, $canOwn$jscomp$4$$) {
+  var $node$jscomp$46_path$jscomp$39$$ = $arr$jscomp$4_name$jscomp$96_stream$jscomp$41$$;
+  $mode$jscomp$38_parent$jscomp$23$$ && ($mode$jscomp$38_parent$jscomp$23$$ = "string" == typeof $mode$jscomp$38_parent$jscomp$23$$ ? $mode$jscomp$38_parent$jscomp$23$$ : $FS$getPath$$($mode$jscomp$38_parent$jscomp$23$$), $node$jscomp$46_path$jscomp$39$$ = $arr$jscomp$4_name$jscomp$96_stream$jscomp$41$$ ? $PATH$normalize$$($mode$jscomp$38_parent$jscomp$23$$ + "/" + $arr$jscomp$4_name$jscomp$96_stream$jscomp$41$$) : $mode$jscomp$38_parent$jscomp$23$$);
   $mode$jscomp$38_parent$jscomp$23$$ = $FS_getMode$$($canRead$jscomp$5_i$jscomp$17$$, $canWrite$jscomp$5_len$jscomp$5$$);
   $node$jscomp$46_path$jscomp$39$$ = $FS$create$$($node$jscomp$46_path$jscomp$39$$, $mode$jscomp$38_parent$jscomp$23$$);
   if ($data$jscomp$83$$) {
     if ("string" == typeof $data$jscomp$83$$) {
-      $arr$jscomp$3_name$jscomp$96_stream$jscomp$41$$ = Array($data$jscomp$83$$.length);
+      $arr$jscomp$4_name$jscomp$96_stream$jscomp$41$$ = Array($data$jscomp$83$$.length);
       $canRead$jscomp$5_i$jscomp$17$$ = 0;
       for ($canWrite$jscomp$5_len$jscomp$5$$ = $data$jscomp$83$$.length; $canRead$jscomp$5_i$jscomp$17$$ < $canWrite$jscomp$5_len$jscomp$5$$; ++$canRead$jscomp$5_i$jscomp$17$$) {
-        $arr$jscomp$3_name$jscomp$96_stream$jscomp$41$$[$canRead$jscomp$5_i$jscomp$17$$] = $data$jscomp$83$$.charCodeAt($canRead$jscomp$5_i$jscomp$17$$);
+        $arr$jscomp$4_name$jscomp$96_stream$jscomp$41$$[$canRead$jscomp$5_i$jscomp$17$$] = $data$jscomp$83$$.charCodeAt($canRead$jscomp$5_i$jscomp$17$$);
       }
-      $data$jscomp$83$$ = $arr$jscomp$3_name$jscomp$96_stream$jscomp$41$$;
+      $data$jscomp$83$$ = $arr$jscomp$4_name$jscomp$96_stream$jscomp$41$$;
     }
     $FS$chmod$$($node$jscomp$46_path$jscomp$39$$, $mode$jscomp$38_parent$jscomp$23$$ | 146);
-    $arr$jscomp$3_name$jscomp$96_stream$jscomp$41$$ = $FS$open$$($node$jscomp$46_path$jscomp$39$$, 577);
-    $FS$write$$($arr$jscomp$3_name$jscomp$96_stream$jscomp$41$$, $data$jscomp$83$$, 0, $data$jscomp$83$$.length, 0, $canOwn$jscomp$4$$);
-    $FS$close$$($arr$jscomp$3_name$jscomp$96_stream$jscomp$41$$);
+    $arr$jscomp$4_name$jscomp$96_stream$jscomp$41$$ = $FS$open$$($node$jscomp$46_path$jscomp$39$$, 577);
+    $FS$write$$($arr$jscomp$4_name$jscomp$96_stream$jscomp$41$$, $data$jscomp$83$$, 0, $data$jscomp$83$$.length, 0, $canOwn$jscomp$4$$);
+    $FS$close$$($arr$jscomp$4_name$jscomp$96_stream$jscomp$41$$);
     $FS$chmod$$($node$jscomp$46_path$jscomp$39$$, $mode$jscomp$38_parent$jscomp$23$$);
   }
 }
@@ -1166,23 +1185,23 @@ function $FS$forceLoadFile$$($obj$jscomp$29$$) {
   }
 }
 function $FS$createLazyFile$$($parent$jscomp$25_stream_ops$$, $name$jscomp$98$$, $url$jscomp$28$$, $canRead$jscomp$6$$, $canWrite$jscomp$6$$) {
-  function $writeChunks$$($contents$jscomp$4_stream$jscomp$46$$, $buffer$jscomp$29$$, $offset$jscomp$39$$, $length$jscomp$32_size$jscomp$23$$, $position$jscomp$8$$) {
+  function $writeChunks$$($contents$jscomp$4_stream$jscomp$46$$, $buffer$jscomp$29$$, $offset$jscomp$39$$, $length$jscomp$32_size$jscomp$25$$, $position$jscomp$8$$) {
     $contents$jscomp$4_stream$jscomp$46$$ = $contents$jscomp$4_stream$jscomp$46$$.node.$contents$;
     if ($position$jscomp$8$$ >= $contents$jscomp$4_stream$jscomp$46$$.length) {
       return 0;
     }
-    $length$jscomp$32_size$jscomp$23$$ = Math.min($contents$jscomp$4_stream$jscomp$46$$.length - $position$jscomp$8$$, $length$jscomp$32_size$jscomp$23$$);
-    $assert$$(0 <= $length$jscomp$32_size$jscomp$23$$);
+    $length$jscomp$32_size$jscomp$25$$ = Math.min($contents$jscomp$4_stream$jscomp$46$$.length - $position$jscomp$8$$, $length$jscomp$32_size$jscomp$25$$);
+    $assert$$(0 <= $length$jscomp$32_size$jscomp$25$$);
     if ($contents$jscomp$4_stream$jscomp$46$$.slice) {
-      for (var $i$jscomp$20$$ = 0; $i$jscomp$20$$ < $length$jscomp$32_size$jscomp$23$$; $i$jscomp$20$$++) {
+      for (var $i$jscomp$20$$ = 0; $i$jscomp$20$$ < $length$jscomp$32_size$jscomp$25$$; $i$jscomp$20$$++) {
         $buffer$jscomp$29$$[$offset$jscomp$39$$ + $i$jscomp$20$$] = $contents$jscomp$4_stream$jscomp$46$$[$position$jscomp$8$$ + $i$jscomp$20$$];
       }
     } else {
-      for ($i$jscomp$20$$ = 0; $i$jscomp$20$$ < $length$jscomp$32_size$jscomp$23$$; $i$jscomp$20$$++) {
+      for ($i$jscomp$20$$ = 0; $i$jscomp$20$$ < $length$jscomp$32_size$jscomp$25$$; $i$jscomp$20$$++) {
         $buffer$jscomp$29$$[$offset$jscomp$39$$ + $i$jscomp$20$$] = $contents$jscomp$4_stream$jscomp$46$$.get($position$jscomp$8$$ + $i$jscomp$20$$);
       }
     }
-    return $length$jscomp$32_size$jscomp$23$$;
+    return $length$jscomp$32_size$jscomp$25$$;
   }
   class $LazyUint8Array$$ {
     $i$=!1;
@@ -1210,21 +1229,21 @@ function $FS$createLazyFile$$($parent$jscomp$25_stream_ops$$, $name$jscomp$98$$,
       $hasByteServing$$ || ($chunkSize$$ = $datalength$$);
       var $lazyArray$jscomp$1$$ = this;
       $lazyArray$jscomp$1$$.$s$($chunkNum$jscomp$1$$ => {
-        var $JSCompiler_inline_result$jscomp$10_start$jscomp$14$$ = $chunkNum$jscomp$1$$ * $chunkSize$$, $end$jscomp$12_to$jscomp$inline_119$$ = ($chunkNum$jscomp$1$$ + 1) * $chunkSize$$ - 1;
+        var $JSCompiler_inline_result$jscomp$12_start$jscomp$14$$ = $chunkNum$jscomp$1$$ * $chunkSize$$, $end$jscomp$12_to$jscomp$inline_119$$ = ($chunkNum$jscomp$1$$ + 1) * $chunkSize$$ - 1;
         $end$jscomp$12_to$jscomp$inline_119$$ = Math.min($end$jscomp$12_to$jscomp$inline_119$$, $datalength$$ - 1);
         if ("undefined" == typeof $lazyArray$jscomp$1$$.$g$[$chunkNum$jscomp$1$$]) {
-          var $JSCompiler_temp_const$jscomp$9$$ = $lazyArray$jscomp$1$$.$g$;
-          $JSCompiler_inline_result$jscomp$10_start$jscomp$14$$ > $end$jscomp$12_to$jscomp$inline_119$$ && $abort$$("invalid range (" + $JSCompiler_inline_result$jscomp$10_start$jscomp$14$$ + ", " + $end$jscomp$12_to$jscomp$inline_119$$ + ") or no bytes requested!");
+          var $JSCompiler_temp_const$jscomp$11$$ = $lazyArray$jscomp$1$$.$g$;
+          $JSCompiler_inline_result$jscomp$12_start$jscomp$14$$ > $end$jscomp$12_to$jscomp$inline_119$$ && $abort$$("invalid range (" + $JSCompiler_inline_result$jscomp$12_start$jscomp$14$$ + ", " + $end$jscomp$12_to$jscomp$inline_119$$ + ") or no bytes requested!");
           $end$jscomp$12_to$jscomp$inline_119$$ > $datalength$$ - 1 && $abort$$("only " + $datalength$$ + " bytes available! programmer error!");
           var $xhr$jscomp$inline_120$$ = new XMLHttpRequest();
           $xhr$jscomp$inline_120$$.open("GET", $url$jscomp$28$$, !1);
-          $datalength$$ !== $chunkSize$$ && $xhr$jscomp$inline_120$$.setRequestHeader("Range", "bytes=" + $JSCompiler_inline_result$jscomp$10_start$jscomp$14$$ + "-" + $end$jscomp$12_to$jscomp$inline_119$$);
+          $datalength$$ !== $chunkSize$$ && $xhr$jscomp$inline_120$$.setRequestHeader("Range", "bytes=" + $JSCompiler_inline_result$jscomp$12_start$jscomp$14$$ + "-" + $end$jscomp$12_to$jscomp$inline_119$$);
           $xhr$jscomp$inline_120$$.responseType = "arraybuffer";
           $xhr$jscomp$inline_120$$.overrideMimeType && $xhr$jscomp$inline_120$$.overrideMimeType("text/plain; charset=x-user-defined");
           $xhr$jscomp$inline_120$$.send(null);
           200 <= $xhr$jscomp$inline_120$$.status && 300 > $xhr$jscomp$inline_120$$.status || 304 === $xhr$jscomp$inline_120$$.status || $abort$$("Couldn't load " + $url$jscomp$28$$ + ". Status: " + $xhr$jscomp$inline_120$$.status);
-          $JSCompiler_inline_result$jscomp$10_start$jscomp$14$$ = void 0 !== $xhr$jscomp$inline_120$$.response ? new Uint8Array($xhr$jscomp$inline_120$$.response || []) : $intArrayFromString$$($xhr$jscomp$inline_120$$.responseText || "");
-          $JSCompiler_temp_const$jscomp$9$$[$chunkNum$jscomp$1$$] = $JSCompiler_inline_result$jscomp$10_start$jscomp$14$$;
+          $JSCompiler_inline_result$jscomp$12_start$jscomp$14$$ = void 0 !== $xhr$jscomp$inline_120$$.response ? new Uint8Array($xhr$jscomp$inline_120$$.response || []) : $intArrayFromString$$($xhr$jscomp$inline_120$$.responseText || "");
+          $JSCompiler_temp_const$jscomp$11$$[$chunkNum$jscomp$1$$] = $JSCompiler_inline_result$jscomp$12_start$jscomp$14$$;
         }
         "undefined" == typeof $lazyArray$jscomp$1$$.$g$[$chunkNum$jscomp$1$$] && $abort$$("doXHR failed!");
         return $lazyArray$jscomp$1$$.$g$[$chunkNum$jscomp$1$$];
@@ -1247,13 +1266,13 @@ function $FS$createLazyFile$$($parent$jscomp$25_stream_ops$$, $name$jscomp$98$$,
   }
   if (globalThis.XMLHttpRequest) {
     $abort$$("Cannot do synchronous binary XHRs outside webworkers in modern browsers. Use --embed-file or --preload-file in emcc");
-    var $JSCompiler_object_inline_contents_359$$ = new $LazyUint8Array$$();
-    var $JSCompiler_object_inline_url_360$$ = void 0;
+    var $JSCompiler_object_inline_contents_373$$ = new $LazyUint8Array$$();
+    var $JSCompiler_object_inline_url_374$$ = void 0;
   } else {
-    $JSCompiler_object_inline_url_360$$ = $url$jscomp$28$$, $JSCompiler_object_inline_contents_359$$ = void 0;
+    $JSCompiler_object_inline_url_374$$ = $url$jscomp$28$$, $JSCompiler_object_inline_contents_373$$ = void 0;
   }
   var $node$jscomp$47$$ = $FS$createFile$$($parent$jscomp$25_stream_ops$$, $name$jscomp$98$$, $canRead$jscomp$6$$, $canWrite$jscomp$6$$);
-  $JSCompiler_object_inline_contents_359$$ ? $node$jscomp$47$$.$contents$ = $JSCompiler_object_inline_contents_359$$ : $JSCompiler_object_inline_url_360$$ && ($node$jscomp$47$$.$contents$ = null, $node$jscomp$47$$.url = $JSCompiler_object_inline_url_360$$);
+  $JSCompiler_object_inline_contents_373$$ ? $node$jscomp$47$$.$contents$ = $JSCompiler_object_inline_contents_373$$ : $JSCompiler_object_inline_url_374$$ && ($node$jscomp$47$$.$contents$ = null, $node$jscomp$47$$.url = $JSCompiler_object_inline_url_374$$);
   Object.defineProperties($node$jscomp$47$$, {$usedBytes$:{get:function() {
     return this.$contents$.length;
   }}});
@@ -1270,19 +1289,58 @@ function $FS$createLazyFile$$($parent$jscomp$25_stream_ops$$, $name$jscomp$98$$,
   };
   $parent$jscomp$25_stream_ops$$.$mmap$ = ($stream$jscomp$48$$, $length$jscomp$34$$, $position$jscomp$10$$) => {
     $FS$forceLoadFile$$($node$jscomp$47$$);
-    var $ptr$jscomp$6$$ = $mmapAlloc$$();
-    if (!$ptr$jscomp$6$$) {
+    var $ptr$jscomp$8$$ = $mmapAlloc$$($length$jscomp$34$$);
+    if (!$ptr$jscomp$8$$) {
       throw new $FS$ErrnoError$$(48);
     }
-    $writeChunks$$($stream$jscomp$48$$, $HEAP8$$, $ptr$jscomp$6$$, $length$jscomp$34$$, $position$jscomp$10$$);
-    return {$ptr$:$ptr$jscomp$6$$, $allocated$:!0};
+    $writeChunks$$($stream$jscomp$48$$, $HEAP8$$, $ptr$jscomp$8$$, $length$jscomp$34$$, $position$jscomp$10$$);
+    return {$ptr$:$ptr$jscomp$8$$, $allocated$:!0};
   };
   $node$jscomp$47$$.$stream_ops$ = $parent$jscomp$25_stream_ops$$;
   return $node$jscomp$47$$;
 }
-var $FS$$ = {}, $SYSCALLS$varargs$$ = void 0, $AsciiToString$$ = $ptr$jscomp$8$$ => {
+var $FS$$ = {};
+function $SYSCALLS$calculateAt$$($dir$jscomp$5_dirfd$$, $path$jscomp$41$$, $allowEmpty$$) {
+  if ("/" === $path$jscomp$41$$.charAt(0)) {
+    return $path$jscomp$41$$;
+  }
+  $dir$jscomp$5_dirfd$$ = -100 === $dir$jscomp$5_dirfd$$ ? "/" : $FS$getStreamChecked$$($dir$jscomp$5_dirfd$$).path;
+  if (0 == $path$jscomp$41$$.length) {
+    if (!$allowEmpty$$) {
+      throw new $FS$ErrnoError$$(44);
+    }
+    return $dir$jscomp$5_dirfd$$;
+  }
+  return $dir$jscomp$5_dirfd$$ + "/" + $path$jscomp$41$$;
+}
+function $SYSCALLS$writeStat$$($buf$jscomp$1$$, $stat$jscomp$1$$) {
+  $HEAPU32$$[$_asan_js_check_index$$($HEAPU32$$, $buf$jscomp$1$$ >> 2, $___asan_storeN$$)] = $stat$jscomp$1$$.$dev$;
+  $HEAPU32$$[$_asan_js_check_index$$($HEAPU32$$, $buf$jscomp$1$$ + 4 >> 2, $___asan_storeN$$)] = $stat$jscomp$1$$.mode;
+  $HEAPU32$$[$_asan_js_check_index$$($HEAPU32$$, $buf$jscomp$1$$ + 8 >> 2, $___asan_storeN$$)] = $stat$jscomp$1$$.$nlink$;
+  $HEAPU32$$[$_asan_js_check_index$$($HEAPU32$$, $buf$jscomp$1$$ + 12 >> 2, $___asan_storeN$$)] = $stat$jscomp$1$$.uid;
+  $HEAPU32$$[$_asan_js_check_index$$($HEAPU32$$, $buf$jscomp$1$$ + 16 >> 2, $___asan_storeN$$)] = $stat$jscomp$1$$.$gid$;
+  $HEAPU32$$[$_asan_js_check_index$$($HEAPU32$$, $buf$jscomp$1$$ + 20 >> 2, $___asan_storeN$$)] = $stat$jscomp$1$$.$rdev$;
+  $HEAP64$$[$_asan_js_check_index$$($HEAP64$$, $buf$jscomp$1$$ + 24 >> 3, $___asan_storeN$$)] = BigInt($stat$jscomp$1$$.size);
+  $HEAP32$$[$_asan_js_check_index$$($HEAP32$$, $buf$jscomp$1$$ + 32 >> 2, $___asan_storeN$$)] = 4096;
+  $HEAP32$$[$_asan_js_check_index$$($HEAP32$$, $buf$jscomp$1$$ + 36 >> 2, $___asan_storeN$$)] = $stat$jscomp$1$$.$blocks$;
+  var $atime$jscomp$1$$ = $stat$jscomp$1$$.$atime$.getTime(), $mtime$jscomp$1$$ = $stat$jscomp$1$$.$mtime$.getTime(), $ctime$$ = $stat$jscomp$1$$.$ctime$.getTime();
+  $HEAP64$$[$_asan_js_check_index$$($HEAP64$$, $buf$jscomp$1$$ + 40 >> 3, $___asan_storeN$$)] = BigInt(Math.floor($atime$jscomp$1$$ / 1e3));
+  $HEAPU32$$[$_asan_js_check_index$$($HEAPU32$$, $buf$jscomp$1$$ + 48 >> 2, $___asan_storeN$$)] = $atime$jscomp$1$$ % 1e3 * 1E6;
+  $HEAP64$$[$_asan_js_check_index$$($HEAP64$$, $buf$jscomp$1$$ + 56 >> 3, $___asan_storeN$$)] = BigInt(Math.floor($mtime$jscomp$1$$ / 1e3));
+  $HEAPU32$$[$_asan_js_check_index$$($HEAPU32$$, $buf$jscomp$1$$ + 64 >> 2, $___asan_storeN$$)] = $mtime$jscomp$1$$ % 1e3 * 1E6;
+  $HEAP64$$[$_asan_js_check_index$$($HEAP64$$, $buf$jscomp$1$$ + 72 >> 3, $___asan_storeN$$)] = BigInt(Math.floor($ctime$$ / 1e3));
+  $HEAPU32$$[$_asan_js_check_index$$($HEAPU32$$, $buf$jscomp$1$$ + 80 >> 2, $___asan_storeN$$)] = $ctime$$ % 1e3 * 1E6;
+  $HEAP64$$[$_asan_js_check_index$$($HEAP64$$, $buf$jscomp$1$$ + 88 >> 3, $___asan_storeN$$)] = BigInt($stat$jscomp$1$$.$ino$);
+  return 0;
+}
+var $SYSCALLS$varargs$$ = void 0, $syscallGetVarargI$$ = () => {
+  $assert$$(void 0 != $SYSCALLS$varargs$$);
+  var $ret$jscomp$4$$ = $HEAP32$$[$_asan_js_check_index$$($HEAP32$$, +$SYSCALLS$varargs$$ >> 2, $___asan_loadN$$)];
+  $SYSCALLS$varargs$$ += 4;
+  return $ret$jscomp$4$$;
+}, $AsciiToString$$ = $ptr$jscomp$10$$ => {
   for (var $str$jscomp$11$$ = "";;) {
-    var $ch$jscomp$1$$ = $HEAPU8$$[$ptr$jscomp$8$$++];
+    var $ch$jscomp$1$$ = $HEAPU8$$[$_asan_js_check_index$$($HEAPU8$$, $ptr$jscomp$10$$++, $___asan_loadN$$)];
     if (!$ch$jscomp$1$$) {
       return $str$jscomp$11$$;
     }
@@ -1317,13 +1375,13 @@ function $registerType$$($rawType$jscomp$1$$, $registeredInstance$jscomp$1$$, $o
 var $integerReadValueFromPointer$$ = ($name$jscomp$100$$, $width$jscomp$28$$, $signed$$) => {
   switch($width$jscomp$28$$) {
     case 1:
-      return $signed$$ ? $pointer$$ => $HEAP8$$[$pointer$$] : $pointer$jscomp$1$$ => $HEAPU8$$[$pointer$jscomp$1$$];
+      return $signed$$ ? $pointer$$ => $HEAP8$$[$_asan_js_check_index$$($HEAP8$$, $pointer$$, $___asan_loadN$$)] : $pointer$jscomp$1$$ => $HEAPU8$$[$_asan_js_check_index$$($HEAPU8$$, $pointer$jscomp$1$$, $___asan_loadN$$)];
     case 2:
-      return $signed$$ ? $pointer$jscomp$2$$ => $HEAP16$$[$pointer$jscomp$2$$ >> 1] : $pointer$jscomp$3$$ => $HEAPU16$$[$pointer$jscomp$3$$ >> 1];
+      return $signed$$ ? $pointer$jscomp$2$$ => $HEAP16$$[$_asan_js_check_index$$($HEAP16$$, $pointer$jscomp$2$$ >> 1, $___asan_loadN$$)] : $pointer$jscomp$3$$ => $HEAPU16$$[$_asan_js_check_index$$($HEAPU16$$, $pointer$jscomp$3$$ >> 1, $___asan_loadN$$)];
     case 4:
-      return $signed$$ ? $pointer$jscomp$4$$ => $HEAP32$$[$pointer$jscomp$4$$ >> 2] : $pointer$jscomp$5$$ => $HEAPU32$$[$pointer$jscomp$5$$ >> 2];
+      return $signed$$ ? $pointer$jscomp$4$$ => $HEAP32$$[$_asan_js_check_index$$($HEAP32$$, $pointer$jscomp$4$$ >> 2, $___asan_loadN$$)] : $pointer$jscomp$5$$ => $HEAPU32$$[$_asan_js_check_index$$($HEAPU32$$, $pointer$jscomp$5$$ >> 2, $___asan_loadN$$)];
     case 8:
-      return $signed$$ ? $pointer$jscomp$6$$ => $HEAP64$$[$pointer$jscomp$6$$ >> 3] : $pointer$jscomp$7$$ => $HEAPU64$$[$pointer$jscomp$7$$ >> 3];
+      return $signed$$ ? $pointer$jscomp$6$$ => $HEAP64$$[$_asan_js_check_index$$($HEAP64$$, $pointer$jscomp$6$$ >> 3, $___asan_loadN$$)] : $pointer$jscomp$7$$ => $HEAPU64$$[$_asan_js_check_index$$($HEAPU64$$, $pointer$jscomp$7$$ >> 3, $___asan_loadN$$)];
     default:
       throw new TypeError(`invalid integer width (${$width$jscomp$28$$}): ${$name$jscomp$100$$}`);
   }
@@ -1340,23 +1398,23 @@ var $integerReadValueFromPointer$$ = ($name$jscomp$100$$, $width$jscomp$28$$, $s
 }, $throwInstanceAlreadyDeleted$$ = $obj$jscomp$30$$ => {
   throw new $BindingError$$($obj$jscomp$30$$.$$$$.$ptrType$.$registeredClass$.name + " instance already deleted");
 }, $finalizationRegistry$$ = !1, $detachFinalizer$$ = () => {
-}, $downcastPointer$$ = ($ptr$jscomp$9_rv$$, $ptrClass$$, $desiredClass$$) => {
+}, $downcastPointer$$ = ($ptr$jscomp$11_rv$$, $ptrClass$$, $desiredClass$$) => {
   if ($ptrClass$$ === $desiredClass$$) {
-    return $ptr$jscomp$9_rv$$;
+    return $ptr$jscomp$11_rv$$;
   }
   if (void 0 === $desiredClass$$.$baseClass$) {
     return null;
   }
-  $ptr$jscomp$9_rv$$ = $downcastPointer$$($ptr$jscomp$9_rv$$, $ptrClass$$, $desiredClass$$.$baseClass$);
-  return null === $ptr$jscomp$9_rv$$ ? null : $desiredClass$$.$downcast$($ptr$jscomp$9_rv$$);
-}, $registeredPointers$$ = {}, $registeredInstances$$ = {}, $getInheritedInstance$$ = ($class_$jscomp$1_class_$jscomp$inline_128$$, $ptr$jscomp$11_ptr$jscomp$inline_129$$) => {
-  if (void 0 === $ptr$jscomp$11_ptr$jscomp$inline_129$$) {
+  $ptr$jscomp$11_rv$$ = $downcastPointer$$($ptr$jscomp$11_rv$$, $ptrClass$$, $desiredClass$$.$baseClass$);
+  return null === $ptr$jscomp$11_rv$$ ? null : $desiredClass$$.$downcast$($ptr$jscomp$11_rv$$);
+}, $registeredPointers$$ = {}, $registeredInstances$$ = {}, $getInheritedInstance$$ = ($class_$jscomp$1_class_$jscomp$inline_128$$, $ptr$jscomp$13_ptr$jscomp$inline_129$$) => {
+  if (void 0 === $ptr$jscomp$13_ptr$jscomp$inline_129$$) {
     throw new $BindingError$$("ptr should not be undefined");
   }
   for (; $class_$jscomp$1_class_$jscomp$inline_128$$.$baseClass$;) {
-    $ptr$jscomp$11_ptr$jscomp$inline_129$$ = $class_$jscomp$1_class_$jscomp$inline_128$$.$upcast$($ptr$jscomp$11_ptr$jscomp$inline_129$$), $class_$jscomp$1_class_$jscomp$inline_128$$ = $class_$jscomp$1_class_$jscomp$inline_128$$.$baseClass$;
+    $ptr$jscomp$13_ptr$jscomp$inline_129$$ = $class_$jscomp$1_class_$jscomp$inline_128$$.$upcast$($ptr$jscomp$13_ptr$jscomp$inline_129$$), $class_$jscomp$1_class_$jscomp$inline_128$$ = $class_$jscomp$1_class_$jscomp$inline_128$$.$baseClass$;
   }
-  return $registeredInstances$$[$ptr$jscomp$11_ptr$jscomp$inline_129$$];
+  return $registeredInstances$$[$ptr$jscomp$13_ptr$jscomp$inline_129$$];
 }, $InternalError$$ = class extends Error {
   constructor($message$jscomp$42$$) {
     super($message$jscomp$42$$);
@@ -1372,21 +1430,21 @@ var $integerReadValueFromPointer$$ = ($name$jscomp$100$$, $width$jscomp$28$$, $s
   $record$$.count = {value:1};
   return $attachFinalizer$$(Object.create($prototype$$, {$$$$:{value:$record$$, writable:!0}}));
 };
-function $RegisteredPointer_fromWireType$$($ptr$jscomp$12$$) {
+function $RegisteredPointer_fromWireType$$($ptr$jscomp$14$$) {
   function $makeDefaultHandle$$() {
-    return this.$isSmartPointer$ ? $makeClassHandle$$(this.$registeredClass$.$instancePrototype$, {$ptrType$:this.$pointeeType$, $ptr$:$rawPointer$$, $smartPtrType$:this, $smartPtr$:$ptr$jscomp$12$$}) : $makeClassHandle$$(this.$registeredClass$.$instancePrototype$, {$ptrType$:this, $ptr$:$ptr$jscomp$12$$});
+    return this.$isSmartPointer$ ? $makeClassHandle$$(this.$registeredClass$.$instancePrototype$, {$ptrType$:this.$pointeeType$, $ptr$:$rawPointer$$, $smartPtrType$:this, $smartPtr$:$ptr$jscomp$14$$}) : $makeClassHandle$$(this.$registeredClass$.$instancePrototype$, {$ptrType$:this, $ptr$:$ptr$jscomp$14$$});
   }
-  var $rawPointer$$ = this.$getPointee$($ptr$jscomp$12$$);
+  var $rawPointer$$ = this.$getPointee$($ptr$jscomp$14$$);
   if (!$rawPointer$$) {
-    return this.$destructor$($ptr$jscomp$12$$), null;
+    return this.$destructor$($ptr$jscomp$14$$), null;
   }
   var $actualType_registeredInstance$jscomp$2_registeredPointerRecord_rv$jscomp$1_toType$$ = $getInheritedInstance$$(this.$registeredClass$, $rawPointer$$);
   if (void 0 !== $actualType_registeredInstance$jscomp$2_registeredPointerRecord_rv$jscomp$1_toType$$) {
     if (0 === $actualType_registeredInstance$jscomp$2_registeredPointerRecord_rv$jscomp$1_toType$$.$$$$.count.value) {
-      return $actualType_registeredInstance$jscomp$2_registeredPointerRecord_rv$jscomp$1_toType$$.$$$$.$ptr$ = $rawPointer$$, $actualType_registeredInstance$jscomp$2_registeredPointerRecord_rv$jscomp$1_toType$$.$$$$.$smartPtr$ = $ptr$jscomp$12$$, $actualType_registeredInstance$jscomp$2_registeredPointerRecord_rv$jscomp$1_toType$$.clone();
+      return $actualType_registeredInstance$jscomp$2_registeredPointerRecord_rv$jscomp$1_toType$$.$$$$.$ptr$ = $rawPointer$$, $actualType_registeredInstance$jscomp$2_registeredPointerRecord_rv$jscomp$1_toType$$.$$$$.$smartPtr$ = $ptr$jscomp$14$$, $actualType_registeredInstance$jscomp$2_registeredPointerRecord_rv$jscomp$1_toType$$.clone();
     }
     $actualType_registeredInstance$jscomp$2_registeredPointerRecord_rv$jscomp$1_toType$$ = $actualType_registeredInstance$jscomp$2_registeredPointerRecord_rv$jscomp$1_toType$$.clone();
-    this.$destructor$($ptr$jscomp$12$$);
+    this.$destructor$($ptr$jscomp$14$$);
     return $actualType_registeredInstance$jscomp$2_registeredPointerRecord_rv$jscomp$1_toType$$;
   }
   $actualType_registeredInstance$jscomp$2_registeredPointerRecord_rv$jscomp$1_toType$$ = this.$registeredClass$.$getActualType$($rawPointer$$);
@@ -1396,7 +1454,7 @@ function $RegisteredPointer_fromWireType$$($ptr$jscomp$12$$) {
   }
   $actualType_registeredInstance$jscomp$2_registeredPointerRecord_rv$jscomp$1_toType$$ = this.$isConst$ ? $actualType_registeredInstance$jscomp$2_registeredPointerRecord_rv$jscomp$1_toType$$.$constPointerType$ : $actualType_registeredInstance$jscomp$2_registeredPointerRecord_rv$jscomp$1_toType$$.pointerType;
   var $dp$$ = $downcastPointer$$($rawPointer$$, this.$registeredClass$, $actualType_registeredInstance$jscomp$2_registeredPointerRecord_rv$jscomp$1_toType$$.$registeredClass$);
-  return null === $dp$$ ? $makeDefaultHandle$$.call(this) : this.$isSmartPointer$ ? $makeClassHandle$$($actualType_registeredInstance$jscomp$2_registeredPointerRecord_rv$jscomp$1_toType$$.$registeredClass$.$instancePrototype$, {$ptrType$:$actualType_registeredInstance$jscomp$2_registeredPointerRecord_rv$jscomp$1_toType$$, $ptr$:$dp$$, $smartPtrType$:this, $smartPtr$:$ptr$jscomp$12$$}) : $makeClassHandle$$($actualType_registeredInstance$jscomp$2_registeredPointerRecord_rv$jscomp$1_toType$$.$registeredClass$.$instancePrototype$, 
+  return null === $dp$$ ? $makeDefaultHandle$$.call(this) : this.$isSmartPointer$ ? $makeClassHandle$$($actualType_registeredInstance$jscomp$2_registeredPointerRecord_rv$jscomp$1_toType$$.$registeredClass$.$instancePrototype$, {$ptrType$:$actualType_registeredInstance$jscomp$2_registeredPointerRecord_rv$jscomp$1_toType$$, $ptr$:$dp$$, $smartPtrType$:this, $smartPtr$:$ptr$jscomp$14$$}) : $makeClassHandle$$($actualType_registeredInstance$jscomp$2_registeredPointerRecord_rv$jscomp$1_toType$$.$registeredClass$.$instancePrototype$, 
   {$ptrType$:$actualType_registeredInstance$jscomp$2_registeredPointerRecord_rv$jscomp$1_toType$$, $ptr$:$dp$$});
 }
 var $attachFinalizer$$ = $handle$jscomp$14$$ => {
@@ -1427,7 +1485,7 @@ var $attachFinalizer$$ = $handle$jscomp$14$$ => {
 }, $deletionQueue$$ = [];
 function $ClassHandle$$() {
 }
-var $createNamedFunction$$ = ($name$jscomp$103$$, $func$jscomp$7$$) => Object.defineProperty($func$jscomp$7$$, "name", {value:$name$jscomp$103$$}), $ensureOverloadTable$$ = ($proto$jscomp$4$$, $methodName$$, $humanName$$) => {
+var $createNamedFunction$$ = ($name$jscomp$103$$, $func$jscomp$8$$) => Object.defineProperty($func$jscomp$8$$, "name", {value:$name$jscomp$103$$}), $ensureOverloadTable$$ = ($proto$jscomp$4$$, $methodName$$, $humanName$$) => {
   if (void 0 === $proto$jscomp$4$$[$methodName$$].$overloadTable$) {
     var $prevFunc$$ = $proto$jscomp$4$$[$methodName$$];
     $proto$jscomp$4$$[$methodName$$] = function(...$args$jscomp$8$$) {
@@ -1462,15 +1520,15 @@ function $RegisteredClass$$($name$jscomp$106$$, $constructor$$, $instancePrototy
   this.$downcast$ = $downcast$$;
   this.$pureVirtualFunctions$ = [];
 }
-var $upcastPointer$$ = ($ptr$jscomp$13$$, $ptrClass$jscomp$1$$, $desiredClass$jscomp$1$$) => {
+var $upcastPointer$$ = ($ptr$jscomp$15$$, $ptrClass$jscomp$1$$, $desiredClass$jscomp$1$$) => {
   for (; $ptrClass$jscomp$1$$ !== $desiredClass$jscomp$1$$;) {
     if (!$ptrClass$jscomp$1$$.$upcast$) {
       throw new $BindingError$$(`Expected null or instance of ${$desiredClass$jscomp$1$$.name}, got an instance of ${$ptrClass$jscomp$1$$.name}`);
     }
-    $ptr$jscomp$13$$ = $ptrClass$jscomp$1$$.$upcast$($ptr$jscomp$13$$);
+    $ptr$jscomp$15$$ = $ptrClass$jscomp$1$$.$upcast$($ptr$jscomp$15$$);
     $ptrClass$jscomp$1$$ = $ptrClass$jscomp$1$$.$baseClass$;
   }
-  return $ptr$jscomp$13$$;
+  return $ptr$jscomp$15$$;
 };
 function $constNoSmartPtrRawPointerToWireType$$($destructors$jscomp$2$$, $handle$jscomp$18$$) {
   if (null === $handle$jscomp$18$$) {
@@ -1493,9 +1551,9 @@ function $genericPointerToWireType$$($destructors$jscomp$3$$, $handle$jscomp$19$
       throw new $BindingError$$(`null is not a valid ${this.name}`);
     }
     if (this.$isSmartPointer$) {
-      var $ptr$jscomp$15$$ = this.$rawConstructor$();
-      null !== $destructors$jscomp$3$$ && $destructors$jscomp$3$$.push(this.$rawDestructor$, $ptr$jscomp$15$$);
-      return $ptr$jscomp$15$$;
+      var $ptr$jscomp$17$$ = this.$rawConstructor$();
+      null !== $destructors$jscomp$3$$ && $destructors$jscomp$3$$.push(this.$rawDestructor$, $ptr$jscomp$17$$);
+      return $ptr$jscomp$17$$;
     }
     return 0;
   }
@@ -1508,7 +1566,7 @@ function $genericPointerToWireType$$($destructors$jscomp$3$$, $handle$jscomp$19$
   if (!this.$isConst$ && $handle$jscomp$19$$.$$$$.$ptrType$.$isConst$) {
     throw new $BindingError$$(`Cannot convert argument of type ${$handle$jscomp$19$$.$$$$.$smartPtrType$ ? $handle$jscomp$19$$.$$$$.$smartPtrType$.name : $handle$jscomp$19$$.$$$$.$ptrType$.name} to parameter type ${this.name}`);
   }
-  $ptr$jscomp$15$$ = $upcastPointer$$($handle$jscomp$19$$.$$$$.$ptr$, $handle$jscomp$19$$.$$$$.$ptrType$.$registeredClass$, this.$registeredClass$);
+  $ptr$jscomp$17$$ = $upcastPointer$$($handle$jscomp$19$$.$$$$.$ptr$, $handle$jscomp$19$$.$$$$.$ptrType$.$registeredClass$, this.$registeredClass$);
   if (this.$isSmartPointer$) {
     if (void 0 === $handle$jscomp$19$$.$$$$.$smartPtr$) {
       throw new $BindingError$$("Passing raw pointer to smart pointer is illegal");
@@ -1516,28 +1574,28 @@ function $genericPointerToWireType$$($destructors$jscomp$3$$, $handle$jscomp$19$
     switch(this.$sharingPolicy$) {
       case 0:
         if ($handle$jscomp$19$$.$$$$.$smartPtrType$ === this) {
-          $ptr$jscomp$15$$ = $handle$jscomp$19$$.$$$$.$smartPtr$;
+          $ptr$jscomp$17$$ = $handle$jscomp$19$$.$$$$.$smartPtr$;
         } else {
           throw new $BindingError$$(`Cannot convert argument of type ${$handle$jscomp$19$$.$$$$.$smartPtrType$ ? $handle$jscomp$19$$.$$$$.$smartPtrType$.name : $handle$jscomp$19$$.$$$$.$ptrType$.name} to parameter type ${this.name}`);
         }
         break;
       case 1:
-        $ptr$jscomp$15$$ = $handle$jscomp$19$$.$$$$.$smartPtr$;
+        $ptr$jscomp$17$$ = $handle$jscomp$19$$.$$$$.$smartPtr$;
         break;
       case 2:
         if ($handle$jscomp$19$$.$$$$.$smartPtrType$ === this) {
-          $ptr$jscomp$15$$ = $handle$jscomp$19$$.$$$$.$smartPtr$;
+          $ptr$jscomp$17$$ = $handle$jscomp$19$$.$$$$.$smartPtr$;
         } else {
           var $clonedHandle$$ = $handle$jscomp$19$$.clone();
-          $ptr$jscomp$15$$ = this.$rawShare$($ptr$jscomp$15$$, $Emval$toHandle$$(() => $clonedHandle$$["delete"]()));
-          null !== $destructors$jscomp$3$$ && $destructors$jscomp$3$$.push(this.$rawDestructor$, $ptr$jscomp$15$$);
+          $ptr$jscomp$17$$ = this.$rawShare$($ptr$jscomp$17$$, $Emval$toHandle$$(() => $clonedHandle$$["delete"]()));
+          null !== $destructors$jscomp$3$$ && $destructors$jscomp$3$$.push(this.$rawDestructor$, $ptr$jscomp$17$$);
         }
         break;
       default:
         throw new $BindingError$$("Unsupporting sharing policy");
     }
   }
-  return $ptr$jscomp$15$$;
+  return $ptr$jscomp$17$$;
 }
 function $nonConstNoSmartPtrRawPointerToWireType$$($destructors$jscomp$4$$, $handle$jscomp$20$$) {
   if (null === $handle$jscomp$20$$) {
@@ -1558,7 +1616,7 @@ function $nonConstNoSmartPtrRawPointerToWireType$$($destructors$jscomp$4$$, $han
   return $upcastPointer$$($handle$jscomp$20$$.$$$$.$ptr$, $handle$jscomp$20$$.$$$$.$ptrType$.$registeredClass$, this.$registeredClass$);
 }
 function $readPointer$$($pointer$jscomp$9$$) {
-  return this.$fromWireType$($HEAPU32$$[$pointer$jscomp$9$$ >> 2]);
+  return this.$fromWireType$($HEAPU32$$[$_asan_js_check_index$$($HEAPU32$$, $pointer$jscomp$9$$ >> 2, $___asan_loadN$$)]);
 }
 function $RegisteredPointer$$($name$jscomp$107$$, $registeredClass$$, $isReference$$, $isConst$$, $isSmartPointer$$, $pointeeType$$, $sharingPolicy$$, $rawGetPointee$$, $rawConstructor$$, $rawShare$$, $rawDestructor$jscomp$1$$) {
   this.name = $name$jscomp$107$$;
@@ -1580,22 +1638,22 @@ var $replacePublicSymbol$$ = ($name$jscomp$108$$, $value$jscomp$101$$) => {
   }
   $Module$$[$name$jscomp$108$$] = $value$jscomp$101$$;
   $Module$$[$name$jscomp$108$$].$argCount$ = void 0;
-}, $wasmTableMirror$$ = [], $embind__requireFunction$$ = ($signature$jscomp$1$$, $rawFunction$$, $fp_func$jscomp$inline_396_isAsync$$ = !1) => {
-  $assert$$(!$fp_func$jscomp$inline_396_isAsync$$, "Async bindings are only supported with JSPI.");
+}, $wasmTableMirror$$ = [], $embind__requireFunction$$ = ($signature$jscomp$1$$, $rawFunction$$, $fp_func$jscomp$inline_411_isAsync$$ = !1) => {
+  $assert$$(!$fp_func$jscomp$inline_411_isAsync$$, "Async bindings are only supported with JSPI.");
   $signature$jscomp$1$$ = $AsciiToString$$($signature$jscomp$1$$);
-  ($fp_func$jscomp$inline_396_isAsync$$ = $wasmTableMirror$$[$rawFunction$$]) || ($wasmTableMirror$$[$rawFunction$$] = $fp_func$jscomp$inline_396_isAsync$$ = $wasmTable$$.get($rawFunction$$));
-  $assert$$($wasmTable$$.get($rawFunction$$) == $fp_func$jscomp$inline_396_isAsync$$, "JavaScript-side Wasm function table mirror is out of date!");
-  if ("function" != typeof $fp_func$jscomp$inline_396_isAsync$$) {
+  ($fp_func$jscomp$inline_411_isAsync$$ = $wasmTableMirror$$[$rawFunction$$]) || ($wasmTableMirror$$[$rawFunction$$] = $fp_func$jscomp$inline_411_isAsync$$ = $wasmTable$$.get($rawFunction$$));
+  $assert$$($wasmTable$$.get($rawFunction$$) == $fp_func$jscomp$inline_411_isAsync$$, "JavaScript-side Wasm function table mirror is out of date!");
+  if ("function" != typeof $fp_func$jscomp$inline_411_isAsync$$) {
     throw new $BindingError$$(`unknown function pointer with signature ${$signature$jscomp$1$$}: ${$rawFunction$$}`);
   }
-  return $fp_func$jscomp$inline_396_isAsync$$;
+  return $fp_func$jscomp$inline_411_isAsync$$;
 };
 class $UnboundTypeError$$ extends Error {
 }
-var $getTypeName$$ = $ptr$jscomp$19_type$jscomp$172$$ => {
-  $ptr$jscomp$19_type$jscomp$172$$ = $___getTypeName$$($ptr$jscomp$19_type$jscomp$172$$);
-  var $rv$jscomp$2$$ = $AsciiToString$$($ptr$jscomp$19_type$jscomp$172$$);
-  $_free$$($ptr$jscomp$19_type$jscomp$172$$);
+var $getTypeName$$ = $ptr$jscomp$21_type$jscomp$172$$ => {
+  $ptr$jscomp$21_type$jscomp$172$$ = $___getTypeName$$($ptr$jscomp$21_type$jscomp$172$$);
+  var $rv$jscomp$2$$ = $AsciiToString$$($ptr$jscomp$21_type$jscomp$172$$);
+  $_free$$($ptr$jscomp$21_type$jscomp$172$$);
   return $rv$jscomp$2$$;
 }, $throwUnboundTypeError$$ = ($message$jscomp$44$$, $types$$) => {
   function $visit$$($type$jscomp$173$$) {
@@ -1626,13 +1684,13 @@ var $getTypeName$$ = $ptr$jscomp$19_type$jscomp$172$$ => {
   0 === $unregisteredTypes$$.length && $onComplete$$($typeConverters$$);
 }, $heap32VectorToArray$$ = ($count$jscomp$39$$, $firstElement$$) => {
   for (var $array$jscomp$6$$ = [], $i$jscomp$24$$ = 0; $i$jscomp$24$$ < $count$jscomp$39$$; $i$jscomp$24$$++) {
-    $array$jscomp$6$$.push($HEAPU32$$[$firstElement$$ + 4 * $i$jscomp$24$$ >> 2]);
+    $array$jscomp$6$$.push($HEAPU32$$[$_asan_js_check_index$$($HEAPU32$$, $firstElement$$ + 4 * $i$jscomp$24$$ >> 2, $___asan_loadN$$)]);
   }
   return $array$jscomp$6$$;
 }, $runDestructors$$ = $destructors$jscomp$5$$ => {
   for (; $destructors$jscomp$5$$.length;) {
-    var $ptr$jscomp$20$$ = $destructors$jscomp$5$$.pop();
-    $destructors$jscomp$5$$.pop()($ptr$jscomp$20$$);
+    var $ptr$jscomp$22$$ = $destructors$jscomp$5$$.pop();
+    $destructors$jscomp$5$$.pop()($ptr$jscomp$22$$);
   }
 };
 function $usesDestructorStack$$($argTypes$$) {
@@ -1747,11 +1805,11 @@ var $getFunctionName$$ = $signature$jscomp$2$$ => {
   switch($width$jscomp$29$$) {
     case 4:
       return function($pointer$jscomp$10$$) {
-        return this.$fromWireType$($HEAPF32$$[$pointer$jscomp$10$$ >> 2]);
+        return this.$fromWireType$($HEAPF32$$[$_asan_js_check_index$$($HEAPF32$$, $pointer$jscomp$10$$ >> 2, $___asan_loadN$$)]);
       };
     case 8:
       return function($pointer$jscomp$11$$) {
-        return this.$fromWireType$($HEAPF64$$[$pointer$jscomp$11$$ >> 3]);
+        return this.$fromWireType$($HEAPF64$$[$_asan_js_check_index$$($HEAPF64$$, $pointer$jscomp$11$$ >> 3, $___asan_loadN$$)]);
       };
     default:
       throw new TypeError(`invalid float width (${$width$jscomp$29$$}): ${$name$jscomp$110$$}`);
@@ -1759,15 +1817,16 @@ var $getFunctionName$$ = $signature$jscomp$2$$ => {
 }, $stringToUTF8$$ = ($str$jscomp$12$$, $outPtr$$, $maxBytesToWrite$jscomp$1$$) => {
   $assert$$("number" == typeof $maxBytesToWrite$jscomp$1$$, "stringToUTF8(str, outPtr, maxBytesToWrite) is missing the third parameter that specifies the length of the output buffer!");
   return $stringToUTF8Array$$($str$jscomp$12$$, $HEAPU8$$, $outPtr$$, $maxBytesToWrite$jscomp$1$$);
-}, $UTF16Decoder$$ = globalThis.TextDecoder ? new TextDecoder("utf-16le") : void 0, $UTF16ToString$$ = ($i$jscomp$31_idx$jscomp$4_ptr$jscomp$23$$, $endIdx$jscomp$1_maxBytesToRead$jscomp$3$$, $ignoreNul$jscomp$3_str$jscomp$14$$) => {
-  $assert$$(0 == $i$jscomp$31_idx$jscomp$4_ptr$jscomp$23$$ % 2, "Pointer passed to UTF16ToString must be aligned to two bytes!");
-  $i$jscomp$31_idx$jscomp$4_ptr$jscomp$23$$ >>= 1;
-  $endIdx$jscomp$1_maxBytesToRead$jscomp$3$$ = $findStringEnd$$($HEAPU16$$, $i$jscomp$31_idx$jscomp$4_ptr$jscomp$23$$, $endIdx$jscomp$1_maxBytesToRead$jscomp$3$$ / 2, $ignoreNul$jscomp$3_str$jscomp$14$$);
-  if (16 < $endIdx$jscomp$1_maxBytesToRead$jscomp$3$$ - $i$jscomp$31_idx$jscomp$4_ptr$jscomp$23$$ && $UTF16Decoder$$) {
-    return $UTF16Decoder$$.decode($HEAPU16$$.subarray($i$jscomp$31_idx$jscomp$4_ptr$jscomp$23$$, $endIdx$jscomp$1_maxBytesToRead$jscomp$3$$));
+}, $UTF16Decoder$$ = globalThis.TextDecoder ? new TextDecoder("utf-16le") : void 0, $UTF16ToString$$ = ($i$jscomp$31_idx$jscomp$4_ptr$jscomp$25$$, $endIdx$jscomp$1_maxBytesToRead$jscomp$3$$, $ignoreNul$jscomp$3_str$jscomp$14$$) => {
+  $assert$$(0 == $i$jscomp$31_idx$jscomp$4_ptr$jscomp$25$$ % 2, "Pointer passed to UTF16ToString must be aligned to two bytes!");
+  $i$jscomp$31_idx$jscomp$4_ptr$jscomp$25$$ >>= 1;
+  $endIdx$jscomp$1_maxBytesToRead$jscomp$3$$ = $findStringEnd$$($HEAPU16$$, $i$jscomp$31_idx$jscomp$4_ptr$jscomp$25$$, $endIdx$jscomp$1_maxBytesToRead$jscomp$3$$ / 2, $ignoreNul$jscomp$3_str$jscomp$14$$);
+  if (16 < $endIdx$jscomp$1_maxBytesToRead$jscomp$3$$ - $i$jscomp$31_idx$jscomp$4_ptr$jscomp$25$$ && $UTF16Decoder$$) {
+    return $UTF16Decoder$$.decode($HEAPU16$$.subarray($i$jscomp$31_idx$jscomp$4_ptr$jscomp$25$$, $endIdx$jscomp$1_maxBytesToRead$jscomp$3$$));
   }
-  for ($ignoreNul$jscomp$3_str$jscomp$14$$ = ""; $i$jscomp$31_idx$jscomp$4_ptr$jscomp$23$$ < $endIdx$jscomp$1_maxBytesToRead$jscomp$3$$; ++$i$jscomp$31_idx$jscomp$4_ptr$jscomp$23$$) {
-    $ignoreNul$jscomp$3_str$jscomp$14$$ += String.fromCharCode($HEAPU16$$[$i$jscomp$31_idx$jscomp$4_ptr$jscomp$23$$]);
+  for ($ignoreNul$jscomp$3_str$jscomp$14$$ = ""; $i$jscomp$31_idx$jscomp$4_ptr$jscomp$25$$ < $endIdx$jscomp$1_maxBytesToRead$jscomp$3$$; ++$i$jscomp$31_idx$jscomp$4_ptr$jscomp$25$$) {
+    var $codeUnit$$ = $HEAPU16$$[$_asan_js_check_index$$($HEAPU16$$, $i$jscomp$31_idx$jscomp$4_ptr$jscomp$25$$, $___asan_loadN$$)];
+    $ignoreNul$jscomp$3_str$jscomp$14$$ += String.fromCharCode($codeUnit$$);
   }
   return $ignoreNul$jscomp$3_str$jscomp$14$$;
 }, $stringToUTF16$$ = ($str$jscomp$15$$, $outPtr$jscomp$1$$, $maxBytesToWrite$jscomp$2_numCharsToWrite$$) => {
@@ -1781,16 +1840,18 @@ var $getFunctionName$$ = $signature$jscomp$2$$ => {
   var $startPtr$$ = $outPtr$jscomp$1$$;
   $maxBytesToWrite$jscomp$2_numCharsToWrite$$ = $maxBytesToWrite$jscomp$2_numCharsToWrite$$ < 2 * $str$jscomp$15$$.length ? $maxBytesToWrite$jscomp$2_numCharsToWrite$$ / 2 : $str$jscomp$15$$.length;
   for (var $i$jscomp$32$$ = 0; $i$jscomp$32$$ < $maxBytesToWrite$jscomp$2_numCharsToWrite$$; ++$i$jscomp$32$$) {
-    $HEAP16$$[$outPtr$jscomp$1$$ >> 1] = $str$jscomp$15$$.charCodeAt($i$jscomp$32$$), $outPtr$jscomp$1$$ += 2;
+    var $codeUnit$jscomp$1$$ = $str$jscomp$15$$.charCodeAt($i$jscomp$32$$);
+    $HEAP16$$[$_asan_js_check_index$$($HEAP16$$, $outPtr$jscomp$1$$ >> 1, $___asan_storeN$$)] = $codeUnit$jscomp$1$$;
+    $outPtr$jscomp$1$$ += 2;
   }
-  $HEAP16$$[$outPtr$jscomp$1$$ >> 1] = 0;
+  $HEAP16$$[$_asan_js_check_index$$($HEAP16$$, $outPtr$jscomp$1$$ >> 1, $___asan_storeN$$)] = 0;
   return $outPtr$jscomp$1$$ - $startPtr$$;
-}, $lengthBytesUTF16$$ = $str$jscomp$16$$ => 2 * $str$jscomp$16$$.length, $UTF32ToString$$ = ($ptr$jscomp$24_startIdx$jscomp$1$$, $maxBytesToRead$jscomp$4$$, $ignoreNul$jscomp$4$$) => {
-  $assert$$(0 == $ptr$jscomp$24_startIdx$jscomp$1$$ % 4, "Pointer passed to UTF32ToString must be aligned to four bytes!");
+}, $lengthBytesUTF16$$ = $str$jscomp$16$$ => 2 * $str$jscomp$16$$.length, $UTF32ToString$$ = ($ptr$jscomp$26_startIdx$jscomp$1$$, $maxBytesToRead$jscomp$4$$, $ignoreNul$jscomp$4$$) => {
+  $assert$$(0 == $ptr$jscomp$26_startIdx$jscomp$1$$ % 4, "Pointer passed to UTF32ToString must be aligned to four bytes!");
   var $str$jscomp$17$$ = "";
-  $ptr$jscomp$24_startIdx$jscomp$1$$ >>= 2;
+  $ptr$jscomp$26_startIdx$jscomp$1$$ >>= 2;
   for (var $i$jscomp$33$$ = 0; !($i$jscomp$33$$ >= $maxBytesToRead$jscomp$4$$ / 4); $i$jscomp$33$$++) {
-    var $utf32$$ = $HEAPU32$$[$ptr$jscomp$24_startIdx$jscomp$1$$ + $i$jscomp$33$$];
+    var $utf32$$ = $HEAPU32$$[$_asan_js_check_index$$($HEAPU32$$, $ptr$jscomp$26_startIdx$jscomp$1$$ + $i$jscomp$33$$, $___asan_loadN$$)];
     if (!$utf32$$ && !$ignoreNul$jscomp$4$$) {
       break;
     }
@@ -1809,56 +1870,128 @@ var $getFunctionName$$ = $signature$jscomp$2$$ => {
   for (var $i$jscomp$34$$ = 0; $i$jscomp$34$$ < $str$jscomp$18$$.length; ++$i$jscomp$34$$) {
     var $codePoint$jscomp$1$$ = $str$jscomp$18$$.codePointAt($i$jscomp$34$$);
     65535 < $codePoint$jscomp$1$$ && $i$jscomp$34$$++;
-    $HEAP32$$[$outPtr$jscomp$2$$ >> 2] = $codePoint$jscomp$1$$;
+    $HEAP32$$[$_asan_js_check_index$$($HEAP32$$, $outPtr$jscomp$2$$ >> 2, $___asan_storeN$$)] = $codePoint$jscomp$1$$;
     $outPtr$jscomp$2$$ += 4;
     if ($outPtr$jscomp$2$$ + 4 > $endPtr$jscomp$1_maxBytesToWrite$jscomp$3$$) {
       break;
     }
   }
-  $HEAP32$$[$outPtr$jscomp$2$$ >> 2] = 0;
+  $HEAP32$$[$_asan_js_check_index$$($HEAP32$$, $outPtr$jscomp$2$$ >> 2, $___asan_storeN$$)] = 0;
   return $outPtr$jscomp$2$$ - $startPtr$jscomp$1$$;
 }, $lengthBytesUTF32$$ = $str$jscomp$19$$ => {
   for (var $len$jscomp$7$$ = 0, $i$jscomp$35$$ = 0; $i$jscomp$35$$ < $str$jscomp$19$$.length; ++$i$jscomp$35$$) {
     65535 < $str$jscomp$19$$.codePointAt($i$jscomp$35$$) && $i$jscomp$35$$++, $len$jscomp$7$$ += 4;
   }
   return $len$jscomp$7$$;
+}, $withBuiltinMalloc$$ = $func$jscomp$10$$ => {
+  var $prev_malloc$$ = "undefined" != typeof $_malloc$$ ? $_malloc$$ : void 0, $prev_free$$ = "undefined" != typeof $_free$$ ? $_free$$ : void 0;
+  $_malloc$$ = $_emscripten_builtin_malloc$$;
+  $_free$$ = $_emscripten_builtin_free$$;
+  try {
+    return $func$jscomp$10$$();
+  } finally {
+    $_malloc$$ = $prev_malloc$$, $_free$$ = $prev_free$$;
+  }
+}, $stringToNewUTF8$$ = $str$jscomp$22$$ => {
+  var $size$jscomp$30$$ = $lengthBytesUTF8$$($str$jscomp$22$$) + 1, $ret$jscomp$5$$ = $_malloc$$($size$jscomp$30$$);
+  $ret$jscomp$5$$ && $stringToUTF8$$($str$jscomp$22$$, $ret$jscomp$5$$, $size$jscomp$30$$);
+  return $ret$jscomp$5$$;
 }, $emval_methodCallers$$ = [], $emval_addMethodCaller$$ = $caller$$ => {
   var $id$jscomp$9$$ = $emval_methodCallers$$.length;
   $emval_methodCallers$$.push($caller$$);
   return $id$jscomp$9$$;
-}, $emval_lookupTypes$$ = ($argCount$jscomp$4_message$jscomp$inline_398$$, $argTypes$jscomp$6$$) => {
-  for (var $a$jscomp$1$$ = Array($argCount$jscomp$4_message$jscomp$inline_398$$), $i$jscomp$36$$ = 0; $i$jscomp$36$$ < $argCount$jscomp$4_message$jscomp$inline_398$$; ++$i$jscomp$36$$) {
-    var $JSCompiler_temp_const$jscomp$48$$ = $i$jscomp$36$$, $rawType$jscomp$inline_204$$ = $HEAPU32$$[$argTypes$jscomp$6$$ + 4 * $i$jscomp$36$$ >> 2], $impl$jscomp$inline_206$$ = $registeredTypes$$[$rawType$jscomp$inline_204$$];
+}, $emval_lookupTypes$$ = ($argCount$jscomp$4_message$jscomp$inline_413$$, $argTypes$jscomp$6$$) => {
+  for (var $a$jscomp$1$$ = Array($argCount$jscomp$4_message$jscomp$inline_413$$), $i$jscomp$36$$ = 0; $i$jscomp$36$$ < $argCount$jscomp$4_message$jscomp$inline_413$$; ++$i$jscomp$36$$) {
+    var $JSCompiler_temp_const$jscomp$51$$ = $i$jscomp$36$$, $rawType$jscomp$inline_204$$ = $HEAPU32$$[$_asan_js_check_index$$($HEAPU32$$, $argTypes$jscomp$6$$ + 4 * $i$jscomp$36$$ >> 2, $___asan_loadN$$)], $impl$jscomp$inline_206$$ = $registeredTypes$$[$rawType$jscomp$inline_204$$];
     if (void 0 === $impl$jscomp$inline_206$$) {
-      throw $argCount$jscomp$4_message$jscomp$inline_398$$ = `${`parameter ${$i$jscomp$36$$}`} has unknown type ${$getTypeName$$($rawType$jscomp$inline_204$$)}`, new $BindingError$$($argCount$jscomp$4_message$jscomp$inline_398$$);
+      throw $argCount$jscomp$4_message$jscomp$inline_413$$ = `${`parameter ${$i$jscomp$36$$}`} has unknown type ${$getTypeName$$($rawType$jscomp$inline_204$$)}`, new $BindingError$$($argCount$jscomp$4_message$jscomp$inline_413$$);
     }
-    $a$jscomp$1$$[$JSCompiler_temp_const$jscomp$48$$] = $impl$jscomp$inline_206$$;
+    $a$jscomp$1$$[$JSCompiler_temp_const$jscomp$51$$] = $impl$jscomp$inline_206$$;
   }
   return $a$jscomp$1$$;
 }, $emval_returnValue$$ = ($result$jscomp$7_toReturnWire$$, $destructorsRef$$, $handle$jscomp$26$$) => {
   var $destructors$jscomp$13$$ = [];
   $result$jscomp$7_toReturnWire$$ = $result$jscomp$7_toReturnWire$$($destructors$jscomp$13$$, $handle$jscomp$26$$);
-  $destructors$jscomp$13$$.length && ($HEAPU32$$[$destructorsRef$$ >> 2] = $Emval$toHandle$$($destructors$jscomp$13$$));
+  $destructors$jscomp$13$$.length && ($HEAPU32$$[$_asan_js_check_index$$($HEAPU32$$, $destructorsRef$$ >> 2, $___asan_storeN$$)] = $Emval$toHandle$$($destructors$jscomp$13$$));
   return $result$jscomp$7_toReturnWire$$;
 }, $emval_symbols$$ = {}, $getStringOrSymbol$$ = $address$$ => {
   var $symbol$$ = $emval_symbols$$[$address$$];
   return void 0 === $symbol$$ ? $AsciiToString$$($address$$) : $symbol$$;
-}, $readEmAsmArgsArray$$ = [], $specialHTMLTargets$$ = [0, document, window], $findEventTarget$$ = $cString$jscomp$inline_208_target$jscomp$92$$ => {
+}, $readEmAsmArgsArray$$ = [], $UNWIND_CACHE$$ = {}, $convertPCtoSourceLocation$$ = $pc$$ => {
+  if ($UNWIND_CACHE$$.$last_get_source_pc$ == $pc$$) {
+    return $UNWIND_CACHE$$.$last_source$;
+  }
+  var $match$$;
+  if (!$source$jscomp$17$$) {
+    var $frame$jscomp$1$$ = $UNWIND_CACHE$$[$pc$$];
+    if (!$frame$jscomp$1$$) {
+      return null;
+    }
+    if ($match$$ = /\((.*):(\d+):(\d+)\)$/.exec($frame$jscomp$1$$)) {
+      var $source$jscomp$17$$ = {file:$match$$[1], line:$match$$[2], $column$:$match$$[3]};
+    } else if ($match$$ = /@(.*):(\d+):(\d+)/.exec($frame$jscomp$1$$)) {
+      $source$jscomp$17$$ = {file:$match$$[1], line:$match$$[2], $column$:$match$$[3]};
+    }
+  }
+  $UNWIND_CACHE$$.$last_get_source_pc$ = $pc$$;
+  return $UNWIND_CACHE$$.$last_source$ = $source$jscomp$17$$;
+}, $_emscripten_pc_get_file$$ = $pc$jscomp$2$$ => $withBuiltinMalloc$$(() => {
+  var $result$jscomp$9$$ = $convertPCtoSourceLocation$$($pc$jscomp$2$$);
+  if (!$result$jscomp$9$$) {
+    return 0;
+  }
+  $_free$$($_emscripten_pc_get_file$$.$ret$ ?? 0);
+  $_emscripten_pc_get_file$$.$ret$ = $stringToNewUTF8$$($result$jscomp$9$$.file);
+  return $_emscripten_pc_get_file$$.$ret$;
+}), $convertFrameToPC$$ = $frame$jscomp$2$$ => {
+  var $match$jscomp$1$$;
+  if ($match$jscomp$1$$ = /\bwasm-function\[\d+\]:(0x[0-9a-f]+)/.exec($frame$jscomp$2$$)) {
+    return +$match$jscomp$1$$[1];
+  }
+  if (/\bwasm-function\[(\d+)\]:(\d+)/.exec($frame$jscomp$2$$)) {
+    $warnOnce$$("legacy backtrace format detected, this version of v8 is no longer supported by the emscripten backtrace mechanism");
+  } else if ($match$jscomp$1$$ = /:(\d+):\d+(?:\)|$)/.exec($frame$jscomp$2$$)) {
+    return 2147483648 | +$match$jscomp$1$$[1];
+  }
+  return 0;
+}, $saveInUnwindCache$$ = $callstack_pc$jscomp$3$$ => {
+  for (var $line$jscomp$8$$ of $callstack_pc$jscomp$3$$) {
+    ($callstack_pc$jscomp$3$$ = $convertFrameToPC$$($line$jscomp$8$$)) && ($UNWIND_CACHE$$[$callstack_pc$jscomp$3$$] = $line$jscomp$8$$);
+  }
+}, $_emscripten_pc_get_function$$ = $pc$jscomp$4$$ => $withBuiltinMalloc$$(() => {
+  var $frame$jscomp$3_name$jscomp$120$$ = $UNWIND_CACHE$$[$pc$jscomp$4$$];
+  if (!$frame$jscomp$3_name$jscomp$120$$) {
+    return 0;
+  }
+  var $match$jscomp$2$$;
+  if ($match$jscomp$2$$ = /^\s+at .*\.wasm\.(.*) \(.*\)$/.exec($frame$jscomp$3_name$jscomp$120$$)) {
+    $frame$jscomp$3_name$jscomp$120$$ = $match$jscomp$2$$[1];
+  } else if ($match$jscomp$2$$ = /^\s+at (.*) \(.*\)$/.exec($frame$jscomp$3_name$jscomp$120$$)) {
+    $frame$jscomp$3_name$jscomp$120$$ = $match$jscomp$2$$[1];
+  } else if ($match$jscomp$2$$ = /^(.+?)@/.exec($frame$jscomp$3_name$jscomp$120$$)) {
+    $frame$jscomp$3_name$jscomp$120$$ = $match$jscomp$2$$[1];
+  } else {
+    return 0;
+  }
+  $_free$$($_emscripten_pc_get_function$$.$ret$ ?? 0);
+  $_emscripten_pc_get_function$$.$ret$ = $stringToNewUTF8$$($frame$jscomp$3_name$jscomp$120$$);
+  return $_emscripten_pc_get_function$$.$ret$;
+}), $specialHTMLTargets$$ = [0, document, window], $findEventTarget$$ = $cString$jscomp$inline_208_target$jscomp$92$$ => {
   $cString$jscomp$inline_208_target$jscomp$92$$ = 2 < $cString$jscomp$inline_208_target$jscomp$92$$ ? $UTF8ToString$$($cString$jscomp$inline_208_target$jscomp$92$$) : $cString$jscomp$inline_208_target$jscomp$92$$;
   return $specialHTMLTargets$$[$cString$jscomp$inline_208_target$jscomp$92$$] || document.querySelector($cString$jscomp$inline_208_target$jscomp$92$$);
 }, $GLctx$$, $getEmscriptenSupportedExtensions$$ = $ctx$jscomp$6$$ => {
   var $supportedExtensions$$ = "EXT_color_buffer_float EXT_conservative_depth EXT_disjoint_timer_query_webgl2 EXT_texture_norm16 NV_shader_noperspective_interpolation WEBGL_clip_cull_distance EXT_clip_control EXT_color_buffer_half_float EXT_depth_clamp EXT_float_blend EXT_polygon_offset_clamp EXT_texture_compression_bptc EXT_texture_compression_rgtc EXT_texture_filter_anisotropic KHR_parallel_shader_compile OES_texture_float_linear WEBGL_blend_func_extended WEBGL_compressed_texture_astc WEBGL_compressed_texture_etc WEBGL_compressed_texture_etc1 WEBGL_compressed_texture_s3tc WEBGL_compressed_texture_s3tc_srgb WEBGL_debug_renderer_info WEBGL_debug_shaders WEBGL_lose_context WEBGL_multi_draw WEBGL_polygon_mode".split(" ");
   return ($ctx$jscomp$6$$.getSupportedExtensions() || []).filter($ext$$ => $supportedExtensions$$.includes($ext$$));
 }, $GL$counter$$ = 1, $GL$buffers$$ = [], $GL$programs$$ = [], $GL$textures$$ = [], $GL$shaders$$ = [], $GL$vaos$$ = [], $GL$contexts$$ = [], $GL$getNewId$$ = $table$$ => {
-  for (var $ret$jscomp$5$$ = $GL$counter$$++, $i$jscomp$38$$ = $table$$.length; $i$jscomp$38$$ < $ret$jscomp$5$$; $i$jscomp$38$$++) {
-    $table$$[$i$jscomp$38$$] = null;
+  for (var $ret$jscomp$6$$ = $GL$counter$$++, $i$jscomp$39$$ = $table$$.length; $i$jscomp$39$$ < $ret$jscomp$6$$; $i$jscomp$39$$++) {
+    $table$$[$i$jscomp$39$$] = null;
   }
-  return $ret$jscomp$5$$;
+  return $ret$jscomp$6$$;
 }, $GL$genObject$$ = ($n$jscomp$4$$, $buffers$jscomp$2$$, $createFunction$$, $objectTable$$) => {
-  for (var $i$jscomp$39$$ = 0; $i$jscomp$39$$ < $n$jscomp$4$$; $i$jscomp$39$$++) {
-    var $buffer$jscomp$32$$ = $GLctx$$[$createFunction$$](), $id$jscomp$10$$ = $buffer$jscomp$32$$ && $GL$getNewId$$($objectTable$$);
-    $buffer$jscomp$32$$ ? ($buffer$jscomp$32$$.name = $id$jscomp$10$$, $objectTable$$[$id$jscomp$10$$] = $buffer$jscomp$32$$) : $GL$lastError$$ ||= 1282;
-    $HEAP32$$[$buffers$jscomp$2$$ + 4 * $i$jscomp$39$$ >> 2] = $id$jscomp$10$$;
+  for (var $i$jscomp$40$$ = 0; $i$jscomp$40$$ < $n$jscomp$4$$; $i$jscomp$40$$++) {
+    var $buffer$jscomp$33$$ = $GLctx$$[$createFunction$$](), $id$jscomp$10$$ = $buffer$jscomp$33$$ && $GL$getNewId$$($objectTable$$);
+    $buffer$jscomp$33$$ ? ($buffer$jscomp$33$$.name = $id$jscomp$10$$, $objectTable$$[$id$jscomp$10$$] = $buffer$jscomp$33$$) : $GL$lastError$$ ||= 1282;
+    $HEAP32$$[$_asan_js_check_index$$($HEAP32$$, $buffers$jscomp$2$$ + 4 * $i$jscomp$40$$ >> 2, $___asan_storeN$$)] = $id$jscomp$10$$;
   }
 }, $GL$createContext$$ = ($canvas$jscomp$1$$, $webGLContextAttributes$$) => {
   $canvas$jscomp$1$$.$g$ || ($canvas$jscomp$1$$.$g$ = $canvas$jscomp$1$$.getContext, $canvas$jscomp$1$$.getContext = function($ver$$, $attrs_gl$$) {
@@ -1906,30 +2039,30 @@ var $getFunctionName$$ = $signature$jscomp$2$$ => {
   return $getEnvStrings$strings$$;
 }, $getEnvStrings$strings$$, $webglGetExtensions$$ = () => {
   var $exts$$ = $getEmscriptenSupportedExtensions$$($GLctx$$);
-  return $exts$$ = $exts$$.concat($exts$$.map($e$jscomp$33$$ => "GL_" + $e$jscomp$33$$));
-}, $emscriptenWebGLGet$$ = ($i$jscomp$46_name_$$, $p$jscomp$3$$) => {
+  return $exts$$ = $exts$$.concat($exts$$.map($e$jscomp$41$$ => "GL_" + $e$jscomp$41$$));
+}, $emscriptenWebGLGet$$ = ($i$jscomp$47_name_$$, $p$jscomp$3$$) => {
   if ($p$jscomp$3$$) {
-    var $ret$jscomp$8$$ = void 0;
-    switch($i$jscomp$46_name_$$) {
+    var $ret$jscomp$9$$ = void 0;
+    switch($i$jscomp$47_name_$$) {
       case 36346:
-        $ret$jscomp$8$$ = 1;
+        $ret$jscomp$9$$ = 1;
         break;
       case 36344:
         return;
       case 34814:
       case 36345:
-        $ret$jscomp$8$$ = 0;
+        $ret$jscomp$9$$ = 0;
         break;
       case 34466:
-        var $formats_result$jscomp$8$$ = $GLctx$$.getParameter(34467);
-        $ret$jscomp$8$$ = $formats_result$jscomp$8$$ ? $formats_result$jscomp$8$$.length : 0;
+        var $formats_result$jscomp$11$$ = $GLctx$$.getParameter(34467);
+        $ret$jscomp$9$$ = $formats_result$jscomp$11$$ ? $formats_result$jscomp$11$$.length : 0;
         break;
       case 33309:
         if (2 > $GL$currentContext$$.version) {
           $GL$lastError$$ ||= 1282;
           return;
         }
-        $ret$jscomp$8$$ = $webglGetExtensions$$().length;
+        $ret$jscomp$9$$ = $webglGetExtensions$$().length;
         break;
       case 33307:
       case 33308:
@@ -1937,22 +2070,22 @@ var $getFunctionName$$ = $signature$jscomp$2$$ => {
           $GL$lastError$$ ||= 1280;
           return;
         }
-        $ret$jscomp$8$$ = 33307 == $i$jscomp$46_name_$$ ? 3 : 0;
+        $ret$jscomp$9$$ = 33307 == $i$jscomp$47_name_$$ ? 3 : 0;
     }
-    if (void 0 === $ret$jscomp$8$$) {
-      switch($formats_result$jscomp$8$$ = $GLctx$$.getParameter($i$jscomp$46_name_$$), typeof $formats_result$jscomp$8$$) {
+    if (void 0 === $ret$jscomp$9$$) {
+      switch($formats_result$jscomp$11$$ = $GLctx$$.getParameter($i$jscomp$47_name_$$), typeof $formats_result$jscomp$11$$) {
         case "number":
-          $ret$jscomp$8$$ = $formats_result$jscomp$8$$;
+          $ret$jscomp$9$$ = $formats_result$jscomp$11$$;
           break;
         case "boolean":
-          $ret$jscomp$8$$ = $formats_result$jscomp$8$$ ? 1 : 0;
+          $ret$jscomp$9$$ = $formats_result$jscomp$11$$ ? 1 : 0;
           break;
         case "string":
           $GL$lastError$$ ||= 1280;
           return;
         case "object":
-          if (null === $formats_result$jscomp$8$$) {
-            switch($i$jscomp$46_name_$$) {
+          if (null === $formats_result$jscomp$11$$) {
+            switch($i$jscomp$47_name_$$) {
               case 34964:
               case 35725:
               case 34965:
@@ -1972,39 +2105,39 @@ var $getFunctionName$$ = $signature$jscomp$2$$ => {
               case 35983:
               case 35368:
               case 34068:
-                $ret$jscomp$8$$ = 0;
+                $ret$jscomp$9$$ = 0;
                 break;
               default:
                 $GL$lastError$$ ||= 1280;
                 return;
             }
           } else {
-            if ($formats_result$jscomp$8$$ instanceof Float32Array || $formats_result$jscomp$8$$ instanceof Uint32Array || $formats_result$jscomp$8$$ instanceof Int32Array || $formats_result$jscomp$8$$ instanceof Array) {
-              for ($i$jscomp$46_name_$$ = 0; $i$jscomp$46_name_$$ < $formats_result$jscomp$8$$.length; ++$i$jscomp$46_name_$$) {
-                $HEAP32$$[$p$jscomp$3$$ + 4 * $i$jscomp$46_name_$$ >> 2] = $formats_result$jscomp$8$$[$i$jscomp$46_name_$$];
+            if ($formats_result$jscomp$11$$ instanceof Float32Array || $formats_result$jscomp$11$$ instanceof Uint32Array || $formats_result$jscomp$11$$ instanceof Int32Array || $formats_result$jscomp$11$$ instanceof Array) {
+              for ($i$jscomp$47_name_$$ = 0; $i$jscomp$47_name_$$ < $formats_result$jscomp$11$$.length; ++$i$jscomp$47_name_$$) {
+                $HEAP32$$[$_asan_js_check_index$$($HEAP32$$, $p$jscomp$3$$ + 4 * $i$jscomp$47_name_$$ >> 2, $___asan_storeN$$)] = $formats_result$jscomp$11$$[$i$jscomp$47_name_$$];
               }
               return;
             }
             try {
-              $ret$jscomp$8$$ = $formats_result$jscomp$8$$.name | 0;
-            } catch ($e$jscomp$34$$) {
+              $ret$jscomp$9$$ = $formats_result$jscomp$11$$.name | 0;
+            } catch ($e$jscomp$42$$) {
               $GL$lastError$$ ||= 1280;
-              $err$$(`GL_INVALID_ENUM in glGet${0}v: Unknown object returned from WebGL getParameter(${$i$jscomp$46_name_$$})! (error: ${$e$jscomp$34$$})`);
+              $err$$(`GL_INVALID_ENUM in glGet${0}v: Unknown object returned from WebGL getParameter(${$i$jscomp$47_name_$$})! (error: ${$e$jscomp$42$$})`);
               return;
             }
           }
           break;
         default:
           $GL$lastError$$ ||= 1280;
-          $err$$(`GL_INVALID_ENUM in glGet${0}v: Native code calling glGet${0}v(${$i$jscomp$46_name_$$}) and it returns ${$formats_result$jscomp$8$$} of type ${typeof $formats_result$jscomp$8$$}!`);
+          $err$$(`GL_INVALID_ENUM in glGet${0}v: Native code calling glGet${0}v(${$i$jscomp$47_name_$$}) and it returns ${$formats_result$jscomp$11$$} of type ${typeof $formats_result$jscomp$11$$}!`);
           return;
       }
     }
-    $HEAP32$$[$p$jscomp$3$$ >> 2] = $ret$jscomp$8$$;
+    $HEAP32$$[$_asan_js_check_index$$($HEAP32$$, $p$jscomp$3$$ >> 2, $___asan_storeN$$)] = $ret$jscomp$9$$;
   } else {
     $GL$lastError$$ ||= 1281;
   }
-}, $webglGetLeftBracePos$$ = $name$jscomp$119$$ => "]" == $name$jscomp$119$$.slice(-1) && $name$jscomp$119$$.lastIndexOf("["), $heapObjectForWebGLType$$ = $type$jscomp$178$$ => {
+}, $webglGetLeftBracePos$$ = $name$jscomp$121$$ => "]" == $name$jscomp$121$$.slice(-1) && $name$jscomp$121$$.lastIndexOf("["), $heapObjectForWebGLType$$ = $type$jscomp$178$$ => {
   $type$jscomp$178$$ -= 5120;
   return 0 == $type$jscomp$178$$ ? $HEAP8$$ : 1 == $type$jscomp$178$$ ? $HEAPU8$$ : 2 == $type$jscomp$178$$ ? $HEAP16$$ : 4 == $type$jscomp$178$$ ? $HEAP32$$ : 6 == $type$jscomp$178$$ ? $HEAPF32$$ : 5 == $type$jscomp$178$$ || 28922 == $type$jscomp$178$$ || 28520 == $type$jscomp$178$$ || 30779 == $type$jscomp$178$$ || 30782 == $type$jscomp$178$$ ? $HEAPU32$$ : $HEAPU16$$;
 };
@@ -2037,11 +2170,11 @@ $FS$mkdir$$("/home/web_user");
   $FS$mount$$({$mount$() {
     var $node$jscomp$45$$ = $FS$createNode$$($proc_self$$, "fd", 16895, 73);
     $node$jscomp$45$$.$stream_ops$ = {$llseek$:$MEMFS$$.$stream_ops$.$llseek$};
-    $node$jscomp$45$$.$node_ops$ = {$lookup$($fd$jscomp$10_parent$jscomp$20_ret$jscomp$1$$, $name$jscomp$94$$) {
-      $fd$jscomp$10_parent$jscomp$20_ret$jscomp$1$$ = +$name$jscomp$94$$;
-      var $stream$jscomp$39$$ = $FS$getStreamChecked$$($fd$jscomp$10_parent$jscomp$20_ret$jscomp$1$$);
-      $fd$jscomp$10_parent$jscomp$20_ret$jscomp$1$$ = {parent:null, $mount$:{$mountpoint$:"fake"}, $node_ops$:{$readlink$:() => $stream$jscomp$39$$.path}, id:$fd$jscomp$10_parent$jscomp$20_ret$jscomp$1$$ + 1};
-      return $fd$jscomp$10_parent$jscomp$20_ret$jscomp$1$$.parent = $fd$jscomp$10_parent$jscomp$20_ret$jscomp$1$$;
+    $node$jscomp$45$$.$node_ops$ = {$lookup$($fd$jscomp$10_parent$jscomp$20_ret$$, $name$jscomp$94$$) {
+      $fd$jscomp$10_parent$jscomp$20_ret$$ = +$name$jscomp$94$$;
+      var $stream$jscomp$39$$ = $FS$getStreamChecked$$($fd$jscomp$10_parent$jscomp$20_ret$$);
+      $fd$jscomp$10_parent$jscomp$20_ret$$ = {parent:null, $mount$:{$mountpoint$:"fake"}, $node_ops$:{$readlink$:() => $stream$jscomp$39$$.path}, id:$fd$jscomp$10_parent$jscomp$20_ret$$ + 1};
+      return $fd$jscomp$10_parent$jscomp$20_ret$$.parent = $fd$jscomp$10_parent$jscomp$20_ret$$;
     }, $readdir$() {
       return Array.from($FS$streams$$.entries()).filter(([, $v$$]) => $v$$).map(([$k$jscomp$1$$]) => $k$jscomp$1$$.toString());
     }};
@@ -2069,21 +2202,21 @@ $FS$mkdir$$("/home/web_user");
     if (this.$$$$.$preservePointerOnDelete$) {
       return this.$$$$.count.value += 1, this;
     }
-    var $JSCompiler_temp_const$jscomp$41_clone$$ = $attachFinalizer$$, $JSCompiler_temp_const$jscomp$40$$ = Object, $JSCompiler_temp_const$jscomp$39$$ = $JSCompiler_temp_const$jscomp$40$$.create, $JSCompiler_temp_const$jscomp$38$$ = Object.getPrototypeOf(this), $o$jscomp$inline_240$$ = this.$$$$;
-    $JSCompiler_temp_const$jscomp$41_clone$$ = $JSCompiler_temp_const$jscomp$41_clone$$($JSCompiler_temp_const$jscomp$39$$.call($JSCompiler_temp_const$jscomp$40$$, $JSCompiler_temp_const$jscomp$38$$, {$$$$:{value:{count:$o$jscomp$inline_240$$.count, $deleteScheduled$:$o$jscomp$inline_240$$.$deleteScheduled$, $preservePointerOnDelete$:$o$jscomp$inline_240$$.$preservePointerOnDelete$, $ptr$:$o$jscomp$inline_240$$.$ptr$, $ptrType$:$o$jscomp$inline_240$$.$ptrType$, $smartPtr$:$o$jscomp$inline_240$$.$smartPtr$, 
-    $smartPtrType$:$o$jscomp$inline_240$$.$smartPtrType$}}}));
-    $JSCompiler_temp_const$jscomp$41_clone$$.$$$$.count.value += 1;
-    $JSCompiler_temp_const$jscomp$41_clone$$.$$$$.$deleteScheduled$ = !1;
-    return $JSCompiler_temp_const$jscomp$41_clone$$;
+    var $JSCompiler_temp_const$jscomp$44_clone$$ = $attachFinalizer$$, $JSCompiler_temp_const$jscomp$43$$ = Object, $JSCompiler_temp_const$jscomp$42$$ = $JSCompiler_temp_const$jscomp$43$$.create, $JSCompiler_temp_const$jscomp$41$$ = Object.getPrototypeOf(this), $o$jscomp$inline_241$$ = this.$$$$;
+    $JSCompiler_temp_const$jscomp$44_clone$$ = $JSCompiler_temp_const$jscomp$44_clone$$($JSCompiler_temp_const$jscomp$42$$.call($JSCompiler_temp_const$jscomp$43$$, $JSCompiler_temp_const$jscomp$41$$, {$$$$:{value:{count:$o$jscomp$inline_241$$.count, $deleteScheduled$:$o$jscomp$inline_241$$.$deleteScheduled$, $preservePointerOnDelete$:$o$jscomp$inline_241$$.$preservePointerOnDelete$, $ptr$:$o$jscomp$inline_241$$.$ptr$, $ptrType$:$o$jscomp$inline_241$$.$ptrType$, $smartPtr$:$o$jscomp$inline_241$$.$smartPtr$, 
+    $smartPtrType$:$o$jscomp$inline_241$$.$smartPtrType$}}}));
+    $JSCompiler_temp_const$jscomp$44_clone$$.$$$$.count.value += 1;
+    $JSCompiler_temp_const$jscomp$44_clone$$.$$$$.$deleteScheduled$ = !1;
+    return $JSCompiler_temp_const$jscomp$44_clone$$;
   }, ["delete"]() {
     this.$$$$.$ptr$ || $throwInstanceAlreadyDeleted$$(this);
     if (this.$$$$.$deleteScheduled$ && !this.$$$$.$preservePointerOnDelete$) {
       throw new $BindingError$$("Object already scheduled for deletion");
     }
     $detachFinalizer$$(this);
-    var $$$$jscomp$inline_244$$ = this.$$$$;
-    --$$$$jscomp$inline_244$$.count.value;
-    0 === $$$$jscomp$inline_244$$.count.value && ($$$$jscomp$inline_244$$.$smartPtr$ ? $$$$jscomp$inline_244$$.$smartPtrType$.$rawDestructor$($$$$jscomp$inline_244$$.$smartPtr$) : $$$$jscomp$inline_244$$.$ptrType$.$registeredClass$.$rawDestructor$($$$$jscomp$inline_244$$.$ptr$));
+    var $$$$jscomp$inline_245$$ = this.$$$$;
+    --$$$$jscomp$inline_245$$.count.value;
+    0 === $$$$jscomp$inline_245$$.count.value && ($$$$jscomp$inline_245$$.$smartPtr$ ? $$$$jscomp$inline_245$$.$smartPtrType$.$rawDestructor$($$$$jscomp$inline_245$$.$smartPtr$) : $$$$jscomp$inline_245$$.$ptrType$.$registeredClass$.$rawDestructor$($$$$jscomp$inline_245$$.$ptr$));
     this.$$$$.$preservePointerOnDelete$ || (this.$$$$.$smartPtr$ = void 0, this.$$$$.$ptr$ = void 0);
   }, isDeleted:function() {
     return !this.$$$$.$ptr$;
@@ -2099,13 +2232,14 @@ $FS$mkdir$$("/home/web_user");
   const $symbolDispose$$ = Symbol.dispose;
   $symbolDispose$$ && ($proto$jscomp$3$$[$symbolDispose$$] = $proto$jscomp$3$$["delete"]);
 })();
-Object.assign($RegisteredPointer$$.prototype, {$getPointee$($ptr$jscomp$inline_248$$) {
-  this.$rawGetPointee$ && ($ptr$jscomp$inline_248$$ = this.$rawGetPointee$($ptr$jscomp$inline_248$$));
-  return $ptr$jscomp$inline_248$$;
-}, $destructor$($ptr$jscomp$inline_249$$) {
-  this.$rawDestructor$?.($ptr$jscomp$inline_249$$);
+Object.assign($RegisteredPointer$$.prototype, {$getPointee$($ptr$jscomp$inline_249$$) {
+  this.$rawGetPointee$ && ($ptr$jscomp$inline_249$$ = this.$rawGetPointee$($ptr$jscomp$inline_249$$));
+  return $ptr$jscomp$inline_249$$;
+}, $destructor$($ptr$jscomp$inline_250$$) {
+  this.$rawDestructor$?.($ptr$jscomp$inline_250$$);
 }, $readValueFromPointer$:$readPointer$$, $fromWireType$:$RegisteredPointer_fromWireType$$});
 $assert$$(10 === $emval_handles$$.length);
+$Module$$.noExitRuntime && ($noExitRuntime$$ = $Module$$.noExitRuntime);
 $Module$$.preloadPlugins && ($preloadPlugins$$ = $Module$$.preloadPlugins);
 $Module$$.print && ($out$$ = $Module$$.print);
 $Module$$.printErr && ($err$$ = $Module$$.printErr);
@@ -2134,21 +2268,21 @@ $consumedModuleProp$$("preInit");
 $Module$$.addRunDependency = $addRunDependency$$;
 $Module$$.removeRunDependency = $removeRunDependency$$;
 $Module$$.FS_preloadFile = async($parent$jscomp$10$$, $name$jscomp$82$$, $url$jscomp$26$$, $canRead$jscomp$1$$, $canWrite$jscomp$1$$, $dontCreateFile$$, $canOwn$jscomp$1$$, $preFinish$$) => {
-  var $fullname$jscomp$1$$ = $name$jscomp$82$$ ? $PATH_FS$resolve$$($PATH$normalize$$($parent$jscomp$10$$ + "/" + $name$jscomp$82$$)) : $parent$jscomp$10$$, $dep$jscomp$1_id$jscomp$inline_252$$;
+  var $fullname$jscomp$1$$ = $name$jscomp$82$$ ? $PATH_FS$resolve$$($PATH$normalize$$($parent$jscomp$10$$ + "/" + $name$jscomp$82$$)) : $parent$jscomp$10$$, $dep$jscomp$1_id$jscomp$inline_253$$;
   a: {
-    for (var $byteArray$jscomp$1_orig$jscomp$inline_253$$ = $dep$jscomp$1_id$jscomp$inline_252$$ = `cp ${$fullname$jscomp$1$$}`;;) {
-      if (!$runDependencyTracking$$[$dep$jscomp$1_id$jscomp$inline_252$$]) {
+    for (var $byteArray$jscomp$1_orig$jscomp$inline_254$$ = $dep$jscomp$1_id$jscomp$inline_253$$ = `cp ${$fullname$jscomp$1$$}`;;) {
+      if (!$runDependencyTracking$$[$dep$jscomp$1_id$jscomp$inline_253$$]) {
         break a;
       }
-      $dep$jscomp$1_id$jscomp$inline_252$$ = $byteArray$jscomp$1_orig$jscomp$inline_253$$ + Math.random();
+      $dep$jscomp$1_id$jscomp$inline_253$$ = $byteArray$jscomp$1_orig$jscomp$inline_254$$ + Math.random();
     }
   }
-  $addRunDependency$$($dep$jscomp$1_id$jscomp$inline_252$$);
+  $addRunDependency$$($dep$jscomp$1_id$jscomp$inline_253$$);
   try {
-    $byteArray$jscomp$1_orig$jscomp$inline_253$$ = $url$jscomp$26$$, "string" == typeof $url$jscomp$26$$ && ($byteArray$jscomp$1_orig$jscomp$inline_253$$ = await $asyncLoad$$($url$jscomp$26$$)), $byteArray$jscomp$1_orig$jscomp$inline_253$$ = await $FS_handledByPreloadPlugin$$($byteArray$jscomp$1_orig$jscomp$inline_253$$, $fullname$jscomp$1$$), $preFinish$$?.(), $dontCreateFile$$ || $FS$createDataFile$$($parent$jscomp$10$$, $name$jscomp$82$$, $byteArray$jscomp$1_orig$jscomp$inline_253$$, $canRead$jscomp$1$$, 
+    $byteArray$jscomp$1_orig$jscomp$inline_254$$ = $url$jscomp$26$$, "string" == typeof $url$jscomp$26$$ && ($byteArray$jscomp$1_orig$jscomp$inline_254$$ = await $asyncLoad$$($url$jscomp$26$$)), $byteArray$jscomp$1_orig$jscomp$inline_254$$ = await $FS_handledByPreloadPlugin$$($byteArray$jscomp$1_orig$jscomp$inline_254$$, $fullname$jscomp$1$$), $preFinish$$?.(), $dontCreateFile$$ || $FS$createDataFile$$($parent$jscomp$10$$, $name$jscomp$82$$, $byteArray$jscomp$1_orig$jscomp$inline_254$$, $canRead$jscomp$1$$, 
     $canWrite$jscomp$1$$, $canOwn$jscomp$1$$);
   } finally {
-    $removeRunDependency$$($dep$jscomp$1_id$jscomp$inline_252$$);
+    $removeRunDependency$$($dep$jscomp$1_id$jscomp$inline_253$$);
   }
 };
 $Module$$.FS_unlink = (...$args$jscomp$15$$) => $FS$unlink$$(...$args$jscomp$15$$);
@@ -2156,44 +2290,452 @@ $Module$$.FS_createPath = (...$args$jscomp$14$$) => $FS$createPath$$(...$args$js
 $Module$$.FS_createDevice = (...$args$jscomp$17$$) => $FS$createDevice$$(...$args$jscomp$17$$);
 $Module$$.FS_createDataFile = (...$args$jscomp$6$$) => $FS$createDataFile$$(...$args$jscomp$6$$);
 $Module$$.FS_createLazyFile = (...$args$jscomp$16$$) => $FS$createLazyFile$$(...$args$jscomp$16$$);
-"writeI53ToI64Clamped writeI53ToI64Signaling writeI53ToU64Clamped writeI53ToU64Signaling convertI32PairToI53 convertI32PairToI53Checked convertU32PairToI53 stackAlloc getTempRet0 setTempRet0 zeroMemory exitJS withStackSave inetPton4 inetNtop4 inetPton6 inetNtop6 readSockaddr writeSockaddr runMainThreadEmAsm autoResumeAudioContext getDynCaller dynCall handleException keepRuntimeAlive runtimeKeepalivePush runtimeKeepalivePop callUserCallback maybeExit asmjsMangle HandleAllocator addOnInit addOnPostCtor addOnPreMain addOnExit STACK_SIZE STACK_ALIGN POINTER_SIZE ASSERTIONS ccall cwrap convertJsFunctionToWasm getEmptyTableSlot updateTableMap getFunctionAddress addFunction removeFunction intArrayToString stringToAscii stringToNewUTF8 stringToUTF8OnStack writeArrayToMemory registerKeyEventCallback getBoundingClientRect fillMouseEventData registerMouseEventCallback registerWheelEventCallback registerUiEventCallback registerFocusEventCallback fillDeviceOrientationEventData registerDeviceOrientationEventCallback fillDeviceMotionEventData registerDeviceMotionEventCallback screenOrientation fillOrientationChangeEventData registerOrientationChangeEventCallback fillFullscreenChangeEventData registerFullscreenChangeEventCallback JSEvents_requestFullscreen JSEvents_resizeCanvasForFullscreen registerRestoreOldStyle hideEverythingExceptGivenElement restoreHiddenElements setLetterbox softFullscreenResizeWebGLRenderTarget doRequestFullscreen fillPointerlockChangeEventData registerPointerlockChangeEventCallback registerPointerlockErrorEventCallback requestPointerLock fillVisibilityChangeEventData registerVisibilityChangeEventCallback registerTouchEventCallback fillGamepadEventData registerGamepadEventCallback registerBeforeUnloadEventCallback fillBatteryEventData registerBatteryEventCallback setCanvasElementSize getCanvasElementSize jsStackTrace getCallstack convertPCtoSourceLocation checkWasiClock wasiRightsToMuslOFlags wasiOFlagsToMuslOFlags safeSetTimeout setImmediateWrapped safeRequestAnimationFrame clearImmediateWrapped registerPostMainLoop registerPreMainLoop getPromise makePromise idsToPromises makePromiseCallback findMatchingCatch Browser_asyncPrepareDataCounter isLeapYear ydayFromDate arraySum addDays getSocketFromFD getSocketAddress FS_mkdirTree _setNetworkCallback emscriptenWebGLGetUniform emscriptenWebGLGetVertexAttrib __glGetActiveAttribOrUniform writeGLArray registerWebGlEventCallback runAndAbortIfError emscriptenWebGLGetIndexed ALLOC_NORMAL ALLOC_STACK allocate writeStringToMemory writeAsciiToMemory allocateUTF8 allocateUTF8OnStack demangle stackTrace getNativeTypeSize getFunctionArgsName createJsInvokerSignature PureVirtualError registerInheritedInstance unregisterInheritedInstance getInheritedInstanceCount getLiveInheritedInstances enumReadValueFromPointer setDelayFunction validateThis count_emval_handles".split(" ").forEach(function($sym$jscomp$2$$) {
+"writeI53ToI64Clamped writeI53ToI64Signaling writeI53ToU64Clamped writeI53ToU64Signaling convertI32PairToI53 convertI32PairToI53Checked convertU32PairToI53 stackAlloc getTempRet0 setTempRet0 exitJS withStackSave inetPton4 inetNtop4 inetPton6 inetNtop6 readSockaddr writeSockaddr runMainThreadEmAsm autoResumeAudioContext getDynCaller dynCall handleException runtimeKeepalivePush runtimeKeepalivePop callUserCallback maybeExit asmjsMangle HandleAllocator addOnInit addOnPostCtor addOnPreMain addOnExit STACK_SIZE STACK_ALIGN POINTER_SIZE ASSERTIONS ccall cwrap convertJsFunctionToWasm getEmptyTableSlot updateTableMap getFunctionAddress addFunction removeFunction intArrayToString stringToAscii stringToUTF8OnStack writeArrayToMemory registerKeyEventCallback getBoundingClientRect fillMouseEventData registerMouseEventCallback registerWheelEventCallback registerUiEventCallback registerFocusEventCallback fillDeviceOrientationEventData registerDeviceOrientationEventCallback fillDeviceMotionEventData registerDeviceMotionEventCallback screenOrientation fillOrientationChangeEventData registerOrientationChangeEventCallback fillFullscreenChangeEventData registerFullscreenChangeEventCallback JSEvents_requestFullscreen JSEvents_resizeCanvasForFullscreen registerRestoreOldStyle hideEverythingExceptGivenElement restoreHiddenElements setLetterbox softFullscreenResizeWebGLRenderTarget doRequestFullscreen fillPointerlockChangeEventData registerPointerlockChangeEventCallback registerPointerlockErrorEventCallback requestPointerLock fillVisibilityChangeEventData registerVisibilityChangeEventCallback registerTouchEventCallback fillGamepadEventData registerGamepadEventCallback registerBeforeUnloadEventCallback fillBatteryEventData registerBatteryEventCallback setCanvasElementSize getCanvasElementSize getCallstack wasiRightsToMuslOFlags wasiOFlagsToMuslOFlags safeSetTimeout setImmediateWrapped safeRequestAnimationFrame clearImmediateWrapped registerPostMainLoop registerPreMainLoop getPromise makePromise idsToPromises makePromiseCallback findMatchingCatch Browser_asyncPrepareDataCounter isLeapYear ydayFromDate arraySum addDays getSocketFromFD getSocketAddress FS_mkdirTree _setNetworkCallback emscriptenWebGLGetUniform emscriptenWebGLGetVertexAttrib __glGetActiveAttribOrUniform writeGLArray registerWebGlEventCallback runAndAbortIfError emscriptenWebGLGetIndexed ALLOC_NORMAL ALLOC_STACK allocate writeStringToMemory writeAsciiToMemory allocateUTF8 allocateUTF8OnStack demangle stackTrace getNativeTypeSize getFunctionArgsName createJsInvokerSignature PureVirtualError registerInheritedInstance unregisterInheritedInstance getInheritedInstanceCount getLiveInheritedInstances enumReadValueFromPointer setDelayFunction validateThis count_emval_handles".split(" ").forEach(function($sym$jscomp$2$$) {
   $unexportedRuntimeSymbol$$($sym$jscomp$2$$);
 });
-"run out err callMain abort wasmExports HEAPF32 HEAPF64 HEAP8 HEAP16 HEAPU16 HEAP32 HEAPU32 HEAP64 HEAPU64 writeStackCookie checkStackCookie writeI53ToI64 readI53FromI64 readI53FromU64 INT53_MAX INT53_MIN bigintToI53Checked stackSave stackRestore createNamedFunction ptrToString getHeapMax growMemory ENV ERRNO_CODES strError DNS Protocols Sockets timers warnOnce readEmAsmArgsArray readEmAsmArgs runEmAsmFunction jstoi_q getExecutableName asyncLoad alignMemory mmapAlloc wasmTable wasmMemory getUniqueRunDependency noExitRuntime addOnPreRun addOnPostRun freeTableIndexes functionsInTableMap setValue getValue PATH PATH_FS UTF8Decoder UTF8ArrayToString UTF8ToString stringToUTF8Array stringToUTF8 lengthBytesUTF8 intArrayFromString AsciiToString UTF16Decoder UTF16ToString stringToUTF16 lengthBytesUTF16 UTF32ToString stringToUTF32 lengthBytesUTF32 JSEvents specialHTMLTargets maybeCStringToJsString findEventTarget findCanvasEventTarget currentFullscreenStrategy restoreOldWindowedStyle UNWIND_CACHE ExitStatus getEnvStrings doReadv doWritev initRandomFill randomFill emSetImmediate emClearImmediate_deps emClearImmediate promiseMap uncaughtExceptionCount exceptionLast exceptionCaught ExceptionInfo Browser requestFullscreen requestFullScreen setCanvasSize getUserMedia createContext getPreloadedImageData__data wget MONTH_DAYS_REGULAR MONTH_DAYS_LEAP MONTH_DAYS_REGULAR_CUMULATIVE MONTH_DAYS_LEAP_CUMULATIVE SYSCALLS preloadPlugins FS_createPreloadedFile FS_modeStringToFlags FS_getMode FS_stdin_getChar_buffer FS_stdin_getChar FS_readFile FS FS_root FS_mounts FS_devices FS_streams FS_nextInode FS_nameTable FS_currentPath FS_initialized FS_ignorePermissions FS_filesystems FS_syncFSRequests FS_readFiles FS_lookupPath FS_getPath FS_hashName FS_hashAddNode FS_hashRemoveNode FS_lookupNode FS_createNode FS_destroyNode FS_isRoot FS_isMountpoint FS_isFile FS_isDir FS_isLink FS_isChrdev FS_isBlkdev FS_isFIFO FS_isSocket FS_flagsToPermissionString FS_nodePermissions FS_mayLookup FS_mayCreate FS_mayDelete FS_mayOpen FS_checkOpExists FS_nextfd FS_getStreamChecked FS_getStream FS_createStream FS_closeStream FS_dupStream FS_doSetAttr FS_chrdev_stream_ops FS_major FS_minor FS_makedev FS_registerDevice FS_getDevice FS_getMounts FS_syncfs FS_mount FS_unmount FS_lookup FS_mknod FS_statfs FS_statfsStream FS_statfsNode FS_create FS_mkdir FS_mkdev FS_symlink FS_rename FS_rmdir FS_readdir FS_readlink FS_stat FS_fstat FS_lstat FS_doChmod FS_chmod FS_lchmod FS_fchmod FS_doChown FS_chown FS_lchown FS_fchown FS_doTruncate FS_truncate FS_ftruncate FS_utime FS_open FS_close FS_isClosed FS_llseek FS_read FS_write FS_mmap FS_msync FS_ioctl FS_writeFile FS_cwd FS_chdir FS_createDefaultDirectories FS_createDefaultDevices FS_createSpecialDirectories FS_createStandardStreams FS_staticInit FS_init FS_quit FS_findObject FS_analyzePath FS_createFile FS_forceLoadFile FS_absolutePath FS_createFolder FS_createLink FS_joinPath FS_mmapAlloc FS_standardizePath MEMFS TTY PIPEFS SOCKFS tempFixedLengthArray miniTempWebGLFloatBuffers miniTempWebGLIntBuffers heapObjectForWebGLType toTypedArrayIndex webgl_enable_WEBGL_multi_draw webgl_enable_EXT_polygon_offset_clamp webgl_enable_EXT_clip_control webgl_enable_WEBGL_polygon_mode GL emscriptenWebGLGet computeUnpackAlignedImageSize colorChannelsInGlTextureFormat emscriptenWebGLGetTexPixelData webglGetUniformLocation webglPrepareUniformLocationsBeforeFirstUse webglGetLeftBracePos AL GLUT EGL GLEW IDBStore SDL SDL_gfx webgl_enable_WEBGL_draw_instanced_base_vertex_base_instance webgl_enable_WEBGL_multi_draw_instanced_base_vertex_base_instance print printErr jstoi_s InternalError BindingError throwInternalError throwBindingError registeredTypes awaitingDependencies typeDependencies tupleRegistrations structRegistrations sharedRegisterType whenDependentTypesAreResolved getTypeName getFunctionName heap32VectorToArray requireRegisteredType usesDestructorStack checkArgCount getRequiredArgCount createJsInvoker UnboundTypeError EmValType EmValOptionalType throwUnboundTypeError ensureOverloadTable exposePublicSymbol replacePublicSymbol embindRepr registeredInstances getBasestPointer getInheritedInstance registeredPointers registerType integerReadValueFromPointer floatReadValueFromPointer assertIntegerRange readPointer runDestructors craftInvokerFunction embind__requireFunction genericPointerToWireType constNoSmartPtrRawPointerToWireType nonConstNoSmartPtrRawPointerToWireType init_RegisteredPointer RegisteredPointer RegisteredPointer_fromWireType runDestructor releaseClassHandle finalizationRegistry detachFinalizer_deps detachFinalizer attachFinalizer makeClassHandle init_ClassHandle ClassHandle throwInstanceAlreadyDeleted deletionQueue flushPendingDeletes delayFunction RegisteredClass shallowCopyInternalPointer downcastPointer upcastPointer char_0 char_9 makeLegalFunctionName emval_freelist emval_handles emval_symbols getStringOrSymbol Emval emval_returnValue emval_lookupTypes emval_methodCallers emval_addMethodCaller".split(" ").forEach($unexportedRuntimeSymbol$$);
-var $ASM_CONSTS$$ = {100832:() => {
+"run out err callMain abort wasmExports HEAPF32 HEAPF64 HEAP8 HEAP16 HEAPU16 HEAP32 HEAPU32 HEAP64 HEAPU64 writeStackCookie checkStackCookie writeI53ToI64 readI53FromI64 readI53FromU64 INT53_MAX INT53_MIN bigintToI53Checked stackSave stackRestore createNamedFunction ptrToString zeroMemory getHeapMax growMemory ENV ERRNO_CODES strError DNS Protocols Sockets timers warnOnce withBuiltinMalloc readEmAsmArgsArray readEmAsmArgs runEmAsmFunction jstoi_q getExecutableName keepRuntimeAlive asyncLoad alignMemory mmapAlloc wasmTable wasmMemory getUniqueRunDependency noExitRuntime addOnPreRun addOnPostRun freeTableIndexes functionsInTableMap setValue getValue PATH PATH_FS UTF8Decoder UTF8ArrayToString UTF8ToString stringToUTF8Array stringToUTF8 lengthBytesUTF8 intArrayFromString AsciiToString UTF16Decoder UTF16ToString stringToUTF16 lengthBytesUTF16 UTF32ToString stringToUTF32 lengthBytesUTF32 stringToNewUTF8 JSEvents specialHTMLTargets maybeCStringToJsString findEventTarget findCanvasEventTarget currentFullscreenStrategy restoreOldWindowedStyle jsStackTrace UNWIND_CACHE convertPCtoSourceLocation ExitStatus getEnvStrings checkWasiClock doReadv doWritev initRandomFill randomFill emSetImmediate emClearImmediate_deps emClearImmediate promiseMap uncaughtExceptionCount exceptionLast exceptionCaught ExceptionInfo Browser requestFullscreen requestFullScreen setCanvasSize getUserMedia createContext getPreloadedImageData__data wget MONTH_DAYS_REGULAR MONTH_DAYS_LEAP MONTH_DAYS_REGULAR_CUMULATIVE MONTH_DAYS_LEAP_CUMULATIVE SYSCALLS preloadPlugins FS_createPreloadedFile FS_modeStringToFlags FS_getMode FS_stdin_getChar_buffer FS_stdin_getChar FS_readFile FS FS_root FS_mounts FS_devices FS_streams FS_nextInode FS_nameTable FS_currentPath FS_initialized FS_ignorePermissions FS_filesystems FS_syncFSRequests FS_readFiles FS_lookupPath FS_getPath FS_hashName FS_hashAddNode FS_hashRemoveNode FS_lookupNode FS_createNode FS_destroyNode FS_isRoot FS_isMountpoint FS_isFile FS_isDir FS_isLink FS_isChrdev FS_isBlkdev FS_isFIFO FS_isSocket FS_flagsToPermissionString FS_nodePermissions FS_mayLookup FS_mayCreate FS_mayDelete FS_mayOpen FS_checkOpExists FS_nextfd FS_getStreamChecked FS_getStream FS_createStream FS_closeStream FS_dupStream FS_doSetAttr FS_chrdev_stream_ops FS_major FS_minor FS_makedev FS_registerDevice FS_getDevice FS_getMounts FS_syncfs FS_mount FS_unmount FS_lookup FS_mknod FS_statfs FS_statfsStream FS_statfsNode FS_create FS_mkdir FS_mkdev FS_symlink FS_rename FS_rmdir FS_readdir FS_readlink FS_stat FS_fstat FS_lstat FS_doChmod FS_chmod FS_lchmod FS_fchmod FS_doChown FS_chown FS_lchown FS_fchown FS_doTruncate FS_truncate FS_ftruncate FS_utime FS_open FS_close FS_isClosed FS_llseek FS_read FS_write FS_mmap FS_msync FS_ioctl FS_writeFile FS_cwd FS_chdir FS_createDefaultDirectories FS_createDefaultDevices FS_createSpecialDirectories FS_createStandardStreams FS_staticInit FS_init FS_quit FS_findObject FS_analyzePath FS_createFile FS_forceLoadFile FS_absolutePath FS_createFolder FS_createLink FS_joinPath FS_mmapAlloc FS_standardizePath MEMFS TTY PIPEFS SOCKFS tempFixedLengthArray miniTempWebGLFloatBuffers miniTempWebGLIntBuffers heapObjectForWebGLType toTypedArrayIndex webgl_enable_WEBGL_multi_draw webgl_enable_EXT_polygon_offset_clamp webgl_enable_EXT_clip_control webgl_enable_WEBGL_polygon_mode GL emscriptenWebGLGet computeUnpackAlignedImageSize colorChannelsInGlTextureFormat emscriptenWebGLGetTexPixelData webglGetUniformLocation webglPrepareUniformLocationsBeforeFirstUse webglGetLeftBracePos AL GLUT EGL GLEW IDBStore SDL SDL_gfx webgl_enable_WEBGL_draw_instanced_base_vertex_base_instance webgl_enable_WEBGL_multi_draw_instanced_base_vertex_base_instance print printErr jstoi_s InternalError BindingError throwInternalError throwBindingError registeredTypes awaitingDependencies typeDependencies tupleRegistrations structRegistrations sharedRegisterType whenDependentTypesAreResolved getTypeName getFunctionName heap32VectorToArray requireRegisteredType usesDestructorStack checkArgCount getRequiredArgCount createJsInvoker UnboundTypeError EmValType EmValOptionalType throwUnboundTypeError ensureOverloadTable exposePublicSymbol replacePublicSymbol embindRepr registeredInstances getBasestPointer getInheritedInstance registeredPointers registerType integerReadValueFromPointer floatReadValueFromPointer assertIntegerRange readPointer runDestructors craftInvokerFunction embind__requireFunction genericPointerToWireType constNoSmartPtrRawPointerToWireType nonConstNoSmartPtrRawPointerToWireType init_RegisteredPointer RegisteredPointer RegisteredPointer_fromWireType runDestructor releaseClassHandle finalizationRegistry detachFinalizer_deps detachFinalizer attachFinalizer makeClassHandle init_ClassHandle ClassHandle throwInstanceAlreadyDeleted deletionQueue flushPendingDeletes delayFunction RegisteredClass shallowCopyInternalPointer downcastPointer upcastPointer char_0 char_9 makeLegalFunctionName emval_freelist emval_handles emval_symbols getStringOrSymbol Emval emval_returnValue emval_lookupTypes emval_methodCallers emval_addMethodCaller".split(" ").forEach($unexportedRuntimeSymbol$$);
+var $ASM_CONSTS$$ = {306902752:() => {
   throw "A böngésződ nem támogatja a WebGL-t!";
-}, 100883:() => {
+}, 306902803:() => {
+}, 306902804:() => {
+}, 306902805:() => {
+}, 306902806:() => {
+}, 306902807:() => {
+}, 306902808:() => {
+}, 306902809:() => {
+}, 306902810:() => {
+}, 306902811:() => {
+}, 306902812:() => {
+}, 306902813:() => {
+}, 306902814:() => {
+}, 306902815:() => {
+}, 306902816:() => {
+}, 306902817:() => {
+}, 306902818:() => {
+}, 306902819:() => {
+}, 306902820:() => {
+}, 306902821:() => {
+}, 306902822:() => {
+}, 306902823:() => {
+}, 306902824:() => {
+}, 306902825:() => {
+}, 306902826:() => {
+}, 306902827:() => {
+}, 306902828:() => {
+}, 306902829:() => {
+}, 306902830:() => {
+}, 306902831:() => {
+}, 306902832:() => {
+}, 306902833:() => {
+}, 306902834:() => {
+}, 306902835:() => {
+}, 306902836:() => {
+}, 306902837:() => {
+}, 306902838:() => {
+}, 306902839:() => {
+}, 306902840:() => {
+}, 306902841:() => {
+}, 306902842:() => {
+}, 306902843:() => {
+}, 306902844:() => {
+}, 306902845:() => {
+}, 306902846:() => {
+}, 306902847:() => {
+}, 306902848:() => {
   console.error("Renderer: Tried to set non-existent shader!");
-}, 100944:() => {
+}, 306902909:() => {
+}, 306902910:() => {
+}, 306902911:() => {
+}, 306902912:() => {
+}, 306902913:() => {
+}, 306902914:() => {
+}, 306902915:() => {
+}, 306902916:() => {
+}, 306902917:() => {
+}, 306902918:() => {
+}, 306902919:() => {
+}, 306902920:() => {
+}, 306902921:() => {
+}, 306902922:() => {
+}, 306902923:() => {
+}, 306902924:() => {
+}, 306902925:() => {
+}, 306902926:() => {
+}, 306902927:() => {
+}, 306902928:() => {
+}, 306902929:() => {
+}, 306902930:() => {
+}, 306902931:() => {
+}, 306902932:() => {
+}, 306902933:() => {
+}, 306902934:() => {
+}, 306902935:() => {
+}, 306902936:() => {
+}, 306902937:() => {
+}, 306902938:() => {
+}, 306902939:() => {
+}, 306902940:() => {
+}, 306902941:() => {
+}, 306902942:() => {
+}, 306902943:() => {
+}, 306902944:() => {
   console.error("Renderer: No shader is set!");
-}, 100989:$$0$$ => {
+}, 306902989:() => {
+}, 306902990:() => {
+}, 306902991:() => {
+}, 306902992:() => {
+}, 306902993:() => {
+}, 306902994:() => {
+}, 306902995:() => {
+}, 306902996:() => {
+}, 306902997:() => {
+}, 306902998:() => {
+}, 306902999:() => {
+}, 306903E3:() => {
+}, 306903001:() => {
+}, 306903002:() => {
+}, 306903003:() => {
+}, 306903004:() => {
+}, 306903005:() => {
+}, 306903006:() => {
+}, 306903007:() => {
+}, 306903008:() => {
+}, 306903009:() => {
+}, 306903010:() => {
+}, 306903011:() => {
+}, 306903012:() => {
+}, 306903013:() => {
+}, 306903014:() => {
+}, 306903015:() => {
+}, 306903016:() => {
+}, 306903017:() => {
+}, 306903018:() => {
+}, 306903019:() => {
+}, 306903020:() => {
+}, 306903021:() => {
+}, 306903022:() => {
+}, 306903023:() => {
+}, 306903024:() => {
+}, 306903025:() => {
+}, 306903026:() => {
+}, 306903027:() => {
+}, 306903028:() => {
+}, 306903029:() => {
+}, 306903030:() => {
+}, 306903031:() => {
+}, 306903032:() => {
+}, 306903033:() => {
+}, 306903034:() => {
+}, 306903035:() => {
+}, 306903036:() => {
+}, 306903037:() => {
+}, 306903038:() => {
+}, 306903039:() => {
+}, 306903040:$$0$$ => {
   throw "Sikertelen shader fordítás: " + $UTF8ToString$$($$0$$);
-}, 101053:$$0$jscomp$1$$ => {
+}, 306903104:() => {
+}, 306903105:() => {
+}, 306903106:() => {
+}, 306903107:() => {
+}, 306903108:() => {
+}, 306903109:() => {
+}, 306903110:() => {
+}, 306903111:() => {
+}, 306903112:() => {
+}, 306903113:() => {
+}, 306903114:() => {
+}, 306903115:() => {
+}, 306903116:() => {
+}, 306903117:() => {
+}, 306903118:() => {
+}, 306903119:() => {
+}, 306903120:() => {
+}, 306903121:() => {
+}, 306903122:() => {
+}, 306903123:() => {
+}, 306903124:() => {
+}, 306903125:() => {
+}, 306903126:() => {
+}, 306903127:() => {
+}, 306903128:() => {
+}, 306903129:() => {
+}, 306903130:() => {
+}, 306903131:() => {
+}, 306903132:() => {
+}, 306903133:() => {
+}, 306903134:() => {
+}, 306903135:() => {
+}, 306903136:$$0$jscomp$1$$ => {
   throw "Sikertelen shader összekapcsolás: " + $UTF8ToString$$($$0$jscomp$1$$);
-}, 101123:($$0$jscomp$2$$, $$1_fps$$) => {
+}, 306903206:() => {
+}, 306903207:() => {
+}, 306903208:() => {
+}, 306903209:() => {
+}, 306903210:() => {
+}, 306903211:() => {
+}, 306903212:() => {
+}, 306903213:() => {
+}, 306903214:() => {
+}, 306903215:() => {
+}, 306903216:() => {
+}, 306903217:() => {
+}, 306903218:() => {
+}, 306903219:() => {
+}, 306903220:() => {
+}, 306903221:() => {
+}, 306903222:() => {
+}, 306903223:() => {
+}, 306903224:() => {
+}, 306903225:() => {
+}, 306903226:() => {
+}, 306903227:() => {
+}, 306903228:() => {
+}, 306903229:() => {
+}, 306903230:() => {
+}, 306903231:() => {
+}, 306903232:() => {
+}, 306903233:() => {
+}, 306903234:() => {
+}, 306903235:() => {
+}, 306903236:() => {
+}, 306903237:() => {
+}, 306903238:() => {
+}, 306903239:() => {
+}, 306903240:() => {
+}, 306903241:() => {
+}, 306903242:() => {
+}, 306903243:() => {
+}, 306903244:() => {
+}, 306903245:() => {
+}, 306903246:() => {
+}, 306903247:() => {
+}, 306903248:() => {
+}, 306903249:() => {
+}, 306903250:() => {
+}, 306903251:() => {
+}, 306903252:() => {
+}, 306903253:() => {
+}, 306903254:() => {
+}, 306903255:() => {
+}, 306903256:() => {
+}, 306903257:() => {
+}, 306903258:() => {
+}, 306903259:() => {
+}, 306903260:() => {
+}, 306903261:() => {
+}, 306903262:() => {
+}, 306903263:() => {
+}, 306903264:($$0$jscomp$2$$, $$1_fps$$) => {
   if ($$1_fps$$ = document.getElementById($UTF8ToString$$($$1_fps$$))) {
     $$1_fps$$.innerText = $$0$jscomp$2$$;
   }
-}, 101213:$$0$jscomp$3$$ => {
+}, 306903354:() => {
+}, 306903355:() => {
+}, 306903356:() => {
+}, 306903357:() => {
+}, 306903358:() => {
+}, 306903359:() => {
+}, 306903360:() => {
+}, 306903361:() => {
+}, 306903362:() => {
+}, 306903363:() => {
+}, 306903364:() => {
+}, 306903365:() => {
+}, 306903366:() => {
+}, 306903367:() => {
+}, 306903368:() => {
+}, 306903369:() => {
+}, 306903370:() => {
+}, 306903371:() => {
+}, 306903372:() => {
+}, 306903373:() => {
+}, 306903374:() => {
+}, 306903375:() => {
+}, 306903376:() => {
+}, 306903377:() => {
+}, 306903378:() => {
+}, 306903379:() => {
+}, 306903380:() => {
+}, 306903381:() => {
+}, 306903382:() => {
+}, 306903383:() => {
+}, 306903384:() => {
+}, 306903385:() => {
+}, 306903386:() => {
+}, 306903387:() => {
+}, 306903388:() => {
+}, 306903389:() => {
+}, 306903390:() => {
+}, 306903391:() => {
+}, 306903392:$$0$jscomp$3$$ => {
   throw "Sikertelen fájl beolvasás: " + $UTF8ToString$$($$0$jscomp$3$$);
-}, 101276:() => {
+}, 306903455:() => {
+}, 306903456:() => {
   console.log("full");
-}, 101296:() => {
+}, 306903476:() => {
+}, 306903477:() => {
+}, 306903478:() => {
+}, 306903479:() => {
+}, 306903480:() => {
+}, 306903481:() => {
+}, 306903482:() => {
+}, 306903483:() => {
+}, 306903484:() => {
+}, 306903485:() => {
+}, 306903486:() => {
+}, 306903487:() => {
+}, 306903488:() => {
+}, 306903489:() => {
+}, 306903490:() => {
+}, 306903491:() => {
+}, 306903492:() => {
+}, 306903493:() => {
+}, 306903494:() => {
+}, 306903495:() => {
+}, 306903496:() => {
+}, 306903497:() => {
+}, 306903498:() => {
+}, 306903499:() => {
+}, 306903500:() => {
+}, 306903501:() => {
+}, 306903502:() => {
+}, 306903503:() => {
+}, 306903504:() => {
+}, 306903505:() => {
+}, 306903506:() => {
+}, 306903507:() => {
+}, 306903508:() => {
+}, 306903509:() => {
+}, 306903510:() => {
+}, 306903511:() => {
+}, 306903512:() => {
+}, 306903513:() => {
+}, 306903514:() => {
+}, 306903515:() => {
+}, 306903516:() => {
+}, 306903517:() => {
+}, 306903518:() => {
+}, 306903519:() => {
+}, 306903520:() => {
   console.log("2x2");
-}, 101315:() => {
+}, 306903539:() => {
+}, 306903540:() => {
+}, 306903541:() => {
+}, 306903542:() => {
+}, 306903543:() => {
+}, 306903544:() => {
+}, 306903545:() => {
+}, 306903546:() => {
+}, 306903547:() => {
+}, 306903548:() => {
+}, 306903549:() => {
+}, 306903550:() => {
+}, 306903551:() => {
+}, 306903552:() => {
+}, 306903553:() => {
+}, 306903554:() => {
+}, 306903555:() => {
+}, 306903556:() => {
+}, 306903557:() => {
+}, 306903558:() => {
+}, 306903559:() => {
+}, 306903560:() => {
+}, 306903561:() => {
+}, 306903562:() => {
+}, 306903563:() => {
+}, 306903564:() => {
+}, 306903565:() => {
+}, 306903566:() => {
+}, 306903567:() => {
+}, 306903568:() => {
+}, 306903569:() => {
+}, 306903570:() => {
+}, 306903571:() => {
+}, 306903572:() => {
+}, 306903573:() => {
+}, 306903574:() => {
+}, 306903575:() => {
+}, 306903576:() => {
+}, 306903577:() => {
+}, 306903578:() => {
+}, 306903579:() => {
+}, 306903580:() => {
+}, 306903581:() => {
+}, 306903582:() => {
+}, 306903583:() => {
+}, 306903584:() => {
   console.log("4x4");
-}}, $___getTypeName$$ = $makeInvalidEarlyAccess$$("___getTypeName"), $_malloc$$ = $makeInvalidEarlyAccess$$("_malloc"), $_free$$ = $makeInvalidEarlyAccess$$("_free"), $_emscripten_stack_get_end$$ = $makeInvalidEarlyAccess$$("_emscripten_stack_get_end"), $_strerror$$ = $makeInvalidEarlyAccess$$("_strerror"), $_emscripten_stack_init$$ = $makeInvalidEarlyAccess$$("_emscripten_stack_init"), $wasmMemory$$ = $makeInvalidEarlyAccess$$("wasmMemory"), $wasmTable$$ = $makeInvalidEarlyAccess$$("wasmTable"), 
-$wasmImports$$ = {__cxa_throw:($JSCompiler_StaticMethods_init$self$jscomp$inline_255_ptr$jscomp$3$$, $type$jscomp$170$$, $destructor$jscomp$2$$) => {
-  $JSCompiler_StaticMethods_init$self$jscomp$inline_255_ptr$jscomp$3$$ = new $ExceptionInfo$$($JSCompiler_StaticMethods_init$self$jscomp$inline_255_ptr$jscomp$3$$);
-  $HEAPU32$$[$JSCompiler_StaticMethods_init$self$jscomp$inline_255_ptr$jscomp$3$$.$ptr$ + 16 >> 2] = 0;
-  $HEAPU32$$[$JSCompiler_StaticMethods_init$self$jscomp$inline_255_ptr$jscomp$3$$.$ptr$ + 4 >> 2] = $type$jscomp$170$$;
-  $HEAPU32$$[$JSCompiler_StaticMethods_init$self$jscomp$inline_255_ptr$jscomp$3$$.$ptr$ + 8 >> 2] = $destructor$jscomp$2$$;
+}, 306903603:() => {
+}, 306903604:() => {
+}, 306903605:() => {
+}, 306903606:() => {
+}, 306903607:() => {
+}, 306903608:() => {
+}, 306903609:() => {
+}, 306903610:() => {
+}, 306903611:() => {
+}, 306903612:() => {
+}, 306903613:() => {
+}, 306903614:() => {
+}, 306903615:() => {
+}, 306903616:() => {
+}, 306903617:() => {
+}, 306903618:() => {
+}, 306903619:() => {
+}, 306903620:() => {
+}, 306903621:() => {
+}, 306903622:() => {
+}, 306903623:() => {
+}, 306903624:() => {
+}, 306903625:() => {
+}, 306903626:() => {
+}, 306903627:() => {
+}, 306903628:() => {
+}, 306903629:() => {
+}, 306903630:() => {
+}, 306903631:() => {
+}, 306903632:() => {
+}, 306903633:() => {
+}, 306903634:() => {
+}, 306903635:() => {
+}, 306903636:() => {
+}, 306903637:() => {
+}, 306903638:() => {
+}, 306903639:() => {
+}, 306903640:() => {
+}, 306903641:() => {
+}, 306903642:() => {
+}, 306903643:() => {
+}, 306903644:() => {
+}, 306903645:() => {
+}, 306903646:() => {
+}, 306903647:() => {
+}}, $___getTypeName$$ = $makeInvalidEarlyAccess$$("___getTypeName"), $_malloc$$ = $makeInvalidEarlyAccess$$("_malloc"), $_free$$ = $makeInvalidEarlyAccess$$("_free"), $_emscripten_stack_get_end$$ = $makeInvalidEarlyAccess$$("_emscripten_stack_get_end"), $_strerror$$ = $makeInvalidEarlyAccess$$("_strerror"), $_emscripten_builtin_malloc$$ = $makeInvalidEarlyAccess$$("_emscripten_builtin_malloc"), $_emscripten_builtin_free$$ = $makeInvalidEarlyAccess$$("_emscripten_builtin_free"), $_emscripten_builtin_memalign$$ = 
+$makeInvalidEarlyAccess$$("_emscripten_builtin_memalign"), $_emscripten_stack_init$$ = $makeInvalidEarlyAccess$$("_emscripten_stack_init");
+$Module$$.__ZN6__asan9FakeStack17AddrIsInFakeStackEm = $makeInvalidEarlyAccess$$("__ZN6__asan9FakeStack17AddrIsInFakeStackEm");
+$Module$$.__ZN6__asan9FakeStack8AllocateEmmm = $makeInvalidEarlyAccess$$("__ZN6__asan9FakeStack8AllocateEmmm");
+var $___asan_loadN$$ = $makeInvalidEarlyAccess$$("___asan_loadN"), $___asan_storeN$$ = $makeInvalidEarlyAccess$$("___asan_storeN"), $wasmMemory$$ = $makeInvalidEarlyAccess$$("wasmMemory"), $wasmTable$$ = $makeInvalidEarlyAccess$$("wasmTable"), $wasmImports$$ = {__assert_fail:($condition$jscomp$3$$, $filename$jscomp$3$$, $line$jscomp$7$$, $func$jscomp$7$$) => $abort$$(`Assertion failed: ${$UTF8ToString$$($condition$jscomp$3$$)}, at: ` + [$filename$jscomp$3$$ ? $UTF8ToString$$($filename$jscomp$3$$) : 
+"unknown filename", $line$jscomp$7$$, $func$jscomp$7$$ ? $UTF8ToString$$($func$jscomp$7$$) : "unknown function"]), __cxa_throw:($JSCompiler_StaticMethods_init$self$jscomp$inline_256_ptr$jscomp$4$$, $type$jscomp$170$$, $destructor$jscomp$2$$) => {
+  $JSCompiler_StaticMethods_init$self$jscomp$inline_256_ptr$jscomp$4$$ = new $ExceptionInfo$$($JSCompiler_StaticMethods_init$self$jscomp$inline_256_ptr$jscomp$4$$);
+  $HEAPU32$$[$_asan_js_check_index$$($HEAPU32$$, $JSCompiler_StaticMethods_init$self$jscomp$inline_256_ptr$jscomp$4$$.$ptr$ + 16 >> 2, $___asan_storeN$$)] = 0;
+  $HEAPU32$$[$_asan_js_check_index$$($HEAPU32$$, $JSCompiler_StaticMethods_init$self$jscomp$inline_256_ptr$jscomp$4$$.$ptr$ + 4 >> 2, $___asan_storeN$$)] = $type$jscomp$170$$;
+  $HEAPU32$$[$_asan_js_check_index$$($HEAPU32$$, $JSCompiler_StaticMethods_init$self$jscomp$inline_256_ptr$jscomp$4$$.$ptr$ + 8 >> 2, $___asan_storeN$$)] = $destructor$jscomp$2$$;
   $uncaughtExceptionCount$$++;
   $assert$$(!1, "Exception thrown, but exception catching is not enabled. Compile with -sNO_DISABLE_EXCEPTION_CATCHING or -sEXCEPTION_CATCHING_ALLOWED=[..] to catch.");
-}, __syscall_fcntl64:function($fd$jscomp$12$$, $cmd$jscomp$1$$, $varargs$$) {
+}, __syscall_dup:function($fd$jscomp$12$$) {
+  try {
+    var $old$$ = $FS$getStreamChecked$$($fd$jscomp$12$$);
+    return $FS$dupStream$$($old$$).$fd$;
+  } catch ($e$jscomp$25$$) {
+    if ("undefined" == typeof $FS$$ || "ErrnoError" !== $e$jscomp$25$$.name) {
+      throw $e$jscomp$25$$;
+    }
+    return -$e$jscomp$25$$.$errno$;
+  }
+}, __syscall_fcntl64:function($fd$jscomp$13$$, $cmd$jscomp$1$$, $varargs$$) {
   $SYSCALLS$varargs$$ = $varargs$$;
   try {
-    var $stream$jscomp$51$$ = $FS$getStreamChecked$$($fd$jscomp$12$$);
+    var $stream$jscomp$51$$ = $FS$getStreamChecked$$($fd$jscomp$13$$);
     switch($cmd$jscomp$1$$) {
       case 0:
         var $arg$jscomp$11$$ = $syscallGetVarargI$$();
@@ -2212,23 +2754,37 @@ $wasmImports$$ = {__cxa_throw:($JSCompiler_StaticMethods_init$self$jscomp$inline
       case 4:
         return $arg$jscomp$11$$ = $syscallGetVarargI$$(), $stream$jscomp$51$$.flags |= $arg$jscomp$11$$, 0;
       case 12:
-        return $arg$jscomp$11$$ = $syscallGetVarargI$$(), $HEAP16$$[$arg$jscomp$11$$ + 0 >> 1] = 2, 0;
+        return $arg$jscomp$11$$ = $syscallGetVarargI$$(), $HEAP16$$[$_asan_js_check_index$$($HEAP16$$, $arg$jscomp$11$$ + 0 >> 1, $___asan_storeN$$)] = 2, 0;
       case 13:
       case 14:
         return 0;
     }
     return -28;
-  } catch ($e$jscomp$25$$) {
-    if ("undefined" == typeof $FS$$ || "ErrnoError" !== $e$jscomp$25$$.name) {
-      throw $e$jscomp$25$$;
+  } catch ($e$jscomp$26$$) {
+    if ("undefined" == typeof $FS$$ || "ErrnoError" !== $e$jscomp$26$$.name) {
+      throw $e$jscomp$26$$;
     }
-    return -$e$jscomp$25$$.$errno$;
+    return -$e$jscomp$26$$.$errno$;
   }
-}, __syscall_ioctl:function($fd$jscomp$13$$, $JSCompiler_object_inline_c_cc_365_c_cc_op$jscomp$1$$, $varargs$jscomp$1$$) {
+}, __syscall_fstat64:function($arg$jscomp$inline_264_fd$jscomp$14$$, $buf$jscomp$3$$) {
+  try {
+    var $stream$jscomp$inline_261$$ = $FS$getStreamChecked$$($arg$jscomp$inline_264_fd$jscomp$14$$), $node$jscomp$inline_262$$ = $stream$jscomp$inline_261$$.node, $getattr$jscomp$inline_263$$ = $stream$jscomp$inline_261$$.$stream_ops$.$getattr$;
+    $arg$jscomp$inline_264_fd$jscomp$14$$ = $getattr$jscomp$inline_263$$ ? $stream$jscomp$inline_261$$ : $node$jscomp$inline_262$$;
+    $getattr$jscomp$inline_263$$ ??= $node$jscomp$inline_262$$.$node_ops$.$getattr$;
+    $FS$checkOpExists$$($getattr$jscomp$inline_263$$);
+    var $JSCompiler_inline_result$jscomp$7$$ = $getattr$jscomp$inline_263$$($arg$jscomp$inline_264_fd$jscomp$14$$);
+    return $SYSCALLS$writeStat$$($buf$jscomp$3$$, $JSCompiler_inline_result$jscomp$7$$);
+  } catch ($e$jscomp$27$$) {
+    if ("undefined" == typeof $FS$$ || "ErrnoError" !== $e$jscomp$27$$.name) {
+      throw $e$jscomp$27$$;
+    }
+    return -$e$jscomp$27$$.$errno$;
+  }
+}, __syscall_ioctl:function($fd$jscomp$15$$, $JSCompiler_object_inline_c_cc_379_c_cc_op$jscomp$1$$, $varargs$jscomp$1$$) {
   $SYSCALLS$varargs$$ = $varargs$jscomp$1$$;
   try {
-    var $stream$jscomp$52$$ = $FS$getStreamChecked$$($fd$jscomp$13$$);
-    switch($JSCompiler_object_inline_c_cc_365_c_cc_op$jscomp$1$$) {
+    var $stream$jscomp$52$$ = $FS$getStreamChecked$$($fd$jscomp$15$$);
+    switch($JSCompiler_object_inline_c_cc_379_c_cc_op$jscomp$1$$) {
       case 21509:
         return $stream$jscomp$52$$.$tty$ ? 0 : -59;
       case 21505:
@@ -2236,14 +2792,14 @@ $wasmImports$$ = {__cxa_throw:($JSCompiler_StaticMethods_init$self$jscomp$inline
           return -59;
         }
         if ($stream$jscomp$52$$.$tty$.$ops$.$ioctl_tcgets$) {
-          $JSCompiler_object_inline_c_cc_365_c_cc_op$jscomp$1$$ = [3, 28, 127, 21, 4, 0, 1, 0, 17, 19, 26, 0, 18, 15, 23, 22, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0];
-          var $arg$jscomp$inline_261_argp$$ = $syscallGetVarargI$$();
-          $HEAP32$$[$arg$jscomp$inline_261_argp$$ >> 2] = 25856;
-          $HEAP32$$[$arg$jscomp$inline_261_argp$$ + 4 >> 2] = 5;
-          $HEAP32$$[$arg$jscomp$inline_261_argp$$ + 8 >> 2] = 191;
-          $HEAP32$$[$arg$jscomp$inline_261_argp$$ + 12 >> 2] = 35387;
+          $JSCompiler_object_inline_c_cc_379_c_cc_op$jscomp$1$$ = [3, 28, 127, 21, 4, 0, 1, 0, 17, 19, 26, 0, 18, 15, 23, 22, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0];
+          var $arg$jscomp$inline_268_argp$$ = $syscallGetVarargI$$();
+          $HEAP32$$[$_asan_js_check_index$$($HEAP32$$, $arg$jscomp$inline_268_argp$$ >> 2, $___asan_storeN$$)] = 25856;
+          $HEAP32$$[$_asan_js_check_index$$($HEAP32$$, $arg$jscomp$inline_268_argp$$ + 4 >> 2, $___asan_storeN$$)] = 5;
+          $HEAP32$$[$_asan_js_check_index$$($HEAP32$$, $arg$jscomp$inline_268_argp$$ + 8 >> 2, $___asan_storeN$$)] = 191;
+          $HEAP32$$[$_asan_js_check_index$$($HEAP32$$, $arg$jscomp$inline_268_argp$$ + 12 >> 2, $___asan_storeN$$)] = 35387;
           for (var $i$jscomp$21_winsize$$ = 0; 32 > $i$jscomp$21_winsize$$; $i$jscomp$21_winsize$$++) {
-            $HEAP8$$[$arg$jscomp$inline_261_argp$$ + $i$jscomp$21_winsize$$ + 17] = $JSCompiler_object_inline_c_cc_365_c_cc_op$jscomp$1$$[$i$jscomp$21_winsize$$] || 0;
+            $HEAP8$$[$_asan_js_check_index$$($HEAP8$$, $arg$jscomp$inline_268_argp$$ + $i$jscomp$21_winsize$$ + 17, $___asan_storeN$$)] = $JSCompiler_object_inline_c_cc_379_c_cc_op$jscomp$1$$[$i$jscomp$21_winsize$$] || 0;
           }
         }
         return 0;
@@ -2258,8 +2814,9 @@ $wasmImports$$ = {__cxa_throw:($JSCompiler_StaticMethods_init$self$jscomp$inline
           return -59;
         }
         if ($stream$jscomp$52$$.$tty$.$ops$.$ioctl_tcsets$) {
-          for ($arg$jscomp$inline_261_argp$$ = $syscallGetVarargI$$(), $JSCompiler_object_inline_c_cc_365_c_cc_op$jscomp$1$$ = [], $i$jscomp$21_winsize$$ = 0; 32 > $i$jscomp$21_winsize$$; $i$jscomp$21_winsize$$++) {
-            $JSCompiler_object_inline_c_cc_365_c_cc_op$jscomp$1$$.push($HEAP8$$[$arg$jscomp$inline_261_argp$$ + $i$jscomp$21_winsize$$ + 17]);
+          for ($arg$jscomp$inline_268_argp$$ = $syscallGetVarargI$$(), $_asan_js_check_index$$($HEAP32$$, $arg$jscomp$inline_268_argp$$ >> 2, $___asan_loadN$$), $_asan_js_check_index$$($HEAP32$$, $arg$jscomp$inline_268_argp$$ + 4 >> 2, $___asan_loadN$$), $_asan_js_check_index$$($HEAP32$$, $arg$jscomp$inline_268_argp$$ + 8 >> 2, $___asan_loadN$$), $_asan_js_check_index$$($HEAP32$$, $arg$jscomp$inline_268_argp$$ + 12 >> 2, $___asan_loadN$$), $JSCompiler_object_inline_c_cc_379_c_cc_op$jscomp$1$$ = [], 
+          $i$jscomp$21_winsize$$ = 0; 32 > $i$jscomp$21_winsize$$; $i$jscomp$21_winsize$$++) {
+            $JSCompiler_object_inline_c_cc_379_c_cc_op$jscomp$1$$.push($HEAP8$$[$_asan_js_check_index$$($HEAP8$$, $arg$jscomp$inline_268_argp$$ + $i$jscomp$21_winsize$$ + 17, $___asan_loadN$$)]);
           }
         }
         return 0;
@@ -2267,22 +2824,22 @@ $wasmImports$$ = {__cxa_throw:($JSCompiler_StaticMethods_init$self$jscomp$inline
         if (!$stream$jscomp$52$$.$tty$) {
           return -59;
         }
-        $arg$jscomp$inline_261_argp$$ = $syscallGetVarargI$$();
-        return $HEAP32$$[$arg$jscomp$inline_261_argp$$ >> 2] = 0;
+        $arg$jscomp$inline_268_argp$$ = $syscallGetVarargI$$();
+        return $HEAP32$$[$_asan_js_check_index$$($HEAP32$$, $arg$jscomp$inline_268_argp$$ >> 2, $___asan_storeN$$)] = 0;
       case 21520:
         return $stream$jscomp$52$$.$tty$ ? -28 : -59;
       case 21537:
       case 21531:
-        $arg$jscomp$inline_261_argp$$ = $syscallGetVarargI$$();
+        $arg$jscomp$inline_268_argp$$ = $syscallGetVarargI$$();
         if (!$stream$jscomp$52$$.$stream_ops$.$ioctl$) {
           throw new $FS$ErrnoError$$(59);
         }
-        return $stream$jscomp$52$$.$stream_ops$.$ioctl$($stream$jscomp$52$$, $JSCompiler_object_inline_c_cc_365_c_cc_op$jscomp$1$$, $arg$jscomp$inline_261_argp$$);
+        return $stream$jscomp$52$$.$stream_ops$.$ioctl$($stream$jscomp$52$$, $JSCompiler_object_inline_c_cc_379_c_cc_op$jscomp$1$$, $arg$jscomp$inline_268_argp$$);
       case 21523:
         if (!$stream$jscomp$52$$.$tty$) {
           return -59;
         }
-        $stream$jscomp$52$$.$tty$.$ops$.$ioctl_tiocgwinsz$ && ($i$jscomp$21_winsize$$ = [24, 80], $arg$jscomp$inline_261_argp$$ = $syscallGetVarargI$$(), $HEAP16$$[$arg$jscomp$inline_261_argp$$ >> 1] = $i$jscomp$21_winsize$$[0], $HEAP16$$[$arg$jscomp$inline_261_argp$$ + 2 >> 1] = $i$jscomp$21_winsize$$[1]);
+        $stream$jscomp$52$$.$tty$.$ops$.$ioctl_tiocgwinsz$ && ($i$jscomp$21_winsize$$ = [24, 80], $arg$jscomp$inline_268_argp$$ = $syscallGetVarargI$$(), $HEAP16$$[$_asan_js_check_index$$($HEAP16$$, $arg$jscomp$inline_268_argp$$ >> 1, $___asan_storeN$$)] = $i$jscomp$21_winsize$$[0], $HEAP16$$[$_asan_js_check_index$$($HEAP16$$, $arg$jscomp$inline_268_argp$$ + 2 >> 1, $___asan_storeN$$)] = $i$jscomp$21_winsize$$[1]);
         return 0;
       case 21524:
         return $stream$jscomp$52$$.$tty$ ? 0 : -59;
@@ -2291,40 +2848,72 @@ $wasmImports$$ = {__cxa_throw:($JSCompiler_StaticMethods_init$self$jscomp$inline
       default:
         return -28;
     }
-  } catch ($e$jscomp$26$$) {
-    if ("undefined" == typeof $FS$$ || "ErrnoError" !== $e$jscomp$26$$.name) {
-      throw $e$jscomp$26$$;
+  } catch ($e$jscomp$28$$) {
+    if ("undefined" == typeof $FS$$ || "ErrnoError" !== $e$jscomp$28$$.name) {
+      throw $e$jscomp$28$$;
     }
-    return -$e$jscomp$26$$.$errno$;
+    return -$e$jscomp$28$$.$errno$;
   }
-}, __syscall_openat:function($dirfd$jscomp$1$$, $path$jscomp$42$$, $flags$jscomp$13$$, $varargs$jscomp$2$$) {
+}, __syscall_lstat64:function($path$jscomp$42$$, $buf$jscomp$4$$) {
+  try {
+    return $path$jscomp$42$$ = $UTF8ToString$$($path$jscomp$42$$), $SYSCALLS$writeStat$$($buf$jscomp$4$$, $FS$stat$$($path$jscomp$42$$, !0));
+  } catch ($e$jscomp$29$$) {
+    if ("undefined" == typeof $FS$$ || "ErrnoError" !== $e$jscomp$29$$.name) {
+      throw $e$jscomp$29$$;
+    }
+    return -$e$jscomp$29$$.$errno$;
+  }
+}, __syscall_mkdirat:function($dirfd$jscomp$1$$, $path$jscomp$43$$, $mode$jscomp$40$$) {
+  try {
+    return $path$jscomp$43$$ = $UTF8ToString$$($path$jscomp$43$$), $path$jscomp$43$$ = $SYSCALLS$calculateAt$$($dirfd$jscomp$1$$, $path$jscomp$43$$), $FS$mkdir$$($path$jscomp$43$$, $mode$jscomp$40$$), 0;
+  } catch ($e$jscomp$30$$) {
+    if ("undefined" == typeof $FS$$ || "ErrnoError" !== $e$jscomp$30$$.name) {
+      throw $e$jscomp$30$$;
+    }
+    return -$e$jscomp$30$$.$errno$;
+  }
+}, __syscall_newfstatat:function($dirfd$jscomp$2$$, $path$jscomp$44$$, $buf$jscomp$5$$, $flags$jscomp$13$$) {
+  try {
+    $path$jscomp$44$$ = $UTF8ToString$$($path$jscomp$44$$);
+    var $nofollow$$ = $flags$jscomp$13$$ & 256, $allowEmpty$jscomp$1$$ = $flags$jscomp$13$$ & 4096;
+    $flags$jscomp$13$$ &= -6401;
+    $assert$$(!$flags$jscomp$13$$, `unknown flags in __syscall_newfstatat: ${$flags$jscomp$13$$}`);
+    $path$jscomp$44$$ = $SYSCALLS$calculateAt$$($dirfd$jscomp$2$$, $path$jscomp$44$$, $allowEmpty$jscomp$1$$);
+    return $SYSCALLS$writeStat$$($buf$jscomp$5$$, $nofollow$$ ? $FS$stat$$($path$jscomp$44$$, !0) : $FS$stat$$($path$jscomp$44$$));
+  } catch ($e$jscomp$31$$) {
+    if ("undefined" == typeof $FS$$ || "ErrnoError" !== $e$jscomp$31$$.name) {
+      throw $e$jscomp$31$$;
+    }
+    return -$e$jscomp$31$$.$errno$;
+  }
+}, __syscall_openat:function($dirfd$jscomp$3$$, $path$jscomp$45$$, $flags$jscomp$14$$, $varargs$jscomp$2$$) {
   $SYSCALLS$varargs$$ = $varargs$jscomp$2$$;
   try {
-    $path$jscomp$42$$ = $UTF8ToString$$($path$jscomp$42$$);
-    var $path$jscomp$inline_264$$ = $path$jscomp$42$$;
-    if ("/" === $path$jscomp$inline_264$$.charAt(0)) {
-      $path$jscomp$42$$ = $path$jscomp$inline_264$$;
-    } else {
-      var $dir$jscomp$inline_266$$ = -100 === $dirfd$jscomp$1$$ ? "/" : $FS$getStreamChecked$$($dirfd$jscomp$1$$).path;
-      if (0 == $path$jscomp$inline_264$$.length) {
-        throw new $FS$ErrnoError$$(44);
-      }
-      $path$jscomp$42$$ = $dir$jscomp$inline_266$$ + "/" + $path$jscomp$inline_264$$;
+    $path$jscomp$45$$ = $UTF8ToString$$($path$jscomp$45$$);
+    $path$jscomp$45$$ = $SYSCALLS$calculateAt$$($dirfd$jscomp$3$$, $path$jscomp$45$$);
+    var $mode$jscomp$41$$ = $varargs$jscomp$2$$ ? $syscallGetVarargI$$() : 0;
+    return $FS$open$$($path$jscomp$45$$, $flags$jscomp$14$$, $mode$jscomp$41$$).$fd$;
+  } catch ($e$jscomp$32$$) {
+    if ("undefined" == typeof $FS$$ || "ErrnoError" !== $e$jscomp$32$$.name) {
+      throw $e$jscomp$32$$;
     }
-    var $mode$jscomp$40$$ = $varargs$jscomp$2$$ ? $syscallGetVarargI$$() : 0;
-    return $FS$open$$($path$jscomp$42$$, $flags$jscomp$13$$, $mode$jscomp$40$$).$fd$;
-  } catch ($e$jscomp$27$$) {
-    if ("undefined" == typeof $FS$$ || "ErrnoError" !== $e$jscomp$27$$.name) {
-      throw $e$jscomp$27$$;
-    }
-    return -$e$jscomp$27$$.$errno$;
+    return -$e$jscomp$32$$.$errno$;
   }
-}, _abort_js:() => $abort$$("native code called abort()"), _embind_register_bigint:($primitiveType$$, $name$jscomp$101$$, $size$jscomp$24$$, $minRange$jscomp$1$$, $maxRange$jscomp$1$$) => {
+}, __syscall_stat64:function($path$jscomp$46$$, $buf$jscomp$6$$) {
+  try {
+    return $path$jscomp$46$$ = $UTF8ToString$$($path$jscomp$46$$), $SYSCALLS$writeStat$$($buf$jscomp$6$$, $FS$stat$$($path$jscomp$46$$));
+  } catch ($e$jscomp$33$$) {
+    if ("undefined" == typeof $FS$$ || "ErrnoError" !== $e$jscomp$33$$.name) {
+      throw $e$jscomp$33$$;
+    }
+    return -$e$jscomp$33$$.$errno$;
+  }
+}, _abort_js:() => $abort$$("native code called abort()"), _embind_register_bigint:($primitiveType$$, $name$jscomp$101$$, $size$jscomp$26$$, $minRange$jscomp$1$$, $maxRange$jscomp$1$$) => {
   $name$jscomp$101$$ = $AsciiToString$$($name$jscomp$101$$);
   const $isUnsignedType$$ = 0n === $minRange$jscomp$1$$;
   let $fromWireType$$ = $value$jscomp$97$$ => $value$jscomp$97$$;
   if ($isUnsignedType$$) {
-    const $bitSize$$ = 8 * $size$jscomp$24$$;
+    const $bitSize$$ = 8 * $size$jscomp$26$$;
     $fromWireType$$ = $value$jscomp$98$$ => BigInt.asUintN($bitSize$$, $value$jscomp$98$$);
     $maxRange$jscomp$1$$ = $fromWireType$$($maxRange$jscomp$1$$);
   }
@@ -2336,7 +2925,7 @@ $wasmImports$$ = {__cxa_throw:($JSCompiler_StaticMethods_init$self$jscomp$inline
     }
     $assertIntegerRange$$($name$jscomp$101$$, $value$jscomp$99$$, $minRange$jscomp$1$$, $maxRange$jscomp$1$$);
     return $value$jscomp$99$$;
-  }, $readValueFromPointer$:$integerReadValueFromPointer$$($name$jscomp$101$$, $size$jscomp$24$$, !$isUnsignedType$$), $destructorFunction$:null});
+  }, $readValueFromPointer$:$integerReadValueFromPointer$$($name$jscomp$101$$, $size$jscomp$26$$, !$isUnsignedType$$), $destructorFunction$:null});
 }, _embind_register_bool:($rawType$jscomp$2$$, $name$jscomp$102$$, $trueValue$$, $falseValue$$) => {
   $name$jscomp$102$$ = $AsciiToString$$($name$jscomp$102$$);
   $registerType$$($rawType$jscomp$2$$, {name:$name$jscomp$102$$, $fromWireType$:function($wt$$) {
@@ -2344,7 +2933,7 @@ $wasmImports$$ = {__cxa_throw:($JSCompiler_StaticMethods_init$self$jscomp$inline
   }, $toWireType$:function($destructors$jscomp$1$$, $o$$) {
     return $o$$ ? $trueValue$$ : $falseValue$$;
   }, $readValueFromPointer$:function($pointer$jscomp$8$$) {
-    return this.$fromWireType$($HEAPU8$$[$pointer$jscomp$8$$]);
+    return this.$fromWireType$($HEAPU8$$[$_asan_js_check_index$$($HEAPU8$$, $pointer$jscomp$8$$, $___asan_loadN$$)]);
   }, $destructorFunction$:null});
 }, _embind_register_class:($rawType$jscomp$3$$, $rawPointerType$$, $rawConstPointerType$$, $baseClassRawType$$, $getActualTypeSignature$$, $getActualType$jscomp$1$$, $upcastSignature$$, $upcast$jscomp$1$$, $downcastSignature$$, $downcast$jscomp$1$$, $name$jscomp$109$$, $destructorSignature$$, $rawDestructor$jscomp$2$$) => {
   $name$jscomp$109$$ = $AsciiToString$$($name$jscomp$109$$);
@@ -2381,16 +2970,16 @@ $wasmImports$$ = {__cxa_throw:($JSCompiler_StaticMethods_init$self$jscomp$inline
     $base$jscomp$3_constructor$jscomp$1$$.prototype = $instancePrototype$jscomp$1$$;
     var $registeredClass$jscomp$1$$ = new $RegisteredClass$$($name$jscomp$109$$, $base$jscomp$3_constructor$jscomp$1$$, $instancePrototype$jscomp$1$$, $rawDestructor$jscomp$2$$, $baseClass$jscomp$1_referenceConverter$$, $getActualType$jscomp$1$$, $upcast$jscomp$1$$, $downcast$jscomp$1$$);
     if ($registeredClass$jscomp$1$$.$baseClass$) {
-      var $$jscomp$logical$assign$tmp2003172446$4_pointerConverter$$;
-      ($$jscomp$logical$assign$tmp2003172446$4_pointerConverter$$ = $registeredClass$jscomp$1$$.$baseClass$).$__derivedClasses$ ?? ($$jscomp$logical$assign$tmp2003172446$4_pointerConverter$$.$__derivedClasses$ = []);
+      var $$jscomp$logical$assign$tmpm2050448251$4_pointerConverter$$;
+      ($$jscomp$logical$assign$tmpm2050448251$4_pointerConverter$$ = $registeredClass$jscomp$1$$.$baseClass$).$__derivedClasses$ ?? ($$jscomp$logical$assign$tmpm2050448251$4_pointerConverter$$.$__derivedClasses$ = []);
       $registeredClass$jscomp$1$$.$baseClass$.$__derivedClasses$.push($registeredClass$jscomp$1$$);
     }
     $baseClass$jscomp$1_referenceConverter$$ = new $RegisteredPointer$$($name$jscomp$109$$, $registeredClass$jscomp$1$$, !0, !1, !1);
-    $$jscomp$logical$assign$tmp2003172446$4_pointerConverter$$ = new $RegisteredPointer$$($name$jscomp$109$$ + "*", $registeredClass$jscomp$1$$, !1, !1, !1);
+    $$jscomp$logical$assign$tmpm2050448251$4_pointerConverter$$ = new $RegisteredPointer$$($name$jscomp$109$$ + "*", $registeredClass$jscomp$1$$, !1, !1, !1);
     $basePrototype_constPointerConverter$$ = new $RegisteredPointer$$($name$jscomp$109$$ + " const*", $registeredClass$jscomp$1$$, !1, !0, !1);
-    $registeredPointers$$[$rawType$jscomp$3$$] = {pointerType:$$jscomp$logical$assign$tmp2003172446$4_pointerConverter$$, $constPointerType$:$basePrototype_constPointerConverter$$};
+    $registeredPointers$$[$rawType$jscomp$3$$] = {pointerType:$$jscomp$logical$assign$tmpm2050448251$4_pointerConverter$$, $constPointerType$:$basePrototype_constPointerConverter$$};
     $replacePublicSymbol$$($legalFunctionName$$, $base$jscomp$3_constructor$jscomp$1$$);
-    return [$baseClass$jscomp$1_referenceConverter$$, $$jscomp$logical$assign$tmp2003172446$4_pointerConverter$$, $basePrototype_constPointerConverter$$];
+    return [$baseClass$jscomp$1_referenceConverter$$, $$jscomp$logical$assign$tmpm2050448251$4_pointerConverter$$, $basePrototype_constPointerConverter$$];
   });
 }, _embind_register_class_constructor:($rawClassType$$, $argCount$jscomp$2$$, $rawArgTypesAddr$$, $invokerSignature$$, $invoker$$, $rawConstructor$jscomp$1$$) => {
   $assert$$(0 < $argCount$jscomp$2$$);
@@ -2436,19 +3025,19 @@ $wasmImports$$ = {__cxa_throw:($JSCompiler_StaticMethods_init$self$jscomp$inline
     });
     return [];
   });
-}, _embind_register_emval:$rawType$jscomp$4$$ => $registerType$$($rawType$jscomp$4$$, $EmValType$$), _embind_register_float:($rawType$jscomp$5$$, $name$jscomp$111$$, $size$jscomp$25$$) => {
+}, _embind_register_emval:$rawType$jscomp$4$$ => $registerType$$($rawType$jscomp$4$$, $EmValType$$), _embind_register_float:($rawType$jscomp$5$$, $name$jscomp$111$$, $size$jscomp$27$$) => {
   $name$jscomp$111$$ = $AsciiToString$$($name$jscomp$111$$);
   $registerType$$($rawType$jscomp$5$$, {name:$name$jscomp$111$$, $fromWireType$:$value$jscomp$104$$ => $value$jscomp$104$$, $toWireType$:($destructors$jscomp$8$$, $value$jscomp$105$$) => {
     if ("number" != typeof $value$jscomp$105$$ && "boolean" != typeof $value$jscomp$105$$) {
       throw new TypeError(`Cannot convert ${$embindRepr$$($value$jscomp$105$$)} to ${this.name}`);
     }
     return $value$jscomp$105$$;
-  }, $readValueFromPointer$:$floatReadValueFromPointer$$($name$jscomp$111$$, $size$jscomp$25$$), $destructorFunction$:null});
-}, _embind_register_integer:($primitiveType$jscomp$1$$, $name$jscomp$112$$, $size$jscomp$26$$, $minRange$jscomp$2$$, $maxRange$jscomp$2$$) => {
+  }, $readValueFromPointer$:$floatReadValueFromPointer$$($name$jscomp$111$$, $size$jscomp$27$$), $destructorFunction$:null});
+}, _embind_register_integer:($primitiveType$jscomp$1$$, $name$jscomp$112$$, $size$jscomp$28$$, $minRange$jscomp$2$$, $maxRange$jscomp$2$$) => {
   $name$jscomp$112$$ = $AsciiToString$$($name$jscomp$112$$);
   let $fromWireType$jscomp$1$$ = $value$jscomp$106$$ => $value$jscomp$106$$;
   if (0 === $minRange$jscomp$2$$) {
-    var $bitshift$$ = 32 - 8 * $size$jscomp$26$$;
+    var $bitshift$$ = 32 - 8 * $size$jscomp$28$$;
     $fromWireType$jscomp$1$$ = $value$jscomp$107$$ => $value$jscomp$107$$ << $bitshift$$ >>> $bitshift$$;
     $maxRange$jscomp$2$$ = $fromWireType$jscomp$1$$($maxRange$jscomp$2$$);
   }
@@ -2458,10 +3047,12 @@ $wasmImports$$ = {__cxa_throw:($JSCompiler_StaticMethods_init$self$jscomp$inline
     }
     $assertIntegerRange$$($name$jscomp$112$$, $value$jscomp$108$$, $minRange$jscomp$2$$, $maxRange$jscomp$2$$);
     return $value$jscomp$108$$;
-  }, $readValueFromPointer$:$integerReadValueFromPointer$$($name$jscomp$112$$, $size$jscomp$26$$, 0 !== $minRange$jscomp$2$$), $destructorFunction$:null});
+  }, $readValueFromPointer$:$integerReadValueFromPointer$$($name$jscomp$112$$, $size$jscomp$28$$, 0 !== $minRange$jscomp$2$$), $destructorFunction$:null});
 }, _embind_register_memory_view:($rawType$jscomp$6$$, $dataTypeIndex$$, $name$jscomp$113$$) => {
-  function $decodeMemoryView$$($handle$jscomp$25$$) {
-    return new $TA$$($HEAP8$$.buffer, $HEAPU32$$[$handle$jscomp$25$$ + 4 >> 2], $HEAPU32$$[$handle$jscomp$25$$ >> 2]);
+  function $decodeMemoryView$$($data$jscomp$84_handle$jscomp$25$$) {
+    var $size$jscomp$29$$ = $HEAPU32$$[$_asan_js_check_index$$($HEAPU32$$, $data$jscomp$84_handle$jscomp$25$$ >> 2, $___asan_loadN$$)];
+    $data$jscomp$84_handle$jscomp$25$$ = $HEAPU32$$[$_asan_js_check_index$$($HEAPU32$$, $data$jscomp$84_handle$jscomp$25$$ + 4 >> 2, $___asan_loadN$$)];
+    return new $TA$$($HEAP8$$.buffer, $data$jscomp$84_handle$jscomp$25$$, $size$jscomp$29$$);
   }
   var $TA$$ = [Int8Array, Uint8Array, Int16Array, Uint16Array, Int32Array, Uint32Array, Float32Array, Float64Array, BigInt64Array, BigUint64Array][$dataTypeIndex$$];
   $name$jscomp$113$$ = $AsciiToString$$($name$jscomp$113$$);
@@ -2469,9 +3060,10 @@ $wasmImports$$ = {__cxa_throw:($JSCompiler_StaticMethods_init$self$jscomp$inline
 }, _embind_register_std_string:($rawType$jscomp$7$$, $name$jscomp$114$$) => {
   $name$jscomp$114$$ = $AsciiToString$$($name$jscomp$114$$);
   $registerType$$($rawType$jscomp$7$$, {name:$name$jscomp$114$$, $fromWireType$($value$jscomp$109$$) {
-    var $str$jscomp$13$$ = $UTF8ToString$$($value$jscomp$109$$ + 4, $HEAPU32$$[$value$jscomp$109$$ >> 2], !0);
+    var $length$jscomp$35_str$jscomp$13$$ = $HEAPU32$$[$_asan_js_check_index$$($HEAPU32$$, $value$jscomp$109$$ >> 2, $___asan_loadN$$)];
+    $length$jscomp$35_str$jscomp$13$$ = $UTF8ToString$$($value$jscomp$109$$ + 4, $length$jscomp$35_str$jscomp$13$$, !0);
     $_free$$($value$jscomp$109$$);
-    return $str$jscomp$13$$;
+    return $length$jscomp$35_str$jscomp$13$$;
   }, $toWireType$($destructors$jscomp$10$$, $value$jscomp$110$$) {
     $value$jscomp$110$$ instanceof ArrayBuffer && ($value$jscomp$110$$ = new Uint8Array($value$jscomp$110$$));
     var $valueIsOfTypeString$$ = "string" == typeof $value$jscomp$110$$;
@@ -2479,13 +3071,13 @@ $wasmImports$$ = {__cxa_throw:($JSCompiler_StaticMethods_init$self$jscomp$inline
       throw new $BindingError$$("Cannot pass non-string to std::string");
     }
     var $length$jscomp$36$$ = $valueIsOfTypeString$$ ? $lengthBytesUTF8$$($value$jscomp$110$$) : $value$jscomp$110$$.length;
-    var $base$jscomp$4$$ = $_malloc$$(4 + $length$jscomp$36$$ + 1), $ptr$jscomp$21$$ = $base$jscomp$4$$ + 4;
-    $HEAPU32$$[$base$jscomp$4$$ >> 2] = $length$jscomp$36$$;
-    $valueIsOfTypeString$$ ? $stringToUTF8$$($value$jscomp$110$$, $ptr$jscomp$21$$, $length$jscomp$36$$ + 1) : $HEAPU8$$.set($value$jscomp$110$$, $ptr$jscomp$21$$);
+    var $base$jscomp$4$$ = $_malloc$$(4 + $length$jscomp$36$$ + 1), $ptr$jscomp$23$$ = $base$jscomp$4$$ + 4;
+    $HEAPU32$$[$_asan_js_check_index$$($HEAPU32$$, $base$jscomp$4$$ >> 2, $___asan_storeN$$)] = $length$jscomp$36$$;
+    $valueIsOfTypeString$$ ? $stringToUTF8$$($value$jscomp$110$$, $ptr$jscomp$23$$, $length$jscomp$36$$ + 1) : $HEAPU8$$.set($value$jscomp$110$$, $ptr$jscomp$23$$);
     null !== $destructors$jscomp$10$$ && $destructors$jscomp$10$$.push($_free$$, $base$jscomp$4$$);
     return $base$jscomp$4$$;
-  }, $readValueFromPointer$:$readPointer$$, $destructorFunction$($ptr$jscomp$22$$) {
-    $_free$$($ptr$jscomp$22$$);
+  }, $readValueFromPointer$:$readPointer$$, $destructorFunction$($ptr$jscomp$24$$) {
+    $_free$$($ptr$jscomp$24$$);
   }});
 }, _embind_register_std_wstring:($rawType$jscomp$8$$, $charSize$$, $name$jscomp$115$$) => {
   $name$jscomp$115$$ = $AsciiToString$$($name$jscomp$115$$);
@@ -2497,38 +3089,42 @@ $wasmImports$$ = {__cxa_throw:($JSCompiler_StaticMethods_init$self$jscomp$inline
     $assert$$(4 === $charSize$$, "only 2-byte and 4-byte strings are currently supported"), $decodeString$$ = $UTF32ToString$$, $encodeString$$ = $stringToUTF32$$, $lengthBytesUTF$$ = $lengthBytesUTF32$$;
   }
   $registerType$$($rawType$jscomp$8$$, {name:$name$jscomp$115$$, $fromWireType$:$value$jscomp$111$$ => {
-    var $str$jscomp$20$$ = $decodeString$$($value$jscomp$111$$ + 4, $HEAPU32$$[$value$jscomp$111$$ >> 2] * $charSize$$, !0);
+    var $length$jscomp$37_str$jscomp$20$$ = $HEAPU32$$[$_asan_js_check_index$$($HEAPU32$$, $value$jscomp$111$$ >> 2, $___asan_loadN$$)];
+    $length$jscomp$37_str$jscomp$20$$ = $decodeString$$($value$jscomp$111$$ + 4, $length$jscomp$37_str$jscomp$20$$ * $charSize$$, !0);
     $_free$$($value$jscomp$111$$);
-    return $str$jscomp$20$$;
+    return $length$jscomp$37_str$jscomp$20$$;
   }, $toWireType$:($destructors$jscomp$11$$, $value$jscomp$112$$) => {
     if ("string" != typeof $value$jscomp$112$$) {
       throw new $BindingError$$(`Cannot pass non-string to C++ string type ${$name$jscomp$115$$}`);
     }
-    var $length$jscomp$38$$ = $lengthBytesUTF$$($value$jscomp$112$$), $ptr$jscomp$25$$ = $_malloc$$(4 + $length$jscomp$38$$ + $charSize$$);
-    $HEAPU32$$[$ptr$jscomp$25$$ >> 2] = $length$jscomp$38$$ / $charSize$$;
-    $encodeString$$($value$jscomp$112$$, $ptr$jscomp$25$$ + 4, $length$jscomp$38$$ + $charSize$$);
-    null !== $destructors$jscomp$11$$ && $destructors$jscomp$11$$.push($_free$$, $ptr$jscomp$25$$);
-    return $ptr$jscomp$25$$;
-  }, $readValueFromPointer$:$readPointer$$, $destructorFunction$($ptr$jscomp$26$$) {
-    $_free$$($ptr$jscomp$26$$);
+    var $length$jscomp$38$$ = $lengthBytesUTF$$($value$jscomp$112$$), $ptr$jscomp$27$$ = $_malloc$$(4 + $length$jscomp$38$$ + $charSize$$);
+    $HEAPU32$$[$_asan_js_check_index$$($HEAPU32$$, $ptr$jscomp$27$$ >> 2, $___asan_storeN$$)] = $length$jscomp$38$$ / $charSize$$;
+    $encodeString$$($value$jscomp$112$$, $ptr$jscomp$27$$ + 4, $length$jscomp$38$$ + $charSize$$);
+    null !== $destructors$jscomp$11$$ && $destructors$jscomp$11$$.push($_free$$, $ptr$jscomp$27$$);
+    return $ptr$jscomp$27$$;
+  }, $readValueFromPointer$:$readPointer$$, $destructorFunction$($ptr$jscomp$28$$) {
+    $_free$$($ptr$jscomp$28$$);
   }});
 }, _embind_register_void:($rawType$jscomp$9$$, $name$jscomp$116$$) => {
   $name$jscomp$116$$ = $AsciiToString$$($name$jscomp$116$$);
   $registerType$$($rawType$jscomp$9$$, {$isVoid$:!0, name:$name$jscomp$116$$, $fromWireType$:() => {
   }, $toWireType$:() => {
   }});
-}, _emscripten_fs_load_embedded_files:$ptr$jscomp$27$$ => {
+}, _emscripten_fs_load_embedded_files:$ptr$jscomp$29$$ => {
   do {
-    var $name$jscomp$117_name_addr$$ = $HEAPU32$$[$ptr$jscomp$27$$ >> 2];
-    $ptr$jscomp$27$$ += 4;
-    var $len$jscomp$8$$ = $HEAPU32$$[$ptr$jscomp$27$$ >> 2];
-    $ptr$jscomp$27$$ += 4;
-    var $content$$ = $HEAPU32$$[$ptr$jscomp$27$$ >> 2];
-    $ptr$jscomp$27$$ += 4;
+    var $name$jscomp$117_name_addr$$ = $HEAPU32$$[$_asan_js_check_index$$($HEAPU32$$, $ptr$jscomp$29$$ >> 2, $___asan_loadN$$)];
+    $ptr$jscomp$29$$ += 4;
+    var $len$jscomp$8$$ = $HEAPU32$$[$_asan_js_check_index$$($HEAPU32$$, $ptr$jscomp$29$$ >> 2, $___asan_loadN$$)];
+    $ptr$jscomp$29$$ += 4;
+    var $content$$ = $HEAPU32$$[$_asan_js_check_index$$($HEAPU32$$, $ptr$jscomp$29$$ >> 2, $___asan_loadN$$)];
+    $ptr$jscomp$29$$ += 4;
     $name$jscomp$117_name_addr$$ = $UTF8ToString$$($name$jscomp$117_name_addr$$);
     $FS$createPath$$("/", $PATH$dirname$$($name$jscomp$117_name_addr$$));
     $FS$createDataFile$$($name$jscomp$117_name_addr$$, null, $HEAP8$$.subarray($content$$, $content$$ + $len$jscomp$8$$), !0, !0, !0);
-  } while ($HEAPU32$$[$ptr$jscomp$27$$ >> 2]);
+  } while ($HEAPU32$$[$_asan_js_check_index$$($HEAPU32$$, $ptr$jscomp$29$$ >> 2, $___asan_loadN$$)]);
+}, _emscripten_get_progname:($str$jscomp$21$$, $len$jscomp$9$$) => $stringToUTF8$$($thisProgram$$ || "./this.program", $str$jscomp$21$$, $len$jscomp$9$$), _emscripten_sanitizer_get_option:$name$jscomp$118$$ => $withBuiltinMalloc$$(() => $stringToNewUTF8$$($Module$$[$UTF8ToString$$($name$jscomp$118$$)] || "")), _emscripten_sanitizer_use_colors:() => {
+  var $setting$$ = $Module$$.printWithColors;
+  return void 0 !== $setting$$ ? $setting$$ : !1;
 }, _emval_create_invoker:($argCount$jscomp$5_args$jscomp$11$$, $argTypesPtr_toReturnWire$jscomp$1$$, $invokerFunction_kind$jscomp$4$$) => {
   var [$retType$jscomp$1$$, ...$argTypes$jscomp$7$$] = $emval_lookupTypes$$($argCount$jscomp$5_args$jscomp$11$$, $argTypesPtr_toReturnWire$jscomp$1$$);
   $argTypesPtr_toReturnWire$jscomp$1$$ = $retType$jscomp$1$$.$toWireType$.bind($retType$jscomp$1$$);
@@ -2555,18 +3151,16 @@ $wasmImports$$ = {__cxa_throw:($JSCompiler_StaticMethods_init$self$jscomp$inline
   }
   $functionBody_functionName$$ += `(${$argCount$jscomp$5_args$jscomp$11$$})`;
   $retType$jscomp$1$$.$isVoid$ || ($captures$$.toReturnWire = $argTypesPtr_toReturnWire$jscomp$1$$, $captures$$.emval_returnValue = $emval_returnValue$$, $functionBody_functionName$$ = `return emval_returnValue(toReturnWire, destructorsRef, ${$functionBody_functionName$$})`);
-  $functionBody_functionName$$ = `return function (handle, methodName, destructorsRef, args) {
-  ${$functionBody_functionName$$}
-  }`;
+  $functionBody_functionName$$ = `return function (handle, methodName, destructorsRef, args) {\n  ${$functionBody_functionName$$}\n  }`;
   $invokerFunction_kind$jscomp$4$$ = (new Function(Object.keys($captures$$), $functionBody_functionName$$))(...Object.values($captures$$));
   $functionBody_functionName$$ = `methodCaller<(${$argTypes$jscomp$7$$.map($t$jscomp$1$$ => $t$jscomp$1$$.name)}) => ${$retType$jscomp$1$$.name}>`;
   return $emval_addMethodCaller$$($createNamedFunction$$($functionBody_functionName$$, $invokerFunction_kind$jscomp$4$$));
-}, _emval_decref:$__emval_decref$$, _emval_get_global:$name$jscomp$118$$ => {
-  if (!$name$jscomp$118$$) {
+}, _emval_decref:$__emval_decref$$, _emval_get_global:$name$jscomp$119$$ => {
+  if (!$name$jscomp$119$$) {
     return $Emval$toHandle$$(globalThis);
   }
-  $name$jscomp$118$$ = $getStringOrSymbol$$($name$jscomp$118$$);
-  return $Emval$toHandle$$(globalThis[$name$jscomp$118$$]);
+  $name$jscomp$119$$ = $getStringOrSymbol$$($name$jscomp$119$$);
+  return $Emval$toHandle$$(globalThis[$name$jscomp$119$$]);
 }, _emval_invoke:($caller$jscomp$1$$, $handle$jscomp$27$$, $methodName$jscomp$2$$, $destructorsRef$jscomp$1$$, $args$jscomp$12$$) => $emval_methodCallers$$[$caller$jscomp$1$$]($handle$jscomp$27$$, $methodName$jscomp$2$$, $destructorsRef$jscomp$1$$, $args$jscomp$12$$), _emval_run_destructors:$handle$jscomp$28$$ => {
   var $destructors$jscomp$14$$ = $Emval$toValue$$($handle$jscomp$28$$);
   $runDestructors$$($destructors$jscomp$14$$);
@@ -2576,11 +3170,62 @@ $wasmImports$$ = {__cxa_throw:($JSCompiler_StaticMethods_init$self$jscomp$inline
   $key$jscomp$42$$ = $Emval$toValue$$($key$jscomp$42$$);
   $value$jscomp$113$$ = $Emval$toValue$$($value$jscomp$113$$);
   $handle$jscomp$29$$[$key$jscomp$42$$] = $value$jscomp$113$$;
+}, _mmap_js:function($len$jscomp$10$$, $prot$jscomp$3$$, $flags$jscomp$15$$, $fd$jscomp$16_position$jscomp$inline_276$$, $offset$jscomp$43$$, $allocated$jscomp$1$$, $addr$jscomp$1$$) {
+  $offset$jscomp$43$$ = -9007199254740992 > $offset$jscomp$43$$ || 9007199254740992 < $offset$jscomp$43$$ ? NaN : Number($offset$jscomp$43$$);
+  try {
+    $assert$$(!isNaN($offset$jscomp$43$$));
+    var $stream$jscomp$inline_274$$ = $FS$getStreamChecked$$($fd$jscomp$16_position$jscomp$inline_276$$);
+    $fd$jscomp$16_position$jscomp$inline_276$$ = $offset$jscomp$43$$;
+    if (0 !== ($prot$jscomp$3$$ & 2) && 0 === ($flags$jscomp$15$$ & 2) && 2 !== ($stream$jscomp$inline_274$$.flags & 2097155)) {
+      throw new $FS$ErrnoError$$(2);
+    }
+    if (1 === ($stream$jscomp$inline_274$$.flags & 2097155)) {
+      throw new $FS$ErrnoError$$(2);
+    }
+    if (!$stream$jscomp$inline_274$$.$stream_ops$.$mmap$) {
+      throw new $FS$ErrnoError$$(43);
+    }
+    if (!$len$jscomp$10$$) {
+      throw new $FS$ErrnoError$$(28);
+    }
+    var $res$$ = $stream$jscomp$inline_274$$.$stream_ops$.$mmap$($stream$jscomp$inline_274$$, $len$jscomp$10$$, $fd$jscomp$16_position$jscomp$inline_276$$, $prot$jscomp$3$$, $flags$jscomp$15$$);
+    var $ptr$jscomp$30$$ = $res$$.$ptr$;
+    $HEAP32$$[$_asan_js_check_index$$($HEAP32$$, $allocated$jscomp$1$$ >> 2, $___asan_storeN$$)] = $res$$.$allocated$;
+    $HEAPU32$$[$_asan_js_check_index$$($HEAPU32$$, $addr$jscomp$1$$ >> 2, $___asan_storeN$$)] = $ptr$jscomp$30$$;
+    return 0;
+  } catch ($e$jscomp$34$$) {
+    if ("undefined" == typeof $FS$$ || "ErrnoError" !== $e$jscomp$34$$.name) {
+      throw $e$jscomp$34$$;
+    }
+    return -$e$jscomp$34$$.$errno$;
+  }
+}, _munmap_js:function($addr$jscomp$2$$, $len$jscomp$11$$, $offset$jscomp$inline_284_prot$jscomp$4$$, $flags$jscomp$16$$, $fd$jscomp$17$$, $offset$jscomp$44$$) {
+  $offset$jscomp$44$$ = -9007199254740992 > $offset$jscomp$44$$ || 9007199254740992 < $offset$jscomp$44$$ ? NaN : Number($offset$jscomp$44$$);
+  try {
+    var $stream$jscomp$54$$ = $FS$getStreamChecked$$($fd$jscomp$17$$);
+    if ($offset$jscomp$inline_284_prot$jscomp$4$$ & 2) {
+      $offset$jscomp$inline_284_prot$jscomp$4$$ = $offset$jscomp$44$$;
+      if (32768 !== ($stream$jscomp$54$$.node.mode & 61440)) {
+        throw new $FS$ErrnoError$$(43);
+      }
+      if (!($flags$jscomp$16$$ & 2)) {
+        var $buffer$jscomp$inline_440$$ = $HEAPU8$$.slice($addr$jscomp$2$$, $addr$jscomp$2$$ + $len$jscomp$11$$);
+        $assert$$(0 <= $offset$jscomp$inline_284_prot$jscomp$4$$);
+        $stream$jscomp$54$$.$stream_ops$.$msync$ && $stream$jscomp$54$$.$stream_ops$.$msync$($stream$jscomp$54$$, $buffer$jscomp$inline_440$$, $offset$jscomp$inline_284_prot$jscomp$4$$, $len$jscomp$11$$, $flags$jscomp$16$$);
+      }
+    }
+  } catch ($e$jscomp$35$$) {
+    if ("undefined" == typeof $FS$$ || "ErrnoError" !== $e$jscomp$35$$.name) {
+      throw $e$jscomp$35$$;
+    }
+    return -$e$jscomp$35$$.$errno$;
+  }
 }, _tzset_js:($timezone_winterName$$, $daylight_extractZone_summerName$$, $std_name$$, $dst_name$$) => {
   var $currentYear_summerOffset$$ = (new Date()).getFullYear(), $winterOffset$$ = (new Date($currentYear_summerOffset$$, 0, 1)).getTimezoneOffset();
   $currentYear_summerOffset$$ = (new Date($currentYear_summerOffset$$, 6, 1)).getTimezoneOffset();
-  $HEAPU32$$[$timezone_winterName$$ >> 2] = 60 * Math.max($winterOffset$$, $currentYear_summerOffset$$);
-  $HEAP32$$[$daylight_extractZone_summerName$$ >> 2] = Number($winterOffset$$ != $currentYear_summerOffset$$);
+  var $stdTimezoneOffset$$ = Math.max($winterOffset$$, $currentYear_summerOffset$$);
+  $HEAPU32$$[$_asan_js_check_index$$($HEAPU32$$, $timezone_winterName$$ >> 2, $___asan_storeN$$)] = 60 * $stdTimezoneOffset$$;
+  $HEAP32$$[$_asan_js_check_index$$($HEAP32$$, $daylight_extractZone_summerName$$ >> 2, $___asan_storeN$$)] = Number($winterOffset$$ != $currentYear_summerOffset$$);
   $daylight_extractZone_summerName$$ = $timezoneOffset$$ => {
     var $absOffset$$ = Math.abs($timezoneOffset$$);
     return `UTC${0 <= $timezoneOffset$$ ? "-" : "+"}${String(Math.floor($absOffset$$ / 60)).padStart(2, "0")}${String($absOffset$$ % 60).padStart(2, "0")}`;
@@ -2592,23 +3237,32 @@ $wasmImports$$ = {__cxa_throw:($JSCompiler_StaticMethods_init$self$jscomp$inline
   $assert$$(16 >= $lengthBytesUTF8$$($timezone_winterName$$), `timezone name truncated to fit in TZNAME_MAX (${$timezone_winterName$$})`);
   $assert$$(16 >= $lengthBytesUTF8$$($daylight_extractZone_summerName$$), `timezone name truncated to fit in TZNAME_MAX (${$daylight_extractZone_summerName$$})`);
   $currentYear_summerOffset$$ < $winterOffset$$ ? ($stringToUTF8$$($timezone_winterName$$, $std_name$$, 17), $stringToUTF8$$($daylight_extractZone_summerName$$, $dst_name$$, 17)) : ($stringToUTF8$$($timezone_winterName$$, $dst_name$$, 17), $stringToUTF8$$($daylight_extractZone_summerName$$, $std_name$$, 17));
-}, emscripten_asm_const_int:($code$jscomp$3$$, $sigPtr$jscomp$2_sigPtr$jscomp$inline_424$$, $argbuf$jscomp$1_buf$jscomp$inline_425$$) => {
+}, clock_time_get:function($clk_id_nsec$$, $ignored_precision$$, $ptime$$) {
+  if (!(0 <= $clk_id_nsec$$ && 3 >= $clk_id_nsec$$)) {
+    return 28;
+  }
+  $clk_id_nsec$$ = Math.round(1E6 * (0 === $clk_id_nsec$$ ? Date.now() : performance.now()));
+  $HEAP64$$[$_asan_js_check_index$$($HEAP64$$, $ptime$$ >> 3, $___asan_storeN$$)] = BigInt($clk_id_nsec$$);
+  return 0;
+}, emscripten_asm_const_int:($code$jscomp$3$$, $sigPtr$jscomp$2_sigPtr$jscomp$inline_445$$, $argbuf$jscomp$1_buf$jscomp$inline_446$$) => {
   $assert$$(Array.isArray($readEmAsmArgsArray$$));
-  $assert$$(0 == $argbuf$jscomp$1_buf$jscomp$inline_425$$ % 16);
+  $assert$$(0 == $argbuf$jscomp$1_buf$jscomp$inline_446$$ % 16);
   $readEmAsmArgsArray$$.length = 0;
-  for (var $ch$jscomp$inline_426$$; $ch$jscomp$inline_426$$ = $HEAPU8$$[$sigPtr$jscomp$2_sigPtr$jscomp$inline_424$$++];) {
-    var $chr$jscomp$inline_427_wide$jscomp$inline_429$$ = String.fromCharCode($ch$jscomp$inline_426$$), $validChars$jscomp$inline_428$$ = ["d", "f", "i", "p"];
-    $validChars$jscomp$inline_428$$.push("j");
-    $assert$$($validChars$jscomp$inline_428$$.includes($chr$jscomp$inline_427_wide$jscomp$inline_429$$), `Invalid character ${$ch$jscomp$inline_426$$}("${$chr$jscomp$inline_427_wide$jscomp$inline_429$$}") in readEmAsmArgs! Use only [${$validChars$jscomp$inline_428$$}], and do not specify "v" for void return argument.`);
-    $chr$jscomp$inline_427_wide$jscomp$inline_429$$ = 105 != $ch$jscomp$inline_426$$;
-    $chr$jscomp$inline_427_wide$jscomp$inline_429$$ &= 112 != $ch$jscomp$inline_426$$;
-    $argbuf$jscomp$1_buf$jscomp$inline_425$$ += $chr$jscomp$inline_427_wide$jscomp$inline_429$$ && $argbuf$jscomp$1_buf$jscomp$inline_425$$ % 8 ? 4 : 0;
-    $readEmAsmArgsArray$$.push(112 == $ch$jscomp$inline_426$$ ? $HEAPU32$$[$argbuf$jscomp$1_buf$jscomp$inline_425$$ >> 2] : 106 == $ch$jscomp$inline_426$$ ? $HEAP64$$[$argbuf$jscomp$1_buf$jscomp$inline_425$$ >> 3] : 105 == $ch$jscomp$inline_426$$ ? $HEAP32$$[$argbuf$jscomp$1_buf$jscomp$inline_425$$ >> 2] : $HEAPF64$$[$argbuf$jscomp$1_buf$jscomp$inline_425$$ >> 3]);
-    $argbuf$jscomp$1_buf$jscomp$inline_425$$ += $chr$jscomp$inline_427_wide$jscomp$inline_429$$ ? 8 : 4;
+  for (var $ch$jscomp$inline_447$$; $ch$jscomp$inline_447$$ = $HEAPU8$$[$_asan_js_check_index$$($HEAPU8$$, $sigPtr$jscomp$2_sigPtr$jscomp$inline_445$$++, $___asan_loadN$$)];) {
+    var $chr$jscomp$inline_448_wide$jscomp$inline_450$$ = String.fromCharCode($ch$jscomp$inline_447$$), $validChars$jscomp$inline_449$$ = ["d", "f", "i", "p"];
+    $validChars$jscomp$inline_449$$.push("j");
+    $assert$$($validChars$jscomp$inline_449$$.includes($chr$jscomp$inline_448_wide$jscomp$inline_450$$), `Invalid character ${$ch$jscomp$inline_447$$}("${$chr$jscomp$inline_448_wide$jscomp$inline_450$$}") in readEmAsmArgs! Use only [${$validChars$jscomp$inline_449$$}], and do not specify "v" for void return argument.`);
+    $chr$jscomp$inline_448_wide$jscomp$inline_450$$ = 105 != $ch$jscomp$inline_447$$;
+    $chr$jscomp$inline_448_wide$jscomp$inline_450$$ &= 112 != $ch$jscomp$inline_447$$;
+    $argbuf$jscomp$1_buf$jscomp$inline_446$$ += $chr$jscomp$inline_448_wide$jscomp$inline_450$$ && $argbuf$jscomp$1_buf$jscomp$inline_446$$ % 8 ? 4 : 0;
+    $readEmAsmArgsArray$$.push(112 == $ch$jscomp$inline_447$$ ? $HEAPU32$$[$_asan_js_check_index$$($HEAPU32$$, $argbuf$jscomp$1_buf$jscomp$inline_446$$ >> 2, $___asan_loadN$$)] : 106 == $ch$jscomp$inline_447$$ ? $HEAP64$$[$_asan_js_check_index$$($HEAP64$$, $argbuf$jscomp$1_buf$jscomp$inline_446$$ >> 3, $___asan_loadN$$)] : 105 == $ch$jscomp$inline_447$$ ? $HEAP32$$[$_asan_js_check_index$$($HEAP32$$, $argbuf$jscomp$1_buf$jscomp$inline_446$$ >> 2, $___asan_loadN$$)] : $HEAPF64$$[$_asan_js_check_index$$($HEAPF64$$, 
+    $argbuf$jscomp$1_buf$jscomp$inline_446$$ >> 3, $___asan_loadN$$)]);
+    $argbuf$jscomp$1_buf$jscomp$inline_446$$ += $chr$jscomp$inline_448_wide$jscomp$inline_450$$ ? 8 : 4;
   }
   $assert$$($ASM_CONSTS$$.hasOwnProperty($code$jscomp$3$$), `No EM_ASM constant found at address ${$code$jscomp$3$$}.  The loaded WebAssembly file is likely out of sync with the generated JavaScript.`);
   return $ASM_CONSTS$$[$code$jscomp$3$$](...$readEmAsmArgsArray$$);
-}, emscripten_get_now:() => performance.now(), emscripten_resize_heap:$requestedSize$$ => {
+}, emscripten_get_heap_max:() => 2147483648, emscripten_get_now:() => performance.now(), emscripten_pc_get_column:$pc$jscomp$1_result$jscomp$8$$ => ($pc$jscomp$1_result$jscomp$8$$ = $convertPCtoSourceLocation$$($pc$jscomp$1_result$jscomp$8$$)) ? $pc$jscomp$1_result$jscomp$8$$.$column$ || 0 : 0, emscripten_pc_get_file:$_emscripten_pc_get_file$$, emscripten_pc_get_function:$_emscripten_pc_get_function$$, emscripten_pc_get_line:$pc$jscomp$5_result$jscomp$10$$ => ($pc$jscomp$5_result$jscomp$10$$ = $convertPCtoSourceLocation$$($pc$jscomp$5_result$jscomp$10$$)) ? 
+$pc$jscomp$5_result$jscomp$10$$.line : 0, emscripten_resize_heap:$requestedSize$$ => {
   var $oldSize$$ = $HEAPU8$$.length;
   $requestedSize$$ >>>= 0;
   $assert$$($requestedSize$$ > $oldSize$$);
@@ -2616,22 +3270,18 @@ $wasmImports$$ = {__cxa_throw:($JSCompiler_StaticMethods_init$self$jscomp$inline
     return $err$$(`Cannot enlarge memory, requested ${$requestedSize$$} bytes, but the limit is ${2147483648} bytes!`), !1;
   }
   for (var $cutDown$$ = 1; 4 >= $cutDown$$; $cutDown$$ *= 2) {
-    var $oldHeapSize$jscomp$inline_281_overGrownHeapSize_size$jscomp$inline_277$$ = $oldSize$$ * (1 + 0.2 / $cutDown$$);
-    $oldHeapSize$jscomp$inline_281_overGrownHeapSize_size$jscomp$inline_277$$ = Math.min($oldHeapSize$jscomp$inline_281_overGrownHeapSize_size$jscomp$inline_277$$, $requestedSize$$ + 100663296);
-    var $JSCompiler_temp_const$jscomp$52_newSize$jscomp$2$$ = Math, $JSCompiler_temp_const$jscomp$51_size$jscomp$inline_280$$ = $JSCompiler_temp_const$jscomp$52_newSize$jscomp$2$$.min;
-    $oldHeapSize$jscomp$inline_281_overGrownHeapSize_size$jscomp$inline_277$$ = Math.max($requestedSize$$, $oldHeapSize$jscomp$inline_281_overGrownHeapSize_size$jscomp$inline_277$$);
-    $assert$$(65536, "alignment argument is required");
-    $JSCompiler_temp_const$jscomp$52_newSize$jscomp$2$$ = $JSCompiler_temp_const$jscomp$51_size$jscomp$inline_280$$.call($JSCompiler_temp_const$jscomp$52_newSize$jscomp$2$$, 2147483648, 65536 * Math.ceil($oldHeapSize$jscomp$inline_281_overGrownHeapSize_size$jscomp$inline_277$$ / 65536));
+    var $newSize$jscomp$2_overGrownHeapSize$$ = $oldSize$$ * (1 + .2 / $cutDown$$);
+    $newSize$jscomp$2_overGrownHeapSize$$ = Math.min($newSize$jscomp$2_overGrownHeapSize$$, $requestedSize$$ + 100663296);
+    $newSize$jscomp$2_overGrownHeapSize$$ = Math.min(2147483648, $alignMemory$$(Math.max($requestedSize$$, $newSize$jscomp$2_overGrownHeapSize$$)));
     a: {
-      $JSCompiler_temp_const$jscomp$51_size$jscomp$inline_280$$ = $JSCompiler_temp_const$jscomp$52_newSize$jscomp$2$$;
-      $oldHeapSize$jscomp$inline_281_overGrownHeapSize_size$jscomp$inline_277$$ = $wasmMemory$$.buffer.byteLength;
+      var $size$jscomp$inline_291$$ = $newSize$jscomp$2_overGrownHeapSize$$, $oldHeapSize$jscomp$inline_292$$ = $wasmMemory$$.buffer.byteLength;
       try {
-        $wasmMemory$$.grow(($JSCompiler_temp_const$jscomp$51_size$jscomp$inline_280$$ - $oldHeapSize$jscomp$inline_281_overGrownHeapSize_size$jscomp$inline_277$$ + 65535) / 65536 | 0);
+        $wasmMemory$$.grow(($size$jscomp$inline_291$$ - $oldHeapSize$jscomp$inline_292$$ + 65535) / 65536 | 0);
         $updateMemoryViews$$();
         var $JSCompiler_inline_result$jscomp$54$$ = 1;
         break a;
-      } catch ($e$jscomp$inline_283$$) {
-        $err$$(`growMemory: Attempted to grow heap from ${$oldHeapSize$jscomp$inline_281_overGrownHeapSize_size$jscomp$inline_277$$} bytes to ${$JSCompiler_temp_const$jscomp$51_size$jscomp$inline_280$$} bytes, but got error: ${$e$jscomp$inline_283$$}`);
+      } catch ($e$jscomp$inline_294$$) {
+        $err$$(`growMemory: Attempted to grow heap from ${$oldHeapSize$jscomp$inline_292$$} bytes to ${$size$jscomp$inline_291$$} bytes, but got error: ${$e$jscomp$inline_294$$}`);
       }
       $JSCompiler_inline_result$jscomp$54$$ = void 0;
     }
@@ -2639,8 +3289,12 @@ $wasmImports$$ = {__cxa_throw:($JSCompiler_StaticMethods_init$self$jscomp$inline
       return !0;
     }
   }
-  $err$$(`Failed to grow the heap from ${$oldSize$$} bytes to ${$JSCompiler_temp_const$jscomp$52_newSize$jscomp$2$$} bytes, not enough memory!`);
+  $err$$(`Failed to grow the heap from ${$oldSize$$} bytes to ${$newSize$jscomp$2_overGrownHeapSize$$} bytes, not enough memory!`);
   return !1;
+}, emscripten_return_address:$level$jscomp$19$$ => {
+  var $callstack$jscomp$2$$ = Error().stack.toString().split("\n");
+  "Error" == $callstack$jscomp$2$$[0] && $callstack$jscomp$2$$.shift();
+  return $convertFrameToPC$$($callstack$jscomp$2$$[$level$jscomp$19$$ + 3]);
 }, emscripten_set_canvas_element_size:($canvas_target$jscomp$93$$, $width$jscomp$30$$, $height$jscomp$25$$) => {
   $canvas_target$jscomp$93$$ = $findEventTarget$$($canvas_target$jscomp$93$$);
   if (!$canvas_target$jscomp$93$$) {
@@ -2649,11 +3303,33 @@ $wasmImports$$ = {__cxa_throw:($JSCompiler_StaticMethods_init$self$jscomp$inline
   $canvas_target$jscomp$93$$.width = $width$jscomp$30$$;
   $canvas_target$jscomp$93$$.height = $height$jscomp$25$$;
   return 0;
+}, emscripten_stack_snapshot:() => {
+  var $callstack$jscomp$1$$ = Error().stack.toString().split("\n");
+  "Error" == $callstack$jscomp$1$$[0] && $callstack$jscomp$1$$.shift();
+  $saveInUnwindCache$$($callstack$jscomp$1$$);
+  $UNWIND_CACHE$$.$last_addr$ = $convertFrameToPC$$($callstack$jscomp$1$$[3]);
+  $UNWIND_CACHE$$.$last_stack$ = $callstack$jscomp$1$$;
+  return $UNWIND_CACHE$$.$last_addr$;
+}, emscripten_stack_unwind_buffer:($addr$jscomp$3_i$jscomp$38$$, $buffer$jscomp$32$$, $count$jscomp$40$$) => {
+  if ($UNWIND_CACHE$$.$last_addr$ == $addr$jscomp$3_i$jscomp$38$$) {
+    var $stack$$ = $UNWIND_CACHE$$.$last_stack$;
+  } else {
+    $stack$$ = Error().stack.toString().split("\n"), "Error" == $stack$$[0] && $stack$$.shift(), $saveInUnwindCache$$($stack$$);
+  }
+  for (var $offset$jscomp$45$$ = 3; $stack$$[$offset$jscomp$45$$] && $convertFrameToPC$$($stack$$[$offset$jscomp$45$$]) != $addr$jscomp$3_i$jscomp$38$$;) {
+    ++$offset$jscomp$45$$;
+  }
+  for ($addr$jscomp$3_i$jscomp$38$$ = 0; $addr$jscomp$3_i$jscomp$38$$ < $count$jscomp$40$$ && $stack$$[$addr$jscomp$3_i$jscomp$38$$ + $offset$jscomp$45$$]; ++$addr$jscomp$3_i$jscomp$38$$) {
+    $HEAP32$$[$_asan_js_check_index$$($HEAP32$$, $buffer$jscomp$32$$ + 4 * $addr$jscomp$3_i$jscomp$38$$ >> 2, $___asan_storeN$$)] = $convertFrameToPC$$($stack$$[$addr$jscomp$3_i$jscomp$38$$ + $offset$jscomp$45$$]);
+  }
+  return $addr$jscomp$3_i$jscomp$38$$;
 }, emscripten_webgl_create_context:($canvas$jscomp$2_target$jscomp$94$$, $attributes$jscomp$1_contextAttributes$$) => {
   $assert$$($attributes$jscomp$1_contextAttributes$$);
-  var $attr32$$ = $attributes$jscomp$1_contextAttributes$$ >> 2;
-  $attributes$jscomp$1_contextAttributes$$ = {alpha:!!$HEAP8$$[$attributes$jscomp$1_contextAttributes$$ + 0], depth:!!$HEAP8$$[$attributes$jscomp$1_contextAttributes$$ + 1], stencil:!!$HEAP8$$[$attributes$jscomp$1_contextAttributes$$ + 2], antialias:!!$HEAP8$$[$attributes$jscomp$1_contextAttributes$$ + 3], premultipliedAlpha:!!$HEAP8$$[$attributes$jscomp$1_contextAttributes$$ + 4], preserveDrawingBuffer:!!$HEAP8$$[$attributes$jscomp$1_contextAttributes$$ + 5], powerPreference:$webglPowerPreferences$$[$HEAP32$$[$attr32$$ + 
-  2]], failIfMajorPerformanceCaveat:!!$HEAP8$$[$attributes$jscomp$1_contextAttributes$$ + 12], $majorVersion$:$HEAP32$$[$attr32$$ + 4], $minorVersion$:$HEAP32$$[$attr32$$ + 5], $enableExtensionsByDefault$:$HEAP8$$[$attributes$jscomp$1_contextAttributes$$ + 24], $explicitSwapControl$:$HEAP8$$[$attributes$jscomp$1_contextAttributes$$ + 25], $proxyContextToMainThread$:$HEAP32$$[$attr32$$ + 7], $renderViaOffscreenBackBuffer$:$HEAP8$$[$attributes$jscomp$1_contextAttributes$$ + 32]};
+  var $attr32$$ = $attributes$jscomp$1_contextAttributes$$ >> 2, $powerPreference$$ = $HEAP32$$[$_asan_js_check_index$$($HEAP32$$, $attr32$$ + 2, $___asan_loadN$$)];
+  $attributes$jscomp$1_contextAttributes$$ = {alpha:!!$HEAP8$$[$_asan_js_check_index$$($HEAP8$$, $attributes$jscomp$1_contextAttributes$$ + 0, $___asan_loadN$$)], depth:!!$HEAP8$$[$_asan_js_check_index$$($HEAP8$$, $attributes$jscomp$1_contextAttributes$$ + 1, $___asan_loadN$$)], stencil:!!$HEAP8$$[$_asan_js_check_index$$($HEAP8$$, $attributes$jscomp$1_contextAttributes$$ + 2, $___asan_loadN$$)], antialias:!!$HEAP8$$[$_asan_js_check_index$$($HEAP8$$, $attributes$jscomp$1_contextAttributes$$ + 3, $___asan_loadN$$)], 
+  premultipliedAlpha:!!$HEAP8$$[$_asan_js_check_index$$($HEAP8$$, $attributes$jscomp$1_contextAttributes$$ + 4, $___asan_loadN$$)], preserveDrawingBuffer:!!$HEAP8$$[$_asan_js_check_index$$($HEAP8$$, $attributes$jscomp$1_contextAttributes$$ + 5, $___asan_loadN$$)], powerPreference:$webglPowerPreferences$$[$powerPreference$$], failIfMajorPerformanceCaveat:!!$HEAP8$$[$_asan_js_check_index$$($HEAP8$$, $attributes$jscomp$1_contextAttributes$$ + 12, $___asan_loadN$$)], $majorVersion$:$HEAP32$$[$_asan_js_check_index$$($HEAP32$$, 
+  $attr32$$ + 4, $___asan_loadN$$)], $minorVersion$:$HEAP32$$[$_asan_js_check_index$$($HEAP32$$, $attr32$$ + 5, $___asan_loadN$$)], $enableExtensionsByDefault$:$HEAP8$$[$_asan_js_check_index$$($HEAP8$$, $attributes$jscomp$1_contextAttributes$$ + 24, $___asan_loadN$$)], $explicitSwapControl$:$HEAP8$$[$_asan_js_check_index$$($HEAP8$$, $attributes$jscomp$1_contextAttributes$$ + 25, $___asan_loadN$$)], $proxyContextToMainThread$:$HEAP32$$[$_asan_js_check_index$$($HEAP32$$, $attr32$$ + 7, $___asan_loadN$$)], 
+  $renderViaOffscreenBackBuffer$:$HEAP8$$[$_asan_js_check_index$$($HEAP8$$, $attributes$jscomp$1_contextAttributes$$ + 32, $___asan_loadN$$)]};
   1 !== $attributes$jscomp$1_contextAttributes$$.$majorVersion$ && 2 !== $attributes$jscomp$1_contextAttributes$$.$majorVersion$ && $err$$(`Invalid WebGL version requested: ${$attributes$jscomp$1_contextAttributes$$.$majorVersion$}`);
   2 !== $attributes$jscomp$1_contextAttributes$$.$majorVersion$ && $err$$("WebGL 1 requested but only WebGL 2 is supported (MIN_WEBGL_VERSION is 2)");
   $canvas$jscomp$2_target$jscomp$94$$ = $findEventTarget$$($canvas$jscomp$2_target$jscomp$94$$);
@@ -2671,41 +3347,41 @@ $wasmImports$$ = {__cxa_throw:($JSCompiler_StaticMethods_init$self$jscomp$inline
 }, environ_get:($__environ$$, $environ_buf$$) => {
   var $bufSize$$ = 0, $envp$$ = 0, $string$jscomp$4$$;
   for ($string$jscomp$4$$ of $getEnvStrings$$()) {
-    var $ptr$jscomp$28$$ = $environ_buf$$ + $bufSize$$;
-    $HEAPU32$$[$__environ$$ + $envp$$ >> 2] = $ptr$jscomp$28$$;
-    $bufSize$$ += $stringToUTF8$$($string$jscomp$4$$, $ptr$jscomp$28$$, Infinity) + 1;
+    var $ptr$jscomp$31$$ = $environ_buf$$ + $bufSize$$;
+    $HEAPU32$$[$_asan_js_check_index$$($HEAPU32$$, $__environ$$ + $envp$$ >> 2, $___asan_storeN$$)] = $ptr$jscomp$31$$;
+    $bufSize$$ += $stringToUTF8$$($string$jscomp$4$$, $ptr$jscomp$31$$, Infinity) + 1;
     $envp$$ += 4;
   }
   return 0;
 }, environ_sizes_get:($bufSize$jscomp$1_penviron_count$$, $penviron_buf_size$$) => {
   var $strings$jscomp$1$$ = $getEnvStrings$$();
-  $HEAPU32$$[$bufSize$jscomp$1_penviron_count$$ >> 2] = $strings$jscomp$1$$.length;
+  $HEAPU32$$[$_asan_js_check_index$$($HEAPU32$$, $bufSize$jscomp$1_penviron_count$$ >> 2, $___asan_storeN$$)] = $strings$jscomp$1$$.length;
   $bufSize$jscomp$1_penviron_count$$ = 0;
   for (var $string$jscomp$5$$ of $strings$jscomp$1$$) {
     $bufSize$jscomp$1_penviron_count$$ += $lengthBytesUTF8$$($string$jscomp$5$$) + 1;
   }
-  $HEAPU32$$[$penviron_buf_size$$ >> 2] = $bufSize$jscomp$1_penviron_count$$;
+  $HEAPU32$$[$_asan_js_check_index$$($HEAPU32$$, $penviron_buf_size$$ >> 2, $___asan_storeN$$)] = $bufSize$jscomp$1_penviron_count$$;
   return 0;
 }, equirectangularFromURL:function($url$jscomp$30$$, $ctxId$jscomp$1$$, $tiles$$, $textureIdsHandle$$) {
   let $gl$jscomp$2$$ = $GL$contexts$$[$ctxId$jscomp$1$$].$GLctx$, $img$jscomp$3$$ = new Image(), $imgUrl$jscomp$1$$ = $UTF8ToString$$($url$jscomp$30$$), $textureIds$$ = $Emval$toValue$$($textureIdsHandle$$);
   $img$jscomp$3$$.onload = function() {
     var $canvas$jscomp$3_textureCount$$ = $tiles$$ * $tiles$$;
     let $textures$jscomp$2$$ = [];
-    for (var $ctx$jscomp$9_i$jscomp$49$$ = 0; $ctx$jscomp$9_i$jscomp$49$$ < $canvas$jscomp$3_textureCount$$ && $GL$textures$$[$textureIds$$[$ctx$jscomp$9_i$jscomp$49$$]];) {
-      $textures$jscomp$2$$.push($GL$textures$$[$textureIds$$[$ctx$jscomp$9_i$jscomp$49$$]]), $ctx$jscomp$9_i$jscomp$49$$++;
+    for (var $ctx$jscomp$9_i$jscomp$50$$ = 0; $ctx$jscomp$9_i$jscomp$50$$ < $canvas$jscomp$3_textureCount$$ && $GL$textures$$[$textureIds$$[$ctx$jscomp$9_i$jscomp$50$$]];) {
+      $textures$jscomp$2$$.push($GL$textures$$[$textureIds$$[$ctx$jscomp$9_i$jscomp$50$$]]), $ctx$jscomp$9_i$jscomp$50$$++;
     }
-    if ($ctx$jscomp$9_i$jscomp$49$$ == $canvas$jscomp$3_textureCount$$) {
+    if ($ctx$jscomp$9_i$jscomp$50$$ == $canvas$jscomp$3_textureCount$$) {
       $canvas$jscomp$3_textureCount$$ = document.createElement("canvas");
-      $ctx$jscomp$9_i$jscomp$49$$ = $canvas$jscomp$3_textureCount$$.getContext("2d");
+      $ctx$jscomp$9_i$jscomp$50$$ = $canvas$jscomp$3_textureCount$$.getContext("2d");
       let $tileW$$ = $img$jscomp$3$$.width / $tiles$$, $tileH$$ = $img$jscomp$3$$.height / $tiles$$;
       $canvas$jscomp$3_textureCount$$.width = $tileW$$;
       $canvas$jscomp$3_textureCount$$.height = $tileH$$;
-      let $i$jscomp$50$$ = 0;
+      let $i$jscomp$51$$ = 0;
       for (let $x$jscomp$94$$ = 0; $x$jscomp$94$$ < $tiles$$; $x$jscomp$94$$++) {
         for (let $y$jscomp$78$$ = 0; $y$jscomp$78$$ < $tiles$$; $y$jscomp$78$$++) {
-          $ctx$jscomp$9_i$jscomp$49$$.clearRect(0, 0, $tileW$$, $tileH$$), $ctx$jscomp$9_i$jscomp$49$$.drawImage($img$jscomp$3$$, $x$jscomp$94$$ * $tileW$$, $y$jscomp$78$$ * $tileH$$, $tileW$$, $tileH$$, 0, 0, $tileW$$, $tileH$$), $gl$jscomp$2$$.bindTexture($gl$jscomp$2$$.TEXTURE_2D, $textures$jscomp$2$$[$i$jscomp$50$$]), $gl$jscomp$2$$.texImage2D($gl$jscomp$2$$.TEXTURE_2D, 0, $gl$jscomp$2$$.RGBA, $gl$jscomp$2$$.RGBA, $gl$jscomp$2$$.UNSIGNED_BYTE, $canvas$jscomp$3_textureCount$$), $gl$jscomp$2$$.generateMipmap($gl$jscomp$2$$.TEXTURE_2D), 
+          $ctx$jscomp$9_i$jscomp$50$$.clearRect(0, 0, $tileW$$, $tileH$$), $ctx$jscomp$9_i$jscomp$50$$.drawImage($img$jscomp$3$$, $x$jscomp$94$$ * $tileW$$, $y$jscomp$78$$ * $tileH$$, $tileW$$, $tileH$$, 0, 0, $tileW$$, $tileH$$), $gl$jscomp$2$$.bindTexture($gl$jscomp$2$$.TEXTURE_2D, $textures$jscomp$2$$[$i$jscomp$51$$]), $gl$jscomp$2$$.texImage2D($gl$jscomp$2$$.TEXTURE_2D, 0, $gl$jscomp$2$$.RGBA, $gl$jscomp$2$$.RGBA, $gl$jscomp$2$$.UNSIGNED_BYTE, $canvas$jscomp$3_textureCount$$), $gl$jscomp$2$$.generateMipmap($gl$jscomp$2$$.TEXTURE_2D), 
           $gl$jscomp$2$$.texParameteri($gl$jscomp$2$$.TEXTURE_2D, $gl$jscomp$2$$.TEXTURE_MIN_FILTER, $gl$jscomp$2$$.LINEAR), $gl$jscomp$2$$.texParameteri($gl$jscomp$2$$.TEXTURE_2D, $gl$jscomp$2$$.TEXTURE_MAG_FILTER, $gl$jscomp$2$$.NEAREST), $gl$jscomp$2$$.texParameteri($gl$jscomp$2$$.TEXTURE_2D, $gl$jscomp$2$$.TEXTURE_WRAP_S, $gl$jscomp$2$$.CLAMP_TO_EDGE), $gl$jscomp$2$$.texParameteri($gl$jscomp$2$$.TEXTURE_2D, $gl$jscomp$2$$.TEXTURE_WRAP_T, $gl$jscomp$2$$.CLAMP_TO_EDGE), $gl$jscomp$2$$.bindTexture($gl$jscomp$2$$.TEXTURE_2D, 
-          null), $i$jscomp$50$$++;
+          null), $i$jscomp$51$$++;
         }
       }
     } else {
@@ -2716,132 +3392,132 @@ $wasmImports$$ = {__cxa_throw:($JSCompiler_StaticMethods_init$self$jscomp$inline
     console.error("Texture failed to load:\t" + $imgUrl$jscomp$1$$);
   };
   $img$jscomp$3$$.src = $imgUrl$jscomp$1$$;
-}, fd_close:function($fd$jscomp$14$$) {
+}, fd_close:function($fd$jscomp$18$$) {
   try {
-    var $stream$jscomp$53$$ = $FS$getStreamChecked$$($fd$jscomp$14$$);
-    $FS$close$$($stream$jscomp$53$$);
+    var $stream$jscomp$55$$ = $FS$getStreamChecked$$($fd$jscomp$18$$);
+    $FS$close$$($stream$jscomp$55$$);
     return 0;
-  } catch ($e$jscomp$29$$) {
-    if ("undefined" == typeof $FS$$ || "ErrnoError" !== $e$jscomp$29$$.name) {
-      throw $e$jscomp$29$$;
+  } catch ($e$jscomp$37$$) {
+    if ("undefined" == typeof $FS$$ || "ErrnoError" !== $e$jscomp$37$$.name) {
+      throw $e$jscomp$37$$;
     }
-    return $e$jscomp$29$$.$errno$;
+    return $e$jscomp$37$$.$errno$;
   }
-}, fd_read:function($fd$jscomp$15_iov$jscomp$inline_290$$, $iov$jscomp$1_ret$jscomp$inline_293$$, $iovcnt$jscomp$1$$, $pnum$$) {
+}, fd_read:function($fd$jscomp$19_iov$jscomp$inline_301$$, $iov$jscomp$1_ret$jscomp$inline_304$$, $iovcnt$jscomp$1$$, $pnum$$) {
   try {
     a: {
-      var $stream$jscomp$inline_289$$ = $FS$getStreamChecked$$($fd$jscomp$15_iov$jscomp$inline_290$$);
-      $fd$jscomp$15_iov$jscomp$inline_290$$ = $iov$jscomp$1_ret$jscomp$inline_293$$;
-      for (var $offset$jscomp$inline_292$$, $i$jscomp$inline_294$$ = $iov$jscomp$1_ret$jscomp$inline_293$$ = 0; $i$jscomp$inline_294$$ < $iovcnt$jscomp$1$$; $i$jscomp$inline_294$$++) {
-        var $ptr$jscomp$inline_295$$ = $HEAPU32$$[$fd$jscomp$15_iov$jscomp$inline_290$$ >> 2], $len$jscomp$inline_296$$ = $HEAPU32$$[$fd$jscomp$15_iov$jscomp$inline_290$$ + 4 >> 2];
-        $fd$jscomp$15_iov$jscomp$inline_290$$ += 8;
-        var $stream$jscomp$inline_431$$ = $stream$jscomp$inline_289$$, $offset$jscomp$inline_432$$ = $ptr$jscomp$inline_295$$, $length$jscomp$inline_433$$ = $len$jscomp$inline_296$$, $position$jscomp$inline_434$$ = $offset$jscomp$inline_292$$, $buffer$jscomp$inline_435$$ = $HEAP8$$;
-        $assert$$(0 <= $offset$jscomp$inline_432$$);
-        if (0 > $length$jscomp$inline_433$$ || 0 > $position$jscomp$inline_434$$) {
+      var $stream$jscomp$inline_300$$ = $FS$getStreamChecked$$($fd$jscomp$19_iov$jscomp$inline_301$$);
+      $fd$jscomp$19_iov$jscomp$inline_301$$ = $iov$jscomp$1_ret$jscomp$inline_304$$;
+      for (var $offset$jscomp$inline_303$$, $i$jscomp$inline_305$$ = $iov$jscomp$1_ret$jscomp$inline_304$$ = 0; $i$jscomp$inline_305$$ < $iovcnt$jscomp$1$$; $i$jscomp$inline_305$$++) {
+        var $ptr$jscomp$inline_306$$ = $HEAPU32$$[$_asan_js_check_index$$($HEAPU32$$, $fd$jscomp$19_iov$jscomp$inline_301$$ >> 2, $___asan_loadN$$)], $len$jscomp$inline_307$$ = $HEAPU32$$[$_asan_js_check_index$$($HEAPU32$$, $fd$jscomp$19_iov$jscomp$inline_301$$ + 4 >> 2, $___asan_loadN$$)];
+        $fd$jscomp$19_iov$jscomp$inline_301$$ += 8;
+        var $stream$jscomp$inline_452$$ = $stream$jscomp$inline_300$$, $offset$jscomp$inline_453$$ = $ptr$jscomp$inline_306$$, $length$jscomp$inline_454$$ = $len$jscomp$inline_307$$, $position$jscomp$inline_455$$ = $offset$jscomp$inline_303$$, $buffer$jscomp$inline_456$$ = $HEAP8$$;
+        $assert$$(0 <= $offset$jscomp$inline_453$$);
+        if (0 > $length$jscomp$inline_454$$ || 0 > $position$jscomp$inline_455$$) {
           throw new $FS$ErrnoError$$(28);
         }
-        if (null === $stream$jscomp$inline_431$$.$fd$) {
+        if (null === $stream$jscomp$inline_452$$.$fd$) {
           throw new $FS$ErrnoError$$(8);
         }
-        if (1 === ($stream$jscomp$inline_431$$.flags & 2097155)) {
+        if (1 === ($stream$jscomp$inline_452$$.flags & 2097155)) {
           throw new $FS$ErrnoError$$(8);
         }
-        if ($FS$isDir$$($stream$jscomp$inline_431$$.node.mode)) {
+        if ($FS$isDir$$($stream$jscomp$inline_452$$.node.mode)) {
           throw new $FS$ErrnoError$$(31);
         }
-        if (!$stream$jscomp$inline_431$$.$stream_ops$.read) {
+        if (!$stream$jscomp$inline_452$$.$stream_ops$.read) {
           throw new $FS$ErrnoError$$(28);
         }
-        var $seeking$jscomp$inline_436$$ = "undefined" != typeof $position$jscomp$inline_434$$;
-        if (!$seeking$jscomp$inline_436$$) {
-          $position$jscomp$inline_434$$ = $stream$jscomp$inline_431$$.position;
-        } else if (!$stream$jscomp$inline_431$$.seekable) {
+        var $seeking$jscomp$inline_457$$ = "undefined" != typeof $position$jscomp$inline_455$$;
+        if (!$seeking$jscomp$inline_457$$) {
+          $position$jscomp$inline_455$$ = $stream$jscomp$inline_452$$.position;
+        } else if (!$stream$jscomp$inline_452$$.seekable) {
           throw new $FS$ErrnoError$$(70);
         }
-        var $bytesRead$jscomp$inline_437$$ = $stream$jscomp$inline_431$$.$stream_ops$.read($stream$jscomp$inline_431$$, $buffer$jscomp$inline_435$$, $offset$jscomp$inline_432$$, $length$jscomp$inline_433$$, $position$jscomp$inline_434$$);
-        $seeking$jscomp$inline_436$$ || ($stream$jscomp$inline_431$$.position += $bytesRead$jscomp$inline_437$$);
-        var $curr$jscomp$inline_297$$ = $bytesRead$jscomp$inline_437$$;
-        if (0 > $curr$jscomp$inline_297$$) {
-          var $num$jscomp$6$$ = -1;
+        var $bytesRead$jscomp$inline_458$$ = $stream$jscomp$inline_452$$.$stream_ops$.read($stream$jscomp$inline_452$$, $buffer$jscomp$inline_456$$, $offset$jscomp$inline_453$$, $length$jscomp$inline_454$$, $position$jscomp$inline_455$$);
+        $seeking$jscomp$inline_457$$ || ($stream$jscomp$inline_452$$.position += $bytesRead$jscomp$inline_458$$);
+        var $curr$jscomp$inline_308$$ = $bytesRead$jscomp$inline_458$$;
+        if (0 > $curr$jscomp$inline_308$$) {
+          var $num$jscomp$7$$ = -1;
           break a;
         }
-        $iov$jscomp$1_ret$jscomp$inline_293$$ += $curr$jscomp$inline_297$$;
-        if ($curr$jscomp$inline_297$$ < $len$jscomp$inline_296$$) {
+        $iov$jscomp$1_ret$jscomp$inline_304$$ += $curr$jscomp$inline_308$$;
+        if ($curr$jscomp$inline_308$$ < $len$jscomp$inline_307$$) {
           break;
         }
-        "undefined" != typeof $offset$jscomp$inline_292$$ && ($offset$jscomp$inline_292$$ += $curr$jscomp$inline_297$$);
+        "undefined" != typeof $offset$jscomp$inline_303$$ && ($offset$jscomp$inline_303$$ += $curr$jscomp$inline_308$$);
       }
-      $num$jscomp$6$$ = $iov$jscomp$1_ret$jscomp$inline_293$$;
+      $num$jscomp$7$$ = $iov$jscomp$1_ret$jscomp$inline_304$$;
     }
-    $HEAPU32$$[$pnum$$ >> 2] = $num$jscomp$6$$;
+    $HEAPU32$$[$_asan_js_check_index$$($HEAPU32$$, $pnum$$ >> 2, $___asan_storeN$$)] = $num$jscomp$7$$;
     return 0;
-  } catch ($e$jscomp$30$$) {
-    if ("undefined" == typeof $FS$$ || "ErrnoError" !== $e$jscomp$30$$.name) {
-      throw $e$jscomp$30$$;
+  } catch ($e$jscomp$38$$) {
+    if ("undefined" == typeof $FS$$ || "ErrnoError" !== $e$jscomp$38$$.name) {
+      throw $e$jscomp$38$$;
     }
-    return $e$jscomp$30$$.$errno$;
+    return $e$jscomp$38$$.$errno$;
   }
-}, fd_seek:function($fd$jscomp$16$$, $offset$jscomp$44$$, $whence$jscomp$2$$, $newOffset$$) {
-  $offset$jscomp$44$$ = -9007199254740992 > $offset$jscomp$44$$ || 9007199254740992 < $offset$jscomp$44$$ ? NaN : Number($offset$jscomp$44$$);
+}, fd_seek:function($fd$jscomp$20$$, $offset$jscomp$47$$, $whence$jscomp$2$$, $newOffset$$) {
+  $offset$jscomp$47$$ = -9007199254740992 > $offset$jscomp$47$$ || 9007199254740992 < $offset$jscomp$47$$ ? NaN : Number($offset$jscomp$47$$);
   try {
-    if (isNaN($offset$jscomp$44$$)) {
+    if (isNaN($offset$jscomp$47$$)) {
       return 61;
     }
-    var $stream$jscomp$56$$ = $FS$getStreamChecked$$($fd$jscomp$16$$);
-    $FS$llseek$$($stream$jscomp$56$$, $offset$jscomp$44$$, $whence$jscomp$2$$);
-    $HEAP64$$[$newOffset$$ >> 3] = BigInt($stream$jscomp$56$$.position);
-    $stream$jscomp$56$$.$getdents$ && 0 === $offset$jscomp$44$$ && 0 === $whence$jscomp$2$$ && ($stream$jscomp$56$$.$getdents$ = null);
+    var $stream$jscomp$58$$ = $FS$getStreamChecked$$($fd$jscomp$20$$);
+    $FS$llseek$$($stream$jscomp$58$$, $offset$jscomp$47$$, $whence$jscomp$2$$);
+    $HEAP64$$[$_asan_js_check_index$$($HEAP64$$, $newOffset$$ >> 3, $___asan_storeN$$)] = BigInt($stream$jscomp$58$$.position);
+    $stream$jscomp$58$$.$getdents$ && 0 === $offset$jscomp$47$$ && 0 === $whence$jscomp$2$$ && ($stream$jscomp$58$$.$getdents$ = null);
     return 0;
-  } catch ($e$jscomp$31$$) {
-    if ("undefined" == typeof $FS$$ || "ErrnoError" !== $e$jscomp$31$$.name) {
-      throw $e$jscomp$31$$;
+  } catch ($e$jscomp$39$$) {
+    if ("undefined" == typeof $FS$$ || "ErrnoError" !== $e$jscomp$39$$.name) {
+      throw $e$jscomp$39$$;
     }
-    return $e$jscomp$31$$.$errno$;
+    return $e$jscomp$39$$.$errno$;
   }
-}, fd_write:function($fd$jscomp$17_iov$jscomp$inline_300$$, $iov$jscomp$3_ret$jscomp$inline_303$$, $iovcnt$jscomp$3$$, $pnum$jscomp$1$$) {
+}, fd_write:function($fd$jscomp$21_iov$jscomp$inline_311$$, $iov$jscomp$3_ret$jscomp$inline_314$$, $iovcnt$jscomp$3$$, $pnum$jscomp$1$$) {
   try {
     a: {
-      var $stream$jscomp$inline_299$$ = $FS$getStreamChecked$$($fd$jscomp$17_iov$jscomp$inline_300$$);
-      $fd$jscomp$17_iov$jscomp$inline_300$$ = $iov$jscomp$3_ret$jscomp$inline_303$$;
-      for (var $offset$jscomp$inline_302$$, $i$jscomp$inline_304$$ = $iov$jscomp$3_ret$jscomp$inline_303$$ = 0; $i$jscomp$inline_304$$ < $iovcnt$jscomp$3$$; $i$jscomp$inline_304$$++) {
-        var $ptr$jscomp$inline_305$$ = $HEAPU32$$[$fd$jscomp$17_iov$jscomp$inline_300$$ >> 2], $len$jscomp$inline_306$$ = $HEAPU32$$[$fd$jscomp$17_iov$jscomp$inline_300$$ + 4 >> 2];
-        $fd$jscomp$17_iov$jscomp$inline_300$$ += 8;
-        var $curr$jscomp$inline_307$$ = $FS$write$$($stream$jscomp$inline_299$$, $HEAP8$$, $ptr$jscomp$inline_305$$, $len$jscomp$inline_306$$, $offset$jscomp$inline_302$$);
-        if (0 > $curr$jscomp$inline_307$$) {
+      var $stream$jscomp$inline_310$$ = $FS$getStreamChecked$$($fd$jscomp$21_iov$jscomp$inline_311$$);
+      $fd$jscomp$21_iov$jscomp$inline_311$$ = $iov$jscomp$3_ret$jscomp$inline_314$$;
+      for (var $offset$jscomp$inline_313$$, $i$jscomp$inline_315$$ = $iov$jscomp$3_ret$jscomp$inline_314$$ = 0; $i$jscomp$inline_315$$ < $iovcnt$jscomp$3$$; $i$jscomp$inline_315$$++) {
+        var $ptr$jscomp$inline_316$$ = $HEAPU32$$[$_asan_js_check_index$$($HEAPU32$$, $fd$jscomp$21_iov$jscomp$inline_311$$ >> 2, $___asan_loadN$$)], $len$jscomp$inline_317$$ = $HEAPU32$$[$_asan_js_check_index$$($HEAPU32$$, $fd$jscomp$21_iov$jscomp$inline_311$$ + 4 >> 2, $___asan_loadN$$)];
+        $fd$jscomp$21_iov$jscomp$inline_311$$ += 8;
+        var $curr$jscomp$inline_318$$ = $FS$write$$($stream$jscomp$inline_310$$, $HEAP8$$, $ptr$jscomp$inline_316$$, $len$jscomp$inline_317$$, $offset$jscomp$inline_313$$);
+        if (0 > $curr$jscomp$inline_318$$) {
           var $num$jscomp$8$$ = -1;
           break a;
         }
-        $iov$jscomp$3_ret$jscomp$inline_303$$ += $curr$jscomp$inline_307$$;
-        if ($curr$jscomp$inline_307$$ < $len$jscomp$inline_306$$) {
+        $iov$jscomp$3_ret$jscomp$inline_314$$ += $curr$jscomp$inline_318$$;
+        if ($curr$jscomp$inline_318$$ < $len$jscomp$inline_317$$) {
           break;
         }
-        "undefined" != typeof $offset$jscomp$inline_302$$ && ($offset$jscomp$inline_302$$ += $curr$jscomp$inline_307$$);
+        "undefined" != typeof $offset$jscomp$inline_313$$ && ($offset$jscomp$inline_313$$ += $curr$jscomp$inline_318$$);
       }
-      $num$jscomp$8$$ = $iov$jscomp$3_ret$jscomp$inline_303$$;
+      $num$jscomp$8$$ = $iov$jscomp$3_ret$jscomp$inline_314$$;
     }
-    $HEAPU32$$[$pnum$jscomp$1$$ >> 2] = $num$jscomp$8$$;
+    $HEAPU32$$[$_asan_js_check_index$$($HEAPU32$$, $pnum$jscomp$1$$ >> 2, $___asan_storeN$$)] = $num$jscomp$8$$;
     return 0;
-  } catch ($e$jscomp$32$$) {
-    if ("undefined" == typeof $FS$$ || "ErrnoError" !== $e$jscomp$32$$.name) {
-      throw $e$jscomp$32$$;
+  } catch ($e$jscomp$40$$) {
+    if ("undefined" == typeof $FS$$ || "ErrnoError" !== $e$jscomp$40$$.name) {
+      throw $e$jscomp$40$$;
     }
-    return $e$jscomp$32$$.$errno$;
+    return $e$jscomp$40$$.$errno$;
   }
 }, glActiveTexture:$x0$jscomp$2$$ => $GLctx$$.activeTexture($x0$jscomp$2$$), glAttachShader:($program$jscomp$63$$, $shader$jscomp$11$$) => {
   $GLctx$$.attachShader($GL$programs$$[$program$jscomp$63$$], $GL$shaders$$[$shader$jscomp$11$$]);
-}, glBindBuffer:($target$jscomp$95$$, $buffer$jscomp$33$$) => {
-  35051 == $target$jscomp$95$$ ? $GLctx$$.$currentPixelPackBufferBinding$ = $buffer$jscomp$33$$ : 35052 == $target$jscomp$95$$ && ($GLctx$$.$currentPixelUnpackBufferBinding$ = $buffer$jscomp$33$$);
-  $GLctx$$.bindBuffer($target$jscomp$95$$, $GL$buffers$$[$buffer$jscomp$33$$]);
-}, glBindBufferRange:($target$jscomp$96$$, $index$jscomp$103$$, $buffer$jscomp$34$$, $offset$jscomp$46$$, $ptrsize$$) => {
-  $GLctx$$.bindBufferRange($target$jscomp$96$$, $index$jscomp$103$$, $GL$buffers$$[$buffer$jscomp$34$$], $offset$jscomp$46$$, $ptrsize$$);
+}, glBindBuffer:($target$jscomp$95$$, $buffer$jscomp$34$$) => {
+  35051 == $target$jscomp$95$$ ? $GLctx$$.$currentPixelPackBufferBinding$ = $buffer$jscomp$34$$ : 35052 == $target$jscomp$95$$ && ($GLctx$$.$currentPixelUnpackBufferBinding$ = $buffer$jscomp$34$$);
+  $GLctx$$.bindBuffer($target$jscomp$95$$, $GL$buffers$$[$buffer$jscomp$34$$]);
+}, glBindBufferRange:($target$jscomp$96$$, $index$jscomp$104$$, $buffer$jscomp$35$$, $offset$jscomp$49$$, $ptrsize$$) => {
+  $GLctx$$.bindBufferRange($target$jscomp$96$$, $index$jscomp$104$$, $GL$buffers$$[$buffer$jscomp$35$$], $offset$jscomp$49$$, $ptrsize$$);
 }, glBindTexture:($target$jscomp$97$$, $texture$jscomp$7$$) => {
   $GLctx$$.bindTexture($target$jscomp$97$$, $GL$textures$$[$texture$jscomp$7$$]);
 }, glBindVertexArray:$vao$$ => {
   $GLctx$$.bindVertexArray($GL$vaos$$[$vao$$]);
-}, glBufferData:($target$jscomp$98$$, $size$jscomp$30$$, $data$jscomp$85$$, $usage$jscomp$2$$) => {
-  $data$jscomp$85$$ && $size$jscomp$30$$ ? $GLctx$$.bufferData($target$jscomp$98$$, $HEAPU8$$, $usage$jscomp$2$$, $data$jscomp$85$$, $size$jscomp$30$$) : $GLctx$$.bufferData($target$jscomp$98$$, $size$jscomp$30$$, $usage$jscomp$2$$);
-}, glBufferSubData:($target$jscomp$99$$, $offset$jscomp$47$$, $size$jscomp$31$$, $data$jscomp$86$$) => {
-  $size$jscomp$31$$ && $GLctx$$.bufferSubData($target$jscomp$99$$, $offset$jscomp$47$$, $HEAPU8$$, $data$jscomp$86$$, $size$jscomp$31$$);
+}, glBufferData:($target$jscomp$98$$, $size$jscomp$32$$, $data$jscomp$85$$, $usage$jscomp$2$$) => {
+  $data$jscomp$85$$ && $size$jscomp$32$$ ? $GLctx$$.bufferData($target$jscomp$98$$, $HEAPU8$$, $usage$jscomp$2$$, $data$jscomp$85$$, $size$jscomp$32$$) : $GLctx$$.bufferData($target$jscomp$98$$, $size$jscomp$32$$, $usage$jscomp$2$$);
+}, glBufferSubData:($target$jscomp$99$$, $offset$jscomp$50$$, $size$jscomp$33$$, $data$jscomp$86$$) => {
+  $size$jscomp$33$$ && $GLctx$$.bufferSubData($target$jscomp$99$$, $offset$jscomp$50$$, $HEAPU8$$, $data$jscomp$86$$, $size$jscomp$33$$);
 }, glClear:$x0$jscomp$3$$ => $GLctx$$.clear($x0$jscomp$3$$), glClearColor:($x0$jscomp$4$$, $x1$jscomp$5$$, $x2$jscomp$3$$, $x3$$) => $GLctx$$.clearColor($x0$jscomp$4$$, $x1$jscomp$5$$, $x2$jscomp$3$$, $x3$$), glCompileShader:$shader$jscomp$12$$ => {
   $GLctx$$.compileShader($GL$shaders$$[$shader$jscomp$12$$]);
 }, glCreateProgram:() => {
@@ -2856,9 +3532,9 @@ $wasmImports$$ = {__cxa_throw:($JSCompiler_StaticMethods_init$self$jscomp$inline
   $GL$shaders$$[$id$jscomp$12$$] = $GLctx$$.createShader($shaderType$$);
   return $id$jscomp$12$$;
 }, glDeleteBuffers:($n$jscomp$5$$, $buffers$jscomp$3$$) => {
-  for (var $i$jscomp$43$$ = 0; $i$jscomp$43$$ < $n$jscomp$5$$; $i$jscomp$43$$++) {
-    var $id$jscomp$13$$ = $HEAP32$$[$buffers$jscomp$3$$ + 4 * $i$jscomp$43$$ >> 2], $buffer$jscomp$35$$ = $GL$buffers$$[$id$jscomp$13$$];
-    $buffer$jscomp$35$$ && ($GLctx$$.deleteBuffer($buffer$jscomp$35$$), $buffer$jscomp$35$$.name = 0, $GL$buffers$$[$id$jscomp$13$$] = null, $id$jscomp$13$$ == $GLctx$$.$currentPixelPackBufferBinding$ && ($GLctx$$.$currentPixelPackBufferBinding$ = 0), $id$jscomp$13$$ == $GLctx$$.$currentPixelUnpackBufferBinding$ && ($GLctx$$.$currentPixelUnpackBufferBinding$ = 0));
+  for (var $i$jscomp$44$$ = 0; $i$jscomp$44$$ < $n$jscomp$5$$; $i$jscomp$44$$++) {
+    var $id$jscomp$13$$ = $HEAP32$$[$_asan_js_check_index$$($HEAP32$$, $buffers$jscomp$3$$ + 4 * $i$jscomp$44$$ >> 2, $___asan_loadN$$)], $buffer$jscomp$36$$ = $GL$buffers$$[$id$jscomp$13$$];
+    $buffer$jscomp$36$$ && ($GLctx$$.deleteBuffer($buffer$jscomp$36$$), $buffer$jscomp$36$$.name = 0, $GL$buffers$$[$id$jscomp$13$$] = null, $id$jscomp$13$$ == $GLctx$$.$currentPixelPackBufferBinding$ && ($GLctx$$.$currentPixelPackBufferBinding$ = 0), $id$jscomp$13$$ == $GLctx$$.$currentPixelUnpackBufferBinding$ && ($GLctx$$.$currentPixelUnpackBufferBinding$ = 0));
   }
 }, glDeleteProgram:$id$jscomp$14$$ => {
   if ($id$jscomp$14$$) {
@@ -2871,20 +3547,20 @@ $wasmImports$$ = {__cxa_throw:($JSCompiler_StaticMethods_init$self$jscomp$inline
     $shader$jscomp$13$$ ? ($GLctx$$.deleteShader($shader$jscomp$13$$), $GL$shaders$$[$id$jscomp$15$$] = null) : $GL$lastError$$ ||= 1281;
   }
 }, glDeleteTextures:($n$jscomp$6$$, $textures$$) => {
-  for (var $i$jscomp$44$$ = 0; $i$jscomp$44$$ < $n$jscomp$6$$; $i$jscomp$44$$++) {
-    var $id$jscomp$16$$ = $HEAP32$$[$textures$$ + 4 * $i$jscomp$44$$ >> 2], $texture$jscomp$8$$ = $GL$textures$$[$id$jscomp$16$$];
+  for (var $i$jscomp$45$$ = 0; $i$jscomp$45$$ < $n$jscomp$6$$; $i$jscomp$45$$++) {
+    var $id$jscomp$16$$ = $HEAP32$$[$_asan_js_check_index$$($HEAP32$$, $textures$$ + 4 * $i$jscomp$45$$ >> 2, $___asan_loadN$$)], $texture$jscomp$8$$ = $GL$textures$$[$id$jscomp$16$$];
     $texture$jscomp$8$$ && ($GLctx$$.deleteTexture($texture$jscomp$8$$), $texture$jscomp$8$$.name = 0, $GL$textures$$[$id$jscomp$16$$] = null);
   }
 }, glDeleteVertexArrays:($n$jscomp$7$$, $vaos$$) => {
-  for (var $i$jscomp$45$$ = 0; $i$jscomp$45$$ < $n$jscomp$7$$; $i$jscomp$45$$++) {
-    var $id$jscomp$17$$ = $HEAP32$$[$vaos$$ + 4 * $i$jscomp$45$$ >> 2];
+  for (var $i$jscomp$46$$ = 0; $i$jscomp$46$$ < $n$jscomp$7$$; $i$jscomp$46$$++) {
+    var $id$jscomp$17$$ = $HEAP32$$[$_asan_js_check_index$$($HEAP32$$, $vaos$$ + 4 * $i$jscomp$46$$ >> 2, $___asan_loadN$$)];
     $GLctx$$.deleteVertexArray($GL$vaos$$[$id$jscomp$17$$]);
     $GL$vaos$$[$id$jscomp$17$$] = null;
   }
-}, glDrawElements:($mode$jscomp$41$$, $count$jscomp$41$$, $type$jscomp$176$$, $indices$$) => {
-  $GLctx$$.drawElements($mode$jscomp$41$$, $count$jscomp$41$$, $type$jscomp$176$$, $indices$$);
-}, glEnable:$x0$jscomp$5$$ => $GLctx$$.enable($x0$jscomp$5$$), glEnableVertexAttribArray:$index$jscomp$104$$ => {
-  $GLctx$$.enableVertexAttribArray($index$jscomp$104$$);
+}, glDrawElements:($mode$jscomp$42$$, $count$jscomp$42$$, $type$jscomp$176$$, $indices$$) => {
+  $GLctx$$.drawElements($mode$jscomp$42$$, $count$jscomp$42$$, $type$jscomp$176$$, $indices$$);
+}, glEnable:$x0$jscomp$5$$ => $GLctx$$.enable($x0$jscomp$5$$), glEnableVertexAttribArray:$index$jscomp$105$$ => {
+  $GLctx$$.enableVertexAttribArray($index$jscomp$105$$);
 }, glGenBuffers:($n$jscomp$8$$, $buffers$jscomp$4$$) => {
   $GL$genObject$$($n$jscomp$8$$, $buffers$jscomp$4$$, "createBuffer", $GL$buffers$$);
 }, glGenTextures:($n$jscomp$9$$, $textures$jscomp$1$$) => {
@@ -2895,38 +3571,38 @@ $wasmImports$$ = {__cxa_throw:($JSCompiler_StaticMethods_init$self$jscomp$inline
   $log_program$jscomp$66$$ = $GLctx$$.getProgramInfoLog($GL$programs$$[$log_program$jscomp$66$$]);
   null === $log_program$jscomp$66$$ && ($log_program$jscomp$66$$ = "(unknown error)");
   $maxLength_numBytesWrittenExclNull$$ = 0 < $maxLength_numBytesWrittenExclNull$$ && $infoLog$$ ? $stringToUTF8$$($log_program$jscomp$66$$, $infoLog$$, $maxLength_numBytesWrittenExclNull$$) : 0;
-  $length$jscomp$40$$ && ($HEAP32$$[$length$jscomp$40$$ >> 2] = $maxLength_numBytesWrittenExclNull$$);
-}, glGetProgramiv:($log$jscomp$1_program$jscomp$67$$, $i$jscomp$47_pname$jscomp$26$$, $p$jscomp$5$$) => {
+  $length$jscomp$40$$ && ($HEAP32$$[$_asan_js_check_index$$($HEAP32$$, $length$jscomp$40$$ >> 2, $___asan_storeN$$)] = $maxLength_numBytesWrittenExclNull$$);
+}, glGetProgramiv:($log$jscomp$1_program$jscomp$67$$, $i$jscomp$48_pname$jscomp$26$$, $p$jscomp$5$$) => {
   if ($p$jscomp$5$$) {
     if ($log$jscomp$1_program$jscomp$67$$ >= $GL$counter$$) {
       $GL$lastError$$ ||= 1281;
     } else {
-      if ($log$jscomp$1_program$jscomp$67$$ = $GL$programs$$[$log$jscomp$1_program$jscomp$67$$], 35716 == $i$jscomp$47_pname$jscomp$26$$) {
-        $log$jscomp$1_program$jscomp$67$$ = $GLctx$$.getProgramInfoLog($log$jscomp$1_program$jscomp$67$$), null === $log$jscomp$1_program$jscomp$67$$ && ($log$jscomp$1_program$jscomp$67$$ = "(unknown error)"), $HEAP32$$[$p$jscomp$5$$ >> 2] = $log$jscomp$1_program$jscomp$67$$.length + 1;
-      } else if (35719 == $i$jscomp$47_pname$jscomp$26$$) {
+      if ($log$jscomp$1_program$jscomp$67$$ = $GL$programs$$[$log$jscomp$1_program$jscomp$67$$], 35716 == $i$jscomp$48_pname$jscomp$26$$) {
+        $log$jscomp$1_program$jscomp$67$$ = $GLctx$$.getProgramInfoLog($log$jscomp$1_program$jscomp$67$$), null === $log$jscomp$1_program$jscomp$67$$ && ($log$jscomp$1_program$jscomp$67$$ = "(unknown error)"), $HEAP32$$[$_asan_js_check_index$$($HEAP32$$, $p$jscomp$5$$ >> 2, $___asan_storeN$$)] = $log$jscomp$1_program$jscomp$67$$.length + 1;
+      } else if (35719 == $i$jscomp$48_pname$jscomp$26$$) {
         if (!$log$jscomp$1_program$jscomp$67$$.$maxUniformLength$) {
           var $numActiveAttributes_numActiveUniformBlocks_numActiveUniforms$$ = $GLctx$$.getProgramParameter($log$jscomp$1_program$jscomp$67$$, 35718);
-          for ($i$jscomp$47_pname$jscomp$26$$ = 0; $i$jscomp$47_pname$jscomp$26$$ < $numActiveAttributes_numActiveUniformBlocks_numActiveUniforms$$; ++$i$jscomp$47_pname$jscomp$26$$) {
-            $log$jscomp$1_program$jscomp$67$$.$maxUniformLength$ = Math.max($log$jscomp$1_program$jscomp$67$$.$maxUniformLength$, $GLctx$$.getActiveUniform($log$jscomp$1_program$jscomp$67$$, $i$jscomp$47_pname$jscomp$26$$).name.length + 1);
+          for ($i$jscomp$48_pname$jscomp$26$$ = 0; $i$jscomp$48_pname$jscomp$26$$ < $numActiveAttributes_numActiveUniformBlocks_numActiveUniforms$$; ++$i$jscomp$48_pname$jscomp$26$$) {
+            $log$jscomp$1_program$jscomp$67$$.$maxUniformLength$ = Math.max($log$jscomp$1_program$jscomp$67$$.$maxUniformLength$, $GLctx$$.getActiveUniform($log$jscomp$1_program$jscomp$67$$, $i$jscomp$48_pname$jscomp$26$$).name.length + 1);
           }
         }
-        $HEAP32$$[$p$jscomp$5$$ >> 2] = $log$jscomp$1_program$jscomp$67$$.$maxUniformLength$;
-      } else if (35722 == $i$jscomp$47_pname$jscomp$26$$) {
+        $HEAP32$$[$_asan_js_check_index$$($HEAP32$$, $p$jscomp$5$$ >> 2, $___asan_storeN$$)] = $log$jscomp$1_program$jscomp$67$$.$maxUniformLength$;
+      } else if (35722 == $i$jscomp$48_pname$jscomp$26$$) {
         if (!$log$jscomp$1_program$jscomp$67$$.$maxAttributeLength$) {
-          for ($numActiveAttributes_numActiveUniformBlocks_numActiveUniforms$$ = $GLctx$$.getProgramParameter($log$jscomp$1_program$jscomp$67$$, 35721), $i$jscomp$47_pname$jscomp$26$$ = 0; $i$jscomp$47_pname$jscomp$26$$ < $numActiveAttributes_numActiveUniformBlocks_numActiveUniforms$$; ++$i$jscomp$47_pname$jscomp$26$$) {
-            $log$jscomp$1_program$jscomp$67$$.$maxAttributeLength$ = Math.max($log$jscomp$1_program$jscomp$67$$.$maxAttributeLength$, $GLctx$$.getActiveAttrib($log$jscomp$1_program$jscomp$67$$, $i$jscomp$47_pname$jscomp$26$$).name.length + 1);
+          for ($numActiveAttributes_numActiveUniformBlocks_numActiveUniforms$$ = $GLctx$$.getProgramParameter($log$jscomp$1_program$jscomp$67$$, 35721), $i$jscomp$48_pname$jscomp$26$$ = 0; $i$jscomp$48_pname$jscomp$26$$ < $numActiveAttributes_numActiveUniformBlocks_numActiveUniforms$$; ++$i$jscomp$48_pname$jscomp$26$$) {
+            $log$jscomp$1_program$jscomp$67$$.$maxAttributeLength$ = Math.max($log$jscomp$1_program$jscomp$67$$.$maxAttributeLength$, $GLctx$$.getActiveAttrib($log$jscomp$1_program$jscomp$67$$, $i$jscomp$48_pname$jscomp$26$$).name.length + 1);
           }
         }
-        $HEAP32$$[$p$jscomp$5$$ >> 2] = $log$jscomp$1_program$jscomp$67$$.$maxAttributeLength$;
-      } else if (35381 == $i$jscomp$47_pname$jscomp$26$$) {
+        $HEAP32$$[$_asan_js_check_index$$($HEAP32$$, $p$jscomp$5$$ >> 2, $___asan_storeN$$)] = $log$jscomp$1_program$jscomp$67$$.$maxAttributeLength$;
+      } else if (35381 == $i$jscomp$48_pname$jscomp$26$$) {
         if (!$log$jscomp$1_program$jscomp$67$$.$maxUniformBlockNameLength$) {
-          for ($numActiveAttributes_numActiveUniformBlocks_numActiveUniforms$$ = $GLctx$$.getProgramParameter($log$jscomp$1_program$jscomp$67$$, 35382), $i$jscomp$47_pname$jscomp$26$$ = 0; $i$jscomp$47_pname$jscomp$26$$ < $numActiveAttributes_numActiveUniformBlocks_numActiveUniforms$$; ++$i$jscomp$47_pname$jscomp$26$$) {
-            $log$jscomp$1_program$jscomp$67$$.$maxUniformBlockNameLength$ = Math.max($log$jscomp$1_program$jscomp$67$$.$maxUniformBlockNameLength$, $GLctx$$.getActiveUniformBlockName($log$jscomp$1_program$jscomp$67$$, $i$jscomp$47_pname$jscomp$26$$).length + 1);
+          for ($numActiveAttributes_numActiveUniformBlocks_numActiveUniforms$$ = $GLctx$$.getProgramParameter($log$jscomp$1_program$jscomp$67$$, 35382), $i$jscomp$48_pname$jscomp$26$$ = 0; $i$jscomp$48_pname$jscomp$26$$ < $numActiveAttributes_numActiveUniformBlocks_numActiveUniforms$$; ++$i$jscomp$48_pname$jscomp$26$$) {
+            $log$jscomp$1_program$jscomp$67$$.$maxUniformBlockNameLength$ = Math.max($log$jscomp$1_program$jscomp$67$$.$maxUniformBlockNameLength$, $GLctx$$.getActiveUniformBlockName($log$jscomp$1_program$jscomp$67$$, $i$jscomp$48_pname$jscomp$26$$).length + 1);
           }
         }
-        $HEAP32$$[$p$jscomp$5$$ >> 2] = $log$jscomp$1_program$jscomp$67$$.$maxUniformBlockNameLength$;
+        $HEAP32$$[$_asan_js_check_index$$($HEAP32$$, $p$jscomp$5$$ >> 2, $___asan_storeN$$)] = $log$jscomp$1_program$jscomp$67$$.$maxUniformBlockNameLength$;
       } else {
-        $HEAP32$$[$p$jscomp$5$$ >> 2] = $GLctx$$.getProgramParameter($log$jscomp$1_program$jscomp$67$$, $i$jscomp$47_pname$jscomp$26$$);
+        $HEAP32$$[$_asan_js_check_index$$($HEAP32$$, $p$jscomp$5$$ >> 2, $___asan_storeN$$)] = $GLctx$$.getProgramParameter($log$jscomp$1_program$jscomp$67$$, $i$jscomp$48_pname$jscomp$26$$);
       }
     }
   } else {
@@ -2936,40 +3612,41 @@ $wasmImports$$ = {__cxa_throw:($JSCompiler_StaticMethods_init$self$jscomp$inline
   $log$jscomp$2_shader$jscomp$14$$ = $GLctx$$.getShaderInfoLog($GL$shaders$$[$log$jscomp$2_shader$jscomp$14$$]);
   null === $log$jscomp$2_shader$jscomp$14$$ && ($log$jscomp$2_shader$jscomp$14$$ = "(unknown error)");
   $maxLength$jscomp$1_numBytesWrittenExclNull$jscomp$1$$ = 0 < $maxLength$jscomp$1_numBytesWrittenExclNull$jscomp$1$$ && $infoLog$jscomp$1$$ ? $stringToUTF8$$($log$jscomp$2_shader$jscomp$14$$, $infoLog$jscomp$1$$, $maxLength$jscomp$1_numBytesWrittenExclNull$jscomp$1$$) : 0;
-  $length$jscomp$41$$ && ($HEAP32$$[$length$jscomp$41$$ >> 2] = $maxLength$jscomp$1_numBytesWrittenExclNull$jscomp$1$$);
-}, glGetShaderiv:($log$jscomp$3_shader$jscomp$15_source$jscomp$18$$, $pname$jscomp$27$$, $p$jscomp$6$$) => {
-  $p$jscomp$6$$ ? 35716 == $pname$jscomp$27$$ ? ($log$jscomp$3_shader$jscomp$15_source$jscomp$18$$ = $GLctx$$.getShaderInfoLog($GL$shaders$$[$log$jscomp$3_shader$jscomp$15_source$jscomp$18$$]), null === $log$jscomp$3_shader$jscomp$15_source$jscomp$18$$ && ($log$jscomp$3_shader$jscomp$15_source$jscomp$18$$ = "(unknown error)"), $HEAP32$$[$p$jscomp$6$$ >> 2] = $log$jscomp$3_shader$jscomp$15_source$jscomp$18$$ ? $log$jscomp$3_shader$jscomp$15_source$jscomp$18$$.length + 1 : 0) : 35720 == $pname$jscomp$27$$ ? 
-  ($log$jscomp$3_shader$jscomp$15_source$jscomp$18$$ = $GLctx$$.getShaderSource($GL$shaders$$[$log$jscomp$3_shader$jscomp$15_source$jscomp$18$$]), $HEAP32$$[$p$jscomp$6$$ >> 2] = $log$jscomp$3_shader$jscomp$15_source$jscomp$18$$ ? $log$jscomp$3_shader$jscomp$15_source$jscomp$18$$.length + 1 : 0) : $HEAP32$$[$p$jscomp$6$$ >> 2] = $GLctx$$.getShaderParameter($GL$shaders$$[$log$jscomp$3_shader$jscomp$15_source$jscomp$18$$], $pname$jscomp$27$$) : $GL$lastError$$ ||= 1281;
-}, glGetUniformBlockIndex:($program$jscomp$68$$, $uniformBlockName$jscomp$1$$) => $GLctx$$.getUniformBlockIndex($GL$programs$$[$program$jscomp$68$$], $UTF8ToString$$($uniformBlockName$jscomp$1$$)), glGetUniformLocation:($program$jscomp$70$$, $name$jscomp$120$$) => {
-  $name$jscomp$120$$ = $UTF8ToString$$($name$jscomp$120$$);
+  $length$jscomp$41$$ && ($HEAP32$$[$_asan_js_check_index$$($HEAP32$$, $length$jscomp$41$$ >> 2, $___asan_storeN$$)] = $maxLength$jscomp$1_numBytesWrittenExclNull$jscomp$1$$);
+}, glGetShaderiv:($log$jscomp$3_logLength_shader$jscomp$15_source$jscomp$19_sourceLength$$, $pname$jscomp$27$$, $p$jscomp$6$$) => {
+  $p$jscomp$6$$ ? 35716 == $pname$jscomp$27$$ ? ($log$jscomp$3_logLength_shader$jscomp$15_source$jscomp$19_sourceLength$$ = $GLctx$$.getShaderInfoLog($GL$shaders$$[$log$jscomp$3_logLength_shader$jscomp$15_source$jscomp$19_sourceLength$$]), null === $log$jscomp$3_logLength_shader$jscomp$15_source$jscomp$19_sourceLength$$ && ($log$jscomp$3_logLength_shader$jscomp$15_source$jscomp$19_sourceLength$$ = "(unknown error)"), $log$jscomp$3_logLength_shader$jscomp$15_source$jscomp$19_sourceLength$$ = $log$jscomp$3_logLength_shader$jscomp$15_source$jscomp$19_sourceLength$$ ? 
+  $log$jscomp$3_logLength_shader$jscomp$15_source$jscomp$19_sourceLength$$.length + 1 : 0, $HEAP32$$[$_asan_js_check_index$$($HEAP32$$, $p$jscomp$6$$ >> 2, $___asan_storeN$$)] = $log$jscomp$3_logLength_shader$jscomp$15_source$jscomp$19_sourceLength$$) : 35720 == $pname$jscomp$27$$ ? ($log$jscomp$3_logLength_shader$jscomp$15_source$jscomp$19_sourceLength$$ = ($log$jscomp$3_logLength_shader$jscomp$15_source$jscomp$19_sourceLength$$ = $GLctx$$.getShaderSource($GL$shaders$$[$log$jscomp$3_logLength_shader$jscomp$15_source$jscomp$19_sourceLength$$])) ? 
+  $log$jscomp$3_logLength_shader$jscomp$15_source$jscomp$19_sourceLength$$.length + 1 : 0, $HEAP32$$[$_asan_js_check_index$$($HEAP32$$, $p$jscomp$6$$ >> 2, $___asan_storeN$$)] = $log$jscomp$3_logLength_shader$jscomp$15_source$jscomp$19_sourceLength$$) : $HEAP32$$[$_asan_js_check_index$$($HEAP32$$, $p$jscomp$6$$ >> 2, $___asan_storeN$$)] = $GLctx$$.getShaderParameter($GL$shaders$$[$log$jscomp$3_logLength_shader$jscomp$15_source$jscomp$19_sourceLength$$], $pname$jscomp$27$$) : $GL$lastError$$ ||= 1281;
+}, glGetUniformBlockIndex:($program$jscomp$68$$, $uniformBlockName$jscomp$1$$) => $GLctx$$.getUniformBlockIndex($GL$programs$$[$program$jscomp$68$$], $UTF8ToString$$($uniformBlockName$jscomp$1$$)), glGetUniformLocation:($program$jscomp$70$$, $name$jscomp$122$$) => {
+  $name$jscomp$122$$ = $UTF8ToString$$($name$jscomp$122$$);
   if ($program$jscomp$70$$ = $GL$programs$$[$program$jscomp$70$$]) {
-    var $program$jscomp$inline_319_uniformLocsById$jscomp$1$$ = $program$jscomp$70$$, $arrayIndex_uniformLocsById$jscomp$inline_320$$ = $program$jscomp$inline_319_uniformLocsById$jscomp$1$$.$uniformLocsById$, $sizeAndId_uniformBaseName_uniformSizeAndIdsByName$jscomp$inline_321$$ = $program$jscomp$inline_319_uniformLocsById$jscomp$1$$.$uniformSizeAndIdsByName$, $i$jscomp$inline_322_leftBrace$$;
-    if (!$arrayIndex_uniformLocsById$jscomp$inline_320$$) {
-      $program$jscomp$inline_319_uniformLocsById$jscomp$1$$.$uniformLocsById$ = $arrayIndex_uniformLocsById$jscomp$inline_320$$ = {};
-      $program$jscomp$inline_319_uniformLocsById$jscomp$1$$.$uniformArrayNamesById$ = {};
-      var $numActiveUniforms$jscomp$inline_324$$ = $GLctx$$.getProgramParameter($program$jscomp$inline_319_uniformLocsById$jscomp$1$$, 35718);
-      for ($i$jscomp$inline_322_leftBrace$$ = 0; $i$jscomp$inline_322_leftBrace$$ < $numActiveUniforms$jscomp$inline_324$$; ++$i$jscomp$inline_322_leftBrace$$) {
-        var $sz$jscomp$inline_327_u$jscomp$inline_325$$ = $GLctx$$.getActiveUniform($program$jscomp$inline_319_uniformLocsById$jscomp$1$$, $i$jscomp$inline_322_leftBrace$$);
-        var $j$jscomp$inline_323_nm$jscomp$inline_326$$ = $sz$jscomp$inline_327_u$jscomp$inline_325$$.name;
-        $sz$jscomp$inline_327_u$jscomp$inline_325$$ = $sz$jscomp$inline_327_u$jscomp$inline_325$$.size;
-        var $arrayName$jscomp$inline_329_lb$jscomp$inline_328$$ = $webglGetLeftBracePos$$($j$jscomp$inline_323_nm$jscomp$inline_326$$);
-        $arrayName$jscomp$inline_329_lb$jscomp$inline_328$$ = 0 < $arrayName$jscomp$inline_329_lb$jscomp$inline_328$$ ? $j$jscomp$inline_323_nm$jscomp$inline_326$$.slice(0, $arrayName$jscomp$inline_329_lb$jscomp$inline_328$$) : $j$jscomp$inline_323_nm$jscomp$inline_326$$;
-        var $id$jscomp$inline_330$$ = $program$jscomp$inline_319_uniformLocsById$jscomp$1$$.$uniformIdCounter$;
-        $program$jscomp$inline_319_uniformLocsById$jscomp$1$$.$uniformIdCounter$ += $sz$jscomp$inline_327_u$jscomp$inline_325$$;
-        $sizeAndId_uniformBaseName_uniformSizeAndIdsByName$jscomp$inline_321$$[$arrayName$jscomp$inline_329_lb$jscomp$inline_328$$] = [$sz$jscomp$inline_327_u$jscomp$inline_325$$, $id$jscomp$inline_330$$];
-        for ($j$jscomp$inline_323_nm$jscomp$inline_326$$ = 0; $j$jscomp$inline_323_nm$jscomp$inline_326$$ < $sz$jscomp$inline_327_u$jscomp$inline_325$$; ++$j$jscomp$inline_323_nm$jscomp$inline_326$$) {
-          $arrayIndex_uniformLocsById$jscomp$inline_320$$[$id$jscomp$inline_330$$] = $j$jscomp$inline_323_nm$jscomp$inline_326$$, $program$jscomp$inline_319_uniformLocsById$jscomp$1$$.$uniformArrayNamesById$[$id$jscomp$inline_330$$++] = $arrayName$jscomp$inline_329_lb$jscomp$inline_328$$;
+    var $program$jscomp$inline_330_uniformLocsById$jscomp$1$$ = $program$jscomp$70$$, $arrayIndex_uniformLocsById$jscomp$inline_331$$ = $program$jscomp$inline_330_uniformLocsById$jscomp$1$$.$uniformLocsById$, $sizeAndId_uniformBaseName_uniformSizeAndIdsByName$jscomp$inline_332$$ = $program$jscomp$inline_330_uniformLocsById$jscomp$1$$.$uniformSizeAndIdsByName$, $i$jscomp$inline_333_leftBrace$$;
+    if (!$arrayIndex_uniformLocsById$jscomp$inline_331$$) {
+      $program$jscomp$inline_330_uniformLocsById$jscomp$1$$.$uniformLocsById$ = $arrayIndex_uniformLocsById$jscomp$inline_331$$ = {};
+      $program$jscomp$inline_330_uniformLocsById$jscomp$1$$.$uniformArrayNamesById$ = {};
+      var $numActiveUniforms$jscomp$inline_335$$ = $GLctx$$.getProgramParameter($program$jscomp$inline_330_uniformLocsById$jscomp$1$$, 35718);
+      for ($i$jscomp$inline_333_leftBrace$$ = 0; $i$jscomp$inline_333_leftBrace$$ < $numActiveUniforms$jscomp$inline_335$$; ++$i$jscomp$inline_333_leftBrace$$) {
+        var $sz$jscomp$inline_338_u$jscomp$inline_336$$ = $GLctx$$.getActiveUniform($program$jscomp$inline_330_uniformLocsById$jscomp$1$$, $i$jscomp$inline_333_leftBrace$$);
+        var $j$jscomp$inline_334_nm$jscomp$inline_337$$ = $sz$jscomp$inline_338_u$jscomp$inline_336$$.name;
+        $sz$jscomp$inline_338_u$jscomp$inline_336$$ = $sz$jscomp$inline_338_u$jscomp$inline_336$$.size;
+        var $arrayName$jscomp$inline_340_lb$jscomp$inline_339$$ = $webglGetLeftBracePos$$($j$jscomp$inline_334_nm$jscomp$inline_337$$);
+        $arrayName$jscomp$inline_340_lb$jscomp$inline_339$$ = 0 < $arrayName$jscomp$inline_340_lb$jscomp$inline_339$$ ? $j$jscomp$inline_334_nm$jscomp$inline_337$$.slice(0, $arrayName$jscomp$inline_340_lb$jscomp$inline_339$$) : $j$jscomp$inline_334_nm$jscomp$inline_337$$;
+        var $id$jscomp$inline_341$$ = $program$jscomp$inline_330_uniformLocsById$jscomp$1$$.$uniformIdCounter$;
+        $program$jscomp$inline_330_uniformLocsById$jscomp$1$$.$uniformIdCounter$ += $sz$jscomp$inline_338_u$jscomp$inline_336$$;
+        $sizeAndId_uniformBaseName_uniformSizeAndIdsByName$jscomp$inline_332$$[$arrayName$jscomp$inline_340_lb$jscomp$inline_339$$] = [$sz$jscomp$inline_338_u$jscomp$inline_336$$, $id$jscomp$inline_341$$];
+        for ($j$jscomp$inline_334_nm$jscomp$inline_337$$ = 0; $j$jscomp$inline_334_nm$jscomp$inline_337$$ < $sz$jscomp$inline_338_u$jscomp$inline_336$$; ++$j$jscomp$inline_334_nm$jscomp$inline_337$$) {
+          $arrayIndex_uniformLocsById$jscomp$inline_331$$[$id$jscomp$inline_341$$] = $j$jscomp$inline_334_nm$jscomp$inline_337$$, $program$jscomp$inline_330_uniformLocsById$jscomp$1$$.$uniformArrayNamesById$[$id$jscomp$inline_341$$++] = $arrayName$jscomp$inline_340_lb$jscomp$inline_339$$;
         }
       }
     }
-    $program$jscomp$inline_319_uniformLocsById$jscomp$1$$ = $program$jscomp$70$$.$uniformLocsById$;
-    $arrayIndex_uniformLocsById$jscomp$inline_320$$ = 0;
-    $sizeAndId_uniformBaseName_uniformSizeAndIdsByName$jscomp$inline_321$$ = $name$jscomp$120$$;
-    $i$jscomp$inline_322_leftBrace$$ = $webglGetLeftBracePos$$($name$jscomp$120$$);
-    0 < $i$jscomp$inline_322_leftBrace$$ && ($arrayIndex_uniformLocsById$jscomp$inline_320$$ = parseInt($name$jscomp$120$$.slice($i$jscomp$inline_322_leftBrace$$ + 1)) >>> 0, $sizeAndId_uniformBaseName_uniformSizeAndIdsByName$jscomp$inline_321$$ = $name$jscomp$120$$.slice(0, $i$jscomp$inline_322_leftBrace$$));
-    if (($sizeAndId_uniformBaseName_uniformSizeAndIdsByName$jscomp$inline_321$$ = $program$jscomp$70$$.$uniformSizeAndIdsByName$[$sizeAndId_uniformBaseName_uniformSizeAndIdsByName$jscomp$inline_321$$]) && $arrayIndex_uniformLocsById$jscomp$inline_320$$ < $sizeAndId_uniformBaseName_uniformSizeAndIdsByName$jscomp$inline_321$$[0] && ($arrayIndex_uniformLocsById$jscomp$inline_320$$ += $sizeAndId_uniformBaseName_uniformSizeAndIdsByName$jscomp$inline_321$$[1], $program$jscomp$inline_319_uniformLocsById$jscomp$1$$[$arrayIndex_uniformLocsById$jscomp$inline_320$$] = 
-    $program$jscomp$inline_319_uniformLocsById$jscomp$1$$[$arrayIndex_uniformLocsById$jscomp$inline_320$$] || $GLctx$$.getUniformLocation($program$jscomp$70$$, $name$jscomp$120$$))) {
-      return $arrayIndex_uniformLocsById$jscomp$inline_320$$;
+    $program$jscomp$inline_330_uniformLocsById$jscomp$1$$ = $program$jscomp$70$$.$uniformLocsById$;
+    $arrayIndex_uniformLocsById$jscomp$inline_331$$ = 0;
+    $sizeAndId_uniformBaseName_uniformSizeAndIdsByName$jscomp$inline_332$$ = $name$jscomp$122$$;
+    $i$jscomp$inline_333_leftBrace$$ = $webglGetLeftBracePos$$($name$jscomp$122$$);
+    0 < $i$jscomp$inline_333_leftBrace$$ && ($arrayIndex_uniformLocsById$jscomp$inline_331$$ = parseInt($name$jscomp$122$$.slice($i$jscomp$inline_333_leftBrace$$ + 1)) >>> 0, $sizeAndId_uniformBaseName_uniformSizeAndIdsByName$jscomp$inline_332$$ = $name$jscomp$122$$.slice(0, $i$jscomp$inline_333_leftBrace$$));
+    if (($sizeAndId_uniformBaseName_uniformSizeAndIdsByName$jscomp$inline_332$$ = $program$jscomp$70$$.$uniformSizeAndIdsByName$[$sizeAndId_uniformBaseName_uniformSizeAndIdsByName$jscomp$inline_332$$]) && $arrayIndex_uniformLocsById$jscomp$inline_331$$ < $sizeAndId_uniformBaseName_uniformSizeAndIdsByName$jscomp$inline_332$$[0] && ($arrayIndex_uniformLocsById$jscomp$inline_331$$ += $sizeAndId_uniformBaseName_uniformSizeAndIdsByName$jscomp$inline_332$$[1], $program$jscomp$inline_330_uniformLocsById$jscomp$1$$[$arrayIndex_uniformLocsById$jscomp$inline_331$$] = 
+    $program$jscomp$inline_330_uniformLocsById$jscomp$1$$[$arrayIndex_uniformLocsById$jscomp$inline_331$$] || $GLctx$$.getUniformLocation($program$jscomp$70$$, $name$jscomp$122$$))) {
+      return $arrayIndex_uniformLocsById$jscomp$inline_331$$;
     }
   } else {
     $GL$lastError$$ ||= 1281;
@@ -2980,37 +3657,38 @@ $wasmImports$$ = {__cxa_throw:($JSCompiler_StaticMethods_init$self$jscomp$inline
   $GLctx$$.linkProgram($program$jscomp$71$$);
   $program$jscomp$71$$.$uniformLocsById$ = 0;
   $program$jscomp$71$$.$uniformSizeAndIdsByName$ = {};
-}, glShaderSource:($shader$jscomp$16$$, $count$jscomp$42$$, $string$jscomp$6$$, $length$jscomp$42$$) => {
-  for (var $source$jscomp$inline_337$$ = "", $i$jscomp$inline_338$$ = 0; $i$jscomp$inline_338$$ < $count$jscomp$42$$; ++$i$jscomp$inline_338$$) {
-    $source$jscomp$inline_337$$ += $UTF8ToString$$($HEAPU32$$[$string$jscomp$6$$ + 4 * $i$jscomp$inline_338$$ >> 2], $length$jscomp$42$$ ? $HEAPU32$$[$length$jscomp$42$$ + 4 * $i$jscomp$inline_338$$ >> 2] : void 0);
+}, glShaderSource:($shader$jscomp$16$$, $count$jscomp$43$$, $string$jscomp$6$$, $length$jscomp$42$$) => {
+  for (var $source$jscomp$inline_348$$ = "", $i$jscomp$inline_349$$ = 0; $i$jscomp$inline_349$$ < $count$jscomp$43$$; ++$i$jscomp$inline_349$$) {
+    var $len$jscomp$inline_350$$ = $length$jscomp$42$$ ? $HEAPU32$$[$_asan_js_check_index$$($HEAPU32$$, $length$jscomp$42$$ + 4 * $i$jscomp$inline_349$$ >> 2, $___asan_loadN$$)] : void 0;
+    $source$jscomp$inline_348$$ += $UTF8ToString$$($HEAPU32$$[$_asan_js_check_index$$($HEAPU32$$, $string$jscomp$6$$ + 4 * $i$jscomp$inline_349$$ >> 2, $___asan_loadN$$)], $len$jscomp$inline_350$$);
   }
-  $GLctx$$.shaderSource($GL$shaders$$[$shader$jscomp$16$$], $source$jscomp$inline_337$$);
-}, glTexImage2D:($target$jscomp$100$$, $level$jscomp$19$$, $internalFormat$jscomp$1$$, $width$jscomp$33$$, $height$jscomp$28$$, $border$jscomp$5$$, $format$jscomp$21$$, $type$jscomp$180$$, $JSCompiler_temp$jscomp$58_index$jscomp$105_pixels$jscomp$2$$) => {
+  $GLctx$$.shaderSource($GL$shaders$$[$shader$jscomp$16$$], $source$jscomp$inline_348$$);
+}, glTexImage2D:($target$jscomp$100$$, $level$jscomp$20$$, $internalFormat$jscomp$1$$, $width$jscomp$33$$, $height$jscomp$28$$, $border$jscomp$5$$, $format$jscomp$21$$, $type$jscomp$180$$, $JSCompiler_temp$jscomp$58_index$jscomp$106_pixels$jscomp$2$$) => {
   if ($GLctx$$.$currentPixelUnpackBufferBinding$) {
-    $GLctx$$.texImage2D($target$jscomp$100$$, $level$jscomp$19$$, $internalFormat$jscomp$1$$, $width$jscomp$33$$, $height$jscomp$28$$, $border$jscomp$5$$, $format$jscomp$21$$, $type$jscomp$180$$, $JSCompiler_temp$jscomp$58_index$jscomp$105_pixels$jscomp$2$$);
+    $GLctx$$.texImage2D($target$jscomp$100$$, $level$jscomp$20$$, $internalFormat$jscomp$1$$, $width$jscomp$33$$, $height$jscomp$28$$, $border$jscomp$5$$, $format$jscomp$21$$, $type$jscomp$180$$, $JSCompiler_temp$jscomp$58_index$jscomp$106_pixels$jscomp$2$$);
   } else {
-    if ($JSCompiler_temp$jscomp$58_index$jscomp$105_pixels$jscomp$2$$) {
-      var $heap$jscomp$3_heap$jscomp$inline_345$$ = $heapObjectForWebGLType$$($type$jscomp$180$$);
-      $JSCompiler_temp$jscomp$58_index$jscomp$105_pixels$jscomp$2$$ >>>= 31 - Math.clz32($heap$jscomp$3_heap$jscomp$inline_345$$.BYTES_PER_ELEMENT);
-      $GLctx$$.texImage2D($target$jscomp$100$$, $level$jscomp$19$$, $internalFormat$jscomp$1$$, $width$jscomp$33$$, $height$jscomp$28$$, $border$jscomp$5$$, $format$jscomp$21$$, $type$jscomp$180$$, $heap$jscomp$3_heap$jscomp$inline_345$$, $JSCompiler_temp$jscomp$58_index$jscomp$105_pixels$jscomp$2$$);
+    if ($JSCompiler_temp$jscomp$58_index$jscomp$106_pixels$jscomp$2$$) {
+      var $heap$jscomp$3_heap$jscomp$inline_357$$ = $heapObjectForWebGLType$$($type$jscomp$180$$);
+      $JSCompiler_temp$jscomp$58_index$jscomp$106_pixels$jscomp$2$$ >>>= 31 - Math.clz32($heap$jscomp$3_heap$jscomp$inline_357$$.BYTES_PER_ELEMENT);
+      $GLctx$$.texImage2D($target$jscomp$100$$, $level$jscomp$20$$, $internalFormat$jscomp$1$$, $width$jscomp$33$$, $height$jscomp$28$$, $border$jscomp$5$$, $format$jscomp$21$$, $type$jscomp$180$$, $heap$jscomp$3_heap$jscomp$inline_357$$, $JSCompiler_temp$jscomp$58_index$jscomp$106_pixels$jscomp$2$$);
     } else {
-      if ($JSCompiler_temp$jscomp$58_index$jscomp$105_pixels$jscomp$2$$) {
-        $heap$jscomp$3_heap$jscomp$inline_345$$ = $heapObjectForWebGLType$$($type$jscomp$180$$);
-        var $bytes$jscomp$inline_346$$ = $height$jscomp$28$$ * ($width$jscomp$33$$ * ({5:3, 6:4, 8:2, 29502:3, 29504:4, 26917:2, 26918:2, 29846:3, 29847:4}[$format$jscomp$21$$ - 6402] || 1) * $heap$jscomp$3_heap$jscomp$inline_345$$.BYTES_PER_ELEMENT + 4 - 1 & -4);
-        $JSCompiler_temp$jscomp$58_index$jscomp$105_pixels$jscomp$2$$ = $heap$jscomp$3_heap$jscomp$inline_345$$.subarray($JSCompiler_temp$jscomp$58_index$jscomp$105_pixels$jscomp$2$$ >>> 31 - Math.clz32($heap$jscomp$3_heap$jscomp$inline_345$$.BYTES_PER_ELEMENT), $JSCompiler_temp$jscomp$58_index$jscomp$105_pixels$jscomp$2$$ + $bytes$jscomp$inline_346$$ >>> 31 - Math.clz32($heap$jscomp$3_heap$jscomp$inline_345$$.BYTES_PER_ELEMENT));
+      if ($JSCompiler_temp$jscomp$58_index$jscomp$106_pixels$jscomp$2$$) {
+        $heap$jscomp$3_heap$jscomp$inline_357$$ = $heapObjectForWebGLType$$($type$jscomp$180$$);
+        var $bytes$jscomp$inline_358$$ = $height$jscomp$28$$ * ($width$jscomp$33$$ * ({5:3, 6:4, 8:2, 29502:3, 29504:4, 26917:2, 26918:2, 29846:3, 29847:4}[$format$jscomp$21$$ - 6402] || 1) * $heap$jscomp$3_heap$jscomp$inline_357$$.BYTES_PER_ELEMENT + 4 - 1 & -4);
+        $JSCompiler_temp$jscomp$58_index$jscomp$106_pixels$jscomp$2$$ = $heap$jscomp$3_heap$jscomp$inline_357$$.subarray($JSCompiler_temp$jscomp$58_index$jscomp$106_pixels$jscomp$2$$ >>> 31 - Math.clz32($heap$jscomp$3_heap$jscomp$inline_357$$.BYTES_PER_ELEMENT), $JSCompiler_temp$jscomp$58_index$jscomp$106_pixels$jscomp$2$$ + $bytes$jscomp$inline_358$$ >>> 31 - Math.clz32($heap$jscomp$3_heap$jscomp$inline_357$$.BYTES_PER_ELEMENT));
       } else {
-        $JSCompiler_temp$jscomp$58_index$jscomp$105_pixels$jscomp$2$$ = null;
+        $JSCompiler_temp$jscomp$58_index$jscomp$106_pixels$jscomp$2$$ = null;
       }
-      $GLctx$$.texImage2D($target$jscomp$100$$, $level$jscomp$19$$, $internalFormat$jscomp$1$$, $width$jscomp$33$$, $height$jscomp$28$$, $border$jscomp$5$$, $format$jscomp$21$$, $type$jscomp$180$$, $JSCompiler_temp$jscomp$58_index$jscomp$105_pixels$jscomp$2$$);
+      $GLctx$$.texImage2D($target$jscomp$100$$, $level$jscomp$20$$, $internalFormat$jscomp$1$$, $width$jscomp$33$$, $height$jscomp$28$$, $border$jscomp$5$$, $format$jscomp$21$$, $type$jscomp$180$$, $JSCompiler_temp$jscomp$58_index$jscomp$106_pixels$jscomp$2$$);
     }
   }
 }, glTexParameteri:($x0$jscomp$7$$, $x1$jscomp$6$$, $x2$jscomp$4$$) => $GLctx$$.texParameteri($x0$jscomp$7$$, $x1$jscomp$6$$, $x2$jscomp$4$$), glUniform1i:($JSCompiler_inline_result$jscomp$61_location$jscomp$80$$, $v0$jscomp$16$$) => {
   var $JSCompiler_temp_const$jscomp$60$$ = $GLctx$$, $JSCompiler_temp_const$jscomp$59$$ = $JSCompiler_temp_const$jscomp$60$$.uniform1i;
-  var $p$jscomp$inline_349$$ = $GLctx$$.$currentProgram$;
-  if ($p$jscomp$inline_349$$) {
-    var $webglLoc$jscomp$inline_350$$ = $p$jscomp$inline_349$$.$uniformLocsById$[$JSCompiler_inline_result$jscomp$61_location$jscomp$80$$];
-    "number" == typeof $webglLoc$jscomp$inline_350$$ && ($p$jscomp$inline_349$$.$uniformLocsById$[$JSCompiler_inline_result$jscomp$61_location$jscomp$80$$] = $webglLoc$jscomp$inline_350$$ = $GLctx$$.getUniformLocation($p$jscomp$inline_349$$, $p$jscomp$inline_349$$.$uniformArrayNamesById$[$JSCompiler_inline_result$jscomp$61_location$jscomp$80$$] + (0 < $webglLoc$jscomp$inline_350$$ ? `[${$webglLoc$jscomp$inline_350$$}]` : "")));
-    $JSCompiler_inline_result$jscomp$61_location$jscomp$80$$ = $webglLoc$jscomp$inline_350$$;
+  var $p$jscomp$inline_361$$ = $GLctx$$.$currentProgram$;
+  if ($p$jscomp$inline_361$$) {
+    var $webglLoc$jscomp$inline_362$$ = $p$jscomp$inline_361$$.$uniformLocsById$[$JSCompiler_inline_result$jscomp$61_location$jscomp$80$$];
+    "number" == typeof $webglLoc$jscomp$inline_362$$ && ($p$jscomp$inline_361$$.$uniformLocsById$[$JSCompiler_inline_result$jscomp$61_location$jscomp$80$$] = $webglLoc$jscomp$inline_362$$ = $GLctx$$.getUniformLocation($p$jscomp$inline_361$$, $p$jscomp$inline_361$$.$uniformArrayNamesById$[$JSCompiler_inline_result$jscomp$61_location$jscomp$80$$] + (0 < $webglLoc$jscomp$inline_362$$ ? `[${$webglLoc$jscomp$inline_362$$}]` : "")));
+    $JSCompiler_inline_result$jscomp$61_location$jscomp$80$$ = $webglLoc$jscomp$inline_362$$;
   } else {
     $GL$lastError$$ ||= 1282, $JSCompiler_inline_result$jscomp$61_location$jscomp$80$$ = void 0;
   }
@@ -3022,9 +3700,12 @@ $wasmImports$$ = {__cxa_throw:($JSCompiler_StaticMethods_init$self$jscomp$inline
   $program$jscomp$73$$ = $GL$programs$$[$program$jscomp$73$$];
   $GLctx$$.useProgram($program$jscomp$73$$);
   $GLctx$$.$currentProgram$ = $program$jscomp$73$$;
-}, glVertexAttribPointer:($index$jscomp$106$$, $size$jscomp$32$$, $type$jscomp$181$$, $normalized$jscomp$2$$, $stride$jscomp$3$$, $ptr$jscomp$34$$) => {
-  $GLctx$$.vertexAttribPointer($index$jscomp$106$$, $size$jscomp$32$$, $type$jscomp$181$$, !!$normalized$jscomp$2$$, $stride$jscomp$3$$, $ptr$jscomp$34$$);
-}, glViewport:($x0$jscomp$8$$, $x1$jscomp$7$$, $x2$jscomp$5$$, $x3$jscomp$1$$) => $GLctx$$.viewport($x0$jscomp$8$$, $x1$jscomp$7$$, $x2$jscomp$5$$, $x3$jscomp$1$$), textureFromURL:function($textureID$$, $url$jscomp$29$$, $ctxId$$) {
+}, glVertexAttribPointer:($index$jscomp$107$$, $size$jscomp$34$$, $type$jscomp$181$$, $normalized$jscomp$2$$, $stride$jscomp$3$$, $ptr$jscomp$37$$) => {
+  $GLctx$$.vertexAttribPointer($index$jscomp$107$$, $size$jscomp$34$$, $type$jscomp$181$$, !!$normalized$jscomp$2$$, $stride$jscomp$3$$, $ptr$jscomp$37$$);
+}, glViewport:($x0$jscomp$8$$, $x1$jscomp$7$$, $x2$jscomp$5$$, $x3$jscomp$1$$) => $GLctx$$.viewport($x0$jscomp$8$$, $x1$jscomp$7$$, $x2$jscomp$5$$, $x3$jscomp$1$$), proc_exit:$code$jscomp$4$$ => {
+  $noExitRuntime$$ || ($Module$$.onExit?.($code$jscomp$4$$), $ABORT$$ = !0);
+  throw new $ExitStatus$$($code$jscomp$4$$);
+}, textureFromURL:function($textureID$$, $url$jscomp$29$$, $ctxId$$) {
   let $gl$jscomp$1$$ = $GL$contexts$$[$ctxId$$].$GLctx$, $img$jscomp$2$$ = new Image(), $imgUrl$$ = $UTF8ToString$$($url$jscomp$29$$);
   $img$jscomp$2$$.onload = function() {
     let $texture$jscomp$9$$ = $GL$textures$$[$textureID$$];
@@ -3048,18 +3729,18 @@ function $run$$() {
       if (!$Module$$.noFSInit && !$FS$initialized$$) {
         $assert$$(!$FS$initialized$$, "FS.init was previously called. If you want to initialize later with custom parameters, remove any earlier calls (note that one is automatically added to the generated code)");
         $FS$initialized$$ = !0;
-        $input$jscomp$inline_441_input$jscomp$inline_444_stdout$jscomp$inline_448$$ ??= $Module$$.stdin;
-        $output$jscomp$inline_442_output$jscomp$inline_445_stderr$jscomp$inline_449$$ ??= $Module$$.stdout;
-        $cb$jscomp$inline_451_error$jscomp$inline_443_error$jscomp$inline_446_stdin$jscomp$inline_447$$ ??= $Module$$.stderr;
-        $input$jscomp$inline_441_input$jscomp$inline_444_stdout$jscomp$inline_448$$ ? $FS$createDevice$$("/dev", "stdin", $input$jscomp$inline_441_input$jscomp$inline_444_stdout$jscomp$inline_448$$) : $FS$symlink$$("/dev/tty", "/dev/stdin");
-        $output$jscomp$inline_442_output$jscomp$inline_445_stderr$jscomp$inline_449$$ ? $FS$createDevice$$("/dev", "stdout", null, $output$jscomp$inline_442_output$jscomp$inline_445_stderr$jscomp$inline_449$$) : $FS$symlink$$("/dev/tty", "/dev/stdout");
-        $cb$jscomp$inline_451_error$jscomp$inline_443_error$jscomp$inline_446_stdin$jscomp$inline_447$$ ? $FS$createDevice$$("/dev", "stderr", null, $cb$jscomp$inline_451_error$jscomp$inline_443_error$jscomp$inline_446_stdin$jscomp$inline_447$$) : $FS$symlink$$("/dev/tty1", "/dev/stderr");
-        var $cb$jscomp$inline_451_error$jscomp$inline_443_error$jscomp$inline_446_stdin$jscomp$inline_447$$ = $FS$open$$("/dev/stdin", 0);
-        var $input$jscomp$inline_441_input$jscomp$inline_444_stdout$jscomp$inline_448$$ = $FS$open$$("/dev/stdout", 1);
-        var $output$jscomp$inline_442_output$jscomp$inline_445_stderr$jscomp$inline_449$$ = $FS$open$$("/dev/stderr", 1);
-        $assert$$(0 === $cb$jscomp$inline_451_error$jscomp$inline_443_error$jscomp$inline_446_stdin$jscomp$inline_447$$.$fd$, `invalid handle for stdin (${$cb$jscomp$inline_451_error$jscomp$inline_443_error$jscomp$inline_446_stdin$jscomp$inline_447$$.$fd$})`);
-        $assert$$(1 === $input$jscomp$inline_441_input$jscomp$inline_444_stdout$jscomp$inline_448$$.$fd$, `invalid handle for stdout (${$input$jscomp$inline_441_input$jscomp$inline_444_stdout$jscomp$inline_448$$.$fd$})`);
-        $assert$$(2 === $output$jscomp$inline_442_output$jscomp$inline_445_stderr$jscomp$inline_449$$.$fd$, `invalid handle for stderr (${$output$jscomp$inline_442_output$jscomp$inline_445_stderr$jscomp$inline_449$$.$fd$})`);
+        $input$jscomp$inline_462_input$jscomp$inline_465_stdout$jscomp$inline_469$$ ??= $Module$$.stdin;
+        $output$jscomp$inline_463_output$jscomp$inline_466_stderr$jscomp$inline_470$$ ??= $Module$$.stdout;
+        $cb$jscomp$inline_472_error$jscomp$inline_464_error$jscomp$inline_467_stdin$jscomp$inline_468$$ ??= $Module$$.stderr;
+        $input$jscomp$inline_462_input$jscomp$inline_465_stdout$jscomp$inline_469$$ ? $FS$createDevice$$("/dev", "stdin", $input$jscomp$inline_462_input$jscomp$inline_465_stdout$jscomp$inline_469$$) : $FS$symlink$$("/dev/tty", "/dev/stdin");
+        $output$jscomp$inline_463_output$jscomp$inline_466_stderr$jscomp$inline_470$$ ? $FS$createDevice$$("/dev", "stdout", null, $output$jscomp$inline_463_output$jscomp$inline_466_stderr$jscomp$inline_470$$) : $FS$symlink$$("/dev/tty", "/dev/stdout");
+        $cb$jscomp$inline_472_error$jscomp$inline_464_error$jscomp$inline_467_stdin$jscomp$inline_468$$ ? $FS$createDevice$$("/dev", "stderr", null, $cb$jscomp$inline_472_error$jscomp$inline_464_error$jscomp$inline_467_stdin$jscomp$inline_468$$) : $FS$symlink$$("/dev/tty1", "/dev/stderr");
+        var $cb$jscomp$inline_472_error$jscomp$inline_464_error$jscomp$inline_467_stdin$jscomp$inline_468$$ = $FS$open$$("/dev/stdin", 0);
+        var $input$jscomp$inline_462_input$jscomp$inline_465_stdout$jscomp$inline_469$$ = $FS$open$$("/dev/stdout", 1);
+        var $output$jscomp$inline_463_output$jscomp$inline_466_stderr$jscomp$inline_470$$ = $FS$open$$("/dev/stderr", 1);
+        $assert$$(0 === $cb$jscomp$inline_472_error$jscomp$inline_464_error$jscomp$inline_467_stdin$jscomp$inline_468$$.$fd$, `invalid handle for stdin (${$cb$jscomp$inline_472_error$jscomp$inline_464_error$jscomp$inline_467_stdin$jscomp$inline_468$$.$fd$})`);
+        $assert$$(1 === $input$jscomp$inline_462_input$jscomp$inline_465_stdout$jscomp$inline_469$$.$fd$, `invalid handle for stdout (${$input$jscomp$inline_462_input$jscomp$inline_465_stdout$jscomp$inline_469$$.$fd$})`);
+        $assert$$(2 === $output$jscomp$inline_463_output$jscomp$inline_466_stderr$jscomp$inline_470$$.$fd$, `invalid handle for stderr (${$output$jscomp$inline_463_output$jscomp$inline_466_stderr$jscomp$inline_470$$.$fd$})`);
       }
       $wasmExports$$.__wasm_call_ctors();
       $FS$ignorePermissions$$ = !1;
@@ -3070,7 +3751,7 @@ function $run$$() {
       $checkStackCookie$$();
       if ($Module$$.postRun) {
         for ("function" == typeof $Module$$.postRun && ($Module$$.postRun = [$Module$$.postRun]); $Module$$.postRun.length;) {
-          $cb$jscomp$inline_451_error$jscomp$inline_443_error$jscomp$inline_446_stdin$jscomp$inline_447$$ = $Module$$.postRun.shift(), $onPostRuns$$.push($cb$jscomp$inline_451_error$jscomp$inline_443_error$jscomp$inline_446_stdin$jscomp$inline_447$$);
+          $cb$jscomp$inline_472_error$jscomp$inline_464_error$jscomp$inline_467_stdin$jscomp$inline_468$$ = $Module$$.postRun.shift(), $onPostRuns$$.push($cb$jscomp$inline_472_error$jscomp$inline_464_error$jscomp$inline_467_stdin$jscomp$inline_468$$);
         }
       }
       $consumedModuleProp$$("postRun");
@@ -3097,30 +3778,50 @@ function $run$$() {
 }
 var $wasmExports$$;
 $wasmExports$$ = await (async function() {
-  function $receiveInstance$$($instance$jscomp$1_wasmExports$jscomp$inline_356$$) {
-    $instance$jscomp$1_wasmExports$jscomp$inline_356$$ = $wasmExports$$ = $instance$jscomp$1_wasmExports$jscomp$inline_356$$.exports;
-    $assert$$("undefined" != typeof $instance$jscomp$1_wasmExports$jscomp$inline_356$$.__getTypeName, "missing Wasm export: __getTypeName");
-    $___getTypeName$$ = $createExportWrapper$$("__getTypeName");
-    $assert$$("undefined" != typeof $instance$jscomp$1_wasmExports$jscomp$inline_356$$.malloc, "missing Wasm export: malloc");
-    $_malloc$$ = $createExportWrapper$$("malloc");
-    $assert$$("undefined" != typeof $instance$jscomp$1_wasmExports$jscomp$inline_356$$.free, "missing Wasm export: free");
-    $_free$$ = $createExportWrapper$$("free");
-    $assert$$("undefined" != typeof $instance$jscomp$1_wasmExports$jscomp$inline_356$$.fflush, "missing Wasm export: fflush");
-    $assert$$("undefined" != typeof $instance$jscomp$1_wasmExports$jscomp$inline_356$$.emscripten_stack_get_end, "missing Wasm export: emscripten_stack_get_end");
-    $_emscripten_stack_get_end$$ = $instance$jscomp$1_wasmExports$jscomp$inline_356$$.emscripten_stack_get_end;
-    $assert$$("undefined" != typeof $instance$jscomp$1_wasmExports$jscomp$inline_356$$.emscripten_stack_get_base, "missing Wasm export: emscripten_stack_get_base");
-    $assert$$("undefined" != typeof $instance$jscomp$1_wasmExports$jscomp$inline_356$$.strerror, "missing Wasm export: strerror");
-    $_strerror$$ = $createExportWrapper$$("strerror");
-    $assert$$("undefined" != typeof $instance$jscomp$1_wasmExports$jscomp$inline_356$$.emscripten_stack_init, "missing Wasm export: emscripten_stack_init");
-    $_emscripten_stack_init$$ = $instance$jscomp$1_wasmExports$jscomp$inline_356$$.emscripten_stack_init;
-    $assert$$("undefined" != typeof $instance$jscomp$1_wasmExports$jscomp$inline_356$$.emscripten_stack_get_free, "missing Wasm export: emscripten_stack_get_free");
-    $assert$$("undefined" != typeof $instance$jscomp$1_wasmExports$jscomp$inline_356$$._emscripten_stack_restore, "missing Wasm export: _emscripten_stack_restore");
-    $assert$$("undefined" != typeof $instance$jscomp$1_wasmExports$jscomp$inline_356$$._emscripten_stack_alloc, "missing Wasm export: _emscripten_stack_alloc");
-    $assert$$("undefined" != typeof $instance$jscomp$1_wasmExports$jscomp$inline_356$$.emscripten_stack_get_current, "missing Wasm export: emscripten_stack_get_current");
-    $assert$$("undefined" != typeof $instance$jscomp$1_wasmExports$jscomp$inline_356$$.memory, "missing Wasm export: memory");
-    $wasmMemory$$ = $instance$jscomp$1_wasmExports$jscomp$inline_356$$.memory;
-    $assert$$("undefined" != typeof $instance$jscomp$1_wasmExports$jscomp$inline_356$$.__indirect_function_table, "missing Wasm export: __indirect_function_table");
-    $wasmTable$$ = $instance$jscomp$1_wasmExports$jscomp$inline_356$$.__indirect_function_table;
+  function $receiveInstance$$($instance$jscomp$1_wasmExports$jscomp$inline_370$$) {
+    $instance$jscomp$1_wasmExports$jscomp$inline_370$$ = $wasmExports$$ = $instance$jscomp$1_wasmExports$jscomp$inline_370$$.exports;
+    $assert$$("undefined" != typeof $instance$jscomp$1_wasmExports$jscomp$inline_370$$.__getTypeName, "missing Wasm export: __getTypeName");
+    $___getTypeName$$ = $createExportWrapper$$("__getTypeName", 1);
+    $assert$$("undefined" != typeof $instance$jscomp$1_wasmExports$jscomp$inline_370$$.malloc, "missing Wasm export: malloc");
+    $_malloc$$ = $createExportWrapper$$("malloc", 1);
+    $assert$$("undefined" != typeof $instance$jscomp$1_wasmExports$jscomp$inline_370$$.free, "missing Wasm export: free");
+    $_free$$ = $createExportWrapper$$("free", 1);
+    $assert$$("undefined" != typeof $instance$jscomp$1_wasmExports$jscomp$inline_370$$.__funcs_on_exit, "missing Wasm export: __funcs_on_exit");
+    $assert$$("undefined" != typeof $instance$jscomp$1_wasmExports$jscomp$inline_370$$.fflush, "missing Wasm export: fflush");
+    $assert$$("undefined" != typeof $instance$jscomp$1_wasmExports$jscomp$inline_370$$.emscripten_stack_get_end, "missing Wasm export: emscripten_stack_get_end");
+    $_emscripten_stack_get_end$$ = $instance$jscomp$1_wasmExports$jscomp$inline_370$$.emscripten_stack_get_end;
+    $assert$$("undefined" != typeof $instance$jscomp$1_wasmExports$jscomp$inline_370$$.emscripten_stack_get_base, "missing Wasm export: emscripten_stack_get_base");
+    $assert$$("undefined" != typeof $instance$jscomp$1_wasmExports$jscomp$inline_370$$.strerror, "missing Wasm export: strerror");
+    $_strerror$$ = $createExportWrapper$$("strerror", 1);
+    $assert$$("undefined" != typeof $instance$jscomp$1_wasmExports$jscomp$inline_370$$.emscripten_builtin_malloc, "missing Wasm export: emscripten_builtin_malloc");
+    $_emscripten_builtin_malloc$$ = $createExportWrapper$$("emscripten_builtin_malloc", 1);
+    $assert$$("undefined" != typeof $instance$jscomp$1_wasmExports$jscomp$inline_370$$.emscripten_builtin_free, "missing Wasm export: emscripten_builtin_free");
+    $_emscripten_builtin_free$$ = $createExportWrapper$$("emscripten_builtin_free", 1);
+    $assert$$("undefined" != typeof $instance$jscomp$1_wasmExports$jscomp$inline_370$$.emscripten_builtin_realloc, "missing Wasm export: emscripten_builtin_realloc");
+    $assert$$("undefined" != typeof $instance$jscomp$1_wasmExports$jscomp$inline_370$$.emscripten_builtin_memalign, "missing Wasm export: emscripten_builtin_memalign");
+    $_emscripten_builtin_memalign$$ = $createExportWrapper$$("emscripten_builtin_memalign", 2);
+    $assert$$("undefined" != typeof $instance$jscomp$1_wasmExports$jscomp$inline_370$$.emscripten_builtin_calloc, "missing Wasm export: emscripten_builtin_calloc");
+    $assert$$("undefined" != typeof $instance$jscomp$1_wasmExports$jscomp$inline_370$$.calloc, "missing Wasm export: calloc");
+    $assert$$("undefined" != typeof $instance$jscomp$1_wasmExports$jscomp$inline_370$$.realloc, "missing Wasm export: realloc");
+    $assert$$("undefined" != typeof $instance$jscomp$1_wasmExports$jscomp$inline_370$$.memalign, "missing Wasm export: memalign");
+    $assert$$("undefined" != typeof $instance$jscomp$1_wasmExports$jscomp$inline_370$$.emscripten_stack_init, "missing Wasm export: emscripten_stack_init");
+    $_emscripten_stack_init$$ = $instance$jscomp$1_wasmExports$jscomp$inline_370$$.emscripten_stack_init;
+    $assert$$("undefined" != typeof $instance$jscomp$1_wasmExports$jscomp$inline_370$$.emscripten_stack_get_free, "missing Wasm export: emscripten_stack_get_free");
+    $assert$$("undefined" != typeof $instance$jscomp$1_wasmExports$jscomp$inline_370$$._emscripten_stack_restore, "missing Wasm export: _emscripten_stack_restore");
+    $assert$$("undefined" != typeof $instance$jscomp$1_wasmExports$jscomp$inline_370$$._emscripten_stack_alloc, "missing Wasm export: _emscripten_stack_alloc");
+    $assert$$("undefined" != typeof $instance$jscomp$1_wasmExports$jscomp$inline_370$$.emscripten_stack_get_current, "missing Wasm export: emscripten_stack_get_current");
+    $assert$$("undefined" != typeof $instance$jscomp$1_wasmExports$jscomp$inline_370$$._ZN6__asan9FakeStack17AddrIsInFakeStackEm, "missing Wasm export: _ZN6__asan9FakeStack17AddrIsInFakeStackEm");
+    $Module$$.__ZN6__asan9FakeStack17AddrIsInFakeStackEm = $createExportWrapper$$("_ZN6__asan9FakeStack17AddrIsInFakeStackEm", 2);
+    $assert$$("undefined" != typeof $instance$jscomp$1_wasmExports$jscomp$inline_370$$._ZN6__asan9FakeStack8AllocateEmmm, "missing Wasm export: _ZN6__asan9FakeStack8AllocateEmmm");
+    $Module$$.__ZN6__asan9FakeStack8AllocateEmmm = $createExportWrapper$$("_ZN6__asan9FakeStack8AllocateEmmm", 4);
+    $assert$$("undefined" != typeof $instance$jscomp$1_wasmExports$jscomp$inline_370$$.__asan_loadN, "missing Wasm export: __asan_loadN");
+    $___asan_loadN$$ = $instance$jscomp$1_wasmExports$jscomp$inline_370$$.__asan_loadN;
+    $assert$$("undefined" != typeof $instance$jscomp$1_wasmExports$jscomp$inline_370$$.__asan_storeN, "missing Wasm export: __asan_storeN");
+    $___asan_storeN$$ = $instance$jscomp$1_wasmExports$jscomp$inline_370$$.__asan_storeN;
+    $assert$$("undefined" != typeof $instance$jscomp$1_wasmExports$jscomp$inline_370$$.memory, "missing Wasm export: memory");
+    $wasmMemory$$ = $instance$jscomp$1_wasmExports$jscomp$inline_370$$.memory;
+    $assert$$("undefined" != typeof $instance$jscomp$1_wasmExports$jscomp$inline_370$$.__indirect_function_table, "missing Wasm export: __indirect_function_table");
+    $wasmTable$$ = $instance$jscomp$1_wasmExports$jscomp$inline_370$$.__indirect_function_table;
     $updateMemoryViews$$();
     return $wasmExports$$;
   }

@@ -3,6 +3,7 @@
 
 #include <string>
 #include <vector>
+#include <memory>
 
 #include "core/engine.h"
 
@@ -22,7 +23,7 @@ private:
     Mesh *generateSphereSegment(int rings, int segments, float radius,
                                 float uMin, float uMax, float vMin, float vMax);
     void generateSphere();
-    std::vector<Texture *> imageTiles_;
+    std::vector<std::shared_ptr<Texture>> imageTiles_;
     EQUIRECTANGULARMODE currMode_;
 
     void changeImageMode(EQUIRECTANGULARMODE mode);

@@ -446,7 +446,7 @@ window.ujUrlbol = function () {
 
 // delete texture
 window.texturaTorles = function () {
-    terrainEngine.deleteTexture();
+    terrainEngine.deleteTexture(0);
 };
 
 // set the texture's size
