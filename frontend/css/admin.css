@@ -1,3 +1,7 @@
+body {
+    overflow-y: hidden;
+}
+
 .sidebar {
     transition: width 0.3s ease;
     height: 100%;
