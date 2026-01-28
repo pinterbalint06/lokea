@@ -1,9 +1,11 @@
 import { CanvasInput } from './CanvasInput.js';
 
-const DEFAULT_CANVAS_WIDTH = 1000;
-const DEFAULT_CANVAS_HEIGHT = 1000;
-const DEFAULT_IS_AUTO_ROTATE = false;
-const DEFAULT_AUTO_ROTATE_SPEED = 0.1;
+const DEFAULT_OPTIONS = {
+    "canvasWidth": 1000,
+    "canvasHeight": 1000,
+    "autoRotate": false,
+    "autoRotateSpeed": 0.1,
+};
 
 export class EquirectangularViewer {
     #engine;
@@ -11,11 +13,24 @@ export class EquirectangularViewer {
     #engineInitPromise;
     #canvasId;
     #canvas;
-    #canvasCanvasWidth;
-    #canvasCanvasHeight;
+    #canvasWidth;
+    #canvasHeight;
+    #currentImageRequestID;
+    #animationFrameId;
+    #windowResizeListener;
+    #canvasFullscreenListener;
+    #isDestroyed;
 
     /**
+     * Constructor for EquirectangularViewer class.
+     *
      * @param {string} canvasId - The HTML ID of the canvas.
+     * @param {Object} [options={}] - Optional configuration options.
+     * @param {boolean} [options.autoRotate=DEFAULT_OPTIONS["autoRotate"]] - Whether the viewer should auto-rotate.
+     * @param {number} [options.autoRotateSpeed=DEFAULT_OPTIONS["autoRotate"]] - The speed of auto-rotation.
+     * @param {number} [options.canvasWidth=DEFAULT_OPTIONS["canvasWidth"]] - The width of the canvas.
+     * @param {number} [options.canvasHeight=DEFAULT_OPTIONS["canvasHeight"]] - The height of the canvas.
+     * @throws {Error} Throws an error if the canvas element with the specified ID does not exist.
      */
     constructor(canvasId, options = {}) {
         this.#canvasId = canvasId;
@@ -24,15 +39,18 @@ export class EquirectangularViewer {
         if (this.#canvas) {
             // initialize class variables
             this.#engine = null;
-            this.animationFrameId = null;
+            this.#animationFrameId = null;
             this.#canvasInput = null;
+            this.#isDestroyed = false;
 
-            this.autoRotate = DEFAULT_IS_AUTO_ROTATE;
-            this.autoRotateSpeed = DEFAULT_AUTO_ROTATE_SPEED;
-            this.#canvasCanvasWidth = options.canvasWidth ? options.canvasWidth : DEFAULT_CANVAS_WIDTH;
-            this.#canvasCanvasHeight = options.canvasHeight ? options.canvasHeight : DEFAULT_CANVAS_HEIGHT;
-            this.#canvas.width = this.#canvasCanvasWidth;
-            this.#canvas.height = this.#canvasCanvasHeight;
+            this.autoRotate = options.autoRotate != undefined ? options.autoRotate : DEFAULT_OPTIONS["autoRotate"];
+            this.autoRotateSpeed = options.autoRotateSpeed != undefined ? options.autoRotateSpeed : DEFAULT_OPTIONS["autoRotateSpeed"];
+            this.#canvasWidth = options.canvasWidth != undefined ? options.canvasWidth : DEFAULT_OPTIONS["canvasWidth"];
+            this.#canvasHeight = options.canvasHeight != undefined ? options.canvasHeight : DEFAULT_OPTIONS["canvasHeight"];
+            this.#canvas.width = this.#canvasWidth;
+            this.#canvas.height = this.#canvasHeight;
+
+            this.#currentImageRequestID = 0;
 
             // initialize
             this.#engineInitPromise = this.#initialize();
@@ -45,30 +63,54 @@ export class EquirectangularViewer {
     // | PUBLIC FUNCTIONS |
     // |------------------|
 
+
     /**
-     * Loads an equirectangular image to the engine.
+     * Loads an equirectangular image into the viewer.
+     *
+     * Waits for the engine to initialize, then requests the engine to load the image from the given URL
+     * with the specified width and height. If a new image is requested before the current one finishes loading,
+     * the promise is rejected. If the engine fails to load the image, the promise is also rejected.
      *
      * @async
-     * @param {string} url - The URL of the image to load.
+     * @param {string} url - The URL of the equirectangular image to load.
      * @param {number} width - The width of the image.
      * @param {number} height - The height of the image.
-     * @returns {Promise<void>} A promise that resolves when the image is loaded, or rejects if loading fails.
-     * @throws {Error} If the engine initialization was unsuccessful.
+     * @returns {Promise<void>} Resolves when the image is successfully loaded, rejects if loading fails or a new image is requested.
+     * @throws {Error} If the viewer is destroyed or the engine fails to initialize.
      */
     async loadImage(url, width, height) {
-        let success = await this.#engineInitPromise;
-
-        if (success) {
-            return new Promise((resolve, reject) => {
-                try {
-                    this.#engine.loadEquirectangularImage(url, width, height, resolve, reject);
-                } catch (e) {
-                    reject(e);
-                }
-            });
-        } else {
-            throw new Error("loadImage: Engine initialization was unsuccessful!");
+        if (this.#isDestroyed) {
+            throw new Error("Equirectangular Viewer is destroyed!");
         }
+        if (!this.#engine) {
+            await this.#engineInitPromise;
+            if (!this.#engine) {
+                throw new Error("Engine failed to initialize!");
+            }
+        }
+
+        this.#currentImageRequestID++;
+        let currentRequestId = this.#currentImageRequestID;
+
+        return new Promise((resolve, reject) => {
+            this.#engine.loadEquirectangularImage(
+                url,
+                width,
+                height,
+                () => {
+                    if (this.#currentImageRequestID == currentRequestId) {
+                        resolve();
+                    } else {
+                        reject(new Error("New image was requested"));
+                    }
+                },
+                (errorMessage) => {
+                    if (this.#currentImageRequestID == currentRequestId) {
+                        reject(new Error("Engine Load Error: " + errorMessage));
+                    };
+                }
+            );
+        });
     }
 
     setAutoRotate(enabled) {
@@ -76,31 +118,34 @@ export class EquirectangularViewer {
     }
 
     async toggleFullscreen() {
-
-        let engineInitializationSuccess = await this.#engineInitPromise;
-
-        if (engineInitializationSuccess && this.#engine) {
-            if (!document.fullscreenElement) {
-                this.#canvas.requestFullscreen();
-            } else {
-                document.exitFullscreen();
-            }
+        if (!document.fullscreenElement) {
+            await this.#canvas.requestFullscreen();
+        } else {
+            await document.exitFullscreen();
         }
     }
 
     destroy() {
-        // stop rendering
-        cancelAnimationFrame(this.animationFrameId);
+        this.#isDestroyed = true;
+        // stop rendering if running
+        if (this.#animationFrameId) {
+            cancelAnimationFrame(this.#animationFrameId);
+            this.#animationFrameId = null;
+        }
         // remove window listener for fullscreen listeners
-        window.removeEventListener("resize", this.#onFullscreenResize);
+        if (this.#windowResizeListener) {
+            window.removeEventListener("resize", this.#windowResizeListener);
+        }
         // remove fullscreen listener
-        this.#canvas.removeEventListener("fullscreenchange", this.#onFullscreenChange);
+        if (this.#canvasFullscreenListener) {
+            this.#canvas.removeEventListener("fullscreenchange", this.#canvasFullscreenListener);
+        }
         if (this.#canvasInput) {
             this.#canvasInput.removeListeners();
+            this.#canvasInput = null;
         }
-        this.#engineInitPromise.then((success) => {
-            if (success && this.#engine) {
-                console.log("delete");
+        this.#engineInitPromise.then(() => {
+            if (this.#engine && !this.#engine.isDeleted()) {
                 this.#engine.delete();
             }
             this.#engine = null;
@@ -111,101 +156,107 @@ export class EquirectangularViewer {
     // | PRIVATE METHODS |
     // |-----------------|
     async #initialize() {
+        let success = false;
+
+        if (typeof createModule == "undefined") {
+            this.#isDestroyed = true;
+            throw new Error("Webassembly glue code is not present!");
+        }
+
         try {
             let Module = await createModule();
-            this.#engine = new Module.EquirectangularEngine(this.#canvasId);
+            let returnValue = false;
+            if (!this.#isDestroyed) {
+                this.#engine = new Module.EquirectangularEngine(this.#canvasId);
 
-            // set canvas size
-            this.#engine.setCanvasSize(this.#canvasCanvasWidth, this.#canvasCanvasHeight);
+                // set canvas size
+                this.#engine.setCanvasSize(this.#canvasWidth, this.#canvasHeight);
 
-            // Setup CanvasInput
-            this.#setupInputControl();
-            this.#setupResizeHandlers();
+                // Setup CanvasInput
+                this.#setupInputControl();
+                this.#setupResizeHandlers();
 
-            // Start Render Loop
-            this.#renderLoop();
+                // Start Render Loop
+                this.#renderLoop();
 
-            return true;
-        } catch (error) {
-            if (error instanceof ReferenceError) {
-                console.error("Webassembly glue code is not present!");
-            } else {
-                console.error("Unexpected error: Equirectangular Engine failed to initialize: ", error);
+                success = true;
             }
-            return false;
+        } catch (error) {
+            // if initialization failed set destroyed so class can't be used anymore
+            this.#isDestroyed = true;
+            console.error("Unexpected error: Equirectangular Engine failed to initialize: ", error);
+            throw error;
         }
-    }
 
-    async #setFocalLength(focalLength) {
-        let engineInitializationSuccess = await this.#engineInitPromise;
-
-        if (engineInitializationSuccess && this.#engine) {
-            this.#engine.setFocalLength(focalLength);
-        } else {
-            throw new Error("setFocalLength: Engine initialization was unsuccessful!");
-        }
-    }
-
-    async #rotateCamera(pitch, yaw) {
-        let engineInitializationSuccess = await this.#engineInitPromise;
-
-        if (engineInitializationSuccess && this.#engine) {
-            this.#engine.rotateCamera(this.#degToRad(pitch), this.#degToRad(yaw));
-        } else {
-            throw new Error("setFocalLength: Engine initialization was unsuccessful!");
-        }
+        return success;
     }
 
     #setupInputControl() {
         this.#canvasInput = new CanvasInput(this.#canvas, {
-            onRotate: async (pitch, yaw) => {
-                this.#rotateCamera(pitch, yaw);
+            onRotate: (pitch, yaw) => {
+                if (this.#engine) {
+                    this.#engine.rotateCamera(this.#degToRad(pitch), this.#degToRad(yaw));
+                }
             },
             onZoom: (newFocal) => {
-                this.#setFocalLength(newFocal);
+                if (this.#engine) {
+                    this.#engine.setFocalLength(newFocal);
+                }
             }
         });
     }
 
     #setupResizeHandlers() {
-        window.addEventListener("resize", () => { this.#onFullscreenResize() });
-        this.#canvas.addEventListener("fullscreenchange", () => { this.#onFullscreenChange() });
+        this.#windowResizeListener = () => { this.#onFullscreenResize() };
+        this.#canvasFullscreenListener = () => { this.#onFullscreenChange() };
+        window.addEventListener("resize", this.#windowResizeListener);
+        this.#canvas.addEventListener("fullscreenchange", this.#canvasFullscreenListener);
     }
 
     async #onFullscreenChange() {
-        let engineInitializationSuccess = await this.#engineInitPromise;
-
-        if (engineInitializationSuccess && this.#engine) {
-            let isFullscreen = document.fullscreenElement == this.#canvas;
-            if (isFullscreen) {
-                this.#canvas.classList.remove("border");
-                this.#engine.setCanvasSize(window.innerWidth, window.innerHeight);
-            } else {
-                this.#canvas.classList.add("border");
-                this.#engine.setCanvasSize(this.#canvasCanvasWidth, this.#canvasCanvasHeight);
+        // only run if class is not destroyed
+        if (!this.#isDestroyed) {
+            // if engine is not ready wait for initialization to finish
+            if (!this.#engine) {
+                await this.#engineInitPromise;
+            }
+            // if engine is present after initialization
+            if (this.#engine) {
+                let isFullscreen = document.fullscreenElement == this.#canvas;
+                if (isFullscreen) {
+                    this.#engine.setCanvasSize(window.innerWidth, window.innerHeight);
+                } else {
+                    this.#engine.setCanvasSize(this.#canvasWidth, this.#canvasHeight);
+                }
             }
         }
     }
 
     async #onFullscreenResize() {
-        let engineInitializationSuccess = await this.#engineInitPromise;
-
-        if (engineInitializationSuccess && this.#engine) {
-            let isFullscreen = document.fullscreenElement == this.#canvas;
-            if (isFullscreen) {
-                this.#engine.setCanvasSize(window.innerWidth, window.innerHeight);
+        // only run if class is not destroyed
+        if (!this.#isDestroyed) {
+            // if engine is not ready wait for initialization to finish
+            if (!this.#engine) {
+                await this.#engineInitPromise;
+            }
+            // if engine is present after initialization
+            if (this.#engine) {
+                let isFullscreen = document.fullscreenElement == this.#canvas;
+                if (isFullscreen) {
+                    this.#engine.setCanvasSize(window.innerWidth, window.innerHeight);
+                }
             }
         }
     }
 
-    #renderLoop() {
-        if (this.#engine) {
+    #renderLoop = () => {
+        if (this.#engine && !this.#isDestroyed) {
             if (this.autoRotate) {
                 this.#engine.rotateCamera(0, this.#degToRad(this.autoRotateSpeed));
             }
             this.#engine.render();
 
-            this.animationFrameId = requestAnimationFrame(() => this.#renderLoop());
+            this.#animationFrameId = requestAnimationFrame(this.#renderLoop);
         }
     }
 

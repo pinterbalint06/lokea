@@ -77,6 +77,10 @@ document.addEventListener("DOMContentLoaded", async function () {
     equirectangularViewer = new EquirectangularViewer(canvasId);
     let select = document.getElementById("kepek");
     if (imageList[0]) {
-        equirectangularViewer.loadImage(imageList[select.value].url, imageList[select.value].width, imageList[select.value].height);
+        equirectangularViewer.loadImage(imageList[select.value].url, imageList[select.value].width, imageList[select.value].height).then(function () {
+            console.log("image loaded");
+        }).catch(function (e) {
+            console.log(e)
+        });
     }
 });
