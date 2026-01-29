@@ -5,20 +5,10 @@ const fs = require('fs/promises');
 const bcrypt = require('bcrypt');
 const validator = require('validator');
 const { body, validationResult } = require("express-validator");
-const mysql = require('mysql2/promise');
 
 //!Multer
 const multer = require('multer'); //?npm install multer
 const path = require('path');
-
-const pool = mysql.createPool({
-    host: "localhost",
-    user: "root",
-    password: "",
-    database: "bigprojekt_db",
-    waitForConnections: true,
-    connectionLimit: 10
-});
 
 const storage = multer.diskStorage({
     destination: (request, file, callback) => {
@@ -79,10 +69,8 @@ router.post("/signup",
             else {
                 const { username, email, password } = request.body;
                 const hashedPassword = await bcrypt.hash(password, 10);
-                await pool.query(
-                    "INSERT INTO users (username, email, password) VALUES (?, ?, ?)",
-                    [username, email, hashedPassword]
-                );
+                let feltolt = await database.newUser(username, email, hashedPassword);
+                console.log(feltolt);
                 response.status(201).json({
                     success: true,
                     message: "Sikeres regisztráció"
@@ -121,18 +109,12 @@ router.post("/login",
                 const { username, password } = request.body;
                 let rows;
                 if (validator.isEmail(username)) {
-                    [rows] = await pool.query(
-                        `SELECT users.password, users.userid, users.role FROM users WHERE users.email = ?`,
-                        [username]
-                    );
+                    rows = await database.getUserByEmail(username);
                 }
                 else {
-                    [rows] = await pool.query(
-                        `SELECT users.password, users.userid, users.role FROM users WHERE users.username = ?`,
-                        [username]
-                    );
+                    rows = await database.getUserByUsername(username);
                 }
-                if (!rows || rows.length === 0) {
+                if (rows.length === 0) {
                     return response.status(401).json({ message: "Hibás email vagy jelszó" });
                 }
                 else {
