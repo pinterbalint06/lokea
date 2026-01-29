@@ -1,4 +1,4 @@
-import { EquirectangularViewer } from './EquirectangularViewer.js';
+import { EquirectangularViewer } from './libs/viewer/EquirectangularViewer.js';
 
 // |------------------|
 // | GLOBAL VARIABLES |
@@ -70,7 +70,7 @@ function createOptionsForImageList() {
     }
 }
 
-document.addEventListener("DOMContentLoaded", async function () {
+async function init() {
     createOptionsForImageList();
     document.getElementById("autoRotate").addEventListener("change", setAutoRotate);
 
@@ -83,4 +83,6 @@ document.addEventListener("DOMContentLoaded", async function () {
             console.log(e)
         });
     }
-});
+}
+
+document.addEventListener("DOMContentLoaded", init);

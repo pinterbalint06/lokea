@@ -1,5 +1,6 @@
 import { CanvasInput } from './CanvasInput.js';
-import ModuleBuilder from './equirectangular.js';
+import { degreeToRadian } from '../math/mathUtils.js';
+import ModuleBuilder from '../webassembly/equirectangular/equirectangular.js';
 
 const DEFAULT_OPTIONS = {
     "canvasWidth": 1000,
@@ -196,7 +197,7 @@ export class EquirectangularViewer {
         this.#canvasInput = new CanvasInput(this.#canvas, {
             onRotate: (pitch, yaw) => {
                 if (this.#engine) {
-                    this.#engine.rotateCamera(this.#degToRad(pitch), this.#degToRad(yaw));
+                    this.#engine.rotateCamera(degreeToRadian(pitch), degreeToRadian(yaw));
                 }
             },
             onZoom: (newFocal) => {
@@ -253,15 +254,11 @@ export class EquirectangularViewer {
     #renderLoop = () => {
         if (this.#engine && !this.#isDestroyed) {
             if (this.autoRotate) {
-                this.#engine.rotateCamera(0, this.#degToRad(this.autoRotateSpeed));
+                this.#engine.rotateCamera(0, degreeToRadian(this.autoRotateSpeed));
             }
             this.#engine.render();
 
             this.#animationFrameId = requestAnimationFrame(this.#renderLoop);
         }
-    }
-
-    #degToRad(angle) {
-        return angle * (Math.PI / 180.0);
     }
 }

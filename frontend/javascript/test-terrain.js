@@ -1,5 +1,6 @@
-import { CanvasInput } from './CanvasInput.js';
-import ModuleBuilder from './terrain.js';
+import { CanvasInput } from './libs/viewer/CanvasInput.js';
+import { degreeToRadian } from './libs/math/mathUtils.js';
+import ModuleBuilder from './libs/webassembly/terrain/terrain.js';
 
 // |------------------|
 // | GLOBAL VARIABLES |
@@ -23,11 +24,6 @@ let Module;
 // |--------------------|
 // | UTILITIES AND MATH |
 // |--------------------|
-
-function degToRad(angle) {
-    return angle * (Math.PI / 180.0);
-}
-
 function fromHexaToDec(num) {
     let returnVal = 0;
     switch (num) {
@@ -93,7 +89,9 @@ window.fullScreen = fullScreen;
 // | MAIN LOOP AND INITIALIZATION |
 // |------------------------------|
 
-document.addEventListener("DOMContentLoaded", async function () {
+document.addEventListener("DOMContentLoaded", init);
+
+async function init() {
     // Inital light vector
     korRajzol(0, -1);
 
@@ -127,7 +125,7 @@ document.addEventListener("DOMContentLoaded", async function () {
         Module = modu;
         initModule();
     });
-});
+}
 
 function initModule() {
     console.log("module betoltve");
@@ -183,7 +181,7 @@ function mainLoop() {
 
 // rotate camera by degree
 function rotateCamera(pitch, yaw) {
-    terrainEngine.rotateCamera(degToRad(pitch), degToRad(yaw))
+    terrainEngine.rotateCamera(degreeToRadian(pitch), degreeToRadian(yaw))
 }
 
 window.xyForgas = rotateCamera;
@@ -221,7 +219,7 @@ window.ujhely = function () {
 
 // set view direction
 window.irany = function (pitch, yaw) {
-    terrainEngine.setCameraRotation(degToRad(pitch), degToRad(yaw));
+    terrainEngine.setCameraRotation(degreeToRadian(pitch), degreeToRadian(yaw));
 };
 
 // |--------------------|
