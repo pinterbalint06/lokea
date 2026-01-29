@@ -91,7 +91,7 @@ function va() {
   var a = wa.buffer;
   A = new Int8Array(a);
   E = new Int16Array(a);
-  m.HEAPU8 = B = new Uint8Array(a);
+  B = new Uint8Array(a);
   pa = new Uint16Array(a);
   G = new Int32Array(a);
   u = new Uint32Array(a);
@@ -300,7 +300,7 @@ function Wa(a, b) {
 var Ya = {open(a) {
   var b = Va[a.node.pa];
   if (!b) {
-    throw new K(43);
+    throw new J(43);
   }
   a.o = b;
   a.seekable = !1;
@@ -310,16 +310,16 @@ var Ya = {open(a) {
   a.o.P.ia(a.o);
 }, read(a, b, c, d) {
   if (!a.o || !a.o.P.Ia) {
-    throw new K(60);
+    throw new J(60);
   }
   for (var e = 0, f = 0; f < d; f++) {
     try {
       var g = a.o.P.Ia(a.o);
     } catch (h) {
-      throw new K(29);
+      throw new J(29);
     }
     if (void 0 === g && 0 === e) {
-      throw new K(6);
+      throw new J(6);
     }
     if (null === g || void 0 === g) {
       break;
@@ -331,14 +331,14 @@ var Ya = {open(a) {
   return e;
 }, write(a, b, c, d) {
   if (!a.o || !a.o.P.Aa) {
-    throw new K(60);
+    throw new J(60);
   }
   try {
     for (var e = 0; e < d; e++) {
       a.o.P.Aa(a.o, b[c + e]);
     }
   } catch (f) {
-    throw new K(29);
+    throw new J(29);
   }
   d && (a.node.J = a.node.D = Date.now());
   return e;
@@ -376,7 +376,7 @@ var Ya = {open(a) {
   return L.createNode(null, "/", 16895, 0);
 }, createNode(a, b, c, d) {
   if (24576 === (c & 61440) || 4096 === (c & 61440)) {
-    throw new K(63);
+    throw new J(63);
   }
   L.M || (L.M = {dir:{node:{T:L.j.T, N:L.j.N, ba:L.j.ba, oa:L.j.oa, Sa:L.j.Sa, ra:L.j.ra, Ta:L.j.Ta, Ba:L.j.Ba, qa:L.j.qa}, stream:{L:L.i.L}}, file:{node:{T:L.j.T, N:L.j.N}, stream:{L:L.i.L, read:L.i.read, write:L.i.write, za:L.i.za, Pa:L.i.Pa}}, link:{node:{T:L.j.T, N:L.j.N, fa:L.j.fa}, stream:{}}, Fa:{node:{T:L.j.T, N:L.j.N}, stream:bb}});
   c = cb(a, b, c, d);
@@ -408,7 +408,7 @@ var Ya = {open(a) {
   }
   void 0 !== b.size && (b = b.size, a.u != b && (0 == b ? (a.h = null, a.u = 0) : (c = a.h, a.h = new Uint8Array(b), c && a.h.set(c.subarray(0, Math.min(b, a.u))), a.u = b)));
 }, ba() {
-  throw new K(44);
+  throw new J(44);
 }, oa(a, b, c, d) {
   return L.createNode(a, b, c, d);
 }, Sa(a, b, c) {
@@ -419,7 +419,7 @@ var Ya = {open(a) {
   if (d) {
     if (M(a.mode)) {
       for (var e in d.h) {
-        throw new K(55);
+        throw new J(55);
       }
     }
     eb(d);
@@ -434,7 +434,7 @@ var Ya = {open(a) {
 }, Ta(a, b) {
   var c = db(a, b), d;
   for (d in c.h) {
-    throw new K(55);
+    throw new J(55);
   }
   delete a.h[b];
   a.D = a.J = Date.now();
@@ -446,7 +446,7 @@ var Ya = {open(a) {
   return a;
 }, fa(a) {
   if (40960 !== (a.mode & 61440)) {
-    throw new K(28);
+    throw new J(28);
   }
   return a.link;
 }}, i:{read(a, b, c, d, e) {
@@ -498,19 +498,19 @@ var Ya = {open(a) {
 }, L(a, b, c) {
   1 === c ? b += a.position : 2 === c && 32768 === (a.node.mode & 61440) && (b += a.node.u);
   if (0 > b) {
-    throw new K(28);
+    throw new J(28);
   }
   return b;
 }, za(a, b, c, d, e) {
   if (32768 !== (a.node.mode & 61440)) {
-    throw new K(43);
+    throw new J(43);
   }
   a = a.node.h;
   if (e & 2 || !a || a.buffer !== A.buffer) {
     d = !0;
     e = ab();
     if (!e) {
-      throw new K(48);
+      throw new J(48);
     }
     if (a) {
       if (0 < c || c + b < a.length) {
@@ -575,7 +575,7 @@ EOWNERDEAD:62, ESTRPIPE:135}, hb = async a => {
     }
   }
   return a;
-}, qb = null, rb = {}, sb = [], tb = 1, O = null, ub = !1, vb = !0, K = class extends Error {
+}, qb = null, rb = {}, sb = [], tb = 1, O = null, ub = !1, vb = !0, J = class extends Error {
   name="ErrnoError";
   constructor(a) {
     super(ua ? N(wb(a)) : "");
@@ -643,7 +643,7 @@ EOWNERDEAD:62, ESTRPIPE:135}, hb = async a => {
 };
 function zb(a, b = {}) {
   if (!a) {
-    throw new K(44);
+    throw new J(44);
   }
   b.ua ?? (b.ua = !0);
   "/" === a.charAt(0) || (a = "//" + a);
@@ -677,7 +677,7 @@ function zb(a, b = {}) {
           !d.da || g && !b.ua || (d = d.da.root);
           if (40960 === (d.mode & 61440) && (!g || b.ta)) {
             if (!d.j.fa) {
-              throw new K(52);
+              throw new J(52);
             }
             d = d.j.fa(d);
             "/" === d.charAt(0) || (d = Ka(e) + "/" + d);
@@ -689,7 +689,7 @@ function zb(a, b = {}) {
     }
     return {path:e, node:d};
   }
-  throw new K(32);
+  throw new J(32);
 }
 function Ab(a) {
   for (var b;;) {
@@ -723,7 +723,7 @@ function eb(a) {
 function db(a, b) {
   var c = M(a.mode) ? (c = Cb(a, "x")) ? c : a.j.ba ? 0 : 2 : 54;
   if (c) {
-    throw new K(c);
+    throw new J(c);
   }
   for (c = O[Bb(a.id, b)]; c; c = c.Z) {
     var d = c.name;
@@ -774,7 +774,7 @@ function Eb(a, b) {
 function Fb(a) {
   a = sb[a];
   if (!a) {
-    throw new K(8);
+    throw new J(8);
   }
   return a;
 }
@@ -788,7 +788,7 @@ function Gb(a, b = -1) {
           break a;
         }
       }
-      throw new K(33);
+      throw new J(33);
     }
   }
   a.A = b;
@@ -803,7 +803,7 @@ function Ib(a, b) {
   var c = null?.i.N, d = c ? null : a;
   c ??= a.j.N;
   if (!c) {
-    throw new K(63);
+    throw new J(63);
   }
   c(d, b);
 }
@@ -811,7 +811,7 @@ var bb = {open(a) {
   a.i = rb[a.node.pa].i;
   a.i.open?.(a);
 }, L() {
-  throw new K(70);
+  throw new J(70);
 }};
 function Xa(a, b) {
   rb[a] = {i:b};
@@ -822,17 +822,17 @@ function Jb(a, b) {
   }
   var c = "/" === b, d = !b;
   if (c && qb) {
-    throw new K(10);
+    throw new J(10);
   }
   if (!c && !d) {
     var e = zb(b, {ua:!1});
     b = e.path;
     e = e.node;
     if (e.da) {
-      throw new K(10);
+      throw new J(10);
     }
     if (!M(e.mode)) {
-      throw new K(54);
+      throw new J(54);
     }
   }
   b = {type:a, Mb:{}, Oa:b, nb:[]};
@@ -845,17 +845,17 @@ function Kb(a, b, c) {
   var d = zb(a, {parent:!0}).node;
   a = a && a.match(/([^\/]+|\/)\/*$/)[1];
   if (!a) {
-    throw new K(28);
+    throw new J(28);
   }
   if ("." === a || ".." === a) {
-    throw new K(20);
+    throw new J(20);
   }
   var e = Eb(d, a);
   if (e) {
-    throw new K(e);
+    throw new J(e);
   }
   if (!d.j.oa) {
-    throw new K(63);
+    throw new J(63);
   }
   return d.j.oa(d, a, b, c);
 }
@@ -871,26 +871,26 @@ function Mb(a, b, c) {
 }
 function Nb(a, b) {
   if (!Na(a)) {
-    throw new K(44);
+    throw new J(44);
   }
   var c = zb(b, {parent:!0}).node;
   if (!c) {
-    throw new K(44);
+    throw new J(44);
   }
   b = b && b.match(/([^\/]+|\/)\/*$/)[1];
   var d = Eb(c, b);
   if (d) {
-    throw new K(d);
+    throw new J(d);
   }
   if (!c.j.qa) {
-    throw new K(63);
+    throw new J(63);
   }
   c.j.qa(c, b, a);
 }
 function Ob(a) {
   var b = zb(a, {parent:!0}).node;
   if (!b) {
-    throw new K(44);
+    throw new J(44);
   }
   a = a && a.match(/([^\/]+|\/)\/*$/)[1];
   var c = db(b, a);
@@ -905,13 +905,13 @@ function Ob(a) {
     d = e ? e : M(d.mode) ? 31 : 0;
   }
   if (d) {
-    throw new K(d);
+    throw new J(d);
   }
   if (!b.j.ra) {
-    throw new K(63);
+    throw new J(63);
   }
   if (c.da) {
-    throw new K(10);
+    throw new J(10);
   }
   b.j.ra(b, a);
   eb(c);
@@ -922,7 +922,7 @@ function Pb(a, b) {
 }
 function Qb(a, b, c = 438) {
   if ("" === a) {
-    throw new K(44);
+    throw new J(44);
   }
   if ("string" == typeof b) {
     var d = {r:0, "r+":2, w:577, "w+":578, a:1089, "a+":1090}[b];
@@ -944,37 +944,37 @@ function Qb(a, b, c = 438) {
   if (b & 64) {
     if (d) {
       if (b & 128) {
-        throw new K(20);
+        throw new J(20);
       }
     } else {
       if (e) {
-        throw new K(31);
+        throw new J(31);
       }
       d = Kb(a, c | 511, 0);
       f = !0;
     }
   }
   if (!d) {
-    throw new K(44);
+    throw new J(44);
   }
   8192 === (d.mode & 61440) && (b &= -513);
   if (b & 65536 && !M(d.mode)) {
-    throw new K(54);
+    throw new J(54);
   }
   if (!f && (e = d ? 40960 === (d.mode & 61440) ? 32 : M(d.mode) && ("r" !== Db(b) || b & 576) ? 31 : Cb(d, Db(b)) : 44)) {
-    throw new K(e);
+    throw new J(e);
   }
   if (b & 512 && !f) {
     e = d;
     e = "string" == typeof e ? zb(e, {ta:!0}).node : e;
     if (M(e.mode)) {
-      throw new K(31);
+      throw new J(31);
     }
     if (32768 !== (e.mode & 61440)) {
-      throw new K(28);
+      throw new J(28);
     }
     if (a = Cb(e, "w")) {
-      throw new K(a);
+      throw new J(a);
     }
     Ib(e, {size:0, timestamp:Date.now()});
   }
@@ -985,7 +985,7 @@ function Qb(a, b, c = 438) {
 }
 function Rb(a) {
   if (null === a.A) {
-    throw new K(8);
+    throw new J(8);
   }
   a.va && (a.va = null);
   try {
@@ -999,13 +999,13 @@ function Rb(a) {
 }
 function Sb(a, b, c) {
   if (null === a.A) {
-    throw new K(8);
+    throw new J(8);
   }
   if (!a.seekable || !a.i.L) {
-    throw new K(70);
+    throw new J(70);
   }
   if (0 != c && 1 != c && 2 != c) {
-    throw new K(28);
+    throw new J(28);
   }
   a.position = a.i.L(a, b, c);
   a.vb = [];
@@ -1013,26 +1013,26 @@ function Sb(a, b, c) {
 function Tb(a, b, c, d, e, f) {
   p(0 <= c);
   if (0 > d || 0 > e) {
-    throw new K(28);
+    throw new J(28);
   }
   if (null === a.A) {
-    throw new K(8);
+    throw new J(8);
   }
   if (0 === (a.flags & 2097155)) {
-    throw new K(8);
+    throw new J(8);
   }
   if (M(a.node.mode)) {
-    throw new K(31);
+    throw new J(31);
   }
   if (!a.i.write) {
-    throw new K(28);
+    throw new J(28);
   }
   a.seekable && a.flags & 1024 && Sb(a, 0, 2);
   var g = "undefined" != typeof e;
   if (!g) {
     e = a.position;
   } else if (!a.seekable) {
-    throw new K(70);
+    throw new J(70);
   }
   b = a.i.write(a, b, c, d, e, f);
   g || (a.position += b);
@@ -1095,10 +1095,10 @@ function Xb(a, b, c, d) {
       try {
         var r = c();
       } catch (w) {
-        throw new K(29);
+        throw new J(29);
       }
       if (void 0 === r && 0 === n) {
-        throw new K(6);
+        throw new J(6);
       }
       if (null === r || void 0 === r) {
         break;
@@ -1113,7 +1113,7 @@ function Xb(a, b, c, d) {
       try {
         d(g[h + n]);
       } catch (k) {
-        throw new K(29);
+        throw new J(29);
       }
     }
     l && (f.node.J = f.node.D = Date.now());
@@ -1129,7 +1129,7 @@ function Yb(a) {
       try {
         a.h = (void 0)(a.url);
       } catch (b) {
-        throw new K(29);
+        throw new J(29);
       }
     }
   }
@@ -1179,21 +1179,21 @@ function Zb(a, b, c, d, e) {
       C || (x = r);
       var z = this;
       z.tb(F => {
-        var J = F * x, D = (F + 1) * x - 1;
+        var K = F * x, D = (F + 1) * x - 1;
         D = Math.min(D, r - 1);
         if ("undefined" == typeof z.F[F]) {
           var P = z.F;
-          J > D && t("invalid range (" + J + ", " + D + ") or no bytes requested!");
+          K > D && t("invalid range (" + K + ", " + D + ") or no bytes requested!");
           D > r - 1 && t("only " + r + " bytes available! programmer error!");
           var I = new XMLHttpRequest();
           I.open("GET", c, !1);
-          r !== x && I.setRequestHeader("Range", "bytes=" + J + "-" + D);
+          r !== x && I.setRequestHeader("Range", "bytes=" + K + "-" + D);
           I.responseType = "arraybuffer";
           I.overrideMimeType && I.overrideMimeType("text/plain; charset=x-user-defined");
           I.send(null);
           200 <= I.status && 300 > I.status || 304 === I.status || t("Couldn't load " + c + ". Status: " + I.status);
-          J = void 0 !== I.response ? new Uint8Array(I.response || []) : Ua(I.responseText || "");
-          P[F] = J;
+          K = void 0 !== I.response ? new Uint8Array(I.response || []) : Ua(I.responseText || "");
+          P[F] = K;
         }
         "undefined" == typeof z.F[F] && t("doXHR failed!");
         return z.F[F];
@@ -1241,7 +1241,7 @@ function Zb(a, b, c, d, e) {
     Yb(n);
     var C = ab();
     if (!C) {
-      throw new K(48);
+      throw new J(48);
     }
     f(k, A, C, r, w);
     return {l:C, Xa:!0};
@@ -2110,6 +2110,7 @@ p("undefined" == typeof m.wasmMemory, "Use of `wasmMemory` detected.  Use -sIMPO
 p("undefined" == typeof m.INITIAL_MEMORY, "Detected runtime INITIAL_MEMORY setting.  Use -sIMPORTED_MEMORY to define wasmMemory dynamically");
 m.addRunDependency = nb;
 m.removeRunDependency = mb;
+m.UTF8ToString = N;
 m.FS_preloadFile = async(a, b, c, d, e, f, g, h) => {
   var l = b ? Na(Ja(a + "/" + b)) : a, n;
   a: {
@@ -2135,7 +2136,7 @@ m.FS_createLazyFile = (...a) => Zb(...a);
 "writeI53ToI64Clamped writeI53ToI64Signaling writeI53ToU64Clamped writeI53ToU64Signaling convertI32PairToI53 convertI32PairToI53Checked convertU32PairToI53 stackAlloc getTempRet0 setTempRet0 zeroMemory withStackSave inetPton4 inetNtop4 inetPton6 inetNtop6 readSockaddr writeSockaddr runMainThreadEmAsm autoResumeAudioContext getDynCaller dynCall runtimeKeepalivePush runtimeKeepalivePop asmjsMangle HandleAllocator addOnPreRun addOnInit addOnPostCtor addOnPreMain addOnExit addOnPostRun STACK_SIZE STACK_ALIGN POINTER_SIZE ASSERTIONS ccall cwrap convertJsFunctionToWasm getEmptyTableSlot updateTableMap getFunctionAddress addFunction removeFunction intArrayToString stringToAscii stringToNewUTF8 stringToUTF8OnStack writeArrayToMemory registerKeyEventCallback getBoundingClientRect fillMouseEventData registerMouseEventCallback registerWheelEventCallback registerUiEventCallback registerFocusEventCallback fillDeviceOrientationEventData registerDeviceOrientationEventCallback fillDeviceMotionEventData registerDeviceMotionEventCallback screenOrientation fillOrientationChangeEventData registerOrientationChangeEventCallback fillFullscreenChangeEventData registerFullscreenChangeEventCallback JSEvents_requestFullscreen JSEvents_resizeCanvasForFullscreen registerRestoreOldStyle hideEverythingExceptGivenElement restoreHiddenElements setLetterbox softFullscreenResizeWebGLRenderTarget doRequestFullscreen fillPointerlockChangeEventData registerPointerlockChangeEventCallback registerPointerlockErrorEventCallback requestPointerLock fillVisibilityChangeEventData registerVisibilityChangeEventCallback registerTouchEventCallback fillGamepadEventData registerGamepadEventCallback registerBeforeUnloadEventCallback fillBatteryEventData registerBatteryEventCallback setCanvasElementSize getCanvasElementSize jsStackTrace getCallstack convertPCtoSourceLocation checkWasiClock wasiRightsToMuslOFlags wasiOFlagsToMuslOFlags safeSetTimeout setImmediateWrapped safeRequestAnimationFrame clearImmediateWrapped registerPostMainLoop registerPreMainLoop getPromise makePromise idsToPromises makePromiseCallback findMatchingCatch Browser_asyncPrepareDataCounter isLeapYear ydayFromDate arraySum addDays getSocketFromFD getSocketAddress FS_mkdirTree _setNetworkCallback webgl_enable_WEBGL_multi_draw webgl_enable_EXT_polygon_offset_clamp webgl_enable_EXT_clip_control webgl_enable_WEBGL_polygon_mode emscriptenWebGLGetUniform emscriptenWebGLGetVertexAttrib __glGetActiveAttribOrUniform writeGLArray registerWebGlEventCallback runAndAbortIfError emscriptenWebGLGetIndexed webgl_enable_WEBGL_draw_instanced_base_vertex_base_instance webgl_enable_WEBGL_multi_draw_instanced_base_vertex_base_instance ALLOC_NORMAL ALLOC_STACK allocate writeStringToMemory writeAsciiToMemory allocateUTF8 allocateUTF8OnStack demangle stackTrace getNativeTypeSize getFunctionArgsName createJsInvokerSignature PureVirtualError registerInheritedInstance unregisterInheritedInstance getInheritedInstanceCount getLiveInheritedInstances enumReadValueFromPointer setDelayFunction validateThis count_emval_handles".split(" ").forEach(function(a) {
   ma(a);
 });
-"run out err callMain abort wasmExports HEAPF32 HEAPF64 HEAP8 HEAP16 HEAPU16 HEAP32 HEAPU32 HEAP64 HEAPU64 writeStackCookie checkStackCookie writeI53ToI64 readI53FromI64 readI53FromU64 INT53_MAX INT53_MIN bigintToI53Checked stackSave stackRestore createNamedFunction ptrToString exitJS getHeapMax growMemory ENV ERRNO_CODES strError DNS Protocols Sockets timers warnOnce readEmAsmArgsArray readEmAsmArgs runEmAsmFunction jstoi_q getExecutableName handleException keepRuntimeAlive callUserCallback maybeExit asyncLoad alignMemory mmapAlloc wasmTable wasmMemory getUniqueRunDependency noExitRuntime freeTableIndexes functionsInTableMap setValue getValue PATH PATH_FS UTF8Decoder UTF8ArrayToString UTF8ToString stringToUTF8Array stringToUTF8 lengthBytesUTF8 intArrayFromString AsciiToString UTF16Decoder UTF16ToString stringToUTF16 lengthBytesUTF16 UTF32ToString stringToUTF32 lengthBytesUTF32 JSEvents specialHTMLTargets maybeCStringToJsString findEventTarget findCanvasEventTarget currentFullscreenStrategy restoreOldWindowedStyle UNWIND_CACHE ExitStatus getEnvStrings doReadv doWritev initRandomFill randomFill emSetImmediate emClearImmediate_deps emClearImmediate promiseMap uncaughtExceptionCount exceptionLast exceptionCaught ExceptionInfo Browser requestFullscreen requestFullScreen setCanvasSize getUserMedia createContext getPreloadedImageData__data wget MONTH_DAYS_REGULAR MONTH_DAYS_LEAP MONTH_DAYS_REGULAR_CUMULATIVE MONTH_DAYS_LEAP_CUMULATIVE SYSCALLS preloadPlugins FS_createPreloadedFile FS_modeStringToFlags FS_getMode FS_stdin_getChar_buffer FS_stdin_getChar FS_readFile FS FS_root FS_mounts FS_devices FS_streams FS_nextInode FS_nameTable FS_currentPath FS_initialized FS_ignorePermissions FS_filesystems FS_syncFSRequests FS_lookupPath FS_getPath FS_hashName FS_hashAddNode FS_hashRemoveNode FS_lookupNode FS_createNode FS_destroyNode FS_isRoot FS_isMountpoint FS_isFile FS_isDir FS_isLink FS_isChrdev FS_isBlkdev FS_isFIFO FS_isSocket FS_flagsToPermissionString FS_nodePermissions FS_mayLookup FS_mayCreate FS_mayDelete FS_mayOpen FS_checkOpExists FS_nextfd FS_getStreamChecked FS_getStream FS_createStream FS_closeStream FS_dupStream FS_doSetAttr FS_chrdev_stream_ops FS_major FS_minor FS_makedev FS_registerDevice FS_getDevice FS_getMounts FS_syncfs FS_mount FS_unmount FS_lookup FS_mknod FS_statfs FS_statfsStream FS_statfsNode FS_create FS_mkdir FS_mkdev FS_symlink FS_rename FS_rmdir FS_readdir FS_readlink FS_stat FS_fstat FS_lstat FS_doChmod FS_chmod FS_lchmod FS_fchmod FS_doChown FS_chown FS_lchown FS_fchown FS_doTruncate FS_truncate FS_ftruncate FS_utime FS_open FS_close FS_isClosed FS_llseek FS_read FS_write FS_mmap FS_msync FS_ioctl FS_writeFile FS_cwd FS_chdir FS_createDefaultDirectories FS_createDefaultDevices FS_createSpecialDirectories FS_createStandardStreams FS_staticInit FS_init FS_quit FS_findObject FS_analyzePath FS_createFile FS_forceLoadFile FS_absolutePath FS_createFolder FS_createLink FS_joinPath FS_mmapAlloc FS_standardizePath MEMFS TTY PIPEFS SOCKFS tempFixedLengthArray miniTempWebGLFloatBuffers miniTempWebGLIntBuffers heapObjectForWebGLType toTypedArrayIndex GL emscriptenWebGLGet computeUnpackAlignedImageSize colorChannelsInGlTextureFormat emscriptenWebGLGetTexPixelData webglGetUniformLocation webglPrepareUniformLocationsBeforeFirstUse webglGetLeftBracePos AL GLUT EGL GLEW IDBStore SDL SDL_gfx print printErr jstoi_s InternalError BindingError throwInternalError throwBindingError registeredTypes awaitingDependencies typeDependencies tupleRegistrations structRegistrations sharedRegisterType whenDependentTypesAreResolved getTypeName getFunctionName heap32VectorToArray requireRegisteredType usesDestructorStack checkArgCount getRequiredArgCount createJsInvoker UnboundTypeError EmValType EmValOptionalType throwUnboundTypeError ensureOverloadTable exposePublicSymbol replacePublicSymbol embindRepr registeredInstances getBasestPointer getInheritedInstance registeredPointers registerType integerReadValueFromPointer floatReadValueFromPointer assertIntegerRange readPointer runDestructors craftInvokerFunction embind__requireFunction genericPointerToWireType constNoSmartPtrRawPointerToWireType nonConstNoSmartPtrRawPointerToWireType init_RegisteredPointer RegisteredPointer RegisteredPointer_fromWireType runDestructor releaseClassHandle finalizationRegistry detachFinalizer_deps detachFinalizer attachFinalizer makeClassHandle init_ClassHandle ClassHandle throwInstanceAlreadyDeleted deletionQueue flushPendingDeletes delayFunction RegisteredClass shallowCopyInternalPointer downcastPointer upcastPointer char_0 char_9 makeLegalFunctionName emval_freelist emval_handles emval_symbols getStringOrSymbol Emval emval_returnValue emval_lookupTypes emval_methodCallers emval_addMethodCaller".split(" ").forEach(ma);
+"run out err callMain abort wasmExports HEAPF32 HEAPF64 HEAP8 HEAPU8 HEAP16 HEAPU16 HEAP32 HEAPU32 HEAP64 HEAPU64 writeStackCookie checkStackCookie writeI53ToI64 readI53FromI64 readI53FromU64 INT53_MAX INT53_MIN bigintToI53Checked stackSave stackRestore createNamedFunction ptrToString exitJS getHeapMax growMemory ENV ERRNO_CODES strError DNS Protocols Sockets timers warnOnce readEmAsmArgsArray readEmAsmArgs runEmAsmFunction jstoi_q getExecutableName handleException keepRuntimeAlive callUserCallback maybeExit asyncLoad alignMemory mmapAlloc wasmTable wasmMemory getUniqueRunDependency noExitRuntime freeTableIndexes functionsInTableMap setValue getValue PATH PATH_FS UTF8Decoder UTF8ArrayToString stringToUTF8Array stringToUTF8 lengthBytesUTF8 intArrayFromString AsciiToString UTF16Decoder UTF16ToString stringToUTF16 lengthBytesUTF16 UTF32ToString stringToUTF32 lengthBytesUTF32 JSEvents specialHTMLTargets maybeCStringToJsString findEventTarget findCanvasEventTarget currentFullscreenStrategy restoreOldWindowedStyle UNWIND_CACHE ExitStatus getEnvStrings doReadv doWritev initRandomFill randomFill emSetImmediate emClearImmediate_deps emClearImmediate promiseMap uncaughtExceptionCount exceptionLast exceptionCaught ExceptionInfo Browser requestFullscreen requestFullScreen setCanvasSize getUserMedia createContext getPreloadedImageData__data wget MONTH_DAYS_REGULAR MONTH_DAYS_LEAP MONTH_DAYS_REGULAR_CUMULATIVE MONTH_DAYS_LEAP_CUMULATIVE SYSCALLS preloadPlugins FS_createPreloadedFile FS_modeStringToFlags FS_getMode FS_stdin_getChar_buffer FS_stdin_getChar FS_readFile FS FS_root FS_mounts FS_devices FS_streams FS_nextInode FS_nameTable FS_currentPath FS_initialized FS_ignorePermissions FS_filesystems FS_syncFSRequests FS_lookupPath FS_getPath FS_hashName FS_hashAddNode FS_hashRemoveNode FS_lookupNode FS_createNode FS_destroyNode FS_isRoot FS_isMountpoint FS_isFile FS_isDir FS_isLink FS_isChrdev FS_isBlkdev FS_isFIFO FS_isSocket FS_flagsToPermissionString FS_nodePermissions FS_mayLookup FS_mayCreate FS_mayDelete FS_mayOpen FS_checkOpExists FS_nextfd FS_getStreamChecked FS_getStream FS_createStream FS_closeStream FS_dupStream FS_doSetAttr FS_chrdev_stream_ops FS_major FS_minor FS_makedev FS_registerDevice FS_getDevice FS_getMounts FS_syncfs FS_mount FS_unmount FS_lookup FS_mknod FS_statfs FS_statfsStream FS_statfsNode FS_create FS_mkdir FS_mkdev FS_symlink FS_rename FS_rmdir FS_readdir FS_readlink FS_stat FS_fstat FS_lstat FS_doChmod FS_chmod FS_lchmod FS_fchmod FS_doChown FS_chown FS_lchown FS_fchown FS_doTruncate FS_truncate FS_ftruncate FS_utime FS_open FS_close FS_isClosed FS_llseek FS_read FS_write FS_mmap FS_msync FS_ioctl FS_writeFile FS_cwd FS_chdir FS_createDefaultDirectories FS_createDefaultDevices FS_createSpecialDirectories FS_createStandardStreams FS_staticInit FS_init FS_quit FS_findObject FS_analyzePath FS_createFile FS_forceLoadFile FS_absolutePath FS_createFolder FS_createLink FS_joinPath FS_mmapAlloc FS_standardizePath MEMFS TTY PIPEFS SOCKFS tempFixedLengthArray miniTempWebGLFloatBuffers miniTempWebGLIntBuffers heapObjectForWebGLType toTypedArrayIndex GL emscriptenWebGLGet computeUnpackAlignedImageSize colorChannelsInGlTextureFormat emscriptenWebGLGetTexPixelData webglGetUniformLocation webglPrepareUniformLocationsBeforeFirstUse webglGetLeftBracePos AL GLUT EGL GLEW IDBStore SDL SDL_gfx print printErr jstoi_s InternalError BindingError throwInternalError throwBindingError registeredTypes awaitingDependencies typeDependencies tupleRegistrations structRegistrations sharedRegisterType whenDependentTypesAreResolved getTypeName getFunctionName heap32VectorToArray requireRegisteredType usesDestructorStack checkArgCount getRequiredArgCount createJsInvoker UnboundTypeError EmValType EmValOptionalType throwUnboundTypeError ensureOverloadTable exposePublicSymbol replacePublicSymbol embindRepr registeredInstances getBasestPointer getInheritedInstance registeredPointers registerType integerReadValueFromPointer floatReadValueFromPointer assertIntegerRange readPointer runDestructors craftInvokerFunction embind__requireFunction genericPointerToWireType constNoSmartPtrRawPointerToWireType nonConstNoSmartPtrRawPointerToWireType init_RegisteredPointer RegisteredPointer RegisteredPointer_fromWireType runDestructor releaseClassHandle finalizationRegistry detachFinalizer_deps detachFinalizer attachFinalizer makeClassHandle init_ClassHandle ClassHandle throwInstanceAlreadyDeleted deletionQueue flushPendingDeletes delayFunction RegisteredClass shallowCopyInternalPointer downcastPointer upcastPointer char_0 char_9 makeLegalFunctionName emval_freelist emval_handles emval_symbols getStringOrSymbol Emval emval_returnValue emval_lookupTypes emval_methodCallers emval_addMethodCaller".split(" ").forEach(ma);
 var Od = {100080:() => {
   throw "A böngésződ nem támogatja a WebGL-t!";
 }, 100131:() => {
@@ -2250,7 +2251,7 @@ var Od = {100080:() => {
       case 21531:
         e = H();
         if (!d.i.gb) {
-          throw new K(59);
+          throw new J(59);
         }
         return d.i.gb(d, b, e);
       case 21523:
@@ -2282,7 +2283,7 @@ var Od = {100080:() => {
     } else {
       var f = -100 === a ? "/" : Fb(a).path;
       if (0 == e.length) {
-        throw new K(44);
+        throw new J(44);
       }
       b = f + "/" + e;
     }
@@ -2340,7 +2341,7 @@ var Od = {100080:() => {
       F = uc.prototype;
     }
     x = vc(k, function(...I) {
-      if (Object.getPrototypeOf(this) !== J) {
+      if (Object.getPrototypeOf(this) !== K) {
         throw new S(`Use 'new' to construct ${k}`);
       }
       if (void 0 === D.W) {
@@ -2352,9 +2353,9 @@ var Od = {100080:() => {
       }
       return Nc.apply(this, I);
     });
-    var J = Object.create(F, {constructor:{value:x}});
-    x.prototype = J;
-    var D = new zc(k, x, J, w, z, f, h, n);
+    var K = Object.create(F, {constructor:{value:x}});
+    x.prototype = K;
+    var D = new zc(k, x, K, w, z, f, h, n);
     if (D.C) {
       var P;
       (P = D.C).Ea ?? (P.Ea = []);
@@ -2688,11 +2689,11 @@ var Od = {100080:() => {
       let z = h.width / c, F = h.height / c;
       w.width = z;
       w.height = F;
-      let J = 0;
+      let K = 0;
       for (let D = 0; D < c; D++) {
         for (let P = 0; P < c; P++) {
-          x.clearRect(0, 0, z, F), x.drawImage(h, D * z, P * F, z, F, 0, 0, z, F), g.bindTexture(g.TEXTURE_2D, C[J]), g.texImage2D(g.TEXTURE_2D, 0, g.RGBA, g.RGBA, g.UNSIGNED_BYTE, w), g.generateMipmap(g.TEXTURE_2D), g.texParameteri(g.TEXTURE_2D, g.TEXTURE_MIN_FILTER, g.LINEAR), g.texParameteri(g.TEXTURE_2D, g.TEXTURE_MAG_FILTER, g.NEAREST), g.texParameteri(g.TEXTURE_2D, g.TEXTURE_WRAP_S, g.CLAMP_TO_EDGE), g.texParameteri(g.TEXTURE_2D, g.TEXTURE_WRAP_T, g.CLAMP_TO_EDGE), g.bindTexture(g.TEXTURE_2D, 
-          null), J++;
+          x.clearRect(0, 0, z, F), x.drawImage(h, D * z, P * F, z, F, 0, 0, z, F), g.bindTexture(g.TEXTURE_2D, C[K]), g.texImage2D(g.TEXTURE_2D, 0, g.RGBA, g.RGBA, g.UNSIGNED_BYTE, w), g.generateMipmap(g.TEXTURE_2D), g.texParameteri(g.TEXTURE_2D, g.TEXTURE_MIN_FILTER, g.LINEAR), g.texParameteri(g.TEXTURE_2D, g.TEXTURE_MAG_FILTER, g.NEAREST), g.texParameteri(g.TEXTURE_2D, g.TEXTURE_WRAP_S, g.CLAMP_TO_EDGE), g.texParameteri(g.TEXTURE_2D, g.TEXTURE_WRAP_T, g.CLAMP_TO_EDGE), g.bindTexture(g.TEXTURE_2D, 
+          null), K++;
         }
       }
       k();
@@ -2727,31 +2728,31 @@ var Od = {100080:() => {
         var n = e, k = h, r = l, w = f, C = A;
         p(0 <= k);
         if (0 > r || 0 > w) {
-          throw new K(28);
+          throw new J(28);
         }
         if (null === n.A) {
-          throw new K(8);
+          throw new J(8);
         }
         if (1 === (n.flags & 2097155)) {
-          throw new K(8);
+          throw new J(8);
         }
         if (M(n.node.mode)) {
-          throw new K(31);
+          throw new J(31);
         }
         if (!n.i.read) {
-          throw new K(28);
+          throw new J(28);
         }
         var x = "undefined" != typeof w;
         if (!x) {
           w = n.position;
         } else if (!n.seekable) {
-          throw new K(70);
+          throw new J(70);
         }
         var z = n.i.read(n, C, k, r, w);
         x || (n.position += z);
         var F = z;
         if (0 > F) {
-          var J = -1;
+          var K = -1;
           break a;
         }
         b += F;
@@ -2760,9 +2761,9 @@ var Od = {100080:() => {
         }
         "undefined" != typeof f && (f += F);
       }
-      J = b;
+      K = b;
     }
-    u[d >> 2] = J;
+    u[d >> 2] = K;
     return 0;
   } catch (D) {
     if ("undefined" == typeof $b || "ErrnoError" !== D.name) {

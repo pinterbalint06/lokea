@@ -1,6 +1,6 @@
 cmake_minimum_required(VERSION 3.10)
 
-project(3DRendererForWeb)
+project(Lokea)
 
 # move files to frontend/js off by default
 option(COPYFILES "Move output files to frontend/js directory" OFF)
@@ -24,16 +24,17 @@ file(GLOB_RECURSE EQUI_FILES
     "src/equirectangular/*.cpp"
 )
 
+set(EQUIRECTANGULAR_JS_LIBRARY "${CMAKE_CURRENT_SOURCE_DIR}/src/equirectangular/equirectangularLibrary.js")
+set(TEXTURE_JS_LIBRARY "${CMAKE_CURRENT_SOURCE_DIR}/src/core/resources/textureLibrary.js")
+
 # emscripten flags
 set(COMMON_WASM_FLAGS
     -lembind
     -sINITIAL_MEMORY=268435456
     -sALLOW_MEMORY_GROWTH
     -msimd128
-    -sMODULARIZE=1
-    -sEXPORT_NAME="createModule"
     -sENVIRONMENT=["web"]
-    -sEXPORTED_RUNTIME_METHODS=["HEAPU8"]
+    -sEXPORTED_RUNTIME_METHODS=["UTF8ToString"]
     -sMAX_WEBGL_VERSION=2
     -sMIN_WEBGL_VERSION=2
     -sGL_SUPPORT_AUTOMATIC_ENABLE_EXTENSIONS=0
@@ -43,8 +44,8 @@ set(COMMON_WASM_FLAGS
     -sMODULARIZE=1
     -sEXPORT_ES6=1
     -sEXPORT_NAME="ModuleBuilder"
-    --embed-file ${CMAKE_SOURCE_DIR}/resources/shaders@shaders
-    --closure=1
+    --js-library=${TEXTURE_JS_LIBRARY}
+    --embed-file=${CMAKE_SOURCE_DIR}/resources/shaders@shaders
 )
 
 set(COMMON_WASM_COMPILATION
@@ -61,6 +62,7 @@ set(RELEASE_COMPILE_FLAGS
 set(RELEASE_LINK_FLAGS
     -flto
     -sGL_TRACK_ERRORS=0
+    --closure=1
 )
 # ---------------------------------------------------------
 # debug
@@ -96,28 +98,39 @@ target_compile_options(terrain_debug PUBLIC ${DEBUG_COMPILE_FLAGS} ${COMMON_WASM
 
 # release
 add_executable(equirectangular ${ENGINE_CORE_FILES} ${EQUI_FILES} src/equirectangular/equirectangularBinding.cpp)
-target_link_options(equirectangular PUBLIC ${COMMON_WASM_FLAGS} ${RELEASE_LINK_FLAGS})
+target_link_options(equirectangular PUBLIC
+    ${COMMON_WASM_FLAGS}
+    ${RELEASE_LINK_FLAGS}
+    --js-library=${EQUIRECTANGULAR_JS_LIBRARY}
+)
 target_compile_options(equirectangular PUBLIC ${RELEASE_COMPILE_FLAGS} ${COMMON_WASM_COMPILATION})
 
 # debug
 add_executable(equirectangular_debug ${ENGINE_CORE_FILES} ${EQUI_FILES} src/equirectangular/equirectangularBinding.cpp)
-target_link_options(equirectangular_debug PUBLIC ${COMMON_WASM_FLAGS} ${DEBUG_LINK_FLAGS})
+target_link_options(equirectangular_debug PUBLIC
+    ${COMMON_WASM_FLAGS}
+    ${DEBUG_LINK_FLAGS}
+    --js-library=${EQUIRECTANGULAR_JS_LIBRARY}
+)
 target_compile_options(equirectangular_debug PUBLIC ${DEBUG_COMPILE_FLAGS} ${COMMON_WASM_COMPILATION})
 
 if (COPYFILES)
+    set(WEBASSEMBLY_FOLDER_LOCATION "${CMAKE_SOURCE_DIR}/frontend/javascript/libs/webassembly")
+
     # ---------------------------------------------------------
     # Test terrain
     # ---------------------------------------------------------
+    set(TERRAIN_TARGET_LOCATION "${WEBASSEMBLY_FOLDER_LOCATION}/terrain")
 
     #release
     add_custom_command(TARGET terrain POST_BUILD
         COMMAND ${CMAKE_COMMAND} -E copy_if_different 
             "${CMAKE_CURRENT_BINARY_DIR}/terrain.js"
-            "${CMAKE_SOURCE_DIR}/frontend/javascript/terrain.js"
+            "${TERRAIN_TARGET_LOCATION}/terrain.js"
 
         COMMAND ${CMAKE_COMMAND} -E copy_if_different 
             "${CMAKE_CURRENT_BINARY_DIR}/terrain.wasm"
-            "${CMAKE_SOURCE_DIR}/frontend/javascript/terrain.wasm"
+            "${TERRAIN_TARGET_LOCATION}/terrain.wasm"
 
         COMMENT "Copy testTerrain to frontend/javascript/"
     )
@@ -126,15 +139,15 @@ if (COPYFILES)
     add_custom_command(TARGET terrain_debug POST_BUILD
         COMMAND ${CMAKE_COMMAND} -E copy_if_different 
             "${CMAKE_CURRENT_BINARY_DIR}/terrain_debug.js"
-            "${CMAKE_SOURCE_DIR}/frontend/javascript/terrain_debug.js"
+            "${TERRAIN_TARGET_LOCATION}/terrain_debug.js"
 
         COMMAND ${CMAKE_COMMAND} -E copy_if_different 
             "${CMAKE_CURRENT_BINARY_DIR}/terrain_debug.wasm"
-            "${CMAKE_SOURCE_DIR}/frontend/javascript/terrain_debug.wasm"
+            "${TERRAIN_TARGET_LOCATION}/terrain_debug.wasm"
 
         COMMAND ${CMAKE_COMMAND} -E copy_if_different 
             "${CMAKE_CURRENT_BINARY_DIR}/terrain_debug.wasm.map"
-            "${CMAKE_SOURCE_DIR}/frontend/javascript/terrain_debug.wasm.map"
+            "${TERRAIN_TARGET_LOCATION}/terrain_debug.wasm.map"
 
         COMMENT "Copy testTerrain debug to frontend/javascript/"
     )
@@ -142,33 +155,34 @@ if (COPYFILES)
     # ---------------------------------------------------------
     # Test equirectangular
     # ---------------------------------------------------------
+    set(EQUIRECTANGULAR_TARGET_LOCATION "${WEBASSEMBLY_FOLDER_LOCATION}/equirectangular")
 
     #release
     add_custom_command(TARGET equirectangular POST_BUILD
         COMMAND ${CMAKE_COMMAND} -E copy_if_different 
             "${CMAKE_CURRENT_BINARY_DIR}/equirectangular.js"
-            "${CMAKE_SOURCE_DIR}/frontend/javascript/equirectangular.js"
+            "${EQUIRECTANGULAR_TARGET_LOCATION}/equirectangular.js"
 
         COMMAND ${CMAKE_COMMAND} -E copy_if_different 
             "${CMAKE_CURRENT_BINARY_DIR}/equirectangular.wasm"
-            "${CMAKE_SOURCE_DIR}/frontend/javascript/equirectangular.wasm"
+            "${EQUIRECTANGULAR_TARGET_LOCATION}/equirectangular.wasm"
 
-        COMMENT "Copy testEquirectangular debug to frontend/javascript/"
+        COMMENT "Copy testEquirectangular to frontend/javascript/"
     )
 
     #debug
     add_custom_command(TARGET equirectangular_debug POST_BUILD
         COMMAND ${CMAKE_COMMAND} -E copy_if_different 
             "${CMAKE_CURRENT_BINARY_DIR}/equirectangular_debug.js"
-            "${CMAKE_SOURCE_DIR}/frontend/javascript/equirectangular_debug.js"
+            "${EQUIRECTANGULAR_TARGET_LOCATION}/equirectangular_debug.js"
 
         COMMAND ${CMAKE_COMMAND} -E copy_if_different 
             "${CMAKE_CURRENT_BINARY_DIR}/equirectangular_debug.wasm"
-            "${CMAKE_SOURCE_DIR}/frontend/javascript/equirectangular_debug.wasm"
+            "${EQUIRECTANGULAR_TARGET_LOCATION}/equirectangular_debug.wasm"
 
         COMMAND ${CMAKE_COMMAND} -E copy_if_different 
             "${CMAKE_CURRENT_BINARY_DIR}/equirectangular_debug.wasm.map"
-            "${CMAKE_SOURCE_DIR}/frontend/javascript/equirectangular_debug.wasm.map"
+            "${EQUIRECTANGULAR_TARGET_LOCATION}/equirectangular_debug.wasm.map"
 
         COMMENT "Copy testEquirectangular debug to frontend/javascript/"
     )

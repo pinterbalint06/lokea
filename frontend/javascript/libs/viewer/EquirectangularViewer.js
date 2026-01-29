@@ -10,17 +10,61 @@ const DEFAULT_OPTIONS = {
 };
 
 export class EquirectangularViewer {
+    // ENGINE RELATED
+    /**
+     * @type {Object}
+     * The equirectangular image engine from webassembly */
     #engine;
-    #canvasInput;
+    /**
+     * @type {Promise<void>}
+     * Promise for initializing the engine returns true if it was successful */
     #engineInitPromise;
-    #canvasId;
+
+    // CANVAS RELATED
+    /**
+     * @type {HTMLCanvasElement}
+     * The used canvas */
     #canvas;
+    /**
+     * @type {string}
+     * The id of the used canvas */
+    #canvasId;
+    /**
+     * @type {number}
+     * The width of the canvas */
     #canvasWidth;
+    /**
+     * @type {number}
+     * The height of the canvas */
     #canvasHeight;
-    #currentImageRequestID;
-    #animationFrameId;
+    /**
+     * @type {CanvasInput}
+     * - Handles rotating and zooming */
+    #canvasInput;
+
+    // EVENT RELATED
+    /**
+     * @type {Function}
+     * It is a function bind to window on resize which calls onFullscreenResize */
     #windowResizeListener;
+    /**
+     * @type {Function}
+     * It is a function bind to the used canvas on fullscreen change which calls onFullscreenChange */
     #canvasFullscreenListener;
+
+    // STATE
+    /** 
+     * @type {number | null} 
+     * The ID of the current requested image loading (used to dismiss old image load requests) */
+    #currentImageRequestID;
+    /** 
+     * @type {number|null} 
+     * The ID given by requestAnimationFrame (used to cancel the render loop) */
+    #animationFrameId;
+    /** 
+     * @type {boolean} 
+     * Flag indicating if the viewer has been destroyed to prevent further function calls 
+     */
     #isDestroyed;
 
     /**
@@ -167,7 +211,6 @@ export class EquirectangularViewer {
 
         try {
             let Module = await ModuleBuilder();
-            let returnValue = false;
             if (!this.#isDestroyed) {
                 this.#engine = new Module.EquirectangularEngine(this.#canvasId);
 
