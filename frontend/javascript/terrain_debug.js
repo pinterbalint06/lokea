@@ -1,15 +1,10 @@
 // This code implements the `-sMODULARIZE` settings by taking the generated
 // JS program code (INNER_JS_CODE) and wrapping it in a factory function.
 
-// Single threaded MINIMAL_RUNTIME programs do not need access to
-// document.currentScript, so a simple export declaration is enough.
-var createModule = (() => {
-  // When MODULARIZE this JS may be executed later,
-  // after document.currentScript is gone, so we save it.
-  // In EXPORT_ES6 mode we can just use 'import.meta.url'.
-  var _scriptName = globalThis.document?.currentScript?.src;
-  return async function(moduleArg = {}) {
-    var moduleRtn;
+// When targetting node and ES6 we use `await import ..` in the generated code
+// so the outer function needs to be marked as async.
+async function ModuleBuilder(moduleArg = {}) {
+  var moduleRtn;
 
 (function() {
   function $humanReadableVersionToPacked$$($str$jscomp$6_vers$$) {
@@ -40,9 +35,9 @@ var createModule = (() => {
     throw Error(`This emscripten-generated code requires Chrome v85 (detected v${$currentChromeVersion_currentFirefoxVersion_currentNodeVersion_currentSafariVersion$$})`);
   }
 })();
-var $Module$$ = moduleArg, $scriptDirectory$$ = "", $readAsync$$;
+var $Module$$ = moduleArg, $_scriptName$$ = import.meta.url, $scriptDirectory$$ = "", $readAsync$$;
 try {
-  $scriptDirectory$$ = (new URL(".", _scriptName)).href;
+  $scriptDirectory$$ = (new URL(".", $_scriptName$$)).href;
 } catch {
 }
 if (!globalThis.window && !globalThis.WorkerGlobalScope) {
@@ -2770,16 +2765,16 @@ var $___asan_loadN$$ = $makeInvalidEarlyAccess$$("___asan_loadN"), $___asan_stor
     $base$jscomp$3_constructor$jscomp$1$$.prototype = $instancePrototype$jscomp$1$$;
     var $registeredClass$jscomp$1$$ = new $RegisteredClass$$($name$jscomp$109$$, $base$jscomp$3_constructor$jscomp$1$$, $instancePrototype$jscomp$1$$, $rawDestructor$jscomp$3$$, $baseClass$jscomp$1_referenceConverter$$, $getActualType$jscomp$1$$, $upcast$jscomp$1$$, $downcast$jscomp$1$$);
     if ($registeredClass$jscomp$1$$.$baseClass$) {
-      var $$jscomp$logical$assign$tmpm1265920187$4_pointerConverter$$;
-      ($$jscomp$logical$assign$tmpm1265920187$4_pointerConverter$$ = $registeredClass$jscomp$1$$.$baseClass$).$__derivedClasses$ ?? ($$jscomp$logical$assign$tmpm1265920187$4_pointerConverter$$.$__derivedClasses$ = []);
+      var $$jscomp$logical$assign$tmp211317323$4_pointerConverter$$;
+      ($$jscomp$logical$assign$tmp211317323$4_pointerConverter$$ = $registeredClass$jscomp$1$$.$baseClass$).$__derivedClasses$ ?? ($$jscomp$logical$assign$tmp211317323$4_pointerConverter$$.$__derivedClasses$ = []);
       $registeredClass$jscomp$1$$.$baseClass$.$__derivedClasses$.push($registeredClass$jscomp$1$$);
     }
     $baseClass$jscomp$1_referenceConverter$$ = new $RegisteredPointer$$($name$jscomp$109$$, $registeredClass$jscomp$1$$, !0, !1, !1);
-    $$jscomp$logical$assign$tmpm1265920187$4_pointerConverter$$ = new $RegisteredPointer$$($name$jscomp$109$$ + "*", $registeredClass$jscomp$1$$, !1, !1, !1);
+    $$jscomp$logical$assign$tmp211317323$4_pointerConverter$$ = new $RegisteredPointer$$($name$jscomp$109$$ + "*", $registeredClass$jscomp$1$$, !1, !1, !1);
     $basePrototype_constPointerConverter$$ = new $RegisteredPointer$$($name$jscomp$109$$ + " const*", $registeredClass$jscomp$1$$, !1, !0, !1);
-    $registeredPointers$$[$rawType$jscomp$3$$] = {pointerType:$$jscomp$logical$assign$tmpm1265920187$4_pointerConverter$$, $constPointerType$:$basePrototype_constPointerConverter$$};
+    $registeredPointers$$[$rawType$jscomp$3$$] = {pointerType:$$jscomp$logical$assign$tmp211317323$4_pointerConverter$$, $constPointerType$:$basePrototype_constPointerConverter$$};
     $replacePublicSymbol$$($legalFunctionName$$, $base$jscomp$3_constructor$jscomp$1$$);
-    return [$baseClass$jscomp$1_referenceConverter$$, $$jscomp$logical$assign$tmpm1265920187$4_pointerConverter$$, $basePrototype_constPointerConverter$$];
+    return [$baseClass$jscomp$1_referenceConverter$$, $$jscomp$logical$assign$tmp211317323$4_pointerConverter$$, $basePrototype_constPointerConverter$$];
   });
 }, _embind_register_class_class_function:($rawClassType$$, $methodName$jscomp$1$$, $argCount$jscomp$2$$, $rawArgTypesAddr$$, $invokerSignature$$, $rawInvoker$$, $fn$jscomp$1$$, $isAsync$jscomp$3$$) => {
   var $rawArgTypes$$ = $heap32VectorToArray$$($argCount$jscomp$2$$, $rawArgTypesAddr$$);
@@ -3565,7 +3560,7 @@ function $run$$() {
 var $wasmExports$$;
 $wasmExports$$ = await (async function() {
   var $info_result$jscomp$inline_427_wasmExports$jscomp$inline_435$$ = {env:$wasmImports$$, wasi_snapshot_preview1:$wasmImports$$};
-  $wasmBinaryFile$$ ??= $scriptDirectory$$ + "terrain_debug.wasm";
+  $wasmBinaryFile$$ ??= $Module$$.locateFile ? $scriptDirectory$$ + "terrain_debug.wasm" : (new URL("terrain_debug.wasm", import.meta.url)).href;
   $info_result$jscomp$inline_427_wasmExports$jscomp$inline_435$$ = await $instantiateAsync$$($info_result$jscomp$inline_427_wasmExports$jscomp$inline_435$$);
   $assert$$($Module$$ === $Module$$, "the Module object should not be replaced during async compilation - perhaps the order of HTML elements is wrong?");
   $info_result$jscomp$inline_427_wasmExports$jscomp$inline_435$$ = $wasmExports$$ = $info_result$jscomp$inline_427_wasmExports$jscomp$inline_435$$.instance.exports;
@@ -3627,16 +3622,9 @@ for (const $prop$jscomp$4$$ of Object.keys($Module$$)) {
 ;
 
 
-    return moduleRtn;
-  };
-})();
+  return moduleRtn;
+}
 
 // Export using a UMD style export, or ES6 exports if selected
-if (typeof exports === 'object' && typeof module === 'object') {
-  module.exports = createModule;
-  // This default export looks redundant, but it allows TS to import this
-  // commonjs style module.
-  module.exports.default = createModule;
-} else if (typeof define === 'function' && define['amd'])
-  define([], () => createModule);
+export default ModuleBuilder;
 

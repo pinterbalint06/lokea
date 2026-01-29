@@ -40,6 +40,9 @@ set(COMMON_WASM_FLAGS
     -sINCOMING_MODULE_JS_API=[]
     -sGL_POOL_TEMP_BUFFERS=0
     -sGL_ENABLE_GET_PROC_ADDRESS=0
+    -sMODULARIZE=1
+    -sEXPORT_ES6=1
+    -sEXPORT_NAME="ModuleBuilder"
     --embed-file ${CMAKE_SOURCE_DIR}/resources/shaders@shaders
     --closure=1
 )

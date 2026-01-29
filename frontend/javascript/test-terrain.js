@@ -1,4 +1,5 @@
 import { CanvasInput } from './CanvasInput.js';
+import ModuleBuilder from './terrain.js';
 
 // |------------------|
 // | GLOBAL VARIABLES |
@@ -122,7 +123,7 @@ document.addEventListener("DOMContentLoaded", async function () {
         }
     });
 
-    createModule().then((modu) => {
+    ModuleBuilder().then((modu) => {
         Module = modu;
         initModule();
     });

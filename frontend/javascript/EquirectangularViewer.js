@@ -1,4 +1,5 @@
 import { CanvasInput } from './CanvasInput.js';
+import ModuleBuilder from './equirectangular.js';
 
 const DEFAULT_OPTIONS = {
     "canvasWidth": 1000,
@@ -158,13 +159,13 @@ export class EquirectangularViewer {
     async #initialize() {
         let success = false;
 
-        if (typeof createModule == "undefined") {
+        if (typeof ModuleBuilder == "undefined") {
             this.#isDestroyed = true;
             throw new Error("Webassembly glue code is not present!");
         }
 
         try {
-            let Module = await createModule();
+            let Module = await ModuleBuilder();
             let returnValue = false;
             if (!this.#isDestroyed) {
                 this.#engine = new Module.EquirectangularEngine(this.#canvasId);

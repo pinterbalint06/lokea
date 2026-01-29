@@ -1,3 +1,5 @@
+import ModuleBuilder from './terrain.js';
+
 // |------------------|
 // | GLOBAL VARIABLES |
 // |------------------|
@@ -12,7 +14,7 @@ const meret = 256;
 // |------------------------------|
 
 document.addEventListener("DOMContentLoaded", function () {
-    createModule().then((modu) => {
+    ModuleBuilder().then((modu) => {
         Module = modu;
         initModule();
     });
