@@ -80,7 +80,7 @@ async function init() {
         equirectangularViewer.loadImage(imageList[select.value].url, imageList[select.value].width, imageList[select.value].height).then(function () {
             console.log("image loaded");
         }).catch(function (e) {
-            console.log(e)
+            console.log("error", e)
         });
     }
 }

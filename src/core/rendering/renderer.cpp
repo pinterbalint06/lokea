@@ -1,6 +1,7 @@
 #include <emscripten/emscripten.h>
 #include <emscripten/html5.h>
 #include <emscripten/html5_webgl.h>
+#include <emscripten/console.h>
 #include <GLES3/gl3.h>
 #include <string>
 #include <map>
@@ -112,7 +113,7 @@ void Renderer::setShadingMode(Shaders::SHADINGMODE shadingMode)
     }
     else
     {
-        EM_ASM(console.error("Renderer: Tried to set non-existent shader!"));
+        emscripten_console_error("Renderer: Tried to set non-existent shader!");
     }
 }
 
@@ -211,6 +212,6 @@ void Renderer::render(const Scene *scene)
     }
     else
     {
-        EM_ASM(console.error("Renderer: No shader is set!"));
+        emscripten_console_error("Renderer: No shader is set!");
     }
 }

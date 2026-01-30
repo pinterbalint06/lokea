@@ -5487,6 +5487,16 @@ var runEmAsmFunction = (code, sigPtr, argbuf) => {
 
 var _emscripten_asm_const_int = (code, sigPtr, argbuf) => runEmAsmFunction(code, sigPtr, argbuf);
 
+var _emscripten_console_error = str => {
+  assert(typeof str == "number");
+  console.error(UTF8ToString(str));
+};
+
+var _emscripten_console_log = str => {
+  assert(typeof str == "number");
+  console.log(UTF8ToString(str));
+};
+
 var getHeapMax = () => // Stay one Wasm page short of 4GB: while e.g. Chrome is able to allocate
 // full 4GB Wasm memories, the size will wrap back to 0 bytes in Wasm side
 // for any code that deals with heap sizes, which would require special
@@ -5954,55 +5964,89 @@ var _environ_sizes_get = (penviron_count, penviron_buf_size) => {
   return 0;
 };
 
-function _equirectangularFromURL(url, ctxId, tiles, textureIdsHandle, onSuccessHandle, onErrorHandle) {
-  let gl = GL.contexts[ctxId].GLctx;
-  let img = new Image;
-  let imgUrl = UTF8ToString(url);
-  let textureIds = Emval.toValue(textureIdsHandle);
-  let onSuccess = Emval.toValue(onSuccessHandle);
+function _equirectangularFromURL(url, ctxId, tiles, textureIdsHandle, onSuccessHandle, onErrorHandle, requestID, pointerCurrentRequestId) {
   let onError = Emval.toValue(onErrorHandle);
-  img.onload = function() {
-    let textureCount = tiles * tiles;
-    let textures = [];
-    let i = 0;
-    while (i < textureCount && GL.textures[textureIds[i]]) {
-      textures.push(GL.textures[textureIds[i]]);
-      i++;
-    }
-    if (i == textureCount) {
-      let canvas = document.createElement("canvas");
-      let ctx = canvas.getContext("2d");
-      let tileW = img.width / tiles;
-      let tileH = img.height / tiles;
-      canvas.width = tileW;
-      canvas.height = tileH;
-      let i = 0;
-      for (let x = 0; x < tiles; x++) {
-        for (let y = 0; y < tiles; y++) {
-          ctx.clearRect(0, 0, tileW, tileH);
-          ctx.drawImage(img, x * tileW, y * tileH, tileW, tileH, 0, 0, tileW, tileH);
-          gl.bindTexture(gl.TEXTURE_2D, textures[i]);
-          gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, canvas);
-          gl.generateMipmap(gl.TEXTURE_2D);
-          gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR);
-          gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.NEAREST);
-          gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
-          gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
-          gl.bindTexture(gl.TEXTURE_2D, null);
-          i++;
+  let imgUrl = UTF8ToString(url);
+  let glContainer = GL.contexts[ctxId];
+  if (glContainer) {
+    let glContext = glContainer.GLctx;
+    let onSuccess = Emval.toValue(onSuccessHandle);
+    let img = new Image;
+    let textureIds = Emval.toValue(textureIdsHandle);
+    let now = performance.now();
+    img.onload = function() {
+      let tileCount = tiles * tiles;
+      let textures = [];
+      let textureCount = 0;
+      while (textureCount < tileCount && GL.textures[textureIds[textureCount]]) {
+        textures.push(GL.textures[textureIds[textureCount]]);
+        textureCount++;
+      }
+      let currentRequestId = HEAP32[_asan_js_check_index(HEAP32, pointerCurrentRequestId / 4, ___asan_loadN)];
+      if (textureCount == tileCount && requestID == currentRequestId) {
+        let canvas = document.createElement("canvas");
+        let canvasContext = canvas.getContext("2d", {
+          willReadFrequently: true
+        });
+        let tileWidth = img.width / tiles;
+        let tileHeight = img.height / tiles;
+        canvas.width = tileWidth;
+        canvas.height = tileHeight;
+        let i = 0;
+        for (let x = 0; x < tiles; x++) {
+          for (let y = 0; y < tiles; y++) {
+            canvasContext.clearRect(0, 0, tileWidth, tileHeight);
+            canvasContext.drawImage(img, x * tileWidth, y * tileHeight, tileWidth, tileHeight, 0, 0, tileWidth, tileHeight);
+            glContext.bindTexture(glContext.TEXTURE_2D, textures[i]);
+            glContext.texImage2D(glContext.TEXTURE_2D, 0, glContext.RGBA, glContext.RGBA, glContext.UNSIGNED_BYTE, canvas);
+            glContext.generateMipmap(glContext.TEXTURE_2D);
+            // if there is more than tile we disable linear interpolation
+            // to prevent misalignment of the textures across tiles
+            let minFilter = tileCount == 1 ? glContext.LINEAR_MIPMAP_LINEAR : glContext.LINEAR;
+            let magFilter = tileCount == 1 ? glContext.LINEAR : glContext.NEAREST;
+            glContext.texParameteri(glContext.TEXTURE_2D, glContext.TEXTURE_MIN_FILTER, minFilter);
+            glContext.texParameteri(glContext.TEXTURE_2D, glContext.TEXTURE_MAG_FILTER, magFilter);
+            glContext.texParameteri(glContext.TEXTURE_2D, glContext.TEXTURE_WRAP_S, glContext.CLAMP_TO_EDGE);
+            glContext.texParameteri(glContext.TEXTURE_2D, glContext.TEXTURE_WRAP_T, glContext.CLAMP_TO_EDGE);
+            i++;
+          }
+        }
+        glContext.bindTexture(glContext.TEXTURE_2D, null);
+        console.log("took: ", performance.now() - now);
+        if (typeof onSuccess == "function") {
+          onSuccess();
+        }
+      } else {
+        if (textureCount != tileCount) {
+          if (typeof onError == "function") {
+            onError("Texture failed to load (it no longer exists):\t" + imgUrl);
+          } else {
+            console.error("Texture failed to load (it no longer exists):\t" + imgUrl);
+          }
+        } else {
+          if (typeof onError == "function") {
+            onError("New image was requested. Aborting old request." + imgUrl);
+          } else {
+            console.error("New image was requested. Aborting old request." + imgUrl);
+          }
         }
       }
-      onSuccess();
+    };
+    img.onerror = function() {
+      if (typeof onError == "function") {
+        onError("Texture failed to load:\t" + imgUrl);
+      } else {
+        console.error("Texture failed to load:\t" + imgUrl);
+      }
+    };
+    img.src = imgUrl;
+  } else {
+    if (typeof onError == "function") {
+      onError("Texture failed to load (invalid WebGL context):\t" + imgUrl);
     } else {
-      console.error("Texture failed to load (it no longer exists):\t" + imgUrl);
-      onError();
+      console.error("Texture failed to load (invalid WebGL context):\t" + imgUrl);
     }
-  };
-  img.onerror = function() {
-    console.error("Texture failed to load:\t" + imgUrl);
-    onError();
-  };
-  img.src = imgUrl;
+  }
 }
 
 function _fd_close(fd) {
@@ -6911,13 +6955,19 @@ function _textureFromURL(textureID, url, ctxId, onSuccessHandle, onErrorHandle) 
       gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR_MIPMAP_LINEAR);
       gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
       gl.bindTexture(gl.TEXTURE_2D, null);
-      onSuccess();
+      if (typeof onSuccess == "function") {
+        onSuccess();
+      }
     } else {
-      onError("Texture failed to load (it no longer exists):\t" + imgUrl);
+      if (typeof onError == "function") {
+        onError("Texture failed to load (it no longer exists):\t" + imgUrl);
+      }
     }
   };
   img.onerror = function() {
-    onError("Texture failed to load:\t" + imgUrl);
+    if (typeof onError == "function") {
+      onError("Texture failed to load:\t" + imgUrl);
+    }
   };
   img.src = imgUrl;
 }
@@ -7053,22 +7103,57 @@ function checkIncomingModuleAPI() {
 }
 
 var ASM_CONSTS = {
-  306902592: () => {
+  306902496: () => {
     throw ("A böngésződ nem támogatja a WebGL-t!");
   },
-  306902643: () => {},
-  306902644: () => {},
-  306902645: () => {},
-  306902646: () => {},
-  306902647: () => {},
-  306902648: () => {},
-  306902649: () => {},
-  306902650: () => {},
-  306902651: () => {},
-  306902652: () => {},
-  306902653: () => {},
-  306902654: () => {},
-  306902655: () => {},
+  306902547: () => {},
+  306902548: () => {},
+  306902549: () => {},
+  306902550: () => {},
+  306902551: () => {},
+  306902552: () => {},
+  306902553: () => {},
+  306902554: () => {},
+  306902555: () => {},
+  306902556: () => {},
+  306902557: () => {},
+  306902558: () => {},
+  306902559: () => {},
+  306902560: () => {},
+  306902561: () => {},
+  306902562: () => {},
+  306902563: () => {},
+  306902564: () => {},
+  306902565: () => {},
+  306902566: () => {},
+  306902567: () => {},
+  306902568: () => {},
+  306902569: () => {},
+  306902570: () => {},
+  306902571: () => {},
+  306902572: () => {},
+  306902573: () => {},
+  306902574: () => {},
+  306902575: () => {},
+  306902576: () => {},
+  306902577: () => {},
+  306902578: () => {},
+  306902579: () => {},
+  306902580: () => {},
+  306902581: () => {},
+  306902582: () => {},
+  306902583: () => {},
+  306902584: () => {},
+  306902585: () => {},
+  306902586: () => {},
+  306902587: () => {},
+  306902588: () => {},
+  306902589: () => {},
+  306902590: () => {},
+  306902591: () => {},
+  306902592: $0 => {
+    throw ("Sikertelen shader fordítás: " + UTF8ToString($0));
+  },
   306902656: () => {},
   306902657: () => {},
   306902658: () => {},
@@ -7101,18 +7186,9 @@ var ASM_CONSTS = {
   306902685: () => {},
   306902686: () => {},
   306902687: () => {},
-  306902688: () => {
-    console.error("Renderer: Tried to set non-existent shader!");
+  306902688: $0 => {
+    throw ("Sikertelen shader összekapcsolás: " + UTF8ToString($0));
   },
-  306902749: () => {},
-  306902750: () => {},
-  306902751: () => {},
-  306902752: () => {},
-  306902753: () => {},
-  306902754: () => {},
-  306902755: () => {},
-  306902756: () => {},
-  306902757: () => {},
   306902758: () => {},
   306902759: () => {},
   306902760: () => {},
@@ -7139,347 +7215,85 @@ var ASM_CONSTS = {
   306902781: () => {},
   306902782: () => {},
   306902783: () => {},
-  306902784: () => {
-    console.error("Renderer: No shader is set!");
-  },
-  306902829: () => {},
-  306902830: () => {},
-  306902831: () => {},
-  306902832: () => {},
-  306902833: () => {},
-  306902834: () => {},
-  306902835: () => {},
-  306902836: () => {},
-  306902837: () => {},
-  306902838: () => {},
-  306902839: () => {},
-  306902840: () => {},
-  306902841: () => {},
-  306902842: () => {},
-  306902843: () => {},
-  306902844: () => {},
-  306902845: () => {},
-  306902846: () => {},
-  306902847: () => {},
-  306902848: () => {},
-  306902849: () => {},
-  306902850: () => {},
-  306902851: () => {},
-  306902852: () => {},
-  306902853: () => {},
-  306902854: () => {},
-  306902855: () => {},
-  306902856: () => {},
-  306902857: () => {},
-  306902858: () => {},
-  306902859: () => {},
-  306902860: () => {},
-  306902861: () => {},
-  306902862: () => {},
-  306902863: () => {},
-  306902864: () => {},
-  306902865: () => {},
-  306902866: () => {},
-  306902867: () => {},
-  306902868: () => {},
-  306902869: () => {},
-  306902870: () => {},
-  306902871: () => {},
-  306902872: () => {},
-  306902873: () => {},
-  306902874: () => {},
-  306902875: () => {},
-  306902876: () => {},
-  306902877: () => {},
-  306902878: () => {},
-  306902879: () => {},
-  306902880: $0 => {
-    throw ("Sikertelen shader fordítás: " + UTF8ToString($0));
-  },
-  306902944: () => {},
-  306902945: () => {},
-  306902946: () => {},
-  306902947: () => {},
-  306902948: () => {},
-  306902949: () => {},
-  306902950: () => {},
-  306902951: () => {},
-  306902952: () => {},
-  306902953: () => {},
-  306902954: () => {},
-  306902955: () => {},
-  306902956: () => {},
-  306902957: () => {},
-  306902958: () => {},
-  306902959: () => {},
-  306902960: () => {},
-  306902961: () => {},
-  306902962: () => {},
-  306902963: () => {},
-  306902964: () => {},
-  306902965: () => {},
-  306902966: () => {},
-  306902967: () => {},
-  306902968: () => {},
-  306902969: () => {},
-  306902970: () => {},
-  306902971: () => {},
-  306902972: () => {},
-  306902973: () => {},
-  306902974: () => {},
-  306902975: () => {},
-  306902976: $0 => {
-    throw ("Sikertelen shader összekapcsolás: " + UTF8ToString($0));
-  },
-  306903046: () => {},
-  306903047: () => {},
-  306903048: () => {},
-  306903049: () => {},
-  306903050: () => {},
-  306903051: () => {},
-  306903052: () => {},
-  306903053: () => {},
-  306903054: () => {},
-  306903055: () => {},
-  306903056: () => {},
-  306903057: () => {},
-  306903058: () => {},
-  306903059: () => {},
-  306903060: () => {},
-  306903061: () => {},
-  306903062: () => {},
-  306903063: () => {},
-  306903064: () => {},
-  306903065: () => {},
-  306903066: () => {},
-  306903067: () => {},
-  306903068: () => {},
-  306903069: () => {},
-  306903070: () => {},
-  306903071: () => {},
-  306903072: () => {},
-  306903073: () => {},
-  306903074: () => {},
-  306903075: () => {},
-  306903076: () => {},
-  306903077: () => {},
-  306903078: () => {},
-  306903079: () => {},
-  306903080: () => {},
-  306903081: () => {},
-  306903082: () => {},
-  306903083: () => {},
-  306903084: () => {},
-  306903085: () => {},
-  306903086: () => {},
-  306903087: () => {},
-  306903088: () => {},
-  306903089: () => {},
-  306903090: () => {},
-  306903091: () => {},
-  306903092: () => {},
-  306903093: () => {},
-  306903094: () => {},
-  306903095: () => {},
-  306903096: () => {},
-  306903097: () => {},
-  306903098: () => {},
-  306903099: () => {},
-  306903100: () => {},
-  306903101: () => {},
-  306903102: () => {},
-  306903103: () => {},
-  306903104: ($0, $1) => {
+  306902784: () => {},
+  306902785: () => {},
+  306902786: () => {},
+  306902787: () => {},
+  306902788: () => {},
+  306902789: () => {},
+  306902790: () => {},
+  306902791: () => {},
+  306902792: () => {},
+  306902793: () => {},
+  306902794: () => {},
+  306902795: () => {},
+  306902796: () => {},
+  306902797: () => {},
+  306902798: () => {},
+  306902799: () => {},
+  306902800: () => {},
+  306902801: () => {},
+  306902802: () => {},
+  306902803: () => {},
+  306902804: () => {},
+  306902805: () => {},
+  306902806: () => {},
+  306902807: () => {},
+  306902808: () => {},
+  306902809: () => {},
+  306902810: () => {},
+  306902811: () => {},
+  306902812: () => {},
+  306902813: () => {},
+  306902814: () => {},
+  306902815: () => {},
+  306902816: ($0, $1) => {
     let fps = document.getElementById(UTF8ToString($1));
     if (fps) {
       fps.innerText = $0;
     }
   },
-  306903194: () => {},
-  306903195: () => {},
-  306903196: () => {},
-  306903197: () => {},
-  306903198: () => {},
-  306903199: () => {},
-  306903200: () => {},
-  306903201: () => {},
-  306903202: () => {},
-  306903203: () => {},
-  306903204: () => {},
-  306903205: () => {},
-  306903206: () => {},
-  306903207: () => {},
-  306903208: () => {},
-  306903209: () => {},
-  306903210: () => {},
-  306903211: () => {},
-  306903212: () => {},
-  306903213: () => {},
-  306903214: () => {},
-  306903215: () => {},
-  306903216: () => {},
-  306903217: () => {},
-  306903218: () => {},
-  306903219: () => {},
-  306903220: () => {},
-  306903221: () => {},
-  306903222: () => {},
-  306903223: () => {},
-  306903224: () => {},
-  306903225: () => {},
-  306903226: () => {},
-  306903227: () => {},
-  306903228: () => {},
-  306903229: () => {},
-  306903230: () => {},
-  306903231: () => {},
-  306903232: $0 => {
+  306902906: () => {},
+  306902907: () => {},
+  306902908: () => {},
+  306902909: () => {},
+  306902910: () => {},
+  306902911: () => {},
+  306902912: () => {},
+  306902913: () => {},
+  306902914: () => {},
+  306902915: () => {},
+  306902916: () => {},
+  306902917: () => {},
+  306902918: () => {},
+  306902919: () => {},
+  306902920: () => {},
+  306902921: () => {},
+  306902922: () => {},
+  306902923: () => {},
+  306902924: () => {},
+  306902925: () => {},
+  306902926: () => {},
+  306902927: () => {},
+  306902928: () => {},
+  306902929: () => {},
+  306902930: () => {},
+  306902931: () => {},
+  306902932: () => {},
+  306902933: () => {},
+  306902934: () => {},
+  306902935: () => {},
+  306902936: () => {},
+  306902937: () => {},
+  306902938: () => {},
+  306902939: () => {},
+  306902940: () => {},
+  306902941: () => {},
+  306902942: () => {},
+  306902943: () => {},
+  306902944: $0 => {
     throw ("Sikertelen fájl beolvasás: " + UTF8ToString($0));
-  },
-  306903295: () => {},
-  306903296: () => {
-    console.log("full");
-  },
-  306903316: () => {},
-  306903317: () => {},
-  306903318: () => {},
-  306903319: () => {},
-  306903320: () => {},
-  306903321: () => {},
-  306903322: () => {},
-  306903323: () => {},
-  306903324: () => {},
-  306903325: () => {},
-  306903326: () => {},
-  306903327: () => {},
-  306903328: () => {},
-  306903329: () => {},
-  306903330: () => {},
-  306903331: () => {},
-  306903332: () => {},
-  306903333: () => {},
-  306903334: () => {},
-  306903335: () => {},
-  306903336: () => {},
-  306903337: () => {},
-  306903338: () => {},
-  306903339: () => {},
-  306903340: () => {},
-  306903341: () => {},
-  306903342: () => {},
-  306903343: () => {},
-  306903344: () => {},
-  306903345: () => {},
-  306903346: () => {},
-  306903347: () => {},
-  306903348: () => {},
-  306903349: () => {},
-  306903350: () => {},
-  306903351: () => {},
-  306903352: () => {},
-  306903353: () => {},
-  306903354: () => {},
-  306903355: () => {},
-  306903356: () => {},
-  306903357: () => {},
-  306903358: () => {},
-  306903359: () => {},
-  306903360: () => {
-    console.log("2x2");
-  },
-  306903379: () => {},
-  306903380: () => {},
-  306903381: () => {},
-  306903382: () => {},
-  306903383: () => {},
-  306903384: () => {},
-  306903385: () => {},
-  306903386: () => {},
-  306903387: () => {},
-  306903388: () => {},
-  306903389: () => {},
-  306903390: () => {},
-  306903391: () => {},
-  306903392: () => {},
-  306903393: () => {},
-  306903394: () => {},
-  306903395: () => {},
-  306903396: () => {},
-  306903397: () => {},
-  306903398: () => {},
-  306903399: () => {},
-  306903400: () => {},
-  306903401: () => {},
-  306903402: () => {},
-  306903403: () => {},
-  306903404: () => {},
-  306903405: () => {},
-  306903406: () => {},
-  306903407: () => {},
-  306903408: () => {},
-  306903409: () => {},
-  306903410: () => {},
-  306903411: () => {},
-  306903412: () => {},
-  306903413: () => {},
-  306903414: () => {},
-  306903415: () => {},
-  306903416: () => {},
-  306903417: () => {},
-  306903418: () => {},
-  306903419: () => {},
-  306903420: () => {},
-  306903421: () => {},
-  306903422: () => {},
-  306903423: () => {},
-  306903424: () => {
-    console.log("4x4");
-  },
-  306903443: () => {},
-  306903444: () => {},
-  306903445: () => {},
-  306903446: () => {},
-  306903447: () => {},
-  306903448: () => {},
-  306903449: () => {},
-  306903450: () => {},
-  306903451: () => {},
-  306903452: () => {},
-  306903453: () => {},
-  306903454: () => {},
-  306903455: () => {},
-  306903456: () => {},
-  306903457: () => {},
-  306903458: () => {},
-  306903459: () => {},
-  306903460: () => {},
-  306903461: () => {},
-  306903462: () => {},
-  306903463: () => {},
-  306903464: () => {},
-  306903465: () => {},
-  306903466: () => {},
-  306903467: () => {},
-  306903468: () => {},
-  306903469: () => {},
-  306903470: () => {},
-  306903471: () => {},
-  306903472: () => {},
-  306903473: () => {},
-  306903474: () => {},
-  306903475: () => {},
-  306903476: () => {},
-  306903477: () => {},
-  306903478: () => {},
-  306903479: () => {},
-  306903480: () => {},
-  306903481: () => {},
-  306903482: () => {},
-  306903483: () => {},
-  306903484: () => {},
-  306903485: () => {},
-  306903486: () => {},
-  306903487: () => {}
+  }
 };
 
 // Imports from the Wasm binary.
@@ -7639,6 +7453,8 @@ var wasmImports = {
   /** @export */ _tzset_js: __tzset_js,
   /** @export */ clock_time_get: _clock_time_get,
   /** @export */ emscripten_asm_const_int: _emscripten_asm_const_int,
+  /** @export */ emscripten_console_error: _emscripten_console_error,
+  /** @export */ emscripten_console_log: _emscripten_console_log,
   /** @export */ emscripten_get_heap_max: _emscripten_get_heap_max,
   /** @export */ emscripten_get_now: _emscripten_get_now,
   /** @export */ emscripten_pc_get_column: _emscripten_pc_get_column,

@@ -1,5 +1,6 @@
 #include <emscripten/html5.h>
 #include <emscripten/emscripten.h>
+#include <emscripten/console.h>
 #include <emscripten/val.h>
 #include <string>
 #include <cmath>
@@ -19,7 +20,15 @@
 
 extern "C"
 {
-    extern void equirectangularFromURL(const char *url, int ctxId, int tiles, emscripten::EM_VAL textureIdsHandle, emscripten::EM_VAL onSuccessHandle, emscripten::EM_VAL onErrorHandle);
+    extern void equirectangularFromURL(
+        const char *url,
+        int ctxId,
+        int tiles,
+        emscripten::EM_VAL textureIdsHandle,
+        emscripten::EM_VAL onSuccessHandle,
+        emscripten::EM_VAL onErrorHandle,
+        int requestID,
+        int *currentRequestID);
 }
 
 Mesh *EquirectangularEngine::generateSphereSegment(int rings, int segments, float radius,
@@ -143,6 +152,7 @@ EquirectangularEngine::EquirectangularEngine(const std::string &canvasID) : Engi
 {
     setShadingMode(Shaders::SHADINGMODE::NO_SHADING);
 
+    currentRequestID = 0;
     const int maxTextures = 16;
     imageTiles_.reserve(maxTextures);
     for (int i = 0; i < maxTextures; i++)
@@ -156,6 +166,7 @@ EquirectangularEngine::EquirectangularEngine(const std::string &canvasID) : Engi
 
 EquirectangularEngine::~EquirectangularEngine()
 {
+    currentRequestID++;
 }
 
 void EquirectangularEngine::changeImageMode(EQUIRECTANGULARMODE mode)
@@ -176,7 +187,7 @@ void EquirectangularEngine::uploadTiles(const std::string &url, int ctx, emscrip
     {
         textureIds.set(i, imageTiles_[i]->getTextureIndex());
     }
-    equirectangularFromURL(url.c_str(), ctx, tiles, textureIds.as_handle(), onSuccess.as_handle(), onError.as_handle());
+    equirectangularFromURL(url.c_str(), ctx, tiles, textureIds.as_handle(), onSuccess.as_handle(), onError.as_handle(), currentRequestID, &currentRequestID);
 }
 
 void EquirectangularEngine::loadEquirectangularImage(const std::string &url, int width, int height, emscripten::val onSuccess, emscripten::val onError)
@@ -185,38 +196,37 @@ void EquirectangularEngine::loadEquirectangularImage(const std::string &url, int
 
     if (ctx > 0)
     {
+        currentRequestID++;
         GLint maxTextureSize = 0;
         glGetIntegerv(GL_MAX_TEXTURE_SIZE, &maxTextureSize);
-        if (maxTextureSize >= width && maxTextureSize >= height)
+        if (maxTextureSize < width / 4 || maxTextureSize < height / 4)
         {
-            EM_ASM(console.log("full"));
+            // if can't fit textures generate one whole sphere
             changeImageMode(EQUIRECTANGULARMODE::FULL);
-            imageTiles_[0]->loadFromUrl(url, onSuccess, onError);
+            // set its material to the error material
+            scene_->getMesh(0)->setMaterial(Materials::Material::Error());
         }
         else
         {
-            if (maxTextureSize >= width / 2 && maxTextureSize >= height / 2)
+            if (maxTextureSize >= width && maxTextureSize >= height)
             {
-                EM_ASM(console.log("2x2"));
-                changeImageMode(EQUIRECTANGULARMODE::SPLIT_2X2);
-                uploadTiles(url, ctx, onSuccess, onError);
+                emscripten_console_log("full");
+                changeImageMode(EQUIRECTANGULARMODE::FULL);
             }
             else
             {
-                if (maxTextureSize >= width / 4 && maxTextureSize >= height / 4)
+                if (maxTextureSize >= width / 2 && maxTextureSize >= height / 2)
                 {
-                    EM_ASM(console.log("4x4"));
-                    changeImageMode(EQUIRECTANGULARMODE::SPLIT_4X4);
-                    uploadTiles(url, ctx, onSuccess, onError);
+                    emscripten_console_log("2x2");
+                    changeImageMode(EQUIRECTANGULARMODE::SPLIT_2X2);
                 }
                 else
                 {
-                    // if can't fit textures generate one whole sphere
-                    changeImageMode(EQUIRECTANGULARMODE::FULL);
-                    // set its material to the error material
-                    scene_->getMesh(0)->setMaterial(Materials::Material::Error());
+                    emscripten_console_log("4x4");
+                    changeImageMode(EQUIRECTANGULARMODE::SPLIT_4X4);
                 }
             }
+            uploadTiles(url, ctx, onSuccess, onError);
         }
     }
 }

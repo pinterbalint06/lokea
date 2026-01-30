@@ -151,9 +151,7 @@ export class EquirectangularViewer {
                     }
                 },
                 (errorMessage) => {
-                    if (this.#currentImageRequestID == currentRequestId) {
-                        reject(new Error("Engine Load Error: " + errorMessage));
-                    };
+                    reject(new Error("Engine Load Error: " + errorMessage));
                 }
             );
         });
