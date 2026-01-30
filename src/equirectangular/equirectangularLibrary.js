@@ -1,4 +1,20 @@
 mergeInto(LibraryManager.library, {
+    $EquirectangularSharedCanvas: {
+        canvas: null,
+        canvasContext: null,
+        updateCanvas: function (width, height) {
+            if (!EquirectangularSharedCanvas.canvas) {
+                EquirectangularSharedCanvas.canvas = new OffscreenCanvas(width, height);
+                EquirectangularSharedCanvas.canvasContext = EquirectangularSharedCanvas.canvas.getContext('2d', { alpha: false });
+            }
+
+            if (EquirectangularSharedCanvas.canvas.width != width || EquirectangularSharedCanvas.canvas.height != height) {
+                EquirectangularSharedCanvas.canvas.width = width;
+                EquirectangularSharedCanvas.canvas.height = height;
+            }
+        }
+    },
+
     equirectangularFromURL: function (
         url,
         ctxId,
@@ -19,7 +35,6 @@ mergeInto(LibraryManager.library, {
             let img = new Image();
             let textureIds = Emval.toValue(textureIdsHandle);
 
-            let now = performance.now();
             img.onload = function () {
                 let tileCount = tiles * tiles;
                 let textures = [];
@@ -30,12 +45,11 @@ mergeInto(LibraryManager.library, {
                 }
                 let currentRequestId = HEAP32[pointerCurrentRequestId / 4];
                 if (textureCount == tileCount && requestID == currentRequestId) {
-                    let canvas = document.createElement('canvas');
-                    let canvasContext = canvas.getContext('2d', { willReadFrequently: true });
                     let tileWidth = img.width / tiles;
                     let tileHeight = img.height / tiles;
-                    canvas.width = tileWidth;
-                    canvas.height = tileHeight;
+                    EquirectangularSharedCanvas.updateCanvas(tileWidth, tileHeight);
+                    let canvas = EquirectangularSharedCanvas.canvas;
+                    let canvasContext = EquirectangularSharedCanvas.canvasContext;
                     let i = 0;
                     for (let x = 0; x < tiles; x++) {
                         for (let y = 0; y < tiles; y++) {
@@ -45,8 +59,10 @@ mergeInto(LibraryManager.library, {
                             glContext.bindTexture(glContext.TEXTURE_2D, textures[i]);
 
                             glContext.texImage2D(glContext.TEXTURE_2D, 0, glContext.RGBA, glContext.RGBA, glContext.UNSIGNED_BYTE, canvas);
-                            glContext.generateMipmap(glContext.TEXTURE_2D);
 
+                            if (tileCount == 1) {
+                                glContext.generateMipmap(glContext.TEXTURE_2D);
+                            }
 
                             // if there is more than tile we disable linear interpolation
                             // to prevent misalignment of the textures across tiles
@@ -62,7 +78,6 @@ mergeInto(LibraryManager.library, {
                         }
                     }
                     glContext.bindTexture(glContext.TEXTURE_2D, null);
-                    console.log("took: ", performance.now() - now);
                     if (typeof onSuccess == "function") {
                         onSuccess();
                     }
@@ -100,5 +115,6 @@ mergeInto(LibraryManager.library, {
                 console.error("Texture failed to load (invalid WebGL context):\t" + imgUrl);
             }
         }
-    }
+    },
+    equirectangularFromURL__deps: ['$EquirectangularSharedCanvas'],
 });
