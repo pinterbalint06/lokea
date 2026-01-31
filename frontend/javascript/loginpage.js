@@ -31,7 +31,7 @@ function validalvaReg(a, b, c) {
         fail = true;
         b.classList.add("border-danger");
     }
-    if (jelszo.length > 50 || jelszo.length < 8 || !isCorrectPassword(password)) {
+    if (jelszo.length > 50 || jelszo.length < 8 || !isCorrectPassword(jelszo)) {
         fail = true;
         c.classList.add("border-danger");
     }
@@ -112,7 +112,8 @@ async function bejelentkezes(username, jelszo) {
             })
         });
         let data = await response.json();
-        return true;
+        alert(data.message);
+        return response.ok;
     } catch (error) {
         alert(`hálózati hiba: ${error}`);
     }
