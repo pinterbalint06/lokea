@@ -16,37 +16,47 @@ CREATE TABLE users (
     deleted_at TIMESTAMP DEFAULT NULL
 );
 
-CREATE TABLE pictures (
-    picid int AUTO_INCREMENT PRIMARY KEY NOT NULL,
+CREATE TABLE images (
+    image_id int AUTO_INCREMENT PRIMARY KEY NOT NULL,
     width int NOT NULL,
     height int NOT NULL,
     filepath varchar(255) NOT NULL
 );
 
+CREATE TABLE game_maps (
+    game_maps_id int AUTO_INCREMENT PRIMARY KEY NOT NULL,
+    creator_id int,
+    title varchar(50) NOT NULL,
+    image_id int,
+    game_created TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    foreign key (creator_id) references users(userid) ON DELETE SET NULL,
+    foreign key (image_id) references images(image_id) ON DELETE SET NULL
+);
+
 CREATE TABLE map (
-    mapid int AUTO_INCREMENT PRIMARY KEY NOT NULL,
-    creatorid int,
-    name varchar(50) NOT NULL,
-    picid int,
-    foreign key (creatorid) references users(userid) ON DELETE SET NULL,
-    foreign key (picid) references pictures(picid) ON DELETE SET NULL
+    map_id int AUTO_INCREMENT PRIMARY KEY NOT NULL,
+    game_maps_id int,
+    image_id int,
+    foreign key (game_maps_id) references game_maps(game_maps_id) ON DELETE CASCADE,
+    foreign key (image_id) references images(image_id) ON DELETE CASCADE
 );
 
 CREATE TABLE points (
-    pointid int AUTO_INCREMENT PRIMARY KEY NOT NULL,
-    mapid int,
-    pointx int NOT NULL,
-    pointy int NOT NULL,
-    picid int,
-    foreign key (mapid) references map(mapid) ON DELETE SET NULL,
-    foreign key (picid) references pictures(picid) ON DELETE SET NULL
+    point_id int AUTO_INCREMENT PRIMARY KEY NOT NULL,
+    map_id int,
+    point_x int NOT NULL,
+    point_y int NOT NULL,
+    image_id int,
+    foreign key (map_id) references map(map_id) ON DELETE SET NULL,
+    foreign key (image_id) references images(image_id) ON DELETE SET NULL
 );
 
 CREATE TABLE scores (
-    scoreid int AUTO_INCREMENT PRIMARY KEY NOT NULL,
-    userid int,
-    mapid int,
+    score_id int AUTO_INCREMENT PRIMARY KEY NOT NULL,
+    user_id int,
+    game_maps_id int,
     score int NOT NULL,
-    foreign key (userid) references users(userid) ON DELETE CASCADE,
-    foreign key (mapid) references map(mapid) ON DELETE CASCADE
-)
+    score_time TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    foreign key (user_id) references users(userid) ON DELETE set NULL,
+    foreign key (game_maps_id) references game_maps(game_maps_id) ON DELETE CASCADE
+);
