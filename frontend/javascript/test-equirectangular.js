@@ -4,26 +4,29 @@ import { EquirectangularViewer } from './libs/viewer/EquirectangularViewer.js';
 // | GLOBAL VARIABLES |
 // |------------------|
 const canvasId = "canvas";
+
+/** 
+ * @type {EquirectangularViewer} */
 let equirectangularViewer;
 
 const imageList = [
     {
-        "url": "/images/equirectangular/Cathedral.jpg",
+        "url": "/images/equirectangular/Cathedral.webp",
         width: 1920,
         height: 960
     },
     {
-        "url": "/images/equirectangular/Herdecke.jpg",
+        "url": "/images/equirectangular/Herdecke.webp",
         width: 10836,
         height: 5418
     },
     {
-        "url": "/images/equirectangular/test-equirectangular-image.jpg",
+        "url": "/images/equirectangular/test-equirectangular-image.webp",
         width: 5000,
         height: 2500
     },
     {
-        "url": "/images/equirectangular/wittenberg.jpg",
+        "url": "/images/equirectangular/wittenberg.webp",
         width: 10000,
         height: 5000
     }

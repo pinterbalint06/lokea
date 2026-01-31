@@ -71,7 +71,8 @@ set(RELEASE_LINK_FLAGS
 set(DEBUG_COMPILE_FLAGS
     -g
     -fsanitize=address
-    )
+    -DDEBUG
+)
 set(DEBUG_LINK_FLAGS
     -g
     --source-map-base "http://localhost:3000/"

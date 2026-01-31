@@ -5981,11 +5981,22 @@ var EquirectangularSharedCanvas = {
   }
 };
 
-function equirectangularReportError(onError, sentError) {
+function equirectangularReportError(onError, errorMessage, errorType, url, requestId, originalError = null) {
+  let error = {
+    "message": errorMessage,
+    "options": {
+      "type": errorType,
+      "imgUrl": url,
+      "requestId": requestId
+    }
+  };
+  if (originalError) {
+    error["options"]["originalError"] = originalError;
+  }
   if (typeof onError == "function") {
-    onError(sentError);
+    onError(error);
   } else {
-    console.error(sentError);
+    console.error("ERROR " + error.type + ": " + error.message, error.originalError);
   }
 }
 
@@ -6009,7 +6020,11 @@ function _equirectangularFromURL(url, ctxId, tiles, textureIdsHandle, onSuccessH
     let textureIds = Emval.toValue(textureIdsHandle);
     fetch(imgUrl).then(function(response) {
       if (!response.ok) {
-        equirectangularReportError(onError, "Requested image failed to load:\t" + response.status);
+        equirectangularReportError(onError, "Image failed to load:\t" + response.status, "NETWORK", url, requestID);
+      }
+      let contentType = response.headers.get("content-type");
+      if (contentType && !contentType.startsWith("image/")) {
+        equirectangularReportError(onError, "Invalid content-type:\t" + contentType, "INVALID_INPUT", url, requestID);
       }
       return response.blob();
     }).then(function(blob) {
@@ -6024,26 +6039,30 @@ function _equirectangularFromURL(url, ctxId, tiles, textureIdsHandle, onSuccessH
         EquirectangularSharedCanvas.updateCanvas(tileWidth, tileHeight);
         let canvas = EquirectangularSharedCanvas.canvas;
         let canvasContext = EquirectangularSharedCanvas.canvasContext;
-        let i = 0;
-        for (let x = 0; x < tiles; x++) {
-          for (let y = 0; y < tiles; y++) {
-            canvasContext.clearRect(0, 0, tileWidth, tileHeight);
-            canvasContext.drawImage(imageBitmap, x * tileWidth, y * tileHeight, tileWidth, tileHeight, 0, 0, tileWidth, tileHeight);
-            glContext.bindTexture(glContext.TEXTURE_2D, textures[i]);
-            glContext.texImage2D(glContext.TEXTURE_2D, 0, glContext.RGBA, glContext.RGBA, glContext.UNSIGNED_BYTE, canvas);
-            if (tileCount == 1) {
-              glContext.generateMipmap(glContext.TEXTURE_2D);
+        try {
+          let i = 0;
+          for (let x = 0; x < tiles; x++) {
+            for (let y = 0; y < tiles; y++) {
+              canvasContext.clearRect(0, 0, tileWidth, tileHeight);
+              canvasContext.drawImage(imageBitmap, x * tileWidth, y * tileHeight, tileWidth, tileHeight, 0, 0, tileWidth, tileHeight);
+              glContext.bindTexture(glContext.TEXTURE_2D, textures[i]);
+              glContext.texImage2D(glContext.TEXTURE_2D, 0, glContext.RGBA, glContext.RGBA, glContext.UNSIGNED_BYTE, canvas);
+              if (tileCount == 1) {
+                glContext.generateMipmap(glContext.TEXTURE_2D);
+              }
+              // if there is more than tile we disable linear interpolation
+              // to prevent misalignment of the textures across tiles
+              let minFilter = tileCount == 1 ? glContext.LINEAR_MIPMAP_LINEAR : glContext.LINEAR;
+              let magFilter = tileCount == 1 ? glContext.LINEAR : glContext.NEAREST;
+              glContext.texParameteri(glContext.TEXTURE_2D, glContext.TEXTURE_MIN_FILTER, minFilter);
+              glContext.texParameteri(glContext.TEXTURE_2D, glContext.TEXTURE_MAG_FILTER, magFilter);
+              glContext.texParameteri(glContext.TEXTURE_2D, glContext.TEXTURE_WRAP_S, glContext.CLAMP_TO_EDGE);
+              glContext.texParameteri(glContext.TEXTURE_2D, glContext.TEXTURE_WRAP_T, glContext.CLAMP_TO_EDGE);
+              i++;
             }
-            // if there is more than tile we disable linear interpolation
-            // to prevent misalignment of the textures across tiles
-            let minFilter = tileCount == 1 ? glContext.LINEAR_MIPMAP_LINEAR : glContext.LINEAR;
-            let magFilter = tileCount == 1 ? glContext.LINEAR : glContext.NEAREST;
-            glContext.texParameteri(glContext.TEXTURE_2D, glContext.TEXTURE_MIN_FILTER, minFilter);
-            glContext.texParameteri(glContext.TEXTURE_2D, glContext.TEXTURE_MAG_FILTER, magFilter);
-            glContext.texParameteri(glContext.TEXTURE_2D, glContext.TEXTURE_WRAP_S, glContext.CLAMP_TO_EDGE);
-            glContext.texParameteri(glContext.TEXTURE_2D, glContext.TEXTURE_WRAP_T, glContext.CLAMP_TO_EDGE);
-            i++;
           }
+        } catch (error) {
+          equirectangularReportError(onError, "Failed to upload texture to GPU", "WEBGL", url, requestID, error);
         }
         glContext.bindTexture(glContext.TEXTURE_2D, null);
         if (typeof onSuccess == "function") {
@@ -6051,17 +6070,17 @@ function _equirectangularFromURL(url, ctxId, tiles, textureIdsHandle, onSuccessH
         }
       } else {
         if (textures.length != tileCount) {
-          equirectangularReportError(onError, "Texture failed to load (it no longer exists):\t" + imgUrl);
+          equirectangularReportError(onError, "Textures no longer exist:\t" + imgUrl, "WEBGL", url, requestID);
         } else {
-          equirectangularReportError(onError, "New image was requested. Aborting old request:\t" + imgUrl);
+          equirectangularReportError(onError, "New image was requested. Aborting old request:\t" + imgUrl, "REQUEST_CANCELLED", url, requestID);
         }
       }
     }).catch(function(err) {
       let msg = "Texture failed to load (Fetch/decoding error): " + err.message + "\t" + imgUrl;
-      equirectangularReportError(onError, msg);
+      equirectangularReportError(onError, msg, "IMAGE_DECODE", url, requestID);
     });
   } else {
-    equirectangularReportError(onError, "Texture failed to load (invalid WebGL context):\t" + imgUrl);
+    equirectangularReportError(onError, "Invalid WebGL context", "WEBGL", url, requestID);
   }
 }
 

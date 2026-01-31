@@ -1,6 +1,8 @@
 #include <emscripten/html5.h>
 #include <emscripten/emscripten.h>
+#ifdef DEBUG
 #include <emscripten/console.h>
+#endif
 #include <emscripten/val.h>
 #include <string>
 #include <cmath>
@@ -210,19 +212,25 @@ void EquirectangularEngine::loadEquirectangularImage(const std::string &url, int
         {
             if (maxTextureSize >= width && maxTextureSize >= height)
             {
+            #ifdef DEBUG
                 emscripten_console_log("full");
+            #endif
                 changeImageMode(EQUIRECTANGULARMODE::FULL);
             }
             else
             {
                 if (maxTextureSize >= width / 2 && maxTextureSize >= height / 2)
                 {
+                #ifdef DEBUG
                     emscripten_console_log("2x2");
+                #endif
                     changeImageMode(EQUIRECTANGULARMODE::SPLIT_2X2);
                 }
                 else
                 {
+                #ifdef DEBUG
                     emscripten_console_log("4x4");
+                #endif
                     changeImageMode(EQUIRECTANGULARMODE::SPLIT_4X4);
                 }
             }
