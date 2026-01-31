@@ -27,7 +27,7 @@ export const ERROR_TYPES = {
     INVALID_INPUT: 'INVALID_INPUT',
     CANCELLED: 'REQUEST_CANCELLED',
     INITIALIZATION: 'ENGINE_INITIALIZATION',
-    DESTROYED: 'VIEWER_DESTROYEDD'
+    DESTROYED: 'VIEWER_DESTROYED'
 };
 
 export class EquirectangularViewer {
@@ -146,15 +146,6 @@ export class EquirectangularViewer {
      * @throws {Error} If the viewer is destroyed or the engine fails to initialize.
      */
     async loadImage(url, width, height) {
-        if (this.#isDestroyed) {
-            throw new EquirectangularError(
-                "Equirectangular Viewer is destroyed!",
-                {
-                    "type": ERROR_TYPES.DESTROYED,
-                    "imgUrl": url
-                });
-        }
-
         if (!url || typeof url != 'string') {
             throw new EquirectangularError(
                 "Invalid URL provided",
@@ -173,11 +164,18 @@ export class EquirectangularViewer {
                 });
         }
 
-        this.#currentImageRequestID++;
-        let currentRequestId = this.#currentImageRequestID;
-
         if (!this.#engine) {
             await this.#engineInitPromise;
+
+            if (this.#isDestroyed) {
+                throw new EquirectangularError(
+                    "Equirectangular Viewer is destroyed!",
+                    {
+                        "type": ERROR_TYPES.DESTROYED,
+                        "imgUrl": url
+                    });
+            }
+
             if (!this.#engine) {
                 throw new EquirectangularError(
                     "Engine failed to initialize",
@@ -188,6 +186,9 @@ export class EquirectangularViewer {
                     });
             }
         }
+
+        this.#currentImageRequestID++;
+        let currentRequestId = this.#currentImageRequestID;
 
         return new Promise((resolve, reject) => {
             this.#engine.loadEquirectangularImage(
