@@ -2,45 +2,58 @@
 
 Egyedek:
 - users
-- pictures
+- images
+- game_maps
 - map
 - points
 - scores
 
 2. lépés
-kapcsolatok:
+Kapcsolatok:
 
-- upload_map (users, map): 1-N kapcsolat, mert egy felhasználónak több térképe is lehet
+- upload_map (users, game_maps): 1-N kapcsolat, mert egy felhasználó több game mapot is létrehozhat, viszont egy game map egy készítőhöz tartozik.
 
-- select_location (map, pictures): 1-N kapcsolat, mert egy térképnek több picture (helyszine) lehet, viszont egy picture (helyszin) csak egy térképhez tartozik
+- contains (game_maps, map): 1-N kapcsolat, mert egy game_map több mapból állhat, de egy térképrészlet egy game_maphoz tartozik.
 
-!!komment
-esetleg lehetne N-M kapcsolat, mert egy térképnek több picture (helyszine) lehet, és egy picture (helyszin) több térképhez tartozhatna
-!!
+- image_of_map (map, images): 1-N kapcsolat, mert egy térképhez több kép is tartozhat, de egy kép csak egy térképhez tartozik.
 
-- use_map (map, points): 1-N kapcsolat, mert egy térképhez több pontja is lehet, viszont egy pontnak egy térképe van.
+- use_map (map, points): 1-N kapcsolat, mert egy térképen több pont is elhelyezkedhet, viszont egy pont csak egy térképhez tartozik.
 
-- use_pictures (points, pictures): 1-N kapcsolat, mert egy képhez több pont tartozhat, viszont minden ponthoz egy kép társul.
+- use_pictures (points, images): 1-1 kapcsolat, mert egy ponthoz pontosan egy kép tartozik.
 
-- score_points (scores, users): 1-N kapcsolat, mert egy felhasználóhoz több pontszám tartozhat, viszont egy pontszám csak egy játékoshoz tartozik.
+- score_points (users, scores): 1-N kapcsolat, mert egy felhasználónak több pontszáma is születhet, viszont egy pontszám rekord egy felhasználóhoz kötődik.
 
-- score_calculation (scores, map): 1-N kapcsolat, mert egy térképhez több pontszám tartozhat, miközben egy pontszám csak egy térképhez tartozik.
+- score_calculation (game_maps, scores): 1-N kapcsolat, mert egy game_maphoz több pontszám is tartozhat, de egy pontszám egy adott game_maphoz kapcsolódik.
 
 3. lépés
-tulajdonságok
--users: _userid_, username, email, password, role, pfp, is_2fa, created_at, deleted_at
+Egyed táblák:
+- users: _userid_, username, email, password, role, pfp, is_2fa, created_at, deleted_at
+- images: _image_id_, width, height, filepath
+- game_maps: _game_maps_id_, title, game_created
+- map: _map_id_
+- points: _point_id_, point_x, point_y
+- scores: _score_id_, score, score_time
 
--pictures: _pic_id_, width, height, filepath
+Kapcsolat táblák:
+- upload_map: _game_maps_id_, userid
+- contains: _map_id_, game_maps_id
+- image_of_map: _map_id_, image_id
+- use_map: _point_id_, map_id
+- use_pictures: _point_id_, image_id
+- score_points: _score_id_, userid
+- score_calculation: _score_id_, game_maps_id
 
--map: _map_id_, creator_id, name, pic_id
+4. lépés
+Táblák összevonása
 
--points: _pointid_, map_id, pointx, pointy, pic_id
+Az 1:N (egy a többhöz) kapcsolatok esetén a kapcsolatot nem külön táblaként valósítjuk meg,
+hanem beolvasztjuk a „több” (N) oldalon álló egyed táblájába idegen kulcsként (Foreign Key).
+Mivel a rendszerben minden kapcsolat 1:N típusú (vagy 1:1, ami szintén összevonható),
+a 3. lépésben felírt kapcsolótáblák mindegyike beépül a fő táblákba.
 
--scores: _scoreid_, user_id, map_id, score
-
-
-
-
-
-
-
+- users: _userid_, username, email, password, role, pfp, is_2fa, created_at, deleted_at
+- images: _image_id_, width, height, filepath
+- game_maps: _game_maps_id_, creator_id, title, game_created
+- map: _map_id_, game_maps_id, image_id
+- points: _point_id_, map_id, point_x, point_y, image_id
+- scores: _score_id_, user_id, game_maps_id, score, score_time
