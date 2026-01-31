@@ -3,6 +3,7 @@
 
 #include <string>
 #include <vector>
+#include <memory>
 
 #include "core/engine.h"
 
@@ -19,19 +20,21 @@ enum EQUIRECTANGULARMODE
 class EquirectangularEngine : public Engine
 {
 private:
+    int currentRequestID;
+
     Mesh *generateSphereSegment(int rings, int segments, float radius,
                                 float uMin, float uMax, float vMin, float vMax);
     void generateSphere();
-    std::vector<Texture *> imageTiles_;
+    std::vector<std::shared_ptr<Texture>> imageTiles_;
     EQUIRECTANGULARMODE currMode_;
 
     void changeImageMode(EQUIRECTANGULARMODE mode);
-    void uploadTiles(const std::string &url, int ctx);
+    void uploadTiles(const std::string &url, int ctx, emscripten::val onSuccess, emscripten::val onError);
 
 public:
     EquirectangularEngine(const std::string &canvasID);
     ~EquirectangularEngine();
-    void loadEquirectangularImage(const std::string &url, int width, int height);
+    void loadEquirectangularImage(const std::string &url, int width, int height, emscripten::val onSuccess, emscripten::val onError);
 };
 
 #endif

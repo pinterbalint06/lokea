@@ -3,6 +3,7 @@
 
 #include <cstdint>
 #include <string>
+#include <memory>
 
 #include "core/rendering/shader.h"
 #include "core/rendering/renderer.h"
@@ -16,8 +17,8 @@ class Mesh; // defined in "core/resources/mesh.h"
 class Engine
 {
 protected:
-    Scene *scene_;
-    Renderer *renderer_;
+    std::unique_ptr<Scene> scene_;
+    std::unique_ptr<Renderer> renderer_;
     std::string canvas_;
 
 public:
@@ -36,7 +37,7 @@ public:
 
     void rotateCamera(float dPitch, float dYaw);
     void setCameraRotation(float pitch, float yaw);
-    void render() { renderer_->render(scene_); };
+    void render() { renderer_->render(scene_.get()); };
     uint8_t *initTexture(int width, int height, int meshIndex);
     void uploadTextureToGPU(int meshIndex);
     void deleteTexture(int meshIndex);

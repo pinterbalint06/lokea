@@ -14,4 +14,3 @@
 14. Kód átnézése nem használt függvényekre, váltózokra
 15. UBO binding slotok átdolgozása
 16. Van-e jelenlegi WebGL ctx ellenőrzések
-17. Kép link helyett egy select az ekvirektanguláris képekből

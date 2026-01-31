@@ -4,6 +4,7 @@
 #include <cstdint>
 #include <string>
 #include <GLES3/gl3.h>
+#include <emscripten/val.h>
 
 class Texture
 {
@@ -27,6 +28,7 @@ public:
     GLuint getTextureIndex() const { return textureGL_; }
 
     void loadFromUrl(const std::string &url);
+    void loadFromUrl(const std::string &url, emscripten::val onSuccess, emscripten::val onError);
     void uploadToGPU();
     void bind(int location);
 };
