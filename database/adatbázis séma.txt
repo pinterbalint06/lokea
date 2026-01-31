@@ -1,0 +1,46 @@
+1. lépés
+
+Egyedek:
+- users
+- pictures
+- map
+- points
+- scores
+
+2. lépés
+kapcsolatok:
+
+- upload_map (users, map): 1-N kapcsolat, mert egy felhasználónak több térképe is lehet
+
+- select_location (map, pictures): 1-N kapcsolat, mert egy térképnek több picture (helyszine) lehet, viszont egy picture (helyszin) csak egy térképhez tartozik
+
+!!komment
+esetleg lehetne N-M kapcsolat, mert egy térképnek több picture (helyszine) lehet, és egy picture (helyszin) több térképhez tartozhatna
+!!
+
+- use_map (map, points): 1-N kapcsolat, mert egy térképhez több pontja is lehet, viszont egy pontnak egy térképe van.
+
+- use_pictures (points, pictures): 1-N kapcsolat, mert egy képhez több pont tartozhat, viszont minden ponthoz egy kép társul.
+
+- score_points (scores, users): 1-N kapcsolat, mert egy felhasználóhoz több pontszám tartozhat, viszont egy pontszám csak egy játékoshoz tartozik.
+
+- score_calculation (scores, map): 1-N kapcsolat, mert egy térképhez több pontszám tartozhat, miközben egy pontszám csak egy térképhez tartozik.
+
+3. lépés
+tulajdonságok
+-users: _userid_, username, email, password, role, pfp, is_2fa, created_at, deleted_at
+
+-pictures: _pic_id_, width, height, filepath
+
+-map: _map_id_, creator_id, name, pic_id
+
+-points: _pointid_, map_id, pointx, pointy, pic_id
+
+-scores: _scoreid_, user_id, map_id, score
+
+
+
+
+
+
+
