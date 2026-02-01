@@ -48,6 +48,9 @@ router.get('/equirectangular', (request, response) => {
 router.get('/webgl', (request, response) => {
     response.sendFile(path.join(__dirname, '../frontend/html/test-webgl.html'));
 });
+router.get('/map', (request, response) => {
+    response.sendFile(path.join(__dirname, '../frontend/html/test-map.html'));
+});
 router.get('/login_page', (request, response) => {
     response.sendFile(path.join(__dirname, '../frontend/html/login.html'));
 });

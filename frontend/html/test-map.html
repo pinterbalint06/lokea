@@ -1,0 +1,30 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Test map</title>
+    <link rel="stylesheet" href="../css/test.css">
+    <script type="module" src="../javascript/test-map.js"></script>
+</head>
+
+<body>
+    <div class="row w100 around wrapreverse">
+        <div class="col wrap gap">
+            <div class="col center">
+                <div>
+                    <p>FPS: <span id="fps"></span></p>
+                    <div class="row center">
+                        <button onclick="fullScreen();">Teljes képernyő</button>
+                    </div>
+                </div>
+            </div>
+            <div class="col">
+                <canvas id="canvas" class="canvasborder"></canvas>
+            </div>
+        </div>
+    </div>
+</body>
+
+</html>
