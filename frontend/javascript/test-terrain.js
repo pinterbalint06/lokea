@@ -181,7 +181,7 @@ function mainLoop() {
 
 // rotate camera by degree
 function rotateCamera(pitch, yaw) {
-    terrainEngine.rotateCamera(degreeToRadian(pitch), degreeToRadian(yaw))
+    terrainEngine.rotateCamera(degreeToRadian(pitch), degreeToRadian(yaw));
 }
 
 window.xyForgas = rotateCamera;
