@@ -47,4 +47,5 @@ void Scene::clearMeshes()
     {
         delete meshes_[i];
     }
+    meshes_.clear();
 }

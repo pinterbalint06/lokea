@@ -1,9 +1,13 @@
 #include <emscripten/html5.h>
 #include <emscripten/emscripten.h>
+#ifdef DEBUG
+#include <emscripten/console.h>
+#endif
 #include <emscripten/val.h>
 #include <string>
 #include <cmath>
 #include <cstdint>
+#include <memory>
 
 #include "core/resources/mesh.h"
 #include "core/resources/vertex.h"
@@ -16,66 +20,18 @@
 
 #include "core/math/mathUtils.h"
 
-EM_JS(void, equirectangularFromURL, (const char *url, int ctxId, int tiles, emscripten::EM_VAL textureIdsHandle), {
-    let gl = GL.contexts[ctxId].GLctx;
-    let img = new Image();
-    let imgUrl = UTF8ToString(url);
-    let textureIds = Emval.toValue(textureIdsHandle);
-
-    img.onload = function()
-    {
-        let textureCount = tiles * tiles;
-        let textures = [];
-        let i = 0;
-        while (i < textureCount && GL.textures[textureIds[i]])
-        {
-            textures.push(GL.textures[textureIds[i]]);
-            i++;
-        }
-        if (i == textureCount)
-        {
-            let canvas = document.createElement('canvas');
-            let ctx = canvas.getContext('2d');
-            let tileW = img.width / tiles;
-            let tileH = img.height / tiles;
-            canvas.width = tileW;
-            canvas.height = tileH;
-            let i = 0;
-            for (let x = 0; x < tiles; x++)
-            {
-                for (let y = 0; y < tiles; y++)
-                {
-                    ctx.clearRect(0, 0, tileW, tileH);
-                    ctx.drawImage(img, x * tileW, y * tileH, tileW, tileH, 0, 0, tileW, tileH);
-
-                    gl.bindTexture(gl.TEXTURE_2D, textures[i]);
-
-                    gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, canvas);
-                    gl.generateMipmap(gl.TEXTURE_2D);
-                    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR);
-                    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.NEAREST);
-
-                    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
-                    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
-
-                    gl.bindTexture(gl.TEXTURE_2D, null);
-                    i++;
-                }
-            }
-        }
-        else
-        {
-            console.error("Texture failed to load (it no longer exists):\t" + imgUrl);
-        }
-    };
-
-    img.onerror = function()
-    {
-        console.error("Texture failed to load:\t" + imgUrl);
-    };
-
-    img.src = imgUrl;
-});
+extern "C"
+{
+    extern void equirectangularFromURL(
+        const char *url,
+        int ctxId,
+        int tiles,
+        emscripten::EM_VAL textureIdsHandle,
+        emscripten::EM_VAL onSuccessHandle,
+        emscripten::EM_VAL onErrorHandle,
+        int requestID,
+        int *currentRequestID);
+}
 
 Mesh *EquirectangularEngine::generateSphereSegment(int rings, int segments, float radius,
                                                    float uMin, float uMax, float vMin, float vMax)
@@ -186,7 +142,7 @@ void EquirectangularEngine::generateSphere()
         {
             Mesh *sphereSegment = generateSphereSegment(rings / tiles, segs / tiles, rad, rec * x, rec * (x + 1), rec * y, rec * (y + 1));
             Materials::Material defaultMat = Materials::Material::Error();
-            defaultMat.setTexture(imageTiles_[i]);
+            defaultMat.setTexture(imageTiles_[i].get());
             sphereSegment->setMaterial(defaultMat);
             addMesh(sphereSegment);
             i++;
@@ -198,12 +154,12 @@ EquirectangularEngine::EquirectangularEngine(const std::string &canvasID) : Engi
 {
     setShadingMode(Shaders::SHADINGMODE::NO_SHADING);
 
+    currentRequestID = 0;
     const int maxTextures = 16;
     imageTiles_.reserve(maxTextures);
     for (int i = 0; i < maxTextures; i++)
     {
-        Texture *tileTexture = new Texture();
-        imageTiles_.push_back(tileTexture);
+        imageTiles_.push_back(std::make_shared<Texture>());
     }
 
     currMode_ = EQUIRECTANGULARMODE::FULL;
@@ -212,13 +168,7 @@ EquirectangularEngine::EquirectangularEngine(const std::string &canvasID) : Engi
 
 EquirectangularEngine::~EquirectangularEngine()
 {
-    for (int i = 0; i < imageTiles_.size(); i++)
-    {
-        if (imageTiles_[i])
-        {
-            delete imageTiles_[i];
-        }
-    }
+    currentRequestID++;
 }
 
 void EquirectangularEngine::changeImageMode(EQUIRECTANGULARMODE mode)
@@ -230,7 +180,7 @@ void EquirectangularEngine::changeImageMode(EQUIRECTANGULARMODE mode)
     }
 }
 
-void EquirectangularEngine::uploadTiles(const std::string &url, int ctx)
+void EquirectangularEngine::uploadTiles(const std::string &url, int ctx, emscripten::val onSuccess, emscripten::val onError)
 {
     int tiles = currMode_;
     emscripten::val textureIds = emscripten::val::global("Uint32Array").new_(tiles * tiles);
@@ -239,47 +189,52 @@ void EquirectangularEngine::uploadTiles(const std::string &url, int ctx)
     {
         textureIds.set(i, imageTiles_[i]->getTextureIndex());
     }
-    equirectangularFromURL(url.c_str(), ctx, tiles, textureIds.as_handle());
+    equirectangularFromURL(url.c_str(), ctx, tiles, textureIds.as_handle(), onSuccess.as_handle(), onError.as_handle(), currentRequestID, &currentRequestID);
 }
 
-void EquirectangularEngine::loadEquirectangularImage(const std::string &url, int width, int height)
+void EquirectangularEngine::loadEquirectangularImage(const std::string &url, int width, int height, emscripten::val onSuccess, emscripten::val onError)
 {
     int ctx = emscripten_webgl_get_current_context();
 
     if (ctx > 0)
     {
+        currentRequestID++;
         GLint maxTextureSize = 0;
         glGetIntegerv(GL_MAX_TEXTURE_SIZE, &maxTextureSize);
-        if (maxTextureSize >= width && maxTextureSize >= height)
+        if (maxTextureSize < width / 4 || maxTextureSize < height / 4)
         {
-            EM_ASM(console.log("full"));
+            // if can't fit textures generate one whole sphere
             changeImageMode(EQUIRECTANGULARMODE::FULL);
-            loadTextureFromUrl(url, 0);
+            // set its material to the error material
+            scene_->getMesh(0)->setMaterial(Materials::Material::Error());
         }
         else
         {
-            if (maxTextureSize >= width / 2 && maxTextureSize >= height / 2)
+            if (maxTextureSize >= width && maxTextureSize >= height)
             {
-                EM_ASM(console.log("2x2"));
-                changeImageMode(EQUIRECTANGULARMODE::SPLIT_2X2);
-                uploadTiles(url, ctx);
+            #ifdef DEBUG
+                emscripten_console_log("full");
+            #endif
+                changeImageMode(EQUIRECTANGULARMODE::FULL);
             }
             else
             {
-                if (maxTextureSize >= width / 4 && maxTextureSize >= height / 4)
+                if (maxTextureSize >= width / 2 && maxTextureSize >= height / 2)
                 {
-                    EM_ASM(console.log("4x4"));
-                    changeImageMode(EQUIRECTANGULARMODE::SPLIT_4X4);
-                    uploadTiles(url, ctx);
+                #ifdef DEBUG
+                    emscripten_console_log("2x2");
+                #endif
+                    changeImageMode(EQUIRECTANGULARMODE::SPLIT_2X2);
                 }
                 else
                 {
-                    // if can't fit textures generate one whole sphere
-                    changeImageMode(EQUIRECTANGULARMODE::FULL);
-                    // set its material to the error material
-                    scene_->getMesh(0)->setMaterial(Materials::Material::Error());
+                #ifdef DEBUG
+                    emscripten_console_log("4x4");
+                #endif
+                    changeImageMode(EQUIRECTANGULARMODE::SPLIT_4X4);
                 }
             }
+            uploadTiles(url, ctx, onSuccess, onError);
         }
     }
 }

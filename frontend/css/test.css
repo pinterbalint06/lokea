@@ -176,6 +176,10 @@ canvas {
     touch-action: none;
 }
 
-.border {
+.canvasborder {
     border: solid gray 2px;
+}
+
+.canvasborder:fullscreen {
+    border: none;
 }

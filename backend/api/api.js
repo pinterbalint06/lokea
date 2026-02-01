@@ -56,88 +56,122 @@ router.get('/testsql', async (request, response) => {
 
 router.post("/signup",
     [
-    body("username")
-        .isLength({ max: 20}).withMessage("Felhasználónév hossza nem megfelelő!"),
-    body("email")
-        .isEmail().withMessage("Hibás email formátum")
-        .isLength({ max: 250 }).withMessage("Email max 250 karakter"),
+        body("username")
+            .isLength({ min: 1, max: 20 }).withMessage("Felhasználónév hossza nem megfelelő!"),
+        body("email")
+            .isEmail().withMessage("Hibás email formátum")
+            .isLength({ min: 5, max: 250 }).withMessage("Email max 250 karakter"),
 
-    body("password")
-        .isLength({ min: 8, max: 50 }).withMessage("Jelszó hossza 8-50")
-        .matches(/\d/).withMessage("Kell benne szám")
-        .matches(/[A-Z]/).withMessage("Kell benne nagybetű")
+        body("password")
+            .isLength({ min: 8, max: 50 }).withMessage("Jelszó hossza 8-50")
+            .matches(/\d/).withMessage("Kell benne szám")
+            .matches(/[A-Z]/).withMessage("Kell benne nagybetű")
     ],
     async (request, response) => {
-        const errors = validationResult(request);
-        if (!errors.isEmpty()) {
-            return response.status(400).json({ 
-                success: false,
-                error: errors.array() 
-            });
-    }
-
-    const { username, email, password } = request.body;
-
-    // Jelszó hash
-    const hashedPassword = await bcrypt.hash(password, 10);
-    try {
-        await pool.query(
-            "INSERT INTO users (username, email, password) VALUES (?, ?, ?)",
-            [username, email, hashedPassword]
-        );
-    } 
-    catch (error) {
-        if (error.code === "ER_DUP_ENTRY") {
-            return response.status(400).json({
-                error: "A felhasználónév vagy email már foglalt!"
-            });
+        try {
+            const errors = validationResult(request);
+            if (!errors.isEmpty()) {
+                response.status(400).json({
+                    success: false,
+                    error: errors.array()
+                });
+            }
+            else {
+                const { username, email, password } = request.body;
+                const hashedPassword = await bcrypt.hash(password, 10);
+                await pool.query(
+                    "INSERT INTO users (username, email, password) VALUES (?, ?, ?)",
+                    [username, email, hashedPassword]
+                );
+                response.status(201).json({
+                    success: true,
+                    message: "Sikeres regisztráció"
+                });
+            }
+        } catch (error) {
+            if (error.code === "ER_DUP_ENTRY") {
+                response.status(400).json({
+                    error: "A felhasználónév vagy email már foglalt!"
+                });
+            }
+            else {
+                response.status(500).json({ error: "Hiba az adatbázis művelet során!" });
+            }
         }
-        else {
-            return response.status(500).json({ error: "Hiba az adatbázis művelet során!" });
-        }
     }
-    
-
-    response.status(201).json({ 
-        success: true,
-        message: "Sikeres regisztráció" 
-    });
-  }
 );
 
-router.post("/login", async (request, response) => {
-    const { username, password } = request.body;
-    try {
-        let rows;
-        if (validator.isEmail(username)) {
-            [rows] = await pool.query(
-                `SELECT users.password FROM users WHERE users.email = ?`,
-                [username]
-            );
+router.post("/login",
+    [
+        body("username")
+            .isLength({ min: 1, max: 250 }).withMessage("Felhasználónév/email hossza nem megfelelő!"),
+        body("password")
+            .isLength({ min: 8, max: 50 }).withMessage("Jelszó hossza nem megfelelő!")
+    ],
+    async (request, response) => {
+        try {
+            const errors = validationResult(request);
+            if (!errors.isEmpty()) {
+                response.status(400).json({
+                    success: false,
+                    error: errors.array()
+                });
+            }
+            else {
+                const { username, password } = request.body;
+                let rows;
+                if (validator.isEmail(username)) {
+                    [rows] = await pool.query(
+                        `SELECT users.password, users.userid, users.role FROM users WHERE users.email = ?`,
+                        [username]
+                    );
+                }
+                else {
+                    [rows] = await pool.query(
+                        `SELECT users.password, users.userid, users.role FROM users WHERE users.username = ?`,
+                        [username]
+                    );
+                }
+                if (!rows || rows.length === 0) {
+                    return response.status(401).json({ message: "Hibás email vagy jelszó" });
+                }
+                else {
+                    let sPass = rows[0].password;
+                    let egyezes = await bcrypt.compare(password, sPass);
+                    if (!egyezes) {
+                        return response.status(401).json({ message: "Hibás email vagy jelszó" });
+                    }
+                    else {
+                        let sesRole = rows[0].role;
+
+                        if (sesRole.role === 'ADMIN') {
+                            request.session.cookie.maxAge = 15 * 60 * 1000;
+                        }
+                        else {
+                            request.session.cookie.maxAge = 2 * 60 * 60 * 1000;
+                        }
+
+                        request.session.userid = rows[0].userid;
+                        request.session.role = sesRole;
+                        response.status(200).json({ message: "Sikeres bejelentkezés", role: sesRole });
+                    }
+                }
+            }
+        } catch (error) {
+            response.status(500).json({ message: error })
+        }
+    });
+
+router.post('/signout', (request, response) => {
+    request.session.destroy(error => { 
+        if (error) {
+            response.status(500).json({success: false, error: error});
         }
         else {
-            [rows] = await pool.query(
-                `SELECT users.password FROM users WHERE users.username = ?`,
-                [username]
-            );
+            response.clearCookie('geo.sid');
+            response.status(200).json({success: true});
         }
-
-        if (!rows || rows.length === 0) {
-            return response.status(401).json({ message: "Hibás email vagy jelszó" });
-        }
-
-        let sPass = rows[0].password;
-        console.log(password, sPass);
-        let egyezes = await bcrypt.compare(password, sPass);
-
-        if (!egyezes) {
-            return response.status(401).json({ message: "Hibás email vagy jelszó" });
-        }
-
-        response.status(200).json({ message: "Sikeres bejelentkezés" });
-    } catch (error) {
-        response.status(500).json({ message: error})
-    }
+    });
 });
 
 module.exports = router;

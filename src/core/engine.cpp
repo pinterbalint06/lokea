@@ -1,5 +1,6 @@
 #include <string>
 #include <vector>
+#include <memory>
 #include <emscripten/html5.h>
 
 #include "core/rendering/renderer.h"
@@ -17,8 +18,8 @@
 Engine::Engine(std::string canvID)
 {
     canvas_ = canvID;
-    scene_ = new Scene();
-    renderer_ = new Renderer(canvas_);
+    scene_ = std::make_unique<Scene>();
+    renderer_ = std::make_unique<Renderer>(canvas_);
 
     std::vector<std::string> helpers = {
         "shaders/helpers/UBOs.glsl",
@@ -37,14 +38,6 @@ Engine::Engine(std::string canvID)
 
 Engine::~Engine()
 {
-    if (scene_)
-    {
-        delete scene_;
-    }
-    if (renderer_)
-    {
-        delete renderer_;
-    }
 }
 
 void Engine::setLightIntensity(float intensity)
@@ -123,7 +116,10 @@ void Engine::uploadTextureToGPU(int meshIndex)
     Mesh *mesh = scene_->getMesh(meshIndex);
     if (mesh != nullptr)
     {
-        mesh->getMaterial().getTexture()->uploadToGPU();
+        if (mesh->getMaterial().getTexture() != nullptr)
+        {
+            mesh->getMaterial().getTexture()->uploadToGPU();
+        }
     }
 }
 
@@ -147,14 +143,20 @@ void Engine::loadTextureFromUrl(const std::string &url, int meshIndex)
     Mesh *mesh = scene_->getMesh(meshIndex);
     if (mesh != nullptr)
     {
-        deleteTexture(meshIndex);
+        Texture *texture = mesh->getMaterial().getTexture();
+        if (texture == nullptr)
+        {
+            Texture *texture = new Texture();
 
-        Texture *texture = new Texture();
+            texture->loadFromUrl(url);
 
-        texture->loadFromUrl(url);
-
-        Materials::Material newTexMat = mesh->getMaterial();
-        newTexMat.setTexture(texture);
-        mesh->setMaterial(newTexMat);
+            Materials::Material newTexMat = mesh->getMaterial();
+            newTexMat.setTexture(texture);
+            mesh->setMaterial(newTexMat);
+        }
+        else
+        {
+            texture->loadFromUrl(url);
+        }
     }
 }
