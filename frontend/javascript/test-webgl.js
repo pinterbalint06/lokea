@@ -1,3 +1,4 @@
+import ModuleBuilder from './libs/webassembly/terrain/terrain.js';
 // |------------------|
 // | GLOBAL VARIABLES |
 // |------------------|
@@ -11,12 +12,14 @@ const meret = 256;
 // | MAIN LOOP AND INITIALIZATION |
 // |------------------------------|
 
-document.addEventListener("DOMContentLoaded", function () {
-    createModule().then((modu) => {
+function init() {
+    ModuleBuilder().then((modu) => {
         Module = modu;
         initModule();
     });
-});
+}
+
+document.addEventListener("DOMContentLoaded", init);
 
 function initModule() {
     // Initialize the terrainEngine
