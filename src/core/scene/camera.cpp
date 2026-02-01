@@ -1,6 +1,10 @@
+#include <emscripten/emscripten.h>
 #include <cmath>
 #include <algorithm>
-#include <emscripten/emscripten.h>
+#include <memory>
+
+#include "core/projection/projectionMatrix.h"
+#include "core/projection/perspectiveProjectionMatrix.h"
 
 #include "core/scene/camera.h"
 
@@ -8,28 +12,19 @@
 
 Camera::Camera()
 {
-    viewMatrix_ = (float *)malloc(16 * sizeof(float));
-    projMatrix_ = (float *)malloc(16 * sizeof(float));
+    projectionMatrix_ = std::make_unique<PerspectiveProjectionMatrix>(0.1f, 1000.0f);
     MathUtils::setIdentity(viewMatrix_);
-    MathUtils::setIdentity(projMatrix_);
     data_.camPos[0] = 0;
     data_.camPos[1] = 0;
     data_.camPos[2] = 0;
     yaw_ = 0;
     pitch_ = 0;
     newView_ = true;
+    newViewProj_ = true;
 }
 
 Camera::~Camera()
 {
-    if (viewMatrix_)
-    {
-        free(viewMatrix_);
-    }
-    if (projMatrix_)
-    {
-        free(projMatrix_);
-    }
 }
 
 void Camera::setPosition(float x, float y, float z)
@@ -71,10 +66,10 @@ void Camera::updateViewMatrix()
 {
     if (newView_)
     {
-        float yRotMatr[16] = {0};
-        float xRotMatr[16] = {0};
-        float rotMatr[16] = {0};
-        float translation[16] = {0};
+        float yRotMatr[16] = { 0 };
+        float xRotMatr[16] = { 0 };
+        float rotMatr[16] = { 0 };
+        float translation[16] = { 0 };
 
         float sinY = sinf(yaw_);
         float cosY = cosf(yaw_);
@@ -126,7 +121,7 @@ void Camera::updateViewProjectionMatrix()
 {
     if (newViewProj_)
     {
-        MathUtils::multiplyMatrix(getViewMatrix(), getProjMatrix(), data_.VP);
+        MathUtils::multiplyMatrix(viewMatrix_, projectionMatrix_->getProjectionMatrix(), data_.VP);
         newViewProj_ = false;
     }
 }
@@ -138,53 +133,49 @@ void Camera::setPerspective(float focal, float filmW, float filmH, int imageW, i
     filmH_ = filmH;
     imageW_ = imageW;
     imageH_ = imageH;
-    n_ = n;
-    f_ = f;
-    updatePerspective();
+    projectionMatrix_->setNearClippingPlane(n);
+    projectionMatrix_->setFarClippingPlane(f);
+    recalculateCanvasBoundaries();
 }
 
 void Camera::setImageDimensions(int imageW, int imageH)
 {
     imageW_ = imageW;
     imageH_ = imageH;
-    updatePerspective();
+    recalculateCanvasBoundaries();
 }
 
 void Camera::setFocalLength(float focalLength)
 {
     focalLength_ = focalLength;
-    updatePerspective();
+    recalculateCanvasBoundaries();
 }
 
-void Camera::updatePerspective()
+void Camera::recalculateCanvasBoundaries()
 {
     // aspect ratios
     float imageAspect = (float)imageW_ / imageH_;
     float filmAspect = filmW_ / filmH_;
 
-    float t = (filmH_ / 2.0f) / focalLength_ * n_;
-    float r = t * filmAspect;
+    float near = projectionMatrix_->getNearClippingPlane();
+    float top = (filmH_ / 2.0f) / focalLength_ * near;
+    float right = top * filmAspect;
 
     // if film aspect ratio is different from image aspect ratio
     if (filmAspect > imageAspect)
     {
-        r *= imageAspect / filmAspect;
+        right *= imageAspect / filmAspect;
     }
     else
     {
-        t *= filmAspect / imageAspect;
+        top *= filmAspect / imageAspect;
     }
-    float b = -t;
-    float l = -r;
+    projectionMatrix_->setTopClippingPlane(top);
+    projectionMatrix_->setRightClippingPlane(right);
 
-    // reset perspective projection matrix
-    memset(projMatrix_, 0, 16 * sizeof(float));
-    projMatrix_[0] = 2.0f * n_ / (r - l);
-    projMatrix_[5] = 2.0f * n_ / (t - b);
-    projMatrix_[8] = (r + l) / (r - l);
-    projMatrix_[9] = (t + b) / (t - b);
-    projMatrix_[10] = f_ / (n_ - f_);
-    projMatrix_[11] = -1.0f;
-    projMatrix_[14] = n_ * f_ / (n_ - f_);
+    projectionMatrix_->setBottomClippingPlane(-top);
+    projectionMatrix_->setLeftClippingPlane(-right);
+
+    // update perspective projection matrix
     newViewProj_ = true;
 }

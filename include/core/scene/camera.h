@@ -1,6 +1,10 @@
 #ifndef CAMERA_H
 #define CAMERA_H
 
+#include <memory>
+
+#include "core/projection/projectionMatrix.h"
+
 struct CameraData
 {
     float VP[16]; // 0 -> 64
@@ -18,14 +22,13 @@ private:
      * This matrix defines the transformation from world space to camera (view) space.
      * It is a 4x4 matrix stored in a contiguous float array in row-major order.
      */
-    float *viewMatrix_;
+    float viewMatrix_[16];
 
     /**
      * @brief Pointer to the projection matrix used by the camera for transforming 3D coordinates to 2D screen space.
      *
-     * It is a 4x4 matrix stored in a contiguous float array in row-major order.
      */
-    float *projMatrix_;
+    std::unique_ptr<ProjectionMatrix> projectionMatrix_;
 
     CameraData data_;
 
@@ -42,18 +45,10 @@ private:
     bool newViewProj_;
 
     /// @brief Camera properties
-    float focalLength_, filmW_, filmH_, n_, f_;
+    float focalLength_, filmW_, filmH_;
     int imageW_, imageH_;
 
-    /**
-     * @brief Sets the perspective projection matrix for the camera.
-     *
-     * Configures the camera's projection matrix based on focal length, film size,
-     * image size, and near/far clipping planes. Adjusts for differences between the film and image
-     * aspect ratios to ensure correct field of view and image coverage.
-     *
-     */
-    void updatePerspective();
+    void recalculateCanvasBoundaries();
 
 public:
     /**
@@ -74,20 +69,6 @@ public:
     ~Camera();
 
     // getters
-    /**
-     * @brief Returns the view matrix.
-     *
-     * @return Pointer to the view matrix.
-     */
-    float *getViewMatrix() const { return viewMatrix_; }
-
-    /**
-     * @brief Returns the projection matrix.
-     *
-     * @return Pointer to the projection matrix.
-     */
-    float *getProjMatrix() const { return projMatrix_; }
-
     // position getters
     /**
      * @brief Returns the current x-coordinate of the camera.
@@ -137,7 +118,7 @@ public:
      * @brief Sets the focal length of the camera.
      *
      * Updates the camera's focal length to the specified value,
-     * and calls updatePerspective().
+     * and calls recalculateCanvasBoundaries().
      *
      * @param pitch The new pitch angle (in radians).
      * @param yaw The new yaw angle (in radians).
@@ -197,7 +178,7 @@ public:
     void updateViewProjectionMatrix();
 
     /**
-     * @brief Sets the camera's properties and calls updatePerspective().
+     * @brief Sets the camera's properties and calls recalculateCanvasBoundaries().
      *
      * @param focal   The focal length of the camera lens.
      * @param filmW   The width of the film/sensor.
@@ -211,7 +192,7 @@ public:
                         int imageW, int imageH, float n, float f);
 
     /**
-     * @brief Sets the camera's image dimensions and calls updatePerspective().
+     * @brief Sets the camera's image dimensions and calls recalculateCanvasBoundaries().
      *
      * @param imageW  The width of the output image in pixels.
      * @param imageH  The height of the output image in pixels.

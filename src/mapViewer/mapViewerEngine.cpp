@@ -3,11 +3,14 @@
 #include <cstring>
 
 #include "core/rendering/shader.h"
+
 #include "core/resources/mesh.h"
 #include "core/resources/vertex.h"
 #include "core/resources/material.h"
-#include "core/engine.h"
+
 #include "mapViewer/mapViewerEngine.h"
+
+#include "core/engine.h"
 
 Mesh *MapViewerEngine::createPlane()
 {
@@ -23,7 +26,7 @@ Mesh *MapViewerEngine::createPlane()
         1, 2, 0,
         1, 3, 2
     };
-    
+
     Mesh *plane = new Mesh(sizeof(vertices) / sizeof(Vertex), sizeof(indices) / sizeof(uint32_t));
     std::memcpy(plane->getVertices(), vertices, sizeof(vertices));
     std::memcpy(plane->getIndices(), indices, sizeof(indices));
