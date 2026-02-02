@@ -13,7 +13,7 @@ CREATE TABLE users (
     pfp VARCHAR(30) DEFAULT 'default.png',
     is_2fa BOOLEAN DEFAULT 0,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    deleted_at TIMESTAMP DEFAULT NULL
+    deleted_at TIMESTAMP NULL
 );
 
 CREATE TABLE images (
@@ -27,13 +27,12 @@ CREATE TABLE game_maps (
     game_maps_id int AUTO_INCREMENT PRIMARY KEY NOT NULL,
     creator_id int,
     title varchar(50) NOT NULL,
-    cover_image varchar(255),
+    cover_image_id int,
     rating float DEFAULT 0,
     plays int DEFAULT 0,
     game_created TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     foreign key (creator_id) references users(userid) ON DELETE SET NULL,
-    foreign key (image_id) references images(image_id) ON DELETE SET NULL,
-    foreign key (cover_image) references images(image_id) ON DELETE SET NULL
+    foreign key (cover_image_id) references images(image_id) ON DELETE SET NULL
 );
 
 CREATE TABLE map (
