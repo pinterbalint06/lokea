@@ -5,7 +5,7 @@ COLLATE utf8_hungarian_ci;
 USE bigprojekt_db;
 
 CREATE TABLE users (
-    userid INT AUTO_INCREMENT PRIMARY KEY,
+    user_id INT AUTO_INCREMENT PRIMARY KEY,
     username VARCHAR(20) NOT NULL UNIQUE,
     email VARCHAR(254) NOT NULL UNIQUE,
     password VARCHAR(60) NOT NULL,
@@ -31,7 +31,7 @@ CREATE TABLE game_maps (
     rating float DEFAULT 0,
     plays int DEFAULT 0,
     game_created TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    foreign key (creator_id) references users(userid) ON DELETE SET NULL,
+    foreign key (creator_id) references users(user_id) ON DELETE SET NULL,
     foreign key (cover_image_id) references images(image_id) ON DELETE SET NULL
 );
 
@@ -59,7 +59,7 @@ CREATE TABLE scores (
     game_maps_id int,
     score int NOT NULL,
     score_time TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    foreign key (user_id) references users(userid) ON DELETE set NULL,
+    foreign key (user_id) references users(user_id) ON DELETE set NULL,
     foreign key (game_maps_id) references game_maps(game_maps_id) ON DELETE CASCADE
 );
 
@@ -67,7 +67,16 @@ CREATE TABLE favorites (
     favorite_id int AUTO_INCREMENT PRIMARY KEY NOT NULL,
     user_id int,
     game_maps_id int,
-    foreign key (user_id) references users(userid) ON DELETE CASCADE,
+    foreign key (user_id) references users(user_id) ON DELETE CASCADE,
     foreign key (game_maps_id) references game_maps(game_maps_id) ON DELETE CASCADE
 );
+
+CREATE TABLE log (
+    log_id INT AUTO_INCREMENT PRIMARY KEY NOT NULL,
+    user_id int,
+    activity varchar(50),
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    foreign key (user_id) references users(user_id) ON DELETE CASCADE,
+);
+
 
