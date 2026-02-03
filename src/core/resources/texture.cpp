@@ -1,46 +1,15 @@
 #include <emscripten/html5.h>
 #include <emscripten/emscripten.h>
+#include <emscripten/val.h>
 #include <GLES3/gl3.h>
 #include <cstdint>
 #include <string>
 
 #include "core/resources/texture.h"
 
-namespace
+extern "C"
 {
-    EM_JS(void, textureFromURL, (int textureID, const char *url, int ctxId), {
-        let gl = GL.contexts[ctxId].GLctx;
-        let img = new Image();
-        let imgUrl = UTF8ToString(url);
-
-        img.onload = function()
-        {
-            let texture = GL.textures[textureID];
-            if (texture)
-            {
-                gl.bindTexture(gl.TEXTURE_2D, texture);
-
-                gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, img);
-                gl.generateMipmap(gl.TEXTURE_2D);
-
-                gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR_MIPMAP_LINEAR);
-                gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
-
-                gl.bindTexture(gl.TEXTURE_2D, null);
-            }
-            else
-            {
-                console.error("Texture failed to load (it no longer exists):\t" + imgUrl);
-            }
-        };
-
-        img.onerror = function()
-        {
-            console.error("Texture failed to load:\t" + imgUrl);
-        };
-
-        img.src = imgUrl;
-    });
+    extern void textureFromURL(int textureID, const char *url, int ctxId, emscripten::EM_VAL onSuccessHandle, emscripten::EM_VAL onErrorHandle);
 }
 
 Texture::Texture()
@@ -95,9 +64,15 @@ void Texture::initGL()
 
 void Texture::loadFromUrl(const std::string &url)
 {
+    loadFromUrl(url, emscripten::val::undefined(), emscripten::val::undefined());
+}
+
+void Texture::loadFromUrl(const std::string &url, emscripten::val onSuccess, emscripten::val onError)
+{
     if (imgData_)
     {
         free(imgData_);
+        imgData_ = nullptr;
     }
     width_ = 0;
     height_ = 0;
@@ -105,7 +80,7 @@ void Texture::loadFromUrl(const std::string &url)
     int ctx = emscripten_webgl_get_current_context();
     if (ctx > 0)
     {
-        textureFromURL(textureGL_, url.c_str(), ctx);
+        textureFromURL(textureGL_, url.c_str(), ctx, onSuccess.as_handle(), onError.as_handle());
     }
 }
 

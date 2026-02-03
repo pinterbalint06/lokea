@@ -1,0 +1,376 @@
+import { CanvasInput } from './CanvasInput.js';
+import { degreeToRadian } from '../math/mathUtils.js';
+import ModuleBuilder from '../webassembly/equirectangular/equirectangular.js';
+
+const DEFAULT_OPTIONS = {
+    "canvasWidth": 1000,
+    "canvasHeight": 1000,
+    "autoRotate": false,
+    "autoRotateSpeed": 0.1,
+};
+
+export class EquirectangularError extends Error {
+    constructor(message, options = {}) {
+        super(message);
+        this.name = "EquirectangularError";
+        this.type = options.type;
+        this.originalError = options.originalError;
+        this.imgUrl = options.imgUrl;
+        this.requestId = options.requestId;
+    }
+}
+
+export const ERROR_TYPES = {
+    NETWORK: 'NETWORK',
+    DECODE: 'IMAGE_DECODE',
+    WEBGL: 'WEBGL',
+    INVALID_INPUT: 'INVALID_INPUT',
+    CANCELLED: 'REQUEST_CANCELLED',
+    INITIALIZATION: 'ENGINE_INITIALIZATION',
+    DESTROYED: 'VIEWER_DESTROYED'
+};
+
+export class EquirectangularViewer {
+    // ENGINE RELATED
+    /**
+     * @type {Object}
+     * The equirectangular image engine from webassembly */
+    #engine;
+    /**
+     * @type {Promise<void>}
+     * Promise for initializing the engine returns true if it was successful */
+    #engineInitPromise;
+
+    // CANVAS RELATED
+    /**
+     * @type {HTMLCanvasElement}
+     * The used canvas */
+    #canvas;
+    /**
+     * @type {string}
+     * The id of the used canvas */
+    #canvasId;
+    /**
+     * @type {number}
+     * The width of the canvas */
+    #canvasWidth;
+    /**
+     * @type {number}
+     * The height of the canvas */
+    #canvasHeight;
+    /**
+     * @type {CanvasInput}
+     * - Handles rotating and zooming */
+    #canvasInput;
+
+    // EVENT RELATED
+    /**
+     * @type {Function}
+     * It is a function bind to window on resize which calls onFullscreenResize */
+    #windowResizeListener;
+    /**
+     * @type {Function}
+     * It is a function bind to the used canvas on fullscreen change which calls onFullscreenChange */
+    #canvasFullscreenListener;
+
+    // STATE
+    /** 
+     * @type {number | null} 
+     * The ID of the current requested image loading (used to dismiss old image load requests) */
+    #currentImageRequestID;
+    /** 
+     * @type {number|null} 
+     * The ID given by requestAnimationFrame (used to cancel the render loop) */
+    #animationFrameId;
+    /** 
+     * @type {boolean} 
+     * Flag indicating if the viewer has been destroyed to prevent further function calls 
+     */
+    #isDestroyed;
+
+    /**
+     * Constructor for EquirectangularViewer class.
+     *
+     * @param {string} canvasId - The HTML ID of the canvas.
+     * @param {Object} [options={}] - Optional configuration options.
+     * @param {boolean} [options.autoRotate=DEFAULT_OPTIONS["autoRotate"]] - Whether the viewer should auto-rotate.
+     * @param {number} [options.autoRotateSpeed=DEFAULT_OPTIONS["autoRotate"]] - The speed of auto-rotation.
+     * @param {number} [options.canvasWidth=DEFAULT_OPTIONS["canvasWidth"]] - The width of the canvas.
+     * @param {number} [options.canvasHeight=DEFAULT_OPTIONS["canvasHeight"]] - The height of the canvas.
+     * @throws {Error} Throws an error if the canvas element with the specified ID does not exist.
+     */
+    constructor(canvasId, options = {}) {
+        this.#canvasId = canvasId;
+        this.#canvas = document.getElementById(canvasId);
+
+        if (this.#canvas) {
+            // initialize class variables
+            this.#engine = null;
+            this.#animationFrameId = null;
+            this.#canvasInput = null;
+            this.#isDestroyed = false;
+
+            this.autoRotate = options.autoRotate != undefined ? options.autoRotate : DEFAULT_OPTIONS["autoRotate"];
+            this.autoRotateSpeed = options.autoRotateSpeed != undefined ? options.autoRotateSpeed : DEFAULT_OPTIONS["autoRotateSpeed"];
+            this.#canvasWidth = options.canvasWidth != undefined ? options.canvasWidth : DEFAULT_OPTIONS["canvasWidth"];
+            this.#canvasHeight = options.canvasHeight != undefined ? options.canvasHeight : DEFAULT_OPTIONS["canvasHeight"];
+            this.#canvas.width = this.#canvasWidth;
+            this.#canvas.height = this.#canvasHeight;
+
+            this.#currentImageRequestID = 0;
+
+            // initialize
+            this.#engineInitPromise = this.#initialize();
+        } else {
+            throw new Error("There is no canvas with the id: " + this.#canvasId);
+        }
+    }
+
+    // |------------------|
+    // | PUBLIC FUNCTIONS |
+    // |------------------|
+
+
+    /**
+     * Loads an equirectangular image into the viewer.
+     *
+     * Waits for the engine to initialize, then requests the engine to load the image from the given URL
+     * with the specified width and height. If a new image is requested before the current one finishes loading,
+     * the promise is rejected. If the engine fails to load the image, the promise is also rejected.
+     *
+     * @async
+     * @param {string} url - The URL of the equirectangular image to load.
+     * @param {number} width - The width of the image.
+     * @param {number} height - The height of the image.
+     * @returns {Promise<void>} Resolves when the image is successfully loaded, rejects if loading fails or a new image is requested.
+     * @throws {Error} If the viewer is destroyed or the engine fails to initialize.
+     */
+    async loadImage(url, width, height) {
+        if (!url || typeof url != 'string') {
+            throw new EquirectangularError(
+                "Invalid URL provided",
+                {
+                    "type": ERROR_TYPES.INVALID_INPUT,
+                    "imgUrl": url
+                });
+        }
+
+        if (!Number.isInteger(width) || !Number.isInteger(height) || width <= 0 || height <= 0) {
+            throw new EquirectangularError(
+                "Invalid image dimensions provided",
+                {
+                    "type": ERROR_TYPES.INVALID_INPUT,
+                    "imgUrl": url
+                });
+        }
+
+        if (!this.#engine) {
+            await this.#engineInitPromise;
+
+            if (this.#isDestroyed) {
+                throw new EquirectangularError(
+                    "Equirectangular Viewer is destroyed!",
+                    {
+                        "type": ERROR_TYPES.DESTROYED,
+                        "imgUrl": url
+                    });
+            }
+
+            if (!this.#engine) {
+                throw new EquirectangularError(
+                    "Engine failed to initialize",
+                    {
+                        "type": ERROR_TYPES.INITIALIZATION,
+                        "requestId": currentRequestId,
+                        "imgUrl": url
+                    });
+            }
+        }
+
+        this.#currentImageRequestID++;
+        let currentRequestId = this.#currentImageRequestID;
+
+        return new Promise((resolve, reject) => {
+            this.#engine.loadEquirectangularImage(
+                url,
+                width,
+                height,
+                () => {
+                    if (this.#currentImageRequestID == currentRequestId) {
+                        resolve();
+                    } else {
+                        reject(new EquirectangularError(
+                            "New image was requested. Aborting old image.",
+                            {
+                                "type": ERROR_TYPES.CANCELLED,
+                                "requestId": currentRequestId,
+                                "imgUrl": url
+                            }));
+                    }
+                },
+                (errorObject) => {
+                    let error = new EquirectangularError(
+                        errorObject.message,
+                        errorObject.options
+                    );
+                    reject(error);
+                }
+            );
+        });
+    }
+
+    setAutoRotate(enabled) {
+        this.autoRotate = enabled;
+    }
+
+    async toggleFullscreen() {
+        if (!document.fullscreenElement) {
+            await this.#canvas.requestFullscreen();
+        } else {
+            await document.exitFullscreen();
+        }
+    }
+
+    destroy() {
+        this.#isDestroyed = true;
+        // stop rendering if running
+        if (this.#animationFrameId) {
+            cancelAnimationFrame(this.#animationFrameId);
+            this.#animationFrameId = null;
+        }
+        // remove window listener for fullscreen listeners
+        if (this.#windowResizeListener) {
+            window.removeEventListener("resize", this.#windowResizeListener);
+        }
+        // remove fullscreen listener
+        if (this.#canvasFullscreenListener) {
+            this.#canvas.removeEventListener("fullscreenchange", this.#canvasFullscreenListener);
+        }
+        if (this.#canvasInput) {
+            this.#canvasInput.removeListeners();
+            this.#canvasInput = null;
+        }
+        this.#engineInitPromise.then(() => {
+            if (this.#engine && !this.#engine.isDeleted()) {
+                this.#engine.delete();
+            }
+            this.#engine = null;
+        });
+    }
+
+    // |-----------------|
+    // | PRIVATE METHODS |
+    // |-----------------|
+    async #initialize() {
+        let success = false;
+
+        if (typeof ModuleBuilder == "undefined") {
+            this.#isDestroyed = true;
+
+            throw new EquirectangularError(
+                "Webassembly glue code is not present",
+                {
+                    "type": ERROR_TYPES.INITIALIZATION
+                });
+        }
+
+        try {
+            let Module = await ModuleBuilder();
+            if (!this.#isDestroyed) {
+                this.#engine = new Module.EquirectangularEngine(this.#canvasId);
+
+                // set canvas size
+                this.#engine.setCanvasSize(this.#canvasWidth, this.#canvasHeight);
+
+                // Setup CanvasInput
+                this.#setupInputControl();
+                this.#setupResizeHandlers();
+
+                // Start Render Loop
+                this.#renderLoop();
+
+                success = true;
+            }
+        } catch (error) {
+            // if initialization failed set destroyed so class can't be used anymore
+            this.#isDestroyed = true;
+            throw new EquirectangularError(
+                "Unexpected error during engine initialization",
+                {
+                    "type": ERROR_TYPES.INITIALIZATION,
+                    "originalError": error
+                });
+        }
+
+        return success;
+    }
+
+    #setupInputControl() {
+        this.#canvasInput = new CanvasInput(this.#canvas, {
+            onRotate: (pitch, yaw) => {
+                if (this.#engine) {
+                    this.#engine.rotateCamera(degreeToRadian(pitch), degreeToRadian(yaw));
+                }
+            },
+            onZoom: (newFocal) => {
+                if (this.#engine) {
+                    this.#engine.setFocalLength(newFocal);
+                }
+            }
+        });
+    }
+
+    #setupResizeHandlers() {
+        this.#windowResizeListener = () => { this.#onFullscreenResize() };
+        this.#canvasFullscreenListener = () => { this.#onFullscreenChange() };
+        window.addEventListener("resize", this.#windowResizeListener);
+        this.#canvas.addEventListener("fullscreenchange", this.#canvasFullscreenListener);
+    }
+
+    async #onFullscreenChange() {
+        // only run if class is not destroyed
+        if (!this.#isDestroyed) {
+            // if engine is not ready wait for initialization to finish
+            if (!this.#engine) {
+                await this.#engineInitPromise;
+            }
+            // if engine is present after initialization
+            if (this.#engine) {
+                let isFullscreen = document.fullscreenElement == this.#canvas;
+                if (isFullscreen) {
+                    this.#engine.setCanvasSize(window.innerWidth, window.innerHeight);
+                } else {
+                    this.#engine.setCanvasSize(this.#canvasWidth, this.#canvasHeight);
+                }
+            }
+        }
+    }
+
+    async #onFullscreenResize() {
+        // only run if class is not destroyed
+        if (!this.#isDestroyed) {
+            // if engine is not ready wait for initialization to finish
+            if (!this.#engine) {
+                await this.#engineInitPromise;
+            }
+            // if engine is present after initialization
+            if (this.#engine) {
+                let isFullscreen = document.fullscreenElement == this.#canvas;
+                if (isFullscreen) {
+                    this.#engine.setCanvasSize(window.innerWidth, window.innerHeight);
+                }
+            }
+        }
+    }
+
+    #renderLoop = () => {
+        if (this.#engine && !this.#isDestroyed) {
+            if (this.autoRotate) {
+                this.#engine.rotateCamera(0, degreeToRadian(this.autoRotateSpeed));
+            }
+            this.#engine.render();
+
+            this.#animationFrameId = requestAnimationFrame(this.#renderLoop);
+        }
+    }
+}
