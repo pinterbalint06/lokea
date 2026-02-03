@@ -14,7 +14,7 @@ class Vertex; // defined in "core/resources/vertex.h"
 class MapViewerEngine : private Engine
 {
 private:
-    float sens = 0.003f;
+    float sens = 0.001f;
     float zoomSens = 0.02f;
     float zoomLevel;
     Mesh *createPlane(float aspectRatio);
@@ -26,7 +26,11 @@ public:
     void loadMap(const std::string &url, emscripten::val onSuccess, emscripten::val onError);
     void loadMap(const std::string &url);
     void zoomMap(float zoomAmount);
-    void callRender();
+    void render()
+    {
+        Engine::render();
+    }
+    void setCanvasSize(int width, int height);
 };
 
 #endif

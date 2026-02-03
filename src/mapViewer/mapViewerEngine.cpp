@@ -1,4 +1,5 @@
 #include <emscripten/val.h>
+#include <emscripten/html5.h>
 #include <string>
 #include <cstring>
 
@@ -51,7 +52,9 @@ MapViewerEngine::MapViewerEngine(const std::string &canvasID, int width, int hei
 {
     setShadingMode(Shaders::SHADINGMODE::NO_SHADING);
     setProjectionType(PROJECTIONTYPE::ORTHOGRAPHIC);
-    setZoom(0.22f);
+    setZoom(0.218f);
+    renderer_->setDefaultColor(255.0f, 0.0f, 255.0f);
+    scene_->getCamera()->setImageDimensions(width, width);
     zoomLevel = 1.0f;
 
     renderer_->setImageDimensions(width, height);
@@ -165,7 +168,37 @@ void MapViewerEngine::loadMap(const std::string &url)
     loadMap(url, emscripten::val::undefined(), emscripten::val::undefined());
 }
 
-void MapViewerEngine::callRender()
+void MapViewerEngine::setCanvasSize(int width, int height)
 {
-    render();
+    std::string canvID = "#" + canvas_;
+    emscripten_set_canvas_element_size(canvID.c_str(), width, height);
+    renderer_->setImageDimensions(width, height);
+
+    Mesh *plane = scene_->getMesh(0);
+    Vertex *vertices = plane->getVertices();
+
+    float screenAspectRatio = (float)width / (float)height;
+
+    // first we calculate the center of the horizontal axis
+    float currentCenterU = (vertices[0].u + vertices[1].u) * 0.5f;
+
+    // current height
+    float currentMapHeightV = vertices[2].v - vertices[0].v;
+
+    // by aspect ratio we keep the height and make more visible in width
+    float newMapWidthU = currentMapHeightV * screenAspectRatio;
+
+    // we calculate the half of the new widht
+    float halfWidth = newMapWidthU * 0.5f;
+
+    // old center - new half width = left point of the new view
+    vertices[0].u = currentCenterU - halfWidth;
+    vertices[2].u = currentCenterU - halfWidth;
+
+    // old center + new half width = right point of the new view
+    vertices[1].u = currentCenterU + halfWidth;
+    vertices[3].u = currentCenterU + halfWidth;
+
+    // zpdate GPU
+    plane->setUpOpenGL();
 }

@@ -11,5 +11,6 @@ EMSCRIPTEN_BINDINGS(mapViewerEngineBinding)
         .function("loadMap", emscripten::select_overload<void(const std::string&)>(&MapViewerEngine::loadMap))
         .function("moveMap", &MapViewerEngine::moveMap)
         .function("zoomMap", &MapViewerEngine::zoomMap)
-        .function("render", &MapViewerEngine::callRender);
+        .function("render", &MapViewerEngine::render)
+        .function("setCanvasSize", &MapViewerEngine::setCanvasSize);
 }
