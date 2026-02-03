@@ -8,29 +8,30 @@
 #include "core/resources/vertex.h"
 #include "core/resources/material.h"
 
-#include "mapViewer/mapViewerEngine.h"
+#include "core/scene/camera/camera.h"
 
 #include "core/engine.h"
 
+#include "mapViewer/mapViewerEngine.h"
+
+constexpr float minZoom = 1.0f;
+constexpr float maxZoom = 50.0f;
+
 Mesh *MapViewerEngine::createPlane(float aspectRatio)
 {
-    float uMult = 1.0f;
-    float vMult = 1.0f;
+    float startU = 0.0f;
+    float endU = 1.0f;
 
-    if (aspectRatio > 1.0f)
-    {
-        uMult = aspectRatio;
-    }
-    else
-    {
-        vMult = 1.0f / aspectRatio;
-    }
+    float uMult = aspectRatio;
+    float off = (uMult - 1.0f) * 0.5f;
+    startU = -off;
+    endU = 1.0f + off;
     const Vertex vertices[] = {
         //  x      y      z     w       nx    ny    nz        u     v
-        { -1.0f,  1.0f,  -0.1f, 1.0f,   0.0f, 0.0f, 1.0f,   0.0f,  0.0f  },
-        {  1.0f,  1.0f,  -0.1f, 1.0f,   0.0f, 0.0f, 1.0f,   uMult, 0.0f  },
-        { -1.0f, -1.0f,  -0.1f, 1.0f,   0.0f, 0.0f, 1.0f,   0.0f,  vMult },
-        {  1.0f, -1.0f,  -0.1f, 1.0f,   0.0f, 0.0f, 1.0f,   uMult, vMult }
+        { -1.0f,  1.0f,  -0.1f, 1.0f,   0.0f, 0.0f, 1.0f,   startU, 0.0f }, // TOP LEFT
+        {  1.0f,  1.0f,  -0.1f, 1.0f,   0.0f, 0.0f, 1.0f,   endU,   0.0f }, // TOP RIGHT
+        { -1.0f, -1.0f,  -0.1f, 1.0f,   0.0f, 0.0f, 1.0f,   startU, 1.0f }, // BOTTOM LEFT
+        {  1.0f, -1.0f,  -0.1f, 1.0f,   0.0f, 0.0f, 1.0f,   endU,   1.0f }  // BOTTOM RIGHT
     };
 
     constexpr uint32_t indices[] = {
@@ -49,8 +50,9 @@ Mesh *MapViewerEngine::createPlane(float aspectRatio)
 MapViewerEngine::MapViewerEngine(const std::string &canvasID, int width, int height) : Engine(canvasID)
 {
     setShadingMode(Shaders::SHADINGMODE::NO_SHADING);
-    setProjectionType(1);
-    setZoom(0.22);
+    setProjectionType(PROJECTIONTYPE::ORTHOGRAPHIC);
+    setZoom(0.22f);
+    zoomLevel = 1.0f;
 
     renderer_->setImageDimensions(width, height);
     float aspectRatio = (float)width / height;
@@ -62,20 +64,108 @@ MapViewerEngine::~MapViewerEngine()
 {
 }
 
+void MapViewerEngine::limitVCoordinates(Vertex* vertices, int vertexCount)
+{
+    float minV = vertices[0].v;
+    float maxV = vertices[0].v;
+
+    for (int i = 1; i < vertexCount; i++)
+    {
+        if (vertices[i].v < minV)
+        {
+            minV = vertices[i].v;
+        }
+        else
+        {
+            if (vertices[i].v > maxV)
+            {
+                maxV = vertices[i].v;
+            }
+        }
+    }
+
+    float height = maxV - minV;
+    float vOffset = 0.0f;
+
+    if (minV < 0.0f)
+    {
+        vOffset = 0.0f - minV;
+    }
+    else
+    {
+        if (maxV > 1.0f)
+        {
+            vOffset = 1.0f - maxV;
+        }
+    }
+
+    if (vOffset != 0.0f)
+    {
+        for (int i = 0; i < vertexCount; i++)
+        {
+            vertices[i].v += vOffset;
+        }
+    }
+}
+
 void MapViewerEngine::moveMap(float deltaX, float deltaY)
 {
     Mesh *plane = scene_->getMesh(0);
     Vertex *vertices = plane->getVertices();
     int vertexCount = plane->getVertexCount();
+
+    float zoomCorrectedSensitivity = (1.0f / zoomLevel) * sens;
+    float dX = deltaX * zoomCorrectedSensitivity;
+    float dY = deltaY * zoomCorrectedSensitivity;
+
     for (int i = 0; i < vertexCount; i++)
     {
-        vertices[i].u += deltaX * sens;
-        vertices[i].v += deltaY * sens;
+        vertices[i].u += dX;
+        vertices[i].v += dY;
     }
+    limitVCoordinates(vertices, 4);
     plane->setUpOpenGL();
+}
+
+void MapViewerEngine::zoomMap(float zoomAmount)
+{
+    Mesh *plane = scene_->getMesh(0);
+    Vertex *vertices = plane->getVertices();
+    int vertexCount = plane->getVertexCount();
+
+    float currentScreenCenterU = (vertices[0].u + vertices[3].u) / 2.0f;
+    float currentScreenCenterV = (vertices[0].v + vertices[3].v) / 2.0f;
+
+    float oldZoomLevel = zoomLevel;
+    zoomLevel += zoomAmount * zoomSens;
+    zoomLevel = std::clamp(zoomLevel, minZoom, maxZoom);
+    float zoomFactor = oldZoomLevel / zoomLevel;
+
+    if (zoomFactor != 1.0f)
+    {
+        for (int i = 0; i < vertexCount; i++)
+        {
+            // translate vertice to top left apply zoom and retranslate by center
+            vertices[i].u = (vertices[i].u - currentScreenCenterU) * zoomFactor + currentScreenCenterU;
+            vertices[i].v = (vertices[i].v - currentScreenCenterV) * zoomFactor + currentScreenCenterV;
+        }
+
+        limitVCoordinates(vertices, 4);
+        plane->setUpOpenGL();
+    }
 }
 
 void MapViewerEngine::loadMap(const std::string &url, emscripten::val onSuccess, emscripten::val onError)
 {
+    loadTextureFromUrl(url, 0);
+}
 
+void MapViewerEngine::loadMap(const std::string &url)
+{
+    loadMap(url, emscripten::val::undefined(), emscripten::val::undefined());
+}
+
+void MapViewerEngine::callRender()
+{
+    render();
 }

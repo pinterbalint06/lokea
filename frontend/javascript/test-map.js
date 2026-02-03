@@ -29,14 +29,14 @@ function initModule() {
     canvas.width = jsCanvasSzelesseg;
     canvas.height = jsCanvasMagassag;
     mapViewerEngine = new Module.MapViewerEngine(canvasId, jsCanvasSzelesseg, jsCanvasMagassag);
-    mapViewerEngine.loadTextureFromUrl("/images/worldmap.webp", 0);
+    mapViewerEngine.loadMap("/images/worldmap.webp");
     let inputControls = new CanvasInput(canvas, {
         "mode": "2D",
         onRotate: (deltaX, deltaY) => {
             mapViewerEngine.moveMap(deltaX, deltaY);
         },
         onZoom: (zoomAmount) => {
-            mapViewerEngine.zoom(zoomAmount);
+            mapViewerEngine.zoomMap(zoomAmount);
         }
     });
     canvas.addEventListener("fullscreenchange", function () {
