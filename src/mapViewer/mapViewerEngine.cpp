@@ -12,14 +12,25 @@
 
 #include "core/engine.h"
 
-Mesh *MapViewerEngine::createPlane()
+Mesh *MapViewerEngine::createPlane(float aspectRatio)
 {
-    constexpr Vertex vertices[] = {
-        //  x      y      z     w       nx    ny    nz      u     v
-        { -1.0f,  1.0f,  -0.1f, 1.0f,   0.0f, 0.0f, 1.0f,   0.0f, 0.0f },
-        {  1.0f,  1.0f,  -0.1f, 1.0f,   0.0f, 0.0f, 1.0f,   1.0f, 0.0f },
-        { -1.0f, -1.0f,  -0.1f, 1.0f,   0.0f, 0.0f, 1.0f,   0.0f, 1.0f },
-        {  1.0f, -1.0f,  -0.1f, 1.0f,   0.0f, 0.0f, 1.0f,   1.0f, 1.0f }
+    float uMult = 1.0f;
+    float vMult = 1.0f;
+
+    if (aspectRatio > 1.0f)
+    {
+        uMult = aspectRatio;
+    }
+    else
+    {
+        vMult = 1.0f / aspectRatio;
+    }
+    const Vertex vertices[] = {
+        //  x      y      z     w       nx    ny    nz        u     v
+        { -1.0f,  1.0f,  -0.1f, 1.0f,   0.0f, 0.0f, 1.0f,   0.0f,  0.0f  },
+        {  1.0f,  1.0f,  -0.1f, 1.0f,   0.0f, 0.0f, 1.0f,   uMult, 0.0f  },
+        { -1.0f, -1.0f,  -0.1f, 1.0f,   0.0f, 0.0f, 1.0f,   0.0f,  vMult },
+        {  1.0f, -1.0f,  -0.1f, 1.0f,   0.0f, 0.0f, 1.0f,   uMult, vMult }
     };
 
     constexpr uint32_t indices[] = {
@@ -35,18 +46,33 @@ Mesh *MapViewerEngine::createPlane()
 }
 
 
-MapViewerEngine::MapViewerEngine(const std::string &canvasID) : Engine(canvasID)
+MapViewerEngine::MapViewerEngine(const std::string &canvasID, int width, int height) : Engine(canvasID)
 {
     setShadingMode(Shaders::SHADINGMODE::NO_SHADING);
     setProjectionType(1);
     setZoom(0.22);
 
-    Mesh *plane = createPlane();
+    renderer_->setImageDimensions(width, height);
+    float aspectRatio = (float)width / height;
+    Mesh *plane = createPlane(aspectRatio);
     addMesh(plane);
 }
 
 MapViewerEngine::~MapViewerEngine()
 {
+}
+
+void MapViewerEngine::moveMap(float deltaX, float deltaY)
+{
+    Mesh *plane = scene_->getMesh(0);
+    Vertex *vertices = plane->getVertices();
+    int vertexCount = plane->getVertexCount();
+    for (int i = 0; i < vertexCount; i++)
+    {
+        vertices[i].u += deltaX * sens;
+        vertices[i].v += deltaY * sens;
+    }
+    plane->setUpOpenGL();
 }
 
 void MapViewerEngine::loadMap(const std::string &url, emscripten::val onSuccess, emscripten::val onError)

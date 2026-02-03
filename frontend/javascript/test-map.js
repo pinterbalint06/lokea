@@ -1,13 +1,12 @@
 import ModuleBuilder from './libs/webassembly/mapViewer/mapViewer.js';
 import { CanvasInput } from './libs/viewer/CanvasInput.js';
-import { degreeToRadian } from './libs/math/mathUtils.js';
 
 
 // |------------------|
 // | GLOBAL VARIABLES |
 // |------------------|
 // Canvas settings
-const jsCanvasSzelesseg = 1000;
+const jsCanvasSzelesseg = 1700;
 const jsCanvasMagassag = 1000;
 const canvasId = "canvas";
 
@@ -26,14 +25,15 @@ function init() {
 }
 
 function initModule() {
-    mapViewerEngine = new Module.MapViewerEngine(canvasId);
-    mapViewerEngine.loadTextureFromUrl("/images/worldmap.webp", 0);
     let canvas = document.getElementById(canvasId);
     canvas.width = jsCanvasSzelesseg;
     canvas.height = jsCanvasMagassag;
+    mapViewerEngine = new Module.MapViewerEngine(canvasId, jsCanvasSzelesseg, jsCanvasMagassag);
+    mapViewerEngine.loadTextureFromUrl("/images/worldmap.webp", 0);
     let inputControls = new CanvasInput(canvas, {
-        onRotate: (pitch, yaw) => {
-            mapViewerEngine.rotateCamera(degreeToRadian(pitch), degreeToRadian(yaw));
+        "mode": "2D",
+        onRotate: (deltaX, deltaY) => {
+            mapViewerEngine.moveMap(deltaX, deltaY);
         },
         onZoom: (zoomAmount) => {
             mapViewerEngine.zoom(zoomAmount);
@@ -45,6 +45,7 @@ function initModule() {
             mapViewerEngine.setCanvasSize(jsCanvasSzelesseg, jsCanvasMagassag);
         } else {
             canvas.classList.remove("border");
+            console.log();
             mapViewerEngine.setCanvasSize(window.innerWidth, window.innerHeight);
         }
     });

@@ -13,10 +13,12 @@ class Mesh; // defined in "core/resources/mesh.h"
 class MapViewerEngine : public Engine
 {
 private:
-    Mesh *createPlane();
+    float sens = 0.001f;
+    Mesh *createPlane(float aspectRatio);
 public:
-    MapViewerEngine(const std::string &canvasID);
+    MapViewerEngine(const std::string &canvasID, int width, int height);
     ~MapViewerEngine();
+    void moveMap(float deltaX, float deltaY);
     void loadMap(const std::string &url, emscripten::val onSuccess, emscripten::val onError);
 };
 

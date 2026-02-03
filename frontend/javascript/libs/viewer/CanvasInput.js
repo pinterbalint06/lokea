@@ -1,5 +1,6 @@
 const DEFAULT_ZOOM_SPEED = 0.05;
 const DEFAULT_SENSITIVITY = 0.10;
+const DEFAULT_MODE = "3D";
 
 export class CanvasInput {
     /**
@@ -11,6 +12,7 @@ export class CanvasInput {
 
         this.zoomSpeed = options.zoomSpeed ? options.zoomSpeed : DEFAULT_ZOOM_SPEED;
         this.sensitivity = options.sensitivity ? options.sensitivity : DEFAULT_SENSITIVITY;
+        this.mode = options.mode ? options.mode : DEFAULT_MODE;
 
         this.onRotate = options.onRotate ? options.onRotate : (() => { });
         this.onZoom = options.onZoom ? options.onZoom : (() => { });
@@ -91,8 +93,14 @@ export class CanvasInput {
             this.lastX = e.clientX;
             this.lastY = e.clientY;
 
-            const rotX = -dY;
-            const rotY = -dX;
+            let rotX, rotY;
+            if (this.mode == "3D") {
+                rotX = -dY;
+                rotY = -dX;
+            } else {
+                rotX = -dX;
+                rotY = -dY;
+            }
 
             this.onRotate(rotX, rotY);
         } else {
