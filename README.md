@@ -67,10 +67,10 @@
 
     Az equirectangular oldalon használt fájlok. Az ekvirektanguláris képek megjelenítésének tesztelésének debugolható verziója.
 
-    #### 3. mapViewer
+    #### 5. mapViewer
 
     A test-map oldalon használt fájlok. Az 2D-s térképek megjelenítésének tesztelésének optimalizált verziója.
 
-    #### 4. mapViewer_debug
+    #### 6. mapViewer_debug
 
     Az test-map oldalon használt fájlok. Az 2D-s térképek megjelenítésének tesztelésének debugolható verziója.

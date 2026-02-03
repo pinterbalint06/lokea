@@ -6,9 +6,6 @@ import { degreeToRadian } from './libs/math/mathUtils.js';
 // |------------------|
 // | GLOBAL VARIABLES |
 // |------------------|
-// Camera properties
-let fokuszTavolsag = 18.0;
-
 // Canvas settings
 const jsCanvasSzelesseg = 1000;
 const jsCanvasMagassag = 1000;
@@ -35,12 +32,11 @@ function initModule() {
     canvas.width = jsCanvasSzelesseg;
     canvas.height = jsCanvasMagassag;
     let inputControls = new CanvasInput(canvas, {
-        focalLength: fokuszTavolsag,
         onRotate: (pitch, yaw) => {
             mapViewerEngine.rotateCamera(degreeToRadian(pitch), degreeToRadian(yaw));
         },
-        onZoom: (ujFokuszTavolsag) => {
-            mapViewerEngine.setFocalLength(ujFokuszTavolsag);
+        onZoom: (zoomAmount) => {
+            mapViewerEngine.zoom(zoomAmount);
         }
     });
     canvas.addEventListener("fullscreenchange", function () {

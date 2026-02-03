@@ -9,7 +9,7 @@
 #include "core/rendering/renderer.h"
 
 #include "core/scene/scene.h"
-#include "core/scene/camera.h"
+#include "core/scene/camera/camera.h"
 
 // Forward declaration
 class Mesh; // defined in "core/resources/mesh.h"
@@ -29,11 +29,14 @@ public:
 
     void setLightIntensity(float intensity);
     void setShadingMode(Shaders::SHADINGMODE shadingmode);
-    void setFrustum(float focal, float filmW, float filmH, int imageW, int imageH, float n, float f);
+    void setFrustum(float filmW, float filmH, int imageW, int imageH, float n, float f);
     void setLightColor(float r, float g, float b);
     void setAmbientLight(float ambientLightIntensity);
-    void setFocalLength(float focal);
+    void setZoom(float amount);
+    void zoom(float amount);
     void setCanvasSize(int width, int height);
+    void setProjectionType(PROJECTIONTYPE type);
+    void setProjectionType(int type);
 
     void rotateCamera(float dPitch, float dYaw);
     void setCameraRotation(float pitch, float yaw);

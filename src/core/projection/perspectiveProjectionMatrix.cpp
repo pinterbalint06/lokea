@@ -19,9 +19,9 @@ void PerspectiveProjectionMatrix::updateMatrix()
         matrix_[5] = 2.0f * near_ / (top_ - bottom_);
         matrix_[8] = (right_ + left_) / (right_ - left_);
         matrix_[9] = (top_ + bottom_) / (top_ - bottom_);
-        matrix_[10] = far_ / (near_ - far_);
+        matrix_[10] = -(far_ + near_) / (far_ - near_);
         matrix_[11] = -1.0f;
-        matrix_[14] = near_ * far_ / (near_ - far_);
+        matrix_[14] = -2.0f * near_ * far_ / (far_ - near_);
         dirty_ = false;
     }
 }

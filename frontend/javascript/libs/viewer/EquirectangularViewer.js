@@ -312,9 +312,9 @@ export class EquirectangularViewer {
                     this.#engine.rotateCamera(degreeToRadian(pitch), degreeToRadian(yaw));
                 }
             },
-            onZoom: (newFocal) => {
+            onZoom: (zoomAmount) => {
                 if (this.#engine) {
-                    this.#engine.setFocalLength(newFocal);
+                    this.#engine.zoom(zoomAmount);
                 }
             }
         });

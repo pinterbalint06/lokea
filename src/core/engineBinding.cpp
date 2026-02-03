@@ -13,19 +13,21 @@ EMSCRIPTEN_BINDINGS(engineBinding)
         .function("setFrustum", &Engine::setFrustum)
         .function("setLightColor", &Engine::setLightColor)
         .function("setAmbientLight", &Engine::setAmbientLight)
-        .function("setFocalLength", &Engine::setFocalLength)
+        .function("zoom", &Engine::zoom)
         .function("rotateCamera", &Engine::rotateCamera)
         .function("setCameraRotation", &Engine::setCameraRotation)
         .function("render", &Engine::render)
         .function("initTexture", emscripten::optional_override(
-                                     [](Engine &self, int width, int height, int meshIndex) -> int
-                                     {
-                                         return (int)self.initTexture(width, height, meshIndex);
-                                     }))
+            [](Engine &self, int width, int height, int meshIndex) -> int
+            {
+                return (int)self.initTexture(width, height, meshIndex);
+            }))
         .function("uploadTextureToGPU", &Engine::uploadTextureToGPU)
         .function("deleteTexture", &Engine::deleteTexture)
         .function("loadTextureFromUrl", &Engine::loadTextureFromUrl)
         .function("getPitch", &Engine::getPitch)
         .function("getYaw", &Engine::getYaw)
-        .function("setCanvasSize", &Engine::setCanvasSize);
+        .function("setCanvasSize", &Engine::setCanvasSize)
+        .function("setProjectionType", emscripten::select_overload<void(int)>(&Engine::setProjectionType))
+        .function("setZoom", &Engine::setZoom);
 }

@@ -15,11 +15,11 @@
 Mesh *MapViewerEngine::createPlane()
 {
     constexpr Vertex vertices[] = {
-        //  x      y      u     w       nx    ny    nz      u     v
-        { -1.0f,  1.0f, -1.0f, 1.0f,   0.0f, 1.0f, 0.0f,   0.0f, 0.0f },
-        {  1.0f,  1.0f, -1.0f, 1.0f,   0.0f, 1.0f, 0.0f,   1.0f, 0.0f },
-        { -1.0f, -1.0f, -1.0f, 1.0f,   0.0f, 1.0f, 0.0f,   0.0f, 1.0f },
-        {  1.0f, -1.0f, -1.0f, 1.0f,   0.0f, 1.0f, 0.0f,   1.0f, 1.0f }
+        //  x      y      z     w       nx    ny    nz      u     v
+        { -1.0f,  1.0f,  -0.1f, 1.0f,   0.0f, 0.0f, 1.0f,   0.0f, 0.0f },
+        {  1.0f,  1.0f,  -0.1f, 1.0f,   0.0f, 0.0f, 1.0f,   1.0f, 0.0f },
+        { -1.0f, -1.0f,  -0.1f, 1.0f,   0.0f, 0.0f, 1.0f,   0.0f, 1.0f },
+        {  1.0f, -1.0f,  -0.1f, 1.0f,   0.0f, 0.0f, 1.0f,   1.0f, 1.0f }
     };
 
     constexpr uint32_t indices[] = {
@@ -38,6 +38,8 @@ Mesh *MapViewerEngine::createPlane()
 MapViewerEngine::MapViewerEngine(const std::string &canvasID) : Engine(canvasID)
 {
     setShadingMode(Shaders::SHADINGMODE::NO_SHADING);
+    setProjectionType(1);
+    setZoom(0.22);
 
     Mesh *plane = createPlane();
     addMesh(plane);
