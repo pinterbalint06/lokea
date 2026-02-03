@@ -35,8 +35,8 @@ function initModule() {
         onRotate: (deltaX, deltaY) => {
             mapViewerEngine.moveMap(deltaX, deltaY);
         },
-        onZoom: (zoomAmount) => {
-            mapViewerEngine.zoomMap(zoomAmount);
+        onZoom: (zoomAmount, cursorX, cursorY) => {
+            mapViewerEngine.zoomMap(zoomAmount, cursorX, cursorY);
         }
     });
     canvas.addEventListener("fullscreenchange", function () {

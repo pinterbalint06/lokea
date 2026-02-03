@@ -3,7 +3,7 @@
 
 struct CameraConfig
 {
-    float rotationSensitivity = 0.2f;
+    float rotationSensitivity = 0.075f;
     float zoomSensitivity = 0.001f;
 
     float minFocalLength = 10.5f;

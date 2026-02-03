@@ -15,17 +15,20 @@ class MapViewerEngine : private Engine
 {
 private:
     float sens = 0.001f;
-    float zoomSens = 0.02f;
+    float zoomSens = 0.0125f;
     float zoomLevel;
-    Mesh *createPlane(float aspectRatio);
+    int width_, height_;
+    Mesh *createPlane();
     void limitVCoordinates(Vertex* vertices, int vertexCount);
+    void zoomMapUV(float zoomAmount, float zoomHereU, float zoomHereV);
 public:
     MapViewerEngine(const std::string &canvasID, int width, int height);
     ~MapViewerEngine();
     void moveMap(float deltaX, float deltaY);
     void loadMap(const std::string &url, emscripten::val onSuccess, emscripten::val onError);
     void loadMap(const std::string &url);
-    void zoomMap(float zoomAmount);
+    void zoomMapToCenter(float zoomAmount);
+    void zoomMap(float zoomAmount, float zoomHereX, float zoomHereY);
     void render()
     {
         Engine::render();

@@ -18,13 +18,13 @@
 constexpr float minZoom = 1.0f;
 constexpr float maxZoom = 50.0f;
 
-Mesh *MapViewerEngine::createPlane(float aspectRatio)
+Mesh *MapViewerEngine::createPlane()
 {
     float startU = 0.0f;
     float endU = 1.0f;
 
-    float uMult = aspectRatio;
-    float off = (uMult - 1.0f) * 0.5f;
+    float aspectRatio = (float)width_ / (float)height_;
+    float off = (aspectRatio - 1.0f) * 0.5f;
     startU = -off;
     endU = 1.0f + off;
     const Vertex vertices[] = {
@@ -50,16 +50,17 @@ Mesh *MapViewerEngine::createPlane(float aspectRatio)
 
 MapViewerEngine::MapViewerEngine(const std::string &canvasID, int width, int height) : Engine(canvasID)
 {
+    width_ = width;
+    height_ = height;
     setShadingMode(Shaders::SHADINGMODE::NO_SHADING);
     setProjectionType(PROJECTIONTYPE::ORTHOGRAPHIC);
     setZoom(0.218f);
     renderer_->setDefaultColor(255.0f, 0.0f, 255.0f);
-    scene_->getCamera()->setImageDimensions(width, width);
+    scene_->getCamera()->setImageDimensions(width_, width_);
     zoomLevel = 1.0f;
 
-    renderer_->setImageDimensions(width, height);
-    float aspectRatio = (float)width / height;
-    Mesh *plane = createPlane(aspectRatio);
+    renderer_->setImageDimensions(width_, height_);
+    Mesh *plane = createPlane();
     addMesh(plane);
 }
 
@@ -130,14 +131,11 @@ void MapViewerEngine::moveMap(float deltaX, float deltaY)
     plane->setUpOpenGL();
 }
 
-void MapViewerEngine::zoomMap(float zoomAmount)
+void MapViewerEngine::zoomMapUV(float zoomAmount, float zoomHereU, float zoomHereV)
 {
     Mesh *plane = scene_->getMesh(0);
     Vertex *vertices = plane->getVertices();
     int vertexCount = plane->getVertexCount();
-
-    float currentScreenCenterU = (vertices[0].u + vertices[3].u) / 2.0f;
-    float currentScreenCenterV = (vertices[0].v + vertices[3].v) / 2.0f;
 
     float oldZoomLevel = zoomLevel;
     zoomLevel += zoomAmount * zoomSens;
@@ -149,13 +147,45 @@ void MapViewerEngine::zoomMap(float zoomAmount)
         for (int i = 0; i < vertexCount; i++)
         {
             // translate vertice to top left apply zoom and retranslate by center
-            vertices[i].u = (vertices[i].u - currentScreenCenterU) * zoomFactor + currentScreenCenterU;
-            vertices[i].v = (vertices[i].v - currentScreenCenterV) * zoomFactor + currentScreenCenterV;
+            vertices[i].u = (vertices[i].u - zoomHereU) * zoomFactor + zoomHereU;
+            vertices[i].v = (vertices[i].v - zoomHereV) * zoomFactor + zoomHereV;
         }
 
         limitVCoordinates(vertices, 4);
         plane->setUpOpenGL();
     }
+}
+
+void MapViewerEngine::zoomMap(float zoomAmount, float zoomHereCanvasX, float zoomHereCanvasY)
+{
+    Mesh *plane = scene_->getMesh(0);
+    Vertex *vertices = plane->getVertices();
+
+    // calculate currently visible uv range
+    float currentRangeU = vertices[1].u - vertices[0].u;
+    float currentRangeV = vertices[2].v - vertices[0].v;
+
+    // convert screen xy to uv coordinates
+    float screenRatioX = zoomHereCanvasX / (float)width_;
+    float screenRatioY = zoomHereCanvasY / (float)height_;
+
+    // add vertices[0].uv so it starts at the correct place and scale by the currently visible uv range
+    float zoomHereU = vertices[0].u + (screenRatioX * currentRangeU);
+    float zoomHereV = vertices[0].v + (screenRatioY * currentRangeV);
+
+    zoomMapUV(zoomAmount, zoomHereU, zoomHereV);
+}
+
+void MapViewerEngine::zoomMapToCenter(float zoomAmount)
+{
+    Mesh *plane = scene_->getMesh(0);
+    Vertex *vertices = plane->getVertices();
+    int vertexCount = plane->getVertexCount();
+
+    float currentScreenCenterU = (vertices[0].u + vertices[3].u) / 2.0f;
+    float currentScreenCenterV = (vertices[0].v + vertices[3].v) / 2.0f;
+
+    zoomMapUV(zoomAmount, currentScreenCenterU, currentScreenCenterV);
 }
 
 void MapViewerEngine::loadMap(const std::string &url, emscripten::val onSuccess, emscripten::val onError)
@@ -170,14 +200,16 @@ void MapViewerEngine::loadMap(const std::string &url)
 
 void MapViewerEngine::setCanvasSize(int width, int height)
 {
+    width_ = width;
+    height_ = height;
     std::string canvID = "#" + canvas_;
-    emscripten_set_canvas_element_size(canvID.c_str(), width, height);
-    renderer_->setImageDimensions(width, height);
+    emscripten_set_canvas_element_size(canvID.c_str(), width_, height_);
+    renderer_->setImageDimensions(width_, height_);
 
     Mesh *plane = scene_->getMesh(0);
     Vertex *vertices = plane->getVertices();
 
-    float screenAspectRatio = (float)width / (float)height;
+    float screenAspectRatio = (float)width_ / height_;
 
     // first we calculate the center of the horizontal axis
     float currentCenterU = (vertices[0].u + vertices[1].u) * 0.5f;

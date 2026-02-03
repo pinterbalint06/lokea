@@ -1589,7 +1589,7 @@ class Nc extends Error {
 var Rc = a => {
   a = Oc(a);
   var b = R(a);
-  Qc(a);
+  Pc(a);
   return b;
 }, Sc = (a, b) => {
   function c(f) {
@@ -1884,6 +1884,9 @@ var Wc = (a, b) => {
   a -= 5120;
   return 0 == a ? A : 1 == a ? C : 2 == a ? E : 4 == a ? G : 6 == a ? qa : 5 == a || 28922 == a || 28520 == a || 30779 == a || 30782 == a ? w : pa;
 };
+function Id(a, b) {
+  "function" == typeof a ? a(b) : console.error(b);
+}
 ub = Array(4096);
 Kb(L, "/");
 O("/tmp");
@@ -2074,8 +2077,8 @@ n.FS_createLazyFile = (...a) => $b(...a);
 "writeI53ToI64 writeI53ToI64Clamped writeI53ToI64Signaling writeI53ToU64Clamped writeI53ToU64Signaling readI53FromI64 readI53FromU64 convertI32PairToI53 convertI32PairToI53Checked convertU32PairToI53 stackAlloc getTempRet0 setTempRet0 zeroMemory withStackSave inetPton4 inetNtop4 inetPton6 inetNtop6 readSockaddr writeSockaddr runMainThreadEmAsm autoResumeAudioContext getDynCaller dynCall runtimeKeepalivePush runtimeKeepalivePop asmjsMangle HandleAllocator addOnPreRun addOnInit addOnPostCtor addOnPreMain addOnExit addOnPostRun STACK_SIZE STACK_ALIGN POINTER_SIZE ASSERTIONS ccall cwrap convertJsFunctionToWasm getEmptyTableSlot updateTableMap getFunctionAddress addFunction removeFunction intArrayToString stringToAscii stringToNewUTF8 stringToUTF8OnStack writeArrayToMemory registerKeyEventCallback getBoundingClientRect fillMouseEventData registerMouseEventCallback registerWheelEventCallback registerUiEventCallback registerFocusEventCallback fillDeviceOrientationEventData registerDeviceOrientationEventCallback fillDeviceMotionEventData registerDeviceMotionEventCallback screenOrientation fillOrientationChangeEventData registerOrientationChangeEventCallback fillFullscreenChangeEventData registerFullscreenChangeEventCallback JSEvents_requestFullscreen JSEvents_resizeCanvasForFullscreen registerRestoreOldStyle hideEverythingExceptGivenElement restoreHiddenElements setLetterbox softFullscreenResizeWebGLRenderTarget doRequestFullscreen fillPointerlockChangeEventData registerPointerlockChangeEventCallback registerPointerlockErrorEventCallback requestPointerLock fillVisibilityChangeEventData registerVisibilityChangeEventCallback registerTouchEventCallback fillGamepadEventData registerGamepadEventCallback registerBeforeUnloadEventCallback fillBatteryEventData registerBatteryEventCallback setCanvasElementSize getCanvasElementSize jsStackTrace getCallstack convertPCtoSourceLocation checkWasiClock wasiRightsToMuslOFlags wasiOFlagsToMuslOFlags safeSetTimeout setImmediateWrapped safeRequestAnimationFrame clearImmediateWrapped registerPostMainLoop registerPreMainLoop getPromise makePromise idsToPromises makePromiseCallback findMatchingCatch Browser_asyncPrepareDataCounter isLeapYear ydayFromDate arraySum addDays getSocketFromFD getSocketAddress FS_mkdirTree _setNetworkCallback webgl_enable_WEBGL_multi_draw webgl_enable_EXT_polygon_offset_clamp webgl_enable_EXT_clip_control webgl_enable_WEBGL_polygon_mode emscriptenWebGLGet emscriptenWebGLGetUniform emscriptenWebGLGetVertexAttrib __glGetActiveAttribOrUniform writeGLArray registerWebGlEventCallback runAndAbortIfError emscriptenWebGLGetIndexed webgl_enable_WEBGL_draw_instanced_base_vertex_base_instance webgl_enable_WEBGL_multi_draw_instanced_base_vertex_base_instance ALLOC_NORMAL ALLOC_STACK allocate writeStringToMemory writeAsciiToMemory allocateUTF8 allocateUTF8OnStack demangle stackTrace getNativeTypeSize getFunctionArgsName createJsInvokerSignature PureVirtualError registerInheritedInstance unregisterInheritedInstance getInheritedInstanceCount getLiveInheritedInstances setDelayFunction count_emval_handles getStringOrSymbol emval_returnValue emval_lookupTypes emval_addMethodCaller".split(" ").forEach(function(a) {
   ma(a);
 });
-"run out err callMain abort wasmExports HEAPF32 HEAPF64 HEAP8 HEAPU8 HEAP16 HEAPU16 HEAP32 HEAPU32 HEAP64 HEAPU64 writeStackCookie checkStackCookie INT53_MAX INT53_MIN bigintToI53Checked stackSave stackRestore createNamedFunction ptrToString exitJS getHeapMax growMemory ENV ERRNO_CODES strError DNS Protocols Sockets timers warnOnce readEmAsmArgsArray readEmAsmArgs runEmAsmFunction jstoi_q getExecutableName handleException keepRuntimeAlive callUserCallback maybeExit asyncLoad alignMemory mmapAlloc wasmTable wasmMemory getUniqueRunDependency noExitRuntime freeTableIndexes functionsInTableMap setValue getValue PATH PATH_FS UTF8Decoder UTF8ArrayToString stringToUTF8Array stringToUTF8 lengthBytesUTF8 intArrayFromString AsciiToString UTF16Decoder UTF16ToString stringToUTF16 lengthBytesUTF16 UTF32ToString stringToUTF32 lengthBytesUTF32 JSEvents specialHTMLTargets maybeCStringToJsString findEventTarget findCanvasEventTarget currentFullscreenStrategy restoreOldWindowedStyle UNWIND_CACHE ExitStatus getEnvStrings doReadv doWritev initRandomFill randomFill emSetImmediate emClearImmediate_deps emClearImmediate promiseMap uncaughtExceptionCount exceptionLast exceptionCaught ExceptionInfo Browser requestFullscreen requestFullScreen setCanvasSize getUserMedia createContext getPreloadedImageData__data wget MONTH_DAYS_REGULAR MONTH_DAYS_LEAP MONTH_DAYS_REGULAR_CUMULATIVE MONTH_DAYS_LEAP_CUMULATIVE SYSCALLS preloadPlugins FS_createPreloadedFile FS_modeStringToFlags FS_getMode FS_stdin_getChar_buffer FS_stdin_getChar FS_readFile FS FS_root FS_mounts FS_devices FS_streams FS_nextInode FS_nameTable FS_currentPath FS_initialized FS_ignorePermissions FS_filesystems FS_syncFSRequests FS_lookupPath FS_getPath FS_hashName FS_hashAddNode FS_hashRemoveNode FS_lookupNode FS_createNode FS_destroyNode FS_isRoot FS_isMountpoint FS_isFile FS_isDir FS_isLink FS_isChrdev FS_isBlkdev FS_isFIFO FS_isSocket FS_flagsToPermissionString FS_nodePermissions FS_mayLookup FS_mayCreate FS_mayDelete FS_mayOpen FS_checkOpExists FS_nextfd FS_getStreamChecked FS_getStream FS_createStream FS_closeStream FS_dupStream FS_doSetAttr FS_chrdev_stream_ops FS_major FS_minor FS_makedev FS_registerDevice FS_getDevice FS_getMounts FS_syncfs FS_mount FS_unmount FS_lookup FS_mknod FS_statfs FS_statfsStream FS_statfsNode FS_create FS_mkdir FS_mkdev FS_symlink FS_rename FS_rmdir FS_readdir FS_readlink FS_stat FS_fstat FS_lstat FS_doChmod FS_chmod FS_lchmod FS_fchmod FS_doChown FS_chown FS_lchown FS_fchown FS_doTruncate FS_truncate FS_ftruncate FS_utime FS_open FS_close FS_isClosed FS_llseek FS_read FS_write FS_mmap FS_msync FS_ioctl FS_writeFile FS_cwd FS_chdir FS_createDefaultDirectories FS_createDefaultDevices FS_createSpecialDirectories FS_createStandardStreams FS_staticInit FS_init FS_quit FS_findObject FS_analyzePath FS_createFile FS_forceLoadFile FS_absolutePath FS_createFolder FS_createLink FS_joinPath FS_mmapAlloc FS_standardizePath MEMFS TTY PIPEFS SOCKFS tempFixedLengthArray miniTempWebGLFloatBuffers miniTempWebGLIntBuffers heapObjectForWebGLType toTypedArrayIndex GL computeUnpackAlignedImageSize colorChannelsInGlTextureFormat emscriptenWebGLGetTexPixelData webglGetUniformLocation webglPrepareUniformLocationsBeforeFirstUse webglGetLeftBracePos AL GLUT EGL GLEW IDBStore SDL SDL_gfx print printErr jstoi_s InternalError BindingError throwInternalError throwBindingError registeredTypes awaitingDependencies typeDependencies tupleRegistrations structRegistrations sharedRegisterType whenDependentTypesAreResolved getTypeName getFunctionName heap32VectorToArray requireRegisteredType usesDestructorStack checkArgCount getRequiredArgCount createJsInvoker UnboundTypeError EmValType EmValOptionalType throwUnboundTypeError ensureOverloadTable exposePublicSymbol replacePublicSymbol embindRepr registeredInstances getBasestPointer getInheritedInstance registeredPointers registerType integerReadValueFromPointer enumReadValueFromPointer floatReadValueFromPointer assertIntegerRange readPointer runDestructors craftInvokerFunction embind__requireFunction genericPointerToWireType constNoSmartPtrRawPointerToWireType nonConstNoSmartPtrRawPointerToWireType init_RegisteredPointer RegisteredPointer RegisteredPointer_fromWireType runDestructor releaseClassHandle finalizationRegistry detachFinalizer_deps detachFinalizer attachFinalizer makeClassHandle init_ClassHandle ClassHandle throwInstanceAlreadyDeleted deletionQueue flushPendingDeletes delayFunction RegisteredClass shallowCopyInternalPointer downcastPointer upcastPointer validateThis char_0 char_9 makeLegalFunctionName emval_freelist emval_handles emval_symbols Emval emval_methodCallers".split(" ").forEach(ma);
-var Id = {108032:() => {
+"run out err callMain abort wasmExports HEAPF32 HEAPF64 HEAP8 HEAPU8 HEAP16 HEAPU16 HEAP32 HEAPU32 HEAP64 HEAPU64 writeStackCookie checkStackCookie INT53_MAX INT53_MIN bigintToI53Checked stackSave stackRestore createNamedFunction ptrToString exitJS getHeapMax growMemory ENV ERRNO_CODES strError DNS Protocols Sockets timers warnOnce readEmAsmArgsArray readEmAsmArgs runEmAsmFunction jstoi_q getExecutableName handleException keepRuntimeAlive callUserCallback maybeExit asyncLoad alignMemory mmapAlloc wasmTable wasmMemory getUniqueRunDependency noExitRuntime freeTableIndexes functionsInTableMap setValue getValue PATH PATH_FS UTF8Decoder UTF8ArrayToString stringToUTF8Array stringToUTF8 lengthBytesUTF8 intArrayFromString AsciiToString UTF16Decoder UTF16ToString stringToUTF16 lengthBytesUTF16 UTF32ToString stringToUTF32 lengthBytesUTF32 JSEvents specialHTMLTargets maybeCStringToJsString findEventTarget findCanvasEventTarget currentFullscreenStrategy restoreOldWindowedStyle UNWIND_CACHE ExitStatus getEnvStrings doReadv doWritev initRandomFill randomFill emSetImmediate emClearImmediate_deps emClearImmediate promiseMap uncaughtExceptionCount exceptionLast exceptionCaught ExceptionInfo Browser requestFullscreen requestFullScreen setCanvasSize getUserMedia createContext getPreloadedImageData__data wget MONTH_DAYS_REGULAR MONTH_DAYS_LEAP MONTH_DAYS_REGULAR_CUMULATIVE MONTH_DAYS_LEAP_CUMULATIVE SYSCALLS preloadPlugins FS_createPreloadedFile FS_modeStringToFlags FS_getMode FS_stdin_getChar_buffer FS_stdin_getChar FS_readFile FS FS_root FS_mounts FS_devices FS_streams FS_nextInode FS_nameTable FS_currentPath FS_initialized FS_ignorePermissions FS_filesystems FS_syncFSRequests FS_lookupPath FS_getPath FS_hashName FS_hashAddNode FS_hashRemoveNode FS_lookupNode FS_createNode FS_destroyNode FS_isRoot FS_isMountpoint FS_isFile FS_isDir FS_isLink FS_isChrdev FS_isBlkdev FS_isFIFO FS_isSocket FS_flagsToPermissionString FS_nodePermissions FS_mayLookup FS_mayCreate FS_mayDelete FS_mayOpen FS_checkOpExists FS_nextfd FS_getStreamChecked FS_getStream FS_createStream FS_closeStream FS_dupStream FS_doSetAttr FS_chrdev_stream_ops FS_major FS_minor FS_makedev FS_registerDevice FS_getDevice FS_getMounts FS_syncfs FS_mount FS_unmount FS_lookup FS_mknod FS_statfs FS_statfsStream FS_statfsNode FS_create FS_mkdir FS_mkdev FS_symlink FS_rename FS_rmdir FS_readdir FS_readlink FS_stat FS_fstat FS_lstat FS_doChmod FS_chmod FS_lchmod FS_fchmod FS_doChown FS_chown FS_lchown FS_fchown FS_doTruncate FS_truncate FS_ftruncate FS_utime FS_open FS_close FS_isClosed FS_llseek FS_read FS_write FS_mmap FS_msync FS_ioctl FS_writeFile FS_cwd FS_chdir FS_createDefaultDirectories FS_createDefaultDevices FS_createSpecialDirectories FS_createStandardStreams FS_staticInit FS_init FS_quit FS_findObject FS_analyzePath FS_createFile FS_forceLoadFile FS_absolutePath FS_createFolder FS_createLink FS_joinPath FS_mmapAlloc FS_standardizePath MEMFS TTY PIPEFS SOCKFS tempFixedLengthArray miniTempWebGLFloatBuffers miniTempWebGLIntBuffers heapObjectForWebGLType toTypedArrayIndex GL computeUnpackAlignedImageSize colorChannelsInGlTextureFormat emscriptenWebGLGetTexPixelData webglGetUniformLocation webglPrepareUniformLocationsBeforeFirstUse webglGetLeftBracePos AL GLUT EGL GLEW IDBStore SDL SDL_gfx print printErr jstoi_s InternalError BindingError throwInternalError throwBindingError registeredTypes awaitingDependencies typeDependencies tupleRegistrations structRegistrations sharedRegisterType whenDependentTypesAreResolved getTypeName getFunctionName heap32VectorToArray requireRegisteredType usesDestructorStack checkArgCount getRequiredArgCount createJsInvoker UnboundTypeError EmValType EmValOptionalType throwUnboundTypeError ensureOverloadTable exposePublicSymbol replacePublicSymbol embindRepr registeredInstances getBasestPointer getInheritedInstance registeredPointers registerType integerReadValueFromPointer enumReadValueFromPointer floatReadValueFromPointer assertIntegerRange readPointer runDestructors craftInvokerFunction embind__requireFunction genericPointerToWireType constNoSmartPtrRawPointerToWireType nonConstNoSmartPtrRawPointerToWireType init_RegisteredPointer RegisteredPointer RegisteredPointer_fromWireType runDestructor releaseClassHandle finalizationRegistry detachFinalizer_deps detachFinalizer attachFinalizer makeClassHandle init_ClassHandle ClassHandle throwInstanceAlreadyDeleted deletionQueue flushPendingDeletes delayFunction RegisteredClass shallowCopyInternalPointer downcastPointer upcastPointer validateThis char_0 char_9 makeLegalFunctionName emval_freelist emval_handles emval_symbols Emval emval_methodCallers handleError".split(" ").forEach(ma);
+var Jd = {108032:() => {
   throw "A böngésződ nem támogatja a WebGL-t!";
 }, 108083:a => {
   throw "Sikertelen shader fordítás: " + N(a);
@@ -2087,7 +2090,7 @@ var Id = {108032:() => {
   }
 }, 108307:a => {
   throw "Sikertelen fájl beolvasás: " + N(a);
-}}, Oc = x("___getTypeName"), Jd = x("_malloc"), Qc = x("_free"), ia = x("_emscripten_stack_get_end"), Kd = x("__emscripten_timeout"), xb = x("_strerror"), Ld = x("_emscripten_stack_init"), od = x("_emscripten_stack_get_current"), wa = x("wasmMemory"), Mc = x("wasmTable"), Md = {__cxa_throw:(a, b, c) => {
+}}, Oc = x("___getTypeName"), Kd = x("_malloc"), Pc = x("_free"), ia = x("_emscripten_stack_get_end"), Ld = x("__emscripten_timeout"), xb = x("_strerror"), Md = x("_emscripten_stack_init"), od = x("_emscripten_stack_get_current"), wa = x("wasmMemory"), Mc = x("wasmTable"), Nd = {__cxa_throw:(a, b, c) => {
   a = new Fa(a);
   w[a.m + 16 >> 2] = 0;
   w[a.m + 4 >> 2] = b;
@@ -2310,11 +2313,11 @@ var Id = {108032:() => {
       if (void 0 === D.Y) {
         throw new S(`${h} has no accessible constructor`);
       }
-      var Pc = D.Y[K.length];
-      if (void 0 === Pc) {
+      var Qc = D.Y[K.length];
+      if (void 0 === Qc) {
         throw new S(`Tried to invoke ctor of ${h} with invalid number of parameters (${K.length}) - expected (${Object.keys(D.Y).toString()}) parameters instead!`);
       }
-      return Pc.apply(this, K);
+      return Qc.apply(this, K);
     });
     var H = Object.create(F, {constructor:{value:z}});
     z.prototype = H;
@@ -2482,7 +2485,7 @@ var Id = {108032:() => {
   b = R(b);
   P(a, {name:b, o(c) {
     var d = N(c + 4, w[c >> 2], !0);
-    Qc(c);
+    Pc(c);
     return d;
   }, B(c, d) {
     d instanceof ArrayBuffer && (d = new Uint8Array(d));
@@ -2491,13 +2494,13 @@ var Id = {108032:() => {
       throw new S("Cannot pass non-string to std::string");
     }
     var f = e ? Sa(d) : d.length;
-    var g = Jd(4 + f + 1), k = g + 4;
+    var g = Kd(4 + f + 1), k = g + 4;
     w[g >> 2] = f;
     e ? ed(d, k, f + 1) : C.set(d, k);
-    null !== c && c.push(Qc, g);
+    null !== c && c.push(Pc, g);
     return g;
   }, P:dc, F(c) {
-    Qc(c);
+    Pc(c);
   }});
 }, _embind_register_std_wstring:(a, b, c) => {
   c = R(c);
@@ -2510,19 +2513,19 @@ var Id = {108032:() => {
   }
   P(a, {name:c, o:g => {
     var k = d(g + 4, w[g >> 2] * b, !0);
-    Qc(g);
+    Pc(g);
     return k;
   }, B:(g, k) => {
     if ("string" != typeof k) {
       throw new S(`Cannot pass non-string to C++ string type ${c}`);
     }
-    var l = f(k), m = Jd(4 + l + b);
+    var l = f(k), m = Kd(4 + l + b);
     w[m >> 2] = l / b;
     e(k, m + 4, l + b);
-    null !== g && g.push(Qc, m);
+    null !== g && g.push(Pc, m);
     return m;
   }, P:dc, F(g) {
-    Qc(g);
+    Pc(g);
   }});
 }, _embind_register_value_object:(a, b, c, d, e, f) => {
   bc[a] = {name:R(b), Ca:T(c, d), O:T(e, f), Ja:[]};
@@ -2554,7 +2557,7 @@ var Id = {108032:() => {
   var c = setTimeout(() => {
     q(a in nd);
     delete nd[a];
-    pd(() => Kd(a, performance.now()));
+    pd(() => Ld(a, performance.now()));
   }, b);
   nd[a] = {id:c, Xb:b};
   return 0;
@@ -2588,8 +2591,8 @@ var Id = {108032:() => {
     qd.push(112 == d ? w[c >> 2] : 106 == d ? sa[c >> 3] : 105 == d ? G[c >> 2] : ra[c >> 3]);
     c += e ? 8 : 4;
   }
-  q(Id.hasOwnProperty(a), `No EM_ASM constant found at address ${a}.  The loaded WebAssembly file is likely out of sync with the generated JavaScript.`);
-  return Id[a](...qd);
+  q(Jd.hasOwnProperty(a), `No EM_ASM constant found at address ${a}.  The loaded WebAssembly file is likely out of sync with the generated JavaScript.`);
+  return Jd[a](...qd);
 }, emscripten_console_error:a => {
   q("number" == typeof a);
   console.error(N(a));
@@ -2964,21 +2967,27 @@ var Id = {108032:() => {
 }, glViewport:(a, b, c, d) => W.viewport(a, b, c, d), proc_exit:a => {
   throw new Da(a);
 }, textureFromURL:function(a, b, c, d, e) {
-  let f = Z[c].$, g = new Image(), k = N(b), l = $c(d), m = $c(e);
-  g.onload = function() {
+  let f = Z[c].$, g = N(b), k = $c(d), l = $c(e);
+  fetch(g).then(function(m) {
+    if (m.ok) {
+      let h = m.headers.get("content-type");
+      h && !h.startsWith("image/") && Id(l, "Invalid content-type:\t" + h);
+      return m.blob();
+    }
+  }).then(function(m) {
+    return createImageBitmap(m);
+  }).then(function(m) {
     let h = vd[a];
-    h ? (f.bindTexture(f.TEXTURE_2D, h), f.texImage2D(f.TEXTURE_2D, 0, f.RGBA, f.RGBA, f.UNSIGNED_BYTE, g), f.generateMipmap(f.TEXTURE_2D), f.texParameteri(f.TEXTURE_2D, f.TEXTURE_MIN_FILTER, f.LINEAR_MIPMAP_LINEAR), f.texParameteri(f.TEXTURE_2D, f.TEXTURE_MAG_FILTER, f.LINEAR), f.bindTexture(f.TEXTURE_2D, null), "function" == typeof l && l()) : "function" == typeof m && m("Texture failed to load (it no longer exists):\t" + k);
-  };
-  g.onerror = function() {
-    "function" == typeof m && m("Texture failed to load:\t" + k);
-  };
-  g.src = k;
-}}, Nd;
-function Od() {
+    h ? (f.bindTexture(f.TEXTURE_2D, h), f.texImage2D(f.TEXTURE_2D, 0, f.RGBA, f.RGBA, f.UNSIGNED_BYTE, m), f.generateMipmap(f.TEXTURE_2D), f.texParameteri(f.TEXTURE_2D, f.TEXTURE_MIN_FILTER, f.LINEAR_MIPMAP_LINEAR), f.texParameteri(f.TEXTURE_2D, f.TEXTURE_MAG_FILTER, f.LINEAR), f.bindTexture(f.TEXTURE_2D, null), "function" == typeof k && k()) : "function" == typeof l && Id(l, "Texture failed to load (it no longer exists):\t" + g);
+  }).catch(function() {
+    Id(l, "Texture failed to load (Fetch/decoding error):\t" + g);
+  });
+}}, Od;
+function Pd() {
   if (0 < ib) {
-    jb = Od;
+    jb = Pd;
   } else {
-    Ld();
+    Md();
     var a = ia();
     q(0 == (a & 3));
     0 == a && (a += 4);
@@ -2986,10 +2995,10 @@ function Od() {
     w[a + 4 >> 2] = 2310721022;
     w[0] = 1668509029;
     if (0 < ib) {
-      jb = Od;
+      jb = Pd;
     } else {
-      q(!Nd);
-      Nd = !0;
+      q(!Od);
+      Od = !0;
       n.calledRun = !0;
       if (!fa) {
         q(!ua);
@@ -3019,7 +3028,7 @@ function Od() {
 }
 var ya;
 ya = await (async function() {
-  var a = {env:Md, wasi_snapshot_preview1:Md};
+  var a = {env:Nd, wasi_snapshot_preview1:Nd};
   za ??= n.locateFile ? ba + "terrain.wasm" : (new URL("terrain.wasm", import.meta.url)).href;
   a = await Ca(a);
   q(n === n, "the Module object should not be replaced during async compilation - perhaps the order of HTML elements is wrong?");
@@ -3027,19 +3036,19 @@ ya = await (async function() {
   q("undefined" != typeof a.__getTypeName, "missing Wasm export: __getTypeName");
   Oc = xa("__getTypeName", 1);
   q("undefined" != typeof a.malloc, "missing Wasm export: malloc");
-  Jd = xa("malloc", 1);
+  Kd = xa("malloc", 1);
   q("undefined" != typeof a.free, "missing Wasm export: free");
-  Qc = xa("free", 1);
+  Pc = xa("free", 1);
   q("undefined" != typeof a.fflush, "missing Wasm export: fflush");
   q("undefined" != typeof a.emscripten_stack_get_end, "missing Wasm export: emscripten_stack_get_end");
   ia = a.emscripten_stack_get_end;
   q("undefined" != typeof a.emscripten_stack_get_base, "missing Wasm export: emscripten_stack_get_base");
   q("undefined" != typeof a._emscripten_timeout, "missing Wasm export: _emscripten_timeout");
-  Kd = xa("_emscripten_timeout", 2);
+  Ld = xa("_emscripten_timeout", 2);
   q("undefined" != typeof a.strerror, "missing Wasm export: strerror");
   xb = xa("strerror", 1);
   q("undefined" != typeof a.emscripten_stack_init, "missing Wasm export: emscripten_stack_init");
-  Ld = a.emscripten_stack_init;
+  Md = a.emscripten_stack_init;
   q("undefined" != typeof a.emscripten_stack_get_free, "missing Wasm export: emscripten_stack_get_free");
   q("undefined" != typeof a._emscripten_stack_restore, "missing Wasm export: _emscripten_stack_restore");
   q("undefined" != typeof a._emscripten_stack_alloc, "missing Wasm export: _emscripten_stack_alloc");
@@ -3053,7 +3062,7 @@ ya = await (async function() {
   va();
   return ya;
 }());
-Od();
+Pd();
 ua ? moduleRtn = n : moduleRtn = new Promise((a, b) => {
   na = a;
   oa = b;

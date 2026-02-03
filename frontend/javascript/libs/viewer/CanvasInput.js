@@ -118,8 +118,12 @@ export class CanvasInput {
     #wheel(e) {
         e.preventDefault();
         const d = -e.deltaY;
+        let canvasRectangle = canvas.getBoundingClientRect();
 
-        this.onZoom(d);
+        let cursorInsideCanvasX = e.clientX - canvasRectangle.left;
+        let cursorInsideCanvasY = e.clientY - canvasRectangle.top;
+
+        this.onZoom(d, cursorInsideCanvasX, cursorInsideCanvasY);
     }
 
     #calcDiff(p1, p2) {
