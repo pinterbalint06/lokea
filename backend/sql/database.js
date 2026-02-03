@@ -34,10 +34,17 @@ async function getUserByEmail(email) {
     const [result] = await pool.execute(query, [email]);
     return result;
 }
+
+async function getUsers() {
+    const query = 'SELECT users.user_id, users.username, users.email, users.role, users.pfp, users.is_2fa, users.created_at, users.deleted_at FROM users';
+    const [rows] = await pool.execute(query);
+    return rows;
+}
 //!Export
 module.exports = {
     // selectall,
     newUser, 
     getUserByUsername,
-    getUserByEmail
+    getUserByEmail,
+    getUsers
 };

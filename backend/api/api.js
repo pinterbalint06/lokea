@@ -156,4 +156,18 @@ router.post('/signout', (request, response) => {
     });
 });
 
+router.get('/admin/users', async (request, response) => {
+    try {
+        if (request.session.role != 'ADMIN') {
+            response.status(403).json({message: "Nincs hozzáférésed!"});
+        }
+        else {
+            let users = await database.getUsers();
+            response.status(200).json({message: "Sikeres lekérés", users: users});
+        }
+    } catch (error) {
+        response.status(500).json({ error: error })
+    }
+})
+
 module.exports = router;
