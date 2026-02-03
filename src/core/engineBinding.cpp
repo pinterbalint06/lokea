@@ -1,4 +1,5 @@
 #include <emscripten/bind.h>
+#include <emscripten/val.h>
 #include <string>
 
 #include "core/engine.h"
@@ -24,7 +25,8 @@ EMSCRIPTEN_BINDINGS(engineBinding)
             }))
         .function("uploadTextureToGPU", &Engine::uploadTextureToGPU)
         .function("deleteTexture", &Engine::deleteTexture)
-        .function("loadTextureFromUrl", &Engine::loadTextureFromUrl)
+        .function("loadTextureFromUrl", emscripten::select_overload<void(const std::string&, int)>(&Engine::loadTextureFromUrl))
+        .function("loadTextureFromUrlPromise", emscripten::select_overload<void(const std::string&, int, emscripten::val, emscripten::val)>(&Engine::loadTextureFromUrl))
         .function("getPitch", &Engine::getPitch)
         .function("getYaw", &Engine::getYaw)
         .function("setCanvasSize", &Engine::setCanvasSize)

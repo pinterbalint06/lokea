@@ -1,6 +1,7 @@
 #include <string>
 #include <vector>
 #include <memory>
+#include <emscripten/val.h>
 #include <emscripten/html5.h>
 
 #include "core/rendering/renderer.h"
@@ -152,7 +153,7 @@ void Engine::deleteTexture(int meshIndex)
     }
 }
 
-void Engine::loadTextureFromUrl(const std::string &url, int meshIndex)
+void Engine::loadTextureFromUrl(const std::string &url, int meshIndex, emscripten::val onSuccess, emscripten::val onError)
 {
     Mesh *mesh = scene_->getMesh(meshIndex);
     if (mesh != nullptr)
@@ -162,7 +163,7 @@ void Engine::loadTextureFromUrl(const std::string &url, int meshIndex)
         {
             Texture *texture = new Texture();
 
-            texture->loadFromUrl(url);
+            texture->loadFromUrl(url, onSuccess, onError);
 
             Materials::Material newTexMat = mesh->getMaterial();
             newTexMat.setTexture(texture);
@@ -170,7 +171,12 @@ void Engine::loadTextureFromUrl(const std::string &url, int meshIndex)
         }
         else
         {
-            texture->loadFromUrl(url);
+            texture->loadFromUrl(url, onSuccess, onError);
         }
     }
+}
+
+void Engine::loadTextureFromUrl(const std::string &url, int meshIndex)
+{
+    loadTextureFromUrl(url, meshIndex, emscripten::val::undefined(), emscripten::val::undefined());
 }

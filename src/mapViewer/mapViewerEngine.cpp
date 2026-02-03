@@ -1,7 +1,9 @@
 #include <emscripten/val.h>
 #include <emscripten/html5.h>
+#include <emscripten/console.h>
 #include <string>
 #include <cstring>
+#include <algorithm>
 
 #include "core/rendering/shader.h"
 
@@ -13,31 +15,38 @@
 
 #include "core/engine.h"
 
+#include "mapViewer/mapViewerSettings.h"
 #include "mapViewer/mapViewerEngine.h"
 
-constexpr float minZoom = 1.0f;
-constexpr float maxZoom = 50.0f;
+enum VertexIndex
+{
+    TOP_LEFT = 0,
+    TOP_RIGHT = 1,
+    BOTTOM_LEFT = 2,
+    BOTTOM_RIGHT = 3
+};
 
 Mesh *MapViewerEngine::createPlane()
 {
     float startU = 0.0f;
     float endU = 1.0f;
 
+    // squeeze the texture onto the plane according to aspect ratio
+    // the image will be stretched to the canvas size and appear correctly
     float aspectRatio = (float)width_ / (float)height_;
     float off = (aspectRatio - 1.0f) * 0.5f;
     startU = -off;
     endU = 1.0f + off;
-    const Vertex vertices[] = {
-        //  x      y      z     w       nx    ny    nz        u     v
-        { -1.0f,  1.0f,  -0.1f, 1.0f,   0.0f, 0.0f, 1.0f,   startU, 0.0f }, // TOP LEFT
-        {  1.0f,  1.0f,  -0.1f, 1.0f,   0.0f, 0.0f, 1.0f,   endU,   0.0f }, // TOP RIGHT
-        { -1.0f, -1.0f,  -0.1f, 1.0f,   0.0f, 0.0f, 1.0f,   startU, 1.0f }, // BOTTOM LEFT
-        {  1.0f, -1.0f,  -0.1f, 1.0f,   0.0f, 0.0f, 1.0f,   endU,   1.0f }  // BOTTOM RIGHT
-    };
+    Vertex vertices[4];
+    //                            x      y      z     w     nx    ny    nz    u     v
+    vertices[TOP_LEFT] = { -1.0f, 1.0f, -0.1f, 1.0f, 0.0f, 0.0f, 1.0f, startU, 0.0f };
+    vertices[TOP_RIGHT] = { 1.0f, 1.0f, -0.1f, 1.0f, 0.0f, 0.0f, 1.0f, endU, 0.0f };
+    vertices[BOTTOM_LEFT] = { -1.0f, -1.0f, -0.1f, 1.0f, 0.0f, 0.0f, 1.0f, startU, 1.0f };
+    vertices[BOTTOM_RIGHT] = { 1.0f, -1.0f, -0.1f, 1.0f, 0.0f, 0.0f, 1.0f, endU, 1.0f };
 
     constexpr uint32_t indices[] = {
-        1, 2, 0,
-        1, 3, 2
+        TOP_RIGHT, BOTTOM_LEFT, TOP_LEFT,
+        TOP_RIGHT, BOTTOM_RIGHT, BOTTOM_LEFT
     };
 
     Mesh *plane = new Mesh(sizeof(vertices) / sizeof(Vertex), sizeof(indices) / sizeof(uint32_t));
@@ -47,155 +56,222 @@ Mesh *MapViewerEngine::createPlane()
     return plane;
 }
 
-
-MapViewerEngine::MapViewerEngine(const std::string &canvasID, int width, int height) : Engine(canvasID)
+MapViewerEngine::MapViewerEngine(const std::string &canvasID, int width, int height)
+    : Engine(canvasID)
 {
-    width_ = width;
-    height_ = height;
     setShadingMode(Shaders::SHADINGMODE::NO_SHADING);
     setProjectionType(PROJECTIONTYPE::ORTHOGRAPHIC);
     setZoom(0.218f);
+
+    width_ = width;
+    height_ = height;
     renderer_->setDefaultColor(255.0f, 0.0f, 255.0f);
-    scene_->getCamera()->setImageDimensions(width_, width_);
-    zoomLevel = 1.0f;
+    // set image dimension to 1:1 aspect ratio so it only covers the plane
+    scene_->getCamera()->setImageDimensions(1.0f, 1.0f);
+
+    zoomLevel_ = settings_.minZoom;
 
     renderer_->setImageDimensions(width_, height_);
-    Mesh *plane = createPlane();
-    addMesh(plane);
+    mapPlane_ = createPlane();
+    addMesh(mapPlane_);
 }
 
 MapViewerEngine::~MapViewerEngine()
 {
+    if (mapPlane_ != nullptr)
+    {
+        delete mapPlane_;
+        mapPlane_ = nullptr;
+    }
 }
 
-void MapViewerEngine::limitVCoordinates(Vertex* vertices, int vertexCount)
+void MapViewerEngine::limitVCoordinates()
 {
-    float minV = vertices[0].v;
-    float maxV = vertices[0].v;
-
-    for (int i = 1; i < vertexCount; i++)
+    if (mapPlane_ != nullptr)
     {
-        if (vertices[i].v < minV)
+        Vertex *vertices = mapPlane_->getVertices();
+        int vertexCount = mapPlane_->getVertexCount();
+
+        // top vertices (0, 1) have minV
+        float minV = vertices[TOP_LEFT].v;
+        // bottom vertices (2, 3) have maxV
+        float maxV = vertices[BOTTOM_LEFT].v;
+
+        float vOffset = 0.0f;
+
+        // max v range is 1
+        if (minV < 0.0f)
         {
-            minV = vertices[i].v;
+            // if the min is smaller than 0 we push it back
+            vOffset = -minV;
         }
         else
         {
-            if (vertices[i].v > maxV)
+            if (maxV > 1.0f)
             {
-                maxV = vertices[i].v;
+                // if the max is bigger than 1 we push it back below 1
+                vOffset = 1.0f - maxV;
+            }
+        }
+
+        if (vOffset != 0.0f)
+        {
+            for (int i = 0; i < vertexCount; i++)
+            {
+                vertices[i].v += vOffset;
             }
         }
     }
-
-    float height = maxV - minV;
-    float vOffset = 0.0f;
-
-    if (minV < 0.0f)
-    {
-        vOffset = 0.0f - minV;
-    }
     else
     {
-        if (maxV > 1.0f)
-        {
-            vOffset = 1.0f - maxV;
-        }
-    }
-
-    if (vOffset != 0.0f)
-    {
-        for (int i = 0; i < vertexCount; i++)
-        {
-            vertices[i].v += vOffset;
-        }
+        emscripten_console_error("Plane was destroyed!");
     }
 }
 
 void MapViewerEngine::moveMap(float deltaX, float deltaY)
 {
-    Mesh *plane = scene_->getMesh(0);
-    Vertex *vertices = plane->getVertices();
-    int vertexCount = plane->getVertexCount();
-
-    float zoomCorrectedSensitivity = (1.0f / zoomLevel) * sens;
-    float dX = deltaX * zoomCorrectedSensitivity;
-    float dY = deltaY * zoomCorrectedSensitivity;
-
-    for (int i = 0; i < vertexCount; i++)
+    if (mapPlane_ != nullptr)
     {
-        vertices[i].u += dX;
-        vertices[i].v += dY;
+        Vertex *vertices = mapPlane_->getVertices();
+        int vertexCount = mapPlane_->getVertexCount();
+
+        float zoomFactor = (1.0f / zoomLevel_);
+        float zoomCorrectedSensitivity = settings_.panSensitivity * zoomFactor;
+
+        float dX = deltaX * zoomCorrectedSensitivity;
+        float dY = deltaY * zoomCorrectedSensitivity;
+
+        for (int i = 0; i < vertexCount; i++)
+        {
+            vertices[i].u += dX;
+            vertices[i].v += dY;
+        }
+        limitVCoordinates();
+        mapPlane_->setUpOpenGL();
     }
-    limitVCoordinates(vertices, 4);
-    plane->setUpOpenGL();
+    else
+    {
+        emscripten_console_error("Plane was destroyed!");
+    }
 }
 
 void MapViewerEngine::zoomMapUV(float zoomAmount, float zoomHereU, float zoomHereV)
 {
-    Mesh *plane = scene_->getMesh(0);
-    Vertex *vertices = plane->getVertices();
-    int vertexCount = plane->getVertexCount();
-
-    float oldZoomLevel = zoomLevel;
-    zoomLevel += zoomAmount * zoomSens;
-    zoomLevel = std::clamp(zoomLevel, minZoom, maxZoom);
-    float zoomFactor = oldZoomLevel / zoomLevel;
-
-    if (zoomFactor != 1.0f)
+    if (mapPlane_ != nullptr)
     {
-        for (int i = 0; i < vertexCount; i++)
-        {
-            // translate vertice to top left apply zoom and retranslate by center
-            vertices[i].u = (vertices[i].u - zoomHereU) * zoomFactor + zoomHereU;
-            vertices[i].v = (vertices[i].v - zoomHereV) * zoomFactor + zoomHereV;
-        }
+        Vertex *vertices = mapPlane_->getVertices();
+        int vertexCount = mapPlane_->getVertexCount();
 
-        limitVCoordinates(vertices, 4);
-        plane->setUpOpenGL();
+        float oldZoomLevel = zoomLevel_;
+
+        zoomLevel_ += zoomAmount * settings_.zoomSensitivity;
+        zoomLevel_ = std::clamp(zoomLevel_, settings_.minZoom, settings_.maxZoom);
+
+        if (zoomLevel_ != oldZoomLevel)
+        {
+            float zoomFactor = oldZoomLevel / zoomLevel_;
+            for (int i = 0; i < vertexCount; i++)
+            {
+                // translate vertice to top left apply zoom and retranslate by center
+                vertices[i].u = (vertices[i].u - zoomHereU) * zoomFactor + zoomHereU;
+                vertices[i].v = (vertices[i].v - zoomHereV) * zoomFactor + zoomHereV;
+            }
+
+            limitVCoordinates();
+            mapPlane_->setUpOpenGL();
+        }
+    }
+    else
+    {
+        emscripten_console_error("Plane was destroyed!");
     }
 }
 
-void MapViewerEngine::zoomMap(float zoomAmount, float zoomHereCanvasX, float zoomHereCanvasY)
+void MapViewerEngine::getUVAtScreenPosition(float screenX, float screenY, float &u, float &v)
 {
-    Mesh *plane = scene_->getMesh(0);
-    Vertex *vertices = plane->getVertices();
+    if (mapPlane_ != nullptr)
+    {
+        Vertex *vertices = mapPlane_->getVertices();
 
-    // calculate currently visible uv range
-    float currentRangeU = vertices[1].u - vertices[0].u;
-    float currentRangeV = vertices[2].v - vertices[0].v;
+        // calculate currently visible uv range
+        float currentRangeU = vertices[TOP_RIGHT].u - vertices[TOP_LEFT].u;
+        float currentRangeV = vertices[BOTTOM_LEFT].v - vertices[TOP_LEFT].v;
 
-    // convert screen xy to uv coordinates
-    float screenRatioX = zoomHereCanvasX / (float)width_;
-    float screenRatioY = zoomHereCanvasY / (float)height_;
+        // convert screen xy to uv coordinates
+        float screenRatioX = screenX / (float)width_;
+        float screenRatioY = screenY / (float)height_;
 
-    // add vertices[0].uv so it starts at the correct place and scale by the currently visible uv range
-    float zoomHereU = vertices[0].u + (screenRatioX * currentRangeU);
-    float zoomHereV = vertices[0].v + (screenRatioY * currentRangeV);
+        // add vertices[TOP_LEFT].uv so it starts at the correct place and scale by the currently visible uv range
+        u = vertices[TOP_LEFT].u + (screenRatioX * currentRangeU);
+        v = vertices[TOP_LEFT].v + (screenRatioY * currentRangeV);
+    }
+    else
+    {
+        emscripten_console_error("Plane was destroyed!");
+    }
+}
+
+void MapViewerEngine::zoomMap(float zoomAmount, float zoomHereScreenX, float zoomHereScreenY)
+{
+    float zoomHereU = 0.0f;
+    float zoomHereV = 0.0f;
+    getUVAtScreenPosition(zoomHereScreenX, zoomHereScreenY, zoomHereU, zoomHereV);
 
     zoomMapUV(zoomAmount, zoomHereU, zoomHereV);
 }
 
 void MapViewerEngine::zoomMapToCenter(float zoomAmount)
 {
-    Mesh *plane = scene_->getMesh(0);
-    Vertex *vertices = plane->getVertices();
-    int vertexCount = plane->getVertexCount();
+    if (mapPlane_ != nullptr)
+    {
+        Vertex *vertices = mapPlane_->getVertices();
 
-    float currentScreenCenterU = (vertices[0].u + vertices[3].u) / 2.0f;
-    float currentScreenCenterV = (vertices[0].v + vertices[3].v) / 2.0f;
+        float currentScreenCenterU = (vertices[TOP_LEFT].u + vertices[BOTTOM_RIGHT].u) / 2.0f;
+        float currentScreenCenterV = (vertices[TOP_LEFT].v + vertices[BOTTOM_RIGHT].v) / 2.0f;
 
-    zoomMapUV(zoomAmount, currentScreenCenterU, currentScreenCenterV);
+        zoomMapUV(zoomAmount, currentScreenCenterU, currentScreenCenterV);
+    }
+    else
+    {
+        emscripten_console_error("Plane was destroyed!");
+    }
 }
 
 void MapViewerEngine::loadMap(const std::string &url, emscripten::val onSuccess, emscripten::val onError)
 {
-    loadTextureFromUrl(url, 0);
+    loadTextureFromUrl(url, 0, onSuccess, onError);
 }
 
 void MapViewerEngine::loadMap(const std::string &url)
 {
     loadMap(url, emscripten::val::undefined(), emscripten::val::undefined());
+}
+
+void MapViewerEngine::fitMapHorizontally()
+{
+    Vertex *vertices = mapPlane_->getVertices();
+
+    float screenAspectRatio = (float)width_ / height_;
+
+    // first we calculate the center of the horizontal axis
+    float currentCenterU = (vertices[TOP_LEFT].u + vertices[TOP_RIGHT].u) * 0.5f;
+
+    // we keep the current height
+    float currentMapHeightV = vertices[BOTTOM_LEFT].v - vertices[TOP_LEFT].v;
+
+    // change width according to aspect ratio
+    float newMapWidthU = currentMapHeightV * screenAspectRatio;
+
+    // we calculate half of the new width
+    float halfWidth = newMapWidthU * 0.5f;
+
+    // old center - new half width = left boundary of the new view
+    vertices[TOP_LEFT].u = currentCenterU - halfWidth;
+    vertices[BOTTOM_LEFT].u = currentCenterU - halfWidth;
+
+    // old center + new half width = right boundary of the new view
+    vertices[TOP_RIGHT].u = currentCenterU + halfWidth;
+    vertices[BOTTOM_RIGHT].u = currentCenterU + halfWidth;
 }
 
 void MapViewerEngine::setCanvasSize(int width, int height)
@@ -206,31 +282,15 @@ void MapViewerEngine::setCanvasSize(int width, int height)
     emscripten_set_canvas_element_size(canvID.c_str(), width_, height_);
     renderer_->setImageDimensions(width_, height_);
 
-    Mesh *plane = scene_->getMesh(0);
-    Vertex *vertices = plane->getVertices();
+    if (mapPlane_ != nullptr)
+    {
+        fitMapHorizontally();
 
-    float screenAspectRatio = (float)width_ / height_;
-
-    // first we calculate the center of the horizontal axis
-    float currentCenterU = (vertices[0].u + vertices[1].u) * 0.5f;
-
-    // current height
-    float currentMapHeightV = vertices[2].v - vertices[0].v;
-
-    // by aspect ratio we keep the height and make more visible in width
-    float newMapWidthU = currentMapHeightV * screenAspectRatio;
-
-    // we calculate the half of the new widht
-    float halfWidth = newMapWidthU * 0.5f;
-
-    // old center - new half width = left point of the new view
-    vertices[0].u = currentCenterU - halfWidth;
-    vertices[2].u = currentCenterU - halfWidth;
-
-    // old center + new half width = right point of the new view
-    vertices[1].u = currentCenterU + halfWidth;
-    vertices[3].u = currentCenterU + halfWidth;
-
-    // zpdate GPU
-    plane->setUpOpenGL();
+        // update GPU
+        mapPlane_->setUpOpenGL();
+    }
+    else
+    {
+        emscripten_console_error("Plane was destroyed!");
+    }
 }

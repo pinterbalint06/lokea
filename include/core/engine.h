@@ -1,6 +1,7 @@
 #ifndef ENGINE_H
 #define ENGINE_H
 
+#include <emscripten/val.h>
 #include <cstdint>
 #include <string>
 #include <memory>
@@ -44,6 +45,7 @@ public:
     uint8_t *initTexture(int width, int height, int meshIndex);
     void uploadTextureToGPU(int meshIndex);
     void deleteTexture(int meshIndex);
+    void loadTextureFromUrl(const std::string &url, int meshIndex, emscripten::val onSuccess, emscripten::val onError);
     void loadTextureFromUrl(const std::string &url, int meshIndex);
 
     float getPitch() { return scene_->getCamera()->getPitch(); }
