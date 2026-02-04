@@ -1,6 +1,4 @@
-import ModuleBuilder from './libs/webassembly/mapViewer/mapViewer.js';
-import { CanvasInput } from './libs/viewer/CanvasInput.js';
-
+import { MapViewer } from "./libs/viewer/MapViewer.js";
 
 // |------------------|
 // | GLOBAL VARIABLES |
@@ -12,60 +10,27 @@ const canvasId = "canvas";
 
 // The engine
 let mapViewerEngine;
-let Module;
-
 
 document.addEventListener("DOMContentLoaded", init);
 
 function init() {
-    ModuleBuilder().then((modu) => {
-        Module = modu;
-        initModule();
+    mapViewerEngine = new MapViewer(canvasId, {
+        "canvasWidth": jsCanvasSzelesseg,
+        "canvasHeight": jsCanvasMagassag
     });
-}
-
-function initModule() {
-    let canvas = document.getElementById(canvasId);
-    canvas.width = jsCanvasSzelesseg;
-    canvas.height = jsCanvasMagassag;
-    mapViewerEngine = new Module.MapViewerEngine(canvasId, jsCanvasSzelesseg, jsCanvasMagassag);
-    mapViewerEngine.loadMap("/images/worldmap.webp");
-    let inputControls = new CanvasInput(canvas, {
-        "mode": "2D",
-        onRotate: (deltaX, deltaY) => {
-            mapViewerEngine.moveMap(deltaX, deltaY);
-        },
-        onZoom: (zoomAmount, cursorX, cursorY) => {
-            mapViewerEngine.zoomMap(zoomAmount, cursorX, cursorY);
-        }
-    });
-    canvas.addEventListener("fullscreenchange", function () {
-        if (canvas != document.fullscreenElement) {
-            canvas.classList.add("border");
-            mapViewerEngine.setCanvasSize(jsCanvasSzelesseg, jsCanvasMagassag);
-        } else {
-            canvas.classList.remove("border");
-            console.log();
-            mapViewerEngine.setCanvasSize(window.innerWidth, window.innerHeight);
-        }
-    });
-
-    window.addEventListener("resize", function () {
-        if (document.fullscreenElement) {
-            mapViewerEngine.setCanvasSize(window.innerWidth, window.innerHeight);
-        }
-    });
-    requestAnimationFrame(mainLoop)
-}
-
-function mainLoop() {
-    mapViewerEngine.render();
-    requestAnimationFrame(mainLoop);
+    mapViewerEngine.loadMap("/images/worldmap.webp")
+        .then(function () {
+            console.log("image loaded");
+        }).catch(function (e) {
+            console.log(e);
+            for (const key in e) {
+                console.log(key, e[key]);
+            }
+        });
 }
 
 function fullScreen() {
-    let canvas = document.getElementById(canvasId);
-    canvas.requestFullscreen();
+    mapViewerEngine.toggleFullscreen();
 }
 
 window.fullScreen = fullScreen;

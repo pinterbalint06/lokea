@@ -1,4 +1,4 @@
-import { EquirectangularViewer } from './libs/viewer/EquirectangularViewer.js';
+import { EquirectangularViewer } from "./libs/viewer/EquirectangularViewer.js";
 
 // |------------------|
 // | GLOBAL VARIABLES |
@@ -66,7 +66,10 @@ function createOptionsForImageList() {
                 equirectangularViewer.loadImage(imageList[select.value].url, imageList[select.value].width, imageList[select.value].height).then(function () {
                     console.log("image loaded");
                 }).catch(function (e) {
-                    console.log(e)
+                    console.log(e);
+                    for (const key in e) {
+                        console.log(key, e[key]);
+                    }
                 });
             }
         });
@@ -83,8 +86,10 @@ async function init() {
         equirectangularViewer.loadImage(imageList[select.value].url, imageList[select.value].width, imageList[select.value].height).then(function () {
             console.log("image loaded");
         }).catch(function (e) {
-            console.log(e)
-            console.log(e.originalError)
+            console.log(e);
+            for (const key in e) {
+                console.log(key, e[key]);
+            }
         });
     }
 }
