@@ -186,21 +186,28 @@ async function usersDisplayre() {
 
     let tbody = document.createElement('tbody');
     tbody.classList.add("table-group-divider");
-    let adatok = [{
-        cucc: "hallo",
-        igen: 1,
-        cucdc: "hallo",
-        igefn: 1,
-        cuscc: "hallo"
-    }];
+    let adatok = (await osszesUser()).users;
     for (let i = 0; i < adatok.length; i++) {
         let tr = document.createElement('tr');
-        Object.values(adatok[i]).forEach(element => {
+        let ertekek = Object.values(adatok[i]);
+        for (let j = 0; j < ertekek.length; j++) {
             let td = document.createElement('td');
-            td.innerText = element;
+            if (j == 0) {
+                let circle = document.createElement('span');
+                circle.style.display = "inline-block";
+                circle.style.width = "12px";
+                circle.style.height = "12px";
+                circle.style.borderRadius = "50%";
+                circle.style.backgroundColor = ertekek[j] === null ? "green" : "red";
+                td.appendChild(circle);
+            } else {
+                td.innerText = ertekek[j];
+            }
             tr.appendChild(td);
-        });
+        }
         let td = document.createElement('td');
+        let modositoGombokDiv = document.createElement('div');
+        modositoGombokDiv.classList.add("d-flex", "justify-content-evenly");
         let editGomb = document.createElement('input');
         editGomb.type = 'button';
         editGomb.value = 'Szerkesztés';
@@ -209,8 +216,9 @@ async function usersDisplayre() {
         torloGomb.type = 'button';
         torloGomb.value = 'Törlés';
         torloGomb.classList.add("btn", "btn-danger");
-        td.appendChild(editGomb);
-        td.appendChild(torloGomb)
+        modositoGombokDiv.appendChild(editGomb);
+        modositoGombokDiv.appendChild(torloGomb);
+        td.appendChild(modositoGombokDiv);
         tr.appendChild(td);
         tbody.appendChild(tr);
     }
@@ -338,6 +346,12 @@ async function featureFlagsDisplayre() {
     h1.classList.add("h2", "m-5", "text-center");
     h1.innerText = "404 Egyenlőre nincs itt semmi... de itt lenne a featureflags";
     return h1;
+}
+
+async function osszesUser() {
+    let response = await fetch("/api/admin/users");
+    let data = await response.json();
+    return data;
 }
 
 

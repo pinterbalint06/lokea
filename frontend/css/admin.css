@@ -42,6 +42,6 @@ body {
     margin: 0 auto;
 }
 
-#usersTable th:last-child, td:last-child {
-    text-align: right;
+#usersTable th:last-child {
+    text-align: center;
 }

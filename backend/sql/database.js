@@ -24,19 +24,19 @@ async function newUser(username, email, password) {
 }
 
 async function getUserByUsername(username) {
-    const query = 'SELECT users.password, users.userid, users.role FROM users WHERE users.username = ?';
+    const query = 'SELECT users.password, users.user_id, users.role FROM users WHERE users.username = ?';
     const [result] = await pool.execute(query, [username]);
     return result;
 }
 
 async function getUserByEmail(email) {
-    const query = 'SELECT users.password, users.userid, users.role FROM users WHERE users.email = ?';
+    const query = 'SELECT users.password, users.user_id, users.role FROM users WHERE users.email = ?';
     const [result] = await pool.execute(query, [email]);
     return result;
 }
 
 async function getUsers() {
-    const query = 'SELECT users.user_id, users.username, users.email, users.role, users.pfp, users.is_2fa, users.created_at, users.deleted_at FROM users';
+    const query = 'SELECT users.deleted_at, users.user_id, users.username, users.email, users.role FROM users';
     const [rows] = await pool.execute(query);
     return rows;
 }
