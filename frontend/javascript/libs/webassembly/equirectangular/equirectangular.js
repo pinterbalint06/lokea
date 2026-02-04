@@ -1090,34 +1090,34 @@ function Yb(a, b, c, d) {
     f.seekable = !1;
   }, close() {
     d?.buffer?.length && d(10);
-  }, read(f, g, k, m) {
-    for (var l = 0, h = 0; h < m; h++) {
+  }, read(f, g, k, l) {
+    for (var m = 0, h = 0; h < l; h++) {
       try {
         var r = c();
       } catch (z) {
         throw new K(29);
       }
-      if (void 0 === r && 0 === l) {
+      if (void 0 === r && 0 === m) {
         throw new K(6);
       }
       if (null === r || void 0 === r) {
         break;
       }
-      l++;
+      m++;
       g[k + h] = r;
     }
-    l && (f.node.V = Date.now());
-    return l;
-  }, write(f, g, k, m) {
-    for (var l = 0; l < m; l++) {
+    m && (f.node.V = Date.now());
+    return m;
+  }, write(f, g, k, l) {
+    for (var m = 0; m < l; m++) {
       try {
-        d(g[k + l]);
+        d(g[k + m]);
       } catch (h) {
         throw new K(29);
       }
     }
-    m && (f.node.J = f.node.D = Date.now());
-    return l;
+    l && (f.node.J = f.node.D = Date.now());
+    return m;
   }});
   return Nb(a, b, e);
 }
@@ -1217,28 +1217,28 @@ function $b(a, b, c, d, e) {
   if (globalThis.XMLHttpRequest) {
     t("Cannot do synchronous binary XHRs outside webworkers in modern browsers. Use --embed-file or --preload-file in emcc");
     var k = new g();
-    var m = void 0;
+    var l = void 0;
   } else {
-    m = c, k = void 0;
+    l = c, k = void 0;
   }
-  var l = Wb(a, b, d, e);
-  k ? l.h = k : m && (l.h = null, l.url = m);
-  Object.defineProperties(l, {u:{get:function() {
+  var m = Wb(a, b, d, e);
+  k ? m.h = k : l && (m.h = null, m.url = l);
+  Object.defineProperties(m, {u:{get:function() {
     return this.h.length;
   }}});
   a = {};
-  for (const [h, r] of Object.entries(l.i)) {
+  for (const [h, r] of Object.entries(m.i)) {
     a[h] = (...z) => {
-      Zb(l);
+      Zb(m);
       return r(...z);
     };
   }
   a.read = (h, r, z, u, w) => {
-    Zb(l);
+    Zb(m);
     return f(h, r, z, u, w);
   };
   a.za = (h, r, z) => {
-    Zb(l);
+    Zb(m);
     var u = bb();
     if (!u) {
       throw new K(48);
@@ -1246,8 +1246,8 @@ function $b(a, b, c, d, e) {
     f(h, B, u, r, z);
     return {l:u, Xa:!0};
   };
-  l.i = a;
-  return l;
+  m.i = a;
+  return m;
 }
 var ac = {}, Ia = void 0, R = a => {
   for (var b = "";;) {
@@ -1528,7 +1528,7 @@ function Fc(a, b) {
 function Gc(a) {
   return this.B(v[a >> 2]);
 }
-function Hc(a, b, c, d, e, f, g, k, m, l, h) {
+function Hc(a, b, c, d, e, f, g, k, l, m, h) {
   this.name = a;
   this.m = b;
   this.ya = c;
@@ -1537,8 +1537,8 @@ function Hc(a, b, c, d, e, f, g, k, m, l, h) {
   this.pb = f;
   this.ub = g;
   this.Ra = k;
-  this.rb = m;
-  this.sb = l;
+  this.rb = l;
+  this.sb = m;
   this.U = h;
   e || void 0 !== b.C ? this.H = Dc : (this.H = d ? Cc : Fc, this.I = null);
 }
@@ -1578,15 +1578,15 @@ var Pc = a => {
     if (k.length !== a.length) {
       throw new qc("Mismatched type converter count");
     }
-    for (var m = 0; m < a.length; ++m) {
-      T(a[m], k[m]);
+    for (var l = 0; l < a.length; ++l) {
+      T(a[l], k[l]);
     }
   }
   a.forEach(k => dc[k] = b);
   var e = Array(b.length), f = [], g = 0;
-  for (let [k, m] of b.entries()) {
-    cc.hasOwnProperty(m) ? e[k] = cc[m] : (f.push(m), bc.hasOwnProperty(m) || (bc[m] = []), bc[m].push(() => {
-      e[k] = cc[m];
+  for (let [k, l] of b.entries()) {
+    cc.hasOwnProperty(l) ? e[k] = cc[l] : (f.push(l), bc.hasOwnProperty(l) || (bc[l] = []), bc[l].push(() => {
+      e[k] = cc[l];
       ++g;
       g === f.length && d(e);
     }));
@@ -1620,9 +1620,9 @@ function Wc(a, b, c, d, e, f) {
     throw new S("argTypes array size mismatch! Must at least get return value and 'this' types!");
   }
   p(!f, "Async bindings are only supported with JSPI.");
-  var k = null !== b[1] && null !== c, m = Uc(b);
+  var k = null !== b[1] && null !== c, l = Uc(b);
   c = !b[0].Ja;
-  var l = g - 2;
+  var m = g - 2;
   var h = b.length - 2;
   for (var r = b.length - 1; 2 <= r && b[r].optional; --r) {
     h--;
@@ -1633,34 +1633,34 @@ function Wc(a, b, c, d, e, f) {
   for (e = 2; e < g; ++e) {
     r = b[e], d.push(r.H.bind(r));
   }
-  if (!m) {
+  if (!l) {
     for (e = k ? 1 : 2; e < b.length; ++e) {
       null !== b[e].I && d.push(b[e].I);
     }
   }
-  d.push(Vc, h, l);
-  m = Uc(b);
-  l = b.length - 2;
+  d.push(Vc, h, m);
+  l = Uc(b);
+  m = b.length - 2;
   h = [];
   e = ["fn"];
   k && e.push("thisWired");
-  for (g = 0; g < l; ++g) {
+  for (g = 0; g < m; ++g) {
     h.push(`arg${g}`), e.push(`arg${g}Wired`);
   }
   h = h.join(",");
   e = e.join(",");
   h = `return function (${h}) {\n` + "checkArgCount(arguments.length, minArgs, maxArgs, humanName, throwBindingError);\n";
-  m && (h += "var destructors = [];\n");
-  z = m ? "destructors" : "null";
+  l && (h += "var destructors = [];\n");
+  z = l ? "destructors" : "null";
   r = "humanName throwBindingError invoker fn runDestructors fromRetWire toClassParamWire".split(" ");
   k && (h += `var thisWired = toClassParamWire(${z}, this);\n`);
-  for (g = 0; g < l; ++g) {
+  for (g = 0; g < m; ++g) {
     var u = `toArg${g}Wire`;
     h += `var arg${g}Wired = ${u}(${z}, arg${g});\n`;
     r.push(u);
   }
   h += (c || f ? "var rv = " : "") + `invoker(${e});\n`;
-  if (m) {
+  if (l) {
     h += "runDestructors(destructors);\n";
   } else {
     for (g = k ? 1 : 2; g < b.length; ++g) {
@@ -2121,20 +2121,20 @@ n.addRunDependency = ob;
 n.removeRunDependency = nb;
 n.UTF8ToString = O;
 n.FS_preloadFile = async(a, b, c, d, e, f, g, k) => {
-  var m = b ? Oa(Ka(a + "/" + b)) : a, l;
+  var l = b ? Oa(Ka(a + "/" + b)) : a, m;
   a: {
-    for (var h = l = `cp ${m}`;;) {
-      if (!lb[l]) {
+    for (var h = m = `cp ${l}`;;) {
+      if (!lb[m]) {
         break a;
       }
-      l = h + Math.random();
+      m = h + Math.random();
     }
   }
-  ob(l);
+  ob(m);
   try {
-    h = c, "string" == typeof c && (h = await ib(c)), h = await qb(h, m), k?.(), f || Xb(a, b, h, d, e, g);
+    h = c, "string" == typeof c && (h = await ib(c)), h = await qb(h, l), k?.(), f || Xb(a, b, h, d, e, g);
   } finally {
-    nb(l);
+    nb(m);
   }
 };
 n.FS_unlink = (...a) => Pb(...a);
@@ -2300,17 +2300,17 @@ var Qd = {100416:() => {
   let g = k => k;
   if (f) {
     const k = 8 * c;
-    g = m => BigInt.asUintN(k, m);
+    g = l => BigInt.asUintN(k, l);
     e = g(e);
   }
-  T(a, {name:b, B:g, H:(k, m) => {
-    if ("number" == typeof m) {
-      m = BigInt(m);
-    } else if ("bigint" != typeof m) {
-      throw new TypeError(`Cannot convert "${hc(m)}" to ${this.name}`);
+  T(a, {name:b, B:g, H:(k, l) => {
+    if ("number" == typeof l) {
+      l = BigInt(l);
+    } else if ("bigint" != typeof l) {
+      throw new TypeError(`Cannot convert "${hc(l)}" to ${this.name}`);
     }
-    ic(b, m, d, e);
-    return m;
+    ic(b, l, d, e);
+    return l;
   }, S:gc(b, c, !f), I:null});
 }, _embind_register_bool:(a, b, c, d) => {
   b = R(b);
@@ -2321,11 +2321,11 @@ var Qd = {100416:() => {
   }, S:function(e) {
     return this.B(D[e]);
   }, I:null});
-}, _embind_register_class:(a, b, c, d, e, f, g, k, m, l, h, r, z) => {
+}, _embind_register_class:(a, b, c, d, e, f, g, k, l, m, h, r, z) => {
   h = R(h);
   f = Lc(e, f);
   k &&= Lc(g, k);
-  l &&= Lc(m, l);
+  m &&= Lc(l, m);
   z = Lc(r, z);
   var u = zc(h);
   yc(u, function() {
@@ -2354,7 +2354,7 @@ var Qd = {100416:() => {
     });
     var I = Object.create(A, {constructor:{value:w}});
     w.prototype = I;
-    var E = new Ac(h, w, I, z, C, f, k, l);
+    var E = new Ac(h, w, I, z, C, f, k, m);
     if (E.C) {
       var M;
       (M = E.C).Ea ?? (M.Ea = []);
@@ -2373,7 +2373,7 @@ var Qd = {100416:() => {
   e = Lc(d, e);
   Rc([], [a], k => {
     k = k[0];
-    var m = `constructor ${k.name}`;
+    var l = `constructor ${k.name}`;
     void 0 === k.m.W && (k.m.W = []);
     if (void 0 !== k.m.W[b - 1]) {
       throw new S(`Cannot register multiple constructors with identical number of parameters (${b - 1}) for class '${k.name}'! Overload resolution is currently only performed using the parameter count, not actual type info!`);
@@ -2381,21 +2381,21 @@ var Qd = {100416:() => {
     k.m.W[b - 1] = () => {
       Qc(`Cannot construct ${k.name} due to unbound types`, g);
     };
-    Rc([], g, l => {
-      l.splice(1, 0, null);
-      k.m.W[b - 1] = Wc(m, l, null, e, f);
+    Rc([], g, m => {
+      m.splice(1, 0, null);
+      k.m.W[b - 1] = Wc(l, m, null, e, f);
       return [];
     });
     return [];
   });
-}, _embind_register_class_function:(a, b, c, d, e, f, g, k, m) => {
-  var l = Sc(c, d);
+}, _embind_register_class_function:(a, b, c, d, e, f, g, k, l) => {
+  var m = Sc(c, d);
   b = R(b);
   b = Xc(b);
-  f = Lc(e, f, m);
+  f = Lc(e, f, l);
   Rc([], [a], h => {
     function r() {
-      Qc(`Cannot call ${z} due to unbound types`, l);
+      Qc(`Cannot call ${z} due to unbound types`, m);
     }
     h = h[0];
     var z = `${h.name}.${b}`;
@@ -2403,8 +2403,8 @@ var Qd = {100416:() => {
     k && h.m.qb.push(b);
     var u = h.m.Y, w = u[b];
     void 0 === w || void 0 === w.R && w.className !== h.name && w.$ === c - 2 ? (r.$ = c - 2, r.className = h.name, u[b] = r) : (xc(u, b, z), u[b].R[c - 2] = r);
-    Rc([], l, C => {
-      C = Wc(z, C, h, f, g, m);
+    Rc([], m, C => {
+      C = Wc(z, C, h, f, g, l);
       void 0 === u[b].R ? (C.$ = c - 2, u[b] = C) : u[b].R[c - 2] = C;
       return [];
     });
@@ -2426,12 +2426,12 @@ var Qd = {100416:() => {
     f = k => k << g >>> g;
     e = f(e);
   }
-  T(a, {name:b, B:f, H:(k, m) => {
-    if ("number" != typeof m && "boolean" != typeof m) {
-      throw new TypeError(`Cannot convert "${hc(m)}" to ${b}`);
+  T(a, {name:b, B:f, H:(k, l) => {
+    if ("number" != typeof l && "boolean" != typeof l) {
+      throw new TypeError(`Cannot convert "${hc(l)}" to ${b}`);
     }
-    ic(b, m, d, e);
-    return m;
+    ic(b, l, d, e);
+    return l;
   }, S:gc(b, c, 0 !== d), I:null});
 }, _embind_register_memory_view:(a, b, c) => {
   function d(f) {
@@ -2478,11 +2478,11 @@ var Qd = {100416:() => {
     if ("string" != typeof k) {
       throw new S(`Cannot pass non-string to C++ string type ${c}`);
     }
-    var m = f(k), l = Rd(4 + m + b);
-    v[l >> 2] = m / b;
-    e(k, l + 4, m + b);
-    null !== g && g.push(Oc, l);
-    return l;
+    var l = f(k), m = Rd(4 + l + b);
+    v[m >> 2] = l / b;
+    e(k, m + 4, l + b);
+    null !== g && g.push(Oc, m);
+    return m;
   }, S:Gc, I(g) {
     Oc(g);
   }});
@@ -2507,13 +2507,13 @@ var Qd = {100416:() => {
 }, _emval_create_invoker:(a, b, c) => {
   var [d, ...e] = md(a, b);
   b = d.H.bind(d);
-  var f = e.map(m => m.S.bind(m));
+  var f = e.map(l => l.S.bind(l));
   a--;
   var g = {toValue:V};
-  a = f.map((m, l) => {
-    var h = `argFromPtr${l}`;
-    g[h] = m;
-    return `${h}(args${l ? "+" + 8 * l : ""})`;
+  a = f.map((l, m) => {
+    var h = `argFromPtr${m}`;
+    g[h] = l;
+    return `${h}(args${m ? "+" + 8 * m : ""})`;
   });
   switch(c) {
     case 0:
@@ -2534,7 +2534,7 @@ var Qd = {100416:() => {
   ${k}
   }`;
   c = (new Function(Object.keys(g), k))(...Object.values(g));
-  k = `methodCaller<(${e.map(m => m.name)}) => ${d.name}>`;
+  k = `methodCaller<(${e.map(l => l.name)}) => ${d.name}>`;
   return ld(wc(k, c));
 }, _emval_decref:Zc, _emval_get_global:a => {
   if (!a) {
@@ -2678,18 +2678,18 @@ var Qd = {100416:() => {
   v[b >> 2] = a;
   return 0;
 }, equirectangularFromURL:function(a, b, c, d, e, f, g, k) {
-  let m = O(a);
+  let l = O(a);
   b = Z[b];
-  let l = V(f);
+  let m = V(f);
   if (b) {
     let h = b.X, r = V(e), z = V(d);
-    fetch(m).then(function(u) {
+    fetch(l).then(function(u) {
       if (u.ok) {
         let w = u.headers.get("content-type");
-        w && !w.startsWith("image/") && Jd(l, "Invalid content-type:\t" + w, "INVALID_INPUT", a, g);
+        w && !w.startsWith("image/") && Jd(m, "Invalid content-type:\t" + w, "INVALID_INPUT", a, g);
         return u.blob();
       }
-      Jd(l, "Image failed to load:\t" + u.status, "NETWORK", a, g);
+      Jd(m, "Image failed to load:\t" + u.status, "NETWORK", a, g);
     }).then(function(u) {
       return createImageBitmap(u);
     }).then(async function(u) {
@@ -2725,21 +2725,21 @@ var Qd = {100416:() => {
             }
             h.bindTexture(h.TEXTURE_2D, null);
           } catch (M) {
-            u.close(), Jd(l, "Failed to upload texture to GPU", "WEBGL", a, g, M);
+            u.close(), Jd(m, "Failed to upload texture to GPU", "WEBGL", l, g, M);
           }
           u.close();
           "function" == typeof r && r();
         } else {
-          u.close(), Jd(l, "Texture doesn't fit in MAX_TEXTURE_SIZE (" + I + ")", "WEBGL", a, g);
+          u.close(), Jd(m, "Texture doesn't fit in MAX_TEXTURE_SIZE (" + I + ")", "WEBGL", l, g);
         }
       } else {
-        u.close(), C.length != w ? Jd(l, "Textures no longer exist", "WEBGL", a, g) : Jd(l, "New image was requested. Aborting old request", "REQUEST_CANCELLED", a, g);
+        u.close(), C.length != w ? Jd(m, "Textures no longer exist", "WEBGL", l, g) : Jd(m, "New image was requested. Aborting old request", "REQUEST_CANCELLED", l, g);
       }
     }).catch(function() {
-      Jd(l, "Texture failed to load (Fetch/decoding error)", "IMAGE_DECODE", a, g);
+      Jd(m, "Texture failed to load (Fetch/decoding error)", "IMAGE_DECODE", l, g);
     });
   } else {
-    Jd(l, "Invalid WebGL context", "WEBGL", a, g);
+    Jd(m, "Invalid WebGL context", "WEBGL", l, g);
   }
 }, fd_close:function(a) {
   try {
@@ -2758,40 +2758,40 @@ var Qd = {100416:() => {
       var e = Gb(a);
       a = b;
       for (var f, g = b = 0; g < c; g++) {
-        var k = v[a >> 2], m = v[a + 4 >> 2];
+        var k = v[a >> 2], l = v[a + 4 >> 2];
         a += 8;
-        var l = e, h = k, r = m, z = f, u = B;
+        var m = e, h = k, r = l, z = f, u = B;
         p(0 <= h);
         if (0 > r || 0 > z) {
           throw new K(28);
         }
-        if (null === l.A) {
+        if (null === m.A) {
           throw new K(8);
         }
-        if (1 === (l.flags & 2097155)) {
+        if (1 === (m.flags & 2097155)) {
           throw new K(8);
         }
-        if (N(l.node.mode)) {
+        if (N(m.node.mode)) {
           throw new K(31);
         }
-        if (!l.i.read) {
+        if (!m.i.read) {
           throw new K(28);
         }
         var w = "undefined" != typeof z;
         if (!w) {
-          z = l.position;
-        } else if (!l.seekable) {
+          z = m.position;
+        } else if (!m.seekable) {
           throw new K(70);
         }
-        var C = l.i.read(l, u, h, r, z);
-        w || (l.position += C);
+        var C = m.i.read(m, u, h, r, z);
+        w || (m.position += C);
         var A = C;
         if (0 > A) {
           var I = -1;
           break a;
         }
         b += A;
-        if (A < m) {
+        if (A < l) {
           break;
         }
         "undefined" != typeof f && (f += A);
@@ -2829,18 +2829,18 @@ var Qd = {100416:() => {
       var e = Gb(a);
       a = b;
       for (var f, g = b = 0; g < c; g++) {
-        var k = v[a >> 2], m = v[a + 4 >> 2];
+        var k = v[a >> 2], l = v[a + 4 >> 2];
         a += 8;
-        var l = Ub(e, B, k, m, f);
-        if (0 > l) {
+        var m = Ub(e, B, k, l, f);
+        if (0 > m) {
           var h = -1;
           break a;
         }
-        b += l;
-        if (l < m) {
+        b += m;
+        if (m < l) {
           break;
         }
-        "undefined" != typeof f && (f += l);
+        "undefined" != typeof f && (f += m);
       }
       h = b;
     }
@@ -2966,15 +2966,15 @@ var Qd = {100416:() => {
       var g = W.getProgramParameter(c, 35718);
       for (f = 0; f < g; ++f) {
         var k = W.getActiveUniform(c, f);
-        var m = k.name;
+        var l = k.name;
         k = k.size;
-        var l = Nd(m);
-        l = 0 < l ? m.slice(0, l) : m;
+        var m = Nd(l);
+        m = 0 < m ? l.slice(0, m) : l;
         var h = c.Da;
         c.Da += k;
-        e[l] = [k, h];
-        for (m = 0; m < k; ++m) {
-          d[h] = m, c.Ua[h++] = l;
+        e[m] = [k, h];
+        for (l = 0; l < k; ++l) {
+          d[h] = l, c.Ua[h++] = m;
         }
       }
     }
@@ -2998,23 +2998,23 @@ var Qd = {100416:() => {
     e += O(v[c + 4 * f >> 2], d ? v[d + 4 * f >> 2] : void 0);
   }
   W.shaderSource(Y[a], e);
-}, glTexImage2D:(a, b, c, d, e, f, g, k, m) => {
+}, glTexImage2D:(a, b, c, d, e, f, g, k, l) => {
   if (W.sa) {
-    W.texImage2D(a, b, c, d, e, f, g, k, m);
+    W.texImage2D(a, b, c, d, e, f, g, k, l);
   } else {
-    if (m) {
-      var l = Od(k);
-      m >>>= 31 - Math.clz32(l.BYTES_PER_ELEMENT);
-      W.texImage2D(a, b, c, d, e, f, g, k, l, m);
+    if (l) {
+      var m = Od(k);
+      l >>>= 31 - Math.clz32(m.BYTES_PER_ELEMENT);
+      W.texImage2D(a, b, c, d, e, f, g, k, m, l);
     } else {
-      if (m) {
-        l = Od(k);
-        var h = e * (d * ({5:3, 6:4, 8:2, 29502:3, 29504:4, 26917:2, 26918:2, 29846:3, 29847:4}[g - 6402] || 1) * l.BYTES_PER_ELEMENT + 4 - 1 & -4);
-        m = l.subarray(m >>> 31 - Math.clz32(l.BYTES_PER_ELEMENT), m + h >>> 31 - Math.clz32(l.BYTES_PER_ELEMENT));
+      if (l) {
+        m = Od(k);
+        var h = e * (d * ({5:3, 6:4, 8:2, 29502:3, 29504:4, 26917:2, 26918:2, 29846:3, 29847:4}[g - 6402] || 1) * m.BYTES_PER_ELEMENT + 4 - 1 & -4);
+        l = m.subarray(l >>> 31 - Math.clz32(m.BYTES_PER_ELEMENT), l + h >>> 31 - Math.clz32(m.BYTES_PER_ELEMENT));
       } else {
-        m = null;
+        l = null;
       }
-      W.texImage2D(a, b, c, d, e, f, g, k, m);
+      W.texImage2D(a, b, c, d, e, f, g, k, l);
     }
   }
 }, glTexParameteri:(a, b, c) => W.texParameteri(a, b, c), glUniform1i:(a, b) => {
@@ -3035,20 +3035,20 @@ var Qd = {100416:() => {
 }, glViewport:(a, b, c, d) => W.viewport(a, b, c, d), proc_exit:a => {
   throw new Ea(a);
 }, textureFromURL:function(a, b, c, d, e) {
-  let f = Z[c].X, g = O(b), k = V(d), m = V(e);
-  fetch(g).then(function(l) {
-    if (l.ok) {
-      let h = l.headers.get("content-type");
-      h && !h.startsWith("image/") && Pd(m, "Invalid content-type:\t" + h);
-      return l.blob();
+  let f = Z[c].X, g = O(b), k = V(d), l = V(e);
+  fetch(g).then(function(m) {
+    if (m.ok) {
+      let h = m.headers.get("content-type");
+      h && !h.startsWith("image/") && Pd(l, "Invalid content-type:\t" + h);
+      return m.blob();
     }
-  }).then(function(l) {
-    return createImageBitmap(l);
-  }).then(function(l) {
+  }).then(function(m) {
+    return createImageBitmap(m);
+  }).then(function(m) {
     let h = yd[a];
-    h ? (f.bindTexture(f.TEXTURE_2D, h), f.texImage2D(f.TEXTURE_2D, 0, f.RGBA, f.RGBA, f.UNSIGNED_BYTE, l), f.generateMipmap(f.TEXTURE_2D), f.texParameteri(f.TEXTURE_2D, f.TEXTURE_MIN_FILTER, f.LINEAR_MIPMAP_LINEAR), f.texParameteri(f.TEXTURE_2D, f.TEXTURE_MAG_FILTER, f.LINEAR), f.bindTexture(f.TEXTURE_2D, null), "function" == typeof k && k()) : "function" == typeof m && Pd(m, "Texture failed to load (it no longer exists):\t" + g);
+    h ? (f.bindTexture(f.TEXTURE_2D, h), f.texImage2D(f.TEXTURE_2D, 0, f.RGBA, f.RGBA, f.UNSIGNED_BYTE, m), f.generateMipmap(f.TEXTURE_2D), f.texParameteri(f.TEXTURE_2D, f.TEXTURE_MIN_FILTER, f.LINEAR_MIPMAP_LINEAR), f.texParameteri(f.TEXTURE_2D, f.TEXTURE_MAG_FILTER, f.LINEAR), f.bindTexture(f.TEXTURE_2D, null), "function" == typeof k && k()) : "function" == typeof l && Pd(l, "Texture failed to load (it no longer exists):\t" + g);
   }).catch(function() {
-    Pd(m, "Texture failed to load (Fetch/decoding error):\t" + g);
+    Pd(l, "Texture failed to load (Fetch/decoding error):\t" + g);
   });
 }}, Vd;
 function Wd() {
