@@ -175,39 +175,26 @@ async function usersDisplayre() {
 
     let thead = document.createElement('thead');
     let tr = document.createElement('tr');
-    let th = document.createElement('th');
-    th.innerText = "Active";
-    tr.appendChild(th);
-    th = document.createElement('th');
-    th.innerText = "ID";
-    tr.appendChild(th);
-    th = document.createElement('th');
-    th.innerText = "Username";
-    tr.appendChild(th);
-    th = document.createElement('th');
-    th.innerText = "E-mail";
-    tr.appendChild(th);
-    th = document.createElement('th');
-    th.innerText = "Role";
-    tr.appendChild(th);
-    th = document.createElement('th');
-    th.innerText = "Actions";
-    tr.appendChild(th);
+    let oszlopfok = ["Active", "ID", "Username", "E-mail", "Role", "Actions"];
+
+    for (let i = 0; i < oszlopfok.length; i++) {
+        let th = document.createElement("th");
+        th.innerText = oszlopfok[i];
+        tr.appendChild(th);
+    }
     thead.appendChild(tr);
 
     let tbody = document.createElement('tbody');
     tbody.classList.add("table-group-divider");
     let adatok = [{
         cucc: "hallo",
-        igen: 1
+        igen: 1,
+        cucdc: "hallo",
+        igefn: 1,
+        cuscc: "hallo"
     }];
     for (let i = 0; i < adatok.length; i++) {
         let tr = document.createElement('tr');
-        // adatok[i].forEach(element => {
-        //     let td = document.createElement('td');
-        //     td.innerText = element;
-        //     tr.appendChild(td);
-        // });
         Object.values(adatok[i]).forEach(element => {
             let td = document.createElement('td');
             td.innerText = element;
@@ -258,9 +245,11 @@ async function usersDisplayre() {
         radioButton.classList.add("form-check-input");
         radioButton.id = `status${statuszok[i]}`;
         radioButton.name = "sort1";
-        //az elsonek kell checked
+        if (i === 0) {
+            radioButton.checked = true;
+        }
         let label = document.createElement('label');
-        label.for = `status${statuszok[i]}`;
+        label.setAttribute("for", `status${statuszok[i]}`);
         label.classList.add("form-check-label");
         label.innerText = statuszok[i];
         formcheck.appendChild(radioButton);
@@ -284,7 +273,7 @@ async function usersDisplayre() {
         checkbox.id = `role${roleok[i]}`;
         checkbox.name = "sort2";
         let label = document.createElement('label');
-        label.for = `role${roleok[i]}`;
+        label.setAttribute("for", `role${roleok[i]}`);
         label.classList.add("form-check-label");
         label.innerText = roleok[i];
         formcheck.appendChild(checkbox);
