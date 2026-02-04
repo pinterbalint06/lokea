@@ -34,10 +34,19 @@ export class MapViewer extends WASMViewerBase {
     // |------------------|
     // | PUBLIC FUNCTIONS |
     // |------------------|
-    async loadMap(url) {
+    async loadMap(url, width, height) {
         if (!url || typeof url != "string") {
             throw new WebassemblyError(
                 "Invalid URL provided",
+                {
+                    "type": MAP_VIEWER_ERROR_TYPES.INVALID_INPUT,
+                    "imgUrl": url
+                });
+        }
+
+        if (!Number.isInteger(width) || !Number.isInteger(height) || width <= 0 || height <= 0) {
+            throw new WebassemblyError(
+                "Invalid image dimensions provided",
                 {
                     "type": MAP_VIEWER_ERROR_TYPES.INVALID_INPUT,
                     "imgUrl": url
@@ -70,8 +79,10 @@ export class MapViewer extends WASMViewerBase {
         let currentRequestId = this.#currentImageRequestID;
 
         return new Promise((resolve, reject) => {
+            let imageAspectRatio = width / height;
             this._engine.loadMapPromise(
                 url,
+                imageAspectRatio,
                 () => {
                     if (!this._isDestroyed) {
                         if (this.#currentImageRequestID == currentRequestId) {
@@ -109,6 +120,8 @@ export class MapViewer extends WASMViewerBase {
     _getInputCallbacks() {
         return {
             "mode": "2D",
+            "defaultCursor": "default",
+            "grabbingCursor": "move",
             onRotate: (deltaX, deltaY) => {
                 if (this._engine) {
                     this._engine.moveMap(deltaX, deltaY);

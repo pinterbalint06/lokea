@@ -11,6 +11,12 @@ const canvasId = "canvas";
 // The engine
 let mapViewerEngine;
 
+const image = {
+    "url": "/images/worldmap.webp",
+    "width": 3840,
+    "height": 1920
+};
+
 document.addEventListener("DOMContentLoaded", init);
 
 function init() {
@@ -18,7 +24,7 @@ function init() {
         "canvasWidth": jsCanvasSzelesseg,
         "canvasHeight": jsCanvasMagassag
     });
-    mapViewerEngine.loadMap("/images/worldmap.webp")
+    mapViewerEngine.loadMap(image.url, image.width, image.height)
         .then(function () {
             console.log("image loaded");
         }).catch(function (e) {

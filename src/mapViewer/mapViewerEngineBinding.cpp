@@ -10,7 +10,6 @@ EMSCRIPTEN_BINDINGS(mapViewerSettingsBinding)
     emscripten::value_object<MapViewerSettings>("MapViewerSettings")
         .field("minZoom", &MapViewerSettings::minZoom)
         .field("maxZoom", &MapViewerSettings::maxZoom)
-        .field("panSensitivity", &MapViewerSettings::panSensitivity)
         .field("zoomSensitivity", &MapViewerSettings::zoomSensitivity);
 }
 
@@ -18,8 +17,8 @@ EMSCRIPTEN_BINDINGS(mapViewerEngineBinding)
 {
     emscripten::class_<MapViewerEngine>("MapViewerEngine")
         .constructor<std::string, int, int>()
-        .function("loadMap", emscripten::select_overload<void(const std::string&)>(&MapViewerEngine::loadMap))
-        .function("loadMapPromise", emscripten::select_overload<void(const std::string&, emscripten::val, emscripten::val)>(&MapViewerEngine::loadMap))
+        .function("loadMap", emscripten::select_overload<void(const std::string&, float)>(&MapViewerEngine::loadMap))
+        .function("loadMapPromise", emscripten::select_overload<void(const std::string&, float, emscripten::val, emscripten::val)>(&MapViewerEngine::loadMap))
         .function("moveMap", &MapViewerEngine::moveMap)
         .function("zoomMapToCenter", &MapViewerEngine::zoomMapToCenter)
         .function("zoomMap", &MapViewerEngine::zoomMap)

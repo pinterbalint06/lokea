@@ -1,6 +1,10 @@
-const DEFAULT_ZOOM_SPEED = 0.05;
-const DEFAULT_SENSITIVITY = 0.10;
-const DEFAULT_MODE = "3D";
+const DEFAULT_OPTIONS = {
+    "mode": "3D",
+    "sensitvity": 0.10,
+    "zoomSpeed": 0.05,
+    "defaultCursor": "grab",
+    "grabbingCursor": "grabbing"
+};
 
 export class CanvasInput {
     /**
@@ -10,9 +14,11 @@ export class CanvasInput {
     constructor(canvas, options = {}) {
         this.canvas = canvas;
 
-        this.zoomSpeed = options.zoomSpeed ? options.zoomSpeed : DEFAULT_ZOOM_SPEED;
-        this.sensitivity = options.sensitivity ? options.sensitivity : DEFAULT_SENSITIVITY;
-        this.mode = options.mode ? options.mode : DEFAULT_MODE;
+        this.zoomSpeed = options.zoomSpeed ? options.zoomSpeed : DEFAULT_OPTIONS["zoomSpeed"];
+        this.sensitivity = options.sensitivity ? options.sensitivity : DEFAULT_OPTIONS["sensitvity"];
+        this.mode = options.mode ? options.mode : DEFAULT_OPTIONS["mode"];
+        this.defaultCursor = options.defaultCursor ? options.defaultCursor : DEFAULT_OPTIONS["defaultCursor"];
+        this.grabbingCursor = options.grabbingCursor ? options.grabbingCursor : DEFAULT_OPTIONS["grabbingCursor"];
 
         this.onRotate = options.onRotate ? options.onRotate : (() => { });
         this.onZoom = options.onZoom ? options.onZoom : (() => { });
@@ -22,7 +28,7 @@ export class CanvasInput {
         this.lastY = 0;
         this.prevDiff = 0;
 
-        this.canvas.style.cursor = "grab";
+        this.canvas.style.cursor = this.defaultCursor;
         this.#addListeners();
     }
 
@@ -134,6 +140,6 @@ export class CanvasInput {
     }
 
     #updateCursor() {
-        this.canvas.style.cursor = this.pointers.length === 1 ? "grabbing" : "grab";
+        this.canvas.style.cursor = this.pointers.length === 1 ? this.grabbingCursor : this.defaultCursor;
     }
 }

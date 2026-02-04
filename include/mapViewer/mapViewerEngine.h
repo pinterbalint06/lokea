@@ -19,8 +19,12 @@ private:
     int width_, height_;
     Mesh *mapPlane_;
     MapViewerSettings settings_;
+    float currentMapAspectRatio_;
+    // used as pan sensitivity so we use dPixel * texture coordinate per pixel when panning
+    float uPerPixel_, vPerPixel_;
 
     Mesh *createPlane();
+    void recalculateUVPerPixel();
     void limitVCoordinates();
     void fitMapHorizontally();
     void getUVAtScreenPosition(float screenX, float screenY, float &u, float &v);
@@ -40,8 +44,8 @@ public:
     }
 
     void moveMap(float deltaX, float deltaY);
-    void loadMap(const std::string &url, emscripten::val onSuccess, emscripten::val onError);
-    void loadMap(const std::string &url);
+    void loadMap(const std::string &url, float imageAspectRatio, emscripten::val onSuccess, emscripten::val onError);
+    void loadMap(const std::string &url, float imageAspectRatio);
     void zoomMapToCenter(float zoomAmount);
     void zoomMap(float zoomAmount, float zoomHereScreenX, float zoomHereScreenY);
     void render() { Engine::render(); }

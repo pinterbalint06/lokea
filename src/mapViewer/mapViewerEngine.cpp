@@ -33,7 +33,7 @@ Mesh *MapViewerEngine::createPlane()
 
     // squeeze the texture onto the plane according to aspect ratio
     // the image will be stretched to the canvas size and appear correctly
-    float aspectRatio = (float)width_ / (float)height_;
+    float aspectRatio = ((float)width_ / (float)height_) / currentMapAspectRatio_;
     float off = (aspectRatio - 1.0f) * 0.5f;
     startU = -off;
     endU = 1.0f + off;
@@ -63,6 +63,7 @@ MapViewerEngine::MapViewerEngine(const std::string &canvasID, int width, int hei
     setProjectionType(PROJECTIONTYPE::ORTHOGRAPHIC);
     setZoom(0.218f);
 
+    currentMapAspectRatio_ = 1.0f;
     width_ = width;
     height_ = height;
     renderer_->setDefaultColor(255.0f, 0.0f, 255.0f);
@@ -73,6 +74,7 @@ MapViewerEngine::MapViewerEngine(const std::string &canvasID, int width, int hei
 
     renderer_->setImageDimensions(width_, height_);
     mapPlane_ = createPlane();
+    recalculateUVPerPixel();
     addMesh(mapPlane_);
 }
 
@@ -82,6 +84,20 @@ MapViewerEngine::~MapViewerEngine()
     {
         delete mapPlane_;
         mapPlane_ = nullptr;
+    }
+}
+
+void MapViewerEngine::recalculateUVPerPixel()
+{
+    if (mapPlane_ != nullptr && width_ > 0 && height_ > 0)
+    {
+        Vertex *vertices = mapPlane_->getVertices();
+
+        float uRange = vertices[TOP_RIGHT].u - vertices[TOP_LEFT].u;
+        float vRange = vertices[BOTTOM_LEFT].v - vertices[TOP_LEFT].v;
+
+        uPerPixel_ = uRange / (float)width_;
+        vPerPixel_ = vRange / (float)height_;
     }
 }
 
@@ -121,6 +137,7 @@ void MapViewerEngine::limitVCoordinates()
                 vertices[i].v += vOffset;
             }
         }
+        recalculateUVPerPixel();
     }
     else
     {
@@ -135,11 +152,8 @@ void MapViewerEngine::moveMap(float deltaX, float deltaY)
         Vertex *vertices = mapPlane_->getVertices();
         int vertexCount = mapPlane_->getVertexCount();
 
-        float zoomFactor = (1.0f / zoomLevel_);
-        float zoomCorrectedSensitivity = settings_.panSensitivity * zoomFactor;
-
-        float dX = deltaX * zoomCorrectedSensitivity;
-        float dY = deltaY * zoomCorrectedSensitivity;
+        float dX = deltaX * uPerPixel_;
+        float dY = deltaY * vPerPixel_;
 
         for (int i = 0; i < vertexCount; i++)
         {
@@ -237,21 +251,27 @@ void MapViewerEngine::zoomMapToCenter(float zoomAmount)
     }
 }
 
-void MapViewerEngine::loadMap(const std::string &url, emscripten::val onSuccess, emscripten::val onError)
+void MapViewerEngine::loadMap(const std::string &url, float imageAspectRatio, emscripten::val onSuccess, emscripten::val onError)
 {
-    loadTextureFromUrl(url, 0, onSuccess, onError);
+    if (mapPlane_ != nullptr)
+    {
+        loadTextureFromUrl(url, 0, onSuccess, onError);
+        currentMapAspectRatio_ = imageAspectRatio;
+        fitMapHorizontally();
+        mapPlane_->setUpOpenGL();
+    }
 }
 
-void MapViewerEngine::loadMap(const std::string &url)
+void MapViewerEngine::loadMap(const std::string &url, float imageAspectRatio)
 {
-    loadMap(url, emscripten::val::undefined(), emscripten::val::undefined());
+    loadMap(url, imageAspectRatio, emscripten::val::undefined(), emscripten::val::undefined());
 }
 
 void MapViewerEngine::fitMapHorizontally()
 {
     Vertex *vertices = mapPlane_->getVertices();
 
-    float screenAspectRatio = (float)width_ / height_;
+    float screenAspectRatio = ((float)width_ / height_) / currentMapAspectRatio_;
 
     // first we calculate the center of the horizontal axis
     float currentCenterU = (vertices[TOP_LEFT].u + vertices[TOP_RIGHT].u) * 0.5f;
@@ -272,12 +292,15 @@ void MapViewerEngine::fitMapHorizontally()
     // old center + new half width = right boundary of the new view
     vertices[TOP_RIGHT].u = currentCenterU + halfWidth;
     vertices[BOTTOM_RIGHT].u = currentCenterU + halfWidth;
+
+    recalculateUVPerPixel();
 }
 
 void MapViewerEngine::setCanvasSize(int width, int height)
 {
     width_ = width;
     height_ = height;
+
     std::string canvID = "#" + canvas_;
     emscripten_set_canvas_element_size(canvID.c_str(), width_, height_);
     renderer_->setImageDimensions(width_, height_);
