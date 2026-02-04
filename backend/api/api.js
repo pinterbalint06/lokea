@@ -145,15 +145,29 @@ router.post("/login",
     });
 
 router.post('/signout', (request, response) => {
-    request.session.destroy(error => { 
+    request.session.destroy(error => {
         if (error) {
-            response.status(500).json({success: false, error: error});
+            response.status(500).json({ success: false, error: error });
         }
         else {
             response.clearCookie('geo.sid');
-            response.status(200).json({success: true});
+            response.status(200).json({ success: true });
         }
     });
+});
+
+router.get('/game_maps', async (request, response) => {
+    try {
+        const palyak = await database.getGameMaps();
+        response.status(200).json({
+            success: true,
+            results: palyak
+        });
+    } catch (error) {
+        response.status(500).json({
+            message: error
+        });
+    }
 });
 
 module.exports = router;

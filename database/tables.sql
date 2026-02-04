@@ -29,6 +29,7 @@ CREATE TABLE game_maps (
     title varchar(50) NOT NULL,
     cover_image_id int,
     rating float DEFAULT 0,
+    rating_count int DEFAULT 0,
     plays int DEFAULT 0,
     game_created TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     foreign key (creator_id) references users(user_id) ON DELETE SET NULL,
@@ -76,7 +77,7 @@ CREATE TABLE log (
     user_id int,
     activity varchar(50),
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    foreign key (user_id) references users(user_id) ON DELETE CASCADE,
+    foreign key (user_id) references users(user_id) ON DELETE CASCADE
 );
 
 
