@@ -74,7 +74,7 @@ function aktivEltuntet() {
 
 async function melyikValaszt(melyik) {
     let display = document.getElementById('content');
-    display.innerHTML = ""; 
+    display.innerHTML = "";
     switch (melyik) {
         case "dashboard":
             display.appendChild(dashboardDisplayre());
@@ -103,7 +103,7 @@ async function melyikValaszt(melyik) {
         case "fflags":
             display.appendChild(await featureFlagsDisplayre());
             break;
-            
+
     }
 }
 
@@ -115,10 +115,191 @@ function dashboardDisplayre() {
 }
 
 async function usersDisplayre() {
-    let h1 = document.createElement('h1');
-    h1.classList.add("h2", "m-5", "text-center");
-    h1.innerText = "404 Egyenlőre nincs itt semmi... de itt lenne a users";
-    return h1;
+    let row = document.createElement('div');
+    row.classList.add("row", "p-3");
+
+    //kereso
+    let col9div = document.createElement('div');
+    col9div.classList.add("col-9");
+
+    let fejlec = document.createElement('div');
+    fejlec.classList.add("d-flex", "justify-content-between");
+
+    let cim = document.createElement('h2');
+    cim.innerText = "Users";
+    cim.classList.add("h2");
+
+    let keresodiv = document.createElement('div');
+    keresodiv.classList.add("mb-3");
+
+    let inputgroupdiv = document.createElement('div');
+    inputgroupdiv.classList.add("input-group");
+
+    let keresoInput = document.createElement('input');
+    keresoInput.type = "text";
+    keresoInput.id = 'kereses';
+    keresoInput.classList.add("form-control");
+    keresoInput.placeholder = "Keresés...";
+
+    let keresoSelect = document.createElement('select');
+    keresoSelect.classList.add("form-select");
+
+    let option = document.createElement('option');
+    option.value = 'id';
+    option.selected = true;
+    option.innerText = 'ID';
+    keresoSelect.appendChild(option);
+
+    option = document.createElement('option');
+    option.value = 'username';
+    option.innerText = 'Username';
+    keresoSelect.appendChild(option);
+
+    option = document.createElement('option');
+    option.value = 'email';
+    option.innerText = 'E-mail';
+    keresoSelect.appendChild(option);
+
+    inputgroupdiv.appendChild(keresoInput);
+    inputgroupdiv.appendChild(keresoSelect);
+    keresodiv.append(inputgroupdiv);
+    fejlec.appendChild(cim);
+    fejlec.appendChild(keresodiv);
+    col9div.appendChild(fejlec);
+
+    //tablazat
+
+    let tablazat = document.createElement('table');
+    tablazat.id = "usersTable";
+    tablazat.classList.add("table", "table-striped", "table-hover");
+
+    let thead = document.createElement('thead');
+    let tr = document.createElement('tr');
+    let th = document.createElement('th');
+    th.innerText = "Active";
+    tr.appendChild(th);
+    th = document.createElement('th');
+    th.innerText = "ID";
+    tr.appendChild(th);
+    th = document.createElement('th');
+    th.innerText = "Username";
+    tr.appendChild(th);
+    th = document.createElement('th');
+    th.innerText = "E-mail";
+    tr.appendChild(th);
+    th = document.createElement('th');
+    th.innerText = "Role";
+    tr.appendChild(th);
+    th = document.createElement('th');
+    th.innerText = "Actions";
+    tr.appendChild(th);
+    thead.appendChild(tr);
+
+    let tbody = document.createElement('tbody');
+    tbody.classList.add("table-group-divider");
+    let adatok = [{
+        cucc: "hallo",
+        igen: 1
+    }];
+    for (let i = 0; i < adatok.length; i++) {
+        let tr = document.createElement('tr');
+        // adatok[i].forEach(element => {
+        //     let td = document.createElement('td');
+        //     td.innerText = element;
+        //     tr.appendChild(td);
+        // });
+        Object.values(adatok[i]).forEach(element => {
+            let td = document.createElement('td');
+            td.innerText = element;
+            tr.appendChild(td);
+        });
+        let td = document.createElement('td');
+        let editGomb = document.createElement('input');
+        editGomb.type = 'button';
+        editGomb.value = 'Szerkesztés';
+        editGomb.classList.add("btn", "btn-info");
+        let torloGomb = document.createElement('input');
+        torloGomb.type = 'button';
+        torloGomb.value = 'Törlés';
+        torloGomb.classList.add("btn", "btn-danger");
+        td.appendChild(editGomb);
+        td.appendChild(torloGomb)
+        tr.appendChild(td);
+        tbody.appendChild(tr);
+    }
+
+    tablazat.appendChild(thead);
+    tablazat.appendChild(tbody);
+    col9div.appendChild(tablazat);
+    row.appendChild(col9div);
+
+    //szures
+
+    let col3div = document.createElement("div");
+    col3div.classList.add("col-3");
+    let kartya = document.createElement("div");
+    kartya.classList.add("card", "bg-light", "p-3");
+    let kiscim = document.createElement('h4');
+    kiscim.classList.add("h4");
+    kiscim.innerText = 'Sort';
+    let szuresDiv = document.createElement('div');
+    szuresDiv.classList.add("mb-3");
+
+    let statusDiv = document.createElement('div');
+    let statusDivCim = document.createElement('h6');
+    statusDivCim.classList.add("h6");
+    statusDivCim.innerText = "User status";
+    let statuszok = ["Any", "Active", "Deleted"];
+    for (let i = 0; i < statuszok.length; i++) {
+        let formcheck = document.createElement('div');
+        formcheck.classList.add("form-check");
+        let radioButton = document.createElement('input');
+        radioButton.type = "radio"
+        radioButton.classList.add("form-check-input");
+        radioButton.id = `status${statuszok[i]}`;
+        radioButton.name = "sort1";
+        //az elsonek kell checked
+        let label = document.createElement('label');
+        label.for = `status${statuszok[i]}`;
+        label.classList.add("form-check-label");
+        label.innerText = statuszok[i];
+        formcheck.appendChild(radioButton);
+        formcheck.appendChild(label);
+        statusDiv.appendChild(formcheck);
+    }
+    szuresDiv.appendChild(statusDivCim);
+    szuresDiv.appendChild(statusDiv);
+
+    let roleDiv = document.createElement('div');
+    let roleDivCim = document.createElement('h6');
+    roleDivCim.classList.add("h6");
+    roleDivCim.innerText = "Role";
+    let roleok = ["Admin", "Moderator", "User"];
+    for (let i = 0; i < roleok.length; i++) {
+        let formcheck = document.createElement('div');
+        formcheck.classList.add("form-check");
+        let checkbox = document.createElement('input');
+        checkbox.type = "checkbox";
+        checkbox.classList.add("form-check-input");
+        checkbox.id = `role${roleok[i]}`;
+        checkbox.name = "sort2";
+        let label = document.createElement('label');
+        label.for = `role${roleok[i]}`;
+        label.classList.add("form-check-label");
+        label.innerText = roleok[i];
+        formcheck.appendChild(checkbox);
+        formcheck.appendChild(label);
+        roleDiv.appendChild(formcheck);
+    }
+    szuresDiv.appendChild(roleDivCim);
+    szuresDiv.appendChild(roleDiv);
+
+    kartya.appendChild(kiscim);
+    kartya.appendChild(szuresDiv);
+    col3div.appendChild(kartya);
+    row.appendChild(col3div);
+
+    return row;
 }
 
 async function filesDisplayre() {
