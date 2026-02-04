@@ -1,37 +1,27 @@
 import { degreeToRadian } from "../math/mathUtils.js";
-import ModuleBuilder from "../webassembly/equirectangular/equirectangular.js";
+import ModuleBuilder from "../webassembly/mapViewer/mapViewer.js";
 import { WASMViewerBase, WASM_ERROR_TYPES, WebassemblyError } from "./WASMViewerBase.js";
 
-const DEFAULT_OPTIONS = {
-    "autoRotate": false,
-    "autoRotateSpeed": 1.0
-};
-
-export const EQUIRECTANGULAR_ERROR_TYPES = {
+export const MAP_VIEWER_ERROR_TYPES = {
     ...WASM_ERROR_TYPES,
-    NETWORK: "NETWORK",
-    DECODE: "IMAGE_DECODE",
-    WEBGL: "WEBGL",
     INVALID_INPUT: "INVALID_INPUT",
     CANCELLED: "REQUEST_CANCELLED"
 };
 
 export { WebassemblyError };
 
-export class EquirectangularViewer extends WASMViewerBase {
+
+export class MapViewer extends WASMViewerBase {
     // STATE
     /** 
      * @type {number | null} 
      * The ID of the current requested image loading (used to dismiss old image load requests) */
     #currentImageRequestID;
-
     /**
-     * Constructor for EquirectangularViewer class.
+     * Constructor for MapViewer class.
      *
      * @param {string} canvasId - The HTML ID of the canvas.
      * @param {Object} [options={}] - Optional configuration options.
-     * @param {boolean} [options.autoRotate=DEFAULT_OPTIONS["autoRotate"]] - Whether the viewer should auto-rotate.
-     * @param {number} [options.autoRotateSpeed=DEFAULT_OPTIONS["autoRotateSpeed"]] - The speed of auto-rotation.
      * @param {number} [options.canvasWidth=DEFAULT_OPTIONS["canvasWidth"]] - The width of the canvas.
      * @param {number} [options.canvasHeight=DEFAULT_OPTIONS["canvasHeight"]] - The height of the canvas.
      * @throws {Error} Throws an error if the canvas element with the specified ID does not exist.
@@ -39,42 +29,17 @@ export class EquirectangularViewer extends WASMViewerBase {
     constructor(canvasId, options = {}) {
         super(canvasId, options, ModuleBuilder);
         this.#currentImageRequestID = 0;
-        this.autoRotate = options.autoRotate != undefined ? options.autoRotate : DEFAULT_OPTIONS["autoRotate"];
-        this.autoRotateSpeed = options.autoRotateSpeed != undefined ? options.autoRotateSpeed : DEFAULT_OPTIONS["autoRotateSpeed"];
     }
 
     // |------------------|
     // | PUBLIC FUNCTIONS |
     // |------------------|
-    /**
-     * Loads an equirectangular image into the viewer.
-     *
-     * Waits for the engine to initialize, then requests the engine to load the image from the given URL
-     * with the specified width and height. If a new image is requested before the current one finishes loading,
-     * the promise is rejected. If the engine fails to load the image, the promise is also rejected.
-     *
-     * @async
-     * @param {string} url - The URL of the equirectangular image to load.
-     * @param {number} width - The width of the image.
-     * @param {number} height - The height of the image.
-     * @returns {Promise<void>} Resolves when the image is successfully loaded, rejects if loading fails or a new image is requested.
-     * @throws {Error} If the viewer is destroyed or the engine fails to initialize.
-     */
-    async loadImage(url, width, height) {
+    async loadMap(url) {
         if (!url || typeof url != "string") {
             throw new WebassemblyError(
                 "Invalid URL provided",
                 {
-                    "type": EQUIRECTANGULAR_ERROR_TYPES.INVALID_INPUT,
-                    "imgUrl": url
-                });
-        }
-
-        if (!Number.isInteger(width) || !Number.isInteger(height) || width <= 0 || height <= 0) {
-            throw new WebassemblyError(
-                "Invalid image dimensions provided",
-                {
-                    "type": EQUIRECTANGULAR_ERROR_TYPES.INVALID_INPUT,
+                    "type": MAP_VIEWER_ERROR_TYPES.INVALID_INPUT,
                     "imgUrl": url
                 });
         }
@@ -86,7 +51,7 @@ export class EquirectangularViewer extends WASMViewerBase {
                 throw new WebassemblyError(
                     "Equirectangular Viewer is destroyed!",
                     {
-                        "type": EQUIRECTANGULAR_ERROR_TYPES.DESTROYED,
+                        "type": MAP_VIEWER_ERROR_TYPES.DESTROYED,
                         "imgUrl": url
                     });
             }
@@ -95,7 +60,7 @@ export class EquirectangularViewer extends WASMViewerBase {
                 throw new WebassemblyError(
                     "Engine failed to initialize",
                     {
-                        "type": EQUIRECTANGULAR_ERROR_TYPES.INITIALIZATION,
+                        "type": MAP_VIEWER_ERROR_TYPES.INITIALIZATION,
                         "imgUrl": url
                     });
             }
@@ -105,10 +70,8 @@ export class EquirectangularViewer extends WASMViewerBase {
         let currentRequestId = this.#currentImageRequestID;
 
         return new Promise((resolve, reject) => {
-            this._engine.loadEquirectangularImage(
+            this._engine.loadMapPromise(
                 url,
-                width,
-                height,
                 () => {
                     if (!this._isDestroyed) {
                         if (this.#currentImageRequestID == currentRequestId) {
@@ -117,7 +80,7 @@ export class EquirectangularViewer extends WASMViewerBase {
                             reject(new WebassemblyError(
                                 "New image was requested. Aborting old image.",
                                 {
-                                    "type": EQUIRECTANGULAR_ERROR_TYPES.CANCELLED,
+                                    "type": MAP_VIEWER_ERROR_TYPES.CANCELLED,
                                     "requestId": currentRequestId,
                                     "imgUrl": url
                                 }));
@@ -135,34 +98,25 @@ export class EquirectangularViewer extends WASMViewerBase {
         });
     }
 
-    setAutoRotate(enabled) {
-        this.autoRotate = enabled;
-    }
-
     // |-----------------|
     // | PRIVATE METHODS |
     // |-----------------|
-    _beforeRender() {
-        if (this.autoRotate) {
-            this._engine.rotateCamera(0, degreeToRadian(this.autoRotateSpeed));
-        }
-    }
-
     // Functions that have to be implemented
     _createEngine(module) {
-        return new module.EquirectangularEngine(this._canvasId);
+        return new module.MapViewerEngine(this._canvasId, this._canvasWidth, this._canvasHeight);
     }
 
     _getInputCallbacks() {
         return {
-            onRotate: (pitch, yaw) => {
+            "mode": "2D",
+            onRotate: (deltaX, deltaY) => {
                 if (this._engine) {
-                    this._engine.rotateCamera(degreeToRadian(pitch), degreeToRadian(yaw));
+                    this._engine.moveMap(deltaX, deltaY);
                 }
             },
-            onZoom: (zoomAmount) => {
+            onZoom: (zoomAmount, cursorX, cursorY) => {
                 if (this._engine) {
-                    this._engine.zoom(zoomAmount);
+                    this._engine.zoomMap(zoomAmount, cursorX, cursorY);
                 }
             }
         };
