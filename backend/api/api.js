@@ -115,13 +115,13 @@ router.post("/login",
                     rows = await database.getUserByUsername(username);
                 }
                 if (rows.length === 0) {
-                    return response.status(401).json({ message: "Hibás email vagy jelszó" });
+                    response.status(401).json({ message: "Hibás email vagy jelszó" });
                 }
                 else {
                     let sPass = rows[0].password;
                     let egyezes = await bcrypt.compare(password, sPass);
                     if (!egyezes) {
-                        return response.status(401).json({ message: "Hibás email vagy jelszó" });
+                        response.status(401).json({ message: "Hibás email vagy jelszó" });
                     }
                     else {
                         let sesRole = rows[0].role;

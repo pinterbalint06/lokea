@@ -141,18 +141,18 @@ async function usersDisplayre() {
     keresoInput.classList.add("form-control");
     keresoInput.placeholder = "Keresés...";
     keresoInput.addEventListener("input", async function () {
-        tablazatGeneral(await sortedUser());
+        tablazatGeneral(await sortedUser(), tablazat);
     })
 
     let keresoSelect = document.createElement('select');
     keresoSelect.classList.add("form-select");
     keresoSelect.id = 'keresoSelect';
     keresoSelect.addEventListener("change", async function () {
-        tablazatGeneral(await sortedUser());
+        tablazatGeneral(await sortedUser(), tablazat);
     })
 
     let option = document.createElement('option');
-    option.value = 'id';
+    option.value = 'user_id';
     option.selected = true;
     option.innerText = 'ID';
     keresoSelect.appendChild(option);
@@ -203,7 +203,7 @@ async function usersDisplayre() {
             radioButton.checked = true;
         }
         radioButton.addEventListener("change", async function () {
-            tablazatGeneral(await sortedUser());
+            tablazatGeneral(await sortedUser(), tablazat);
         })
         let label = document.createElement('label');
         label.setAttribute("for", `status${statuszok[i]}`);
@@ -230,7 +230,7 @@ async function usersDisplayre() {
         checkbox.id = `role${roleok[i]}`;
         checkbox.name = "sort2";
         checkbox.addEventListener("change", async function () {
-            tablazatGeneral(await sortedUser());
+            tablazatGeneral(await sortedUser(), tablazat);
         })
         let label = document.createElement('label');
         label.setAttribute("for", `role${roleok[i]}`);
@@ -248,7 +248,11 @@ async function usersDisplayre() {
     col3div.appendChild(kartya);
 
     //tablazat
-    col9div.appendChild(tablazatGeneral(await osszesUser()));
+    let tablazat = document.createElement('div');
+    tablazat.id = "usersTableDiv";
+    col9div.appendChild(tablazat);
+    tablazatGeneral(await osszesUser(), tablazat);
+
     row.appendChild(col9div);
     row.appendChild(col3div);
 
@@ -335,9 +339,10 @@ async function sortedUser() {
     return data;
 }
 
-function tablazatGeneral(data) {
+function tablazatGeneral(data, kontener) {
+    kontener.innerHTML = "";
     let tablazat = document.createElement('table');
-    tablazat.id = "usersTable";
+    tablazat.id = 'usersTable';
     tablazat.classList.add("table", "table-striped", "table-hover");
 
     let thead = document.createElement('thead');
@@ -394,7 +399,7 @@ function tablazatGeneral(data) {
     tablazat.appendChild(thead);
     tablazat.appendChild(tbody);
 
-    return tablazat;
+    kontener.appendChild(tablazat);
 }
 
 
