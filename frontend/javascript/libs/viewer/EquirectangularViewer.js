@@ -155,6 +155,7 @@ export class EquirectangularViewer extends WASMViewerBase {
 
     _getInputCallbacks() {
         return {
+            "friction": 0.96,
             onRotate: (pitch, yaw) => {
                 if (this._engine) {
                     this._engine.rotateCamera(degreeToRadian(pitch), degreeToRadian(yaw));

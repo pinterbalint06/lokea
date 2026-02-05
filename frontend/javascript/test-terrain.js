@@ -137,6 +137,7 @@ function initModule() {
     // Setup user input
     let canvas = document.getElementById(canvasId);
     let inputControls = new CanvasInput(canvas, {
+        "friction": 0.96,
         onRotate: (pitch, yaw) => {
             rotateCamera(pitch, yaw);
         },
