@@ -170,4 +170,20 @@ router.get('/admin/users', async (request, response) => {
     }
 })
 
+router.post('/admin/sortedUsers', async (request, response) => {
+    try {
+        if (request.session.role != 'ADMIN') {
+            response.status(403).json({message: "Nincs hozzáférésed!"});
+        }
+        else {
+            console.log(request.body);
+            let {mireKeresek, mit, status, adminChecked, modChecked, userChecked} = request.body;
+            let users = await database.sortedUsers(mireKeresek, mit, status, adminChecked, modChecked, userChecked);
+            response.status(200).json({message: "Sikeres lekérés", users: users});
+        }
+    } catch (error) {
+        response.status(500).json({ error: error })
+    }
+})
+
 module.exports = router;

@@ -40,11 +40,64 @@ async function getUsers() {
     const [rows] = await pool.execute(query);
     return rows;
 }
+
+async function sortedUsers(mireKeresek, mit, status, adminChecked, modChecked, userChecked) {
+    let query = 'SELECT deleted_at, user_id, username, email, role FROM users';
+    let conditions = [];
+    let params = [];
+
+    // 1. Keresés (ID, Username vagy Email alapján)
+    // Csak akkor szűrünk, ha a 'mit' nem üres string
+    if (mit && mit.trim() !== '') {
+        // A 'mireKeresek' változó tartalmazza az oszlopnevet (id, username, email)
+        // A biztonság kedvéért itt ellenőrizni kell az oszlopnevet, 
+        // mert az oszlopnevek nem lehetnek paraméterek (?)
+        const validColumns = ['user_id', 'username', 'email'];
+        const targetColumn = validColumns.includes(mireKeresek) ? mireKeresek : 'username';
+
+        conditions.push(`${targetColumn} LIKE ?`);
+        params.push(`%${mit}%`);
+    }
+
+    // 2. Státusz szűrés
+    // Ha üres string, akkor nem szűrünk (vagyis az összes jön)
+    if (status && status !== '') {
+        if (status === 'statusActive') {
+            conditions.push('deleted_at IS NULL');
+        } else {
+            if (status === 'statusDeleted') {
+                conditions.push('deleted_at IS NOT NULL');
+            }
+        }
+    }
+
+    // 3. Role szűrés (Checkboxok halmaza)
+    let roles = [];
+    if (adminChecked) roles.push('ADMIN');
+    if (modChecked) roles.push('MODERATOR');
+    if (userChecked) roles.push('USER');
+
+    if (roles.length > 0) {
+        // IN ('ADMIN', 'USER') formátum létrehozása
+        const placeHolders = roles.map(() => '?').join(',');
+        conditions.push(`role IN (${placeHolders})`);
+        params.push(...roles);
+    }
+
+    // WHERE feltételek összefűzése, ha vannak
+    if (conditions.length > 0) {
+        query += ' WHERE ' + conditions.join(' AND ');
+    }
+    console.log(query, params);
+    const [rows] = await pool.execute(query, params);
+    return rows;
+}
 //!Export
 module.exports = {
     // selectall,
-    newUser, 
+    newUser,
     getUserByUsername,
     getUserByEmail,
-    getUsers
+    getUsers,
+    sortedUsers
 };

@@ -137,12 +137,19 @@ async function usersDisplayre() {
 
     let keresoInput = document.createElement('input');
     keresoInput.type = "text";
-    keresoInput.id = 'kereses';
+    keresoInput.id = 'keresoInput';
     keresoInput.classList.add("form-control");
     keresoInput.placeholder = "Keresés...";
+    keresoInput.addEventListener("input", async function () {
+        tablazatGeneral(await sortedUser());
+    })
 
     let keresoSelect = document.createElement('select');
     keresoSelect.classList.add("form-select");
+    keresoSelect.id = 'keresoSelect';
+    keresoSelect.addEventListener("change", async function () {
+        tablazatGeneral(await sortedUser());
+    })
 
     let option = document.createElement('option');
     option.value = 'id';
@@ -166,67 +173,6 @@ async function usersDisplayre() {
     fejlec.appendChild(cim);
     fejlec.appendChild(keresodiv);
     col9div.appendChild(fejlec);
-
-    //tablazat
-
-    let tablazat = document.createElement('table');
-    tablazat.id = "usersTable";
-    tablazat.classList.add("table", "table-striped", "table-hover");
-
-    let thead = document.createElement('thead');
-    let tr = document.createElement('tr');
-    let oszlopfok = ["Active", "ID", "Username", "E-mail", "Role", "Actions"];
-
-    for (let i = 0; i < oszlopfok.length; i++) {
-        let th = document.createElement("th");
-        th.innerText = oszlopfok[i];
-        tr.appendChild(th);
-    }
-    thead.appendChild(tr);
-
-    let tbody = document.createElement('tbody');
-    tbody.classList.add("table-group-divider");
-    let adatok = (await osszesUser()).users;
-    for (let i = 0; i < adatok.length; i++) {
-        let tr = document.createElement('tr');
-        let ertekek = Object.values(adatok[i]);
-        for (let j = 0; j < ertekek.length; j++) {
-            let td = document.createElement('td');
-            if (j == 0) {
-                let circle = document.createElement('span');
-                circle.style.display = "inline-block";
-                circle.style.width = "12px";
-                circle.style.height = "12px";
-                circle.style.borderRadius = "50%";
-                circle.style.backgroundColor = ertekek[j] === null ? "green" : "red";
-                td.appendChild(circle);
-            } else {
-                td.innerText = ertekek[j];
-            }
-            tr.appendChild(td);
-        }
-        let td = document.createElement('td');
-        let modositoGombokDiv = document.createElement('div');
-        modositoGombokDiv.classList.add("d-flex", "justify-content-evenly");
-        let editGomb = document.createElement('input');
-        editGomb.type = 'button';
-        editGomb.value = 'Szerkesztés';
-        editGomb.classList.add("btn", "btn-info");
-        let torloGomb = document.createElement('input');
-        torloGomb.type = 'button';
-        torloGomb.value = 'Törlés';
-        torloGomb.classList.add("btn", "btn-danger");
-        modositoGombokDiv.appendChild(editGomb);
-        modositoGombokDiv.appendChild(torloGomb);
-        td.appendChild(modositoGombokDiv);
-        tr.appendChild(td);
-        tbody.appendChild(tr);
-    }
-
-    tablazat.appendChild(thead);
-    tablazat.appendChild(tbody);
-    col9div.appendChild(tablazat);
-    row.appendChild(col9div);
 
     //szures
 
@@ -256,6 +202,9 @@ async function usersDisplayre() {
         if (i === 0) {
             radioButton.checked = true;
         }
+        radioButton.addEventListener("change", async function () {
+            tablazatGeneral(await sortedUser());
+        })
         let label = document.createElement('label');
         label.setAttribute("for", `status${statuszok[i]}`);
         label.classList.add("form-check-label");
@@ -280,6 +229,9 @@ async function usersDisplayre() {
         checkbox.classList.add("form-check-input");
         checkbox.id = `role${roleok[i]}`;
         checkbox.name = "sort2";
+        checkbox.addEventListener("change", async function () {
+            tablazatGeneral(await sortedUser());
+        })
         let label = document.createElement('label');
         label.setAttribute("for", `role${roleok[i]}`);
         label.classList.add("form-check-label");
@@ -294,6 +246,10 @@ async function usersDisplayre() {
     kartya.appendChild(kiscim);
     kartya.appendChild(szuresDiv);
     col3div.appendChild(kartya);
+
+    //tablazat
+    col9div.appendChild(tablazatGeneral(await osszesUser()));
+    row.appendChild(col9div);
     row.appendChild(col3div);
 
     return row;
@@ -352,6 +308,93 @@ async function osszesUser() {
     let response = await fetch("/api/admin/users");
     let data = await response.json();
     return data;
+}
+
+async function sortedUser() {
+    let kereso = document.getElementById('keresoInput').value;
+    let selectOption = document.getElementById('keresoSelect').value;
+    let selectedStatus = document.querySelector('input[name="sort1"]:checked').id;
+    let selectedRoles = Array.from(
+        document.querySelectorAll('input[name="sort2"]:checked')
+    ).map(cb => cb.id);
+    let response = await fetch("/api/admin/sortedUsers", {
+        method: "POST",
+        headers: {
+            "Content-Type": "application/json"
+        },
+        body: JSON.stringify({
+            mireKeresek: selectOption,
+            mit: kereso,
+            status: selectedStatus,
+            adminChecked: selectedRoles.includes("roleAdmin"), 
+            modChecked: selectedRoles.includes("roleModerator"), 
+            userChecked: selectedRoles.includes("roleUser")
+        })
+    });
+    let data = await response.json();
+    return data;
+}
+
+function tablazatGeneral(data) {
+    let tablazat = document.createElement('table');
+    tablazat.id = "usersTable";
+    tablazat.classList.add("table", "table-striped", "table-hover");
+
+    let thead = document.createElement('thead');
+    let tr = document.createElement('tr');
+    let oszlopfok = ["Active", "ID", "Username", "E-mail", "Role", "Actions"];
+
+    for (let i = 0; i < oszlopfok.length; i++) {
+        let th = document.createElement("th");
+        th.innerText = oszlopfok[i];
+        tr.appendChild(th);
+    }
+    thead.appendChild(tr);
+
+    let tbody = document.createElement('tbody');
+    tbody.classList.add("table-group-divider");
+    let adatok = data.users;
+    console.log(adatok);
+    for (let i = 0; i < adatok.length; i++) {
+        let tr = document.createElement('tr');
+        let ertekek = Object.values(adatok[i]);
+        for (let j = 0; j < ertekek.length; j++) {
+            let td = document.createElement('td');
+            if (j == 0) {
+                let circle = document.createElement('span');
+                circle.style.display = "inline-block";
+                circle.style.width = "12px";
+                circle.style.height = "12px";
+                circle.style.borderRadius = "50%";
+                circle.style.backgroundColor = ertekek[j] === null ? "green" : "red";
+                td.appendChild(circle);
+            } else {
+                td.innerText = ertekek[j];
+            }
+            tr.appendChild(td);
+        }
+        let td = document.createElement('td');
+        let modositoGombokDiv = document.createElement('div');
+        modositoGombokDiv.classList.add("d-flex", "justify-content-evenly");
+        let editGomb = document.createElement('input');
+        editGomb.type = 'button';
+        editGomb.value = 'Szerkesztés';
+        editGomb.classList.add("btn", "btn-info");
+        let torloGomb = document.createElement('input');
+        torloGomb.type = 'button';
+        torloGomb.value = 'Törlés';
+        torloGomb.classList.add("btn", "btn-danger");
+        modositoGombokDiv.appendChild(editGomb);
+        modositoGombokDiv.appendChild(torloGomb);
+        td.appendChild(modositoGombokDiv);
+        tr.appendChild(td);
+        tbody.appendChild(tr);
+    }
+
+    tablazat.appendChild(thead);
+    tablazat.appendChild(tbody);
+
+    return tablazat;
 }
 
 
