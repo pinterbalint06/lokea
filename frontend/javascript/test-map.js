@@ -39,4 +39,9 @@ function fullScreen() {
     mapViewerEngine.toggleFullscreen();
 }
 
+function markerPosition() {
+    console.log(mapViewerEngine.getMarkerPosition());
+}
+
 window.fullScreen = fullScreen;
+window.markerPosition = markerPosition;

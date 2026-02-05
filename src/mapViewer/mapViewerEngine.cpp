@@ -4,12 +4,15 @@
 #include <string>
 #include <cstring>
 #include <algorithm>
+#include <cmath>
+#include <GLES3/gl3.h>
 
 #include "core/rendering/shader.h"
 
 #include "core/resources/mesh.h"
 #include "core/resources/vertex.h"
 #include "core/resources/material.h"
+#include "core/resources/texture.h"
 
 #include "core/scene/camera/camera.h"
 
@@ -17,6 +20,8 @@
 
 #include "mapViewer/mapViewerSettings.h"
 #include "mapViewer/mapViewerEngine.h"
+
+constexpr const char* markerUrl = "/images/marker.webp";
 
 enum VertexIndex
 {
@@ -26,56 +31,193 @@ enum VertexIndex
     BOTTOM_RIGHT = 3
 };
 
-Mesh *MapViewerEngine::createPlane()
+void MapViewerEngine::createMapPlane()
 {
-    float startU = 0.0f;
-    float endU = 1.0f;
+    if (mapPlane_ == nullptr)
+    {
+        float startU = 0.0f;
+        float endU = 1.0f;
 
-    // squeeze the texture onto the plane according to aspect ratio
-    // the image will be stretched to the canvas size and appear correctly
-    float aspectRatio = ((float)width_ / (float)height_) / currentMapAspectRatio_;
-    float off = (aspectRatio - 1.0f) * 0.5f;
-    startU = -off;
-    endU = 1.0f + off;
-    Vertex vertices[4];
-    //                            x      y      z     w     nx    ny    nz    u     v
-    vertices[TOP_LEFT] = { -1.0f, 1.0f, -0.1f, 1.0f, 0.0f, 0.0f, 1.0f, startU, 0.0f };
-    vertices[TOP_RIGHT] = { 1.0f, 1.0f, -0.1f, 1.0f, 0.0f, 0.0f, 1.0f, endU, 0.0f };
-    vertices[BOTTOM_LEFT] = { -1.0f, -1.0f, -0.1f, 1.0f, 0.0f, 0.0f, 1.0f, startU, 1.0f };
-    vertices[BOTTOM_RIGHT] = { 1.0f, -1.0f, -0.1f, 1.0f, 0.0f, 0.0f, 1.0f, endU, 1.0f };
+        // squeeze the texture onto the plane according to aspect ratio
+        // the image will be stretched to the canvas size and appear correctly
+        float aspectRatio = (float)width_ / (float)height_;
+        float off = (aspectRatio - 1.0f) * 0.5f;
+        startU = -off;
+        endU = 1.0f + off;
+        Vertex vertices[4];
+        //                        x      y      z     w     nx    ny    nz    u     v
+        vertices[TOP_LEFT] = { -1.0f, 1.0f, -0.01f, 1.0f, 0.0f, 0.0f, 1.0f, startU, 0.0f };
+        vertices[TOP_RIGHT] = { 1.0f, 1.0f, -0.01f, 1.0f, 0.0f, 0.0f, 1.0f, endU, 0.0f };
+        vertices[BOTTOM_LEFT] = { -1.0f, -1.0f, -0.01f, 1.0f, 0.0f, 0.0f, 1.0f, startU, 1.0f };
+        vertices[BOTTOM_RIGHT] = { 1.0f, -1.0f, -0.01f, 1.0f, 0.0f, 0.0f, 1.0f, endU, 1.0f };
 
-    constexpr uint32_t indices[] = {
-        TOP_RIGHT, BOTTOM_LEFT, TOP_LEFT,
-        TOP_RIGHT, BOTTOM_RIGHT, BOTTOM_LEFT
-    };
+        constexpr uint32_t indices[] = {
+            TOP_RIGHT, BOTTOM_LEFT, TOP_LEFT,
+            TOP_RIGHT, BOTTOM_RIGHT, BOTTOM_LEFT
+        };
 
-    Mesh *plane = new Mesh(sizeof(vertices) / sizeof(Vertex), sizeof(indices) / sizeof(uint32_t));
-    std::memcpy(plane->getVertices(), vertices, sizeof(vertices));
-    std::memcpy(plane->getIndices(), indices, sizeof(indices));
+        mapPlane_ = new Mesh(sizeof(vertices) / sizeof(Vertex), sizeof(indices) / sizeof(uint32_t));
+        std::memcpy(mapPlane_->getVertices(), vertices, sizeof(vertices));
+        std::memcpy(mapPlane_->getIndices(), indices, sizeof(indices));
 
-    return plane;
+        recalculateUVPerPixel();
+        addMesh(mapPlane_);
+    }
 }
 
-MapViewerEngine::MapViewerEngine(const std::string &canvasID, int width, int height)
+void MapViewerEngine::createMarkerPlane()
+{
+    if (markerPlane_ == nullptr)
+    {
+        Vertex vertices[4];
+        // default data will be initialized in updateMarker
+        //                        x      y     z     w     nx    ny    nz    u     v
+        vertices[TOP_LEFT] = { 0.0f,  0.0f, 0.0f, 1.0f, 0.0f, 0.0f, 1.0f, 0.0f, 0.0f };
+        vertices[TOP_RIGHT] = { 0.0f,  0.0f, 0.0f, 1.0f, 0.0f, 0.0f, 1.0f, 1.0f, 0.0f };
+        vertices[BOTTOM_LEFT] = { 0.0f, 0.0f, 0.0f, 1.0f, 0.0f, 0.0f, 1.0f, 0.0f, 1.0f };
+        vertices[BOTTOM_RIGHT] = { 0.0f, 0.0f, 0.0f, 1.0f, 0.0f, 0.0f, 1.0f, 1.0f, 1.0f };
+
+        constexpr uint32_t indices[] = {
+            TOP_RIGHT, BOTTOM_LEFT, TOP_LEFT,
+            TOP_RIGHT, BOTTOM_RIGHT, BOTTOM_LEFT
+        };
+
+        markerPlane_ = new Mesh(4, 6);
+        std::memcpy(markerPlane_->getVertices(), vertices, sizeof(vertices));
+        std::memcpy(markerPlane_->getIndices(), indices, sizeof(indices));
+        updateMarker();
+        Texture *texture = new Texture();
+
+        texture->loadFromUrl(markerUrl);
+
+        Materials::Material newTexMat = markerPlane_->getMaterial();
+        newTexMat.setTexture(texture);
+        markerPlane_->setMaterial(newTexMat);
+    }
+}
+
+void MapViewerEngine::updateMarker()
+{
+    if (markerPlaced_ && markerPlane_ && mapPlane_)
+    {
+        Vertex* mapVertices = mapPlane_->getVertices();
+
+        float minMapU = mapVertices[TOP_LEFT].u;
+        float minMapV = mapVertices[TOP_LEFT].v;
+        // ranges
+        float uRange = mapVertices[TOP_RIGHT].u - minMapU;
+        float vRange = mapVertices[BOTTOM_LEFT].v - minMapV;
+
+        // marker's coordinates inside the view
+        float inRangeRelativeU = (markerU_ - minMapU) / uRange;
+        float inRangeRelativeV = (markerV_ - minMapV) / vRange;
+
+        // the plane starts at -1 and ends at 1
+        // we have to turn the rangeRelative [0;1] coordinate to [-1;1]
+        // [0;1] * 2 => [0;2] - 1 => [-1;1]
+        // also flip the y axis
+        float inPlaneX = (inRangeRelativeU * 2.0f) - 1.0f;
+        float inPlaneY = 1.0f - (inRangeRelativeV * 2.0f);
+
+        // correct by aspect ratio
+        float inverseAspectRatio = (float)height_ / (float)width_;
+        float halfWidth = markerWidth_ * inverseAspectRatio * 0.5f;
+
+        Vertex* markerVertices = markerPlane_->getVertices();
+
+        // center x around calculated coordinate
+        markerVertices[TOP_LEFT].x = inPlaneX - halfWidth;
+        markerVertices[TOP_RIGHT].x = inPlaneX + halfWidth;
+
+        markerVertices[BOTTOM_LEFT].x = inPlaneX - halfWidth;
+        markerVertices[BOTTOM_RIGHT].x = inPlaneX + halfWidth;
+
+        // put the bottom to the click not centered around
+        // so the markers bottom middle point marks the point
+        markerVertices[TOP_LEFT].y = inPlaneY + markerHeight_;
+        markerVertices[TOP_RIGHT].y = inPlaneY + markerHeight_;
+
+        markerVertices[BOTTOM_LEFT].y = inPlaneY;
+        markerVertices[BOTTOM_RIGHT].y = inPlaneY;
+
+        // update gpu
+        markerPlane_->setUpOpenGL();
+    }
+}
+
+void MapViewerEngine::placeMarker(float screenX, float screenY)
+{
+    if (!markerPlaced_)
+    {
+        addMesh(markerPlane_);
+        markerPlaced_ = true;
+    }
+
+    getUVAtScreenPosition(screenX, screenY, markerU_, markerV_);
+    updateMarker();
+}
+
+void MapViewerEngine::removeMarker()
+{
+    if (markerPlaced_)
+    {
+        removeMesh(1);
+        markerPlaced_ = false;
+    }
+}
+
+emscripten::val MapViewerEngine::getMarkerPosition()
+{
+    emscripten::val imageCoordinates = emscripten::val::object();
+
+    if (markerPlaced_ && isMapLoaded_)
+    {
+        // drop the integer part of the uvs
+        float markerUFractional = markerU_ - std::floor(markerU_);
+        float markerVFractional = markerV_ - std::floor(markerV_);
+
+        // u v multiplied by image dimensions is the pixel coordinates
+        // also we floor it to an integer because image pixels are integers
+        int imageCoordinateX = std::floor(markerUFractional * mapWidth_);
+        int imageCoordinateY = std::floor(markerVFractional * mapHeight_);
+        imageCoordinates.set("x", imageCoordinateX);
+        imageCoordinates.set("y", imageCoordinateY);
+    }
+
+    return imageCoordinates;
+}
+
+MapViewerEngine::MapViewerEngine(const std::string & canvasID, int width, int height)
     : Engine(canvasID)
 {
     setShadingMode(Shaders::SHADINGMODE::NO_SHADING);
     setProjectionType(PROJECTIONTYPE::ORTHOGRAPHIC);
-    setZoom(0.218f);
+    setZoom(5.0f / 23.0f);
 
-    currentMapAspectRatio_ = 1.0f;
+    mapWidth_ = -1.0f;
+    mapHeight_ = -1.0f;
+    markerWidth_ = 0.07f;
+    markerHeight_ = 0.07f;
+    markerU_ = 0.0f;
+    markerV_ = 0.0f;
+    markerPlaced_ = false;
+    isMapLoaded_ = false;
     width_ = width;
     height_ = height;
     renderer_->setDefaultColor(255.0f, 0.0f, 255.0f);
     // set image dimension to 1:1 aspect ratio so it only covers the plane
     scene_->getCamera()->setImageDimensions(1.0f, 1.0f);
 
+    // enable transparent background for marker
+    glEnable(GL_BLEND);
+    glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+
     zoomLevel_ = settings_.minZoom;
 
     renderer_->setImageDimensions(width_, height_);
-    mapPlane_ = createPlane();
-    recalculateUVPerPixel();
-    addMesh(mapPlane_);
+
+    createMapPlane();
+    createMarkerPlane();
 }
 
 MapViewerEngine::~MapViewerEngine()
@@ -85,6 +227,12 @@ MapViewerEngine::~MapViewerEngine()
         delete mapPlane_;
         mapPlane_ = nullptr;
     }
+    if (markerPlane_ != nullptr)
+    {
+        delete markerPlane_;
+        markerPlane_ = nullptr;
+    }
+
 }
 
 void MapViewerEngine::recalculateUVPerPixel()
@@ -162,6 +310,7 @@ void MapViewerEngine::moveMap(float deltaX, float deltaY)
         }
         limitVCoordinates();
         mapPlane_->setUpOpenGL();
+        updateMarker();
     }
     else
     {
@@ -193,6 +342,7 @@ void MapViewerEngine::zoomMapUV(float zoomAmount, float zoomHereU, float zoomHer
 
             limitVCoordinates();
             mapPlane_->setUpOpenGL();
+            updateMarker();
         }
     }
     else
@@ -251,27 +401,35 @@ void MapViewerEngine::zoomMapToCenter(float zoomAmount)
     }
 }
 
-void MapViewerEngine::loadMap(const std::string &url, float imageAspectRatio, emscripten::val onSuccess, emscripten::val onError)
+void MapViewerEngine::loadMap(const std::string & url, int mapWidth, int mapHeight, emscripten::val onSuccess, emscripten::val onError)
 {
     if (mapPlane_ != nullptr)
     {
         loadTextureFromUrl(url, 0, onSuccess, onError);
-        currentMapAspectRatio_ = imageAspectRatio;
+        mapWidth_ = mapWidth;
+        mapHeight_ = mapHeight;
         fitMapHorizontally();
         mapPlane_->setUpOpenGL();
+        isMapLoaded_ = true;
+        updateMarker();
+    }
+    else
+    {
+        emscripten_console_error("Plane was destroyed!");
     }
 }
 
-void MapViewerEngine::loadMap(const std::string &url, float imageAspectRatio)
+void MapViewerEngine::loadMap(const std::string & url, int mapWidth, int mapHeight)
 {
-    loadMap(url, imageAspectRatio, emscripten::val::undefined(), emscripten::val::undefined());
+    loadMap(url, mapWidth, mapHeight, emscripten::val::undefined(), emscripten::val::undefined());
 }
 
 void MapViewerEngine::fitMapHorizontally()
 {
     Vertex *vertices = mapPlane_->getVertices();
 
-    float screenAspectRatio = ((float)width_ / height_) / currentMapAspectRatio_;
+    float mapAspectRatio = (float)mapWidth_ / mapHeight_;
+    float screenAspectRatio = ((float)width_ / height_) / mapAspectRatio;
 
     // first we calculate the center of the horizontal axis
     float currentCenterU = (vertices[TOP_LEFT].u + vertices[TOP_RIGHT].u) * 0.5f;
@@ -311,6 +469,7 @@ void MapViewerEngine::setCanvasSize(int width, int height)
 
         // update GPU
         mapPlane_->setUpOpenGL();
+        updateMarker();
     }
     else
     {

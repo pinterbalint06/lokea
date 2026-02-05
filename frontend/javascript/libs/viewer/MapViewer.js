@@ -79,10 +79,10 @@ export class MapViewer extends WASMViewerBase {
         let currentRequestId = this.#currentImageRequestID;
 
         return new Promise((resolve, reject) => {
-            let imageAspectRatio = width / height;
             this._engine.loadMapPromise(
                 url,
-                imageAspectRatio,
+                width,
+                height,
                 () => {
                     if (!this._isDestroyed) {
                         if (this.#currentImageRequestID == currentRequestId) {
@@ -109,6 +109,26 @@ export class MapViewer extends WASMViewerBase {
         });
     }
 
+    getMarkerPosition() {
+        if (this._isDestroyed) {
+            throw new WebassemblyError(
+                "Equirectangular Viewer is destroyed!",
+                {
+                    "type": MAP_VIEWER_ERROR_TYPES.DESTROYED
+                });
+        }
+
+        if (this._engine) {
+            return this._engine.getMarkerPosition();
+        } else {
+            throw new WebassemblyError(
+                "Engine not initialized yet",
+                {
+                    "type": MAP_VIEWER_ERROR_TYPES.INITIALIZATION
+                });
+        }
+    }
+
     // |-----------------|
     // | PRIVATE METHODS |
     // |-----------------|
@@ -130,6 +150,11 @@ export class MapViewer extends WASMViewerBase {
             onZoom: (zoomAmount, cursorX, cursorY) => {
                 if (this._engine) {
                     this._engine.zoomMap(zoomAmount, cursorX, cursorY);
+                }
+            },
+            onClick: (cursorX, cursorY) => {
+                if (this._engine) {
+                    this._engine.placeMarker(cursorX, cursorY);
                 }
             }
         };

@@ -68,10 +68,6 @@ export class WASMViewerBase {
      * The ID given by requestAnimationFrame (used to cancel the render loop) */
     _animationFrameId;
     /** 
-     * @type {number|null} 
-     * The ID given by requestAnimationFrame (used to cancel the resize) */
-    _resizeNextFrameId;
-    /** 
      * @type {boolean} 
      * Flag indicating if the viewer has been destroyed to prevent further function calls 
      */
@@ -95,7 +91,6 @@ export class WASMViewerBase {
                 this._engine = null;
                 this._isDestroyed = false;
                 this._animationFrameId = null;
-                this._resizeNextFrameId = null;
                 this._ModuleBuilder = ModuleBuilder;
 
                 // Initialize
@@ -191,10 +186,7 @@ export class WASMViewerBase {
 
     _setupResizeHandlers() {
         this._resizeHandler = () => {
-            this._resizeNextFrameId = requestAnimationFrame(() => {
-                this._handleResize();
-                this._resizeNextFrameId = null;
-            });
+            this._handleResize();
         };
         window.addEventListener("resize", this._resizeHandler);
         this._canvas.addEventListener("fullscreenchange", this._resizeHandler);
@@ -231,10 +223,6 @@ export class WASMViewerBase {
             window.removeEventListener("resize", this._resizeHandler);
             this._canvas.removeEventListener("fullscreenchange", this._resizeHandler);
             this._resizeHandler = null;
-        }
-
-        if (this._resizeNextFrameId) {
-            cancelAnimationFrame(this._resizeNextFrameId);
         }
 
         if (this._canvasInput) {

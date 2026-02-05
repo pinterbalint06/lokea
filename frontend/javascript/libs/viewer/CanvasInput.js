@@ -95,6 +95,10 @@ export class CanvasInput {
      * @type {function}
      * Callback function called on zoom. */
     onZoom;
+    /**
+     * @type {function}
+     * Callback function called on click. */
+    onClick;
 
     // LISTENERS
     /**
@@ -136,6 +140,7 @@ export class CanvasInput {
 
         this.onRotate = options.onRotate ? options.onRotate : (() => { });
         this.onZoom = options.onZoom ? options.onZoom : (() => { });
+        this.onClick = options.onClick ? options.onClick : (() => { });
 
         this.#pointers = [];
         this.#lastX = 0;
@@ -221,7 +226,9 @@ export class CanvasInput {
         while (i < this.#pointers.length && this.#pointers[i].pointerId != e.pointerId) {
             i++;
         }
+        let releasedPointer;
         if (i < this.#pointers.length) {
+            releasedPointer = this.#pointers[i];
             this.#pointers.splice(i, 1);
         }
 
@@ -231,9 +238,19 @@ export class CanvasInput {
             this.#lastY = this.#pointers[0].clientY;
         } else {
             if (this.#pointers.length == 0) {
-                let timeSinceLastMove = Date.now() - this.#lastMoveTime;
-                if (timeSinceLastMove <= this.maxTimeToStartMomentum) {
-                    this.#startMomentum();
+                if (this.#velocityX == 0 && this.#velocityY == 0) {
+                    if (releasedPointer) {
+                        let canvasRectangle = this.#canvas.getBoundingClientRect();
+
+                        let cursorInsideCanvasX = releasedPointer.clientX - canvasRectangle.left;
+                        let cursorInsideCanvasY = releasedPointer.clientY - canvasRectangle.top;
+                        this.onClick(cursorInsideCanvasX, cursorInsideCanvasY);
+                    }
+                } else {
+                    let timeSinceLastMove = Date.now() - this.#lastMoveTime;
+                    if (timeSinceLastMove <= this.maxTimeToStartMomentum) {
+                        this.#startMomentum();
+                    }
                 }
             }
         }

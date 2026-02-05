@@ -155,7 +155,7 @@ void Camera::setProjectionMode(PROJECTIONTYPE mode)
         }
         else
         {
-            projectionMatrix_ = std::make_unique<OrthographicProjectionMatrix>(0.1f, 1000.0f);
+            projectionMatrix_ = std::make_unique<OrthographicProjectionMatrix>(0.0f, 1000.0f);
         }
 
         recalculateCanvasBoundaries();
