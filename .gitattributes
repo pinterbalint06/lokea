@@ -1,0 +1,39 @@
+# generalt package json
+package-lock.json linguist-generated
+backend/package-lock.json linguist-generated
+
+# minden webassembly file
+*.wasm binary linguist-generated
+*.map linguist-generated
+*.wasm.map binary linguist-generated
+frontend/javascript/libs/webassembly/** linguist-generated
+
+# visszamenoen a webassembly es generalt jsek
+engine.js linguist-generated
+webassembly.js linguist-generated
+frontend/engine.js linguist-generated
+frontend/engine_debug.js linguist-generated
+frontend/javascript/equirectangular*.js linguist-generated
+frontend/javascript/terrain*.js linguist-generated
+frontend/javascript/testEquirectangularWASM*.js linguist-generated
+frontend/javascript/testTerrainWASM*.js linguist-generated
+frontend/javascript/testWebGLWASM*.js linguist-generated
+frontend/js/engine*.js linguist-generated
+frontend/js/testEquirectangularWASM*.js linguist-generated
+frontend/js/testTerrainWASM*.js linguist-generated
+frontend/js/testWebGLWASM*.js linguist-generated
+
+# bootstrap
+frontend/bootstrap/** linguist-vendored
+
+# generált dokumentációk
+*.pdf binary linguist-generated
+*.bib linguist-generated
+*.bbl linguist-generated
+*.dia binary linguist-generated
+
+# kepek
+*.ico binary
+*.jpg binary
+*.png binary
+*.webp binary
