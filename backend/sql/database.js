@@ -92,6 +92,12 @@ async function sortedUsers(mireKeresek, mit, status, adminChecked, modChecked, u
     const [rows] = await pool.execute(query, params);
     return rows;
 }
+
+async function userToInactive(userId) {
+    const query = 'UPDATE users SET deleted_at = CURRENT_TIMESTAMP WHERE id = ? AND deleted_at IS NULL';
+    const [result] = await pool.execute(query, userId);
+    return result.affectedRows;
+}
 //!Export
 module.exports = {
     // selectall,
@@ -99,5 +105,6 @@ module.exports = {
     getUserByUsername,
     getUserByEmail,
     getUsers,
-    sortedUsers
+    sortedUsers,
+    userToInactive
 };

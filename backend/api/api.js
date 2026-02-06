@@ -145,13 +145,13 @@ router.post("/login",
     });
 
 router.post('/signout', (request, response) => {
-    request.session.destroy(error => { 
+    request.session.destroy(error => {
         if (error) {
-            response.status(500).json({success: false, error: error});
+            response.status(500).json({ success: false, error: error });
         }
         else {
             response.clearCookie('geo.sid');
-            response.status(200).json({success: true});
+            response.status(200).json({ success: true });
         }
     });
 });
@@ -159,30 +159,51 @@ router.post('/signout', (request, response) => {
 router.get('/admin/users', async (request, response) => {
     try {
         if (request.session.role != 'ADMIN') {
-            response.status(403).json({message: "Nincs hozzáférésed!"});
+            response.status(403).json({ message: "Nincs hozzáférésed!" });
         }
         else {
             let users = await database.getUsers();
-            response.status(200).json({message: "Sikeres lekérés", users: users});
+            response.status(200).json({ message: "Sikeres lekérés", users: users });
         }
     } catch (error) {
-        response.status(500).json({ error: error })
+        response.status(500).json({ error: error });
     }
 })
 
 router.post('/admin/sortedUsers', async (request, response) => {
     try {
         if (request.session.role != 'ADMIN') {
-            response.status(403).json({message: "Nincs hozzáférésed!"});
+            response.status(403).json({ message: "Nincs hozzáférésed!" });
         }
         else {
             console.log(request.body);
-            let {mireKeresek, mit, status, adminChecked, modChecked, userChecked} = request.body;
+            let { mireKeresek, mit, status, adminChecked, modChecked, userChecked } = request.body;
             let users = await database.sortedUsers(mireKeresek, mit, status, adminChecked, modChecked, userChecked);
-            response.status(200).json({message: "Sikeres lekérés", users: users});
+            response.status(200).json({ message: "Sikeres lekérés", users: users });
         }
     } catch (error) {
-        response.status(500).json({ error: error })
+        response.status(500).json({ error: error });
+    }
+})
+
+router.post('/admin/userToInactive', async (request, response) => {
+    try {
+        if (request.session.role != 'ADMIN') {
+            response.status(403).json({ message: "Nincs hozzáférésed!" });
+        }
+        else {
+            console.log(request.body);
+            let { userId } = request.body;
+            let sorok = await database.userToInactive(userId);
+            if (sorok === 0) {
+                response.status(200).json({ message: "A felhasználó már inaktiv volt!" })
+            }
+            else {
+                response.status(204).end();
+            }
+        }
+    } catch (error) {
+        response.status(500).json({ error: error });
     }
 })
 
