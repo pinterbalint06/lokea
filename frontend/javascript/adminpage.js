@@ -330,8 +330,8 @@ async function sortedUser() {
             mireKeresek: selectOption,
             mit: kereso,
             status: selectedStatus,
-            adminChecked: selectedRoles.includes("roleAdmin"), 
-            modChecked: selectedRoles.includes("roleModerator"), 
+            adminChecked: selectedRoles.includes("roleAdmin"),
+            modChecked: selectedRoles.includes("roleModerator"),
             userChecked: selectedRoles.includes("roleUser")
         })
     });
@@ -340,7 +340,7 @@ async function sortedUser() {
 }
 
 async function userToInactive(id) {
-    let response = await fetch("/api/admin/sortedUsers", {
+    let response = await fetch("/api/admin/userToInactive", {
         method: "POST",
         headers: {
             "Content-Type": "application/json"
@@ -349,7 +349,16 @@ async function userToInactive(id) {
             userId: id
         })
     });
-    return (response.status == 204) ? "Sikerült a törlés" : (await response.json()).message;
+    let mitadokvissza;
+    if (response.status == 204) {
+        mitadokvissza = "Sikerült a törlés";
+        let tablazat = document.getElementById('usersTableDiv');
+        tablazatGeneral(await sortedUser(), tablazat);
+    }
+    else {
+        mitadokvissza = (await response.json()).message;
+    }
+    return mitadokvissza;
 }
 
 function tablazatGeneral(data, kontener) {
@@ -372,7 +381,6 @@ function tablazatGeneral(data, kontener) {
     let tbody = document.createElement('tbody');
     tbody.classList.add("table-group-divider");
     let adatok = data.users;
-    console.log(adatok);
     for (let i = 0; i < adatok.length; i++) {
         let tr = document.createElement('tr');
         let ertekek = Object.values(adatok[i]);
@@ -403,7 +411,7 @@ function tablazatGeneral(data, kontener) {
         torloGomb.value = 'Törlés';
         torloGomb.classList.add("btn", "btn-danger");
         torloGomb.addEventListener("click", async function () {
-            alert(await userToInactive(adatok.user_id));
+            alert(await userToInactive(adatok[i].user_id));
         });
         modositoGombokDiv.appendChild(editGomb);
         modositoGombokDiv.appendChild(torloGomb);
@@ -416,6 +424,10 @@ function tablazatGeneral(data, kontener) {
     tablazat.appendChild(tbody);
 
     kontener.appendChild(tablazat);
+}
+
+function modalView(content) {
+
 }
 
 

@@ -88,14 +88,13 @@ async function sortedUsers(mireKeresek, mit, status, adminChecked, modChecked, u
     if (conditions.length > 0) {
         query += ' WHERE ' + conditions.join(' AND ');
     }
-    console.log(query, params);
     const [rows] = await pool.execute(query, params);
     return rows;
 }
 
 async function userToInactive(userId) {
-    const query = 'UPDATE users SET deleted_at = CURRENT_TIMESTAMP WHERE id = ? AND deleted_at IS NULL';
-    const [result] = await pool.execute(query, userId);
+    const query = 'UPDATE users SET deleted_at = CURRENT_TIMESTAMP WHERE user_id = ? AND deleted_at IS NULL';
+    const [result] = await pool.execute(query, [userId]);
     return result.affectedRows;
 }
 //!Export
