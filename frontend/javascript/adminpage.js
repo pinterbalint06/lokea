@@ -339,6 +339,19 @@ async function sortedUser() {
     return data;
 }
 
+async function userToInactive(id) {
+    let response = await fetch("/api/admin/sortedUsers", {
+        method: "POST",
+        headers: {
+            "Content-Type": "application/json"
+        },
+        body: JSON.stringify({
+            userId: id
+        })
+    });
+    return (response.status == 204) ? "Sikerült a törlés" : (await response.json()).message;
+}
+
 function tablazatGeneral(data, kontener) {
     kontener.innerHTML = "";
     let tablazat = document.createElement('table');
@@ -389,6 +402,9 @@ function tablazatGeneral(data, kontener) {
         torloGomb.type = 'button';
         torloGomb.value = 'Törlés';
         torloGomb.classList.add("btn", "btn-danger");
+        torloGomb.addEventListener("click", async function () {
+            alert(await userToInactive(adatok.user_id));
+        });
         modositoGombokDiv.appendChild(editGomb);
         modositoGombokDiv.appendChild(torloGomb);
         td.appendChild(modositoGombokDiv);
