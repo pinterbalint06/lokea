@@ -1,6 +1,6 @@
 #include "core/scene/scene.h"
 #include "core/scene/distantLight.h"
-#include "core/scene/camera.h"
+#include "core/scene/camera/camera.h"
 
 #include "core/resources/mesh.h"
 

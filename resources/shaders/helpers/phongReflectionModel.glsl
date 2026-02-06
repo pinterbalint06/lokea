@@ -3,7 +3,7 @@
 precision highp float;
 precision highp int;
 
-vec4 phongReflectionModel(
+vec3 phongReflectionModel(
     vec3 normal,
     vec3 worldPos,
     vec3 camPos,
@@ -21,7 +21,7 @@ vec4 phongReflectionModel(
     // diffuse
     float dotNL = dot(normal, lightVec);
     float diffFactor = max(0.0, dotNL);
-    vec4 returnColor;
+    vec3 returnColor;
     if(diffFactor > 0.0) {
         vec3 diffuseColor = diffFactor * matAlbedo * matDiffuseness * lightColorPreCalc;
         //specular
@@ -33,10 +33,10 @@ vec4 phongReflectionModel(
         // ambient
         vec3 ambientColor = ambientLight * lightColor * matAlbedo;
 
-        returnColor = vec4((diffuseColor + specColor + ambientColor) / 255.0, 1.0);
+        returnColor = (diffuseColor + specColor + ambientColor) / 255.0;
     } else {
         // no light is shone on the surface
-        returnColor = vec4(vec3(0.0), 1.0);
+        returnColor = vec3(0.0);
     }
     return returnColor;
 }

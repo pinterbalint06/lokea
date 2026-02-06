@@ -9,6 +9,7 @@
 #include <cstdint>
 #include <memory>
 
+#include "core/rendering/shader.h"
 #include "core/resources/mesh.h"
 #include "core/resources/vertex.h"
 #include "core/resources/material.h"

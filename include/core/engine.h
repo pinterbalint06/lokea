@@ -1,6 +1,7 @@
 #ifndef ENGINE_H
 #define ENGINE_H
 
+#include <emscripten/val.h>
 #include <cstdint>
 #include <string>
 #include <memory>
@@ -9,7 +10,7 @@
 #include "core/rendering/renderer.h"
 
 #include "core/scene/scene.h"
-#include "core/scene/camera.h"
+#include "core/scene/camera/camera.h"
 
 // Forward declaration
 class Mesh; // defined in "core/resources/mesh.h"
@@ -29,11 +30,14 @@ public:
 
     void setLightIntensity(float intensity);
     void setShadingMode(Shaders::SHADINGMODE shadingmode);
-    void setFrustum(float focal, float filmW, float filmH, int imageW, int imageH, float n, float f);
+    void setFrustum(float filmW, float filmH, int imageW, int imageH, float n, float f);
     void setLightColor(float r, float g, float b);
     void setAmbientLight(float ambientLightIntensity);
-    void setFocalLength(float focal);
+    void setZoom(float amount);
+    void zoom(float amount);
     void setCanvasSize(int width, int height);
+    void setProjectionType(PROJECTIONTYPE type);
+    void setProjectionType(int type);
 
     void rotateCamera(float dPitch, float dYaw);
     void setCameraRotation(float pitch, float yaw);
@@ -41,6 +45,7 @@ public:
     uint8_t *initTexture(int width, int height, int meshIndex);
     void uploadTextureToGPU(int meshIndex);
     void deleteTexture(int meshIndex);
+    void loadTextureFromUrl(const std::string &url, int meshIndex, emscripten::val onSuccess, emscripten::val onError);
     void loadTextureFromUrl(const std::string &url, int meshIndex);
 
     float getPitch() { return scene_->getCamera()->getPitch(); }

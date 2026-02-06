@@ -4,7 +4,7 @@
 #include "core/rendering/uniformBufferObject.h"
 
 #include "core/scene/scene.h"
-#include "core/scene/camera.h"
+#include "core/scene/camera/camera.h"
 #include "core/scene/distantLight.h"
 
 #include "core/resources/material.h"
