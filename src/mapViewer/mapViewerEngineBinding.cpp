@@ -16,7 +16,7 @@ EMSCRIPTEN_BINDINGS(mapViewerSettingsBinding)
 EMSCRIPTEN_BINDINGS(mapViewerEngineBinding)
 {
     emscripten::class_<MapViewerEngine>("MapViewerEngine")
-        .constructor<std::string, int, int>()
+        .constructor<const std::string&, int, int, const std::string&>()
         .function("loadMap", emscripten::select_overload<void(const std::string&, int, int)>(&MapViewerEngine::loadMap))
         .function("loadMapPromise", emscripten::select_overload<void(const std::string&, int, int, emscripten::val, emscripten::val)>(&MapViewerEngine::loadMap))
         .function("moveMap", &MapViewerEngine::moveMap)

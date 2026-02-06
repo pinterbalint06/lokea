@@ -2,6 +2,10 @@ import { degreeToRadian } from "../math/mathUtils.js";
 import ModuleBuilder from "../webassembly/mapViewer/mapViewer.js";
 import { WASMViewerBase, WASM_ERROR_TYPES, WebassemblyError } from "./WASMViewerBase.js";
 
+const DEFAULT_OPTIONS = {
+    "markerUrl": "/images/marker.webp"
+}
+
 export const MAP_VIEWER_ERROR_TYPES = {
     ...WASM_ERROR_TYPES,
     INVALID_INPUT: "INVALID_INPUT",
@@ -17,6 +21,14 @@ export class MapViewer extends WASMViewerBase {
      * @type {number | null} 
      * The ID of the current requested image loading (used to dismiss old image load requests) */
     #currentImageRequestID;
+
+    // MARKER
+    /**
+     * @type {string}
+     * The URL of the marker.
+     */
+    #markerURL
+
     /**
      * Constructor for MapViewer class.
      *
@@ -24,11 +36,13 @@ export class MapViewer extends WASMViewerBase {
      * @param {Object} [options={}] - Optional configuration options.
      * @param {number} [options.canvasWidth=DEFAULT_OPTIONS["canvasWidth"]] - The width of the canvas.
      * @param {number} [options.canvasHeight=DEFAULT_OPTIONS["canvasHeight"]] - The height of the canvas.
+     * @param {number} [options.markerUrl=DEFAULT_OPTIONS["markerUrl"]] - The URL of the image of the marker.
      * @throws {Error} Throws an error if the canvas element with the specified ID does not exist.
      */
     constructor(canvasId, options = {}) {
         super(canvasId, options, ModuleBuilder);
         this.#currentImageRequestID = 0;
+        this.#markerURL = options.markerUrl != undefined ? options.markerUrl : DEFAULT_OPTIONS["markerUrl"];
     }
 
     // |------------------|
@@ -134,7 +148,11 @@ export class MapViewer extends WASMViewerBase {
     // |-----------------|
     // Functions that have to be implemented
     _createEngine(module) {
-        return new module.MapViewerEngine(this._canvasId, this._canvasWidth, this._canvasHeight);
+        return new module.MapViewerEngine(
+            this._canvasId,
+            this._canvasWidth, this._canvasHeight,
+            this.#markerURL
+        );
     }
 
     _getInputCallbacks() {

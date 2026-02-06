@@ -32,7 +32,7 @@ private:
     float uPerPixel_, vPerPixel_;
 
     void createMapPlane();
-    void createMarkerPlane();
+    void createMarkerPlane(const std::string &markerUrl);
     void updateMarker();
     void recalculateUVPerPixel();
     void limitVCoordinates();
@@ -41,7 +41,7 @@ private:
     void zoomMapUV(float zoomAmount, float zoomHereU, float zoomHereV);
 
 public:
-    MapViewerEngine(const std::string &canvasID, int width, int height);
+    MapViewerEngine(const std::string &canvasID, int width, int height, const std::string &markerUrl);
     ~MapViewerEngine();
 
     MapViewerSettings &getSettings() { return settings_; }

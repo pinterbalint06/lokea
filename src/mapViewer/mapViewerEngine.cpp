@@ -21,8 +21,6 @@
 #include "mapViewer/mapViewerSettings.h"
 #include "mapViewer/mapViewerEngine.h"
 
-constexpr const char* markerUrl = "/images/marker.webp";
-
 enum VertexIndex
 {
     TOP_LEFT = 0,
@@ -65,7 +63,7 @@ void MapViewerEngine::createMapPlane()
     }
 }
 
-void MapViewerEngine::createMarkerPlane()
+void MapViewerEngine::createMarkerPlane(const std::string &markerUrl)
 {
     if (markerPlane_ == nullptr)
     {
@@ -108,8 +106,17 @@ void MapViewerEngine::updateMarker()
         float uRange = mapVertices[TOP_RIGHT].u - minMapU;
         float vRange = mapVertices[BOTTOM_LEFT].v - minMapV;
 
+        // calculate which map to put the marker on
+        // it is put on the closest to the view center
+        float currentCenterU = (mapVertices[TOP_LEFT].u + mapVertices[TOP_RIGHT].u) * 0.5f;
+
+        float markerToCenter = currentCenterU - markerU_;
+
+        float closestMapStart = std::round(markerToCenter);
+        float renderMarkerU = markerU_ + closestMapStart;
+
         // marker's coordinates inside the view
-        float inRangeRelativeU = (markerU_ - minMapU) / uRange;
+        float inRangeRelativeU = (renderMarkerU - minMapU) / uRange;
         float inRangeRelativeV = (markerV_ - minMapV) / vRange;
 
         // the plane starts at -1 and ends at 1
@@ -154,6 +161,9 @@ void MapViewerEngine::placeMarker(float screenX, float screenY)
     }
 
     getUVAtScreenPosition(screenX, screenY, markerU_, markerV_);
+
+    markerU_ = markerU_ - std::floor(markerU_);
+
     updateMarker();
 }
 
@@ -187,7 +197,7 @@ emscripten::val MapViewerEngine::getMarkerPosition()
     return imageCoordinates;
 }
 
-MapViewerEngine::MapViewerEngine(const std::string & canvasID, int width, int height)
+MapViewerEngine::MapViewerEngine(const std::string &canvasID, int width, int height, const std::string &markerUrl)
     : Engine(canvasID)
 {
     setShadingMode(Shaders::SHADINGMODE::NO_SHADING);
@@ -217,7 +227,7 @@ MapViewerEngine::MapViewerEngine(const std::string & canvasID, int width, int he
     renderer_->setImageDimensions(width_, height_);
 
     createMapPlane();
-    createMarkerPlane();
+    createMarkerPlane(markerUrl);
 }
 
 MapViewerEngine::~MapViewerEngine()
@@ -390,8 +400,8 @@ void MapViewerEngine::zoomMapToCenter(float zoomAmount)
     {
         Vertex *vertices = mapPlane_->getVertices();
 
-        float currentScreenCenterU = (vertices[TOP_LEFT].u + vertices[BOTTOM_RIGHT].u) / 2.0f;
-        float currentScreenCenterV = (vertices[TOP_LEFT].v + vertices[BOTTOM_RIGHT].v) / 2.0f;
+        float currentScreenCenterU = (vertices[TOP_LEFT].u + vertices[BOTTOM_RIGHT].u) * 0.5f;
+        float currentScreenCenterV = (vertices[TOP_LEFT].v + vertices[BOTTOM_RIGHT].v) * 0.5f;
 
         zoomMapUV(zoomAmount, currentScreenCenterU, currentScreenCenterV);
     }
