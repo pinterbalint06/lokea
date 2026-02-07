@@ -18,7 +18,7 @@ export class CanvasInput {
     /**
      * @type {string}
      * Default CSS cursor style. */
-    defaultCursor;
+    #defaultCursor;
     /**
      * @type {string}
      * CSS cursor style when dragging. */
@@ -132,7 +132,7 @@ export class CanvasInput {
         this.zoomSpeed = options.zoomSpeed ? options.zoomSpeed : DEFAULT_OPTIONS["zoomSpeed"];
         this.sensitivity = options.sensitivity ? options.sensitivity : DEFAULT_OPTIONS["sensitivity"];
         this.mode = options.mode ? options.mode : DEFAULT_OPTIONS["mode"];
-        this.defaultCursor = options.defaultCursor ? options.defaultCursor : DEFAULT_OPTIONS["defaultCursor"];
+        this.#defaultCursor = options.defaultCursor ? options.defaultCursor : DEFAULT_OPTIONS["defaultCursor"];
         this.grabbingCursor = options.grabbingCursor ? options.grabbingCursor : DEFAULT_OPTIONS["grabbingCursor"];
         this.friction = options.friction ? options.friction : DEFAULT_OPTIONS["friction"];
         this.drag = options.drag ? options.drag : DEFAULT_OPTIONS["drag"];
@@ -156,8 +156,13 @@ export class CanvasInput {
         this.#pointerMoveListener = null;
         this.#wheelListener = null;
 
-        this.#canvas.style.cursor = this.defaultCursor;
+        this.#canvas.style.cursor = this.#defaultCursor;
         this.#addListeners();
+    }
+
+    setDefaultCursor(defaultCursor) {
+        this.#defaultCursor = defaultCursor;
+        this.#updateCursor();
     }
 
     removeListeners() {
@@ -348,6 +353,6 @@ export class CanvasInput {
     }
 
     #updateCursor() {
-        this.#canvas.style.cursor = this.#pointers.length === 1 ? this.grabbingCursor : this.defaultCursor;
+        this.#canvas.style.cursor = this.#pointers.length === 1 ? this.grabbingCursor : this.#defaultCursor;
     }
 }

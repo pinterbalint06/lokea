@@ -55,7 +55,7 @@ export class WASMViewerBase {
     /**
      * @type {CanvasInput}
      * - Handles rotating and zooming */
-    _canvasInput;
+    canvasInput;
     /**
      * @type {function}
      * Handles the fullscreen change and resize of the canvas.
@@ -205,7 +205,7 @@ export class WASMViewerBase {
 
     _setupInputControl() {
         // child class should provide getInputCallbacks
-        this._canvasInput = new CanvasInput(
+        this.canvasInput = new CanvasInput(
             this._canvas,
             this._getInputCallbacks()
         );
@@ -225,9 +225,9 @@ export class WASMViewerBase {
             this._resizeHandler = null;
         }
 
-        if (this._canvasInput) {
-            this._canvasInput.removeListeners();
-            this._canvasInput = null;
+        if (this.canvasInput) {
+            this.canvasInput.removeListeners();
+            this.canvasInput = null;
         }
         this._engineInitPromise.finally(() => {
             if (this._engine && !this._engine.isDeleted()) {

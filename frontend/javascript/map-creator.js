@@ -1,23 +1,87 @@
 import { MapViewer } from "./libs/viewer/MapViewer.js";
 
+const ICONS = {
+    POINTING_HAND: `<svg version="1.1" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 84.91 122.88" style="height: 2em;" fill="white">
+            <path d="M26.6,80.57c-0.11-0.06-0.25-0.14-0.37-0.23c-1.49-1.18-3.13-2.51-4.54-3.66c-2.06-1.69-4.43-3.64-6.09-5.02 c-1.13-0.93-2.42-1.58-3.63-1.83c-0.79-0.14-1.49-0.14-2.06,0.08c-0.45,0.2-0.85,0.56-1.1,1.13c-0.34,0.76-0.51,1.83-0.42,3.3 c0.08,1.3,0.54,2.71,1.13,4.09c0.87,2,2.09,3.86,2.99,5.04c0.06,0.08,0.11,0.14,0.14,0.23l17.84,25.48 c0.23,0.34,0.37,0.71,0.39,1.07c0.37,2.93,0.99,5.16,1.89,6.54c0.68,1.01,1.52,1.52,2.62,1.49h28.07c1.75-0.03,3.33-0.53,4.79-1.55 c1.61-1.1,3.04-2.82,4.37-5.13c0.03-0.03,0.06-0.08,0.08-0.11c0.51-0.87,1.18-2,1.83-3.07c2.85-4.68,5.33-8.77,5.61-14.57l-0.17-8 c-0.03-0.11-0.03-0.23-0.03-0.34s0-0.87,0.03-1.89c0.06-5.3,0.14-11.84-4.71-12.65h-3.13c-0.03,1.49-0.11,3.02-0.2,4.48 c-0.08,1.32-0.17,2.56-0.17,3.78c0,1.3-1.04,2.34-2.34,2.34c-1.3,0-2.34-1.04-2.34-2.34c0-1.21,0.08-2.62,0.17-4.09 c0.31-4.99,0.68-10.71-3.3-11.41h-3.1c-0.17,0-0.34-0.03-0.51-0.06c0.03,1.8-0.08,3.66-0.2,5.47C60.08,70.46,60,71.7,60,72.91 c0,1.3-1.04,2.34-2.34,2.34c-1.3,0-2.34-1.04-2.34-2.34c0-1.21,0.08-2.62,0.17-4.09c0.31-4.99,0.68-10.71-3.3-11.41h-3.1 c-0.23,0-0.42-0.03-0.62-0.08v9.1c0,1.3-1.04,2.34-2.34,2.34c-1.3,0-2.34-1.04-2.34-2.34V41.99c0-4.09-1.66-6.68-3.8-7.75 c-0.79-0.4-1.63-0.59-2.45-0.59c-0.82,0-1.66,0.2-2.45,0.59c-2.11,1.07-3.75,3.66-3.75,7.86v42.81c0,1.3-1.04,2.34-2.34,2.34 c-1.3,0-2.34-1.04-2.34-2.34v-4.34H26.6L26.6,80.57z M39.29,13.99c0,1.55-1.26,2.78-2.78,2.78c-1.55,0-2.78-1.26-2.78-2.78V2.78 c0-1.55,1.26-2.78,2.78-2.78c1.55,0,2.78,1.26,2.78,2.78V13.99L39.29,13.99L39.29,13.99z M13.99,36.95c1.55,0,2.78,1.26,2.78,2.78 c0,1.55-1.26,2.78-2.78,2.78H2.78C1.23,42.5,0,41.24,0,39.73c0-1.55,1.26-2.78,2.78-2.78H13.99L13.99,36.95z M21.92,20.33 c1.08,1.08,1.08,2.85,0,3.93c-1.08,1.08-2.85,1.08-3.93,0l-7.9-7.93c-1.08-1.08-1.08-2.85,0-3.93c1.08-1.08,2.85-1.08,3.93,0 L21.92,20.33L21.92,20.33z M58.47,42.5c-1.55,0-2.78-1.26-2.78-2.78c0-1.55,1.26-2.78,2.78-2.78h11.21c1.55,0,2.78,1.26,2.78,2.78 c0,1.55-1.26,2.78-2.78,2.78H58.47L58.47,42.5z M54.47,23.65c-1.08,1.08-2.85,1.08-3.93,0c-1.08-1.08-1.08-2.85,0-3.93l7.9-7.93 c1.08-1.08,2.85-1.08,3.93,0c1.08,1.08,1.08,2.85,0,3.93L54.47,23.65L54.47,23.65z M48.47,52.79c0.2-0.06,0.39-0.08,0.62-0.08h3.24 c0.17,0,0.37,0.03,0.53,0.06c4.31,0.68,6.26,3.19,7.05,6.45c0.31-0.14,0.65-0.23,0.99-0.23h3.24c0.17,0,0.37,0.03,0.53,0.06 c4.65,0.73,6.51,3.58,7.19,7.19c0.11-0.03,0.23-0.03,0.37-0.03h3.24c0.17,0,0.37,0.03,0.54,0.06c8.91,1.38,8.79,10.23,8.71,17.36 v1.86l0.2,8.23v0.25c-0.34,7.02-3.1,11.56-6.28,16.8c-0.54,0.87-1.07,1.77-1.8,3.02c-0.03,0.03-0.03,0.06-0.06,0.08 c-1.66,2.9-3.58,5.13-5.78,6.65c-2.23,1.55-4.71,2.34-7.41,2.37H35.53c-2.79,0.06-4.96-1.16-6.57-3.55c-1.3-1.92-2.14-4.62-2.59-8 L8.9,86.35l-0.09-0.08c-1.04-1.38-2.45-3.55-3.52-5.95c-0.79-1.8-1.38-3.75-1.52-5.67c-0.14-2.28,0.17-4.09,0.82-5.52 c0.79-1.78,2.09-2.93,3.64-3.55c1.44-0.59,3.07-0.68,4.71-0.34c1.97,0.4,4,1.38,5.72,2.82c1.41,1.18,3.78,3.1,6.09,4.99l1.92,1.58 V42.13c0-6.23,2.76-10.23,6.34-12.04c1.44-0.73,2.99-1.1,4.57-1.1c1.58,0,3.13,0.37,4.56,1.1c3.58,1.8,6.4,5.83,6.4,11.95v10.76 L48.47,52.79L48.47,52.79z" />
+          </svg>`
+};
 const mapCanvasId = "mapCanvas";
+/**
+ * @type {MapViewer}
+ */
 let mapViewer;
+let isPlacingMarker = false;
+let UI = {};
+
+function showToast(message, type = "primary", iconHtml = "") {
+    // Create element
+    let toastElement = document.createElement('div');
+    toastElement.classList.add("toast", "align-items-center", "border-0", "text-bg-" + type);
+    toastElement.setAttribute('role', 'alert');
+    toastElement.setAttribute('aria-live', 'assertive');
+    toastElement.setAttribute('aria-atomic', 'true');
+
+    let toastDiv = document.createElement("div");
+    toastDiv.classList.add("d-flex");
+
+    let toastBody = document.createElement("div");
+    toastBody.classList.add("toast-body", "d-flex", "align-items-center");
+
+    toastBody.insertAdjacentHTML('beforeend', iconHtml);
+
+    let messageP = document.createElement("p");
+    messageP.classList.add("my-0", "ms-2", "p-0");
+    messageP.innerText = message;
+    toastBody.appendChild(messageP);
+
+    toastDiv.appendChild(toastBody);
+
+    toastElement.appendChild(toastDiv);
+
+    let closeButton = document.createElement("button");
+    closeButton.setAttribute("type", "button");
+    closeButton.setAttribute("data-bs-dismiss", "toast");
+    closeButton.setAttribute("aria-label", "Close");
+    closeButton.classList.add("btn-close", "btn-close-white", "me-2", "m-auto");
+    toastDiv.appendChild(closeButton);
+
+    toastElement.appendChild(toastDiv);
+
+    UI.toastPlace.appendChild(toastElement);
+
+    let bootstrapToast = new bootstrap.Toast(toastElement, { delay: 2000 });
+    bootstrapToast.show();
+
+    toastElement.addEventListener('hidden.bs.toast', () => {
+        toastElement.remove();
+    });
+}
+
 
 async function processFile(file) {
-    if (file.type.startsWith("image/")) {
-        let imageUrl = URL.createObjectURL(file);
-        let image = await createImageBitmap(file);
-        await mapViewer.loadMap(
-            imageUrl,
-            image.width,
-            image.height
-        );
-        image.close();
-        URL.revokeObjectURL(imageUrl);
-        let uploadOverlay = document.getElementById("upload-overlay");
-        uploadOverlay.classList.add("d-none");
-        let saveButton = document.getElementById("saveButton");
-        saveButton.disabled = false;
+    let imageBitmap, imageUrl;
+    try {
+        if (file.type.startsWith("image/")) {
+            imageUrl = URL.createObjectURL(file);
+            imageBitmap = await createImageBitmap(file);
+            await mapViewer.loadMap(
+                imageUrl,
+                imageBitmap.width,
+                imageBitmap.height
+            );
+            UI.uploadOverlay.classList.add("d-none");
+            UI.saveButton.disabled = false;
+        }
+    } catch (error) {
+        console.error("Failed to process image:", error);
+        showToast("Hiba a kép betöltésekor!", "danger");
+    } finally {
+        if (imageBitmap) {
+            imageBitmap.close();
+        }
+        if (imageUrl) {
+            URL.revokeObjectURL(imageUrl);
+        }
     }
 }
 
@@ -35,8 +99,6 @@ async function handleDrop(event) {
 }
 
 function setupDragAndDrop() {
-    let dropZone = document.getElementById("drop-zone");
-
     window.addEventListener("drop", (event) => {
         // prevents opening the image on a new page
         event.preventDefault();
@@ -50,31 +112,64 @@ function setupDragAndDrop() {
                 imageItems.push(event.dataTransfer.items[i]);
             }
         }
-        if (imageItems.length > 0 && dropZone.contains(event.target)) {
+        if (imageItems.length > 0 && UI.dropZone.contains(event.target)) {
             event.dataTransfer.dropEffect = "copy";
         } else {
             event.dataTransfer.dropEffect = "none";
         }
     });
 
-    dropZone.addEventListener("drop", handleDrop);
+    UI.dropZone.addEventListener("drop", handleDrop);
 }
 
-function init() {
-    let canvas = document.getElementById(mapCanvasId);
+function setupFileUploadInput() {
+    UI.uploadButton.addEventListener('click', () => UI.fileInput.click());
+
+    UI.fileInput.addEventListener('change', handleFileSelect);
+}
+
+function setupMapViewer() {
     mapViewer = new MapViewer(
         mapCanvasId,
         {
-            "canvasWidth": canvas.clientWidth,
-            "canvasHeight": canvas.clientHeight
+            "canvasWidth": UI.mapCanvas.clientWidth,
+            "canvasHeight": UI.mapCanvas.clientHeight
         }
     );
-    setupDragAndDrop();
-    let uploadButton = document.getElementById("uploadBtn");
-    let fileInput = document.getElementById("fileInput");
-    uploadButton.addEventListener('click', () => fileInput.click());
+    mapViewer.onClickHandler = (cursorX, cursorY) => {
+        if (isPlacingMarker) {
+            mapViewer.placeMarker(cursorX, cursorY);
 
-    fileInput.addEventListener('change', handleFileSelect);
+
+            isPlacingMarker = false;
+            mapViewer.canvasInput.setDefaultCursor("default");
+            UI.plusMarkerBtn.classList.remove("d-none");
+
+            // hideToast(UI.toast); should hide the 
+        }
+    }
+}
+
+function init() {
+    UI.saveButton = document.getElementById("saveButton");
+    UI.fileInput = document.getElementById("fileInput");
+    UI.uploadButton = document.getElementById("uploadBtn");
+    UI.plusMarkerBtn = document.getElementById("plusBtn");
+    UI.mapCanvas = document.getElementById(mapCanvasId);
+    UI.dropZone = document.getElementById("drop-zone");
+    UI.uploadOverlay = document.getElementById("upload-overlay");
+    UI.toastPlace = document.getElementById("toastPlace");
+    setupMapViewer();
+    setupDragAndDrop();
+    setupFileUploadInput();
+
+    UI.plusMarkerBtn.addEventListener("click", () => {
+        UI.plusMarkerBtn.classList.add("d-none");
+        mapViewer.canvasInput.setDefaultCursor("crosshair");
+
+        showToast("Koppints a térképre a jelölő elhelyezéséhez!", "primary", ICONS.POINTING_HAND);
+        isPlacingMarker = true;
+    });
 }
 
 document.addEventListener("DOMContentLoaded", init);

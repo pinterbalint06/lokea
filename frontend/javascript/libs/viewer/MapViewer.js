@@ -143,9 +143,35 @@ export class MapViewer extends WASMViewerBase {
         }
     }
 
+    placeMarker(locationX, locationY) {
+        if (this._isDestroyed) {
+            throw new WebassemblyError(
+                "Equirectangular Viewer is destroyed!",
+                {
+                    "type": MAP_VIEWER_ERROR_TYPES.DESTROYED
+                });
+        }
+
+        if (this._engine) {
+            this._engine.placeMarker(locationX, locationY);
+        } else {
+            throw new WebassemblyError(
+                "Engine not initialized yet",
+                {
+                    "type": MAP_VIEWER_ERROR_TYPES.INITIALIZATION
+                });
+        }
+    }
+
+    onClickHandler = (cursorX, cursorY) => {
+        this.placeMarker(cursorX, cursorY);
+    }
+
     _handleResize() {
         if (!this._isDestroyed && this._engine) {
-            this._engine.setCanvasSize(window.innerWidth, window.innerHeight);
+            this._canvasWidth = this._canvas.clientWidth;
+            this._canvasHeight = this._canvas.clientHeight;
+            this._engine.setCanvasSize(this._canvasWidth, this._canvasHeight);
         }
     }
 
@@ -178,9 +204,7 @@ export class MapViewer extends WASMViewerBase {
                 }
             },
             onClick: (cursorX, cursorY) => {
-                if (this._engine) {
-                    this._engine.placeMarker(cursorX, cursorY);
-                }
+                this.onClickHandler(cursorX, cursorY);
             }
         };
     }
