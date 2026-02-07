@@ -63,6 +63,7 @@ public:
     void removeMarker();
     emscripten::val getMarkerPosition();
     void setCanvasSize(int width, int height);
+    void updateCanvasSize(int width, int height);
 };
 
 #endif

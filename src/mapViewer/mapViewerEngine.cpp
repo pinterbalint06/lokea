@@ -154,7 +154,7 @@ void MapViewerEngine::updateMarker()
 
 void MapViewerEngine::placeMarker(float screenX, float screenY)
 {
-    if (!markerPlaced_)
+    if (!markerPlaced_ && isMapLoaded_)
     {
         addMesh(markerPlane_);
         markerPlaced_ = true;

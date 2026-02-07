@@ -143,6 +143,13 @@ export class MapViewer extends WASMViewerBase {
         }
     }
 
+    _handleResize() {
+        if (!this._isDestroyed && this._engine) {
+            this._engine.setCanvasSize(window.innerWidth, window.innerHeight);
+        }
+    }
+
+
     // |-----------------|
     // | PRIVATE METHODS |
     // |-----------------|

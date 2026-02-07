@@ -51,6 +51,9 @@ router.get('/webgl', (request, response) => {
 router.get('/map', (request, response) => {
     response.sendFile(path.join(__dirname, '../frontend/html/test-map.html'));
 });
+router.get('/map_creator', (request, response) => {
+    response.sendFile(path.join(__dirname, '../frontend/html/map-creator.html'));
+});
 router.get('/login_page', (request, response) => {
     response.sendFile(path.join(__dirname, '../frontend/html/login.html'));
 });
