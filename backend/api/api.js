@@ -156,6 +156,7 @@ router.post('/signout', (request, response) => {
     });
 });
 
+//játékhoz szükséges api-k
 router.get('/game_maps', async (request, response) => {
     try {
         const palyak = await database.getGameMaps();
@@ -163,6 +164,30 @@ router.get('/game_maps', async (request, response) => {
             success: true,
             results: palyak
         });
+    } catch (error) {
+        response.status(500).json({
+            message: error
+        });
+    }
+});
+
+router.post('/get_cover_image', async (request, response) => {
+
+    try {
+        let uploads = path.join(__dirname, '../uploads');
+        let fileRes;
+        if (!request.body || !request.body.image_id) {
+            fileRes = 'cover_images/image-not-found.jpg';
+        } else {
+            let filePath = await database.getImagePath(request.body.image_id);
+            if (!filePath) {
+                fileRes = 'cover_images/image-not-found.jpg';
+            } else {
+                fileRes = filePath;
+            }
+        }
+        let res = path.join(uploads, fileRes);
+        response.sendFile(res);
     } catch (error) {
         response.status(500).json({
             message: error

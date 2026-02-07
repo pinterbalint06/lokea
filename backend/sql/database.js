@@ -41,11 +41,19 @@ async function getGameMaps() {
     const [result] = await pool.execute(query);
     return result;
 }
+
+async function getImagePath(image_id) {
+    const query = 'SELECT images.filepath FROM images WHERE images.image_id = ?';
+    const [result] = await pool.execute(query, [image_id]);
+    let re = result[0].filepath;
+    return re;
+}
 //!Export
 module.exports = {
     // selectall,
     newUser, 
     getUserByUsername,
     getUserByEmail,
-    getGameMaps
+    getGameMaps,
+    getImagePath
 };

@@ -51,8 +51,8 @@ router.get('/webgl', (request, response) => {
 router.get('/login_page', (request, response) => {
     response.sendFile(path.join(__dirname, '../frontend/html/login.html'));
 });
-router.get('/palyavalasztas', (request, response) => {
-    response.sendFile(path.join(__dirname, '../frontend/html/jatek-valsztas.html'));
+router.get('/choose_game', (request, response) => {
+    response.sendFile(path.join(__dirname, '../frontend/html/game-choosing.html'));
 });
 
 
