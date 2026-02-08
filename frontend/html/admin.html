@@ -166,17 +166,18 @@
         </div>
     </div>
     <div class="modal fade" id="modalView" tabindex="-1" aria-labelledby="exampleModalLabel" aria-hidden="true">
-        <div class="modal-dialog modal-xl modal-fullscreen-xl-down">
+        <div class="modal-dialog modal-xl" id="modalSize">
             <div class="modal-content">
                 <div class="modal-header">
                     <h5 class="modal-title" id="modalTitle">Felhasználó szerkesztése</h5>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Bezárás"></button>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Bezárás" title="Bezár"></button>
                 </div>
                 <div class="modal-body" id="modalContent">
+                    szia
                     <div class="container-fluid">
                         <div class="row">
                             <div class="col-4">
-                                <img src="default.png" class="img-fluid img-thumbnail h-75" alt="">
+                                <img src="default.png" class="img-fluid img-thumbnail rounded-circle h-75" alt="">
                                 <h6>Username</h6>
                             </div>
                             <div class="col-8">
@@ -215,12 +216,12 @@
                     </div>
                 </div>
                 <div class="modal-footer justify-content-between">
-                    <p class="text-start text-danger">
+                    <p class="text-danger" id="footerText">
                         Kilépés után a változtatásokat nem lehet visszavonni!
                     </p>
-                    <div>
+                    <div id="footerButtons">
                         <button type="button" class="btn btn-danger">Változtatások visszavonása</button>
-                        <button type="button" class="btn btn-">Mentés</button>
+                        <button type="button" class="btn btn-primary">Mentés</button>
                         <button type="button" class="btn btn-primary">Mentés és kilépés</button>
                     </div>
                 </div>

@@ -424,8 +424,53 @@ function tablazatGeneral(data, kontener) {
     kontener.appendChild(tablazat);
 }
 
-function modalView(content) {
+function modalView(title, type, content) {
+    document.getElementById('modalTitle') = title;
+    let modalSize = document.getElementById('modalSize');
+    modalSize.className = "";
+    let footertext = document.getElementById('footerText');
+    footertext.innerHTML = "";
+    footertext.className = "";
+    let footerButtons = document.getElementById('footerButtons');
+    footerButtons.innerHTML = "";
+    let button;
+    switch (type) {
+        case "edit":
+            modalSize.classList.add("modal-dialog", "modal-xl");
 
+            footertext.innerHTML = "Kilépés után a változtatásokat nem lehet visszavonni!";
+            footertext.classList.add("text-danger");
+
+            button = document.createElement('button');
+            input.type = 'button';
+            input.innerText = "Változtatások visszavonása";
+            input.classList.add("btn", "btn-danger");
+            footerButtons.appendChild(button);
+            button = document.createElement('button');
+            input.type = 'button';
+            input.innerText = "Mentés";
+            input.classList.add("btn", "btn-primary");
+            footerButtons.appendChild(button);
+            button = document.createElement('button');
+            input.type = 'button';
+            input.innerText = "Mentés és kilépés";
+            input.classList.add("btn", "btn-primary");
+            footerButtons.appendChild(button);
+            break;
+        case "alert":
+            modalSize.classList.add("modal-dialog", "modal-sm");
+
+            button = document.createElement('button');
+            input.type = 'button';
+            input.innerText = "OK";
+            input.classList.add("btn", "btn-primary");
+            footerButtons.appendChild(button);
+            break;
+    }
+
+    let hova = document.getElementById('modalContent');
+    hova.innerHTML = "";
+    hova.appendChild(content);
 }
 
 
