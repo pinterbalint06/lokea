@@ -61,9 +61,14 @@ export class WASMViewerBase {
     canvasInput;
     /**
      * @type {function}
-     * Handles the fullscreen change and resize of the canvas.
+     * Handles entering fullscreen and resize of the canvas.
      */
     _resizeHandler;
+    /**
+     * @type {function}
+     * Handles exiting fullscreen.
+     */
+    _fullscreenHandler;
 
     // STATE
     /** 
@@ -75,6 +80,11 @@ export class WASMViewerBase {
      * Flag indicating if the viewer has been destroyed to prevent further function calls 
      */
     _isDestroyed;
+    /**
+     * @type {boolean}
+     * Flag indicating if the viewer thinks it is in fullscreen
+     */
+    _isFullscreen;
 
     constructor(canvasId, options = {}, ModuleBuilder) {
         this._canvasId = canvasId;
@@ -99,6 +109,7 @@ export class WASMViewerBase {
                 this._isDestroyed = false;
                 this._animationFrameId = null;
                 this._ModuleBuilder = ModuleBuilder;
+                this._isFullscreen = false;
 
                 // Initialize
                 this._engineInitPromise = this._initialize();
@@ -173,8 +184,7 @@ export class WASMViewerBase {
                 throw new WebassemblyError(
                     "WASM Viewer is destroyed!",
                     {
-                        "type": WASM_ERROR_TYPES.DESTROYED,
-                        "imgUrl": url
+                        "type": WASM_ERROR_TYPES.DESTROYED
                     });
             }
 
@@ -182,19 +192,13 @@ export class WASMViewerBase {
                 throw new WebassemblyError(
                     "Engine failed to initialize",
                     {
-                        "type": WASM_ERROR_TYPES.INITIALIZATION,
-                        "imgUrl": url
+                        "type": WASM_ERROR_TYPES.INITIALIZATION
                     });
             }
         }
 
         this._canvasWidth = width;
         this._canvasHeight = height;
-
-        if (document.fullscreenElement != this._canvas) {
-            this._windowedWidth = width;
-            this._windowedHeight = height;
-        }
 
         this._engine.setCanvasSize(this._canvasWidth, this._canvasHeight);
     }
@@ -227,6 +231,9 @@ export class WASMViewerBase {
 
     async toggleFullscreen() {
         if (!document.fullscreenElement) {
+            // before entering save windowed size
+            this._windowedWidth = this._canvasWidth;
+            this._windowedHeight = this._canvasHeight;
             await this._canvas.requestFullscreen();
         } else {
             await document.exitFullscreen();
@@ -237,17 +244,28 @@ export class WASMViewerBase {
         this._resizeHandler = () => {
             this._handleResize();
         };
+        this._fullscreenHandler = () => {
+            this._handleFullscreen();
+        };
         window.addEventListener("resize", this._resizeHandler);
-        this._canvas.addEventListener("fullscreenchange", this._resizeHandler);
+        this._canvas.addEventListener("fullscreenchange", this._fullscreenHandler);
+    }
+
+    _handleFullscreen() {
+        this._isFullscreen = document.fullscreenElement == this._canvas;
+
+        // if exited fullscreen revert to windowed size
+        if (!this._isFullscreen) {
+            this.setCanvasSize(this._windowedWidth, this._windowedHeight);
+        }
     }
 
     _handleResize() {
         if (!this._isDestroyed && this._engine) {
-            const isFullscreen = document.fullscreenElement == this._canvas;
-            if (isFullscreen) {
-                this.setCanvasSize(window.innerWidth, window.innerHeight)
+            if (this._isFullscreen) {
+                this.setCanvasSize(window.innerWidth, window.innerHeight);
             } else {
-                this.setCanvasSize(this._windowedWidth, this._windowedHeight);
+                this.setCanvasSize(this._canvas.clientWidth, this._canvas.clientHeight);
             }
         }
     }
@@ -270,8 +288,11 @@ export class WASMViewerBase {
         // remove window listener for fullscreen listeners
         if (this._resizeHandler) {
             window.removeEventListener("resize", this._resizeHandler);
-            this._canvas.removeEventListener("fullscreenchange", this._resizeHandler);
             this._resizeHandler = null;
+        }
+        if (this._fullscreenHandler) {
+            this._canvas.removeEventListener("fullscreenchange", this._fullscreenHandler);
+            this._fullscreenHandler = null;
         }
 
         if (this.canvasInput) {
