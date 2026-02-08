@@ -32,15 +32,16 @@ async function createCard(game_map) {
     let game_maps_card_content = document.createElement('div');
     game_maps_card_content.classList.add('card-content');
     let card_name = document.createElement('h3');
+    card_name.classList.add('card-title');
     card_name.innerText = game_map.title;
-    let card_rating = document.createElement('p');
-    card_rating.innerText = `Értékelés: ${game_map.rating}`; //ratinget megcsinálni api-ból kapott adat alapján
     let card_plays = document.createElement('p');
+    card_plays.classList.add('card-desc');
     card_plays.innerText = `Játékok száma: ${game_map.plays}`;
     let card_created = document.createElement('p');
+    card_created.classList.add('card-desc');
     card_created.innerText = `Létrehozva: ${(game_map.game_created.split('T')[0]).replaceAll('-', '.')}`;
     game_maps_card_content.appendChild(card_name);
-    game_maps_card_content.appendChild(card_rating);
+    game_maps_card_content.appendChild(createReview(game_map.rating));
     game_maps_card_content.appendChild(card_plays);
     game_maps_card_content.appendChild(card_created);
     game_maps_card.appendChild(game_maps_card_content);
@@ -67,4 +68,11 @@ async function getCoverImage(cover_image_id) {
     } catch (error) {
         console.error('POST hiba:', error);
     }
+}
+
+function createReview(rating) {
+    let card_rating = document.createElement('div');
+    card_rating.classList.add('stars');
+    card_rating.style.setProperty('--rating', rating);
+    return card_rating;
 }

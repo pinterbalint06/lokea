@@ -35,3 +35,30 @@
             width: 100%;
             box-sizing: border-box;
         }
+
+        .card-title {
+            margin: 0;
+            font-size: 1.2rem;
+            margin-bottom: 5px;
+        }
+
+        .card-desc {
+            margin: 0;
+            font-size: 0.9rem;
+            opacity: 0.8;
+        }
+
+        .stars {
+            display: inline-block;
+            font-size: 18px;
+            font-family: Times;
+            line-height: 1;
+            margin-bottom: 5px;
+        }
+
+        .stars::before {
+            content: '★★★★★';
+            background: linear-gradient(90deg, #ffc107 calc(var(--rating) * 10%), #bbb calc(var(--rating) * 10%));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }

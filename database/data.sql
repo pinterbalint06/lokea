@@ -6,3 +6,7 @@ INSERT INTO images (width, height, filepath) VALUES
 
 INSERT INTO game_maps (creator_id, title, cover_image_id ) VALUES 
 (1, "testgame", 1);
+INSERT INTO game_maps (creator_id, title, cover_image_id, rating) VALUES 
+(1, "testgame", 1, 5.8);
+INSERT INTO game_maps (creator_id, title, cover_image_id, rating) VALUES 
+(1, "testgame", 1, 2);
