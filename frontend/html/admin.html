@@ -156,111 +156,72 @@
             <div id="contentDisplay" class="col-10">
                 <div class="container-fluid">
                     <div id="content">
-                        <!-- <h1 class="h2 mt-5 text-center">404 Egyenlőre nincs itt semmi...</h1> -->
-
-                        <div class="row p-3">
-                            <div class="col-9">
-                                <div class="d-flex justify-content-between">
-                                    <h2 class="h2">Users</h2>
-                                    
-                                    <div class="mb-3">
-                                        <div class="input-group">
-                                            <input type="text" class="form-control" id="kereses"
-                                                placeholder="Keresés...">
-
+                        <button type="button" class="btn btn-primary" data-bs-toggle="modal"
+                            data-bs-target="#modalView">
+                            Modal megnyitása
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="modal fade" id="modalView" tabindex="-1" aria-labelledby="exampleModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-xl modal-fullscreen-xl-down">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="modalTitle">Felhasználó szerkesztése</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Bezárás"></button>
+                </div>
+                <div class="modal-body" id="modalContent">
+                    <div class="container-fluid">
+                        <div class="row">
+                            <div class="col-4">
+                                <img src="default.png" class="img-fluid img-thumbnail h-75" alt="">
+                                <h6>Username</h6>
+                            </div>
+                            <div class="col-8">
+                                <form>
+                                    <div class="form-group">
+                                        <div>
+                                            <p>ID</p>
+                                            <input type="number" id="editIdInput" class="form-control" disabled>
+                                        </div>
+                                        <div>
+                                            <p>Username</p>
+                                            <input type="text" id="editUsernameInput" class="form-control">
+                                        </div>
+                                        <div>
+                                            <p>E-mail address</p>
+                                            <input type="text" id="editEmailInput" class="form-control">
+                                        </div>
+                                        <div>
+                                            <p>Roles:</p>
                                             <select class="form-select">
-                                                <option value="user_id" selected>ID</option>
-                                                <option value="username">Username</option>
-                                                <option value="email">E-mail</option>
+                                                <option value="1">User</option>
+                                                <option value="2">Moderator</option>
+                                                <option value="3" disabled>Admin</option>
                                             </select>
                                         </div>
-                                    </div>
-                                </div>
-                                <table id="usersTable" class="table table-striped table-hover">
-                                    <thead>
-                                        <tr>
-                                            <th>Active</th>
-                                            <th>ID</th>
-                                            <th>Username</th>
-                                            <th>E-mail</th>
-                                            <th>Role</th>
-                                            <th>Actions</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody class="table-group-divider">
-                                        <tr>
-                                            <td>i</td>
-                                            <td>1</td>
-                                            <td>Szia123</td>
-                                            <td>Cucc@gmail.com</td>
-                                            <td>ADMIN</td>
-                                            <td>
-                                                <input type="button" value="Szerkesztés" class="btn btn-info">
-                                                <input type="button" value="Törlés" class="btn btn-danger">
-                                            </td>
-                                        </tr>
-                                        <tr>
-                                            <td>i</td>
-                                            <td>1</td>
-                                            <td>Szia123</td>
-                                            <td>Cucc@gmail.com</td>
-                                            <td>ADMIN</td>
-                                            <td>
-                                                <input type="button" value="Szerkesztés" class="btn btn-info">
-                                                <input type="button" value="Törlés" class="btn btn-danger">
-                                            </td>
-                                        </tr>
-                                        <tr>
-                                            <td>i</td>
-                                            <td>1</td>
-                                            <td>Szia123</td>
-                                            <td>Cucc@gmail.com</td>
-                                            <td>ADMIN</td>
-                                            <td>
-                                                <input type="button" value="Szerkesztés" class="btn btn-info">
-                                                <input type="button" value="Törlés" class="btn btn-danger">
-                                            </td>
-                                        </tr>
-                                    </tbody>
-                                </table>
-                            </div>
-                            <div class="col-3">
-                                <div class="card bg-light p-3">
-                                    <h4 class="h4">Sort</h4>
-                                    <div class="mb-3">
-                                        <h6 class="h6">User status</h6>
-                                        <div class="form-check">
-                                            <input type="radio" name="a1" id="statusAny" class="form-check-input"
-                                                checked>
-                                            <label for="statusAny" class="form-check-label">Any</label>
-                                        </div>
-                                        <div class="form-check">
-                                            <input type="radio" name="a1" id="statusActive" class="form-check-input">
-                                            <label for="statusActive" class="form-check-label">Active</label>
-                                        </div>
-                                        <div class="form-check">
-                                            <input type="radio" name="a1" id="statusDeleted" class="form-check-input">
-                                            <label for="statusDeleted" class="form-check-label">Deleted</label>
-                                        </div>
-
-                                        <h6 class="h6">Role</h6>
-                                        <div class="form-check">
-                                            <input type="checkbox" name="a2" id="roleAdmin" class="form-check-input">
-                                            <label for="roleAdmin" class="form-check-label">Admin</label>
-                                        </div>
-                                        <div class="form-check">
-                                            <input type="checkbox" name="a2" id="roleMod" class="form-check-input">
-                                            <label for="roleMod" class="form-check-label">Moderator</label>
-                                        </div>
-                                        <div class="form-check">
-                                            <input type="checkbox" name="a2" id="roleUser" class="form-check-input">
-                                            <label for="roleUser" class="form-check-label">User</label>
+                                        <div class="form-check form-switch mt-3">
+                                            <input class="form-check-input" type="checkbox" role="switch"
+                                                id="edit2faInput">
+                                            <label class="form-check-label" for="edit2faInput">Two-factor
+                                                authentication</label>
                                         </div>
                                     </div>
-                                </div>
+                                </form>
                             </div>
                         </div>
-
+                    </div>
+                </div>
+                <div class="modal-footer justify-content-between">
+                    <p class="text-start text-danger">
+                        Kilépés után a változtatásokat nem lehet visszavonni!
+                    </p>
+                    <div>
+                        <button type="button" class="btn btn-danger">Változtatások visszavonása</button>
+                        <button type="button" class="btn btn-">Mentés</button>
+                        <button type="button" class="btn btn-primary">Mentés és kilépés</button>
                     </div>
                 </div>
             </div>

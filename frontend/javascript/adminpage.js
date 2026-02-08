@@ -13,7 +13,6 @@ document.addEventListener("DOMContentLoaded", function () {
             await melyikValaszt(element.dataset.route);
         })
     })
-
 });
 
 async function kijelentkezes() {
@@ -103,7 +102,6 @@ async function melyikValaszt(melyik) {
         case "fflags":
             display.appendChild(await featureFlagsDisplayre());
             break;
-
     }
 }
 
