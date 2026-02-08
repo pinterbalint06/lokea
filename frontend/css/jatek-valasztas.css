@@ -54,11 +54,23 @@
             font-family: Times;
             line-height: 1;
             margin-bottom: 5px;
+            position: relative;
+            color: #ccc;
+            margin: -2px 0;
         }
 
         .stars::before {
             content: '★★★★★';
-            background: linear-gradient(90deg, #ffc107 calc(var(--rating) * 10%), #bbb calc(var(--rating) * 10%));
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
+            display: block;
+        }
+
+        .stars::after {
+            content: '★★★★★';
+            position: absolute;
+            top: 0;
+            left: 0;
+            color: #ffc107;
+            overflow: hidden;
+            white-space: nowrap;
+            width: calc(var(--rating) * 10%);
         }
