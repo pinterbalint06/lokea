@@ -12,8 +12,9 @@ const mapCanvasId = "mapCanvas";
 let mapViewer;
 let isPlacingMarker = false;
 let UI = {};
+let clickOnMapToast;
 
-function showToast(message, type = "primary", iconHtml = "") {
+function showToast(message, type = "primary", isClosable, options = {}, iconHtml = "") {
     // Create element
     let toastElement = document.createElement('div');
     toastElement.classList.add("toast", "align-items-center", "border-0", "text-bg-" + type);
@@ -38,21 +39,24 @@ function showToast(message, type = "primary", iconHtml = "") {
 
     toastElement.appendChild(toastDiv);
 
-    let closeButton = document.createElement("button");
-    closeButton.setAttribute("type", "button");
-    closeButton.setAttribute("data-bs-dismiss", "toast");
-    closeButton.setAttribute("aria-label", "Close");
-    closeButton.classList.add("btn-close", "btn-close-white", "me-2", "m-auto");
-    toastDiv.appendChild(closeButton);
+    if (isClosable) {
+        let closeButton = document.createElement("button");
+        closeButton.setAttribute("type", "button");
+        closeButton.setAttribute("data-bs-dismiss", "toast");
+        closeButton.setAttribute("aria-label", "Close");
+        closeButton.classList.add("btn-close", "btn-close-white", "me-2", "m-auto");
+        toastDiv.appendChild(closeButton);
+    }
 
     toastElement.appendChild(toastDiv);
 
     UI.toastPlace.appendChild(toastElement);
 
-    let bootstrapToast = new bootstrap.Toast(toastElement, { delay: 2000 });
-    bootstrapToast.show();
+    clickOnMapToast = new bootstrap.Toast(toastElement, options);
+    clickOnMapToast.show();
 
     toastElement.addEventListener('hidden.bs.toast', () => {
+        clickOnMapToast = null;
         toastElement.remove();
     });
 }
@@ -71,10 +75,12 @@ async function processFile(file) {
             );
             UI.uploadOverlay.classList.add("d-none");
             UI.saveButton.disabled = false;
+        } else {
+            showToast("Csak kép elfogadott!", "danger", false, { delay: 3000 });
         }
     } catch (error) {
         console.error("Failed to process image:", error);
-        showToast("Hiba a kép betöltésekor!", "danger");
+        showToast("Hiba a kép betöltésekor!", "danger", false, { delay: 3000 });
     } finally {
         if (imageBitmap) {
             imageBitmap.close();
@@ -139,13 +145,13 @@ function setupMapViewer() {
     mapViewer.onClickHandler = (cursorX, cursorY) => {
         if (isPlacingMarker) {
             mapViewer.placeMarker(cursorX, cursorY);
-
-
-            isPlacingMarker = false;
-            mapViewer.canvasInput.setDefaultCursor("default");
-            UI.plusMarkerBtn.classList.remove("d-none");
-
-            // hideToast(UI.toast); should hide the 
+            if (clickOnMapToast) {
+                clickOnMapToast.hide();
+            }
+            let coordinates = mapViewer.getMarkerPosition();
+            UI.coordinateXSpan.innerText = coordinates.x;
+            UI.coordinateYSpan.innerText = coordinates.y;
+            UI.collapseBootstrapElement.show();
         }
     }
 }
@@ -159,6 +165,12 @@ function init() {
     UI.dropZone = document.getElementById("drop-zone");
     UI.uploadOverlay = document.getElementById("upload-overlay");
     UI.toastPlace = document.getElementById("toastPlace");
+    UI.collapseElement = document.getElementById("safeSidebar");
+    UI.coordinateXSpan = document.getElementById("coordinateX");
+    UI.coordinateYSpan = document.getElementById("coordinateY");
+    UI.collapseBootstrapElement = new bootstrap.Collapse(UI.collapseElement, {
+        toggle: false
+    });
     setupMapViewer();
     setupDragAndDrop();
     setupFileUploadInput();
@@ -167,7 +179,7 @@ function init() {
         UI.plusMarkerBtn.classList.add("d-none");
         mapViewer.canvasInput.setDefaultCursor("crosshair");
 
-        showToast("Koppints a térképre a jelölő elhelyezéséhez!", "primary", ICONS.POINTING_HAND);
+        showToast("Koppints a térképre a jelölő elhelyezéséhez!", "primary", true, { autohide: false }, ICONS.POINTING_HAND);
         isPlacingMarker = true;
     });
 }

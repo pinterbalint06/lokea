@@ -48,7 +48,31 @@
         </button>
         <div id="toastPlace" class="toast-container position-absolute top-0 start-50 translate-middle-x mt-3 z-3">
         </div>
+        <div class="collapse collapse-horizontal position-absolute top-0 bottom-0 end-0 me-2 z-3 mt-2 mb-5 rounded shadow"
+            id="safeSidebar">
+            <div class="card h-100">
+                <div class="card-header">
+                    <h5 class="card-title">Új pont hozzáadása</h5>
+                </div>
+                <div class="card-body">
+                    <div class="rounded bg-body-tertiary border d-flex align-items-center p-2">
+                        <svg style="height: 2em;" class="text-body" fill="currentColor"
+                            xmlns="http://www.w3.org/2000/svg" viewBox="0 0 122.88 122.88">
+                            <title>compass-north</title>
+                            <path
+                                d="M61.44,0A61.46,61.46,0,1,1,18,18,61.23,61.23,0,0,1,61.44,0ZM73.93,66.5l-5.18,0-.09.11a7.73,7.73,0,0,1-.6.67,8.9,8.9,0,0,1-12.55,0h0a8.17,8.17,0,0,1-.62-.7l-.13-.16-5.63,0L61.64,95,73.93,66.5Zm-5.85-2.69,7.86,0h2l-16.32,37.8L45,63.66l11.13.07.39.6q.18.27.39.54a5.26,5.26,0,0,0,.44.49,6.2,6.2,0,0,0,8.78,0c.15-.15.29-.31.42-.46a5,5,0,0,0,.37-.5l.4-.6ZM55,59.08,46.11,59l-.64-1.29q7.85-18.25,15.75-36.5l16.62,38-10-.06-.36-.78a5.42,5.42,0,0,0-.55-1,5.87,5.87,0,0,0-.7-.85,6.22,6.22,0,0,0-8.79,0h0a7.57,7.57,0,0,0-.69.81,5.73,5.73,0,0,0-.53.92l-.37.77ZM96.58,26.3a49.71,49.71,0,1,0,14.55,35.14A49.57,49.57,0,0,0,96.58,26.3Z" />
+                        </svg>
+                        <div class="d-flex flex-column ms-2">
+                            <h6 class="h6 text-uppercase text-body-secondary m-0">Koordináták</h6>
+                            <p class="m-0 p-0"><span id="coordinateX"></span>, <span id="coordinateY"></span></p>
+                        </div>
+                    </div>
+                    <canvas width="200" height="200"></canvas>
+                </div>
+            </div>
+        </div>
     </main>
+
     <script src="../bootstrap/js/bootstrap.min.js"></script>
 </body>
 
