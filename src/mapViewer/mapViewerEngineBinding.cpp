@@ -27,6 +27,7 @@ EMSCRIPTEN_BINDINGS(mapViewerEngineBinding)
         .function("getSettings", &MapViewerEngine::getSettings)
         .function("setSettings", &MapViewerEngine::setSettings)
         .function("placeMarker", &MapViewerEngine::placeMarker)
+        .function("placeMarkerByImageCoordinates", &MapViewerEngine::placeMarkerByImageCoordinates)
         .function("removeMarker", &MapViewerEngine::removeMarker)
         .function("getMarkerPosition", &MapViewerEngine::getMarkerPosition);
 }

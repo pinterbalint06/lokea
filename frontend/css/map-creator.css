@@ -27,6 +27,11 @@ main {
     flex: 1;
 }
 
+#equirectangularPreview {
+    display: block;
+    flex: 1;
+}
+
 .border-dashed {
     border-style: dashed !important;
 }

@@ -1,4 +1,3 @@
-import { degreeToRadian } from "../math/mathUtils.js";
 import ModuleBuilder from "../webassembly/mapViewer/mapViewer.js";
 import { WASMViewerBase, WASM_ERROR_TYPES, WebassemblyError } from "./WASMViewerBase.js";
 
@@ -21,6 +20,14 @@ export class MapViewer extends WASMViewerBase {
      * @type {number | null} 
      * The ID of the current requested image loading (used to dismiss old image load requests) */
     #currentImageRequestID;
+    /** 
+     * @type {number} 
+     * The width of the current image*/
+    #imageWidth;
+    /** 
+     * @type {number} 
+     * The height of the current image*/
+    #imageHeight;
 
     // MARKER
     /**
@@ -43,6 +50,8 @@ export class MapViewer extends WASMViewerBase {
         super(canvasId, options, ModuleBuilder);
         this.#currentImageRequestID = 0;
         this.#markerURL = options.markerUrl != undefined ? options.markerUrl : DEFAULT_OPTIONS["markerUrl"];
+        this.#imageWidth = 0;
+        this.#imageHeight = 0;
     }
 
     // |------------------|
@@ -72,7 +81,7 @@ export class MapViewer extends WASMViewerBase {
 
             if (this._isDestroyed) {
                 throw new WebassemblyError(
-                    "Equirectangular Viewer is destroyed!",
+                    "Map Viewer is destroyed!",
                     {
                         "type": MAP_VIEWER_ERROR_TYPES.DESTROYED,
                         "imgUrl": url
@@ -100,6 +109,8 @@ export class MapViewer extends WASMViewerBase {
                 () => {
                     if (!this._isDestroyed) {
                         if (this.#currentImageRequestID == currentRequestId) {
+                            this.#imageWidth = width;
+                            this.#imageHeight = height;
                             resolve();
                         } else {
                             reject(new WebassemblyError(
@@ -123,10 +134,30 @@ export class MapViewer extends WASMViewerBase {
         });
     }
 
+    checkCoordinateValid(imageX, imageY) {
+        let returnObject = {
+            correct: false
+        };
+        if (Number.isInteger(imageX) && Number.isInteger(imageY)) {
+            if (imageX > 0 && imageY > 0) {
+                if (imageX <= this.#imageWidth && imageY <= this.#imageHeight) {
+                    returnObject.correct = true;
+                } else {
+                    returnObject.error = "A koordinátáknak kisebbnek kell lennie mint a kép méretei!";
+                }
+            } else {
+                returnObject.error = "A koordinátáknak nagyobbnak kell lennie mint 0!";
+            }
+        } else {
+            returnObject.error = "A koordinátáknak egész számnak kell lenniük!";
+        }
+        return returnObject;
+    }
+
     getMarkerPosition() {
         if (this._isDestroyed) {
             throw new WebassemblyError(
-                "Equirectangular Viewer is destroyed!",
+                "Map Viewer is destroyed!",
                 {
                     "type": MAP_VIEWER_ERROR_TYPES.DESTROYED
                 });
@@ -146,7 +177,7 @@ export class MapViewer extends WASMViewerBase {
     placeMarker(locationX, locationY) {
         if (this._isDestroyed) {
             throw new WebassemblyError(
-                "Equirectangular Viewer is destroyed!",
+                "Map Viewer is destroyed!",
                 {
                     "type": MAP_VIEWER_ERROR_TYPES.DESTROYED
                 });
@@ -163,16 +194,28 @@ export class MapViewer extends WASMViewerBase {
         }
     }
 
-    onClickHandler = (cursorX, cursorY) => {
-        this.placeMarker(cursorX, cursorY);
+    placeMarkerToImageCoordinates(imageX, imageY) {
+        if (this._isDestroyed) {
+            throw new WebassemblyError(
+                "Map Viewer is destroyed!",
+                {
+                    "type": MAP_VIEWER_ERROR_TYPES.DESTROYED
+                });
+        }
+
+        if (this._engine) {
+            this._engine.placeMarkerByImageCoordinates(imageX, imageY);
+        } else {
+            throw new WebassemblyError(
+                "Engine not initialized yet",
+                {
+                    "type": MAP_VIEWER_ERROR_TYPES.INITIALIZATION
+                });
+        }
     }
 
-    _handleResize() {
-        if (!this._isDestroyed && this._engine) {
-            this._canvasWidth = this._canvas.clientWidth;
-            this._canvasHeight = this._canvas.clientHeight;
-            this._engine.setCanvasSize(this._canvasWidth, this._canvasHeight);
-        }
+    onClickHandler = (cursorX, cursorY) => {
+        this.placeMarker(cursorX, cursorY);
     }
 
 

@@ -80,7 +80,13 @@ async function init() {
     createOptionsForImageList();
     document.getElementById("autoRotate").addEventListener("change", setAutoRotate);
 
-    equirectangularViewer = new EquirectangularViewer(canvasId);
+    equirectangularViewer = new EquirectangularViewer(
+        canvasId,
+        {
+            "canvasWidth": 1000,
+            "canvasHeight": 1000
+        }
+    );
     let select = document.getElementById("kepek");
     if (imageList[0]) {
         equirectangularViewer.loadImage(imageList[select.value].url, imageList[select.value].width, imageList[select.value].height).then(function () {

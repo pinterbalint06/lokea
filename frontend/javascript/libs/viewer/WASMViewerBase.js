@@ -1,10 +1,5 @@
 import { CanvasInput } from "./CanvasInput.js";
 
-const DEFAULT_OPTIONS = {
-    "canvasWidth": 1000,
-    "canvasHeight": 1000
-};
-
 export const WASM_ERROR_TYPES = {
     INITIALIZATION: "ENGINE_INITIALIZATION",
     DESTROYED: "VIEWER_DESTROYED",
@@ -53,6 +48,14 @@ export class WASMViewerBase {
      * The height of the canvas */
     _canvasHeight;
     /**
+     * @type {number}
+     * The width of the canvas when not in fullscreen */
+    _windowedWidth;
+    /**
+     * @type {number}
+     * The height of the canvas when not in fullscreen */
+    _windowedHeight;
+    /**
      * @type {CanvasInput}
      * - Handles rotating and zooming */
     canvasInput;
@@ -80,10 +83,14 @@ export class WASMViewerBase {
         if (this._canvas) {
             if (ModuleBuilder && typeof ModuleBuilder == "function") {
                 // initialize class variables
-                this._canvasWidth = options.canvasWidth != undefined ? options.canvasWidth : DEFAULT_OPTIONS["canvasWidth"];
-                this._canvasHeight = options.canvasHeight != undefined ? options.canvasHeight : DEFAULT_OPTIONS["canvasHeight"];
+                this._canvasWidth = options.canvasWidth != undefined ? options.canvasWidth : this._canvas.clientWidth;
+                this._canvasHeight = options.canvasHeight != undefined ? options.canvasHeight : this._canvas.clientHeight;
+
                 this._canvas.width = this._canvasWidth;
                 this._canvas.height = this._canvasHeight;
+
+                this._windowedWidth = this._canvasWidth;
+                this._windowedHeight = this._canvasHeight;
 
                 this._resizeHandler = null;
 
@@ -150,6 +157,48 @@ export class WASMViewerBase {
         return success;
     }
 
+    async setCanvasSize(width, height) {
+        if (!Number.isInteger(width) || !Number.isInteger(height) || width < 0 || height < 0) {
+            throw new WebassemblyError(
+                "Invalid image dimensions provided",
+                {
+                    "type": WASM_ERROR_TYPES.INVALID_INPUT
+                });
+        }
+
+        if (!this._engine) {
+            await this._engineInitPromise;
+
+            if (this._isDestroyed) {
+                throw new WebassemblyError(
+                    "WASM Viewer is destroyed!",
+                    {
+                        "type": WASM_ERROR_TYPES.DESTROYED,
+                        "imgUrl": url
+                    });
+            }
+
+            if (!this._engine) {
+                throw new WebassemblyError(
+                    "Engine failed to initialize",
+                    {
+                        "type": WASM_ERROR_TYPES.INITIALIZATION,
+                        "imgUrl": url
+                    });
+            }
+        }
+
+        this._canvasWidth = width;
+        this._canvasHeight = height;
+
+        if (document.fullscreenElement != this._canvas) {
+            this._windowedWidth = width;
+            this._windowedHeight = height;
+        }
+
+        this._engine.setCanvasSize(this._canvasWidth, this._canvasHeight);
+    }
+
     // Children class should overwrite this
     // Returns the options which will be given to CanvasInput
     _getInputCallbacks() {
@@ -194,11 +243,11 @@ export class WASMViewerBase {
 
     _handleResize() {
         if (!this._isDestroyed && this._engine) {
-            const isFullscreen = document.fullscreenElement === this._canvas;
+            const isFullscreen = document.fullscreenElement == this._canvas;
             if (isFullscreen) {
-                this._engine.setCanvasSize(window.innerWidth, window.innerHeight);
+                this.setCanvasSize(window.innerWidth, window.innerHeight)
             } else {
-                this._engine.setCanvasSize(this._canvasWidth, this._canvasHeight);
+                this.setCanvasSize(this._windowedWidth, this._windowedHeight);
             }
         }
     }

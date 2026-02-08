@@ -167,6 +167,21 @@ void MapViewerEngine::placeMarker(float screenX, float screenY)
     updateMarker();
 }
 
+void MapViewerEngine::placeMarkerByImageCoordinates(int xCoordinate, int yCoordinate)
+{
+    if (!markerPlaced_ && isMapLoaded_)
+    {
+        addMesh(markerPlane_);
+        markerPlaced_ = true;
+    }
+
+    // convert to uv
+    markerU_ = (float)xCoordinate / mapWidth_;
+    markerV_ = (float)yCoordinate / mapHeight_;
+
+    updateMarker();
+}
+
 void MapViewerEngine::removeMarker()
 {
     if (markerPlaced_)

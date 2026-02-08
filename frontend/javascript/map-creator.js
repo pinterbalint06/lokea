@@ -1,18 +1,31 @@
 import { MapViewer } from "./libs/viewer/MapViewer.js";
+import { EquirectangularViewer } from "./libs/viewer/EquirectangularViewer.js";
 
+// |------------------|
+// | GLOBAL VARIABLES |
+// |------------------|
 const ICONS = {
     POINTING_HAND: `<svg version="1.1" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 84.91 122.88" style="height: 2em;" fill="white">
             <path d="M26.6,80.57c-0.11-0.06-0.25-0.14-0.37-0.23c-1.49-1.18-3.13-2.51-4.54-3.66c-2.06-1.69-4.43-3.64-6.09-5.02 c-1.13-0.93-2.42-1.58-3.63-1.83c-0.79-0.14-1.49-0.14-2.06,0.08c-0.45,0.2-0.85,0.56-1.1,1.13c-0.34,0.76-0.51,1.83-0.42,3.3 c0.08,1.3,0.54,2.71,1.13,4.09c0.87,2,2.09,3.86,2.99,5.04c0.06,0.08,0.11,0.14,0.14,0.23l17.84,25.48 c0.23,0.34,0.37,0.71,0.39,1.07c0.37,2.93,0.99,5.16,1.89,6.54c0.68,1.01,1.52,1.52,2.62,1.49h28.07c1.75-0.03,3.33-0.53,4.79-1.55 c1.61-1.1,3.04-2.82,4.37-5.13c0.03-0.03,0.06-0.08,0.08-0.11c0.51-0.87,1.18-2,1.83-3.07c2.85-4.68,5.33-8.77,5.61-14.57l-0.17-8 c-0.03-0.11-0.03-0.23-0.03-0.34s0-0.87,0.03-1.89c0.06-5.3,0.14-11.84-4.71-12.65h-3.13c-0.03,1.49-0.11,3.02-0.2,4.48 c-0.08,1.32-0.17,2.56-0.17,3.78c0,1.3-1.04,2.34-2.34,2.34c-1.3,0-2.34-1.04-2.34-2.34c0-1.21,0.08-2.62,0.17-4.09 c0.31-4.99,0.68-10.71-3.3-11.41h-3.1c-0.17,0-0.34-0.03-0.51-0.06c0.03,1.8-0.08,3.66-0.2,5.47C60.08,70.46,60,71.7,60,72.91 c0,1.3-1.04,2.34-2.34,2.34c-1.3,0-2.34-1.04-2.34-2.34c0-1.21,0.08-2.62,0.17-4.09c0.31-4.99,0.68-10.71-3.3-11.41h-3.1 c-0.23,0-0.42-0.03-0.62-0.08v9.1c0,1.3-1.04,2.34-2.34,2.34c-1.3,0-2.34-1.04-2.34-2.34V41.99c0-4.09-1.66-6.68-3.8-7.75 c-0.79-0.4-1.63-0.59-2.45-0.59c-0.82,0-1.66,0.2-2.45,0.59c-2.11,1.07-3.75,3.66-3.75,7.86v42.81c0,1.3-1.04,2.34-2.34,2.34 c-1.3,0-2.34-1.04-2.34-2.34v-4.34H26.6L26.6,80.57z M39.29,13.99c0,1.55-1.26,2.78-2.78,2.78c-1.55,0-2.78-1.26-2.78-2.78V2.78 c0-1.55,1.26-2.78,2.78-2.78c1.55,0,2.78,1.26,2.78,2.78V13.99L39.29,13.99L39.29,13.99z M13.99,36.95c1.55,0,2.78,1.26,2.78,2.78 c0,1.55-1.26,2.78-2.78,2.78H2.78C1.23,42.5,0,41.24,0,39.73c0-1.55,1.26-2.78,2.78-2.78H13.99L13.99,36.95z M21.92,20.33 c1.08,1.08,1.08,2.85,0,3.93c-1.08,1.08-2.85,1.08-3.93,0l-7.9-7.93c-1.08-1.08-1.08-2.85,0-3.93c1.08-1.08,2.85-1.08,3.93,0 L21.92,20.33L21.92,20.33z M58.47,42.5c-1.55,0-2.78-1.26-2.78-2.78c0-1.55,1.26-2.78,2.78-2.78h11.21c1.55,0,2.78,1.26,2.78,2.78 c0,1.55-1.26,2.78-2.78,2.78H58.47L58.47,42.5z M54.47,23.65c-1.08,1.08-2.85,1.08-3.93,0c-1.08-1.08-1.08-2.85,0-3.93l7.9-7.93 c1.08-1.08,2.85-1.08,3.93,0c1.08,1.08,1.08,2.85,0,3.93L54.47,23.65L54.47,23.65z M48.47,52.79c0.2-0.06,0.39-0.08,0.62-0.08h3.24 c0.17,0,0.37,0.03,0.53,0.06c4.31,0.68,6.26,3.19,7.05,6.45c0.31-0.14,0.65-0.23,0.99-0.23h3.24c0.17,0,0.37,0.03,0.53,0.06 c4.65,0.73,6.51,3.58,7.19,7.19c0.11-0.03,0.23-0.03,0.37-0.03h3.24c0.17,0,0.37,0.03,0.54,0.06c8.91,1.38,8.79,10.23,8.71,17.36 v1.86l0.2,8.23v0.25c-0.34,7.02-3.1,11.56-6.28,16.8c-0.54,0.87-1.07,1.77-1.8,3.02c-0.03,0.03-0.03,0.06-0.06,0.08 c-1.66,2.9-3.58,5.13-5.78,6.65c-2.23,1.55-4.71,2.34-7.41,2.37H35.53c-2.79,0.06-4.96-1.16-6.57-3.55c-1.3-1.92-2.14-4.62-2.59-8 L8.9,86.35l-0.09-0.08c-1.04-1.38-2.45-3.55-3.52-5.95c-0.79-1.8-1.38-3.75-1.52-5.67c-0.14-2.28,0.17-4.09,0.82-5.52 c0.79-1.78,2.09-2.93,3.64-3.55c1.44-0.59,3.07-0.68,4.71-0.34c1.97,0.4,4,1.38,5.72,2.82c1.41,1.18,3.78,3.1,6.09,4.99l1.92,1.58 V42.13c0-6.23,2.76-10.23,6.34-12.04c1.44-0.73,2.99-1.1,4.57-1.1c1.58,0,3.13,0.37,4.56,1.1c3.58,1.8,6.4,5.83,6.4,11.95v10.76 L48.47,52.79L48.47,52.79z" />
           </svg>`
 };
 const mapCanvasId = "mapCanvas";
+const equirectangularCanvasId = "equirectangularPreview";
 /**
  * @type {MapViewer}
  */
 let mapViewer;
+/**
+ * @type {EquirectangularViewer}
+ */
+let equirectangularViewer;
 let isPlacingMarker = false;
 let UI = {};
 let clickOnMapToast;
+
+// |-----------|
+// |  UTILITY  |
+// |-----------|
 
 function showToast(message, type = "primary", isClosable, options = {}, iconHtml = "") {
     // Create element
@@ -61,87 +74,121 @@ function showToast(message, type = "primary", isClosable, options = {}, iconHtml
     });
 }
 
+async function readImageFile(file) {
+    if (!file.type.startsWith("image/")) {
+        throw new Error("Csak kép elfogadott!");
+    }
 
-async function processFile(file) {
-    let imageBitmap, imageUrl;
+    let url = URL.createObjectURL(file);
+    let imageBitmap;
     try {
-        if (file.type.startsWith("image/")) {
-            imageUrl = URL.createObjectURL(file);
-            imageBitmap = await createImageBitmap(file);
-            await mapViewer.loadMap(
-                imageUrl,
-                imageBitmap.width,
-                imageBitmap.height
-            );
-            UI.uploadOverlay.classList.add("d-none");
-            UI.saveButton.disabled = false;
-        } else {
-            showToast("Csak kép elfogadott!", "danger", false, { delay: 3000 });
-        }
+        imageBitmap = await createImageBitmap(file);
+        return {
+            url: url,
+            imageBitmap: imageBitmap
+        };
     } catch (error) {
-        console.error("Failed to process image:", error);
-        showToast("Hiba a kép betöltésekor!", "danger", false, { delay: 3000 });
-    } finally {
+        URL.revokeObjectURL(url);
         if (imageBitmap) {
             imageBitmap.close();
         }
-        if (imageUrl) {
-            URL.revokeObjectURL(imageUrl);
-        }
+        throw error;
     }
 }
 
-function handleFileSelect(event) {
-    if (event.target.files.length > 0) {
-        processFile(event.target.files[0]);
+// |------------------|
+// |  EVENT HANDLERS  |
+// |------------------|
+
+function handleCoordinateChange(event) {
+    let xCoordinate = UI.coordinateXInput.valueAsNumber;
+    let yCoordinate = UI.coordinateYInput.valueAsNumber;
+    let isValid = mapViewer.checkCoordinateValid(xCoordinate, yCoordinate);
+    if (isValid.correct) {
+        event.target.dataset.previousValue = event.target.valueAsNumber;
+        mapViewer.placeMarkerToImageCoordinates(xCoordinate, yCoordinate);
+    } else {
+        event.target.value = event.target.dataset.previousValue;
+        showToast(isValid.error, "danger", false, { delay: 3000 });
     }
 }
 
-async function handleDrop(event) {
-    event.preventDefault();
-    let imageFile = event.dataTransfer.items[0].getAsFile();
-    await processFile(imageFile);
-    event.dataTransfer.clearData();
-}
+async function handleEquirectangularLoad(file) {
+    let imgData;
+    try {
+        imgData = await readImageFile(file);
 
-function setupDragAndDrop() {
-    window.addEventListener("drop", (event) => {
-        // prevents opening the image on a new page
-        event.preventDefault();
-    });
+        await equirectangularViewer.loadImage(imgData.url, imgData.imageBitmap.width, imgData.imageBitmap.height);
+        URL.revokeObjectURL(imgData.url);
 
-    window.addEventListener("dragover", (event) => {
-        event.preventDefault();
-        let imageItems = [];
-        for (let i = 0; i < event.dataTransfer.items.length; i++) {
-            if (event.dataTransfer.items[i].kind == "file" && event.dataTransfer.items[i].type.startsWith("image/")) {
-                imageItems.push(event.dataTransfer.items[i]);
+        showToast("360°-os kép sikeresen betöltve!", "success", true, { delay: 2000 });
+        UI.savePointButton.disabled = false;
+        UI.equiFullscreenBtn.disabled = false;
+    } catch (error) {
+        console.error(error);
+        showToast(error.message, "danger", false, { delay: 3000 });
+    } finally {
+        if (imgData) {
+            if (imgData.url) {
+                URL.revokeObjectURL(imgData.url);
+            }
+            if (imgData.imageBitmap) {
+                imgData.imageBitmap.close();
             }
         }
-        if (imageItems.length > 0 && UI.dropZone.contains(event.target)) {
-            event.dataTransfer.dropEffect = "copy";
-        } else {
-            event.dataTransfer.dropEffect = "none";
-        }
-    });
-
-    UI.dropZone.addEventListener("drop", handleDrop);
+    }
 }
 
-function setupFileUploadInput() {
-    UI.uploadButton.addEventListener('click', () => UI.fileInput.click());
+async function handleMapLoad(file) {
+    let imgData;
+    try {
+        imgData = await readImageFile(file);
 
-    UI.fileInput.addEventListener('change', handleFileSelect);
+        await mapViewer.loadMap(imgData.url, imgData.imageBitmap.width, imgData.imageBitmap.height);
+        URL.revokeObjectURL(imgData.url);
+
+        UI.uploadOverlay.classList.add("d-none");
+        UI.saveButton.disabled = false;
+    } catch (error) {
+        console.error(error);
+        showToast(error.message, "danger", false, { delay: 3000 });
+    } finally {
+        if (imgData) {
+            if (imgData.url) {
+                URL.revokeObjectURL(imgData.url);
+            }
+            if (imgData.imageBitmap) {
+                imgData.imageBitmap.close();
+            }
+        }
+    }
+}
+
+function fullscreenEquirectangular() {
+    equirectangularViewer.toggleFullscreen();
+}
+
+function savePreviousValue(event) {
+    event.target.dataset.previousValue = event.target.valueAsNumber;
+}
+
+// |-------------------|
+// |  SETUP FUNCTIONS  |
+// |-------------------|
+
+function setupCoordinateInput() {
+    UI.coordinateXInput.addEventListener("focus", savePreviousValue);
+    UI.coordinateYInput.addEventListener("focus", savePreviousValue);
+    UI.coordinateXInput.addEventListener("change", handleCoordinateChange);
+    UI.coordinateYInput.addEventListener("change", handleCoordinateChange);
+}
+
+function setupEquirectangularViewer() {
+    equirectangularViewer = new EquirectangularViewer(equirectangularCanvasId);
 }
 
 function setupMapViewer() {
-    mapViewer = new MapViewer(
-        mapCanvasId,
-        {
-            "canvasWidth": UI.mapCanvas.clientWidth,
-            "canvasHeight": UI.mapCanvas.clientHeight
-        }
-    );
+    mapViewer = new MapViewer(mapCanvasId);
     mapViewer.onClickHandler = (cursorX, cursorY) => {
         if (isPlacingMarker) {
             mapViewer.placeMarker(cursorX, cursorY);
@@ -149,31 +196,111 @@ function setupMapViewer() {
                 clickOnMapToast.hide();
             }
             let coordinates = mapViewer.getMarkerPosition();
-            UI.coordinateXSpan.innerText = coordinates.x;
-            UI.coordinateYSpan.innerText = coordinates.y;
+            UI.coordinateXInput.value = coordinates.x;
+            UI.coordinateYInput.value = coordinates.y;
             UI.collapseBootstrapElement.show();
         }
     }
 }
 
+function setupFileUploadInput(buttonElement, inputElement, onFileLoaded) {
+    buttonElement.addEventListener('click', () => inputElement.click());
+
+    inputElement.addEventListener('change', (event) => {
+        if (event.target.files.length > 0) {
+            onFileLoaded(event.target.files[0]);
+        }
+        event.target.value = '';
+    });
+}
+
+function setupUploadHandler(dropZoneElement, buttonElement, inputElement, onFileLoaded) {
+    setupFileUploadInput(buttonElement, inputElement, onFileLoaded);
+
+    dropZoneElement.addEventListener('dragover', (event) => {
+        event.preventDefault();
+        let draggedFiles = [];
+        for (let i = 0; i < event.dataTransfer.items.length; i++) {
+            if (event.dataTransfer.items[i].kind == "file") {
+                draggedFiles.push(event.dataTransfer.items[i]);
+            }
+        }
+
+        if (draggedFiles.length > 0) {
+            event.dataTransfer.dropEffect = "copy";
+            dropZoneElement.classList.add('border-primary');
+        } else {
+            event.dataTransfer.dropEffect = "none";
+        }
+    });
+
+    dropZoneElement.addEventListener('dragleave', (event) => {
+        event.preventDefault();
+        dropZoneElement.classList.remove('border-primary');
+    });
+
+    dropZoneElement.addEventListener('drop', (event) => {
+        event.preventDefault();
+        dropZoneElement.classList.remove('border-primary');
+
+        let files = event.dataTransfer.files;
+        if (files.length > 0) {
+            onFileLoaded(files[0]);
+        }
+    });
+}
+
+// |------------------|
+// |  INITIALIZATION  |
+// |------------------|
+
 function init() {
+    // buttons
     UI.saveButton = document.getElementById("saveButton");
-    UI.fileInput = document.getElementById("fileInput");
-    UI.uploadButton = document.getElementById("uploadBtn");
+    UI.uploadButtonMap = document.getElementById("uploadBtn");
     UI.plusMarkerBtn = document.getElementById("plusBtn");
+    UI.uploadButtonEquirectangular = document.getElementById("uploadEquirectangularBtn");
+    UI.savePointButton = document.getElementById("savePointButton");
+    UI.equiFullscreenBtn = document.getElementById("equirectangularFullscreen");
+
+    // inputs
+    UI.fileInputMap = document.getElementById("fileInput");
+    UI.fileInputEquirectangular = document.getElementById("fileInputEquirectangular");
+    UI.coordinateXInput = document.getElementById("coordinateX");
+    UI.coordinateYInput = document.getElementById("coordinateY");
+
+    // canvas
     UI.mapCanvas = document.getElementById(mapCanvasId);
-    UI.dropZone = document.getElementById("drop-zone");
+    UI.equirectangularPreview = document.getElementById(equirectangularCanvasId);
+
+    // drop zone
+    UI.dropZoneMap = document.getElementById("drop-zone");
+    UI.dropZoneEquirectangular = document.getElementById("drop-zone-equirectangular");
+
+    // other
     UI.uploadOverlay = document.getElementById("upload-overlay");
     UI.toastPlace = document.getElementById("toastPlace");
     UI.collapseElement = document.getElementById("safeSidebar");
-    UI.coordinateXSpan = document.getElementById("coordinateX");
-    UI.coordinateYSpan = document.getElementById("coordinateY");
+
+    UI.collapseElement.addEventListener('shown.bs.collapse', () => {
+        if (equirectangularViewer) {
+            equirectangularViewer.setCanvasSize(
+                UI.equirectangularPreview.clientWidth,
+                UI.equirectangularPreview.clientHeight
+            );
+        }
+    });
     UI.collapseBootstrapElement = new bootstrap.Collapse(UI.collapseElement, {
         toggle: false
     });
+    UI.equiFullscreenBtn.addEventListener("click", fullscreenEquirectangular);
+
+    // setup
     setupMapViewer();
-    setupDragAndDrop();
-    setupFileUploadInput();
+    setupEquirectangularViewer();
+    setupUploadHandler(UI.dropZoneMap, UI.uploadButtonMap, UI.fileInputMap, handleMapLoad);
+    setupUploadHandler(UI.dropZoneEquirectangular, UI.uploadButtonEquirectangular, UI.fileInputEquirectangular, handleEquirectangularLoad);
+    setupCoordinateInput();
 
     UI.plusMarkerBtn.addEventListener("click", () => {
         UI.plusMarkerBtn.classList.add("d-none");

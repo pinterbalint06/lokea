@@ -60,10 +60,10 @@ public:
     void zoomMap(float zoomAmount, float zoomHereScreenX, float zoomHereScreenY);
     void render() { Engine::render(); }
     void placeMarker(float screenX, float screenY);
+    void placeMarkerByImageCoordinates(int xCoordinate, int yCoordinate);
     void removeMarker();
     emscripten::val getMarkerPosition();
     void setCanvasSize(int width, int height);
-    void updateCanvasSize(int width, int height);
 };
 
 #endif
