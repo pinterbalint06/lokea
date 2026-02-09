@@ -3,12 +3,14 @@
 
 #include <string>
 #include <memory>
+#include <vector>
 
 #include "core/engine.h"
 
 // Forward declaration
 class Mesh;               // defined in "core/resources/mesh.h"
 class Vertex;             // defined in "core/resources/vertex.h"
+class MapMarker;          // defined in "mapViewer/mapMarker.h"
 struct mapViewerSettings; // defined in "mapViewer/mapViewerSettings.h"
 namespace emscripten
 {
@@ -20,20 +22,19 @@ class MapViewerEngine : private Engine
 private:
     float zoomLevel_;
     int width_, height_;
-    float markerU_, markerV_;
-    float markerWidth_, markerHeight_;
-    bool markerPlaced_;
     bool isMapLoaded_;
     Mesh *mapPlane_;
-    Mesh *markerPlane_;
     MapViewerSettings settings_;
+    std::vector<MapMarker*> markers_;
     int mapWidth_, mapHeight_;
     // used as pan sensitivity so we use dPixel * texture coordinate per pixel when panning
     float uPerPixel_, vPerPixel_;
 
     void createMapPlane();
-    void createMarkerPlane(const std::string &markerUrl);
-    void updateMarker();
+    void updateSingleMarker(MapMarker *markerPlane);
+    void updateAllMarkers();
+    void clearAllMarkers();
+    void addMarkerByUV(float u, float v, const std::string& textureUrl);
     void recalculateUVPerPixel();
     void limitVCoordinates();
     void fitMapHorizontally();
@@ -41,7 +42,7 @@ private:
     void zoomMapUV(float zoomAmount, float zoomHereU, float zoomHereV);
 
 public:
-    MapViewerEngine(const std::string &canvasID, int width, int height, const std::string &markerUrl);
+    MapViewerEngine(const std::string &canvasID, int width, int height);
     ~MapViewerEngine();
 
     MapViewerSettings &getSettings() { return settings_; }
@@ -59,10 +60,12 @@ public:
     void zoomMapToCenter(float zoomAmount);
     void zoomMap(float zoomAmount, float zoomHereScreenX, float zoomHereScreenY);
     void render() { Engine::render(); }
-    void placeMarker(float screenX, float screenY);
-    void placeMarkerByImageCoordinates(int xCoordinate, int yCoordinate);
-    void removeMarker();
-    emscripten::val getMarkerPosition();
+    void addMarker(float screenX, float screenY, const std::string& textureUrl);
+    void moveMarkerToImageCoordinates(int index, int xCoordinate, int yCoordinate);
+    void removeMarker(int index);
+    void moveMarkerToScreen(int index, float screenX, float screenY);
+    bool doesMarkerExist(int index);
+    emscripten::val getMarkerPosition(int index);
     void setCanvasSize(int width, int height);
 };
 

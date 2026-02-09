@@ -35,6 +35,7 @@ public:
     EquirectangularEngine(const std::string &canvasID);
     ~EquirectangularEngine();
     void loadEquirectangularImage(const std::string &url, int width, int height, emscripten::val onSuccess, emscripten::val onError);
+    void clearImage();
 };
 
 #endif

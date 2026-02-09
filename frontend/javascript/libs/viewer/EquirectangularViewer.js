@@ -135,6 +135,24 @@ export class EquirectangularViewer extends WASMViewerBase {
         });
     }
 
+    async clearImage() {
+        if (!this._engine) {
+            await this._engineInitPromise;
+
+            if (this._isDestroyed) {
+                console.warn("clearImage() called on destroyed viewer!");
+            }
+
+            if (!this._engine) {
+                console.warn("clearImage() called on failed engine!");
+            }
+        }
+
+        this.#currentImageRequestID++;
+
+        this._engine.clearImage();
+    }
+
     setAutoRotate(enabled) {
         this.autoRotate = enabled;
     }

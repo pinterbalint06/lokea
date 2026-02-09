@@ -239,3 +239,15 @@ void EquirectangularEngine::loadEquirectangularImage(const std::string &url, int
         }
     }
 }
+
+
+void EquirectangularEngine::clearImage()
+{
+    currentRequestID++;
+    changeImageMode(EQUIRECTANGULARMODE::FULL);
+
+    for (int i = 0; i < imageTiles_.size(); i++)
+    {
+        imageTiles_[i]->clear();
+    }
+}

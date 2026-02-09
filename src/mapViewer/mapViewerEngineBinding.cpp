@@ -16,7 +16,7 @@ EMSCRIPTEN_BINDINGS(mapViewerSettingsBinding)
 EMSCRIPTEN_BINDINGS(mapViewerEngineBinding)
 {
     emscripten::class_<MapViewerEngine>("MapViewerEngine")
-        .constructor<const std::string&, int, int, const std::string&>()
+        .constructor<const std::string&, int, int>()
         .function("loadMap", emscripten::select_overload<void(const std::string&, int, int)>(&MapViewerEngine::loadMap))
         .function("loadMapPromise", emscripten::select_overload<void(const std::string&, int, int, emscripten::val, emscripten::val)>(&MapViewerEngine::loadMap))
         .function("moveMap", &MapViewerEngine::moveMap)
@@ -26,8 +26,10 @@ EMSCRIPTEN_BINDINGS(mapViewerEngineBinding)
         .function("setCanvasSize", &MapViewerEngine::setCanvasSize)
         .function("getSettings", &MapViewerEngine::getSettings)
         .function("setSettings", &MapViewerEngine::setSettings)
-        .function("placeMarker", &MapViewerEngine::placeMarker)
-        .function("placeMarkerByImageCoordinates", &MapViewerEngine::placeMarkerByImageCoordinates)
+        .function("addMarker", &MapViewerEngine::addMarker)
+        .function("moveMarkerToImageCoordinates", &MapViewerEngine::moveMarkerToImageCoordinates)
         .function("removeMarker", &MapViewerEngine::removeMarker)
-        .function("getMarkerPosition", &MapViewerEngine::getMarkerPosition);
+        .function("getMarkerPosition", &MapViewerEngine::getMarkerPosition)
+        .function("moveMarkerToScreen", &MapViewerEngine::moveMarkerToScreen)
+        .function("doesMarkerExist", &MapViewerEngine::doesMarkerExist);
 }

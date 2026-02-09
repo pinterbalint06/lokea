@@ -62,6 +62,9 @@ router.get('/login_page', (request, response) => {
 app.use('/', router);
 const endpoints = require('./api/api.js');
 app.use('/api', endpoints);
+//!Map Creation API endpoints
+const mapCreationEndpoints = require('./api/mapCreatorAPI.js');
+app.use('/api/map_creator', mapCreationEndpoints);
 
 //!Szerver futtatása
 app.use(express.static(path.join(__dirname, '../frontend'))); //?frontend mappa tartalmának betöltése az oldal működéséhez

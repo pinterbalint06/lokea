@@ -139,7 +139,7 @@ export class MapViewer extends WASMViewerBase {
             correct: false
         };
         if (Number.isInteger(imageX) && Number.isInteger(imageY)) {
-            if (imageX > 0 && imageY > 0) {
+            if (imageX >= 0 && imageY >= 0) {
                 if (imageX <= this.#imageWidth && imageY <= this.#imageHeight) {
                     returnObject.correct = true;
                 } else {
@@ -154,62 +154,82 @@ export class MapViewer extends WASMViewerBase {
         return returnObject;
     }
 
-    getMarkerPosition() {
-        if (this._isDestroyed) {
-            throw new WebassemblyError(
-                "Map Viewer is destroyed!",
-                {
-                    "type": MAP_VIEWER_ERROR_TYPES.DESTROYED
-                });
+    getMarkerPosition(index) {
+        this._ensureEngineReady();
+
+        if (!this.doesMarkerExist(index)) {
+            if (!Number.isInteger(index)) {
+                throw new WebassemblyError(
+                    "Invalid marker index",
+                    {
+                        "type": MAP_VIEWER_ERROR_TYPES.INVALID_INPUT
+                    });
+            }
         }
 
-        if (this._engine) {
-            return this._engine.getMarkerPosition();
-        } else {
-            throw new WebassemblyError(
-                "Engine not initialized yet",
-                {
-                    "type": MAP_VIEWER_ERROR_TYPES.INITIALIZATION
-                });
-        }
+        return this._engine.getMarkerPosition(index);
     }
 
     placeMarker(locationX, locationY) {
-        if (this._isDestroyed) {
+        this._ensureEngineReady();
+
+        if (Number.isNaN(locationX) || Number.isNaN(locationY) || locationX < 0 || locationY < 0) {
             throw new WebassemblyError(
-                "Map Viewer is destroyed!",
+                "Invalid marker location",
                 {
-                    "type": MAP_VIEWER_ERROR_TYPES.DESTROYED
+                    "type": MAP_VIEWER_ERROR_TYPES.INVALID_INPUT
                 });
         }
 
-        if (this._engine) {
-            this._engine.placeMarker(locationX, locationY);
-        } else {
-            throw new WebassemblyError(
-                "Engine not initialized yet",
-                {
-                    "type": MAP_VIEWER_ERROR_TYPES.INITIALIZATION
-                });
-        }
+        this._engine.addMarker(locationX, locationY, this.#markerURL);
     }
 
-    placeMarkerToImageCoordinates(imageX, imageY) {
-        if (this._isDestroyed) {
+    doesMarkerExist(index) {
+        this._ensureEngineReady();
+
+        if (!Number.isInteger(index)) {
             throw new WebassemblyError(
-                "Map Viewer is destroyed!",
+                "Invalid marker index",
                 {
-                    "type": MAP_VIEWER_ERROR_TYPES.DESTROYED
+                    "type": MAP_VIEWER_ERROR_TYPES.INVALID_INPUT
                 });
         }
 
-        if (this._engine) {
-            this._engine.placeMarkerByImageCoordinates(imageX, imageY);
+        return this._engine.doesMarkerExist(index);
+    }
+
+    moveMarker(index, locationX, locationY) {
+        this._ensureEngineReady();
+
+        if (Number.isNaN(locationX) || Number.isNaN(locationY) || locationX < 0 || locationY < 0) {
+            throw new WebassemblyError(
+                "Invalid marker location",
+                {
+                    "type": MAP_VIEWER_ERROR_TYPES.INVALID_INPUT
+                });
+        }
+
+        if (!this._engine.doesMarkerExist(index)) {
+            throw new WebassemblyError(
+                "Invalid marker index",
+                {
+                    "type": MAP_VIEWER_ERROR_TYPES.INVALID_INPUT
+                });
+        }
+
+        this._engine.moveMarkerToScreen(index, locationX, locationY);
+    }
+
+    moveMarkerToImageCoordinates(index, imageX, imageY) {
+        this._ensureEngineReady();
+
+        if (this._engine.doesMarkerExist(index)) {
+            this._engine.moveMarkerToImageCoordinates(index, imageX, imageY);
         } else {
             throw new WebassemblyError(
-                "Engine not initialized yet",
+                "Invalid marker index",
                 {
-                    "type": MAP_VIEWER_ERROR_TYPES.INITIALIZATION
+                    "type": MAP_VIEWER_ERROR_TYPES.INVALID_INPUT
                 });
         }
     }
@@ -218,7 +238,6 @@ export class MapViewer extends WASMViewerBase {
         this.placeMarker(cursorX, cursorY);
     }
 
-
     // |-----------------|
     // | PRIVATE METHODS |
     // |-----------------|
@@ -226,9 +245,25 @@ export class MapViewer extends WASMViewerBase {
     _createEngine(module) {
         return new module.MapViewerEngine(
             this._canvasId,
-            this._canvasWidth, this._canvasHeight,
-            this.#markerURL
+            this._canvasWidth, this._canvasHeight
         );
+    }
+
+    _ensureEngineReady() {
+        if (this._isDestroyed) {
+            throw new WebassemblyError(
+                "Map Viewer is destroyed!",
+                {
+                    type: MAP_VIEWER_ERROR_TYPES.DESTROYED
+                });
+        }
+        if (!this._engine) {
+            throw new WebassemblyError(
+                "Engine not initialized yet",
+                {
+                    type: MAP_VIEWER_ERROR_TYPES.INITIALIZATION
+                });
+        }
     }
 
     _getInputCallbacks() {

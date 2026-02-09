@@ -41,7 +41,12 @@ function fullScreen() {
     equirectangularViewer.toggleFullscreen();
 }
 
+function clearImage() {
+    equirectangularViewer.clearImage();
+}
+
 window.fullScreen = fullScreen;
+window.clearImage = clearImage;
 
 // |------------------------------|
 // | MAIN LOOP AND INITIALIZATION |

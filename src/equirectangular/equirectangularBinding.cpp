@@ -7,5 +7,6 @@ EMSCRIPTEN_BINDINGS(equirectangularEngineBinding)
 {
     emscripten::class_<EquirectangularEngine, emscripten::base<Engine>>("EquirectangularEngine")
         .constructor<std::string>()
-        .function("loadEquirectangularImage", &EquirectangularEngine::loadEquirectangularImage);
+        .function("loadEquirectangularImage", &EquirectangularEngine::loadEquirectangularImage)
+        .function("clearImage", &EquirectangularEngine::clearImage);
 }
