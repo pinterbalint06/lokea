@@ -457,7 +457,7 @@ function modalView(title, type, content) {
             input.classList.add("btn", "btn-primary");
             footerButtons.appendChild(button);
             break;
-        case "alert":
+        case "information":
             modalSize.classList.add("modal-dialog", "modal-sm");
 
             button = document.createElement('button');
@@ -471,6 +471,136 @@ function modalView(title, type, content) {
     let hova = document.getElementById('modalContent');
     hova.innerHTML = "";
     hova.appendChild(content);
+}
+
+function editUsersToModal() {
+    let container = document.createElement("div");
+    container.classList.add("container-fluid");
+
+    let row = document.createElement("div");
+    row.classList.add("row");
+
+    /* BAL OLDAL */
+    let colLeft = document.createElement("div");
+    colLeft.classList.add("col-4");
+
+    let pfp = document.createElement("img");
+    pfp.src = "default.png";
+    pfp.alt = "Profile picture";
+    pfp.title = "Profile picture";
+    pfp.classList.add("img-fluid", "img-thumbnail", "rounded-circle", "h-75"
+    );
+
+    let pfpTitle = document.createElement("h6");
+    pfpTitle.textContent = "Username";
+
+    colLeft.appendChild(pfp);
+    colLeft.appendChild(pfpTitle);
+
+    /* JOBB OLDAL */
+    let colRight = document.createElement("div");
+    colRight.classList.add("col-8");
+
+    let form = document.createElement("form");
+
+    let formGroup = document.createElement("div");
+    formGroup.classList.add("form-group");
+
+    /* INPUTOK */
+    let idDiv = document.createElement("div");
+    let idP = document.createElement("p");
+    idP.textContent = "ID";
+    let idInput = document.createElement("input");
+    idInput.type = "number";
+    idInput.id = "editIdInput";
+    idInput.disabled = true;
+    idInput.classList.add("form-control");
+
+    idDiv.appendChild(idP);
+    idDiv.appendChild(idInput);
+
+    let userDiv = document.createElement("div");
+    let userP = document.createElement("p");
+    userP.textContent = "Username";
+    let userInput = document.createElement("input");
+    userInput.type = "text";
+    userInput.id = "editUsernameInput";
+    userInput.classList.add("form-control");
+
+    userDiv.appendChild(userP);
+    userDiv.appendChild(userInput);
+
+    let emailDiv = document.createElement("div");
+    let emailP = document.createElement("p");
+    emailP.textContent = "E-mail address";
+    let emailInput = document.createElement("input");
+    emailInput.type = "text";
+    emailInput.id = "editEmailInput";
+    emailInput.classList.add("form-control");
+
+    emailDiv.appendChild(emailP);
+    emailDiv.appendChild(emailInput);
+
+    let roleDiv = document.createElement("div");
+    let roleP = document.createElement("p");
+    roleP.textContent = "Roles:";
+    let select = document.createElement("select");
+    select.classList.add("form-select");
+    let opt1 = document.createElement("option");
+    opt1.value = "1";
+    opt1.textContent = "User";
+    let opt2 = document.createElement("option");
+    opt2.value = "2";
+    opt2.textContent = "Moderator";
+    let opt3 = document.createElement("option");
+    opt3.value = "3";
+    opt3.textContent = "Admin";
+    opt3.disabled = true;
+
+    select.appendChild(opt1);
+    select.appendChild(opt2);
+    select.appendChild(opt3);
+    roleDiv.appendChild(roleP);
+    roleDiv.appendChild(select);
+
+    let switchDiv = document.createElement("div");
+    switchDiv.classList.add("form-check", "form-switch", "mt-3");
+    let switchInput = document.createElement("input");
+    switchInput.type = "checkbox";
+    switchInput.role = "switch";
+    switchInput.id = "edit2faInput";
+    switchInput.classList.add("form-check-input");
+    let switchLabel = document.createElement("label");
+    switchLabel.htmlFor = "edit2faInput";
+    switchLabel.textContent = "Two-factor authentication";
+    switchLabel.classList.add("form-check-label");
+
+    switchDiv.appendChild(switchInput);
+    switchDiv.appendChild(switchLabel);
+
+    /* ÖSSZEÉPITÉS */
+    formGroup.appendChild(idDiv);
+    formGroup.appendChild(userDiv);
+    formGroup.appendChild(emailDiv);
+    formGroup.appendChild(roleDiv);
+    formGroup.appendChild(switchDiv);
+
+    form.appendChild(formGroup);
+    colRight.appendChild(form);
+
+    row.appendChild(colLeft);
+    row.appendChild(colRight);
+    container.appendChild(row);
+
+    return container;
+}
+
+function infoToModal(text) {
+    let content = document.createElement('p');
+    content.classList.add('text-center');
+    content.innerText = text;
+    
+    return text;
 }
 
 
