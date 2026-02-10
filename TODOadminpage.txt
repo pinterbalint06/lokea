@@ -1,0 +1,20 @@
+1. alertek megjelenitese modalon belul es azon kivul
+2. kep cimenek random cim adasa
+3. kepek cimenek lekerese adatbazisbol es a kep tovabbadasa a frontendnek
+4. egyes feladatok függvényekbe szervezése (pl. gomb létrehozás)
+5. külön fájl létrehozása az admin dolgoknak (pl. admin_api.js)
+6. kommentelés
+
+logs oldal
+files oldal
+settings oldal
+write devlog oldal
+test tools oldal
+transactions oldal
+feature flags oldal
+
+hibak amiket javitani kell:
+
+-stack trace
+-admin oldal elerese csak adminkent
+-ne lehessen felhasznalonevnek emailcimet adni
