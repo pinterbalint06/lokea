@@ -31,5 +31,9 @@ EMSCRIPTEN_BINDINGS(mapViewerEngineBinding)
         .function("removeMarker", &MapViewerEngine::removeMarker)
         .function("getMarkerPosition", &MapViewerEngine::getMarkerPosition)
         .function("moveMarkerToScreen", &MapViewerEngine::moveMarkerToScreen)
-        .function("doesMarkerExist", &MapViewerEngine::doesMarkerExist);
+        .function("doesMarkerExist", &MapViewerEngine::doesMarkerExist)
+        .function("changeMarkerType", &MapViewerEngine::changeMarkerType)
+        .function("getMarkerType", &MapViewerEngine::getMarkerType)
+        .function("getMarkerIdAtScreenCoords", &MapViewerEngine::getMarkerIdAtScreenCoords)
+        .function("changeMarkerId", &MapViewerEngine::changeMarkerId);
 }

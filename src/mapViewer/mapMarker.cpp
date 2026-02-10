@@ -16,10 +16,12 @@ enum VertexIndex
     BOTTOM_RIGHT = 3
 };
 
-MapMarker::MapMarker(const std::string &textureUrl, float u, float v, float width, float height)
+MapMarker::MapMarker(int id, const std::string &type, const std::string &textureUrl, float u, float v, float width, float height) : Mesh(4, 6)
 {
+    id_ = id;
     u_ = u;
     v_ = v;
+    type_ = type;
     width_ = width;
     height_ = height;
     Vertex vertices[4];
@@ -34,23 +36,26 @@ MapMarker::MapMarker(const std::string &textureUrl, float u, float v, float widt
             TOP_RIGHT, BOTTOM_RIGHT, BOTTOM_LEFT
     };
 
-    mesh_ = new Mesh(4, 6);
-    std::memcpy(mesh_->getVertices(), vertices, sizeof(vertices));
-    std::memcpy(mesh_->getIndices(), indices, sizeof(indices));
+    std::memcpy(getVertices(), vertices, sizeof(vertices));
+    std::memcpy(getIndices(), indices, sizeof(indices));
 
     Texture *texture = new Texture(true);
 
     texture->loadFromUrl(textureUrl);
 
-    Materials::Material newTexMat = mesh_->getMaterial();
+    Materials::Material newTexMat = getMaterial();
     newTexMat.setTexture(texture);
-    mesh_->setMaterial(newTexMat);
+    setMaterial(newTexMat);
 }
 
 MapMarker::~MapMarker()
 {
-    if (mesh_)
-    {
-        delete mesh_;
-    }
+}
+
+void MapMarker::changeType(const std::string &type, const std::string &textureUrl)
+{
+    type_ = type;
+    Texture *texture = getMaterial().getTexture();
+    texture->clear();
+    texture->loadFromUrl(textureUrl);
 }

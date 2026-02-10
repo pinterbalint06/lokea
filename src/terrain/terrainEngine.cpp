@@ -1,4 +1,5 @@
 #include <string>
+#include <memory>
 
 #include "core/rendering/renderer.h"
 #include "core/rendering/uniformBufferObject.h"
@@ -13,7 +14,7 @@
 
 TerrainEngine::TerrainEngine(const std::string &canvID, int size) : Engine(canvID)
 {
-    terrain_ = new Terrain(size);
+    terrain_ = std::make_shared<Terrain>(size);
     uboPerlin_ = std::make_unique<UniformBufferObject<PerlinNoise::PerlinParameters>>(BindingSlots::UBO::PERLIN_DATA);
     uboWarp_ = std::make_unique<UniformBufferObject<PerlinNoise::PerlinParameters>>(BindingSlots::UBO::PERLIN_WARP_DATA);
     terrain_->setUpNoiseForGPU(uboPerlin_->getID(), uboWarp_->getID());
@@ -28,10 +29,6 @@ TerrainEngine::TerrainEngine(const std::string &canvID, int size) : Engine(canvI
 
 TerrainEngine::~TerrainEngine()
 {
-    if (terrain_)
-    {
-        delete terrain_;
-    }
 }
 
 void TerrainEngine::calcNewCamLoc()

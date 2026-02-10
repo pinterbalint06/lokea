@@ -23,9 +23,9 @@ private:
     float zoomLevel_;
     int width_, height_;
     bool isMapLoaded_;
-    Mesh *mapPlane_;
+    std::shared_ptr<Mesh> mapPlane_;
     MapViewerSettings settings_;
-    std::vector<MapMarker*> markers_;
+    std::vector<std::shared_ptr<MapMarker>> markers_;
     int mapWidth_, mapHeight_;
     // used as pan sensitivity so we use dPixel * texture coordinate per pixel when panning
     float uPerPixel_, vPerPixel_;
@@ -34,12 +34,14 @@ private:
     void updateSingleMarker(MapMarker *markerPlane);
     void updateAllMarkers();
     void clearAllMarkers();
-    void addMarkerByUV(float u, float v, const std::string& textureUrl);
+    void addMarkerByUV(int id, float u, float v, const std::string &type, const std::string &textureUrl);
     void recalculateUVPerPixel();
     void limitVCoordinates();
     void fitMapHorizontally();
     void getUVAtScreenPosition(float screenX, float screenY, float &u, float &v);
     void zoomMapUV(float zoomAmount, float zoomHereU, float zoomHereV);
+    int getMarkerIndexById(int id);
+    bool doesPointOverlapMarker(MapMarker *marker, float x, float y);
 
 public:
     MapViewerEngine(const std::string &canvasID, int width, int height);
@@ -60,12 +62,16 @@ public:
     void zoomMapToCenter(float zoomAmount);
     void zoomMap(float zoomAmount, float zoomHereScreenX, float zoomHereScreenY);
     void render() { Engine::render(); }
-    void addMarker(float screenX, float screenY, const std::string& textureUrl);
-    void moveMarkerToImageCoordinates(int index, int xCoordinate, int yCoordinate);
-    void removeMarker(int index);
-    void moveMarkerToScreen(int index, float screenX, float screenY);
-    bool doesMarkerExist(int index);
-    emscripten::val getMarkerPosition(int index);
+    void addMarker(int id, float screenX, float screenY, const std::string &type, const std::string &textureUrl);
+    void changeMarkerType(int id, const std::string &type, const std::string &textureUrl);
+    void moveMarkerToImageCoordinates(int id, int xCoordinate, int yCoordinate);
+    int getMarkerIdAtScreenCoords(int screenX, int screenY);
+    void removeMarker(int id);
+    void moveMarkerToScreen(int id, float screenX, float screenY);
+    bool doesMarkerExist(int id);
+    std::string getMarkerType(int id);
+    emscripten::val getMarkerPosition(int id);
+    void changeMarkerId(int oldId, int newId);
     void setCanvasSize(int width, int height);
 };
 

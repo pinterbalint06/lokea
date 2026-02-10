@@ -51,8 +51,9 @@ public:
     float getPitch() { return scene_->getCamera()->getPitch(); }
     float getYaw() { return scene_->getCamera()->getYaw(); }
 
-    void addMesh(Mesh *mesh) { scene_->addMesh(mesh); }
+    void addMesh(std::shared_ptr<Mesh> mesh) { scene_->addMesh(mesh); }
     void removeMesh(int index) { scene_->removeMesh(index); }
+    void removeMesh(std::shared_ptr<Mesh> mesh) { scene_->removeMesh(mesh); }
     void clearScene() { scene_->clearMeshes(); };
 };
 

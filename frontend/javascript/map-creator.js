@@ -22,7 +22,8 @@ let mapViewer;
 let equirectangularViewer;
 let isPlacingMarker = false;
 let UI = {};
-let indexChange = 0;
+const TEMP_MARKER_ID = -1;
+let activePointId = null;
 let clickOnMapToast;
 
 // |-----------|
@@ -67,13 +68,14 @@ function showToast(message, type = "primary", isClosable, options = {}, iconHtml
 
     UI.toastPlace.appendChild(toastElement);
 
-    clickOnMapToast = new bootstrap.Toast(toastElement, options);
-    clickOnMapToast.show();
+    let toast = new bootstrap.Toast(toastElement, options);
+    toast.show();
 
     toastElement.addEventListener('hidden.bs.toast', () => {
-        clickOnMapToast = null;
+        toast = null;
         toastElement.remove();
     });
+    return toast;
 }
 
 async function readImageFile(file) {
@@ -85,10 +87,13 @@ async function readImageFile(file) {
     let imageBitmap;
     try {
         imageBitmap = await createImageBitmap(file);
-        return {
+        let returnObject = {
             url: url,
-            imageBitmap: imageBitmap
-        };
+            width: imageBitmap.width,
+            height: imageBitmap.height
+        }
+        imageBitmap.close();
+        return returnObject;
     } catch (error) {
         URL.revokeObjectURL(url);
         if (imageBitmap) {
@@ -108,7 +113,7 @@ function handleCoordinateChange(event) {
     let isValid = mapViewer.checkCoordinateValid(xCoordinate, yCoordinate);
     if (isValid.correct) {
         event.target.dataset.previousValue = event.target.valueAsNumber;
-        mapViewer.moveMarkerToImageCoordinates(indexChange, xCoordinate, yCoordinate);
+        mapViewer.moveMarkerToImageCoordinates(activePointId, xCoordinate, yCoordinate);
     } else {
         event.target.value = event.target.dataset.previousValue;
         showToast(isValid.error, "danger", false, { delay: 3000 });
@@ -116,6 +121,8 @@ function handleCoordinateChange(event) {
 }
 
 async function handleEquirectangularLoad(file) {
+    equirectangularViewer.clearImage();
+    UI.savePointButton.disabled = true;
     let imgData;
     try {
         if (file.size > 10 * 1024 * 1024) {
@@ -123,11 +130,11 @@ async function handleEquirectangularLoad(file) {
         }
         imgData = await readImageFile(file);
 
-        await equirectangularViewer.loadImage(imgData.url, imgData.imageBitmap.width, imgData.imageBitmap.height);
-        URL.revokeObjectURL(imgData.url);
+        await equirectangularViewer.loadImage(imgData.url, imgData.width, imgData.height);
 
-        showToast("360°-os kép sikeresen betöltve!", "success", true, { delay: 2000 });
-        UI.savePointButton.disabled = false;
+        mapViewer.changeMarkerType(activePointId, "UPLOADING");
+        uploadEquirectangular(file, imgData, activePointId);
+
         UI.equiFullscreenBtn.disabled = false;
     } catch (error) {
         console.error(error);
@@ -136,9 +143,6 @@ async function handleEquirectangularLoad(file) {
         if (imgData) {
             if (imgData.url) {
                 URL.revokeObjectURL(imgData.url);
-            }
-            if (imgData.imageBitmap) {
-                imgData.imageBitmap.close();
             }
         }
     }
@@ -152,8 +156,7 @@ async function handleMapLoad(file) {
         }
         imgData = await readImageFile(file);
 
-        await mapViewer.loadMap(imgData.url, imgData.imageBitmap.width, imgData.imageBitmap.height);
-        URL.revokeObjectURL(imgData.url);
+        await mapViewer.loadMap(imgData.url, imgData.width, imgData.height);
 
         UI.uploadOverlay.classList.add("d-none");
         UI.saveButton.disabled = false;
@@ -164,9 +167,6 @@ async function handleMapLoad(file) {
         if (imgData) {
             if (imgData.url) {
                 URL.revokeObjectURL(imgData.url);
-            }
-            if (imgData.imageBitmap) {
-                imgData.imageBitmap.close();
             }
         }
     }
@@ -198,20 +198,118 @@ async function saveMap() {
     }
 }
 
-function savePoint() {
-    // fetch mentes
-    let success = true;
-    if (success) {
-        showToast("Sikeres mentés!", "success", true, { delay: 3000 }, ICONS.UPLOAD_TO_CLOUD);
-        UI.collapseBootstrapElement.hide();
-        equirectangularViewer.clearImage();
-        indexChange++;
-        isPlacingMarker = false;
-        mapViewer.canvasInput.setDefaultCursor("default");
-        UI.savePointButton.disabled = true;
-    } else {
-        showToast("Sikertelen mentés!", "danger", true, { delay: 3000 });
+async function savePoint() {
+    let pontMentesToast = showToast("Pont mentése...", "primary", false, { autohide: false });
+    UI.savePointButton.disabled = true;
+    try {
+        let response = await fetch("/api/map_creator/savePoint", {
+            "method": "POST",
+            "headers": {
+                "Content-Type": "application/json"
+            },
+            "body": JSON.stringify(mapViewer.getMarkerPosition(activePointId))
+        });
+        let data = await response.json();
+        pontMentesToast.hide();
+        if (data.success) {
+            showToast("Pont sikeresen mentve!", "success", true, { delay: 3000 }, ICONS.UPLOAD_TO_CLOUD);
+            equirectangularViewer.clearImage();
+            mapViewer.changeMarkerId(activePointId, data.pointId);
+            mapViewer.changeMarkerType(data.pointId, "READY");
+            UI.collapseBootstrapElement.hide();
+
+            activePointId = null;
+            isPlacingMarker = false;
+            mapViewer.canvasInput.setDefaultCursor("default");
+            UI.savePointButton.disabled = true;
+        } else {
+            throw new Error(data.error);
+        }
+    } catch (error) {
+        pontMentesToast.hide();
+        console.error(data.error);
+        showToast(error.message, "danger", true, { delay: 3000 });
         UI.savePointButton.disabled = false;
+    }
+
+}
+
+function updateCoordinatesInput() {
+    let coordinates = mapViewer.getMarkerPosition(activePointId);
+    UI.coordinateXInput.value = coordinates.x;
+    UI.coordinateYInput.value = coordinates.y;
+}
+
+function placeOrMoveMarker(cursorX, cursorY) {
+    if (mapViewer.doesMarkerExist(activePointId)) {
+        mapViewer.moveMarker(activePointId, cursorX, cursorY);
+    } else {
+        mapViewer.placeMarker(activePointId, cursorX, cursorY, "EMPTY");
+        if (clickOnMapToast) {
+            clickOnMapToast.hide();
+        }
+        UI.collapseBootstrapElement.show();
+    }
+    updateCoordinatesInput();
+}
+
+function clickOnCanvas(cursorX, cursorY) {
+    if (isPlacingMarker) {
+        placeOrMoveMarker(cursorX, cursorY);
+    } else {
+        let clickedMarkerIndex = mapViewer.getMarkerAtClick(cursorX, cursorY);
+        if (clickedMarkerIndex != -1) {
+            activePointId = clickedMarkerIndex;
+            mapViewer.changeMarkerType(activePointId, "EDIT");
+
+
+
+            // load image from backend
+
+
+
+
+            updateCoordinatesInput();
+            UI.collapseBootstrapElement.show();
+        }
+    }
+}
+
+function closeCollapse() {
+    if (mapViewer.getMarkerType(activePointId) == "empty") {
+        mapViewer.removeMarker(activePointId);
+    } else {
+        // for now say that this is ready
+        mapViewer.changeMarkerType(activePointId, "READY");
+    }
+    UI.collapseBootstrapElement.hide();
+    activePointId = null;
+    isPlacingMarker = false;
+    mapViewer.canvasInput.setDefaultCursor("default");
+}
+
+// |--------------------|
+// |  UPLOAD FUNCTIONS  |
+// |--------------------|
+
+async function uploadEquirectangular(file, imgData, markerIndex) {
+    let formData = new FormData();
+
+    formData.append("uploadedFile", file);
+    let feltoltesToast = showToast("Kép feltöltése...", "primary", false, { autohide: false });
+    let response = await fetch("/api/map_creator/uploadEquirectangularImage", {
+        "method": "POST",
+        "body": formData
+    });
+    let data = await response.json();
+    feltoltesToast.hide();
+    if (data.success) {
+        UI.savePointButton.disabled = false;
+        mapViewer.changeMarkerType(markerIndex, "EDIT");
+        showToast("Kép sikeresen feltöltve!", "success", true, { delay: 3000 });
+    } else {
+        console.error(data.error);
+        showToast("Sikertelen kép feltöltés!", "danger", true, { delay: 3000 });
     }
 }
 
@@ -232,22 +330,7 @@ function setupEquirectangularViewer() {
 
 function setupMapViewer() {
     mapViewer = new MapViewer(mapCanvasId);
-    mapViewer.onClickHandler = (cursorX, cursorY) => {
-        if (isPlacingMarker) {
-            if (mapViewer.doesMarkerExist(indexChange)) {
-                mapViewer.moveMarker(indexChange, cursorX, cursorY);
-            } else {
-                mapViewer.placeMarker(cursorX, cursorY);
-                if (clickOnMapToast) {
-                    clickOnMapToast.hide();
-                }
-                UI.collapseBootstrapElement.show();
-            }
-            let coordinates = mapViewer.getMarkerPosition(indexChange);
-            UI.coordinateXInput.value = coordinates.x;
-            UI.coordinateYInput.value = coordinates.y;
-        }
-    }
+    mapViewer.onClickHandler = clickOnCanvas;
 }
 
 function setupFileUploadInput(buttonElement, inputElement, onFileLoaded) {
@@ -309,6 +392,7 @@ function init() {
     UI.uploadButtonEquirectangular = document.getElementById("uploadEquirectangularBtn");
     UI.savePointButton = document.getElementById("savePointButton");
     UI.equiFullscreenBtn = document.getElementById("equirectangularFullscreen");
+    UI.closeCollapse = document.getElementById("closeCollapse");
 
     // inputs
     UI.fileInputMap = document.getElementById("fileInput");
@@ -333,6 +417,7 @@ function init() {
         if (equirectangularViewer) {
             equirectangularViewer.clearImage();
         }
+        activePointId = null;
         UI.plusMarkerBtn.classList.remove("d-none");
     });
     UI.collapseBootstrapElement = new bootstrap.Collapse(UI.collapseElement, {
@@ -341,6 +426,7 @@ function init() {
     UI.equiFullscreenBtn.addEventListener("click", fullscreenEquirectangular);
     UI.saveButton.addEventListener("click", saveMap);
     UI.savePointButton.addEventListener("click", savePoint);
+    UI.closeCollapse.addEventListener("click", closeCollapse);
 
     // setup
     setupMapViewer();
@@ -353,7 +439,9 @@ function init() {
         UI.plusMarkerBtn.classList.add("d-none");
         mapViewer.canvasInput.setDefaultCursor("crosshair");
 
-        showToast("Koppints a térképre a jelölő elhelyezéséhez!", "primary", true, { autohide: false }, ICONS.POINTING_HAND);
+        activePointId = TEMP_MARKER_ID;
+
+        clickOnMapToast = showToast("Koppints a térképre a jelölő elhelyezéséhez!", "primary", true, { autohide: false }, ICONS.POINTING_HAND);
         isPlacingMarker = true;
     });
 }

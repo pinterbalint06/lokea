@@ -113,7 +113,7 @@ void Engine::setCameraRotation(float pitch, float yaw)
 uint8_t *Engine::initTexture(int width, int height, int meshIndex)
 {
     uint8_t *retPtr = nullptr;
-    Mesh *mesh = scene_->getMesh(meshIndex);
+    std::shared_ptr<Mesh> mesh = scene_->getMesh(meshIndex);
     if (mesh != nullptr)
     {
         deleteTexture(meshIndex);
@@ -128,7 +128,7 @@ uint8_t *Engine::initTexture(int width, int height, int meshIndex)
 
 void Engine::uploadTextureToGPU(int meshIndex)
 {
-    Mesh *mesh = scene_->getMesh(meshIndex);
+    std::shared_ptr<Mesh> mesh = scene_->getMesh(meshIndex);
     if (mesh != nullptr)
     {
         if (mesh->getMaterial().getTexture() != nullptr)
@@ -140,7 +140,7 @@ void Engine::uploadTextureToGPU(int meshIndex)
 
 void Engine::deleteTexture(int meshIndex)
 {
-    Mesh *mesh = scene_->getMesh(meshIndex);
+    std::shared_ptr<Mesh> mesh = scene_->getMesh(meshIndex);
     if (mesh != nullptr)
     {
         if (mesh->getMaterial().getTexture() != nullptr)
@@ -155,7 +155,7 @@ void Engine::deleteTexture(int meshIndex)
 
 void Engine::loadTextureFromUrl(const std::string &url, int meshIndex, emscripten::val onSuccess, emscripten::val onError)
 {
-    Mesh *mesh = scene_->getMesh(meshIndex);
+    std::shared_ptr<Mesh> mesh = scene_->getMesh(meshIndex);
     if (mesh != nullptr)
     {
         Texture *texture = mesh->getMaterial().getTexture();

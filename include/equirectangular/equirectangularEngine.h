@@ -22,7 +22,7 @@ class EquirectangularEngine : public Engine
 private:
     int currentRequestID;
 
-    Mesh *generateSphereSegment(int rings, int segments, float radius,
+    std::shared_ptr<Mesh> generateSphereSegment(int rings, int segments, float radius,
                                 float uMin, float uMax, float vMin, float vMax);
     void generateSphere();
     std::vector<std::shared_ptr<Texture>> imageTiles_;

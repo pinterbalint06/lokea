@@ -1,8 +1,11 @@
 import ModuleBuilder from "../webassembly/mapViewer/mapViewer.js";
 import { WASMViewerBase, WASM_ERROR_TYPES, WebassemblyError } from "./WASMViewerBase.js";
 
-const DEFAULT_OPTIONS = {
-    "markerUrl": "/images/marker.webp"
+const MARKER_URLS = {
+    "empty": "/images/empty-marker.webp",
+    "edit": "/images/edit-marker.webp",
+    "ready": "/images/ready-marker.webp",
+    "uploading": "/images/uploading-marker.webp"
 }
 
 export const MAP_VIEWER_ERROR_TYPES = {
@@ -29,13 +32,6 @@ export class MapViewer extends WASMViewerBase {
      * The height of the current image*/
     #imageHeight;
 
-    // MARKER
-    /**
-     * @type {string}
-     * The URL of the marker.
-     */
-    #markerURL
-
     /**
      * Constructor for MapViewer class.
      *
@@ -49,7 +45,6 @@ export class MapViewer extends WASMViewerBase {
     constructor(canvasId, options = {}) {
         super(canvasId, options, ModuleBuilder);
         this.#currentImageRequestID = 0;
-        this.#markerURL = options.markerUrl != undefined ? options.markerUrl : DEFAULT_OPTIONS["markerUrl"];
         this.#imageWidth = 0;
         this.#imageHeight = 0;
     }
@@ -154,23 +149,21 @@ export class MapViewer extends WASMViewerBase {
         return returnObject;
     }
 
-    getMarkerPosition(index) {
+    getMarkerPosition(id) {
         this._ensureEngineReady();
 
-        if (!this.doesMarkerExist(index)) {
-            if (!Number.isInteger(index)) {
-                throw new WebassemblyError(
-                    "Invalid marker index",
-                    {
-                        "type": MAP_VIEWER_ERROR_TYPES.INVALID_INPUT
-                    });
-            }
+        if (!this.doesMarkerExist(id)) {
+            throw new WebassemblyError(
+                "Invalid marker ID",
+                {
+                    "type": MAP_VIEWER_ERROR_TYPES.INVALID_INPUT
+                });
         }
 
-        return this._engine.getMarkerPosition(index);
+        return this._engine.getMarkerPosition(id);
     }
 
-    placeMarker(locationX, locationY) {
+    placeMarker(id, locationX, locationY, type = "empty") {
         this._ensureEngineReady();
 
         if (Number.isNaN(locationX) || Number.isNaN(locationY) || locationX < 0 || locationY < 0) {
@@ -181,24 +174,111 @@ export class MapViewer extends WASMViewerBase {
                 });
         }
 
-        this._engine.addMarker(locationX, locationY, this.#markerURL);
-    }
-
-    doesMarkerExist(index) {
-        this._ensureEngineReady();
-
-        if (!Number.isInteger(index)) {
+        if (this.doesMarkerExist(id)) {
             throw new WebassemblyError(
-                "Invalid marker index",
+                "Point with given ID already exists",
                 {
                     "type": MAP_VIEWER_ERROR_TYPES.INVALID_INPUT
                 });
         }
 
-        return this._engine.doesMarkerExist(index);
+        if (!type || typeof type != "string") {
+            throw new WebassemblyError(
+                "Invalid marker type",
+                {
+                    "type": MAP_VIEWER_ERROR_TYPES.INVALID_INPUT
+                });
+        }
+        let markerType = type.toLowerCase();
+        let markerUrl = MARKER_URLS[markerType];
+
+        if (markerType == undefined) {
+            throw new WebassemblyError(
+                "Invalid marker type",
+                {
+                    "type": MAP_VIEWER_ERROR_TYPES.INVALID_INPUT
+                });
+        }
+
+        this._engine.addMarker(id, locationX, locationY, markerType, markerUrl);
     }
 
-    moveMarker(index, locationX, locationY) {
+    getMarkerAtClick(cursorX, cursorY) {
+        this._ensureEngineReady();
+
+        if (Number.isNaN(cursorX) || Number.isNaN(cursorY) || cursorX < 0 || cursorY < 0) {
+            throw new WebassemblyError(
+                "Invalid marker location",
+                {
+                    "type": MAP_VIEWER_ERROR_TYPES.INVALID_INPUT
+                });
+        }
+
+        return this._engine.getMarkerIdAtScreenCoords(cursorX, cursorY);
+    }
+
+    doesMarkerExist(id) {
+        this._ensureEngineReady();
+
+        if (!Number.isInteger(id)) {
+            throw new WebassemblyError(
+                "Invalid marker ID",
+                {
+                    "type": MAP_VIEWER_ERROR_TYPES.INVALID_INPUT
+                });
+        }
+
+        return this._engine.doesMarkerExist(id);
+    }
+
+    getMarkerType(id) {
+        this._ensureEngineReady();
+
+        if (!this.doesMarkerExist(id)) {
+            throw new WebassemblyError(
+                "Invalid marker ID",
+                {
+                    "type": MAP_VIEWER_ERROR_TYPES.INVALID_INPUT
+                });
+        }
+
+        return this._engine.getMarkerType(id);
+    }
+
+    changeMarkerType(id, type) {
+        this._ensureEngineReady();
+
+        if (!type || typeof type != "string") {
+            throw new WebassemblyError(
+                "Invalid marker type",
+                {
+                    "type": MAP_VIEWER_ERROR_TYPES.INVALID_INPUT
+                });
+        }
+
+        let markerType = type.toLowerCase();
+        let markerUrl = MARKER_URLS[markerType];
+
+        if (markerUrl == undefined) {
+            throw new WebassemblyError(
+                "Invalid marker type",
+                {
+                    "type": MAP_VIEWER_ERROR_TYPES.INVALID_INPUT
+                });
+        }
+
+        if (!this.doesMarkerExist(id)) {
+            throw new WebassemblyError(
+                "Invalid marker ID",
+                {
+                    "type": MAP_VIEWER_ERROR_TYPES.INVALID_INPUT
+                });
+        }
+
+        this._engine.changeMarkerType(id, markerType, markerUrl);
+    }
+
+    moveMarker(id, locationX, locationY) {
         this._ensureEngineReady();
 
         if (Number.isNaN(locationX) || Number.isNaN(locationY) || locationX < 0 || locationY < 0) {
@@ -209,29 +289,65 @@ export class MapViewer extends WASMViewerBase {
                 });
         }
 
-        if (!this._engine.doesMarkerExist(index)) {
+        if (!this.doesMarkerExist(id)) {
             throw new WebassemblyError(
-                "Invalid marker index",
+                "Invalid marker ID",
                 {
                     "type": MAP_VIEWER_ERROR_TYPES.INVALID_INPUT
                 });
         }
 
-        this._engine.moveMarkerToScreen(index, locationX, locationY);
+        this._engine.moveMarkerToScreen(id, locationX, locationY);
     }
 
-    moveMarkerToImageCoordinates(index, imageX, imageY) {
+    moveMarkerToImageCoordinates(id, imageX, imageY) {
         this._ensureEngineReady();
 
-        if (this._engine.doesMarkerExist(index)) {
-            this._engine.moveMarkerToImageCoordinates(index, imageX, imageY);
-        } else {
+        if (!this.doesMarkerExist(id)) {
             throw new WebassemblyError(
-                "Invalid marker index",
+                "Invalid marker ID",
                 {
                     "type": MAP_VIEWER_ERROR_TYPES.INVALID_INPUT
                 });
         }
+
+        this._engine.moveMarkerToImageCoordinates(id, imageX, imageY);
+    }
+
+    removeMarker(id) {
+        this._ensureEngineReady();
+
+        if (!this.doesMarkerExist(id)) {
+            throw new WebassemblyError(
+                "Invalid marker ID",
+                {
+                    "type": MAP_VIEWER_ERROR_TYPES.INVALID_INPUT
+                });
+        }
+
+        this._engine.removeMarker(id);
+    }
+
+    changeMarkerId(oldId, newId) {
+        this._ensureEngineReady();
+
+        if (!this.doesMarkerExist(oldId)) {
+            throw new WebassemblyError(
+                "Invalid marker ID",
+                {
+                    "type": MAP_VIEWER_ERROR_TYPES.INVALID_INPUT
+                });
+        }
+
+        if (!Number.isInteger(newId)) {
+            throw new WebassemblyError(
+                "Invalid new marker ID",
+                {
+                    "type": MAP_VIEWER_ERROR_TYPES.INVALID_INPUT
+                });
+        }
+
+        this._engine.changeMarkerId(oldId, newId);
     }
 
     onClickHandler = (cursorX, cursorY) => {

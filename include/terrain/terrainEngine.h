@@ -27,7 +27,7 @@ class Mesh;
 class TerrainEngine : public Engine
 {
 private:
-    Terrain *terrain_;
+    std::shared_ptr<Terrain> terrain_;
     float cameraHeight_;
     int cameraLocation_;
 

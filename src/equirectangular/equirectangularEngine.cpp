@@ -34,10 +34,10 @@ extern "C"
         int *currentRequestID);
 }
 
-Mesh *EquirectangularEngine::generateSphereSegment(int rings, int segments, float radius,
+std::shared_ptr<Mesh> EquirectangularEngine::generateSphereSegment(int rings, int segments, float radius,
                                                    float uMin, float uMax, float vMin, float vMax)
 {
-    Mesh *mesh = new Mesh((rings + 1) * (segments + 1), rings * segments * 6);
+    std::shared_ptr<Mesh> mesh = std::make_shared<Mesh>((rings + 1) * (segments + 1), rings * segments * 6);
     Vertex *vertices = mesh->getVertices();
 
     int count = 0;
@@ -141,7 +141,7 @@ void EquirectangularEngine::generateSphere()
     {
         for (int y = 0; y < tiles; y++)
         {
-            Mesh *sphereSegment = generateSphereSegment(rings / tiles, segs / tiles, rad, rec * x, rec * (x + 1), rec * y, rec * (y + 1));
+            std::shared_ptr<Mesh> sphereSegment = generateSphereSegment(rings / tiles, segs / tiles, rad, rec * x, rec * (x + 1), rec * y, rec * (y + 1));
             Materials::Material defaultMat = Materials::Material::Error();
             defaultMat.setTexture(imageTiles_[i].get());
             sphereSegment->setMaterial(defaultMat);

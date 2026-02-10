@@ -55,7 +55,7 @@ void MapViewerEngine::createMapPlane()
             TOP_RIGHT, BOTTOM_RIGHT, BOTTOM_LEFT
         };
 
-        mapPlane_ = new Mesh(sizeof(vertices) / sizeof(Vertex), sizeof(indices) / sizeof(uint32_t));
+        mapPlane_ = std::make_shared<Mesh>(sizeof(vertices) / sizeof(Vertex), sizeof(indices) / sizeof(uint32_t));
         std::memcpy(mapPlane_->getVertices(), vertices, sizeof(vertices));
         std::memcpy(mapPlane_->getIndices(), indices, sizeof(indices));
 
@@ -91,8 +91,9 @@ void MapViewerEngine::updateSingleMarker(MapMarker *mapMarker)
 
         // the plane starts at -1 and ends at 1
         // we have to turn the rangeRelative [0;1] coordinate to [-1;1]
-        // [0;1] * 2 => [0;2] - 1 => [-1;1]
-        // also flip the y axis
+        // [0;1] * 2 => [0;2]
+        // [0;2] - 1 => [-1;1]
+        // also flip the y axis by subtracting it from 1
         float inPlaneX = (inRangeRelativeU * 2.0f) - 1.0f;
         float inPlaneY = 1.0f - (inRangeRelativeV * 2.0f);
 
@@ -100,8 +101,7 @@ void MapViewerEngine::updateSingleMarker(MapMarker *mapMarker)
         float inverseAspectRatio = (float)height_ / (float)width_;
         float halfWidth = mapMarker->getWidth() * inverseAspectRatio * 0.5f;
 
-        Mesh *mapMarkerMesh = mapMarker->getMesh();
-        Vertex* markerVertices = mapMarkerMesh->getVertices();
+        Vertex* markerVertices = mapMarker->getVertices();
 
         // center x around calculated coordinate
         markerVertices[TOP_LEFT].x = inPlaneX - halfWidth;
@@ -119,7 +119,7 @@ void MapViewerEngine::updateSingleMarker(MapMarker *mapMarker)
         markerVertices[BOTTOM_RIGHT].y = inPlaneY;
 
         // update gpu
-        mapMarkerMesh->setUpOpenGL();
+        mapMarker->setUpOpenGL();
     }
 }
 
@@ -127,7 +127,7 @@ void MapViewerEngine::updateAllMarkers()
 {
     for (int i = 0; i < markers_.size(); i++)
     {
-        updateSingleMarker(markers_[i]);
+        updateSingleMarker(markers_[i].get());
     }
 }
 
@@ -135,38 +135,78 @@ void MapViewerEngine::clearAllMarkers()
 {
     for (int i = 0; i < markers_.size(); i++)
     {
-        removeMesh(1);
-        delete markers_[i]->getMesh();
+        removeMesh(markers_[i]);
     }
     markers_.clear();
 }
 
-void MapViewerEngine::addMarkerByUV(float u, float v, const std::string& textureUrl)
+int MapViewerEngine::getMarkerIndexById(int id)
 {
-    MapMarker* marker = new MapMarker(textureUrl, u, v, 0.07f, 0.07f);
+    int i = 0;
+    while (i < markers_.size() && markers_[i]->getId() != id)
+    {
+        i++;
+    }
+    int foundIndex = -1;
+    if (i < markers_.size())
+    {
+        foundIndex = i;
+    }
 
-    markers_.push_back(marker);
-    addMesh(marker->getMesh());
-
-    updateSingleMarker(marker);
+    return foundIndex;
 }
 
-void MapViewerEngine::addMarker(float screenX, float screenY, const std::string& textureUrl)
+void MapViewerEngine::addMarkerByUV(int id, float u, float v, const std::string &type, const std::string &textureUrl)
 {
-    if (isMapLoaded_)
+    if (isMapLoaded_ && !doesMarkerExist(id))
+    {
+        std::shared_ptr<MapMarker> marker = std::make_shared<MapMarker>(id, type, textureUrl, u, v, 0.04375f, 0.0625f);
+
+        markers_.push_back(marker);
+        addMesh(marker);
+
+        updateSingleMarker(marker.get());
+    }
+    else
+    {
+        emscripten_console_error("Point with given id already exists!");
+    }
+}
+
+void MapViewerEngine::changeMarkerType(int id, const std::string &type, const std::string &textureUrl)
+{
+    int index = getMarkerIndexById(id);
+    if (index != -1)
+    {
+        markers_[index]->changeType(type, textureUrl);
+    }
+    else
+    {
+        emscripten_console_error("Point doesn't exist!");
+    }
+}
+
+void MapViewerEngine::addMarker(int id, float screenX, float screenY, const std::string &type, const std::string &textureUrl)
+{
+    if (isMapLoaded_ && !doesMarkerExist(id))
     {
         float clickedU, clickedV;
         getUVAtScreenPosition(screenX, screenY, clickedU, clickedV);
 
         clickedU = clickedU - std::floor(clickedU);
 
-        addMarkerByUV(clickedU, clickedV, textureUrl);
+        addMarkerByUV(id, clickedU, clickedV, type, textureUrl);
+    }
+    else
+    {
+        emscripten_console_error("Point with given id already exists!");
     }
 }
 
-void MapViewerEngine::moveMarkerToImageCoordinates(int index, int xCoordinate, int yCoordinate)
+void MapViewerEngine::moveMarkerToImageCoordinates(int id, int xCoordinate, int yCoordinate)
 {
-    if (isMapLoaded_ && doesMarkerExist(index))
+    int index = getMarkerIndexById(id);
+    if (isMapLoaded_ && index != -1)
     {
         // convert to uv
         float newU = (float)xCoordinate / mapWidth_;
@@ -175,13 +215,18 @@ void MapViewerEngine::moveMarkerToImageCoordinates(int index, int xCoordinate, i
         markers_[index]->setU(newU);
         markers_[index]->setV(newV);
 
-        updateSingleMarker(markers_[index]);
+        updateSingleMarker(markers_[index].get());
+    }
+    else
+    {
+        emscripten_console_error("Point doesn't exist!");
     }
 }
 
-void MapViewerEngine::moveMarkerToScreen(int index, float screenX, float screenY)
+void MapViewerEngine::moveMarkerToScreen(int id, float screenX, float screenY)
 {
-    if (isMapLoaded_ && doesMarkerExist(index))
+    int index = getMarkerIndexById(id);
+    if (isMapLoaded_ && index != -1)
     {
         float newU, newV;
         getUVAtScreenPosition(screenX, screenY, newU, newV);
@@ -191,27 +236,51 @@ void MapViewerEngine::moveMarkerToScreen(int index, float screenX, float screenY
         markers_[index]->setU(newU);
         markers_[index]->setV(newV);
 
-        updateSingleMarker(markers_[index]);
+        updateSingleMarker(markers_[index].get());
     }
-}
-
-void MapViewerEngine::removeMarker(int index)
-{
-    if (doesMarkerExist(index))
+    else
     {
-        removeMesh(index);
+        emscripten_console_error("Point doesn't exist!");
     }
 }
 
-bool MapViewerEngine::doesMarkerExist(int index)
+void MapViewerEngine::removeMarker(int id)
 {
-    return index >= 0 && index < markers_.size();
+    int index = getMarkerIndexById(id);
+    if (isMapLoaded_ && index != -1)
+    {
+        removeMesh(markers_[index]);
+        markers_.erase(markers_.begin() + index);
+    }
+    else
+    {
+        emscripten_console_error("Point doesn't exist!");
+    }
 }
 
-emscripten::val MapViewerEngine::getMarkerPosition(int index)
+void MapViewerEngine::changeMarkerId(int oldId, int newId)
+{
+    int index = getMarkerIndexById(oldId);
+    if (isMapLoaded_ && index != -1)
+    {
+        markers_[index]->setId(newId);
+    }
+    else
+    {
+        emscripten_console_error("Point doesn't exist!");
+    }
+}
+
+bool MapViewerEngine::doesMarkerExist(int id)
+{
+    return getMarkerIndexById(id) != -1;
+}
+
+emscripten::val MapViewerEngine::getMarkerPosition(int id)
 {
     emscripten::val imageCoordinates = emscripten::val::object();
-    if (isMapLoaded_ && doesMarkerExist(index))
+    int index = getMarkerIndexById(id);
+    if (isMapLoaded_ && index != -1)
     {
         float markerU = markers_[index]->getU();
         float markerV = markers_[index]->getV();
@@ -226,8 +295,75 @@ emscripten::val MapViewerEngine::getMarkerPosition(int index)
         imageCoordinates.set("x", imageCoordinateX);
         imageCoordinates.set("y", imageCoordinateY);
     }
+    else
+    {
+        emscripten_console_error("Point doesn't exist!");
+    }
 
     return imageCoordinates;
+}
+
+bool MapViewerEngine::doesPointOverlapMarker(MapMarker *marker, float x, float y)
+{
+    Vertex* vertices = marker->getVertices();
+
+    float minX = vertices[TOP_LEFT].x;
+    float maxX = vertices[TOP_RIGHT].x;
+    float minY = vertices[BOTTOM_LEFT].y;
+    float maxY = vertices[TOP_LEFT].y;
+
+    // if x in [minX;maxX] and y in [minY;maxY] then the point overlaps the marker (rectangle)
+    return minX <= x && x <= maxX &&
+        minY <= y && y <= maxY;
+}
+
+int MapViewerEngine::getMarkerIdAtScreenCoords(int screenX, int screenY)
+{
+    int foundId = -1;
+    if (isMapLoaded_)
+    {
+        // the plane starts at -1 and ends at 1
+        // we have to turn the rangeRelative [0;screenSize] coordinate to [-1;1]
+        // [0;screenSize] / screenSize => [0;1]
+        // [0;1] * 2 => [0;2]
+        // [0;2] - 1 => [-1;1]
+        // also flip the y axis by subtracting it from 1
+        float planeX = ((float)screenX / width_) * 2.0f - 1.0f;
+        float planeY = 1.0f - ((float)screenY / height_) * 2.0f;
+
+        // iterate backwards so the one on the top will be found first
+        int i = markers_.size() - 1;
+        while (i >= 0 && !doesPointOverlapMarker(markers_[i].get(), planeX, planeY))
+        {
+            i--;
+        }
+        if (i >= 0)
+        {
+            foundId = markers_[i]->getId();
+        }
+    }
+    else
+    {
+        emscripten_console_error("A map is not yet loaded!");
+    }
+    return foundId;
+}
+
+std::string MapViewerEngine::getMarkerType(int id)
+{
+
+    std::string type = "";
+    int index = getMarkerIndexById(id);
+    if (isMapLoaded_ && index != -1)
+    {
+        type = markers_[index]->getType();
+    }
+    else
+    {
+        emscripten_console_error("Point doesn't exist!");
+    }
+
+    return type;
 }
 
 MapViewerEngine::MapViewerEngine(const std::string &canvasID, int width, int height)
@@ -262,11 +398,6 @@ MapViewerEngine::MapViewerEngine(const std::string &canvasID, int width, int hei
 
 MapViewerEngine::~MapViewerEngine()
 {
-    if (mapPlane_ != nullptr)
-    {
-        delete mapPlane_;
-        mapPlane_ = nullptr;
-    }
     clearAllMarkers();
 }
 
