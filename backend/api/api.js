@@ -176,7 +176,6 @@ router.post('/admin/sortedUsers', async (request, response) => {
             response.status(403).json({ message: "Nincs hozzáférésed!" });
         }
         else {
-            console.log(request.body);
             let { mireKeresek, mit, status, adminChecked, modChecked, userChecked } = request.body;
             let users = await database.sortedUsers(mireKeresek, mit, status, adminChecked, modChecked, userChecked);
             response.status(200).json({ message: "Sikeres lekérés", users: users });
@@ -201,6 +200,27 @@ router.post('/admin/userToInactive', async (request, response) => {
             else {
                 response.status(204).end();
             }
+        }
+    } catch (error) {
+        response.status(500).json({ error: error });
+    }
+})
+
+router.post('/admin/updateUser', async (request, response) => {
+    try {
+        if (request.session.role != 'ADMIN') {
+            response.status(403).json({ message: "Nincs hozzáférésed!" });
+        }
+        else {
+            let { user_id, username, email, role, pfp, is_2fa } = request.body;
+            let success = await database.updateUser(user_id, username, email, role, pfp, is_2fa);
+            if (success == 1) {
+                response.status(204).json({ message: "Sikeres felhasználófrissités!"});
+            }
+            else {
+                response.status(404).json({ message: "Nincs ilyen felhasználó!" });
+            }
+
         }
     } catch (error) {
         response.status(500).json({ error: error });

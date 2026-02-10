@@ -41,6 +41,12 @@ async function getUsers() {
     return rows;
 }
 
+async function getUser(id) {
+    const query = 'SELECT users.username, users.email, users.role, users.pfp, users.is_2fa FROM users WHERE users.user_id = ?';
+    const [result] = await pool.execute(query, [id]);
+    return result;
+}
+
 async function sortedUsers(mireKeresek, mit, status, adminChecked, modChecked, userChecked) {
     let query = 'SELECT deleted_at, user_id, username, email, role FROM users';
     let conditions = [];
@@ -92,6 +98,43 @@ async function sortedUsers(mireKeresek, mit, status, adminChecked, modChecked, u
     return rows;
 }
 
+async function updateUser(user_id, username, email, role, pfp, is_2fa) {
+    let query = 'UPDATE users ';
+    let updates = [];
+    let params = [];
+
+    if (username != null) {
+        updates.push('users.username = ?');
+        params.push(username);
+    }
+    if (email != null) {
+        updates.push('users.email = ?');
+        params.push(email);
+    }
+    if (role != null) {
+        updates.push('users.role = ?');
+        params.push(role);
+    }
+    if (pfp != null) {
+        updates.push('users.pfp = ?');
+        params.push(pfp);
+    }
+    if (is_2fa != null) {
+        updates.push('users.is_2fa = ?');
+        params.push(is_2fa);
+    }
+
+    if (updates.length === 0) {
+        throw new Error('Nincs frissítendő mező');
+    }
+    query += ' SET ' + updates.join(' , ');
+    query += ` WHERE users.user_id = ?`;
+    params.push(user_id);
+
+    const [rows] = await pool.execute(query, params);
+    return rows.affectedRows;
+}
+
 async function userToInactive(userId) {
     const query = 'UPDATE users SET deleted_at = CURRENT_TIMESTAMP WHERE user_id = ? AND deleted_at IS NULL';
     const [result] = await pool.execute(query, [userId]);
@@ -104,6 +147,8 @@ module.exports = {
     getUserByUsername,
     getUserByEmail,
     getUsers,
+    getUser,
     sortedUsers,
+    updateUser,
     userToInactive
 };
