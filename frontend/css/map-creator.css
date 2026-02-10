@@ -29,7 +29,6 @@ main {
 
 #equirectangularPreview {
     display: block;
-    flex: 1;
 }
 
 .border-dashed {
@@ -43,4 +42,37 @@ main {
     display: flex;
     align-items: center;
     justify-content: center;
+}
+
+#ujPontCollapse {
+    top: 0;
+    bottom: 0;
+    right: 0;
+}
+
+@media (max-width: 992px) {
+    #ujPontCollapse {
+        top: auto;
+        bottom: 0;
+        left: 0;
+        right: 0;
+
+        width: 100%;
+
+        margin: 0 !important;
+
+        border-bottom-left-radius: 0;
+        border-bottom-right-radius: 0;
+    }
+
+    #ujPontCollapse .card {
+        max-height: 50vh;
+        overflow-y: auto;
+        border-bottom-left-radius: 0 !important;
+        border-bottom-right-radius: 0 !important;
+    }
+
+    #equirectangularWrapper {
+        min-height: 10vh;
+    }
 }

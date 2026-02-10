@@ -327,16 +327,8 @@ function init() {
     // other
     UI.uploadOverlay = document.getElementById("upload-overlay");
     UI.toastPlace = document.getElementById("toastPlace");
-    UI.collapseElement = document.getElementById("safeSidebar");
+    UI.collapseElement = document.getElementById("ujPontCollapse");
 
-    UI.collapseElement.addEventListener('shown.bs.collapse', () => {
-        if (equirectangularViewer) {
-            equirectangularViewer.setCanvasSize(
-                UI.equirectangularPreview.clientWidth,
-                UI.equirectangularPreview.clientHeight
-            );
-        }
-    });
     UI.collapseElement.addEventListener('hidden.bs.collapse', () => {
         if (equirectangularViewer) {
             equirectangularViewer.clearImage();

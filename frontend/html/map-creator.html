@@ -47,8 +47,7 @@
         </button>
         <div id="toastPlace" class="toast-container position-absolute top-0 start-50 translate-middle-x mt-3 z-3">
         </div>
-        <div class="collapse collapse-horizontal position-absolute top-0 bottom-0 end-0 me-2 z-3 mt-2 mb-5 rounded shadow"
-            id="safeSidebar">
+        <div class="collapse collapse-horizontal position-absolute me-2 z-3 mt-2 mb-5 rounded shadow" id="ujPontCollapse">
             <div class="card h-100">
                 <div class="card-header">
                     <h5 class="card-title">Új pont hozzáadása</h5>
@@ -88,8 +87,10 @@
                         <input type="file" id="fileInputEquirectangular" accept="image/*" hidden>
                     </div>
                     <h5 class="h5 my-1">Előnézet</h5>
-                    <div class="w-100 h-100 d-flex">
-                        <canvas class="m-3 broder border-dark rounded" id="equirectangularPreview"></canvas>
+                    <div id="equirectangularWrapper"
+                        class="w-100 flex-grow-1 position-relative my-2 border border-dark rounded">
+                        <canvas id="equirectangularPreview"
+                            class="w-100 h-100 position-absolute top-0 start-0"></canvas>
                     </div>
                     <div class="d-flex justify-content-center w-100">
                         <button id="equirectangularFullscreen" class="btn btn-secondary" disabled>Teljes

@@ -60,10 +60,15 @@ export class WASMViewerBase {
      * - Handles rotating and zooming */
     canvasInput;
     /**
-     * @type {function}
-     * Handles entering fullscreen and resize of the canvas.
+     * @type {ResizeObserver}
+     * Handles element resizing.
      */
-    _resizeHandler;
+    _resizeObserver;
+    /**
+     * @type {number|null}
+     * ID for the resize frame
+     */
+    _resizeAnimationFrame;
     /**
      * @type {function}
      * Handles exiting fullscreen.
@@ -102,7 +107,8 @@ export class WASMViewerBase {
                 this._windowedWidth = this._canvasWidth;
                 this._windowedHeight = this._canvasHeight;
 
-                this._resizeHandler = null;
+                this._resizeObserver = null;
+                this._resizeAnimationFrame = null;
 
                 // State related
                 this._engine = null;
@@ -169,6 +175,9 @@ export class WASMViewerBase {
     }
 
     async setCanvasSize(width, height) {
+        width = Math.floor(width);
+        height = Math.floor(height);
+
         if (!Number.isInteger(width) || !Number.isInteger(height) || width < 0 || height < 0) {
             throw new WebassemblyError(
                 "Invalid image dimensions provided",
@@ -197,10 +206,15 @@ export class WASMViewerBase {
             }
         }
 
-        this._canvasWidth = width;
-        this._canvasHeight = height;
+        if (this._canvasWidth != width || this._canvasHeight != height) {
+            this._canvasWidth = width;
+            this._canvasHeight = height;
 
-        this._engine.setCanvasSize(this._canvasWidth, this._canvasHeight);
+            this._engine.setCanvasSize(this._canvasWidth, this._canvasHeight);
+
+            this._beforeRender();
+            this._engine.render();
+        }
     }
 
     // Children class should overwrite this
@@ -241,13 +255,26 @@ export class WASMViewerBase {
     }
 
     _setupResizeHandlers() {
-        this._resizeHandler = () => {
-            this._handleResize();
-        };
+        this._resizeObserver = new ResizeObserver((entries) => {
+            if (entries && entries.length > 0) {
+                let entry = entries[0];
+
+                if (this._resizeAnimationFrame) {
+                    cancelAnimationFrame(this._resizeAnimationFrame);
+                }
+
+                this._resizeAnimationFrame = requestAnimationFrame(() => {
+                    this._handleResize(entry);
+                    this._resizeAnimationFrame = null;
+                });
+            }
+        });
+
+        this._resizeObserver.observe(this._canvas);
+
         this._fullscreenHandler = () => {
             this._handleFullscreen();
         };
-        window.addEventListener("resize", this._resizeHandler);
         this._canvas.addEventListener("fullscreenchange", this._fullscreenHandler);
     }
 
@@ -260,12 +287,23 @@ export class WASMViewerBase {
         }
     }
 
-    _handleResize() {
+    _handleResize(entry) {
         if (!this._isDestroyed && this._engine) {
             if (this._isFullscreen) {
                 this.setCanvasSize(window.innerWidth, window.innerHeight);
             } else {
-                this.setCanvasSize(this._canvas.clientWidth, this._canvas.clientHeight);
+                let width, height;
+
+                if (entry) {
+                    // contentrec is the content's size no margin border
+                    width = entry.contentRect.width;
+                    height = entry.contentRect.height;
+                } else {
+                    width = this._canvas.clientWidth;
+                    height = this._canvas.clientHeight;
+                }
+
+                this.setCanvasSize(width, height);
             }
         }
     }
@@ -285,11 +323,17 @@ export class WASMViewerBase {
             cancelAnimationFrame(this._animationFrameId);
             this._animationFrameId = null;
         }
-        // remove window listener for fullscreen listeners
-        if (this._resizeHandler) {
-            window.removeEventListener("resize", this._resizeHandler);
-            this._resizeHandler = null;
+
+        if (this._resizeAnimationFrame) {
+            cancelAnimationFrame(this._resizeAnimationFrame);
+            this._resizeAnimationFrame = null;
         }
+
+        if (this._resizeObserver) {
+            this._resizeObserver.disconnect();
+            this._resizeObserver = null;
+        }
+
         if (this._fullscreenHandler) {
             this._canvas.removeEventListener("fullscreenchange", this._fullscreenHandler);
             this._fullscreenHandler = null;
