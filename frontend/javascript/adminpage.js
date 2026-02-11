@@ -36,6 +36,30 @@ async function kijelentkezes() {
     }
 }
 
+async function userUpdate(user_id, username, email, role, is_2fa) {
+    try {
+        let response = await fetch("/api/admin/updateUser", {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json"
+            },
+            body: JSON.stringify({
+                user_id,
+                username,
+                email,
+                role,
+                is_2fa
+            })
+        });
+
+        let data = await response.json();
+        console.log(data.message);
+
+    } catch (error) {
+        console.log("Hálózati vagy szerver hiba:");
+    }
+}
+
 function sidebarvaltoztat() {
     let sidebar = document.getElementById('sidebar');
     let sidebardiv = document.getElementById('sidebardiv');
@@ -356,7 +380,6 @@ async function userToInactive(id) {
     let mitadokvissza;
     if (response.status == 204) {
         mitadokvissza = "Sikerült a törlés";
-        let tablazat = document.getElementById('usersTableDiv');
         tablazatGeneral(await sortedUser(), tablazat);
     }
     else {
@@ -413,8 +436,8 @@ function tablazatGeneral(data, kontener) {
         if (adatok[i].role != "ADMIN" && adatok[i].deleted_at == null) {
             editGomb.value = 'Szerkesztés';
             editGomb.addEventListener("click", async function () {
-                currentData = await getUser(adatok[i].user_id);
-                modalView("Felhasználó módosítása", "edit", editUserToModal(currentData.users[0]));
+                currentData = (await getUser(adatok[i].user_id)).users[0];
+                modalView("Felhasználó módosítása", "edit", editUserToModal(currentData));
                 let modalElement = document.getElementById('modalView');
                 let modal = new bootstrap.Modal(modalElement);
                 modal.show();
@@ -423,8 +446,8 @@ function tablazatGeneral(data, kontener) {
         else {
             editGomb.value = 'Megtekintés';
             editGomb.addEventListener("click", async function () {
-                currentData = await getUser(adatok[i].user_id);
-                modalView("Felhasználó megtekintése", "view", viewUserToModal(currentData.users[0]));
+                currentData = (await getUser(adatok[i].user_id)).users[0];
+                modalView("Felhasználó megtekintése", "view", viewUserToModal(currentData));
                 let modalElement = document.getElementById('modalView');
                 let modal = new bootstrap.Modal(modalElement);
                 modal.show();
@@ -483,12 +506,34 @@ function modalView(title, type, content) {
             button = document.createElement('button');
             button.innerText = "Mentés";
             button.classList.add("btn", "btn-primary");
-            button.addEventListener('submit', async function () {
-
+            button.addEventListener('click', async function () {
+                let valtozas = false;
+                let inInput = {
+                    username: document.getElementById("editUsernameInput").value,
+                    email: document.getElementById("editEmailInput").value,
+                    role: document.getElementById("editRoleSelect").value,
+                    is_2fa: document.getElementById("edit2faInput").checked,
+                }
+                console.log(inInput);
+                Object.keys(inInput).forEach(key => {
+                    if (inInput[key] == currentData[key]) {
+                        console.log(inInput[key], currentData[key])
+                        inInput[key] = null;
+                    }
+                    else {
+                        valtozas = true;
+                    }
+                });
+                if (valtozas) {
+                    console.log("valtozas");
+                    await userUpdate(currentData.user_id, inInput.username, inInput.email, inInput.role, inInput.is_2fa);
+                    tablazatGeneral(await sortedUser(), tablazat);
+                }
+                const modalElement = document.getElementById("modalView");
+                const modal = bootstrap.Modal.getInstance(modalElement);
+                modal.hide();
             })
             footerButtons.appendChild(button);
-
-
             break;
         case "view":
             modalSize.classList.add("modal-dialog", "modal-xl");
@@ -601,14 +646,15 @@ function editUserToModal(data) {
     roleP.textContent = "Roles:";
     let select = document.createElement("select");
     select.classList.add("form-select");
+    select.id = 'editRoleSelect';
     let opt1 = document.createElement("option");
-    opt1.value = "1";
+    opt1.value = "user";
     opt1.textContent = "User";
     let opt2 = document.createElement("option");
-    opt2.value = "2";
+    opt2.value = "MOD";
     opt2.textContent = "Moderator";
     let opt3 = document.createElement("option");
-    opt3.value = "3";
+    opt3.value = "ADMIN";
     opt3.textContent = "Admin";
     opt3.disabled = true;
     switch (role) {
@@ -821,8 +867,7 @@ function infoToModal(text) {
 }
 
 let currentData = {};
-
-
+let tablazat;
 
 
 

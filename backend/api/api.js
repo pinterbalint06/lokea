@@ -227,8 +227,8 @@ router.post('/admin/updateUser', async (request, response) => {
             response.status(403).json({ message: "Nincs hozzáférésed!" });
         }
         else {
-            let { user_id, username, email, role, pfp, is_2fa } = request.body;
-            let success = await database.updateUser(user_id, username, email, role, pfp, is_2fa);
+            let { user_id, username, email, role, is_2fa } = request.body;
+            let success = await database.updateUser(user_id, username, email, role, is_2fa);
             if (success == 1) {
                 response.status(204).json({ message: "Sikeres felhasználófrissités!"});
             }

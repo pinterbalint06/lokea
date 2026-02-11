@@ -42,7 +42,7 @@ async function getUsers() {
 }
 
 async function getUser(id) {
-    const query = 'SELECT users.user_id, users.username, users.email, users.role, users.pfp, users.is_2fa FROM users WHERE users.user_id = ?';
+    const query = 'SELECT users.user_id, users.username, users.email, users.role, users.is_2fa FROM users WHERE users.user_id = ?';
     const [result] = await pool.execute(query, [id]);
     return result;
 }
@@ -98,7 +98,7 @@ async function sortedUsers(mireKeresek, mit, status, adminChecked, modChecked, u
     return rows;
 }
 
-async function updateUser(user_id, username, email, role, pfp, is_2fa) {
+async function updateUser(user_id, username, email, role, is_2fa) {
     let query = 'UPDATE users ';
     let updates = [];
     let params = [];
@@ -115,10 +115,10 @@ async function updateUser(user_id, username, email, role, pfp, is_2fa) {
         updates.push('users.role = ?');
         params.push(role);
     }
-    if (pfp != null) {
-        updates.push('users.pfp = ?');
-        params.push(pfp);
-    }
+    // if (pfp != null) {
+    //     updates.push('users.pfp = ?');
+    //     params.push(pfp);
+    // }
     if (is_2fa != null) {
         updates.push('users.is_2fa = ?');
         params.push(is_2fa);
