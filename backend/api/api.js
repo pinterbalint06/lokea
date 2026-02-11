@@ -170,6 +170,21 @@ router.get('/admin/users', async (request, response) => {
     }
 })
 
+router.get('/admin/user/', async (request, response) => {
+    try {
+        if (request.session.role != 'ADMIN') {
+            response.status(403).json({ message: "Nincs hozzáférésed!" });
+        }
+        else {
+            let params = request.query.id;
+            let users = await database.getUser(params);
+            response.status(200).json({ message: "Sikeres lekérés", users: users });
+        }
+    } catch (error) {
+        response.status(500).json({ error: error });
+    }
+})
+
 router.post('/admin/sortedUsers', async (request, response) => {
     try {
         if (request.session.role != 'ADMIN') {

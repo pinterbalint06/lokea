@@ -312,6 +312,12 @@ async function osszesUser() {
     return data;
 }
 
+async function getUser(id) {
+    let response = await fetch(`/api/admin/user?id=${id}`);
+    let data = await response.json();
+    return data;
+}
+
 async function sortedUser() {
     let kereso = document.getElementById('keresoInput').value;
     let selectOption = document.getElementById('keresoSelect').value;
@@ -404,6 +410,13 @@ function tablazatGeneral(data, kontener) {
         editGomb.type = 'button';
         editGomb.value = 'Szerkesztés';
         editGomb.classList.add("btn", "btn-info");
+        editGomb.addEventListener("click", async function () {
+            currentData = await getUser(adatok[i].user_id);
+            modalView("Felhasználó módosítása", "edit", editUsersToModal(currentData.users[0]));
+            let modalElement = document.getElementById('modalView');
+            let modal = new bootstrap.Modal(modalElement);
+            modal.show();
+        })
         let torloGomb = document.createElement('input');
         torloGomb.type = 'button';
         torloGomb.value = 'Törlés';
@@ -425,7 +438,7 @@ function tablazatGeneral(data, kontener) {
 }
 
 function modalView(title, type, content) {
-    document.getElementById('modalTitle') = title;
+    document.getElementById('modalTitle').innerText = title;
     let modalSize = document.getElementById('modalSize');
     modalSize.className = "";
     let footertext = document.getElementById('footerText');
@@ -442,28 +455,28 @@ function modalView(title, type, content) {
             footertext.classList.add("text-danger");
 
             button = document.createElement('button');
-            input.type = 'button';
-            input.innerText = "Változtatások visszavonása";
-            input.classList.add("btn", "btn-danger");
+            button.type = 'reset';
+            button.innerText = "Változtatások visszavonása";
+            button.classList.add("btn", "btn-danger");
+            button.form = 'editUserForm';
             footerButtons.appendChild(button);
+
             button = document.createElement('button');
-            input.type = 'button';
-            input.innerText = "Mentés";
-            input.classList.add("btn", "btn-primary");
+            button.innerText = "Mentés";
+            button.classList.add("btn", "btn-primary");
+            button.addEventListener('submit', async function () {
+
+            })
             footerButtons.appendChild(button);
-            button = document.createElement('button');
-            input.type = 'button';
-            input.innerText = "Mentés és kilépés";
-            input.classList.add("btn", "btn-primary");
-            footerButtons.appendChild(button);
+
             break;
         case "information":
             modalSize.classList.add("modal-dialog", "modal-sm");
 
             button = document.createElement('button');
-            input.type = 'button';
-            input.innerText = "OK";
-            input.classList.add("btn", "btn-primary");
+            button.type = 'button';
+            button.innerText = "OK";
+            button.classList.add("btn", "btn-primary");
             footerButtons.appendChild(button);
             break;
     }
@@ -473,7 +486,13 @@ function modalView(title, type, content) {
     hova.appendChild(content);
 }
 
-function editUsersToModal() {
+function editUsersToModal(data) {
+    console.log(data);
+    let user_id = data.user_id;
+    let username = data.username;
+    let email = data.email;
+    let role = data.role;
+    let is_2fa = data.is_2fa;
     let container = document.createElement("div");
     container.classList.add("container-fluid");
 
@@ -485,14 +504,14 @@ function editUsersToModal() {
     colLeft.classList.add("col-4");
 
     let pfp = document.createElement("img");
-    pfp.src = "default.png";
+    // pfp.src = "default.png";
     pfp.alt = "Profile picture";
     pfp.title = "Profile picture";
     pfp.classList.add("img-fluid", "img-thumbnail", "rounded-circle", "h-75"
     );
 
     let pfpTitle = document.createElement("h6");
-    pfpTitle.textContent = "Username";
+    pfpTitle.textContent = username;
 
     colLeft.appendChild(pfp);
     colLeft.appendChild(pfpTitle);
@@ -502,6 +521,7 @@ function editUsersToModal() {
     colRight.classList.add("col-8");
 
     let form = document.createElement("form");
+    form.id = 'editUserForm';
 
     let formGroup = document.createElement("div");
     formGroup.classList.add("form-group");
@@ -514,6 +534,7 @@ function editUsersToModal() {
     idInput.type = "number";
     idInput.id = "editIdInput";
     idInput.disabled = true;
+    idInput.value = user_id;
     idInput.classList.add("form-control");
 
     idDiv.appendChild(idP);
@@ -525,6 +546,7 @@ function editUsersToModal() {
     let userInput = document.createElement("input");
     userInput.type = "text";
     userInput.id = "editUsernameInput";
+    userInput.value = username;
     userInput.classList.add("form-control");
 
     userDiv.appendChild(userP);
@@ -536,6 +558,7 @@ function editUsersToModal() {
     let emailInput = document.createElement("input");
     emailInput.type = "text";
     emailInput.id = "editEmailInput";
+    emailInput.value = email;
     emailInput.classList.add("form-control");
 
     emailDiv.appendChild(emailP);
@@ -556,6 +579,18 @@ function editUsersToModal() {
     opt3.value = "3";
     opt3.textContent = "Admin";
     opt3.disabled = true;
+    switch (role) {
+        case "ADMIN":
+            opt3.selected = true;
+            opt2.disabled = true;
+            opt1.disabled = true;
+            break;
+        case "MOD":
+            opt2.selected = true;
+            break;
+        case "user":
+            opt1.selected = true;
+    }
 
     select.appendChild(opt1);
     select.appendChild(opt2);
@@ -569,6 +604,9 @@ function editUsersToModal() {
     switchInput.type = "checkbox";
     switchInput.role = "switch";
     switchInput.id = "edit2faInput";
+    if (is_2fa) {
+        switchInput.checked = true;
+    }
     switchInput.classList.add("form-check-input");
     let switchLabel = document.createElement("label");
     switchLabel.htmlFor = "edit2faInput";
@@ -599,9 +637,11 @@ function infoToModal(text) {
     let content = document.createElement('p');
     content.classList.add('text-center');
     content.innerText = text;
-    
+
     return text;
 }
+
+let currentData = {};
 
 
 

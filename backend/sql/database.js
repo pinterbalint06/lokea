@@ -42,7 +42,7 @@ async function getUsers() {
 }
 
 async function getUser(id) {
-    const query = 'SELECT users.username, users.email, users.role, users.pfp, users.is_2fa FROM users WHERE users.user_id = ?';
+    const query = 'SELECT users.user_id, users.username, users.email, users.role, users.pfp, users.is_2fa FROM users WHERE users.user_id = ?';
     const [result] = await pool.execute(query, [id]);
     return result;
 }
