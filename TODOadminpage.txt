@@ -20,3 +20,4 @@ hibak amiket javitani kell:
 -admin oldal elerese csak adminkent
 -ne lehessen felhasznalonevnek emailcimet adni
 -compare attetele database.js-be
+-ha inactive ne lehessen belepni

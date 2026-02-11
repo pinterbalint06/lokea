@@ -104,6 +104,7 @@ async function melyikValaszt(melyik) {
             break;
         case "users":
             display.appendChild(await usersDisplayre());
+            tablazatGeneral(await osszesUser());
             break;
         case "files":
             display.appendChild(await filesDisplayre());
@@ -163,14 +164,14 @@ async function usersDisplayre() {
     keresoInput.classList.add("form-control");
     keresoInput.placeholder = "Keresés...";
     keresoInput.addEventListener("input", async function () {
-        tablazatGeneral(await sortedUser(), tablazat);
+        tablazatGeneral(await sortedUser());
     })
 
     let keresoSelect = document.createElement('select');
     keresoSelect.classList.add("form-select");
     keresoSelect.id = 'keresoSelect';
     keresoSelect.addEventListener("change", async function () {
-        tablazatGeneral(await sortedUser(), tablazat);
+        tablazatGeneral(await sortedUser());
     })
 
     let option = document.createElement('option');
@@ -225,7 +226,7 @@ async function usersDisplayre() {
             radioButton.checked = true;
         }
         radioButton.addEventListener("change", async function () {
-            tablazatGeneral(await sortedUser(), tablazat);
+            tablazatGeneral(await sortedUser());
         })
         let label = document.createElement('label');
         label.setAttribute("for", `status${statuszok[i]}`);
@@ -252,7 +253,7 @@ async function usersDisplayre() {
         checkbox.id = `role${roleok[i]}`;
         checkbox.name = "sort2";
         checkbox.addEventListener("change", async function () {
-            tablazatGeneral(await sortedUser(), tablazat);
+            tablazatGeneral(await sortedUser());
         })
         let label = document.createElement('label');
         label.setAttribute("for", `role${roleok[i]}`);
@@ -273,7 +274,6 @@ async function usersDisplayre() {
     let tablazat = document.createElement('div');
     tablazat.id = "usersTableDiv";
     col9div.appendChild(tablazat);
-    tablazatGeneral(await osszesUser(), tablazat);
 
     row.appendChild(col9div);
     row.appendChild(col3div);
@@ -380,7 +380,7 @@ async function userToInactive(id) {
     let mitadokvissza;
     if (response.status == 204) {
         mitadokvissza = "Sikerült a törlés";
-        tablazatGeneral(await sortedUser(), tablazat);
+        tablazatGeneral(await sortedUser());
     }
     else {
         mitadokvissza = (await response.json()).message;
@@ -388,7 +388,8 @@ async function userToInactive(id) {
     return mitadokvissza;
 }
 
-function tablazatGeneral(data, kontener) {
+function tablazatGeneral(data) {
+    let kontener = document.getElementById('usersTableDiv');
     kontener.innerHTML = "";
     let tablazat = document.createElement('table');
     tablazat.id = 'usersTable';
@@ -527,7 +528,7 @@ function modalView(title, type, content) {
                 if (valtozas) {
                     console.log("valtozas");
                     await userUpdate(currentData.user_id, inInput.username, inInput.email, inInput.role, inInput.is_2fa);
-                    tablazatGeneral(await sortedUser(), tablazat);
+                    tablazatGeneral(await sortedUser());
                 }
                 const modalElement = document.getElementById("modalView");
                 const modal = bootstrap.Modal.getInstance(modalElement);
@@ -867,7 +868,6 @@ function infoToModal(text) {
 }
 
 let currentData = {};
-let tablazat;
 
 
 
