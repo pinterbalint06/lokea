@@ -15,6 +15,47 @@ document.addEventListener("DOMContentLoaded", function () {
     })
 });
 
+//GET fetchings
+
+async function osszesUser() {
+    let response = await fetch("/api/admin/users");
+    let data = await response.json();
+    return data;
+}
+
+async function getUser(id) {
+    let response = await fetch(`/api/admin/user?id=${id}`);
+    let data = await response.json();
+    return data;
+}
+
+async function sortedUser() {
+    let kereso = document.getElementById('keresoInput').value;
+    let selectOption = document.getElementById('keresoSelect').value;
+    let selectedStatus = document.querySelector('input[name="sort1"]:checked').id;
+    let selectedRoles = Array.from(
+        document.querySelectorAll('input[name="sort2"]:checked')
+    ).map(cb => cb.id);
+    let response = await fetch("/api/admin/sortedUsers", {
+        method: "POST",
+        headers: {
+            "Content-Type": "application/json"
+        },
+        body: JSON.stringify({
+            mireKeresek: selectOption,
+            mit: kereso,
+            status: selectedStatus,
+            adminChecked: selectedRoles.includes("roleAdmin"),
+            modChecked: selectedRoles.includes("roleModerator"),
+            userChecked: selectedRoles.includes("roleUser")
+        })
+    });
+    let data = await response.json();
+    return data;
+}
+
+//POST fetchings
+
 async function kijelentkezes() {
     try {
         let response = await fetch("/api/signout", {
@@ -60,6 +101,29 @@ async function userUpdate(user_id, username, email, role, is_2fa) {
     }
 }
 
+async function userToInactive(id) {
+    let response = await fetch("/api/admin/userToInactive", {
+        method: "POST",
+        headers: {
+            "Content-Type": "application/json"
+        },
+        body: JSON.stringify({
+            userId: id
+        })
+    });
+    let mitadokvissza;
+    if (response.status == 204) {
+        mitadokvissza = "Sikerült a törlés";
+        tablazatGeneral(await sortedUser());
+    }
+    else {
+        mitadokvissza = (await response.json()).message;
+    }
+    return mitadokvissza;
+}
+
+//SIDEBAR
+
 function sidebarvaltoztat() {
     let sidebar = document.getElementById('sidebar');
     let sidebardiv = document.getElementById('sidebardiv');
@@ -94,6 +158,8 @@ function aktivEltuntet() {
         element.classList.remove("active");
     })
 }
+
+//HTML DOM
 
 async function melyikValaszt(melyik) {
     let display = document.getElementById('content');
@@ -158,11 +224,7 @@ async function usersDisplayre() {
     let inputgroupdiv = document.createElement('div');
     inputgroupdiv.classList.add("input-group");
 
-    let keresoInput = document.createElement('input');
-    keresoInput.type = "text";
-    keresoInput.id = 'keresoInput';
-    keresoInput.classList.add("form-control");
-    keresoInput.placeholder = "Keresés...";
+    let keresoInput = inputGeneral("text", "Keresés...", null, "keresoInput", ["form-control"], false);
     keresoInput.addEventListener("input", async function () {
         tablazatGeneral(await sortedUser());
     })
@@ -330,63 +392,7 @@ async function featureFlagsDisplayre() {
     return h1;
 }
 
-async function osszesUser() {
-    let response = await fetch("/api/admin/users");
-    let data = await response.json();
-    return data;
-}
-
-async function getUser(id) {
-    let response = await fetch(`/api/admin/user?id=${id}`);
-    let data = await response.json();
-    return data;
-}
-
-async function sortedUser() {
-    let kereso = document.getElementById('keresoInput').value;
-    let selectOption = document.getElementById('keresoSelect').value;
-    let selectedStatus = document.querySelector('input[name="sort1"]:checked').id;
-    let selectedRoles = Array.from(
-        document.querySelectorAll('input[name="sort2"]:checked')
-    ).map(cb => cb.id);
-    let response = await fetch("/api/admin/sortedUsers", {
-        method: "POST",
-        headers: {
-            "Content-Type": "application/json"
-        },
-        body: JSON.stringify({
-            mireKeresek: selectOption,
-            mit: kereso,
-            status: selectedStatus,
-            adminChecked: selectedRoles.includes("roleAdmin"),
-            modChecked: selectedRoles.includes("roleModerator"),
-            userChecked: selectedRoles.includes("roleUser")
-        })
-    });
-    let data = await response.json();
-    return data;
-}
-
-async function userToInactive(id) {
-    let response = await fetch("/api/admin/userToInactive", {
-        method: "POST",
-        headers: {
-            "Content-Type": "application/json"
-        },
-        body: JSON.stringify({
-            userId: id
-        })
-    });
-    let mitadokvissza;
-    if (response.status == 204) {
-        mitadokvissza = "Sikerült a törlés";
-        tablazatGeneral(await sortedUser());
-    }
-    else {
-        mitadokvissza = (await response.json()).message;
-    }
-    return mitadokvissza;
-}
+//DOM UTILITIES
 
 function tablazatGeneral(data) {
     let kontener = document.getElementById('usersTableDiv');
@@ -431,11 +437,9 @@ function tablazatGeneral(data) {
         let td = document.createElement('td');
         let modositoGombokDiv = document.createElement('div');
         modositoGombokDiv.classList.add("d-flex", "justify-content-evenly");
-        let editGomb = document.createElement('input');
-        editGomb.type = 'button';
-        editGomb.classList.add("btn", "btn-info");
+        let editGomb;
         if (adatok[i].role != "ADMIN" && adatok[i].deleted_at == null) {
-            editGomb.value = 'Szerkesztés';
+            editGomb = gombGeneral("click", "Szerkesztés", "blue", null);
             editGomb.addEventListener("click", async function () {
                 currentData = (await getUser(adatok[i].user_id)).users[0];
                 modalView("Felhasználó módosítása", "edit", editUserToModal(currentData));
@@ -445,7 +449,7 @@ function tablazatGeneral(data) {
             })
         }
         else {
-            editGomb.value = 'Megtekintés';
+            editGomb = gombGeneral("click", "Megtekintés", "blue", null);
             editGomb.addEventListener("click", async function () {
                 currentData = (await getUser(adatok[i].user_id)).users[0];
                 modalView("Felhasználó megtekintése", "view", viewUserToModal(currentData));
@@ -458,10 +462,7 @@ function tablazatGeneral(data) {
         modositoGombokDiv.appendChild(editGomb);
 
         if (adatok[i].role != "ADMIN" && adatok[i].deleted_at == null) {
-            let torloGomb = document.createElement('input');
-            torloGomb.type = 'button';
-            torloGomb.value = 'Törlés';
-            torloGomb.classList.add("btn", "btn-danger");
+            let torloGomb = gombGeneral("click", "Törlés", "red", null);
             torloGomb.addEventListener("click", async function () {
                 alert(await userToInactive(adatok[i].user_id));
             });
@@ -480,6 +481,55 @@ function tablazatGeneral(data) {
     kontener.appendChild(tablazat);
 }
 
+function gombGeneral(type, text, color, id) {
+    let button = document.createElement('button');
+    button.type = type;
+    button.innerText = text;
+    if (id != null) {
+        button.id = id;
+    }
+    button.classList.add('btn');
+    switch (color) {
+        case "red":
+            button.classList.add('btn-danger');
+            break;
+        case "blue":
+            button.classList.add('btn-primary');
+            break;
+        case "lightblue":
+            button.classList.add('btn-info');
+            break;
+        case "green":
+            button.classList.add('btn-success');
+            break;
+        case "link":
+            button.classList.add('btn-link');
+            break;
+    }
+    return button;
+}
+
+function inputGeneral(type, placeholder, value, id, osztalyok, disabled) {
+    let input = document.createElement('input');
+    input.type = type;
+    if (placeholder != null) {
+        input.placeholder = placeholder;
+    }
+    if (value != null) {
+        input.value = value;
+    }
+    input.id = id;
+    if (osztalyok != null) {
+        for (let i = 0; i < osztalyok.length; i++) {
+            input.classList.add(osztalyok[i]);
+        }
+    }
+    input.disabled = disabled;
+    return input;
+}
+
+//MODAL FUNCTIONS
+
 function modalView(title, type, content) {
     document.getElementById('modalTitle').innerText = title;
     let modalSize = document.getElementById('modalSize');
@@ -497,16 +547,11 @@ function modalView(title, type, content) {
             footertext.innerHTML = "Kilépés után a változtatásokat nem lehet visszavonni!";
             footertext.classList.add("text-danger");
 
-            button = document.createElement('button');
-            button.type = 'reset';
-            button.innerText = "Változtatások visszavonása";
-            button.classList.add("btn", "btn-danger");
-            button.form = 'editUserForm';
+            button = gombGeneral("reset", "Változtatások visszavonása", "red", null);
+            button.setAttribute("form", "editUserForm");
             footerButtons.appendChild(button);
 
-            button = document.createElement('button');
-            button.innerText = "Mentés";
-            button.classList.add("btn", "btn-primary");
+            button = gombGeneral("button", "Mentés", "blue", null);
             button.addEventListener('click', async function () {
                 let valtozas = false;
                 let inInput = {
@@ -539,9 +584,7 @@ function modalView(title, type, content) {
         case "view":
             modalSize.classList.add("modal-dialog", "modal-xl");
 
-            button = document.createElement('button');
-            button.innerText = "Kilépés";
-            button.classList.add("btn", "btn-primary");
+            button = gombGeneral("button", "Kilépés", "blue", null);
             button.addEventListener("click", function () {
                 const modalElement = document.getElementById("modalView");
                 const modal = bootstrap.Modal.getInstance(modalElement);
@@ -552,10 +595,7 @@ function modalView(title, type, content) {
         case "information":
             modalSize.classList.add("modal-dialog", "modal-sm");
 
-            button = document.createElement('button');
-            button.type = 'button';
-            button.innerText = "OK";
-            button.classList.add("btn", "btn-primary");
+            button = gombGeneral("button", "OK", "blue", null);
             footerButtons.appendChild(button);
             break;
     }
@@ -608,12 +648,7 @@ function editUserToModal(data) {
     let idDiv = document.createElement("div");
     let idP = document.createElement("p");
     idP.textContent = "ID";
-    let idInput = document.createElement("input");
-    idInput.type = "number";
-    idInput.id = "editIdInput";
-    idInput.disabled = true;
-    idInput.value = user_id;
-    idInput.classList.add("form-control");
+    let idInput = inputGeneral("number", null, user_id, "editIdInput", ["form-control"], true);
 
     idDiv.appendChild(idP);
     idDiv.appendChild(idInput);
@@ -621,11 +656,7 @@ function editUserToModal(data) {
     let userDiv = document.createElement("div");
     let userP = document.createElement("p");
     userP.textContent = "Username";
-    let userInput = document.createElement("input");
-    userInput.type = "text";
-    userInput.id = "editUsernameInput";
-    userInput.value = username;
-    userInput.classList.add("form-control");
+    let userInput = inputGeneral("text", null, username, "editUsernameInput", ["form-control"], false);
 
     userDiv.appendChild(userP);
     userDiv.appendChild(userInput);
@@ -633,11 +664,7 @@ function editUserToModal(data) {
     let emailDiv = document.createElement("div");
     let emailP = document.createElement("p");
     emailP.textContent = "E-mail address";
-    let emailInput = document.createElement("input");
-    emailInput.type = "text";
-    emailInput.id = "editEmailInput";
-    emailInput.value = email;
-    emailInput.classList.add("form-control");
+    let emailInput = inputGeneral("text", null, email, "editEmailInput", ["form-control"], false);
 
     emailDiv.appendChild(emailP);
     emailDiv.appendChild(emailInput);
@@ -674,14 +701,11 @@ function editUserToModal(data) {
 
     let switchDiv = document.createElement("div");
     switchDiv.classList.add("form-check", "form-switch", "mt-3");
-    let switchInput = document.createElement("input");
-    switchInput.type = "checkbox";
+    let switchInput = inputGeneral("checkbox", null, null, "edit2faInput", ["form-check-input"], false);
     switchInput.role = "switch";
-    switchInput.id = "edit2faInput";
     if (is_2fa) {
         switchInput.checked = true;
     }
-    switchInput.classList.add("form-check-input");
 
     let switchLabel = document.createElement("label");
     switchLabel.htmlFor = "edit2faInput";
@@ -751,12 +775,7 @@ function viewUserToModal(data) {
     let idDiv = document.createElement("div");
     let idP = document.createElement("p");
     idP.textContent = "ID";
-    let idInput = document.createElement("input");
-    idInput.type = "number";
-    idInput.id = "editIdInput";
-    idInput.disabled = true;
-    idInput.value = user_id;
-    idInput.classList.add("form-control");
+    let idInput = inputGeneral("number", null, user_id, "editIdInput", ["form-control"], true);
 
     idDiv.appendChild(idP);
     idDiv.appendChild(idInput);
@@ -764,12 +783,7 @@ function viewUserToModal(data) {
     let userDiv = document.createElement("div");
     let userP = document.createElement("p");
     userP.textContent = "Username";
-    let userInput = document.createElement("input");
-    userInput.type = "text";
-    userInput.id = "editUsernameInput";
-    userInput.value = username;
-    userInput.classList.add("form-control");
-    userInput.disabled = true;
+    let userInput = inputGeneral("text", null, username, "editUsernameInput", ["form-control"], true);
 
     userDiv.appendChild(userP);
     userDiv.appendChild(userInput);
@@ -777,7 +791,7 @@ function viewUserToModal(data) {
     let emailDiv = document.createElement("div");
     let emailP = document.createElement("p");
     emailP.textContent = "E-mail address";
-    let emailInput = document.createElement("input");
+    let emailInput = inputGeneral("text", null, email, "editEmailInput", ["form-control"], true);
     emailInput.type = "text";
     emailInput.id = "editEmailInput";
     emailInput.value = email;
@@ -824,7 +838,7 @@ function viewUserToModal(data) {
 
     let switchDiv = document.createElement("div");
     switchDiv.classList.add("form-check", "form-switch", "mt-3");
-    let switchInput = document.createElement("input");
+    let switchInput = inputGeneral("checkbox", null, null, "edit2faInput", ["form-check-input"], false);
     switchInput.type = "checkbox";
     switchInput.role = "switch";
     switchInput.id = "edit2faInput";
@@ -866,6 +880,8 @@ function infoToModal(text) {
 
     return text;
 }
+
+//VARIABLES
 
 let currentData = {};
 
