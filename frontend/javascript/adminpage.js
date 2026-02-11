@@ -385,6 +385,7 @@ function tablazatGeneral(data, kontener) {
     let tbody = document.createElement('tbody');
     tbody.classList.add("table-group-divider");
     let adatok = data.users;
+    console.log(adatok);
     for (let i = 0; i < adatok.length; i++) {
         let tr = document.createElement('tr');
         let ertekek = Object.values(adatok[i]);
@@ -408,26 +409,44 @@ function tablazatGeneral(data, kontener) {
         modositoGombokDiv.classList.add("d-flex", "justify-content-evenly");
         let editGomb = document.createElement('input');
         editGomb.type = 'button';
-        editGomb.value = 'Szerkesztés';
         editGomb.classList.add("btn", "btn-info");
-        editGomb.addEventListener("click", async function () {
-            currentData = await getUser(adatok[i].user_id);
-            modalView("Felhasználó módosítása", "edit", editUsersToModal(currentData.users[0]));
-            let modalElement = document.getElementById('modalView');
-            let modal = new bootstrap.Modal(modalElement);
-            modal.show();
-        })
-        let torloGomb = document.createElement('input');
-        torloGomb.type = 'button';
-        torloGomb.value = 'Törlés';
-        torloGomb.classList.add("btn", "btn-danger");
-        torloGomb.addEventListener("click", async function () {
-            alert(await userToInactive(adatok[i].user_id));
-        });
+        if (adatok[i].role != "ADMIN" && adatok[i].deleted_at == null) {
+            editGomb.value = 'Szerkesztés';
+            editGomb.addEventListener("click", async function () {
+                currentData = await getUser(adatok[i].user_id);
+                modalView("Felhasználó módosítása", "edit", editUserToModal(currentData.users[0]));
+                let modalElement = document.getElementById('modalView');
+                let modal = new bootstrap.Modal(modalElement);
+                modal.show();
+            })
+        }
+        else {
+            editGomb.value = 'Megtekintés';
+            editGomb.addEventListener("click", async function () {
+                currentData = await getUser(adatok[i].user_id);
+                modalView("Felhasználó megtekintése", "view", viewUserToModal(currentData.users[0]));
+                let modalElement = document.getElementById('modalView');
+                let modal = new bootstrap.Modal(modalElement);
+                modal.show();
+            })
+        }
+
         modositoGombokDiv.appendChild(editGomb);
-        modositoGombokDiv.appendChild(torloGomb);
+
+        if (adatok[i].role != "ADMIN" && adatok[i].deleted_at == null) {
+            let torloGomb = document.createElement('input');
+            torloGomb.type = 'button';
+            torloGomb.value = 'Törlés';
+            torloGomb.classList.add("btn", "btn-danger");
+            torloGomb.addEventListener("click", async function () {
+                alert(await userToInactive(adatok[i].user_id));
+            });
+            modositoGombokDiv.appendChild(torloGomb);
+        }
+
         td.appendChild(modositoGombokDiv);
         tr.appendChild(td);
+
         tbody.appendChild(tr);
     }
 
@@ -469,6 +488,20 @@ function modalView(title, type, content) {
             })
             footerButtons.appendChild(button);
 
+
+            break;
+        case "view":
+            modalSize.classList.add("modal-dialog", "modal-xl");
+
+            button = document.createElement('button');
+            button.innerText = "Kilépés";
+            button.classList.add("btn", "btn-primary");
+            button.addEventListener("click", function () {
+                const modalElement = document.getElementById("modalView");
+                const modal = bootstrap.Modal.getInstance(modalElement);
+                modal.hide();
+            })
+            footerButtons.appendChild(button);
             break;
         case "information":
             modalSize.classList.add("modal-dialog", "modal-sm");
@@ -486,8 +519,7 @@ function modalView(title, type, content) {
     hova.appendChild(content);
 }
 
-function editUsersToModal(data) {
-    console.log(data);
+function editUserToModal(data) {
     let user_id = data.user_id;
     let username = data.username;
     let email = data.email;
@@ -580,11 +612,6 @@ function editUsersToModal(data) {
     opt3.textContent = "Admin";
     opt3.disabled = true;
     switch (role) {
-        case "ADMIN":
-            opt3.selected = true;
-            opt2.disabled = true;
-            opt1.disabled = true;
-            break;
         case "MOD":
             opt2.selected = true;
             break;
@@ -608,6 +635,158 @@ function editUsersToModal(data) {
         switchInput.checked = true;
     }
     switchInput.classList.add("form-check-input");
+
+    let switchLabel = document.createElement("label");
+    switchLabel.htmlFor = "edit2faInput";
+    switchLabel.textContent = "Two-factor authentication";
+    switchLabel.classList.add("form-check-label");
+
+    switchDiv.appendChild(switchInput);
+    switchDiv.appendChild(switchLabel);
+
+    /* ÖSSZEÉPITÉS */
+    formGroup.appendChild(idDiv);
+    formGroup.appendChild(userDiv);
+    formGroup.appendChild(emailDiv);
+    formGroup.appendChild(roleDiv);
+    formGroup.appendChild(switchDiv);
+
+    form.appendChild(formGroup);
+    colRight.appendChild(form);
+
+    row.appendChild(colLeft);
+    row.appendChild(colRight);
+    container.appendChild(row);
+
+    return container;
+}
+
+function viewUserToModal(data) {
+    let user_id = data.user_id;
+    let username = data.username;
+    let email = data.email;
+    let role = data.role;
+    let is_2fa = data.is_2fa;
+    let container = document.createElement("div");
+    container.classList.add("container-fluid");
+
+    let row = document.createElement("div");
+    row.classList.add("row");
+
+    /* BAL OLDAL */
+    let colLeft = document.createElement("div");
+    colLeft.classList.add("col-4");
+
+    let pfp = document.createElement("img");
+    // pfp.src = "default.png";
+    pfp.alt = "Profile picture";
+    pfp.title = "Profile picture";
+    pfp.classList.add("img-fluid", "img-thumbnail", "rounded-circle", "h-75"
+    );
+
+    let pfpTitle = document.createElement("h6");
+    pfpTitle.textContent = username;
+
+    colLeft.appendChild(pfp);
+    colLeft.appendChild(pfpTitle);
+
+    /* JOBB OLDAL */
+    let colRight = document.createElement("div");
+    colRight.classList.add("col-8");
+
+    let form = document.createElement("form");
+    form.id = 'editUserForm';
+
+    let formGroup = document.createElement("div");
+    formGroup.classList.add("form-group");
+
+    /* INPUTOK */
+    let idDiv = document.createElement("div");
+    let idP = document.createElement("p");
+    idP.textContent = "ID";
+    let idInput = document.createElement("input");
+    idInput.type = "number";
+    idInput.id = "editIdInput";
+    idInput.disabled = true;
+    idInput.value = user_id;
+    idInput.classList.add("form-control");
+
+    idDiv.appendChild(idP);
+    idDiv.appendChild(idInput);
+
+    let userDiv = document.createElement("div");
+    let userP = document.createElement("p");
+    userP.textContent = "Username";
+    let userInput = document.createElement("input");
+    userInput.type = "text";
+    userInput.id = "editUsernameInput";
+    userInput.value = username;
+    userInput.classList.add("form-control");
+    userInput.disabled = true;
+
+    userDiv.appendChild(userP);
+    userDiv.appendChild(userInput);
+
+    let emailDiv = document.createElement("div");
+    let emailP = document.createElement("p");
+    emailP.textContent = "E-mail address";
+    let emailInput = document.createElement("input");
+    emailInput.type = "text";
+    emailInput.id = "editEmailInput";
+    emailInput.value = email;
+    emailInput.classList.add("form-control");
+    emailInput.disabled = true;
+
+    emailDiv.appendChild(emailP);
+    emailDiv.appendChild(emailInput);
+
+    let roleDiv = document.createElement("div");
+    let roleP = document.createElement("p");
+    roleP.textContent = "Roles:";
+    let select = document.createElement("select");
+    select.classList.add("form-select");
+    let opt1 = document.createElement("option");
+    opt1.value = "1";
+    opt1.textContent = "User";
+    opt1.disabled = true;
+    let opt2 = document.createElement("option");
+    opt2.value = "2";
+    opt2.textContent = "Moderator";
+    opt2.disabled = true;
+    let opt3 = document.createElement("option");
+    opt3.value = "3";
+    opt3.textContent = "Admin";
+    opt3.disabled = true;
+    switch (role) {
+        case "ADMIN":
+            opt3.selected = true;
+            break;
+        case "MOD":
+            opt2.selected = true;
+            break;
+        case "user":
+            opt1.selected = true;
+            break;
+    }
+
+    select.appendChild(opt1);
+    select.appendChild(opt2);
+    select.appendChild(opt3);
+    roleDiv.appendChild(roleP);
+    roleDiv.appendChild(select);
+
+    let switchDiv = document.createElement("div");
+    switchDiv.classList.add("form-check", "form-switch", "mt-3");
+    let switchInput = document.createElement("input");
+    switchInput.type = "checkbox";
+    switchInput.role = "switch";
+    switchInput.id = "edit2faInput";
+    if (is_2fa) {
+        switchInput.checked = true;
+    }
+    switchInput.classList.add("form-check-input");
+    switchInput.disabled = true;
+
     let switchLabel = document.createElement("label");
     switchLabel.htmlFor = "edit2faInput";
     switchLabel.textContent = "Two-factor authentication";

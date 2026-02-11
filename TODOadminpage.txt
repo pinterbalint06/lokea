@@ -12,9 +12,11 @@ write devlog oldal
 test tools oldal
 transactions oldal
 feature flags oldal
+2fa megcsinalasa - email kuldese
 
 hibak amiket javitani kell:
 
 -stack trace
 -admin oldal elerese csak adminkent
 -ne lehessen felhasznalonevnek emailcimet adni
+-compare attetele database.js-be
