@@ -15,3 +15,4 @@
 15. UBO binding slotok átdolgozása
 16. Van-e jelenlegi WebGL ctx ellenőrzések
 17. Projection mátrixok dokumentációjának frissítése
+18. Egy óránál idősebb temporary fájlok törlése

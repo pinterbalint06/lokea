@@ -22,8 +22,10 @@ let mapViewer;
 let equirectangularViewer;
 let isPlacingMarker = false;
 let UI = {};
-const TEMP_MARKER_ID = -1;
+const TEMP_MARKER_ID = -2;
 let activePointId = null;
+let originalPointData = null;
+let currentTempImageName = null;
 let clickOnMapToast;
 
 // |-----------|
@@ -201,27 +203,33 @@ async function saveMap() {
 async function savePoint() {
     let pontMentesToast = showToast("Pont mentése...", "primary", false, { autohide: false });
     UI.savePointButton.disabled = true;
+    let send = mapViewer.getMarkerPosition(activePointId);
+    send.tempFilename = currentTempImageName;
     try {
         let response = await fetch("/api/map_creator/savePoint", {
             "method": "POST",
             "headers": {
                 "Content-Type": "application/json"
             },
-            "body": JSON.stringify(mapViewer.getMarkerPosition(activePointId))
+            "body": JSON.stringify(send)
         });
         let data = await response.json();
         pontMentesToast.hide();
         if (data.success) {
             showToast("Pont sikeresen mentve!", "success", true, { delay: 3000 }, ICONS.UPLOAD_TO_CLOUD);
             equirectangularViewer.clearImage();
-            mapViewer.changeMarkerId(activePointId, data.pointId);
+            if (activePointId == TEMP_MARKER_ID) {
+                mapViewer.changeMarkerId(activePointId, data.pointId);
+            }
             mapViewer.changeMarkerType(data.pointId, "READY");
             UI.collapseBootstrapElement.hide();
 
             activePointId = null;
             isPlacingMarker = false;
+            originalPointData = null;
             mapViewer.canvasInput.setDefaultCursor("default");
             UI.savePointButton.disabled = true;
+            currentTempImageName = null;
         } else {
             throw new Error(data.error);
         }
@@ -244,6 +252,7 @@ function placeOrMoveMarker(cursorX, cursorY) {
     if (mapViewer.doesMarkerExist(activePointId)) {
         mapViewer.moveMarker(activePointId, cursorX, cursorY);
     } else {
+        UI.savePointButton.disabled = true;
         mapViewer.placeMarker(activePointId, cursorX, cursorY, "EMPTY");
         if (clickOnMapToast) {
             clickOnMapToast.hide();
@@ -262,6 +271,8 @@ function clickOnCanvas(cursorX, cursorY) {
             activePointId = clickedMarkerIndex;
             mapViewer.changeMarkerType(activePointId, "EDIT");
 
+            originalPointData = mapViewer.getMarkerPosition(activePointId);
+
 
 
             // load image from backend
@@ -270,17 +281,24 @@ function clickOnCanvas(cursorX, cursorY) {
 
 
             updateCoordinatesInput();
+            isPlacingMarker = true;
             UI.collapseBootstrapElement.show();
         }
     }
 }
 
 function closeCollapse() {
-    if (mapViewer.getMarkerType(activePointId) == "empty") {
+    if (activePointId == TEMP_MARKER_ID) {
         mapViewer.removeMarker(activePointId);
+        UI.savePointButton.disabled = true;
     } else {
-        // for now say that this is ready
-        mapViewer.changeMarkerType(activePointId, "READY");
+        if (activePointId != null) {
+            if (originalPointData) {
+                mapViewer.moveMarkerToImageCoordinates(activePointId, originalPointData.x, originalPointData.y);
+            }
+            mapViewer.changeMarkerType(activePointId, "READY");
+            originalPointData = null;
+        }
     }
     UI.collapseBootstrapElement.hide();
     activePointId = null;
@@ -305,6 +323,7 @@ async function uploadEquirectangular(file, imgData, markerIndex) {
     feltoltesToast.hide();
     if (data.success) {
         UI.savePointButton.disabled = false;
+        currentTempImageName = data.tempFilename;
         mapViewer.changeMarkerType(markerIndex, "EDIT");
         showToast("Kép sikeresen feltöltve!", "success", true, { delay: 3000 });
     } else {

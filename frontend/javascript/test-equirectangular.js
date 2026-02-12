@@ -11,7 +11,7 @@ let equirectangularViewer;
 
 const imageList = [
     {
-        "url": "/images/equirectangular/Cathedral.webp",
+        "url": "/api/map_creator/testImage",
         width: 1920,
         height: 960
     },
