@@ -1,10 +1,11 @@
 const DEFAULT_OPTIONS = {
     "mode": "3D",
     "sensitivity": 0.10,
-    "zoomSpeed": 0.05,
+    "zoomSpeed": 0.5,
     "friction": 0.9825,
     "drag": 0.1,
     "maxTimeToStartMomentum": 40,
+    "zoomAnimationSpeed": 10.0,
     "defaultCursor": "grab",
     "grabbingCursor": "grabbing"
 };
@@ -122,6 +123,33 @@ export class CanvasInput {
      * Clears pointers. Listener for blur. */
     #resetPointers;
 
+    // ZOOM RELATED
+    /**
+     * @type {number}
+     * Zoom to be done */
+    #remainingZoom;
+    /**
+     * @type {number}
+     * Current X center of the zoom */
+    #zoomTargetX;
+    /**
+     * @type {number}
+     * Current Y center of the zoom */
+    #zoomTargetY;
+    /**
+     * @type {number|null}
+     * The ID given by requestAnimationFrame (used to cancel the render loop) */
+    #zoomAnimationId;
+    /**
+     * @type {number}
+     * Timestamp of the last zoom frame */
+    #lastZoomTime;
+    /**
+     * @type {number}
+     * The speed of the zooming animation */
+    zoomAnimationSpeed;
+
+
     /**
      * @param {string} canvasId - The HTML ID of the canvas.
      * @param {object} options - The options for default max and min focal length, sensitivity, zoom speed and onRotate and onZoom functions.
@@ -137,6 +165,7 @@ export class CanvasInput {
         this.friction = options.friction ? options.friction : DEFAULT_OPTIONS["friction"];
         this.drag = options.drag ? options.drag : DEFAULT_OPTIONS["drag"];
         this.maxTimeToStartMomentum = options.maxTimeToStartMomentum ? options.maxTimeToStartMomentum : DEFAULT_OPTIONS["maxTimeToStartMomentum"];
+        this.zoomAnimationSpeed = options.zoomAnimationSpeed ? options.zoomAnimationSpeed : DEFAULT_OPTIONS["zoomAnimationSpeed"];
 
         this.onRotate = options.onRotate ? options.onRotate : (() => { });
         this.onZoom = options.onZoom ? options.onZoom : (() => { });
@@ -150,6 +179,12 @@ export class CanvasInput {
         this.#lastMoveTime = 0;
         this.#prevDiff = 0;
         this.#momentumAnimationId = null;
+
+        this.#remainingZoom = 0;
+        this.#zoomTargetX = 0;
+        this.#zoomTargetY = 0;
+        this.#zoomAnimationId = null;
+        this.#lastZoomTime = 0;
 
         this.#pointerDownListener = null;
         this.#pointerUpListener = null;
@@ -308,7 +343,7 @@ export class CanvasInput {
                 let canvasPinchCenterY = screenPinchCenterY - rect.top;
 
                 this.#prevDiff = currDiff;
-                this.onZoom(change, canvasPinchCenterX, canvasPinchCenterY);
+                this.#accumulateZoom(change, canvasPinchCenterX, canvasPinchCenterY);
             }
         }
     }
@@ -345,7 +380,43 @@ export class CanvasInput {
         let cursorInsideCanvasX = e.clientX - canvasRectangle.left;
         let cursorInsideCanvasY = e.clientY - canvasRectangle.top;
 
-        this.onZoom(d, cursorInsideCanvasX, cursorInsideCanvasY);
+        this.#accumulateZoom(d, cursorInsideCanvasX, cursorInsideCanvasY);
+    }
+
+    #accumulateZoom(zoomAmount, cursorX, cursorY) {
+        // apply sensitivity to zoomAmount and add it to remaining zoom
+        this.#remainingZoom += zoomAmount * this.zoomSpeed;
+        this.#zoomTargetX = cursorX;
+        this.#zoomTargetY = cursorY;
+
+        // if animation loop is not running start it
+        if (this.#zoomAnimationId === null) {
+            this.#lastZoomTime = performance.now();
+            this.#zoomAnimationId = requestAnimationFrame(this.#animateZoom);
+        }
+    }
+
+    #animateZoom = () => {
+        // calculate delta time
+        let now = performance.now();
+        let deltaTime = (now - this.#lastZoomTime) / 1000;
+        this.#lastZoomTime = now;
+
+        // if the remaining zoom is small zoom to that and stop the loop
+        if (Math.abs(this.#remainingZoom) < 0.1) {
+            this.onZoom(this.#remainingZoom, this.#zoomTargetX, this.#zoomTargetY);
+            this.#remainingZoom = 0;
+            this.#zoomAnimationId = null;
+        } else {
+            // ease out curve
+            let timeAndSpeedFactor = 1 - Math.exp(-this.zoomAnimationSpeed * deltaTime);
+            let step = this.#remainingZoom * timeAndSpeedFactor;
+
+            this.onZoom(step, this.#zoomTargetX, this.#zoomTargetY);
+            this.#remainingZoom -= step;
+
+            this.#zoomAnimationId = requestAnimationFrame(this.#animateZoom);
+        }
     }
 
     #calcDiff(p1, p2) {

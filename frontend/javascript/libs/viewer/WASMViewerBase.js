@@ -133,6 +133,23 @@ export class WASMViewerBase {
         }
     }
 
+    _ensureEngineReady() {
+        if (this._isDestroyed) {
+            throw new WebassemblyError(
+                "Map Viewer is destroyed!",
+                {
+                    type: MAP_VIEWER_ERROR_TYPES.DESTROYED
+                });
+        }
+        if (!this._engine) {
+            throw new WebassemblyError(
+                "Engine not initialized yet",
+                {
+                    type: MAP_VIEWER_ERROR_TYPES.INITIALIZATION
+                });
+        }
+    }
+
     async _initialize() {
         let success = false;
 
@@ -147,6 +164,8 @@ export class WASMViewerBase {
                     // Setup CanvasInput
                     this._setupInputControl();
                     this._setupResizeHandlers();
+
+                    this._postInitialize();
 
                     // Start Render Loop
                     this._renderLoop();
@@ -234,13 +253,18 @@ export class WASMViewerBase {
         return null;
     }
 
-    _renderLoop = () => {
-        if (this._engine && !this._isDestroyed) {
-            this._beforeRender();
-            this._engine.render();
+    // Children class can implement this
+    // function that is called after initialization but before starting the rendering loop
+    _postInitialize() {
 
-            this._animationFrameId = requestAnimationFrame(this._renderLoop);
-        }
+    }
+
+    _renderLoop = () => {
+        this._ensureEngineReady();
+        this._beforeRender();
+        this._engine.render();
+
+        this._animationFrameId = requestAnimationFrame(this._renderLoop);
     }
 
     async toggleFullscreen() {
@@ -288,23 +312,22 @@ export class WASMViewerBase {
     }
 
     _handleResize(entry) {
-        if (!this._isDestroyed && this._engine) {
-            if (this._isFullscreen) {
-                this.setCanvasSize(window.innerWidth, window.innerHeight);
+        this._ensureEngineReady();
+        if (this._isFullscreen) {
+            this.setCanvasSize(window.innerWidth, window.innerHeight);
+        } else {
+            let width, height;
+
+            if (entry) {
+                // contentrec is the content's size no margin border
+                width = entry.contentRect.width;
+                height = entry.contentRect.height;
             } else {
-                let width, height;
-
-                if (entry) {
-                    // contentrec is the content's size no margin border
-                    width = entry.contentRect.width;
-                    height = entry.contentRect.height;
-                } else {
-                    width = this._canvas.clientWidth;
-                    height = this._canvas.clientHeight;
-                }
-
-                this.setCanvasSize(width, height);
+                width = this._canvas.clientWidth;
+                height = this._canvas.clientHeight;
             }
+
+            this.setCanvasSize(width, height);
         }
     }
 

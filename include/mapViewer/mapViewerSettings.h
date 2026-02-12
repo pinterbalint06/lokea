@@ -6,7 +6,7 @@ struct MapViewerSettings
     float minZoom = 1.0f;
     float maxZoom = 50.0f;
 
-    float zoomSensitivity = 0.0125f;
+    float zoomSensitivity = 0.01f;
 };
 
 #endif

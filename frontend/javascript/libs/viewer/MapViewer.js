@@ -39,7 +39,6 @@ export class MapViewer extends WASMViewerBase {
      * @param {Object} [options={}] - Optional configuration options.
      * @param {number} [options.canvasWidth=DEFAULT_OPTIONS["canvasWidth"]] - The width of the canvas.
      * @param {number} [options.canvasHeight=DEFAULT_OPTIONS["canvasHeight"]] - The height of the canvas.
-     * @param {number} [options.markerUrl=DEFAULT_OPTIONS["markerUrl"]] - The URL of the image of the marker.
      * @throws {Error} Throws an error if the canvas element with the specified ID does not exist.
      */
     constructor(canvasId, options = {}) {
@@ -365,37 +364,18 @@ export class MapViewer extends WASMViewerBase {
         );
     }
 
-    _ensureEngineReady() {
-        if (this._isDestroyed) {
-            throw new WebassemblyError(
-                "Map Viewer is destroyed!",
-                {
-                    type: MAP_VIEWER_ERROR_TYPES.DESTROYED
-                });
-        }
-        if (!this._engine) {
-            throw new WebassemblyError(
-                "Engine not initialized yet",
-                {
-                    type: MAP_VIEWER_ERROR_TYPES.INITIALIZATION
-                });
-        }
-    }
-
     _getInputCallbacks() {
         return {
             "mode": "2D",
             "defaultCursor": "default",
             "grabbingCursor": "move",
             onRotate: (deltaX, deltaY) => {
-                if (this._engine) {
-                    this._engine.moveMap(deltaX, deltaY);
-                }
+                this._ensureEngineReady();
+                this._engine.moveMap(deltaX, deltaY);
             },
             onZoom: (zoomAmount, cursorX, cursorY) => {
-                if (this._engine) {
-                    this._engine.zoomMap(zoomAmount, cursorX, cursorY);
-                }
+                this._ensureEngineReady();
+                this._engine.zoomMap(zoomAmount, cursorX, cursorY);
             },
             onClick: (cursorX, cursorY) => {
                 this.onClickHandler(cursorX, cursorY);
