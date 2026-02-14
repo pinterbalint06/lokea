@@ -27,6 +27,35 @@ let activePointId = null;
 let originalPointData = null;
 let currentTempImageName = null;
 let clickOnMapToast;
+let maps = [];
+let activeMapId = -1;
+
+async function switchMap(index) {
+    if (index >= 0 && index < maps.length) {
+        activeMapId = index;
+        let mapData = maps[index];
+
+        UI.mapSelect.value = index;
+
+        // TODO: get the image from the api
+        await mapViewer.loadMap(mapData.url, mapData.width, mapData.height);
+
+        // TODO: markerek elmentése és betöltése
+
+        showToast("Váltás: " + mapData.name, "secondary", false, { delay: 1500 });
+    }
+}
+
+function updateMapSelectorUI() {
+    UI.mapSelect.innerHTML = "";
+
+    for (let i = 0; i < maps.length; i++) {
+        let option = document.createElement("option");
+        option.value = i;
+        option.text = maps[i].name;
+        UI.mapSelect.appendChild(option);
+    }
+}
 
 // |-----------|
 // |  UTILITY  |
@@ -105,6 +134,29 @@ async function readImageFile(file) {
     }
 }
 
+async function loadImage(pointId) {
+    let ketpBetolteseToast = showToast("Kép betöltése...", "primary", false, { autohide: false });
+    let response = await fetch("/api/game_maps/getImageByPointId?pointId=" + pointId, {
+        "method": "GET"
+    });
+    ketpBetolteseToast.hide();
+    if (response.ok) {
+        let width = parseInt(response.headers.get('imageWidth'));
+        let height = parseInt(response.headers.get('imageHeight'));
+        let data = await response.blob();
+        let url = URL.createObjectURL(data);
+        if (activePointId == pointId) {
+            await equirectangularViewer.loadImage(url, width, height);
+            showToast("Kép sikeresen betöltve!", "success", true, { delay: 3000 });
+            URL.revokeObjectURL(url);
+        }
+    } else {
+        let data = await response.json();
+        console.log(data);
+        showToast("Hiba a kép betöltésekor!", "danger", true, { delay: 3000 });
+    }
+}
+
 // |------------------|
 // |  EVENT HANDLERS  |
 // |------------------|
@@ -158,18 +210,35 @@ async function handleMapLoad(file) {
         }
         imgData = await readImageFile(file);
 
-        await mapViewer.loadMap(imgData.url, imgData.width, imgData.height);
+        // TODO: ID apitol es ilyenkor savemap
+        let newMap = {
+            id: Date.now(),
+            name: file.name.split('.')[0],
+            file: file,
+            url: imgData.url,
+            width: imgData.width,
+            height: imgData.height
+        };
+
+        maps.push(newMap);
+
+        updateMapSelectorUI();
+
+        switchMap(maps.length - 1);
 
         UI.uploadOverlay.classList.add("d-none");
+        UI.mapSelector.classList.remove("d-none");
         UI.saveButton.disabled = false;
     } catch (error) {
         console.error(error);
         showToast(error.message, "danger", false, { delay: 3000 });
     } finally {
         if (imgData) {
-            if (imgData.url) {
-                URL.revokeObjectURL(imgData.url);
-            }
+            // TODO: ha apitol van kerve a map kep akkor itt revoke uncommentelese
+            // have to keep url for testing
+            // if (imgData.url) {
+            //     URL.revokeObjectURL(imgData.url);
+            // }
         }
     }
 }
@@ -273,12 +342,7 @@ function clickOnCanvas(cursorX, cursorY) {
 
             originalPointData = mapViewer.getMarkerPosition(activePointId);
 
-
-
-            // load image from backend
-
-
-
+            loadImage(activePointId);
 
             updateCoordinatesInput();
             isPlacingMarker = true;
@@ -431,6 +495,19 @@ function init() {
     UI.uploadOverlay = document.getElementById("upload-overlay");
     UI.toastPlace = document.getElementById("toastPlace");
     UI.collapseElement = document.getElementById("ujPontCollapse");
+
+    UI.mapSelector = document.getElementById("mapSelector");
+    UI.mapSelect = document.getElementById("mapSelect");
+    UI.addNewMapBtn = document.getElementById("addNewMapBtn");
+
+    UI.mapSelect.addEventListener("change", (event) => {
+        switchMap(parseInt(event.target.value));
+    });
+
+    UI.addNewMapBtn.addEventListener("click", () => {
+        UI.fileInputMap.value = '';
+        UI.fileInputMap.click();
+    });
 
     UI.collapseElement.addEventListener('hidden.bs.collapse', () => {
         if (equirectangularViewer) {

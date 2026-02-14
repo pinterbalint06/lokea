@@ -65,6 +65,9 @@ app.use('/api', endpoints);
 //!Map Creation API endpoints
 const mapCreationEndpoints = require('./api/mapCreatorAPI.js');
 app.use('/api/map_creator', mapCreationEndpoints);
+//!game maps API endpoints
+const gameMapsEndpoints = require('./api/gameMaps.js');
+app.use('/api/game_maps', gameMapsEndpoints);
 
 //!Szerver futtatása
 app.use(express.static(path.join(__dirname, '../frontend'))); //?frontend mappa tartalmának betöltése az oldal működéséhez

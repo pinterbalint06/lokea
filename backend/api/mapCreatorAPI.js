@@ -34,19 +34,13 @@ const checkAuth = (request, response, next) => {
     } else {
         response.status(401).json({
             success: false,
-            error: "Unauthorized upload"
+            error: "Jogosulatlan feltöltés"
         });
     }
 };
 let currPointID = 0;
 
 //!Endpoints:
-//?POST /api/map_creator/saveMap
-router.post("/saveMap", (request, response) => {
-    response.status(200).json({
-        success: true
-    });
-});
 //?POST /api/map_creator/savePoint
 router.post("/savePoint", async (request, response) => {
     try {
@@ -67,7 +61,7 @@ router.post("/savePoint", async (request, response) => {
         try {
             await fs.access(tempPath);
         } catch (err) {
-            const error = new Error("Temporary file not found or invalid.");
+            const error = new Error("Átmeneti fájl nem létezik vagy helytelen");
             error.statusCode = 400;
             throw error;
         }
@@ -85,6 +79,7 @@ router.post("/savePoint", async (request, response) => {
             pointId: currPointID
         });
     } catch (error) {
+        let message, statusCode;
         if (error.statusCode) {
             message = error.message;
             statusCode = error.statusCode;
@@ -103,7 +98,7 @@ router.post("/savePoint", async (request, response) => {
 router.post("/uploadEquirectangularImage", checkAuth, upload.single("uploadedFile"), async (request, response) => {
     try {
         if (!request.file) {
-            const error = new Error("No file provided");
+            const error = new Error("Nem adott meg fájlt!");
             error.statusCode = 400;
             throw error;
         }
@@ -113,6 +108,7 @@ router.post("/uploadEquirectangularImage", checkAuth, upload.single("uploadedFil
             tempFilename: request.file.filename
         });
     } catch (error) {
+        let message, statusCode;
         if (error.statusCode) {
             message = error.message;
             statusCode = error.statusCode;
@@ -138,12 +134,14 @@ router.get("/testImage", async (request, response) => {
         let fileName = "Cathedral.webp";
         response.sendFile(fileName, options, function (err) {
             if (err) {
-                console.error("Error sending file:", err);
-            } else {
-                console.log("Sent:", fileName);
+                return response.status(404).json({
+                    success: false,
+                    error: "A fájl nem létezik vagy helytelen"
+                });
             }
         });
     } catch (error) {
+        let message, statusCode;
         if (error.statusCode) {
             message = error.message;
             statusCode = error.statusCode;
