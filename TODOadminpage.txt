@@ -1,9 +1,8 @@
 1. alertek megjelenitese modalon belul es azon kivul
-2. kep cimenek random cim adasa
-3. kepek cimenek lekerese adatbazisbol es a kep tovabbadasa a frontendnek
-4. egyes feladatok függvényekbe szervezése (pl. gomb létrehozás)
-5. külön fájl létrehozása az admin dolgoknak (pl. admin_api.js)
-6. kommentelés
+2. kepek cimenek lekerese adatbazisbol es a kep tovabbadasa a frontendnek, kep cimenek random cim adasa
+3. formdata hasznalata?
+4. külön fájl létrehozása az admin dolgoknak (pl. admin_api.js)
+5. kommentelés
 
 logs oldal
 files oldal
@@ -21,3 +20,4 @@ hibak amiket javitani kell:
 -ne lehessen felhasznalonevnek emailcimet adni
 -compare attetele database.js-be
 -ha inactive ne lehessen belepni
+-updateusernel ha valami modosul feleljen meg a mező követelményeinek

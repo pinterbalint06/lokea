@@ -23,6 +23,12 @@ async function newUser(username, email, password) {
     return result;
 }
 
+async function newUser(username, email, password, role, is_2fa) {
+    const query = 'INSERT INTO users (username, email, password, role, is_2fa) VALUES (?, ?, ?, ?, ?)';
+    const [result] = await pool.execute(query, [username, email, password, role, is_2fa]);
+    return result;
+}
+
 async function getUserByUsername(username) {
     const query = 'SELECT users.password, users.user_id, users.role FROM users WHERE users.username = ?';
     const [result] = await pool.execute(query, [username]);

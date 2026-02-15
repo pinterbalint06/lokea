@@ -185,6 +185,59 @@ router.get('/admin/user/', async (request, response) => {
     }
 })
 
+router.post("/admin/signupFromAdmin",
+    [
+        body("username")
+            .isLength({ min: 1, max: 20 }).withMessage("Felhasználónév hossza nem megfelelő!"),
+        body("email")
+            .isEmail().withMessage("Hibás email formátum")
+            .isLength({ min: 5, max: 250 }).withMessage("Email max 250 karakter"),
+
+        body("password")
+            .isLength({ min: 8, max: 50 }).withMessage("Jelszó hossza 8-50")
+            .matches(/\d/).withMessage("Kell benne szám")
+            .matches(/[A-Z]/).withMessage("Kell benne nagybetű"),
+        body("role")
+            .isIn(['user', 'MOD', 'ADMIN']).withMessage("Érvénytelen role"),
+        body("is_2fa")
+            .isBoolean().withMessage("Nem kapott true/false a két lépcsős azonosítás!")
+    ],
+    async (request, response) => {
+        try {
+            if (request.session.role != 'ADMIN') {
+                response.status(403).json({ message: "Nincs hozzáférésed!" });
+            }
+            else {
+                const errors = validationResult(request);
+                if (!errors.isEmpty()) {
+                    response.status(400).json({
+                        success: false,
+                        error: errors.array()
+                    });
+                }
+                else {
+                    const { username, email, password, role, is_2fa } = request.body;
+                    const hashedPassword = await bcrypt.hash(password, 10);
+                    await database.newUser(username, email, hashedPassword, role, is_2fa);
+                    response.status(201).json({
+                        success: true,
+                        message: "Sikeres regisztráció"
+                    });
+                }
+            }
+        } catch (error) {
+            if (error.code === "ER_DUP_ENTRY") {
+                response.status(400).json({
+                    error: "A felhasználónév vagy email már foglalt!"
+                });
+            }
+            else {
+                response.status(500).json({ error: "Hiba az adatbázis művelet során!" });
+            }
+        }
+    }
+);
+
 router.post('/admin/sortedUsers', async (request, response) => {
     try {
         if (request.session.role != 'ADMIN') {
@@ -230,7 +283,7 @@ router.post('/admin/updateUser', async (request, response) => {
             let { user_id, username, email, role, is_2fa } = request.body;
             let success = await database.updateUser(user_id, username, email, role, is_2fa);
             if (success == 1) {
-                response.status(204).json({ message: "Sikeres felhasználófrissités!"});
+                response.status(204).json({ message: "Sikeres felhasználófrissités!" });
             }
             else {
                 response.status(404).json({ message: "Nincs ilyen felhasználó!" });
