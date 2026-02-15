@@ -39,24 +39,55 @@ const checkAuth = (request, response, next) => {
     }
 };
 let currPointID = 0;
+let currMapID = 0;
 
 //!Endpoints:
 //?POST /api/map_creator/savePoint
 router.post("/savePoint", async (request, response) => {
     try {
-        // from session
-        const userId = "32";
+        // console.log(request.session.userid);
+        // const userId = request.session.userid;
+        // if (userId == undefined) {
+        //     const error = new Error("Nincs bejelentkezve!");
+        //     error.statusCode = 400;
+        //     throw error;
+        // }
 
-        // from session or param?
-        const gameMapId = "0";
-        const mapId = "1";
-        console.log(request.body);
-        let { xCoordinate, yCoordinate, tempFilename } = request.body;
-        let baseFilename = path.basename(tempFilename);
+        // login doesn't work on this branch yet
+        const userId = 1;
 
-        let tempPath = path.join(__dirname, "..", "temp", baseFilename);
-        let mapDirectory = path.join(__dirname, "..", "..", "private", userId, gameMapId, mapId);
-        let targetPath = path.join(mapDirectory, baseFilename);
+        const gameMapID = Number(request.body.gameMapID);
+        if (!Number.isInteger(gameMapID)) {
+            const error = new Error("Helytelen pálya ID!");
+            error.statusCode = 400;
+            throw error;
+        }
+        const mapID = Number(request.body.mapID);
+        if (!Number.isInteger(mapID)) {
+            const error = new Error("Helytelen térkép ID!");
+            error.statusCode = 400;
+            throw error;
+        }
+        const xCoordinate = Number(request.body.x);
+        const yCoordinate = Number(request.body.y);
+        if (!Number.isFinite(xCoordinate) || !Number.isFinite(yCoordinate)) {
+            const error = new Error("Helytelen koordináták!");
+            error.statusCode = 400;
+            throw error;
+        }
+        const tempFilename = request.body.tempFilename;
+        if (tempFilename == undefined) {
+            const error = new Error("Nem adta meg az átmeneti fájlnevet!");
+            error.statusCode = 400;
+            throw error;
+        }
+        let pathInfo = path.parse(tempFilename);
+
+        currPointID++;
+        let tempPath = path.join(__dirname, "..", "temp", pathInfo.base);
+        // private/userId/gameMapId/mapId/point_images/
+        let mapDirectory = path.join(__dirname, "..", "..", "private", userId.toString(), gameMapID.toString(), mapID.toString(), "point_images", pathInfo.name);
+        let targetPath = path.join(mapDirectory, currPointID.toString() + pathInfo.ext);
 
         try {
             await fs.access(tempPath);
@@ -70,9 +101,9 @@ router.post("/savePoint", async (request, response) => {
 
         await fs.rename(tempPath, targetPath);
 
+        // TODO: create low resolution version of the image
         // TODO: if succesful til here save to database too
 
-        currPointID++;
         await new Promise(r => setTimeout(r, 2000));
         response.status(200).json({
             success: true,
@@ -107,6 +138,109 @@ router.post("/uploadEquirectangularImage", checkAuth, upload.single("uploadedFil
             success: true,
             tempFilename: request.file.filename
         });
+    } catch (error) {
+        let message, statusCode;
+        if (error.statusCode) {
+            message = error.message;
+            statusCode = error.statusCode;
+        } else {
+            console.error(error);
+            message = "Váratlan hiba történt!";
+            statusCode = 500;
+        }
+        response.status(statusCode).json({
+            success: false,
+            error: message
+        });
+    }
+});
+
+//?POST /api/map_creator/uploadMapImage
+router.post("/uploadMapImage", checkAuth, upload.single("uploadedMap"), async (request, response) => {
+    try {
+        if (!request.file) {
+            const error = new Error("Nem adott meg fájlt!");
+            error.statusCode = 400;
+            throw error;
+        }
+
+        await new Promise(r => setTimeout(r, 1000));
+
+        response.status(200).json({
+            success: true,
+            tempFilename: request.file.filename
+        });
+    } catch (error) {
+        let message, statusCode;
+        if (error.statusCode) {
+            message = error.message;
+            statusCode = error.statusCode;
+        } else {
+            console.error(error);
+            message = "Váratlan hiba történt!";
+            statusCode = 500;
+        }
+        response.status(statusCode).json({
+            success: false,
+            error: message
+        });
+    }
+});
+
+//?POST /api/map_creator/saveNewMap
+router.post("/saveNewMap", async (request, response) => {
+    try {
+        // console.log(request.session.userid);
+        // const userId = request.session.userid;
+        // if (userId == undefined) {
+        //     const error = new Error("Nincs bejelentkezve!");
+        //     error.statusCode = 400;
+        //     throw error;
+        // }
+
+        // login doesn't work on this branch yet
+        const userId = 1;
+        const gameMapID = Number(request.body.gameMapID);
+        if (!Number.isInteger(gameMapID)) {
+            const error = new Error("Helytelen pálya ID!");
+            error.statusCode = 400;
+            throw error;
+        }
+        const tempFilename = request.body.tempFilename;
+        if (tempFilename == undefined) {
+            const error = new Error("Nem adta meg az átmeneti fájlnevet!");
+            error.statusCode = 400;
+            throw error;
+        }
+        let pathInfo = path.parse(tempFilename);
+
+        currMapID++;
+        let tempPath = path.join(__dirname, "..", "temp", pathInfo.base);
+        // private/userId/gameMapId/mapId/
+        let mapDirectory = path.join(__dirname, "..", "..", "private", userId.toString(), gameMapID.toString(), currMapID.toString());
+        // TODO: create low res version
+        let targetPath = path.join(mapDirectory, currMapID.toString() + pathInfo.ext);
+
+        try {
+            await fs.access(tempPath);
+        } catch (err) {
+            const error = new Error("Átmeneti fájl nem létezik vagy helytelen");
+            error.statusCode = 400;
+            throw error;
+        }
+
+        await fs.mkdir(mapDirectory, { recursive: true });
+
+        await fs.rename(tempPath, targetPath);
+
+        await new Promise(r => setTimeout(r, 1000));
+
+        response.status(200).json({
+            success: true,
+            mapId: currMapID,
+            message: "Térkép sikeresen mentve!"
+        });
+
     } catch (error) {
         let message, statusCode;
         if (error.statusCode) {
