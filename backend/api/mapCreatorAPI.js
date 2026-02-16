@@ -5,12 +5,14 @@ const fs = require("fs/promises");
 const crypto = require("crypto");
 
 //!Multer
-const multer = require("multer"); //?npm install multer
+const multer = require("multer"); //?npm in stall multer
 const path = require("path");
+
+const { TEMP_DIR, UPLOAD_ROOT, MAX_FILE_SIZE } = require("../config/mapStorage.js");
 
 const storage = multer.diskStorage({
     destination: (request, file, callback) => {
-        callback(null, path.join(__dirname, "../temp"));
+        callback(null, TEMP_DIR);
     },
     filename: (request, file, callback) => {
         let uuid = crypto.randomBytes(16).toString("hex");
@@ -18,10 +20,13 @@ const storage = multer.diskStorage({
 
         callback(null, uuid + extension);
     },
-    limits: { fileSize: 10 * 1024 * 1024 }
+    limits: { fileSize: MAX_FILE_SIZE }
 });
 
-const upload = multer({ storage });
+const upload = multer({
+    storage,
+    limits: { fileSize: MAX_FILE_SIZE }
+});
 
 //TESZT
 function isAllowed(request) {
@@ -41,9 +46,33 @@ const checkAuth = (request, response, next) => {
 let currPointID = 0;
 let currMapID = 0;
 
+async function moveUpload(tempPath, destDir, destFilename) {
+    await fs.mkdir(destDir, { recursive: true });
+    let finalPath = path.join(destDir, destFilename);
+    await fs.rename(tempPath, finalPath);
+}
+
+async function handleUploadError(response, error, file) {
+    if (file) {
+        fs.unlink(file.path).catch(function (error) {
+            console.error("Átmeneti fáj törlése sikertelen volt:", error)
+        });
+    }
+
+    console.error(error);
+
+    let statusCode = error.statusCode ? error.statusCode : 500;
+    let message = error.statusCode ? error.message : "Váratlan hiba történt!";
+
+    response.status(statusCode).json({
+        success: false,
+        error: message
+    });
+}
+
 //!Endpoints:
 //?POST /api/map_creator/savePoint
-router.post("/savePoint", async (request, response) => {
+router.post("/savePoint", checkAuth, upload.single("equirectangularImage"), async (request, response) => {
     try {
         // console.log(request.session.userid);
         // const userId = request.session.userid;
@@ -63,7 +92,7 @@ router.post("/savePoint", async (request, response) => {
             throw error;
         }
         const mapID = Number(request.body.mapID);
-        if (!Number.isInteger(mapID)) {
+        if (!Number.isInteger(mapID) && mapID > 0) {
             const error = new Error("Helytelen térkép ID!");
             error.statusCode = 400;
             throw error;
@@ -75,31 +104,29 @@ router.post("/savePoint", async (request, response) => {
             error.statusCode = 400;
             throw error;
         }
-        const tempFilename = request.body.tempFilename;
-        if (tempFilename == undefined) {
-            const error = new Error("Nem adta meg az átmeneti fájlnevet!");
+
+        if (!request.file) {
+            const error = new Error("Nem adott meg képet!");
             error.statusCode = 400;
             throw error;
         }
-        let pathInfo = path.parse(tempFilename);
+
+        let pathInfo = path.parse(request.file.path);
 
         currPointID++;
-        let tempPath = path.join(__dirname, "..", "temp", pathInfo.base);
-        // private/userId/gameMapId/mapId/point_images/
-        let mapDirectory = path.join(__dirname, "..", "..", "private", userId.toString(), gameMapID.toString(), mapID.toString(), "point_images", pathInfo.name);
-        let targetPath = path.join(mapDirectory, currPointID.toString() + pathInfo.ext);
 
-        try {
-            await fs.access(tempPath);
-        } catch (err) {
-            const error = new Error("Átmeneti fájl nem létezik vagy helytelen");
-            error.statusCode = 400;
-            throw error;
-        }
+        // private/userId/gameMapId/mapId/point_images/pointId/
+        let targetPath = path.join(
+            UPLOAD_ROOT,
+            userId.toString(),
+            gameMapID.toString(),
+            mapID.toString(),
+            "point_images",
+            currPointID.toString()
+        );
+        let targetFileName = currPointID.toString() + pathInfo.ext;
 
-        await fs.mkdir(mapDirectory, { recursive: true });
-
-        await fs.rename(tempPath, targetPath);
+        await moveUpload(request.file.path, targetPath, targetFileName);
 
         // TODO: create low resolution version of the image
         // TODO: if succesful til here save to database too
@@ -110,85 +137,12 @@ router.post("/savePoint", async (request, response) => {
             pointId: currPointID
         });
     } catch (error) {
-        let message, statusCode;
-        if (error.statusCode) {
-            message = error.message;
-            statusCode = error.statusCode;
-        } else {
-            console.error(error);
-            message = "Váratlan hiba történt!";
-            statusCode = 500;
-        }
-        response.status(statusCode).json({
-            success: false,
-            error: message
-        });
-    }
-});
-//?POST /api/map_creator/uploadEquirectangularImage
-router.post("/uploadEquirectangularImage", checkAuth, upload.single("uploadedFile"), async (request, response) => {
-    try {
-        if (!request.file) {
-            const error = new Error("Nem adott meg fájlt!");
-            error.statusCode = 400;
-            throw error;
-        }
-        await new Promise(r => setTimeout(r, 2000));
-        response.status(200).json({
-            success: true,
-            tempFilename: request.file.filename
-        });
-    } catch (error) {
-        let message, statusCode;
-        if (error.statusCode) {
-            message = error.message;
-            statusCode = error.statusCode;
-        } else {
-            console.error(error);
-            message = "Váratlan hiba történt!";
-            statusCode = 500;
-        }
-        response.status(statusCode).json({
-            success: false,
-            error: message
-        });
-    }
-});
-
-//?POST /api/map_creator/uploadMapImage
-router.post("/uploadMapImage", checkAuth, upload.single("uploadedMap"), async (request, response) => {
-    try {
-        if (!request.file) {
-            const error = new Error("Nem adott meg fájlt!");
-            error.statusCode = 400;
-            throw error;
-        }
-
-        await new Promise(r => setTimeout(r, 1000));
-
-        response.status(200).json({
-            success: true,
-            tempFilename: request.file.filename
-        });
-    } catch (error) {
-        let message, statusCode;
-        if (error.statusCode) {
-            message = error.message;
-            statusCode = error.statusCode;
-        } else {
-            console.error(error);
-            message = "Váratlan hiba történt!";
-            statusCode = 500;
-        }
-        response.status(statusCode).json({
-            success: false,
-            error: message
-        });
+        await handleUploadError(response, error, request.file);
     }
 });
 
 //?POST /api/map_creator/saveNewMap
-router.post("/saveNewMap", async (request, response) => {
+router.post("/saveNewMap", checkAuth, upload.single("mapImage"), async (request, response) => {
     try {
         // console.log(request.session.userid);
         // const userId = request.session.userid;
@@ -206,32 +160,28 @@ router.post("/saveNewMap", async (request, response) => {
             error.statusCode = 400;
             throw error;
         }
-        const tempFilename = request.body.tempFilename;
-        if (tempFilename == undefined) {
-            const error = new Error("Nem adta meg az átmeneti fájlnevet!");
+
+        if (!request.file) {
+            const error = new Error("Nem adott meg képet!");
             error.statusCode = 400;
             throw error;
         }
-        let pathInfo = path.parse(tempFilename);
+
+        let pathInfo = path.parse(request.file.path);
 
         currMapID++;
-        let tempPath = path.join(__dirname, "..", "temp", pathInfo.base);
+
         // private/userId/gameMapId/mapId/
-        let mapDirectory = path.join(__dirname, "..", "..", "private", userId.toString(), gameMapID.toString(), currMapID.toString());
+        let targetPath = path.join(
+            UPLOAD_ROOT,
+            userId.toString(),
+            gameMapID.toString(),
+            currMapID.toString()
+        );
         // TODO: create low res version
-        let targetPath = path.join(mapDirectory, currMapID.toString() + pathInfo.ext);
+        let targetFileName = currMapID.toString() + pathInfo.ext;
 
-        try {
-            await fs.access(tempPath);
-        } catch (err) {
-            const error = new Error("Átmeneti fájl nem létezik vagy helytelen");
-            error.statusCode = 400;
-            throw error;
-        }
-
-        await fs.mkdir(mapDirectory, { recursive: true });
-
-        await fs.rename(tempPath, targetPath);
+        await moveUpload(request.file.path, targetPath, targetFileName);
 
         await new Promise(r => setTimeout(r, 1000));
 
@@ -242,53 +192,26 @@ router.post("/saveNewMap", async (request, response) => {
         });
 
     } catch (error) {
-        let message, statusCode;
-        if (error.statusCode) {
-            message = error.message;
-            statusCode = error.statusCode;
-        } else {
-            console.error(error);
-            message = "Váratlan hiba történt!";
-            statusCode = 500;
-        }
-        response.status(statusCode).json({
-            success: false,
-            error: message
-        });
+        await handleUploadError(response, error, request.file);
     }
 });
 
 //?GET /api/map_creator/testImage
 router.get("/testImage", async (request, response) => {
-    try {
-        let options = {
-            root: path.join(__dirname, "..", "..", "private", "equirectangular")
-        };
+    let options = {
+        root: path.join(UPLOAD_ROOT, "equirectangular")
+    };
 
-        let fileName = "Cathedral.webp";
-        response.sendFile(fileName, options, function (err) {
-            if (err) {
+    response.sendFile("Cathedral.webp", options, function (err) {
+        if (err) {
+            if (!response.headersSent) {
                 return response.status(404).json({
                     success: false,
                     error: "A fájl nem létezik vagy helytelen"
                 });
             }
-        });
-    } catch (error) {
-        let message, statusCode;
-        if (error.statusCode) {
-            message = error.message;
-            statusCode = error.statusCode;
-        } else {
-            console.error(error);
-            message = "Váratlan hiba történt!";
-            statusCode = 500;
         }
-        response.status(statusCode).json({
-            success: false,
-            error: message
-        });
-    }
+    });
 });
 
 

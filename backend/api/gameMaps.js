@@ -3,6 +3,8 @@ const router = express.Router();
 
 const path = require("path");
 
+const { UPLOAD_ROOT } = require("../config/mapStorage.js");
+
 // TESZT
 function isAllowedToGetImage(request, imageId) {
     return true;
@@ -32,9 +34,9 @@ router.get("/getImageByPointId", async (request, response) => {
         let imagePath = "equirectangular/Cathedral.webp"
 
         let options = {
-            root: path.join(__dirname, "..", "..", "private")
+            root: UPLOAD_ROOT
         };
-        response.set('Access-Control-Expose-Headers', 'imageWidth, imageHeight');
+        response.set("Access-Control-Expose-Headers", "imageWidth, imageHeight");
         response.set("imageWidth", 1920);
         response.set("imageHeight", 960);
         await new Promise(r => setTimeout(r, 2000));
@@ -90,9 +92,9 @@ router.get("/getMapImageById", async (request, response) => {
         let imagePath = "map/worldmap.webp"
 
         let options = {
-            root: path.join(__dirname, "..", "..", "private")
+            root: UPLOAD_ROOT
         };
-        response.set('Access-Control-Expose-Headers', 'imageWidth, imageHeight');
+        response.set("Access-Control-Expose-Headers", "imageWidth, imageHeight");
         response.set("imageWidth", 3840);
         response.set("imageHeight", 1920);
         await new Promise(r => setTimeout(r, 2000));
