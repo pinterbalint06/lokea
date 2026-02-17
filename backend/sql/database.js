@@ -48,12 +48,12 @@ async function insertImage(connection, width, height, filepath) {
     return result.insertId;
 }
 
-async function insertMap(connection, gameMapId, imageId) {
+async function insertMap(connection, title, gameMapId, imageId) {
     const query = `
-        INSERT INTO map (game_maps_id, image_id)
-        VALUES (?, ?)
+        INSERT INTO map (title, game_maps_id, image_id)
+        VALUES (?, ?, ?)
     `;
-    const [result] = await connection.execute(query, [gameMapId, imageId]);
+    const [result] = await connection.execute(query, [title, gameMapId, imageId]);
     return result.insertId;
 }
 
@@ -108,6 +108,17 @@ async function getPointsOnMap(mapId) {
     return rows;
 }
 
+async function getMapsByGameMapId(gameMapId) {
+    const sql = `
+        SELECT map.map_id, map.title
+        FROM game_maps
+            INNER JOIN map ON (game_maps.game_maps_id = map.game_maps_id)
+        WHERE game_maps.game_maps_id = ?
+    `;
+    const [rows] = await pool.execute(sql, [gameMapId]);
+    return rows;
+}
+
 //!Export
 module.exports = {
     // selectall,
@@ -119,6 +130,7 @@ module.exports = {
     getMapImage,
     getPointImage,
     getPointsOnMap,
+    getMapsByGameMapId,
     newUser,
     getUserByUsername,
     getUserByEmail

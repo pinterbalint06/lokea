@@ -31,7 +31,10 @@ app.use(session({
 }));
 
 
-
+function hasPermissionToEdit() {
+    // TODO: is map theirs
+    return true;
+}
 
 
 //!Routing
@@ -51,8 +54,16 @@ router.get('/webgl', (request, response) => {
 router.get('/map', (request, response) => {
     response.sendFile(path.join(__dirname, '../frontend/html/test-map.html'));
 });
-router.get('/map_creator', (request, response) => {
-    response.sendFile(path.join(__dirname, '../frontend/html/map-creator.html'));
+router.get('/maps/:gameMapId/edit', (request, response) => {
+    let gameMapID = Number(request.params.gameMapId);
+    if (!Number.isInteger(gameMapID) || gameMapID <= 0) {
+        response.status(400).send();
+    }
+    if (hasPermissionToEdit()) {
+        response.sendFile(path.join(__dirname, '../frontend/html/map-creator.html'));
+    } else {
+        response.status(404).send();
+    }
 });
 router.get('/login_page', (request, response) => {
     response.sendFile(path.join(__dirname, '../frontend/html/login.html'));

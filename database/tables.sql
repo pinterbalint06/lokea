@@ -37,6 +37,7 @@ CREATE TABLE game_maps (
 
 CREATE TABLE map (
     map_id int AUTO_INCREMENT PRIMARY KEY NOT NULL,
+    title varchar(20) NOT NULL,
     game_maps_id int,
     image_id int,
     foreign key (game_maps_id) references game_maps(game_maps_id) ON DELETE CASCADE,

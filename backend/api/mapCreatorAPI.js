@@ -88,12 +88,12 @@ async function handleUploadError(response, error, file, dbConnection, finalPath)
     }
 
     if (finalPath) {
-        await blindDelete(finalPath);
+        await deleteFile(finalPath);
     }    // Delete destination file if moved
 
 
     if (file) {
-        await blindDelete(file);
+        await deleteFile(file);
     }
     let statusCode = error.statusCode ? error.statusCode : 500;
     let message = error.statusCode ? error.message : "Váratlan hiba történt!";
@@ -215,6 +215,13 @@ router.post("/saveNewMap", checkAuth, upload.single("mapImage"), async (request,
         // login doesn't work on this branch yet
         const userId = 1;
         const gameMapID = validateId(request.body.gameMapID, "pálya ID");
+        const title = request.body.title;
+        // ^\w{1,20}$ atleast one character long and only characters numbers or underscores
+        if (!title || title.trim() == "" || !title.match(/^\w{1,20}$/)) {
+            const error = new Error("Helytelen cím!");
+            error.statusCode = 400;
+            throw error;
+        }
 
         if (!request.file) {
             const error = new Error("Nem adott meg képet!");
@@ -229,7 +236,7 @@ router.post("/saveNewMap", checkAuth, upload.single("mapImage"), async (request,
 
         let imageId = await database.insertImage(dbConnection, imageData.width, imageData.height, "pending");
 
-        let newMapId = await database.insertMap(dbConnection, gameMapID, imageId);
+        let newMapId = await database.insertMap(dbConnection, title, gameMapID, imageId);
 
         // private/userId/gameMapId/mapId/
         let relativeDestDir = path.join(
@@ -289,6 +296,30 @@ router.get("/:mapid/points", async (request, response) => {
         if (statusCode == 500) {
             console.error(error);
         }
+
+        response.status(statusCode).json({
+            success: false,
+            error: message
+        });
+    }
+});
+
+//?GET /api/map_creator/maps?gameMapID=1
+router.get("/maps", checkAuth, async (request, response) => {
+    try {
+        const gameMapID = validateId(request.query.gameMapID, "pálya ID");
+
+        let mapList = await database.getMapsByGameMapId(gameMapID);
+
+        response.status(200).json({
+            success: true,
+            maps: mapList
+        });
+    } catch (error) {
+        let statusCode = error.statusCode ? error.statusCode : 500;
+        let message = error.message || "Váratlan hiba történt!";
+
+        if (statusCode === 500) console.error(error);
 
         response.status(statusCode).json({
             success: false,

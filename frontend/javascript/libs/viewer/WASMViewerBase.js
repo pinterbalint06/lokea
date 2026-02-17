@@ -133,19 +133,41 @@ export class WASMViewerBase {
         }
     }
 
+    async _ensureEngineReadyAsync() {
+        if (!this._engine) {
+            await this._engineInitPromise;
+
+            if (this._isDestroyed) {
+                throw new WebassemblyError(
+                    "Map Viewer is destroyed!",
+                    {
+                        type: WASM_ERROR_TYPES.DESTROYED
+                    });
+            }
+
+            if (!this._engine) {
+                throw new WebassemblyError(
+                    "Engine failed to initialize",
+                    {
+                        type: WASM_ERROR_TYPES.INITIALIZATION
+                    });
+            }
+        }
+    }
+
     _ensureEngineReady() {
         if (this._isDestroyed) {
             throw new WebassemblyError(
                 "Map Viewer is destroyed!",
                 {
-                    type: MAP_VIEWER_ERROR_TYPES.DESTROYED
+                    type: WASM_ERROR_TYPES.DESTROYED
                 });
         }
         if (!this._engine) {
             throw new WebassemblyError(
                 "Engine not initialized yet",
                 {
-                    type: MAP_VIEWER_ERROR_TYPES.INITIALIZATION
+                    type: WASM_ERROR_TYPES.INITIALIZATION
                 });
         }
     }
@@ -234,6 +256,11 @@ export class WASMViewerBase {
             this._beforeRender();
             this._engine.render();
         }
+    }
+
+    async ready() {
+        await this._engineInitPromise;
+        return true;
     }
 
     // Children class should overwrite this

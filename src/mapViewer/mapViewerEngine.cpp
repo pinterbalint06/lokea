@@ -59,6 +59,10 @@ void MapViewerEngine::createMapPlane()
         std::memcpy(mapPlane_->getVertices(), vertices, sizeof(vertices));
         std::memcpy(mapPlane_->getIndices(), indices, sizeof(indices));
 
+        Materials::Material mat = Materials::Material::Error();
+        mat.setTexture(new Texture());
+        mapPlane_->setMaterial(mat);
+
         recalculateUVPerPixel();
         addMesh(mapPlane_);
     }

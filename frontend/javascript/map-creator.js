@@ -32,7 +32,7 @@ let equirectangularViewer;
 let UI = {};
 let maps = {};
 let activeMapId = -1;
-let gameMapID = 2; // from url?
+let gameMapID = null;
 
 // editor State
 let editorState = {
@@ -140,6 +140,12 @@ async function processUploadedImageFile(file) {
 
 function savePreviousValue(event) {
     event.target.dataset.previousValue = event.target.valueAsNumber;
+}
+
+function getGameMapIdFromUrl() {
+    let pathParts = window.location.pathname.split('/');
+    let id = parseInt(pathParts[2]);
+    return id;
 }
 
 // |-------------|
@@ -265,6 +271,7 @@ async function saveMap() {
         let formData = new FormData();
         formData.append("mapImage", editorState.pendingMapFile);
         formData.append("gameMapID", gameMapID);
+        formData.append("title", currentMap.name);
 
         let response = await fetch("/api/map_creator/saveNewMap", {
             method: "POST",
@@ -363,6 +370,39 @@ async function savePoint() {
     }
 }
 
+async function loadMapList() {
+    let maps = [];
+    try {
+        let response = await fetch(
+            "/api/map_creator/maps?gameMapID=" + gameMapID,
+            {
+                "method": "GET"
+            }
+        );
+        if (response.ok) {
+            let data = await response.json();
+            if (data.success) {
+                maps = data.maps;
+            }
+        }
+    } catch (error) {
+        console.error(error);
+        showToast("Nem sikerült betölteni a térképeket.", "danger", true);
+    }
+    return maps;
+}
+
+function setEditorState(hasMaps) {
+    if (hasMaps) {
+        UI.uploadOverlay.classList.add("d-none");
+        UI.mapSelector.classList.remove("d-none");
+        UI.saveButton.disabled = true;
+    } else {
+        UI.uploadOverlay.classList.remove("d-none");
+        UI.mapSelector.classList.add("d-none");
+    }
+}
+
 // |-----------------|
 // | FILE PROCESSING |
 // |-----------------|
@@ -417,7 +457,6 @@ async function handleMapLoad(file) {
         // TODO: markerek elmentése és betöltése
 
         UI.uploadOverlay.classList.add("d-none");
-        UI.mapSelector.classList.remove("d-none");
         UI.saveButton.disabled = false;
     } catch (error) {
         console.error(error);
@@ -604,6 +643,7 @@ function getUIElements() {
     UI.dropZoneEquirectangular = document.getElementById("drop-zone-equirectangular");
 
     // other
+    UI.loadingOverlay = document.getElementById("loading");
     UI.uploadOverlay = document.getElementById("upload-overlay");
     UI.toastPlace = document.getElementById("toastPlace");
     UI.collapseElement = document.getElementById("ujPontCollapse");
@@ -689,15 +729,43 @@ function setupUIElements() {
     addUIEventListeners();
 }
 
-function init() {
+function processMapList(mapList) {
+    maps = {};
+
+    for (let i = 0; i < mapList.length; i++) {
+        const element = mapList[i];
+        maps[element.map_id] = {
+            id: element.map_id,
+            name: element.title,
+        };
+    }
+
+    updateMapSelectorUI();
+}
+
+async function init() {
+    gameMapID = getGameMapIdFromUrl();
     setupUIElements();
 
     // setup
     setupMapViewer();
     setupEquirectangularViewer();
+    setupCoordinateInput();
+
     setupUploadHandler(UI.dropZoneMap, UI.uploadButtonMap, UI.fileInputMap, handleMapLoad);
     setupUploadHandler(UI.dropZoneEquirectangular, UI.uploadButtonEquirectangular, UI.fileInputEquirectangular, handleEquirectangularLoad);
-    setupCoordinateInput();
+
+    let mapList = await loadMapList();
+    let hasMaps = mapList.length > 0;
+    setEditorState(hasMaps);
+    if (hasMaps) {
+        await mapViewer.ready();
+        processMapList(mapList);
+
+        let firstMapId = mapList[0].map_id;
+        switchMap(firstMapId);
+    }
+    UI.loadingOverlay.classList.add("d-none");
 }
 
 document.addEventListener("DOMContentLoaded", init);

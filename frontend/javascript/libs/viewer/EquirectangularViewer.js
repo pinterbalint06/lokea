@@ -79,27 +79,7 @@ export class EquirectangularViewer extends WASMViewerBase {
                 });
         }
 
-        if (!this._engine) {
-            await this._engineInitPromise;
-
-            if (this._isDestroyed) {
-                throw new WebassemblyError(
-                    "Equirectangular Viewer is destroyed!",
-                    {
-                        "type": EQUIRECTANGULAR_ERROR_TYPES.DESTROYED,
-                        "imgUrl": url
-                    });
-            }
-
-            if (!this._engine) {
-                throw new WebassemblyError(
-                    "Engine failed to initialize",
-                    {
-                        "type": EQUIRECTANGULAR_ERROR_TYPES.INITIALIZATION,
-                        "imgUrl": url
-                    });
-            }
-        }
+        await this._ensureEngineReadyAsync();
 
         this.#currentImageRequestID++;
         let currentRequestId = this.#currentImageRequestID;

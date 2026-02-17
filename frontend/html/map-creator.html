@@ -5,12 +5,12 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Lokea</title>
-    <link href="../bootstrap/css/bootstrap.min.css" rel="stylesheet">
-    <link rel="stylesheet" href="../css/map-creator.css">
-    <script type="module" src="../javascript/map-creator.js"></script>
+    <link href="/bootstrap/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="/css/map-creator.css">
+    <script type="module" src="/javascript/map-creator.js"></script>
 </head>
 
-<body>
+<body class="lilagradiensbg">
     <nav class="navbar navbar-expand-lg uveg sticky-top">
         <div class="container-fluid justify-content-between">
             <a class="navbar-brand">Lokea</a>
@@ -18,7 +18,7 @@
     </nav>
     <main>
         <div id="upload-overlay"
-            class="d-flex justify-content-center align-items-center w-100 h-100 position-absolute bg-body z-2">
+            class="d-flex justify-content-center align-items-center w-100 h-100 position-absolute bg-body z-2 d-none">
             <div id="drop-zone" class="text-center p-5 dropzone border-dashed rounded-3">
                 <div class="mb-3">
                     <svg width="48" height="48" viewBox="0 0 24 24" class="text-body" fill="currentColor"
@@ -33,7 +33,12 @@
                 <input type="file" id="fileInput" accept="image/*" hidden>
             </div>
         </div>
-        <div id="mapSelector" class="position-absolute top-0 start-50 translate-middle-x mt-3 z-3 d-none">
+        <div id="loading"
+            class="d-flex justify-content-center align-items-center w-100 h-100 position-absolute lilagradiensbg">
+            <div class="spinner-border" style="width: 4rem; height: 4rem;">
+            </div>
+        </div>
+        <div id="mapSelector" class="position-absolute top-0 start-50 translate-middle-x mt-3 z-1">
             <div class="d-flex align-items-center uveg border shadow-sm rounded-pill px-3 py-2 gap-2">
                 <svg version="1.1" id="Layer_1" xmlns="http://www.w3.org/2000/svg"
                     xmlns:xlink="http://www.w3.org/1999/xlink" x="0px" y="0px" viewBox="0 0 119.4 122.88"
@@ -140,7 +145,7 @@
         </div>
     </main>
 
-    <script src="../bootstrap/js/bootstrap.min.js"></script>
+    <script src="/bootstrap/js/bootstrap.min.js"></script>
 </body>
 
 </html>
