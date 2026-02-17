@@ -37,7 +37,7 @@ async function getUserByEmail(email) {
 
 //Játékhoz szükséges ab adatok lekérése
 async function getGameMaps() {
-    const query = 'SELECT game_maps_id, creator_id, title, cover_image_id, rating, plays, game_created FROM game_maps;';
+    const query = 'SELECT game_maps.game_maps_id, game_maps.creator_id, game_maps.title, game_maps.cover_image_id, game_maps.rating, game_maps.plays, game_maps.game_created, game_maps.game_description FROM game_maps;';
     const [result] = await pool.execute(query);
     return result;
 }

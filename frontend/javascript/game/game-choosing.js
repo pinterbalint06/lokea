@@ -45,6 +45,9 @@ async function createCard(game_map) {
     game_maps_card_content.appendChild(card_plays);
     game_maps_card_content.appendChild(card_created);
     game_maps_card.appendChild(game_maps_card_content);
+    game_maps_card.addEventListener('click', function () {
+        createModal(game_map);
+    });
     return game_maps_card;
 }
 
@@ -75,4 +78,19 @@ function createReview(rating) {
     card_rating.classList.add('stars');
     card_rating.style.setProperty('--rating', rating);
     return card_rating;
+}
+
+function createModal(game_map) {
+    let modal = document.getElementById('myModal');
+    let modalTitle = document.getElementById('modal-title');
+    let modalStars = document.getElementById('modal-stars');
+    let modalDesc = document.getElementById('modal-desc');
+    modal.classList.add('active');
+    modalTitle.innerText = game_map.title;
+    modalStars.style.setProperty('--rating', game_map.rating);
+    modalDesc.innerText = game_map.game_description;
+    let closeBtn = document.querySelector('.modal-close-btn');
+    closeBtn.addEventListener('click', () => {
+        modal.classList.remove('active');
+    });
 }
