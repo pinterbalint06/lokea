@@ -33,7 +33,6 @@ private:
     void createMapPlane();
     void updateSingleMarker(MapMarker *markerPlane);
     void updateAllMarkers();
-    void clearAllMarkers();
     void addMarkerByUV(int id, float u, float v, const std::string &type, const std::string &textureUrl);
     void recalculateUVPerPixel();
     void limitVCoordinates();
@@ -63,12 +62,14 @@ public:
     void zoomMap(float zoomAmount, float zoomHereScreenX, float zoomHereScreenY);
     void render() { Engine::render(); }
     void addMarker(int id, float screenX, float screenY, const std::string &type, const std::string &textureUrl);
+    void addMarkerByImageCoordinates(int id, float imageX, float imageY, const std::string &type, const std::string &textureUrl);
     void changeMarkerType(int id, const std::string &type, const std::string &textureUrl);
     void moveMarkerToImageCoordinates(int id, int xCoordinate, int yCoordinate);
     int getMarkerIdAtScreenCoords(int screenX, int screenY);
     void removeMarker(int id);
     void moveMarkerToScreen(int id, float screenX, float screenY);
     bool doesMarkerExist(int id);
+    void clearAllMarkers();
     std::string getMarkerType(int id);
     emscripten::val getMarkerPosition(int id);
     void changeMarkerId(int oldId, int newId);

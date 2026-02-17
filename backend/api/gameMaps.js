@@ -14,7 +14,7 @@ function isAllowedToGetImage(request, imageId) {
 //?GET /api/game_maps/getImageByPointId
 router.get("/getImageByPointId", async (request, response) => {
     try {
-        if (!request.query.pointId && request.query.pointId.trim() != "") {
+        if (!request.query.pointId || request.query.pointId.trim() == "") {
             const error = new Error("Nem adott pont ID-t");
             error.statusCode = 400;
             throw error;
@@ -31,17 +31,15 @@ router.get("/getImageByPointId", async (request, response) => {
             throw error;
         }
 
-        //TODO: get the image path from the db
-        let imagePath = "equirectangular/Cathedral.webp"
+        let imageData = await database.getPointImage(pointId);
 
         let options = {
             root: UPLOAD_ROOT
         };
         response.set("Access-Control-Expose-Headers", "imageWidth, imageHeight");
-        response.set("imageWidth", 1920);
-        response.set("imageHeight", 960);
-        await new Promise(r => setTimeout(r, 2000));
-        response.sendFile(imagePath, options, function (err) {
+        response.set("imageWidth", imageData.width);
+        response.set("imageHeight", imageData.height);
+        response.sendFile(imageData.filepath, options, function (err) {
             if (err) {
                 if (!response.headersSent) {
                     return response.status(404).json({
@@ -89,7 +87,6 @@ router.get("/getMapImageById", async (request, response) => {
         //     throw error;
         // }
 
-        //TODO: get the image path from the db
         let imageData = await database.getMapImage(mapId);
 
         let options = {
@@ -98,7 +95,6 @@ router.get("/getMapImageById", async (request, response) => {
         response.set("Access-Control-Expose-Headers", "imageWidth, imageHeight");
         response.set("imageWidth", imageData.width);
         response.set("imageHeight", imageData.height);
-        await new Promise(r => setTimeout(r, 500));
         response.sendFile(imageData.filepath, options, function (err) {
             if (err) {
                 if (!response.headersSent) {

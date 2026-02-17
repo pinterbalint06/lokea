@@ -27,6 +27,7 @@ EMSCRIPTEN_BINDINGS(mapViewerEngineBinding)
         .function("getSettings", &MapViewerEngine::getSettings)
         .function("setSettings", &MapViewerEngine::setSettings)
         .function("addMarker", &MapViewerEngine::addMarker)
+        .function("placeMarkerByImageCoordinates", &MapViewerEngine::addMarkerByImageCoordinates)
         .function("moveMarkerToImageCoordinates", &MapViewerEngine::moveMarkerToImageCoordinates)
         .function("removeMarker", &MapViewerEngine::removeMarker)
         .function("getMarkerPosition", &MapViewerEngine::getMarkerPosition)
@@ -35,5 +36,6 @@ EMSCRIPTEN_BINDINGS(mapViewerEngineBinding)
         .function("changeMarkerType", &MapViewerEngine::changeMarkerType)
         .function("getMarkerType", &MapViewerEngine::getMarkerType)
         .function("getMarkerIdAtScreenCoords", &MapViewerEngine::getMarkerIdAtScreenCoords)
-        .function("changeMarkerId", &MapViewerEngine::changeMarkerId);
+        .function("changeMarkerId", &MapViewerEngine::changeMarkerId)
+        .function("clearAllMarkers", &MapViewerEngine::clearAllMarkers);
 }

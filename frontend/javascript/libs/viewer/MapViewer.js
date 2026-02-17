@@ -165,6 +165,14 @@ export class MapViewer extends WASMViewerBase {
     placeMarker(id, locationX, locationY, type = "empty") {
         this._ensureEngineReady();
 
+        if (Number.isNaN(id)) {
+            throw new WebassemblyError(
+                "Invalid ID",
+                {
+                    "type": MAP_VIEWER_ERROR_TYPES.INVALID_INPUT
+                });
+        }
+
         if (Number.isNaN(locationX) || Number.isNaN(locationY) || locationX < 0 || locationY < 0) {
             throw new WebassemblyError(
                 "Invalid marker location",
@@ -200,6 +208,51 @@ export class MapViewer extends WASMViewerBase {
         }
 
         this._engine.addMarker(id, locationX, locationY, markerType, markerUrl);
+    }
+
+    placeMarkerByImageCoordinates(id, imageX, imageY, type = "empty") {
+        this._ensureEngineReady();
+
+        if (Number.isNaN(id)) {
+            throw new WebassemblyError(
+                "Invalid ID",
+                {
+                    "type": MAP_VIEWER_ERROR_TYPES.INVALID_INPUT
+                });
+        }
+
+        if (Number.isNaN(imageX) || Number.isNaN(imageY) || imageX < 0 || imageY < 0) {
+            throw new WebassemblyError(
+                "Invalid marker location",
+                {
+                    "type": MAP_VIEWER_ERROR_TYPES.INVALID_INPUT
+                });
+        }
+
+        if (!type || typeof type != "string") {
+            throw new WebassemblyError(
+                "Invalid marker type",
+                {
+                    "type": MAP_VIEWER_ERROR_TYPES.INVALID_INPUT
+                });
+        }
+        let markerType = type.toLowerCase();
+        let markerUrl = MARKER_URLS[markerType];
+
+        if (markerType == undefined) {
+            throw new WebassemblyError(
+                "Invalid marker type",
+                {
+                    "type": MAP_VIEWER_ERROR_TYPES.INVALID_INPUT
+                });
+        }
+
+        this._engine.placeMarkerByImageCoordinates(id, imageX, imageY, type, markerUrl);
+    }
+
+    clearMarkers() {
+        this._ensureEngineReady();
+        this._engine.clearAllMarkers();
     }
 
     getMarkerAtClick(cursorX, cursorY) {

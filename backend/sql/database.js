@@ -57,6 +57,15 @@ async function insertMap(connection, gameMapId, imageId) {
     return result.insertId;
 }
 
+async function insertPoint(connection, mapId, x, y, imageId) {
+    const query = `
+        INSERT INTO points (map_id, point_x, point_y, image_id)
+        VALUES (?, ?, ?, ?)
+    `;
+    const [result] = await connection.execute(query, [mapId, x, y, imageId]);
+    return result.insertId;
+}
+
 async function updateImagePath(connection, imageId, filepath) {
     const query = `
         UPDATE images
@@ -70,11 +79,33 @@ async function getMapImage(mapId) {
     const query = `
         SELECT images.filepath, images.width, images.height 
         FROM map
-            JOIN images ON (map.image_id = images.image_id)
+            INNER JOIN images ON (map.image_id = images.image_id)
         WHERE map.map_id = ?
     `;
     const [rows] = await pool.execute(query, [mapId]);
     return rows[0];
+}
+
+async function getPointImage(pointId) {
+    const query = `
+        SELECT images.filepath, images.width, images.height 
+        FROM points
+            INNER JOIN images ON (points.image_id = images.image_id)
+        WHERE points.point_id = ?
+    `;
+    const [rows] = await pool.execute(query, [pointId]);
+    return rows[0];
+}
+
+async function getPointsOnMap(mapId) {
+    const query = `
+        SELECT points.point_id, points.point_x, points.point_y 
+        FROM map
+            INNER JOIN points ON (map.map_id = points.map_id)
+        WHERE map.map_id = ?
+    `;
+    const [rows] = await pool.execute(query, [mapId]);
+    return rows;
 }
 
 //!Export
@@ -83,8 +114,11 @@ module.exports = {
     getConnection,
     insertImage,
     insertMap,
+    insertPoint,
     updateImagePath,
     getMapImage,
+    getPointImage,
+    getPointsOnMap,
     newUser,
     getUserByUsername,
     getUserByEmail

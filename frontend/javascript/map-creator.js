@@ -32,7 +32,7 @@ let equirectangularViewer;
 let UI = {};
 let maps = {};
 let activeMapId = -1;
-let gameMapID = 1; // from url?
+let gameMapID = 2; // from url?
 
 // editor State
 let editorState = {
@@ -169,6 +169,7 @@ async function loadImage(url, loadImageFunction, successCheckId) {
 
         // check if the active id is still the same
         if (successCheckId()) {
+            mapViewer.clearMarkers();
             await loadImageFunction(imageURL, width, height);
             showToast("Kép sikeresen betöltve!", "success", true, { delay: 3000 });
         }
@@ -183,6 +184,41 @@ async function loadImage(url, loadImageFunction, successCheckId) {
     }
 }
 
+async function loadPoints(mapID, successCheckId) {
+    let pontokBetolteseToast = showToast("Pontok betöltése", "", false, { autohide: false }, ICONS.SPINNER);
+    try {
+        let response = await fetch(
+            "/api/map_creator/" + mapID + "/points",
+            {
+                "method": "GET"
+            }
+        );
+        if (!response.ok) {
+            let error = await response.json();
+            throw new Error(error.error ? error.error : "Szerver hiba: " + response.status);
+        }
+
+        let data = await response.json();
+        // check if the active id is still the same
+        if (successCheckId()) {
+            if (!data.success) {
+                throw new Error(data.error);
+            }
+            let points = data.points;
+            for (let i = 0; i < points.length; i++) {
+                console.log(points[i]);
+                mapViewer.placeMarkerByImageCoordinates(points[i].point_id, points[i].point_x, points[i].point_y, "ready");
+            }
+            showToast("Pontok sikeresen betöltve!", "success", true, { delay: 3000 });
+        }
+    } catch (error) {
+        console.error(error);
+        showToast("Hiba a pontok betöltésekor!", "danger", true, { delay: 3000 });
+    } finally {
+        pontokBetolteseToast.hide();
+    }
+}
+
 async function switchMap(mapId) {
     if (maps[mapId]) {
         activeMapId = mapId;
@@ -192,16 +228,20 @@ async function switchMap(mapId) {
 
         let valtasToast = showToast("Váltás: " + mapData.name, "", false, { autohide: false });
 
-        // TODO: markerek elmentése és betöltése
-
         if (mapId == CONSTANTS.TEMP_ID) {
+            // temporary maps cannot have points
+            mapViewer.clearMarkers();
             await mapViewer.loadMap(maps[mapId].temporaryURL, maps[mapId].imgWidth, maps[mapId].imgHeight);
             UI.saveButton.disabled = false;
         } else {
             UI.saveButton.disabled = true;
-            loadImage(
+            await loadImage(
                 "/api/game_maps/getMapImageById?mapId=" + mapId,
                 (url, width, height) => mapViewer.loadMap(url, width, height),
+                () => activeMapId == mapId
+            );
+            loadPoints(
+                mapId,
                 () => activeMapId == mapId
             );
         }
@@ -271,6 +311,7 @@ async function saveMap() {
 
 async function savePoint() {
     let pontMentesToast = showToast("Pont mentése", "", false, { autohide: false }, ICONS.SPINNER);
+    editorState.isPlacingMarker = false;
     UI.savePointButton.disabled = true;
     try {
         let formData = new FormData();
@@ -314,6 +355,7 @@ async function savePoint() {
             throw new Error(data.error);
         }
     } catch (error) {
+        editorState.isPlacingMarker = true;
         pontMentesToast.hide();
         console.error(error.message);
         showToast(error.message, "danger", true, { delay: 3000 });
