@@ -1,3 +1,14 @@
+:root {
+    --lilauveg: rgba(18, 10, 30, 0.75);
+    --lila-border: rgba(180, 100, 255, 0.2);
+    --lila-fenylik: rgba(140, 52, 216, 0.75);
+    --focus-form: rgb(157, 78, 221, 0.6);
+    --gomb-szin: rgb(123, 44, 191, 0.8);
+    --szoveg: #ffffff;
+    --success-szin: rgb(42, 157, 143, 0.8);
+    --danger-szin: rgb(217, 4, 41, 0.8);
+}
+
 html,
 body {
     margin: 0;
@@ -10,6 +21,16 @@ body {
 body {
     display: flex;
     flex-direction: column;
+    background: radial-gradient(circle at 50% -20%, #3a1c71 0%, #0d0614 100%);
+    color: var(--szoveg);
+}
+
+.uveg {
+    background: var(--lilauveg) !important;
+    backdrop-filter: blur(12px);
+    border: 1px solid var(--lila-border);
+    box-shadow: 0px 7px 28px 1px rgba(0, 0, 0, 0.5);
+    color: white;
 }
 
 main {
@@ -26,6 +47,45 @@ main {
     height: 100%;
     flex: 1;
     touch-action: none;
+    z-index: 0;
+}
+
+.uvegform {
+    background-color: rgba(0, 0, 0, 0.3) !important;
+    border: 1px solid var(--lila-border) !important;
+    color: white !important;
+}
+
+.uvegbutton {
+    background-color: var(--gomb-szin);
+    border-color: var(--gomb-szin);
+}
+
+.uvegbutton:hover {
+    background-color: var(--focus-form);
+    border-color: var(--focus-form);
+    box-shadow: 0 0 15px var(--lila-fenylik);
+}
+
+.uvegform:focus {
+    box-shadow: 0 0 0 0.2rem var(--lila-fenylik) !important;
+    border-color: var(--focus-form) !important;
+}
+
+#upload-overlay {
+    background: radial-gradient(circle at 50% -20%, #29133e 0%, #0a0510 100%);
+    backdrop-filter: blur(5px);
+}
+
+.dropzone {
+    background: rgba(255, 255, 255, 0.03);
+    border-color: var(--lila-border);
+    color: #e0e0e0;
+    box-shadow: 0 0 20px rgba(123, 44, 191, 0.2);
+}
+
+.dropfocus {
+    border-color: var(--lila-fenylik) !important;
 }
 
 #equirectangularPreview {
@@ -43,12 +103,42 @@ main {
     display: flex;
     align-items: center;
     justify-content: center;
+    background: linear-gradient(135deg, #7b2cbf, #ff00cc);
+    border: none;
+    box-shadow: 0px 0px 40px -4px rgba(0, 0, 0, 0.68);
+}
+
+#plusBtn:hover {
+    transform: scale(1.05);
+    transition: transform 0.2s;
 }
 
 #ujPontCollapse {
     top: 0;
     bottom: 0;
     right: 0;
+}
+
+#ujPontCollapse .card {
+    background: transparent;
+    border: none;
+    color: white;
+}
+
+.successColor {
+    background-color: var(--success-szin) !important;
+    border-color: var(--success-szin) !important;
+    backdrop-filter: blur(12px);
+}
+
+.dangerColor {
+    background-color: var(--danger-szin) !important;
+    border-color: var(--danger-szin) !important;
+    backdrop-filter: blur(12px);
+}
+
+.successColor:disabled {
+    opacity: 0.5;
 }
 
 @media (max-width: 992px) {

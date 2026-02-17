@@ -47,10 +47,22 @@ let editorState = {
 // |-----------|
 // |  UTILITY  |
 // |-----------|
-function showToast(message, type = "primary", isClosable, options = {}, iconHtml = "") {
+function showToast(message, type = "", isClosable, options = {}, iconHtml = "") {
     // Create element
     let toastElement = document.createElement("div");
-    toastElement.classList.add("toast", "align-items-center", "border-0", "text-bg-" + type);
+    let typeClass;
+    switch (type) {
+        case "success":
+            typeClass = "successColor";
+            break;
+        case "danger":
+            typeClass = "dangerColor";
+            break;
+        default:
+            typeClass = "uveg";
+            break;
+    }
+    toastElement.classList.add("toast", "align-items-center", "border-0", typeClass);
     toastElement.setAttribute("role", "alert");
     toastElement.setAttribute("aria-live", "assertive");
     toastElement.setAttribute("aria-atomic", "true");
@@ -135,7 +147,7 @@ function savePreviousValue(event) {
 // |-------------|
 
 async function loadImage(url, loadImageFunction, successCheckId) {
-    let kepBetolteseToast = showToast("Kép betöltése", "primary", false, { autohide: false }, ICONS.SPINNER);
+    let kepBetolteseToast = showToast("Kép betöltése", "", false, { autohide: false }, ICONS.SPINNER);
     let imageURL;
     try {
         let response = await fetch(
@@ -178,7 +190,7 @@ async function switchMap(mapId) {
 
         UI.mapSelect.value = mapId;
 
-        let valtasToast = showToast("Váltás: " + mapData.name, "secondary", false, { autohide: false });
+        let valtasToast = showToast("Váltás: " + mapData.name, "", false, { autohide: false });
 
         // TODO: markerek elmentése és betöltése
 
@@ -198,7 +210,7 @@ async function switchMap(mapId) {
 }
 
 async function saveMap() {
-    let terkepMentes = showToast("Térkép mentése", "primary", false, { autohide: false }, ICONS.SPINNER);
+    let terkepMentes = showToast("Térkép mentése", "", false, { autohide: false }, ICONS.SPINNER);
     try {
         let currentMap = maps[activeMapId];
 
@@ -256,7 +268,7 @@ async function saveMap() {
 }
 
 async function savePoint() {
-    let pontMentesToast = showToast("Pont mentése", "primary", false, { autohide: false }, ICONS.SPINNER);
+    let pontMentesToast = showToast("Pont mentése", "", false, { autohide: false }, ICONS.SPINNER);
     UI.savePointButton.disabled = true;
     try {
         let formData = new FormData();
@@ -499,7 +511,7 @@ function setupUploadHandler(dropZoneElement, buttonElement, inputElement, onFile
 
         if (draggedFiles.length > 0) {
             event.dataTransfer.dropEffect = "copy";
-            dropZoneElement.classList.add("border-primary");
+            dropZoneElement.classList.add("dropfocus");
         } else {
             event.dataTransfer.dropEffect = "none";
         }
@@ -507,12 +519,12 @@ function setupUploadHandler(dropZoneElement, buttonElement, inputElement, onFile
 
     dropZoneElement.addEventListener("dragleave", (event) => {
         event.preventDefault();
-        dropZoneElement.classList.remove("border-primary");
+        dropZoneElement.classList.remove("dropfocus");
     });
 
     dropZoneElement.addEventListener("drop", (event) => {
         event.preventDefault();
-        dropZoneElement.classList.remove("border-primary");
+        dropZoneElement.classList.remove("dropfocus");
 
         let files = event.dataTransfer.files;
         if (files.length > 0) {
@@ -613,7 +625,7 @@ function addUIEventListeners() {
 
         editorState.activePointId = CONSTANTS.TEMP_ID;
 
-        editorState.clickOnMapToast = showToast("Koppints a térképre a jelölő elhelyezéséhez!", "primary", true, { autohide: false }, ICONS.POINTING_HAND);
+        editorState.clickOnMapToast = showToast("Koppints a térképre a jelölő elhelyezéséhez!", "", true, { autohide: false }, ICONS.POINTING_HAND);
         editorState.isPlacingMarker = true;
     });
 
