@@ -146,6 +146,52 @@ async function userToInactive(userId) {
     const [result] = await pool.execute(query, [userId]);
     return result.affectedRows;
 }
+
+async function uploadProfilePic(filepath, width, height, user_id) {
+    //Régi profilkép elérési útvonala + id lekérése későbbi törlésre
+
+    const queryGetLastImage = 'SELECT images.image_id, images.filepath FROM users LEFT JOIN images ON users.pfp = images.image_id WHERE users.user_id = ?'
+    const [oldImageData] = await pool.execute(queryGetLastImage, [user_id]);
+
+    const oldFilePath = oldImageData[0] ? oldImageData[0].filepath : null;
+    const oldImageId = oldImageData[0] ? oldImageData[0].image_id : null;
+
+    //Új profilkép adatainak feltöltése + users táblában az pfp frissitése
+    const queryInsertNewPic = 'INSERT INTO images (filepath, width, height) VALUES (?, ?, ?)';
+    let [id] = await pool.execute(queryInsertNewPic, [filepath, width, height]);
+    const queryUpdatePfpId = 'UPDATE users SET pfp = ? WHERE user_id = ?';
+    await pool.execute(queryUpdatePfpId, [id.insertId, user_id]);
+
+    //Ha volt előtte egy másik profilkép, törli
+    if (oldImageId != null) {
+        const queryDeleteOldPic = 'DELETE FROM images WHERE image_id = ?';
+        await pool.execute(queryDeleteOldPic, [oldImageId]);
+    }
+
+    //Visszaadja a régi kép elérési útvonalát, hogy törlésre kerülhessen. Amennyiben nem volt, null értéket ad vissza.
+    return oldFilePath;
+}
+
+async function deleteProfilePic(user_id) {
+    //Régi profilkép elérési útvonala + id lekérése a törlésre
+
+    const queryGetLastImage = 'SELECT images.image_id, images.filepath FROM users LEFT JOIN images ON users.pfp = images.image_id WHERE users.user_id = ?'
+    const [oldImageData] = await pool.execute(queryGetLastImage, [user_id]);
+
+    const oldFilePath = oldImageData[0] ? oldImageData[0].filepath : null;
+    const oldImageId = oldImageData[0] ? oldImageData[0].image_id : null;
+
+    //Users táblában az adott felhasználónak a pfp-t NULL-ra állitja
+    const queryUpdatePfpId = 'UPDATE users SET pfp = NULL WHERE user_id = ?';
+    await pool.execute(queryUpdatePfpId, [user_id]);
+
+    //Törlés az images táblából
+    const queryDeleteOldPic = 'DELETE FROM images WHERE image_id = ?';
+        await pool.execute(queryDeleteOldPic, [oldImageId]);
+
+    //Visszaadja a régi kép elérési útvonalát a törléshez.
+    return oldFilePath;
+}
 //!Export
 module.exports = {
     // selectall,
@@ -156,5 +202,7 @@ module.exports = {
     getUser,
     sortedUsers,
     updateUser,
-    userToInactive
+    userToInactive,
+    uploadProfilePic,
+    deleteProfilePic
 };
