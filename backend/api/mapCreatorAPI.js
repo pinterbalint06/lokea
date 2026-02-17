@@ -3,6 +3,9 @@ const router = express.Router();
 const database = require("../sql/database.js");
 const fs = require("fs/promises");
 const crypto = require("crypto");
+const sharp = require("sharp");
+
+sharp.cache(false);
 
 //!Multer
 const multer = require("multer"); //?npm in stall multer
@@ -44,23 +47,25 @@ const checkAuth = (request, response, next) => {
     }
 };
 let currPointID = 0;
-let currMapID = 0;
 
 async function moveUpload(tempPath, destDir, destFilename) {
     await fs.mkdir(destDir, { recursive: true });
     let finalPath = path.join(destDir, destFilename);
     await fs.rename(tempPath, finalPath);
+    return finalPath;
 }
 
-async function handleUploadError(response, error, file) {
+async function handleUploadError(response, error, file, dbConnection, finalPath) {
+    console.error(error);
     if (file) {
         fs.unlink(file.path).catch(function (error) {
             console.error("Átmeneti fáj törlése sikertelen volt:", error)
         });
     }
 
-    console.error(error);
-
+    if (dbConnection) {
+        dbConnection.rollback();
+    }
     let statusCode = error.statusCode ? error.statusCode : 500;
     let message = error.statusCode ? error.message : "Váratlan hiba történt!";
 
@@ -143,6 +148,8 @@ router.post("/savePoint", checkAuth, upload.single("equirectangularImage"), asyn
 
 //?POST /api/map_creator/saveNewMap
 router.post("/saveNewMap", checkAuth, upload.single("mapImage"), async (request, response) => {
+    let dbConnection;
+    let finalPath;
     try {
         // console.log(request.session.userid);
         // const userId = request.session.userid;
@@ -167,32 +174,80 @@ router.post("/saveNewMap", checkAuth, upload.single("mapImage"), async (request,
             throw error;
         }
 
+        let image = sharp(request.file.path);
+        let imageData = await image.metadata();
+        let imageWidth = imageData.width;
+        let imageHeight = imageData.height;
+
         let pathInfo = path.parse(request.file.path);
 
-        currMapID++;
+        dbConnection = await database.getConnection();
+        await dbConnection.beginTransaction();
+
+        let imageId = await database.insertImage(dbConnection, imageWidth, imageHeight, "pending");
+
+        let newMapId = await database.insertMap(dbConnection, gameMapID, imageId);
 
         // private/userId/gameMapId/mapId/
-        let targetPath = path.join(
-            UPLOAD_ROOT,
+        let relativeDestDir = path.join(
             userId.toString(),
             gameMapID.toString(),
-            currMapID.toString()
+            newMapId.toString()
+        );
+        let targetPath = path.join(
+            UPLOAD_ROOT,
+            relativeDestDir
         );
         // TODO: create low res version
-        let targetFileName = currMapID.toString() + pathInfo.ext;
+        let targetFileName = newMapId.toString() + pathInfo.ext;
 
-        await moveUpload(request.file.path, targetPath, targetFileName);
+        finalPath = await moveUpload(request.file.path, targetPath, targetFileName);
+
+        let dbPath = path.join(relativeDestDir, targetFileName);
+        await database.updateImagePath(dbConnection, imageId, dbPath);
+
+        await dbConnection.commit();
 
         await new Promise(r => setTimeout(r, 1000));
 
         response.status(200).json({
             success: true,
-            mapId: currMapID,
+            mapId: newMapId,
             message: "Térkép sikeresen mentve!"
         });
 
     } catch (error) {
-        await handleUploadError(response, error, request.file);
+        console.error(error);
+
+        if (dbConnection) {
+            dbConnection.rollback();
+        }
+
+        if (finalPath) {
+            await fs.unlink(finalPath).catch(() => { });
+        }
+
+        if (request.file) {
+            await fs.access(request.file.path)
+                .then(() =>
+                    fs.unlink(request.file.path)
+                        .catch(function (error) {
+                            console.error("Átmeneti fáj törlése sikertelen volt:", error)
+                        }))
+                .catch(() => { });
+        }
+
+        let statusCode = error.statusCode ? error.statusCode : 500;
+        let message = error.statusCode ? error.message : "Váratlan hiba történt!";
+
+        response.status(statusCode).json({
+            success: false,
+            error: message
+        });
+    } finally {
+        if (dbConnection) {
+            dbConnection.release();
+        }
     }
 });
 

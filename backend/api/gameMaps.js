@@ -1,5 +1,6 @@
 const express = require("express");
 const router = express.Router();
+const database = require("../sql/database.js");
 
 const path = require("path");
 
@@ -70,7 +71,7 @@ router.get("/getImageByPointId", async (request, response) => {
 //?GET /api/game_maps/getMapImageById
 router.get("/getMapImageById", async (request, response) => {
     try {
-        if (!request.query.mapId && request.query.mapId.trim() != "") {
+        if (!request.query.mapId || request.query.mapId.trim() == "") {
             const error = new Error("Nem adott térkép ID-t");
             error.statusCode = 400;
             throw error;
@@ -89,16 +90,16 @@ router.get("/getMapImageById", async (request, response) => {
         // }
 
         //TODO: get the image path from the db
-        let imagePath = "map/worldmap.webp"
+        let imageData = await database.getMapImage(mapId);
 
         let options = {
             root: UPLOAD_ROOT
         };
         response.set("Access-Control-Expose-Headers", "imageWidth, imageHeight");
-        response.set("imageWidth", 3840);
-        response.set("imageHeight", 1920);
-        await new Promise(r => setTimeout(r, 2000));
-        response.sendFile(imagePath, options, function (err) {
+        response.set("imageWidth", imageData.width);
+        response.set("imageHeight", imageData.height);
+        await new Promise(r => setTimeout(r, 500));
+        response.sendFile(imageData.filepath, options, function (err) {
             if (err) {
                 if (!response.headersSent) {
                     return response.status(404).json({

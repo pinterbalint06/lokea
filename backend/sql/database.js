@@ -34,10 +34,58 @@ async function getUserByEmail(email) {
     const [result] = await pool.execute(query, [email]);
     return result;
 }
+
+async function getConnection() {
+    return await pool.getConnection();
+}
+
+async function insertImage(connection, width, height, filepath) {
+    const query = `
+        INSERT INTO images (width, height, filepath)
+        VALUES (?, ?, ?)
+    `;
+    const [result] = await connection.execute(query, [width, height, filepath]);
+    return result.insertId;
+}
+
+async function insertMap(connection, gameMapId, imageId) {
+    const query = `
+        INSERT INTO map (game_maps_id, image_id)
+        VALUES (?, ?)
+    `;
+    const [result] = await connection.execute(query, [gameMapId, imageId]);
+    return result.insertId;
+}
+
+async function updateImagePath(connection, imageId, filepath) {
+    const query = `
+        UPDATE images
+        SET filepath = ?
+        WHERE image_id = ?
+    `;
+    await connection.execute(query, [filepath, imageId]);
+}
+
+async function getMapImage(mapId) {
+    const query = `
+        SELECT images.filepath, images.width, images.height 
+        FROM map
+            JOIN images ON (map.image_id = images.image_id)
+        WHERE map.map_id = ?
+    `;
+    const [rows] = await pool.execute(query, [mapId]);
+    return rows[0];
+}
+
 //!Export
 module.exports = {
     // selectall,
-    newUser, 
+    getConnection,
+    insertImage,
+    insertMap,
+    updateImagePath,
+    getMapImage,
+    newUser,
     getUserByUsername,
     getUserByEmail
 };

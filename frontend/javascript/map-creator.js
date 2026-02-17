@@ -196,7 +196,9 @@ async function switchMap(mapId) {
 
         if (mapId == CONSTANTS.TEMP_ID) {
             await mapViewer.loadMap(maps[mapId].temporaryURL, maps[mapId].imgWidth, maps[mapId].imgHeight);
+            UI.saveButton.disabled = false;
         } else {
+            UI.saveButton.disabled = true;
             loadImage(
                 "/api/game_maps/getMapImageById?mapId=" + mapId,
                 (url, width, height) => mapViewer.loadMap(url, width, height),
@@ -564,6 +566,7 @@ function getUIElements() {
     UI.toastPlace = document.getElementById("toastPlace");
     UI.collapseElement = document.getElementById("ujPontCollapse");
     UI.mapSelector = document.getElementById("mapSelector");
+    UI.floatinButtonDiv = document.getElementById("floatinButtonDiv");
     UI.collapseBootstrapElement = new bootstrap.Collapse(
         UI.collapseElement,
         {
@@ -610,7 +613,7 @@ function addUIEventListeners() {
         }
 
         // reset UI
-        UI.plusMarkerBtn.classList.remove("d-none");
+        UI.floatinButtonDiv.classList.remove("d-none");
 
         // reset state
         editorState.activePointId = null;
@@ -620,13 +623,17 @@ function addUIEventListeners() {
     });
 
     UI.plusMarkerBtn.addEventListener("click", () => {
-        UI.plusMarkerBtn.classList.add("d-none");
-        mapViewer.canvasInput.setDefaultCursor("crosshair");
+        if (activeMapId != CONSTANTS.TEMP_ID) {
+            UI.floatinButtonDiv.classList.add("d-none");
+            mapViewer.canvasInput.setDefaultCursor("crosshair");
 
-        editorState.activePointId = CONSTANTS.TEMP_ID;
+            editorState.activePointId = CONSTANTS.TEMP_ID;
 
-        editorState.clickOnMapToast = showToast("Koppints a térképre a jelölő elhelyezéséhez!", "", true, { autohide: false }, ICONS.POINTING_HAND);
-        editorState.isPlacingMarker = true;
+            editorState.clickOnMapToast = showToast("Koppints a térképre a jelölő elhelyezéséhez!", "", true, { autohide: false }, ICONS.POINTING_HAND);
+            editorState.isPlacingMarker = true;
+        } else {
+            showToast("Először mentsd el a térképet!", "danger", true, { delay: 3000 });
+        }
     });
 
     UI.equiFullscreenBtn.addEventListener("click", fullscreenEquirectangular);
