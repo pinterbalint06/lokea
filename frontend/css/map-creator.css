@@ -93,6 +93,7 @@ main {
 
 #equirectangularPreview {
     display: block;
+    border: solid 1px var(--lila-border);
 }
 
 .border-dashed {

@@ -175,7 +175,6 @@ async function loadImage(url, loadImageFunction, successCheckId) {
 
         // check if the active id is still the same
         if (successCheckId()) {
-            mapViewer.clearMarkers();
             await loadImageFunction(imageURL, width, height);
             showToast("Kép sikeresen betöltve!", "success", true, { delay: 3000 });
         }
@@ -212,7 +211,6 @@ async function loadPoints(mapID, successCheckId) {
             }
             let points = data.points;
             for (let i = 0; i < points.length; i++) {
-                console.log(points[i]);
                 mapViewer.placeMarkerByImageCoordinates(points[i].point_id, points[i].point_x, points[i].point_y, "ready");
             }
             showToast("Pontok sikeresen betöltve!", "success", true, { delay: 3000 });
@@ -226,6 +224,7 @@ async function loadPoints(mapID, successCheckId) {
 }
 
 async function switchMap(mapId) {
+    closeCollapse();
     if (maps[mapId]) {
         activeMapId = mapId;
         let mapData = maps[mapId];
@@ -243,7 +242,10 @@ async function switchMap(mapId) {
             UI.saveButton.disabled = true;
             await loadImage(
                 "/api/game_maps/getMapImageById?mapId=" + mapId,
-                (url, width, height) => mapViewer.loadMap(url, width, height),
+                (url, width, height) => {
+                    mapViewer.clearMarkers();
+                    mapViewer.loadMap(url, width, height)
+                },
                 () => activeMapId == mapId
             );
             loadPoints(
@@ -317,29 +319,46 @@ async function saveMap() {
 }
 
 async function savePoint() {
-    let pontMentesToast = showToast("Pont mentése", "", false, { autohide: false }, ICONS.SPINNER);
     editorState.isPlacingMarker = false;
+    let pontMentesToast = showToast("Pont mentése", "", false, { autohide: false }, ICONS.SPINNER);
     UI.savePointButton.disabled = true;
     try {
         let formData = new FormData();
-        if (!editorState.pendingEquirectangularFile) {
-            throw new Error("Nincs kép kiválasztva!");
-        }
-        formData.append("equirectangularImage", editorState.pendingEquirectangularFile);
         let position = mapViewer.getMarkerPosition(editorState.activePointId);
 
         formData.append("x", position.x);
         formData.append("y", position.y);
-        formData.append("gameMapID", gameMapID);
-        if (activeMapId == CONSTANTS.TEMP_ID) {
-            throw new Error("Először mentsd el a térképet!");
-        }
-        formData.append("mapID", activeMapId);
 
-        let response = await fetch("/api/map_creator/savePoint", {
-            "method": "POST",
-            "body": formData
-        });
+        let url = "";
+        let method = "";
+
+        if (editorState.activePointId == CONSTANTS.TEMP_ID) {
+            if (!editorState.pendingEquirectangularFile) {
+                throw new Error("Nincs kép kiválasztva!");
+            }
+            formData.append("equirectangularImage", editorState.pendingEquirectangularFile);
+            formData.append("gameMapID", gameMapID);
+            if (activeMapId == CONSTANTS.TEMP_ID) {
+                throw new Error("Először mentsd el a térképet!");
+            }
+            formData.append("mapID", activeMapId);
+            url = "/api/map_creator/savePoint";
+            method = "POST";
+        } else {
+            if (editorState.pendingEquirectangularFile) {
+                formData.append("equirectangularImage", editorState.pendingEquirectangularFile);
+            }
+            url = "/api/map_creator/point/" + editorState.activePointId;
+            method = "PUT";
+        }
+
+        let response = await fetch(
+            url,
+            {
+                "method": method,
+                "body": formData
+            }
+        );
         pontMentesToast.hide();
         if (!response.ok) {
             let error = await response.json();
@@ -348,24 +367,21 @@ async function savePoint() {
         let data = await response.json();
         if (data.success) {
             showToast("Pont sikeresen mentve!", "success", true, { delay: 3000 }, ICONS.UPLOAD_TO_CLOUD);
-            equirectangularViewer.clearImage();
             if (editorState.activePointId == CONSTANTS.TEMP_ID) {
                 mapViewer.changeMarkerId(editorState.activePointId, data.pointId);
+                editorState.activePointId = data.pointId;
+                mapViewer.changeMarkerType(editorState.activePointId, "EDIT");
             }
-            mapViewer.changeMarkerType(data.pointId, "READY");
-            // set these to null so revert is skipped in on hidden collapse
-            editorState.activePointId = null;
-            editorState.originalPointData = null;
-
-            closeCollapse();
+            editorState.originalPointData = position;
         } else {
             throw new Error(data.error);
         }
     } catch (error) {
-        editorState.isPlacingMarker = true;
         pontMentesToast.hide();
         console.error(error.message);
         showToast(error.message, "danger", true, { delay: 3000 });
+    } finally {
+        editorState.isPlacingMarker = true;
         UI.savePointButton.disabled = false;
     }
 }
@@ -454,8 +470,7 @@ async function handleMapLoad(file) {
 
         switchMap(CONSTANTS.TEMP_ID);
 
-        // TODO: markerek elmentése és betöltése
-
+        UI.mapSelector.classList.remove("d-none");
         UI.uploadOverlay.classList.add("d-none");
         UI.saveButton.disabled = false;
     } catch (error) {
@@ -496,12 +511,16 @@ function clickOnCanvas(cursorX, cursorY) {
 
             loadImage(
                 "/api/game_maps/getImageByPointId?pointId=" + editorState.activePointId,
-                (url, width, height) => equirectangularViewer.loadImage(url, width, height),
+                (url, width, height) => {
+                    equirectangularViewer.loadImage(url, width, height)
+                    UI.equiFullscreenBtn.disabled = false;
+                },
                 () => editorState.activePointId == clickedMarkerIndex
             );
 
             updateCoordinatesInput();
             editorState.isPlacingMarker = true;
+            UI.savePointButton.disabled = false;
             UI.collapseBootstrapElement.show();
         }
     }
@@ -523,6 +542,15 @@ function handleCoordinateChange(event) {
 // |----|
 // | UI |
 // |----|
+
+function savePointClick() {
+    let position = mapViewer.getMarkerPosition(editorState.activePointId);
+    if (!editorState.originalPointData || position.x != editorState.originalPointData.x || position.y != editorState.originalPointData.y || editorState.pendingEquirectangularFile) {
+        savePoint();
+    } else {
+        editorState.clickOnMapToast = showToast("A pont nem változott!", "", true, { delay: 2000 });
+    }
+}
 
 function updateMapSelectorUI() {
     UI.mapSelect.innerHTML = "";
@@ -667,6 +695,10 @@ function addUIEventListeners() {
         UI.fileInputMap.click();
     });
 
+    UI.collapseElement.addEventListener("show.bs.collapse", () => {
+        UI.floatinButtonDiv.classList.add("d-none");
+    });
+
     UI.collapseElement.addEventListener("hide.bs.collapse", () => {
         if (editorState.activePointId != null) {
             if (editorState.activePointId == CONSTANTS.TEMP_ID) {
@@ -720,7 +752,7 @@ function addUIEventListeners() {
 
     UI.equiFullscreenBtn.addEventListener("click", fullscreenEquirectangular);
     UI.saveButton.addEventListener("click", saveMap);
-    UI.savePointButton.addEventListener("click", savePoint);
+    UI.savePointButton.addEventListener("click", savePointClick);
     UI.closeCollapse.addEventListener("click", closeCollapse);
 }
 

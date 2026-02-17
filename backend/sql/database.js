@@ -88,7 +88,7 @@ async function getMapImage(mapId) {
 
 async function getPointImage(pointId) {
     const query = `
-        SELECT images.filepath, images.width, images.height 
+        SELECT images.image_id, images.filepath, images.width, images.height 
         FROM points
             INNER JOIN images ON (points.image_id = images.image_id)
         WHERE points.point_id = ?
@@ -108,15 +108,67 @@ async function getPointsOnMap(mapId) {
     return rows;
 }
 
+async function getPointInfo(pointId) {
+    const query = `
+        SELECT points.point_id, points.point_x, points.point_y, map.map_id, game_maps.game_maps_id
+        FROM points
+            INNER JOIN map ON (map.map_id = points.map_id)
+            INNER JOIN game_maps ON (game_maps.game_maps_id = map.game_maps_id)
+        WHERE points.point_id = ?
+    `;
+    const [rows] = await pool.execute(query, [pointId]);
+    return rows[0];
+}
+
 async function getMapsByGameMapId(gameMapId) {
-    const sql = `
+    const query = `
         SELECT map.map_id, map.title
         FROM game_maps
             INNER JOIN map ON (game_maps.game_maps_id = map.game_maps_id)
         WHERE game_maps.game_maps_id = ?
     `;
-    const [rows] = await pool.execute(sql, [gameMapId]);
+    const [rows] = await pool.execute(query, [gameMapId]);
     return rows;
+}
+
+async function checkUserOwnsGameMap(userId, gameMapId) {
+    const query = `
+        SELECT COUNT(*) as count
+        FROM game_maps
+        WHERE game_maps.creator_id = ? AND game_maps.game_maps_id = ?
+    `;
+    const [rows] = await pool.execute(query, [userId, gameMapId]);
+    return rows[0].count > 0;
+}
+
+async function updatePointCoordinates(connection, pointId, x, y) {
+    const query = `
+        UPDATE points
+        SET points.point_x = ?,
+            points.point_y = ?
+        WHERE points.point_id = ?
+    `;
+    const [result] = await connection.execute(query, [x, y, pointId]);
+    return result.affectedRows;
+}
+
+async function updatePointImage(connection, pointId, imageId) {
+    const query = `
+        UPDATE points
+        SET points.image_id = ?
+        WHERE points.point_id = ?
+    `;
+    const [result] = await connection.execute(query, [imageId, pointId]);
+    return result.affectedRows;
+}
+
+async function deleteImageById(connection, imageId) {
+    const query = `
+        DELETE FROM images
+        WHERE images.image_id = ?
+    `;
+    const [result] = await connection.execute(query, [imageId]);
+    return result.affectedRows;
 }
 
 //!Export
@@ -131,6 +183,11 @@ module.exports = {
     getPointImage,
     getPointsOnMap,
     getMapsByGameMapId,
+    checkUserOwnsGameMap,
+    updatePointCoordinates,
+    updatePointImage,
+    deleteImageById,
+    getPointInfo,
     newUser,
     getUserByUsername,
     getUserByEmail

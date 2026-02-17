@@ -3,6 +3,7 @@ const express = require('express'); //?npm install express
 const session = require('express-session'); //?npm install express-session
 const path = require('path');
 const cors = require('cors');
+const database = require("./sql/database.js");
 
 //!Beállítások
 const app = express();
@@ -31,9 +32,12 @@ app.use(session({
 }));
 
 
-function hasPermissionToEdit() {
-    // TODO: is map theirs
-    return true;
+async function hasPermissionToEdit(request, gameMapID) {
+    // TODO: change when login works
+    // let userId = request.session.user.user_id;
+    let userId = 1;
+    let isTheirs = await database.checkUserOwnsGameMap(userId, gameMapID);
+    return isTheirs;
 }
 
 
@@ -54,15 +58,21 @@ router.get('/webgl', (request, response) => {
 router.get('/map', (request, response) => {
     response.sendFile(path.join(__dirname, '../frontend/html/test-map.html'));
 });
-router.get('/maps/:gameMapId/edit', (request, response) => {
-    let gameMapID = Number(request.params.gameMapId);
-    if (!Number.isInteger(gameMapID) || gameMapID <= 0) {
-        response.status(400).send();
-    }
-    if (hasPermissionToEdit()) {
-        response.sendFile(path.join(__dirname, '../frontend/html/map-creator.html'));
-    } else {
-        response.status(404).send();
+router.get('/maps/:gameMapId/edit', async (request, response) => {
+    try {
+        let gameMapID = Number(request.params.gameMapId);
+        if (!Number.isInteger(gameMapID) || gameMapID <= 0) {
+            response.status(400).send();
+        }
+        let hasPermission = await hasPermissionToEdit(request, gameMapID);
+        if (hasPermission) {
+            response.sendFile(path.join(__dirname, '../frontend/html/map-creator.html'));
+        } else {
+            response.status(404).send();
+        }
+    } catch (error) {
+        console.error(error);
+        response.status(500).send();
     }
 });
 router.get('/login_page', (request, response) => {

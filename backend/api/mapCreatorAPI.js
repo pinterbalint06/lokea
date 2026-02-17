@@ -32,13 +32,12 @@ const upload = multer({
 });
 
 //TESZT
-function isAllowed(request) {
-    return true;
-}
-
 const checkAuth = (request, response, next) => {
-    // TODO: check authentication
-    if (isAllowed(request)) {
+    // TODO: check authentication and logged in
+    request.session.user = {
+        user_id: 1
+    }
+    if (request.session && request.session.user && request.session.user.user_id) {
         next();
     } else {
         response.status(401).json({
@@ -127,17 +126,9 @@ router.post("/savePoint", checkAuth, upload.single("equirectangularImage"), asyn
     let dbConnection;
     let finalPath;
     try {
-        // console.log(request.session.userid);
-        // const userId = request.session.userid;
-        // if (userId == undefined) {
-        //     const error = new Error("Nincs bejelentkezve!");
-        //     error.statusCode = 400;
-        //     throw error;
-        // }
+        const userId = request.session.user.user_id;
 
-        // login doesn't work on this branch yet
-        const userId = 1;
-
+        // TODO: CHECK IF USER HAS ACCESS
         const gameMapID = validateId(request.body.gameMapID, "pálya ID");
         const mapID = validateId(request.body.mapID, "térkép ID");
 
@@ -176,7 +167,7 @@ router.post("/savePoint", checkAuth, upload.single("equirectangularImage"), asyn
             UPLOAD_ROOT,
             relativeDestDir
         );
-        let targetFileName = newPointId.toString() + imageData.extension;
+        let targetFileName = newPointId.toString() + "_" + crypto.randomBytes(4).toString("hex") + imageData.extension;
 
         finalPath = await moveUpload(request.file.path, targetPath, targetFileName);
 
@@ -204,16 +195,9 @@ router.post("/saveNewMap", checkAuth, upload.single("mapImage"), async (request,
     let dbConnection;
     let finalPath;
     try {
-        // console.log(request.session.userid);
-        // const userId = request.session.userid;
-        // if (userId == undefined) {
-        //     const error = new Error("Nincs bejelentkezve!");
-        //     error.statusCode = 400;
-        //     throw error;
-        // }
+        const userId = request.session.user.user_id;
 
-        // login doesn't work on this branch yet
-        const userId = 1;
+        // TODO: CHECK IF USER HAS ACCESS
         const gameMapID = validateId(request.body.gameMapID, "pálya ID");
         const title = request.body.title;
         // ^\w{1,20}$ atleast one character long and only characters numbers or underscores
@@ -249,7 +233,7 @@ router.post("/saveNewMap", checkAuth, upload.single("mapImage"), async (request,
             relativeDestDir
         );
         // TODO: create low res version
-        let targetFileName = newMapId.toString() + imageData.extension;
+        let targetFileName = newMapId.toString() + "_" + crypto.randomBytes(4).toString("hex") + imageData.extension;
 
         finalPath = await moveUpload(request.file.path, targetPath, targetFileName);
 
@@ -325,6 +309,118 @@ router.get("/maps", checkAuth, async (request, response) => {
             success: false,
             error: message
         });
+    }
+});
+
+//?PUT /api/map_creator/point/:pointId
+router.put("/point/:pointId", checkAuth, upload.single("equirectangularImage"), async (request, response) => {
+    let dbConnection;
+    let finalPath;
+
+    try {
+        const userId = request.session.user.user_id;
+
+        // TODO: CHECK IF USER HAS ACCESS
+        let pointId = validateId(request.params.pointId, "pont ID");
+        const xCoordinate = Number(request.body.x);
+        const yCoordinate = Number(request.body.y);
+        if (!Number.isFinite(xCoordinate) || !Number.isFinite(yCoordinate)) {
+            const error = new Error("Helytelen koordináták!");
+            error.statusCode = 400;
+            throw error;
+        }
+
+        // TODO: check if has access
+        dbConnection = await database.getConnection();
+        await dbConnection.beginTransaction();
+
+        let pointInfo = await database.getPointInfo(pointId);
+        if (!pointInfo) {
+            const error = new Error("A pont nem létezik");
+            error.statusCode = 400;
+            throw error;
+        }
+
+        let affectedRows = await database.updatePointCoordinates(dbConnection, pointId, xCoordinate, yCoordinate);
+        if (affectedRows > 1) {
+            console.error("Multiple rows affected at ID update");
+            let error = {
+                statusCode: 500
+            };
+            throw error;
+        }
+
+        if (request.file) {
+            let oldImageInfo = await database.getPointImage(pointId);
+
+            let imageData = await processImageMetadata(request.file.path);
+            let newImageId = await database.insertImage(dbConnection, imageData.width, imageData.height, "pending");
+            let gameMapID = pointInfo.game_maps_id;
+            let mapID = pointInfo.map_id;
+
+            let relativeDestDir = path.join(
+                userId.toString(),
+                gameMapID.toString(),
+                mapID.toString(),
+                "point_images",
+                pointId.toString()
+            );
+            let targetPath = path.join(
+                UPLOAD_ROOT,
+                relativeDestDir
+            );
+            let targetFileName = pointId.toString() + "_" + crypto.randomBytes(4).toString("hex") + imageData.extension;
+
+            finalPath = await moveUpload(request.file.path, targetPath, targetFileName);
+            let dbPath = path.join(relativeDestDir, targetFileName);
+
+            await database.updateImagePath(dbConnection, newImageId, dbPath);
+
+            // update point's image to the new id
+            let imageUpdateRows = await database.updatePointImage(dbConnection, pointId, newImageId);
+            if (imageUpdateRows > 1) {
+                console.error("Multiple rows affected at ID update");
+                let error = {
+                    statusCode: 500
+                };
+                throw error;
+            }
+
+            if (oldImageInfo) {
+                // delete old image from db
+                let deletedRows = await database.deleteImageById(dbConnection, oldImageInfo.image_id);
+                if (deletedRows > 1) {
+                    console.error("Multiple rows affected at ID delete");
+                    let error = {
+                        statusCode: 500
+                    };
+                    throw error;
+                }
+            }
+
+            await dbConnection.commit();
+
+            if (oldImageInfo && oldImageInfo.filepath) {
+                let absoluteOldPath = path.join(UPLOAD_ROOT, oldImageInfo.filepath);
+                // delete old file
+                fs.unlink(absoluteOldPath)
+                    .catch(function () {
+                        console.error("unsuccessful deletion: " + absoluteOldPath);
+                    });
+            }
+        }
+
+        response.status(200).json({
+            success: true,
+            message: "Pont sikeresen frissítve!"
+        });
+
+    } catch (error) {
+        await handleUploadError(response, error, request.file, dbConnection, finalPath);
+    } finally {
+        if (dbConnection) {
+            dbConnection.release();
+        }
     }
 });
 
