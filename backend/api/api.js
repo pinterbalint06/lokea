@@ -19,7 +19,10 @@ const storage = multer.diskStorage({
     }
 });
 
-const upload = multer({ storage });
+const upload = multer({
+    storage: storage,
+    limits: { fileSize: 5 * 1024 * 1024 } // 5 MB
+});
 
 //!Endpoints:
 //?GET /api/test
@@ -289,6 +292,82 @@ router.post('/admin/updateUser', async (request, response) => {
                 response.status(404).json({ message: "Nincs ilyen felhasználó!" });
             }
 
+        }
+    } catch (error) {
+        response.status(500).json({ error: error });
+    }
+})
+
+router.post('/updateProfilePic', upload.single('profilePic'), async (request, response) => {
+    try {
+        if (!request.session.id) {
+            response.status(403).json({ message: "Nincs hozzáférés!" });
+        }
+        else {
+            if (!request.file) {
+                response.status(400).json({ message: "Nincs kép!" });
+            }
+            else {
+                let originalFile = request.file.path;
+
+                let newFileName = `processed-${Date.now()}.webp`;
+                let newFilePath = path.join('uploads', newFileName);
+
+                //Kép tömöritése
+                const metadata = await sharp(originalFile)
+                    .resize(400, 400, {
+                        fit: 'cover',
+                        position: 'center'
+                    })
+                    .toFormat('webp')
+                    .toFile(newFilePath);
+
+                let { width, height } = metadata;
+                let finalUrl = `/uploads/${newFileName}`;
+
+                let lastPfp = await uploadProfilePic(finalUrl, width, height, request.session.userid);
+
+                try {
+                    await fs.unlink(originalFile);
+                } catch (error) {
+                    console.log("nem sikerült a törlés!" + error);
+                }
+
+                if (lastPfp) {
+                    let lastPfpPath = path.join(__dirname, '..', lastPfp);
+                    try {
+                        await fs.unlink(lastPfpPath);
+                    } catch (error) {
+                        console.log("a kép nincs a szerveren!" + error);
+                    }
+                }
+                response.status(201).json({ success: true, message: "Profilkép frissítve!" });
+            }
+        }
+    } catch (error) {
+        response.status(500).json({ error: error });
+    }
+})
+
+router.post('/deleteProfilePic', async (request, response) => {
+    try {
+        if (!request.session.id) {
+            response.status(403).json({ message: "Nincs hozzáférés!" });
+        }
+        else {
+            let lastPfp = await database.deleteProfilePic(request.session.userid);
+            if (!lastPfp) {
+                response.status(200).json({ success: true, message: "A profilkép már alapértelmezett volt." });
+            }
+            else {
+                let lastPfpPath = path.join(__dirname, '..', lastPfp);
+                try {
+                    await fs.unlink(lastPfpPath);
+                } catch (error) {
+                    console.log("a kép nincs a szerveren!" + error);
+                }
+                response.status(201).json({ success: true, message: "Profilkép törölve!" });
+            }
         }
     } catch (error) {
         response.status(500).json({ error: error });

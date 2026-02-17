@@ -153,8 +153,8 @@ async function uploadProfilePic(filepath, width, height, user_id) {
     const queryGetLastImage = 'SELECT images.image_id, images.filepath FROM users LEFT JOIN images ON users.pfp = images.image_id WHERE users.user_id = ?'
     const [oldImageData] = await pool.execute(queryGetLastImage, [user_id]);
 
-    const oldFilePath = oldImageData[0] ? oldImageData[0].filepath : null;
-    const oldImageId = oldImageData[0] ? oldImageData[0].image_id : null;
+    let oldFilePath = oldImageData[0] ? oldImageData[0].filepath : null;
+    let oldImageId = oldImageData[0] ? oldImageData[0].image_id : null;
 
     //Új profilkép adatainak feltöltése + users táblában az pfp frissitése
     const queryInsertNewPic = 'INSERT INTO images (filepath, width, height) VALUES (?, ?, ?)';
@@ -178,8 +178,8 @@ async function deleteProfilePic(user_id) {
     const queryGetLastImage = 'SELECT images.image_id, images.filepath FROM users LEFT JOIN images ON users.pfp = images.image_id WHERE users.user_id = ?'
     const [oldImageData] = await pool.execute(queryGetLastImage, [user_id]);
 
-    const oldFilePath = oldImageData[0] ? oldImageData[0].filepath : null;
-    const oldImageId = oldImageData[0] ? oldImageData[0].image_id : null;
+    let oldFilePath = oldImageData[0] ? oldImageData[0].filepath : null;
+    let oldImageId = oldImageData[0] ? oldImageData[0].image_id : null;
 
     //Users táblában az adott felhasználónak a pfp-t NULL-ra állitja
     const queryUpdatePfpId = 'UPDATE users SET pfp = NULL WHERE user_id = ?';
