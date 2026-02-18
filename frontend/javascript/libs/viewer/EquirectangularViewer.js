@@ -137,6 +137,11 @@ export class EquirectangularViewer extends WASMViewerBase {
         this.autoRotate = enabled;
     }
 
+    getYaw() {
+        this._ensureEngineReady();
+        return this._engine.getYaw();
+    }
+
     // |-----------------|
     // | PRIVATE METHODS |
     // |-----------------|

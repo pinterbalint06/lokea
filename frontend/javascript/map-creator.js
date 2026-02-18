@@ -17,7 +17,16 @@ const CONSTANTS = {
     MAP_CANVAS_ID: "mapCanvas",
     EQUIRECTANGULAR_CANVAS_ID: "equirectangularPreview",
     TEMP_ID: -2,
-    MAX_FILE_SIZE: 10 * 1024 * 1024 // 10MB
+    FOV_MARKER_ID: -999,
+    MAX_FILE_SIZE: 10 * 1024 * 1024, // 10MB
+    MARKER_SIZE: {
+        width: 24.0,
+        height: 32.0
+    },
+    CONE_SIZE: {
+        width: 150,
+        height: 150
+    }
 };
 
 // app state
@@ -41,7 +50,8 @@ let editorState = {
     originalPointData: null,
     pendingEquirectangularFile: null,
     pendingMapFile: null,
-    clickOnMapToast: null
+    clickOnMapToast: null,
+    fovSyncAnimationID: null
 };
 
 // |-----------|
@@ -151,7 +161,6 @@ function getGameMapIdFromUrl() {
 // |-------------|
 // | API & STATE |
 // |-------------|
-
 async function loadImage(url, loadImageFunction, successCheckId) {
     let kepBetolteseToast = showToast("Kép betöltése", "", false, { autohide: false }, ICONS.SPINNER);
     let imageURL;
@@ -211,7 +220,7 @@ async function loadPoints(mapID, successCheckId) {
             }
             let points = data.points;
             for (let i = 0; i < points.length; i++) {
-                mapViewer.placeMarkerByImageCoordinates(points[i].point_id, points[i].point_x, points[i].point_y, "ready");
+                mapViewer.placeMarkerByImageCoordinates(points[i].point_id, points[i].point_x, points[i].point_y, CONSTANTS.MARKER_SIZE.width, CONSTANTS.MARKER_SIZE.height, "ready");
             }
             showToast("Pontok sikeresen betöltve!", "success", true, { delay: 3000 });
         }
@@ -433,6 +442,7 @@ async function handleEquirectangularLoad(file) {
         imgData = await processUploadedImageFile(file);
 
         await equirectangularViewer.loadImage(imgData.url, imgData.width, imgData.height);
+        startFOVSync();
 
         mapViewer.changeMarkerType(editorState.activePointId, "UPLOADING");
 
@@ -489,7 +499,7 @@ function placeOrMoveMarker(cursorX, cursorY) {
         mapViewer.moveMarker(editorState.activePointId, cursorX, cursorY);
     } else {
         UI.savePointButton.disabled = true;
-        mapViewer.placeMarker(editorState.activePointId, cursorX, cursorY, "EMPTY");
+        mapViewer.placeMarker(editorState.activePointId, cursorX, cursorY, CONSTANTS.MARKER_SIZE.width, CONSTANTS.MARKER_SIZE.height, "EMPTY");
         if (editorState.clickOnMapToast) {
             editorState.clickOnMapToast.hide();
         }
@@ -503,7 +513,7 @@ function clickOnCanvas(cursorX, cursorY) {
         placeOrMoveMarker(cursorX, cursorY);
     } else {
         let clickedMarkerIndex = mapViewer.getMarkerAtClick(cursorX, cursorY);
-        if (clickedMarkerIndex != -1) {
+        if (clickedMarkerIndex != CONSTANTS.TEMP_ID) {
             editorState.activePointId = clickedMarkerIndex;
             mapViewer.changeMarkerType(editorState.activePointId, "EDIT");
 
@@ -513,6 +523,7 @@ function clickOnCanvas(cursorX, cursorY) {
                 "/api/game_maps/getImageByPointId?pointId=" + editorState.activePointId,
                 (url, width, height) => {
                     equirectangularViewer.loadImage(url, width, height)
+                    startFOVSync();
                     UI.equiFullscreenBtn.disabled = false;
                 },
                 () => editorState.activePointId == clickedMarkerIndex
@@ -700,6 +711,8 @@ function addUIEventListeners() {
     });
 
     UI.collapseElement.addEventListener("hide.bs.collapse", () => {
+
+        stopFOVSync();
         if (editorState.activePointId != null) {
             if (editorState.activePointId == CONSTANTS.TEMP_ID) {
                 // it was temporary marker remove it
@@ -716,7 +729,6 @@ function addUIEventListeners() {
                 }
             }
         }
-
         UI.savePointButton.disabled = true;
         mapViewer.canvasInput.setDefaultCursor("default");
     });
@@ -773,6 +785,36 @@ function processMapList(mapList) {
     }
 
     updateMapSelectorUI();
+}
+
+function startFOVSync() {
+    stopFOVSync();
+
+    let pos = mapViewer.getMarkerPosition(editorState.activePointId);
+
+    mapViewer.placeMarkerByImageCoordinates(CONSTANTS.FOV_MARKER_ID, pos.x, pos.y, CONSTANTS.CONE_SIZE.width, CONSTANTS.CONE_SIZE.height, "fov_cone");
+
+    editorState.fovSyncAnimationID = requestAnimationFrame(updateFOVSync);
+}
+
+function updateFOVSync() {
+    if (editorState.activePointId && equirectangularViewer) {
+        // TODO: why does this work with negative instead of pos 3D->2D?
+        let yaw = -equirectangularViewer.getYaw();
+
+        mapViewer.rotateMarker(CONSTANTS.FOV_MARKER_ID, yaw);
+
+        editorState.fovSyncAnimationID = requestAnimationFrame(updateFOVSync);
+    };
+}
+
+function stopFOVSync() {
+    if (editorState.fovSyncAnimationID) {
+        cancelAnimationFrame(editorState.fovSyncAnimationID);
+    }
+    if (mapViewer.doesMarkerExist(CONSTANTS.FOV_MARKER_ID)) {
+        mapViewer.removeMarker(CONSTANTS.FOV_MARKER_ID);
+    }
 }
 
 async function init() {

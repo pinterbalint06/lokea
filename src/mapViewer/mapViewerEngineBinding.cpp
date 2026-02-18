@@ -37,5 +37,6 @@ EMSCRIPTEN_BINDINGS(mapViewerEngineBinding)
         .function("getMarkerType", &MapViewerEngine::getMarkerType)
         .function("getMarkerIdAtScreenCoords", &MapViewerEngine::getMarkerIdAtScreenCoords)
         .function("changeMarkerId", &MapViewerEngine::changeMarkerId)
-        .function("clearAllMarkers", &MapViewerEngine::clearAllMarkers);
+        .function("clearAllMarkers", &MapViewerEngine::clearAllMarkers)
+        .function("rotateMarker", &MapViewerEngine::rotateMarker);
 }

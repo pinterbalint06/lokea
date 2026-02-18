@@ -5,7 +5,8 @@ const MARKER_URLS = {
     "empty": "/images/empty-marker.webp",
     "edit": "/images/edit-marker.webp",
     "ready": "/images/ready-marker.webp",
-    "uploading": "/images/uploading-marker.webp"
+    "uploading": "/images/uploading-marker.webp",
+    "fov_cone": "/images/cone.webp"
 }
 
 export const MAP_VIEWER_ERROR_TYPES = {
@@ -148,6 +149,11 @@ export class MapViewer extends WASMViewerBase {
         return returnObject;
     }
 
+    rotateMarker(id, angleInRadians) {
+        this._ensureEngineReady();
+        this._engine.rotateMarker(id, angleInRadians);
+    }
+
     getMarkerPosition(id) {
         this._ensureEngineReady();
 
@@ -162,7 +168,7 @@ export class MapViewer extends WASMViewerBase {
         return this._engine.getMarkerPosition(id);
     }
 
-    placeMarker(id, locationX, locationY, type = "empty") {
+    placeMarker(id, locationX, locationY, width, height, type = "empty") {
         this._ensureEngineReady();
 
         if (Number.isNaN(id)) {
@@ -176,6 +182,14 @@ export class MapViewer extends WASMViewerBase {
         if (Number.isNaN(locationX) || Number.isNaN(locationY) || locationX < 0 || locationY < 0) {
             throw new WebassemblyError(
                 "Invalid marker location",
+                {
+                    "type": MAP_VIEWER_ERROR_TYPES.INVALID_INPUT
+                });
+        }
+
+        if (Number.isNaN(width) || Number.isNaN(height) || width < 0 || height < 0) {
+            throw new WebassemblyError(
+                "Invalid marker size",
                 {
                     "type": MAP_VIEWER_ERROR_TYPES.INVALID_INPUT
                 });
@@ -207,10 +221,10 @@ export class MapViewer extends WASMViewerBase {
                 });
         }
 
-        this._engine.addMarker(id, locationX, locationY, markerType, markerUrl);
+        this._engine.addMarker(id, locationX, locationY, markerType, markerUrl, width, height);
     }
 
-    placeMarkerByImageCoordinates(id, imageX, imageY, type = "empty") {
+    placeMarkerByImageCoordinates(id, imageX, imageY, width, height, type = "empty") {
         this._ensureEngineReady();
 
         if (Number.isNaN(id)) {
@@ -247,7 +261,7 @@ export class MapViewer extends WASMViewerBase {
                 });
         }
 
-        this._engine.placeMarkerByImageCoordinates(id, imageX, imageY, type, markerUrl);
+        this._engine.placeMarkerByImageCoordinates(id, imageX, imageY, type, markerUrl, width, height);
     }
 
     clearMarkers() {

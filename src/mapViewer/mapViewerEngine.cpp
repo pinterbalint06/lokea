@@ -9,6 +9,8 @@
 
 #include "core/rendering/shader.h"
 
+#include "core/math/mathUtils.h"
+
 #include "core/resources/mesh.h"
 #include "core/resources/vertex.h"
 #include "core/resources/material.h"
@@ -101,29 +103,77 @@ void MapViewerEngine::updateSingleMarker(MapMarker *mapMarker)
         float inPlaneX = (inRangeRelativeU * 2.0f) - 1.0f;
         float inPlaneY = 1.0f - (inRangeRelativeV * 2.0f);
 
-        // correct by aspect ratio
-        float inverseAspectRatio = (float)height_ / (float)width_;
-        float halfWidth = mapMarker->getWidth() * inverseAspectRatio * 0.5f;
+        float pixelWidth = mapMarker->getWidth();
+        float pixelHeight = mapMarker->getHeight();
+
+        float inPlaneWidth = (pixelWidth / (float)width_) * 2.0f;
+        float inPlaneHeight = (pixelHeight / (float)height_) * 2.0f;
+        float halfinPlaneHeight = inPlaneHeight * 0.5f;
+        float halfinPlaneWidth = inPlaneWidth * 0.5f;
 
         Vertex* markerVertices = mapMarker->getVertices();
+        float angle = mapMarker->getRotation();
 
-        // center x around calculated coordinate
-        markerVertices[TOP_LEFT].x = inPlaneX - halfWidth;
-        markerVertices[TOP_RIGHT].x = inPlaneX + halfWidth;
+        if (angle != 0.0f)
+        {
+            float cosine = cos(angle);
+            float sine = sin(angle);
 
-        markerVertices[BOTTOM_LEFT].x = inPlaneX - halfWidth;
-        markerVertices[BOTTOM_RIGHT].x = inPlaneX + halfWidth;
+            // Pre-calculate vector components for width and height
+            float widthCosine = halfinPlaneWidth * cosine;
+            float widthSine = halfinPlaneWidth * sine;
+            float heightCosine = halfinPlaneHeight * cosine;
+            float heightSine = halfinPlaneHeight * sine;
 
-        // put the bottom to the click not centered around
-        // so the markers bottom middle point marks the point
-        markerVertices[TOP_LEFT].y = inPlaneY + mapMarker->getHeight();
-        markerVertices[TOP_RIGHT].y = inPlaneY + mapMarker->getHeight();
+            // rotation formula: 
+            // x' = x*cos - y*sin
+            // y' = x*sin + y*cos
 
-        markerVertices[BOTTOM_LEFT].y = inPlaneY;
-        markerVertices[BOTTOM_RIGHT].y = inPlaneY;
+            // left is -halfinPlaneWidth so it is -widthCosine (-w, +h)
+            // x' = -x*cos - y*sin 
+            markerVertices[TOP_LEFT].x = inPlaneX - widthCosine - heightSine;
+            markerVertices[TOP_LEFT].y = inPlaneY - widthSine + heightCosine;
+
+            // both half width and height is added to this so it is standard rotation formula (+w, +h)
+            markerVertices[TOP_RIGHT].x = inPlaneX + widthCosine - heightSine;
+            markerVertices[TOP_RIGHT].y = inPlaneY + widthSine + heightCosine;
+
+            // bottom left (-w, -h) both half ...
+            markerVertices[BOTTOM_LEFT].x = inPlaneX - widthCosine + heightSine;
+            markerVertices[BOTTOM_LEFT].y = inPlaneY - widthSine - heightCosine;
+
+            // bottom right (+w, -h)
+            markerVertices[BOTTOM_RIGHT].x = inPlaneX + widthCosine + heightSine;
+            markerVertices[BOTTOM_RIGHT].y = inPlaneY + widthSine - heightCosine;
+        }
+        else
+        {
+            // center x around calculated coordinate
+            markerVertices[TOP_LEFT].x = inPlaneX - halfinPlaneWidth;
+            markerVertices[TOP_RIGHT].x = inPlaneX + halfinPlaneWidth;
+            markerVertices[BOTTOM_LEFT].x = inPlaneX - halfinPlaneWidth;
+            markerVertices[BOTTOM_RIGHT].x = inPlaneX + halfinPlaneWidth;
+
+            // put the bottom to the click not centered around
+            // so the markers bottom middle point marks the point
+            markerVertices[TOP_LEFT].y = inPlaneY + halfinPlaneHeight;
+            markerVertices[TOP_RIGHT].y = inPlaneY + halfinPlaneHeight;
+            markerVertices[BOTTOM_LEFT].y = inPlaneY - halfinPlaneHeight;
+            markerVertices[BOTTOM_RIGHT].y = inPlaneY - halfinPlaneHeight;
+        }
 
         // update gpu
         mapMarker->setUpOpenGL();
+    }
+}
+
+void MapViewerEngine::rotateMarker(int id, float angleRadians)
+{
+    int index = getMarkerIndexById(id);
+    if (isMapLoaded_ && index != -1)
+    {
+        markers_[index]->setRotation(angleRadians);
+        updateSingleMarker(markers_[index].get());
     }
 }
 
@@ -160,11 +210,11 @@ int MapViewerEngine::getMarkerIndexById(int id)
     return foundIndex;
 }
 
-void MapViewerEngine::addMarkerByUV(int id, float u, float v, const std::string &type, const std::string &textureUrl)
+void MapViewerEngine::addMarkerByUV(int id, float u, float v, const std::string &type, const std::string &textureUrl, float width, float height)
 {
     if (isMapLoaded_ && !doesMarkerExist(id))
     {
-        std::shared_ptr<MapMarker> marker = std::make_shared<MapMarker>(id, type, textureUrl, u, v, 0.04375f, 0.0625f);
+        std::shared_ptr<MapMarker> marker = std::make_shared<MapMarker>(id, type, textureUrl, u, v, width, height);
 
         markers_.push_back(marker);
         addMesh(marker);
@@ -190,7 +240,7 @@ void MapViewerEngine::changeMarkerType(int id, const std::string &type, const st
     }
 }
 
-void MapViewerEngine::addMarker(int id, float screenX, float screenY, const std::string &type, const std::string &textureUrl)
+void MapViewerEngine::addMarker(int id, float screenX, float screenY, const std::string &type, const std::string &textureUrl, float width, float height)
 {
     if (isMapLoaded_ && !doesMarkerExist(id))
     {
@@ -199,7 +249,7 @@ void MapViewerEngine::addMarker(int id, float screenX, float screenY, const std:
 
         clickedU = clickedU - std::floor(clickedU);
 
-        addMarkerByUV(id, clickedU, clickedV, type, textureUrl);
+        addMarkerByUV(id, clickedU, clickedV, type, textureUrl, width, height);
     }
     else
     {
@@ -207,14 +257,14 @@ void MapViewerEngine::addMarker(int id, float screenX, float screenY, const std:
     }
 }
 
-void MapViewerEngine::addMarkerByImageCoordinates(int id, float imageX, float imageY, const std::string &type, const std::string &textureUrl)
+void MapViewerEngine::addMarkerByImageCoordinates(int id, float imageX, float imageY, const std::string &type, const std::string &textureUrl, float width, float height)
 {
     if (isMapLoaded_ && !doesMarkerExist(id))
     {
         float UCoord = imageX / mapWidth_;
         float VCoord = imageY / mapHeight_;
 
-        addMarkerByUV(id, UCoord, VCoord, type, textureUrl);
+        addMarkerByUV(id, UCoord, VCoord, type, textureUrl, width, height);
     }
     else
     {

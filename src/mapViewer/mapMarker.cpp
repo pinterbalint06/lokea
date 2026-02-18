@@ -24,6 +24,7 @@ MapMarker::MapMarker(int id, const std::string &type, const std::string &texture
     type_ = type;
     width_ = width;
     height_ = height;
+    rotation_ = 0.0f;
     Vertex vertices[4];
     //                        x      y     z     w     nx    ny    nz    u     v
     vertices[TOP_LEFT] = { 0.0f,  0.0f, 0.0f, 1.0f, 0.0f, 0.0f, 1.0f, 0.0f, 0.0f };
