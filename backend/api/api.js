@@ -25,29 +25,33 @@ const upload = multer({
     limits: { fileSize: 5 * 1024 * 1024 } // 5 MB
 });
 
-//!Endpoints:
-//?GET /api/test
+//UTILITY FUNCTIONS
+
+const checkAuth = (request, response, next) => {
+    if (!request.session.userId) {
+        response.status(401).json({ message: "Bejelentkezés szükséges!" });
+    }
+    next();
+};
+
+const checkRole = (...roles) => {
+    return (request, response, next) => {
+        if (!roles.includes(request.session.role)) {
+            return response.status(403).json({ message: "Nincs hozzáférésed!" });
+        }
+        next();
+    };
+};
+
+//!ENDPOINTS
+//test
 router.get('/test', (request, response) => {
     response.status(200).json({
         message: 'Ez a végpont működik.'
     });
 });
 
-//?GET /api/testsql
-router.get('/testsql', async (request, response) => {
-    try {
-        const selectall = await database.selectall();
-        response.status(200).json({
-            message: 'Ez a végpont működik.',
-            results: selectall
-        });
-    } catch (error) {
-        response.status(500).json({
-            message: 'Ez a végpont nem működik.'
-        });
-    }
-});
-
+//Endpoints - signup, login, signout
 router.post("/signup",
     [
         body("username")
@@ -147,7 +151,7 @@ router.post("/login",
         }
     });
 
-router.post('/signout', (request, response) => {
+router.post('/signout', checkAuth, (request, response) => {
     request.session.destroy(error => {
         if (error) {
             response.status(500).json({ success: false, error: error });
@@ -159,36 +163,9 @@ router.post('/signout', (request, response) => {
     });
 });
 
-router.get('/admin/users', async (request, response) => {
-    try {
-        if (request.session.role != 'ADMIN') {
-            response.status(403).json({ message: "Nincs hozzáférésed!" });
-        }
-        else {
-            let users = await database.getUsers();
-            response.status(200).json({ message: "Sikeres lekérés", users: users });
-        }
-    } catch (error) {
-        response.status(500).json({ error: error });
-    }
-})
+//Endpoints - admin
 
-router.get('/admin/user', async (request, response) => {
-    try {
-        if (request.session.role != 'ADMIN') {
-            response.status(403).json({ message: "Nincs hozzáférésed!" });
-        }
-        else {
-            let params = request.query.id;
-            let users = await database.getUser(params);
-            response.status(200).json({ message: "Sikeres lekérés", users: users });
-        }
-    } catch (error) {
-        response.status(500).json({ error: error });
-    }
-})
-
-router.post("/admin/signupFromAdmin",
+router.post("/admin/signupFromAdmin", checkAuth, checkRole("admin"),
     [
         body("username")
             .isLength({ min: 1, max: 20 }).withMessage("Felhasználónév hossza nem megfelelő!"),
@@ -200,33 +177,26 @@ router.post("/admin/signupFromAdmin",
             .isLength({ min: 8, max: 50 }).withMessage("Jelszó hossza 8-50")
             .matches(/\d/).withMessage("Kell benne szám")
             .matches(/[A-Z]/).withMessage("Kell benne nagybetű"),
-        body("role")
-            .isIn(['user', 'MOD', 'ADMIN']).withMessage("Érvénytelen role"),
         body("is_2fa")
             .isBoolean().withMessage("Nem kapott true/false a két lépcsős azonosítás!")
     ],
     async (request, response) => {
         try {
-            if (request.session.role != 'ADMIN') {
-                response.status(403).json({ message: "Nincs hozzáférésed!" });
+            const errors = validationResult(request);
+            if (!errors.isEmpty()) {
+                response.status(400).json({
+                    success: false,
+                    error: errors.array()
+                });
             }
             else {
-                const errors = validationResult(request);
-                if (!errors.isEmpty()) {
-                    response.status(400).json({
-                        success: false,
-                        error: errors.array()
-                    });
-                }
-                else {
-                    const { username, email, password, role, is_2fa } = request.body;
-                    const hashedPassword = await bcrypt.hash(password, 10);
-                    await database.newUserFromAdmin(username, email, hashedPassword, role, is_2fa);
-                    response.status(201).json({
-                        success: true,
-                        message: "Sikeres regisztráció"
-                    });
-                }
+                const { username, email, password, role, is_2fa } = request.body;
+                const hashedPassword = await bcrypt.hash(password, 10);
+                await database.newUserFromAdmin(username, email, hashedPassword, role, is_2fa);
+                response.status(201).json({
+                    success: true,
+                    message: "Sikeres regisztráció"
+                });
             }
         } catch (error) {
             if (error.code === "ER_DUP_ENTRY") {
@@ -241,151 +211,140 @@ router.post("/admin/signupFromAdmin",
     }
 );
 
-router.post('/admin/sortedUsers', async (request, response) => {
+router.get('/admin/users', checkAuth, checkRole("admin"), async (request, response) => {
     try {
-        if (request.session.role != 'ADMIN') {
-            response.status(403).json({ message: "Nincs hozzáférésed!" });
+        let users = await database.getUsers();
+        response.status(200).json({ message: "Sikeres lekérés", users: users });
+    } catch (error) {
+        response.status(500).json({ error: error });
+    }
+})
+
+router.get('/admin/user', checkAuth, checkRole("admin"), async (request, response) => {
+    try {
+        let params = request.query.id;
+        let users = await database.getUser(params);
+        response.status(200).json({ message: "Sikeres lekérés", users: users });
+    } catch (error) {
+        response.status(500).json({ error: error });
+    }
+})
+
+router.post('/admin/sortedUsers', checkAuth, checkRole("admin"), async (request, response) => {
+    try {
+        let { mireKeresek, mit, status, adminChecked, modChecked, userChecked } = request.body;
+        let users = await database.sortedUsers(mireKeresek, mit, status, adminChecked, modChecked, userChecked);
+        response.status(200).json({ message: "Sikeres lekérés", users: users });
+    } catch (error) {
+        response.status(500).json({ error: error });
+    }
+})
+
+router.post('/admin/updateUser', checkAuth, checkRole("admin"), async (request, response) => {
+    try {
+        let { user_id, username, email, role, is_2fa } = request.body;
+        let success = await database.updateUser(user_id, username, email, role, is_2fa);
+        if (success == 1) {
+            response.status(204).json({ message: "Sikeres felhasználófrissités!" });
         }
         else {
-            let { mireKeresek, mit, status, adminChecked, modChecked, userChecked } = request.body;
-            let users = await database.sortedUsers(mireKeresek, mit, status, adminChecked, modChecked, userChecked);
-            response.status(200).json({ message: "Sikeres lekérés", users: users });
+            response.status(404).json({ message: "Nincs ilyen felhasználó!" });
         }
     } catch (error) {
         response.status(500).json({ error: error });
     }
 })
 
-router.post('/admin/userToInactive', async (request, response) => {
+router.post('/admin/userToInactive', checkAuth, checkRole("admin"), async (request, response) => {
     try {
-        if (request.session.role != 'ADMIN') {
-            response.status(403).json({ message: "Nincs hozzáférésed!" });
+        let { userId } = request.body;
+        let sorok = await database.userToInactive(userId);
+        if (sorok === 0) {
+            response.status(200).json({ message: "A felhasználó már inaktiv volt!" })
         }
         else {
-            console.log(request.body);
-            let { userId } = request.body;
-            let sorok = await database.userToInactive(userId);
-            if (sorok === 0) {
-                response.status(200).json({ message: "A felhasználó már inaktiv volt!" })
-            }
-            else {
-                response.status(204).end();
-            }
+            response.status(204).end();
         }
     } catch (error) {
         response.status(500).json({ error: error });
     }
 })
 
-router.post('/admin/updateUser', async (request, response) => {
+//Endpoints - settings
+
+router.post('/updateProfilePic', checkAuth, upload.single('profilePic'), async (request, response) => {
     try {
-        if (request.session.role != 'ADMIN') {
-            response.status(403).json({ message: "Nincs hozzáférésed!" });
+        if (!request.file) {
+            response.status(400).json({ message: "Nincs kép!" });
         }
         else {
-            let { user_id, username, email, role, is_2fa } = request.body;
-            let success = await database.updateUser(user_id, username, email, role, is_2fa);
-            if (success == 1) {
-                response.status(204).json({ message: "Sikeres felhasználófrissités!" });
+            let originalFile = request.file.path;
+
+            let newFileName = `processed-${Date.now()}.webp`;
+            let newFilePath = path.join('uploads', newFileName);
+
+            //Kép tömöritése
+            sharp.cache(false);
+            const metadata = await sharp(originalFile)
+                .resize(400, 400, {
+                    fit: 'cover',
+                    position: 'center'
+                })
+                .toFormat('webp')
+                .toFile(newFilePath);
+
+            let { width, height } = metadata;
+            let finalUrl = `/uploads/${newFileName}`;
+
+            let lastPfp = await database.uploadProfilePic(finalUrl, width, height, request.body.user_id);
+
+            try {
+                await fs.unlink(originalFile);
+            } catch (error) {
+                console.log("nem sikerült a törlés!" + error);
             }
-            else {
-                response.status(404).json({ message: "Nincs ilyen felhasználó!" });
-            }
 
-        }
-    } catch (error) {
-        response.status(500).json({ error: error });
-    }
-})
-
-router.post('/updateProfilePic', upload.single('profilePic'), async (request, response) => {
-    try {
-        if (!request.session.userid) {
-            response.status(403).json({ message: "Nincs hozzáférés!" });
-        }
-        else {
-            if (!request.file) {
-                response.status(400).json({ message: "Nincs kép!" });
-            }
-            else {
-                let originalFile = request.file.path;
-
-                let newFileName = `processed-${Date.now()}.webp`;
-                let newFilePath = path.join('uploads', newFileName);
-
-                //Kép tömöritése
-                sharp.cache(false);
-                const metadata = await sharp(originalFile)
-                    .resize(400, 400, {
-                        fit: 'cover',
-                        position: 'center'
-                    })
-                    .toFormat('webp')
-                    .toFile(newFilePath);
-
-                let { width, height } = metadata;
-                let finalUrl = `/uploads/${newFileName}`;
-
-                let lastPfp = await database.uploadProfilePic(finalUrl, width, height, request.body.user_id);
-
-                try {
-                    await fs.unlink(originalFile);
-                } catch (error) {
-                    console.log("nem sikerült a törlés!" + error);
-                }
-
-                if (lastPfp) {
-                    let lastPfpPath = path.join(__dirname, '..', lastPfp);
-                    try {
-                        await fs.unlink(lastPfpPath);
-                    } catch (error) {
-                        console.log("a kép nincs a szerveren!" + error);
-                    }
-                }
-                response.status(201).json({ success: true, message: "Profilkép frissítve!" });
-            }
-        }
-    } catch (error) {
-        response.status(500).json({ error: error.message, details: error.stack });
-    }
-})
-
-router.post('/deleteProfilePic', async (request, response) => {
-    try {
-        if (!request.session.userid) {
-            response.status(403).json({ message: "Nincs hozzáférés!" });
-        }
-        else {
-            let lastPfp = await database.deleteProfilePic(request.body.user_id);
-            if (!lastPfp) {
-                response.status(200).json({ success: true, message: "A profilkép már alapértelmezett volt." });
-            }
-            else {
+            if (lastPfp) {
                 let lastPfpPath = path.join(__dirname, '..', lastPfp);
                 try {
                     await fs.unlink(lastPfpPath);
                 } catch (error) {
                     console.log("a kép nincs a szerveren!" + error);
                 }
-                response.status(201).json({ success: true, message: "Profilkép törölve!" });
             }
+            response.status(201).json({ success: true, message: "Profilkép frissítve!" });
+        }
+    } catch (error) {
+        response.status(500).json({ error: error.message, details: error.stack });
+    }
+})
+
+router.post('/deleteProfilePic', checkAuth, async (request, response) => {
+    try {
+        let lastPfp = await database.deleteProfilePic(request.body.user_id);
+        if (!lastPfp) {
+            response.status(200).json({ success: true, message: "A profilkép már alapértelmezett volt." });
+        }
+        else {
+            let lastPfpPath = path.join(__dirname, '..', lastPfp);
+            try {
+                await fs.unlink(lastPfpPath);
+            } catch (error) {
+                console.log("a kép nincs a szerveren!" + error);
+            }
+            response.status(201).json({ success: true, message: "Profilkép törölve!" });
         }
     } catch (error) {
         response.status(500).json({ error: error });
     }
 })
 
-router.get('/getProfilePic', (request, response) => {
+router.get('/getProfilePic', checkAuth, (request, response) => {
     try {
-        if (!request.session.id) {
-            response.status(403).json({ message: "Nincs hozzáférés!" });
-        }
-        else {
-            let pfproute = request.query.route;
-            let filePath = path.join(__dirname, '..', pfproute);
+        let pfproute = request.query.route;
+        let filePath = path.join(__dirname, '..', pfproute);
 
-            response.sendFile(filePath);
-        }
+        response.sendFile(filePath);
     } catch (error) {
         console.log(error);
     }
