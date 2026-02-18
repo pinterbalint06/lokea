@@ -23,7 +23,7 @@ async function newUser(username, email, password) {
     return result;
 }
 
-async function newUser(username, email, password, role, is_2fa) {
+async function newUserFromAdmin(username, email, password, role, is_2fa) {
     const query = 'INSERT INTO users (username, email, password, role, is_2fa) VALUES (?, ?, ?, ?, ?)';
     const [result] = await pool.execute(query, [username, email, password, role, is_2fa]);
     return result;
@@ -48,7 +48,7 @@ async function getUsers() {
 }
 
 async function getUser(id) {
-    const query = 'SELECT users.user_id, users.username, users.email, users.role, users.is_2fa FROM users WHERE users.user_id = ?';
+    const query = 'SELECT users.user_id, users.username, users.email, users.role, users.is_2fa, images.filepath FROM users LEFT JOIN images ON (images.image_id = users.pfp) WHERE users.user_id = ?';
     const [result] = await pool.execute(query, [id]);
     return result;
 }
@@ -196,6 +196,7 @@ async function deleteProfilePic(user_id) {
 module.exports = {
     // selectall,
     newUser,
+    newUserFromAdmin,
     getUserByUsername,
     getUserByEmail,
     getUsers,
