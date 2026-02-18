@@ -18,25 +18,75 @@ const pool = mysql.createPool({
 // }
 
 async function newUser(username, email, password) {
-    const query = 'INSERT INTO users (username, email, password) VALUES (?, ?, ?)';
-    const [result] = await pool.execute(query, [username, email, password]);
-    return result;
+    let success = false;
+    let error;
+    const queryUserExistsCheck = 'SELECT email, username FROM users WHERE username LIKE ? OR email LIKE ?';
+    let [result] = await pool.execute(queryUserExistsCheck, [username, email]);
+    if (result.length == 0) {
+        try {
+            const queryInsertNewUser = 'INSERT INTO users (username, email, password) VALUES (?, ?, ?)';
+            [result] = await pool.execute(queryInsertNewUser, [username, email, password]);
+            if (result.affectedRows == 1) {
+                success = true;
+            }
+            else {
+                error = "Failed insert";
+            }
+        } catch (fault) {
+            if (fault.code == 'ER_DUP_ENTRY') {
+                error = "User exists";
+            }
+            else {
+                error = "Failed insert";
+            }
+        }
+    }
+    else {
+        error = "User exists";
+    }
+
+    return success ? { success } : { success, error };
 }
 
 async function newUserFromAdmin(username, email, password, role, is_2fa) {
-    const query = 'INSERT INTO users (username, email, password, role, is_2fa) VALUES (?, ?, ?, ?, ?)';
-    const [result] = await pool.execute(query, [username, email, password, role, is_2fa]);
-    return result;
+    let success = false;
+    let error;
+    const queryUserExistsCheck = 'SELECT email, username FROM users WHERE username LIKE ? OR email LIKE ?';
+    let [result] = await pool.execute(queryUserExistsCheck, [username, email]);
+    if (result.length == 0) {
+        try {
+            const queryInsertNewUser = 'INSERT INTO users (username, email, password, role, is_2fa) VALUES (?, ?, ?, ?, ?)';
+            [result] = await pool.execute(queryInsertNewUser, [username, email, password, role, is_2fa]);
+            if (result.affectedRows == 1) {
+                success = true;
+            }
+            else {
+                error = "Failed insert";
+            }
+        } catch (fault) {
+            if (fault.code == 'ER_DUP_ENTRY') {
+                error = "User exists";
+            }
+            else {
+                error = "Failed insert";
+            }
+        }
+    }
+    else {
+        error = "User exists";
+    }
+
+    return success ? { success } : { success, error };
 }
 
 async function getUserByUsername(username) {
-    const query = 'SELECT users.password, users.user_id, users.role FROM users WHERE users.username = ?';
+    const query = 'SELECT users.password, users.user_id, users.role, users.deleted_at FROM users WHERE users.username = ?';
     const [result] = await pool.execute(query, [username]);
     return result;
 }
 
 async function getUserByEmail(email) {
-    const query = 'SELECT users.password, users.user_id, users.role FROM users WHERE users.email = ?';
+    const query = 'SELECT users.password, users.user_id, users.role, users.deleted_at FROM users WHERE users.email = ?';
     const [result] = await pool.execute(query, [email]);
     return result;
 }
@@ -187,7 +237,7 @@ async function deleteProfilePic(user_id) {
 
     //Törlés az images táblából
     const queryDeleteOldPic = 'DELETE FROM images WHERE image_id = ?';
-        await pool.execute(queryDeleteOldPic, [oldImageId]);
+    await pool.execute(queryDeleteOldPic, [oldImageId]);
 
     //Visszaadja a régi kép elérési útvonalát a törléshez.
     return oldFilePath;

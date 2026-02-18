@@ -11,9 +11,7 @@ document.addEventListener("DOMContentLoaded", async function () {
         let username = document.getElementById('logUser');
         let jelszo = document.getElementById('logPass');
         if (!validalvaBej(username, jelszo)) {
-            if (bejelentkezes(username, jelszo)) {
-                kijelentkezesgomb();
-            }
+            bejelentkezes(username, jelszo);
         }
     });
 });
@@ -23,19 +21,33 @@ function validalvaReg(a, b, c) {
     let username = a.value;
     let email = b.value;
     let jelszo = c.value;
-    if (username.length > 50 || username.length < 1) {
+    if (username.length > 50 || username.length < 1 || !isCorrectUsername(username)) {
         fail = true;
         a.classList.add("border-danger");
+    }
+    else {
+        a.classList.remove("border-danger");
     }
     if (email.length > 250 || email.length < 5 || !isEmail(email)) {
         fail = true;
         b.classList.add("border-danger");
     }
+    else {
+        b.classList.remove("border-danger");
+    }
     if (jelszo.length > 50 || jelszo.length < 8 || !isCorrectPassword(jelszo)) {
         fail = true;
         c.classList.add("border-danger");
     }
+    else {
+        c.classList.remove("border-danger");
+    }
     return fail;
+}
+
+function isCorrectUsername(username) {
+    const re = /^[a-zA-Z0-9áéíóöőúüűÁÉÍÓÖŐÚÜŰ_-]{1,20}$/;
+    return re.test(username);
 }
 
 function isEmail(email) {
@@ -92,9 +104,15 @@ function validalvaBej(a, b) {
         fail = true;
         a.classList.add("border-danger");
     }
+    else {
+        a.classList.remove("border-danger");
+    }
     if (jelszo.length > 50 || jelszo.length < 8) {
         fail = true;
         b.classList.add("border-danger");
+    }
+    else {
+        b.classList.remove("border-danger");
     }
     return fail;
 }
@@ -113,13 +131,20 @@ async function bejelentkezes(username, jelszo) {
         });
         let data = await response.json();
         alert(data.message);
-        return response.ok;
+        if (response.ok) {
+            kijelentkezesgomb();
+        }
     } catch (error) {
         alert(`hálózati hiba: ${error}`);
     }
 }
 
 function kijelentkezesgomb() {
+    let kijelentkezesgomb = document.getElementById('signoutbutton');
+    if (kijelentkezesgomb) {
+        kijelentkezesgomb.remove();
+    }
+
     let a = document.createElement('button');
     a.innerText = "kijelentkezes";
     a.id = 'signoutbutton';
@@ -145,5 +170,6 @@ function kijelentkezesgomb() {
         console.log(`hálózati hiba: ${error}`);
     }
     })
-    document.getElementById('buttons').appendChild(a);
+    let hova = document.getElementById('buttons');
+    hova.appendChild(a);
 }

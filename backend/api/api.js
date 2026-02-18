@@ -28,10 +28,13 @@ const upload = multer({
 //UTILITY FUNCTIONS
 
 const checkAuth = (request, response, next) => {
-    if (!request.session.userId) {
+    if (!request.session.userid) {
         response.status(401).json({ message: "Bejelentkezés szükséges!" });
     }
-    next();
+    else {
+        next();
+    }
+
 };
 
 const checkRole = (...roles) => {
@@ -39,7 +42,9 @@ const checkRole = (...roles) => {
         if (!roles.includes(request.session.role)) {
             return response.status(403).json({ message: "Nincs hozzáférésed!" });
         }
-        next();
+        else {
+            next();
+        }
     };
 };
 
@@ -55,6 +60,8 @@ router.get('/test', (request, response) => {
 router.post("/signup",
     [
         body("username")
+            .not().isEmail().withMessage("Felhasználónév nem lehet email cim!")
+            .matches(/^[a-zA-Z0-9áéíóöőúüűÁÉÍÓÖŐÚÜŰ_-]+$/).withMessage('A felhasználónév csak betűket, számokat, - vagy _ karaktert, és ékezetes betűket tartalmazhat.')
             .isLength({ min: 1, max: 20 }).withMessage("Felhasználónév hossza nem megfelelő!"),
         body("email")
             .isEmail().withMessage("Hibás email formátum")
@@ -77,21 +84,22 @@ router.post("/signup",
             else {
                 const { username, email, password } = request.body;
                 const hashedPassword = await bcrypt.hash(password, 10);
-                let feltolt = await database.newUser(username, email, hashedPassword);
-                response.status(201).json({
-                    success: true,
-                    message: "Sikeres regisztráció"
-                });
+                let insert = await database.newUser(username, email, hashedPassword);
+                if (insert.success) {
+                    response.status(201).json({
+                        success: true,
+                        message: "Sikeres regisztráció"
+                    });
+                }
+                else {
+                    response.status(500).json({
+                        success: false,
+                        message: insert.error
+                    })
+                }
             }
         } catch (error) {
-            if (error.code === "ER_DUP_ENTRY") {
-                response.status(400).json({
-                    error: "A felhasználónév vagy email már foglalt!"
-                });
-            }
-            else {
-                response.status(500).json({ error: error });
-            }
+            response.status(500).json({ error: error });
         }
     }
 );
@@ -121,7 +129,7 @@ router.post("/login",
                 else {
                     rows = await database.getUserByUsername(username);
                 }
-                if (rows.length === 0) {
+                if (rows.length === 0 || rows[0].deleted_at != null) {
                     response.status(401).json({ message: "Hibás email vagy jelszó" });
                 }
                 else {
@@ -165,20 +173,21 @@ router.post('/signout', checkAuth, (request, response) => {
 
 //Endpoints - admin
 
-router.post("/admin/signupFromAdmin", checkAuth, checkRole("admin"),
+router.post("/admin/signupFromAdmin", checkAuth, checkRole("ADMIN"),
     [
         body("username")
+            .not().isEmail().withMessage("Felhasználónév nem lehet email cim!")
+            .matches(/^[a-zA-Z0-9áéíóöőúüűÁÉÍÓÖŐÚÜŰ_-]+$/).withMessage('A felhasználónév csak betűket, számokat, - vagy _ karaktert, és ékezetes betűket tartalmazhat.')
             .isLength({ min: 1, max: 20 }).withMessage("Felhasználónév hossza nem megfelelő!"),
         body("email")
             .isEmail().withMessage("Hibás email formátum")
             .isLength({ min: 5, max: 250 }).withMessage("Email max 250 karakter"),
-
         body("password")
             .isLength({ min: 8, max: 50 }).withMessage("Jelszó hossza 8-50")
             .matches(/\d/).withMessage("Kell benne szám")
             .matches(/[A-Z]/).withMessage("Kell benne nagybetű"),
         body("is_2fa")
-            .isBoolean().withMessage("Nem kapott true/false a két lépcsős azonosítás!")
+            .isBoolean().withMessage("Nem kapott értéket a kétlépcsős azonosítás!")
     ],
     async (request, response) => {
         try {
@@ -192,26 +201,27 @@ router.post("/admin/signupFromAdmin", checkAuth, checkRole("admin"),
             else {
                 const { username, email, password, role, is_2fa } = request.body;
                 const hashedPassword = await bcrypt.hash(password, 10);
-                await database.newUserFromAdmin(username, email, hashedPassword, role, is_2fa);
-                response.status(201).json({
-                    success: true,
-                    message: "Sikeres regisztráció"
-                });
+                let insert = await database.newUserFromAdmin(username, email, hashedPassword, role, is_2fa);
+                if (insert.success) {
+                    response.status(201).json({
+                        success: true,
+                        message: "Sikeres regisztráció!"
+                    });
+                }
+                else {
+                    response.status(500).json({
+                        success: false,
+                        message: insert.error
+                    })
+                }
             }
         } catch (error) {
-            if (error.code === "ER_DUP_ENTRY") {
-                response.status(400).json({
-                    error: "A felhasználónév vagy email már foglalt!"
-                });
-            }
-            else {
-                response.status(500).json({ error: "Hiba az adatbázis művelet során!" });
-            }
+            response.status(500).json({ error: "Hiba az adatbázis művelet során!" });
         }
     }
 );
 
-router.get('/admin/users', checkAuth, checkRole("admin"), async (request, response) => {
+router.get('/admin/users', checkAuth, checkRole("ADMIN"), async (request, response) => {
     try {
         let users = await database.getUsers();
         response.status(200).json({ message: "Sikeres lekérés", users: users });
@@ -220,7 +230,7 @@ router.get('/admin/users', checkAuth, checkRole("admin"), async (request, respon
     }
 })
 
-router.get('/admin/user', checkAuth, checkRole("admin"), async (request, response) => {
+router.get('/admin/user', checkAuth, checkRole("ADMIN"), async (request, response) => {
     try {
         let params = request.query.id;
         let users = await database.getUser(params);
@@ -230,7 +240,7 @@ router.get('/admin/user', checkAuth, checkRole("admin"), async (request, respons
     }
 })
 
-router.post('/admin/sortedUsers', checkAuth, checkRole("admin"), async (request, response) => {
+router.post('/admin/sortedUsers', checkAuth, checkRole("ADMIN"), async (request, response) => {
     try {
         let { mireKeresek, mit, status, adminChecked, modChecked, userChecked } = request.body;
         let users = await database.sortedUsers(mireKeresek, mit, status, adminChecked, modChecked, userChecked);
@@ -240,7 +250,7 @@ router.post('/admin/sortedUsers', checkAuth, checkRole("admin"), async (request,
     }
 })
 
-router.post('/admin/updateUser', checkAuth, checkRole("admin"), async (request, response) => {
+router.post('/admin/updateUser', checkAuth, checkRole("ADMIN"), async (request, response) => {
     try {
         let { user_id, username, email, role, is_2fa } = request.body;
         let success = await database.updateUser(user_id, username, email, role, is_2fa);
@@ -255,7 +265,7 @@ router.post('/admin/updateUser', checkAuth, checkRole("admin"), async (request, 
     }
 })
 
-router.post('/admin/userToInactive', checkAuth, checkRole("admin"), async (request, response) => {
+router.post('/admin/userToInactive', checkAuth, checkRole("ADMIN"), async (request, response) => {
     try {
         let { userId } = request.body;
         let sorok = await database.userToInactive(userId);
