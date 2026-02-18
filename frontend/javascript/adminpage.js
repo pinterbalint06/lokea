@@ -54,6 +54,18 @@ async function sortedUser() {
     return data;
 }
 
+async function getProfilePicture(route) {
+    try {
+        let response = await fetch(`/api/getProfilePic?route=${route}`);
+        let blob = await response.blob();
+
+        let objectURL = URL.createObjectURL(blob);
+        return objectURL;
+    } catch (error) {
+        console.log(error);
+    }
+}
+
 //POST fetchings
 
 async function kijelentkezes() {
@@ -155,10 +167,29 @@ async function uploadProfilePic(picture, id) {
             method: "POST",
             body: fd
         });
-        const result = await response.json();
 
-        if (result.success) {
+        if (response.ok) {
             console.log("sikerult a feltoltes");
+        }
+    } catch (error) {
+        console.log(`hálózati hiba: ${error}`);
+    }
+}
+
+async function deleteProfilePicture(id) {
+    try {
+        let response = await fetch("/api/deleteProfilePic", {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json"
+            },
+            body: JSON.stringify({
+                user_id: id
+            })
+        });
+
+        if (response.ok) {
+            console.log("sikerult a torles");
         }
     } catch (error) {
         console.log(`hálózati hiba: ${error}`);
@@ -784,25 +815,22 @@ async function editUserToModal(data) {
     colLeft.classList.add("col-4");
 
     let pfp = document.createElement("img");
-    console.log(data);
+    let deletePfpButton;
     if (pfproute == null) {
         pfp.src = "../images/default.png";
     }
     else {
-        try {
-            let response = await fetch(`/api/getProfilePic?route=${pfproute}`);
-            let blob = await response.blob();
-
-            let objectURL = URL.createObjectURL(blob);
-            pfp.src = objectURL;
-        } catch (error) {
-            console.log(error);
-        }
+        pfp.src = await getProfilePicture(pfproute);
+        deletePfpButton = gombGeneral("button", "Profilkép törlése", "red", null);
+        deletePfpButton.addEventListener("click", async function() {
+            await deleteProfilePicture(user_id);
+        })
     }
     pfp.alt = "Profile picture";
     pfp.title = "Profile picture";
     pfp.classList.add("img-fluid", "img-thumbnail", "rounded-circle", "h-75"
     );
+
     let newPfpInput = inputGeneral("file", null, null, "newPfpInput", ["form-control"], false);
     newPfpInput.setAttribute("accept", "image/*");
     let newPfpButton = gombGeneral("button", "Profilkép feltöltése", "green", null);
@@ -812,7 +840,7 @@ async function editUserToModal(data) {
             alert("Kérlek, válassz ki egy képet!");
         }
         else {
-            await (uploadProfilePic(feltoltott.files[0], user_id));
+            await uploadProfilePic(feltoltott.files[0], user_id);
         }
     })
 
@@ -822,6 +850,9 @@ async function editUserToModal(data) {
     colLeft.appendChild(pfp);
     colLeft.appendChild(newPfpInput);
     colLeft.appendChild(newPfpButton);
+    if (pfproute != null) {
+        colLeft.appendChild(deletePfpButton);
+    }
     colLeft.appendChild(pfpTitle);
 
     /* JOBB OLDAL */
@@ -945,15 +976,7 @@ async function viewUserToModal(data) {
         pfp.src = "../images/default.png";
     }
     else {
-        try {
-            let response = await fetch(`/api/getProfilePic?route=${pfproute}`);
-            let blob = await response.blob();
-
-            let objectURL = URL.createObjectURL(blob);
-            pfp.src = objectURL;
-        } catch (error) {
-            console.log(error);
-        }
+        pfp.src = await getProfilePicture(pfproute);
     }
     pfp.alt = "Profile picture";
     pfp.title = "Profile picture";

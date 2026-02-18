@@ -356,7 +356,7 @@ router.post('/deleteProfilePic', async (request, response) => {
             response.status(403).json({ message: "Nincs hozzáférés!" });
         }
         else {
-            let lastPfp = await database.deleteProfilePic(request.session.userid);
+            let lastPfp = await database.deleteProfilePic(request.body.user_id);
             if (!lastPfp) {
                 response.status(200).json({ success: true, message: "A profilkép már alapértelmezett volt." });
             }
