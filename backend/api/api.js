@@ -5,6 +5,7 @@ const fs = require('fs/promises');
 const bcrypt = require('bcrypt');
 const validator = require('validator');
 const { body, validationResult } = require("express-validator");
+const sharp = require('sharp');
 
 //!Multer
 const multer = require('multer'); //?npm install multer
@@ -73,7 +74,6 @@ router.post("/signup",
                 const { username, email, password } = request.body;
                 const hashedPassword = await bcrypt.hash(password, 10);
                 let feltolt = await database.newUser(username, email, hashedPassword);
-                console.log(feltolt);
                 response.status(201).json({
                     success: true,
                     message: "Sikeres regisztráció"
@@ -86,7 +86,7 @@ router.post("/signup",
                 });
             }
             else {
-                response.status(500).json({ error: "Hiba az adatbázis művelet során!" });
+                response.status(500).json({ error: error });
             }
         }
     }
@@ -136,7 +136,7 @@ router.post("/login",
                             request.session.cookie.maxAge = 2 * 60 * 60 * 1000;
                         }
 
-                        request.session.userid = rows[0].userid;
+                        request.session.userid = rows[0].user_id;
                         request.session.role = sesRole;
                         response.status(200).json({ message: "Sikeres bejelentkezés", role: sesRole });
                     }
@@ -173,7 +173,7 @@ router.get('/admin/users', async (request, response) => {
     }
 })
 
-router.get('/admin/user/', async (request, response) => {
+router.get('/admin/user', async (request, response) => {
     try {
         if (request.session.role != 'ADMIN') {
             response.status(403).json({ message: "Nincs hozzáférésed!" });
@@ -221,7 +221,7 @@ router.post("/admin/signupFromAdmin",
                 else {
                     const { username, email, password, role, is_2fa } = request.body;
                     const hashedPassword = await bcrypt.hash(password, 10);
-                    await database.newUser(username, email, hashedPassword, role, is_2fa);
+                    await database.newUserFromAdmin(username, email, hashedPassword, role, is_2fa);
                     response.status(201).json({
                         success: true,
                         message: "Sikeres regisztráció"
@@ -300,7 +300,7 @@ router.post('/admin/updateUser', async (request, response) => {
 
 router.post('/updateProfilePic', upload.single('profilePic'), async (request, response) => {
     try {
-        if (!request.session.id) {
+        if (!request.session.userid) {
             response.status(403).json({ message: "Nincs hozzáférés!" });
         }
         else {
@@ -314,6 +314,7 @@ router.post('/updateProfilePic', upload.single('profilePic'), async (request, re
                 let newFilePath = path.join('uploads', newFileName);
 
                 //Kép tömöritése
+                sharp.cache(false);
                 const metadata = await sharp(originalFile)
                     .resize(400, 400, {
                         fit: 'cover',
@@ -325,7 +326,7 @@ router.post('/updateProfilePic', upload.single('profilePic'), async (request, re
                 let { width, height } = metadata;
                 let finalUrl = `/uploads/${newFileName}`;
 
-                let lastPfp = await uploadProfilePic(finalUrl, width, height, request.session.userid);
+                let lastPfp = await database.uploadProfilePic(finalUrl, width, height, request.body.user_id);
 
                 try {
                     await fs.unlink(originalFile);
@@ -345,13 +346,13 @@ router.post('/updateProfilePic', upload.single('profilePic'), async (request, re
             }
         }
     } catch (error) {
-        response.status(500).json({ error: error });
+        response.status(500).json({ error: error.message, details: error.stack });
     }
 })
 
 router.post('/deleteProfilePic', async (request, response) => {
     try {
-        if (!request.session.id) {
+        if (!request.session.userid) {
             response.status(403).json({ message: "Nincs hozzáférés!" });
         }
         else {
@@ -371,6 +372,22 @@ router.post('/deleteProfilePic', async (request, response) => {
         }
     } catch (error) {
         response.status(500).json({ error: error });
+    }
+})
+
+router.get('/getProfilePic', (request, response) => {
+    try {
+        if (!request.session.id) {
+            response.status(403).json({ message: "Nincs hozzáférés!" });
+        }
+        else {
+            let pfproute = request.query.route;
+            let filePath = path.join(__dirname, '..', pfproute);
+
+            response.sendFile(filePath);
+        }
+    } catch (error) {
+        console.log(error);
     }
 })
 

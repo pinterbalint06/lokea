@@ -146,6 +146,25 @@ async function userToInactive(id) {
     return mitadokvissza;
 }
 
+async function uploadProfilePic(picture, id) {
+    let fd = new FormData();
+    fd.append("profilePic", picture);
+    fd.append("user_id", id);
+    try {
+        let response = await fetch("/api/updateProfilePic", {
+            method: "POST",
+            body: fd
+        });
+        const result = await response.json();
+
+        if (result.success) {
+            console.log("sikerult a feltoltes");
+        }
+    } catch (error) {
+        console.log(`hálózati hiba: ${error}`);
+    }
+}
+
 //SIDEBAR
 
 function sidebarvaltoztat() {
@@ -475,7 +494,7 @@ function tablazatGeneral(data) {
             editGomb = gombGeneral("click", "Szerkesztés", "blue", null);
             editGomb.addEventListener("click", async function () {
                 currentData = (await getUser(adatok[i].user_id)).users[0];
-                modalView("Felhasználó módosítása", "edit", editUserToModal(currentData));
+                modalView("Felhasználó módosítása", "edit", await editUserToModal(currentData));
                 let modalElement = document.getElementById('modalView');
                 let modal = new bootstrap.Modal(modalElement);
                 modal.show();
@@ -485,7 +504,7 @@ function tablazatGeneral(data) {
             editGomb = gombGeneral("click", "Megtekintés", "blue", null);
             editGomb.addEventListener("click", async function () {
                 currentData = (await getUser(adatok[i].user_id)).users[0];
-                modalView("Felhasználó megtekintése", "view", viewUserToModal(currentData));
+                modalView("Felhasználó megtekintése", "view", await viewUserToModal(currentData));
                 let modalElement = document.getElementById('modalView');
                 let modal = new bootstrap.Modal(modalElement);
                 modal.show();
@@ -747,12 +766,13 @@ function newUserToModal() {
     return form;
 }
 
-function editUserToModal(data) {
+async function editUserToModal(data) {
     let user_id = data.user_id;
     let username = data.username;
     let email = data.email;
     let role = data.role;
     let is_2fa = data.is_2fa;
+    let pfproute = data.filepath;
     let container = document.createElement("div");
     container.classList.add("container-fluid");
 
@@ -764,16 +784,44 @@ function editUserToModal(data) {
     colLeft.classList.add("col-4");
 
     let pfp = document.createElement("img");
-    // pfp.src = "default.png";
+    console.log(data);
+    if (pfproute == null) {
+        pfp.src = "../images/default.png";
+    }
+    else {
+        try {
+            let response = await fetch(`/api/getProfilePic?route=${pfproute}`);
+            let blob = await response.blob();
+
+            let objectURL = URL.createObjectURL(blob);
+            pfp.src = objectURL;
+        } catch (error) {
+            console.log(error);
+        }
+    }
     pfp.alt = "Profile picture";
     pfp.title = "Profile picture";
     pfp.classList.add("img-fluid", "img-thumbnail", "rounded-circle", "h-75"
     );
+    let newPfpInput = inputGeneral("file", null, null, "newPfpInput", ["form-control"], false);
+    newPfpInput.setAttribute("accept", "image/*");
+    let newPfpButton = gombGeneral("button", "Profilkép feltöltése", "green", null);
+    newPfpButton.addEventListener("click", async function () {
+        let feltoltott = document.getElementById('newPfpInput');
+        if (feltoltott.files.length === 0) {
+            alert("Kérlek, válassz ki egy képet!");
+        }
+        else {
+            await (uploadProfilePic(feltoltott.files[0], user_id));
+        }
+    })
 
     let pfpTitle = document.createElement("h6");
     pfpTitle.textContent = username;
 
     colLeft.appendChild(pfp);
+    colLeft.appendChild(newPfpInput);
+    colLeft.appendChild(newPfpButton);
     colLeft.appendChild(pfpTitle);
 
     /* JOBB OLDAL */
@@ -874,12 +922,14 @@ function editUserToModal(data) {
     return container;
 }
 
-function viewUserToModal(data) {
+async function viewUserToModal(data) {
+    console.log(data);
     let user_id = data.user_id;
     let username = data.username;
     let email = data.email;
     let role = data.role;
     let is_2fa = data.is_2fa;
+    let pfproute = data.filepath;
     let container = document.createElement("div");
     container.classList.add("container-fluid");
 
@@ -891,7 +941,20 @@ function viewUserToModal(data) {
     colLeft.classList.add("col-4");
 
     let pfp = document.createElement("img");
-    // pfp.src = "default.png";
+    if (pfproute == null) {
+        pfp.src = "../images/default.png";
+    }
+    else {
+        try {
+            let response = await fetch(`/api/getProfilePic?route=${pfproute}`);
+            let blob = await response.blob();
+
+            let objectURL = URL.createObjectURL(blob);
+            pfp.src = objectURL;
+        } catch (error) {
+            console.log(error);
+        }
+    }
     pfp.alt = "Profile picture";
     pfp.title = "Profile picture";
     pfp.classList.add("img-fluid", "img-thumbnail", "rounded-circle", "h-75"
