@@ -128,32 +128,34 @@ async function userUpdate(user_id, username, email, role, is_2fa) {
                 is_2fa
             })
         });
-
-        let data = await response.json();
-        console.log(data.message);
-
+        return response.ok;
     } catch (error) {
         console.log("Hálózati vagy szerver hiba:");
     }
 }
 
 async function userToInactive(id) {
-    let response = await fetch("/api/admin/userToInactive", {
-        method: "POST",
-        headers: {
-            "Content-Type": "application/json"
-        },
-        body: JSON.stringify({
-            userId: id
-        })
-    });
     let mitadokvissza;
-    if (response.status == 204) {
-        mitadokvissza = "Sikerült a törlés";
-        tablazatGeneral(await sortedUser());
-    }
-    else {
-        mitadokvissza = (await response.json()).message;
+    try {
+        let response = await fetch("/api/admin/userToInactive", {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json"
+            },
+            body: JSON.stringify({
+                userId: id
+            })
+        });
+        if (response.status == 204) {
+            mitadokvissza = "Sikerült a törlés";
+            tablazatGeneral(await sortedUser());
+        }
+        else {
+            mitadokvissza = (await response.json()).message;
+        }
+    } catch (error) {
+        console.error(error);
+        mitadokvissza = "Baj";
     }
     return mitadokvissza;
 }
@@ -685,12 +687,14 @@ function modalView(title, type, content) {
                     }
                 });
                 if (valtozas) {
-                    await userUpdate(currentData.user_id, inInput.username, inInput.email, inInput.role, inInput.is_2fa);
-                    tablazatGeneral(await sortedUser());
+                    let siker = await userUpdate(currentData.user_id, inInput.username, inInput.email, inInput.role, inInput.is_2fa);
+                    if (siker) {
+                        tablazatGeneral(await sortedUser());
+                        const modalElement = document.getElementById("modalView");
+                        const modal = bootstrap.Modal.getInstance(modalElement);
+                        modal.hide();
+                    }
                 }
-                const modalElement = document.getElementById("modalView");
-                const modal = bootstrap.Modal.getInstance(modalElement);
-                modal.hide();
             })
             footerButtons.appendChild(button);
             break;
@@ -822,7 +826,7 @@ async function editUserToModal(data) {
     else {
         pfp.src = await getProfilePicture(pfproute);
         deletePfpButton = gombGeneral("button", "Profilkép törlése", "red", null);
-        deletePfpButton.addEventListener("click", async function() {
+        deletePfpButton.addEventListener("click", async function () {
             await deleteProfilePicture(user_id);
         })
     }

@@ -3,6 +3,7 @@ const express = require('express'); //?npm install express
 const session = require('express-session'); //?npm install express-session
 const path = require('path');
 const cors = require('cors');
+const { checkAuth, checkRole } = require('./api/api.js'); //ideiglenesen
 
 //!Beállítások
 const app = express();
@@ -51,7 +52,7 @@ router.get('/webgl', (request, response) => {
 router.get('/login_page', (request, response) => {
     response.sendFile(path.join(__dirname, '../frontend/html/login.html'));
 });
-router.get('/admin', (request, response) => {
+router.get('/admin', checkAuth, checkRole("ADMIN"), (request, response) => {
     response.sendFile(path.join(__dirname, '../frontend/html/admin.html'));
 });
 

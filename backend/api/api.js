@@ -250,20 +250,39 @@ router.post('/admin/sortedUsers', checkAuth, checkRole("ADMIN"), async (request,
     }
 })
 
-router.post('/admin/updateUser', checkAuth, checkRole("ADMIN"), async (request, response) => {
-    try {
-        let { user_id, username, email, role, is_2fa } = request.body;
-        let success = await database.updateUser(user_id, username, email, role, is_2fa);
-        if (success == 1) {
-            response.status(204).json({ message: "Sikeres felhasználófrissités!" });
+router.post('/admin/updateUser', checkAuth, checkRole("ADMIN"),
+    [
+        body("username")
+            .not().isEmail().withMessage("Felhasználónév nem lehet email cim!")
+            .matches(/^[a-zA-Z0-9áéíóöőúüűÁÉÍÓÖŐÚÜŰ_-]+$/).withMessage('A felhasználónév csak betűket, számokat, - vagy _ karaktert, és ékezetes betűket tartalmazhat.')
+            .isLength({ min: 1, max: 20 }).withMessage("Felhasználónév hossza nem megfelelő!"),
+        body("email")
+            .isEmail().withMessage("Hibás email formátum")
+            .isLength({ min: 5, max: 250 }).withMessage("Email max 250 karakter")
+    ],
+    async (request, response) => {
+        try {
+            const errors = validationResult(request);
+            if (!errors.isEmpty()) {
+                response.status(400).json({
+                    success: false,
+                    error: errors.array()
+                });
+            }
+            else {
+                let { user_id, username, email, role, is_2fa } = request.body;
+                let success = await database.updateUser(user_id, username, email, role, is_2fa);
+                if (success == 1) {
+                    response.status(204).json({ message: "Sikeres felhasználófrissités!" });
+                }
+                else {
+                    response.status(404).json({ message: "Nincs ilyen felhasználó!" });
+                }
+            }
+        } catch (error) {
+            response.status(500).json({ error: error });
         }
-        else {
-            response.status(404).json({ message: "Nincs ilyen felhasználó!" });
-        }
-    } catch (error) {
-        response.status(500).json({ error: error });
-    }
-})
+    })
 
 router.post('/admin/userToInactive', checkAuth, checkRole("ADMIN"), async (request, response) => {
     try {
@@ -360,4 +379,4 @@ router.get('/getProfilePic', checkAuth, (request, response) => {
     }
 })
 
-module.exports = router;
+module.exports = { checkAuth, checkRole };

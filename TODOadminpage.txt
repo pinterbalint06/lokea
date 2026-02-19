@@ -15,8 +15,8 @@ feature flags oldal
 hibak amiket javitani kell:
 
 -stack trace
--admin oldal elerese csak adminkent
--compare attetele database.js-be
--updateusernel ha valami modosul feleljen meg a mező követelményeinek
--usertoinactive try-catch-be tetele
 -revert nem jo
+
+kerdes:
+-compare attetele database.js-be
+-adminbol inditott updateuser/adduser kell frontend validalas?
