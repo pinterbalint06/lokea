@@ -600,6 +600,14 @@ function closeCollapse() {
     UI.collapseBootstrapElement.hide();
 }
 
+function updateCollapseDirection() {
+    if (window.innerWidth < 992) {
+        UI.collapseElement.classList.remove("collapse-horizontal");
+    } else {
+        UI.collapseElement.classList.add("collapse-horizontal");
+    }
+}
+
 // |--------------------------|
 // |  SETUP & INITIALIZATION  |
 // |--------------------------|
@@ -718,52 +726,58 @@ function addUIEventListeners() {
         UI.fileInputMap.click();
     });
 
-    UI.collapseElement.addEventListener("show.bs.collapse", () => {
-        UI.floatinButtonDiv.classList.add("d-none");
+    UI.collapseElement.addEventListener("show.bs.collapse", (event) => {
+        if (event.target == UI.collapseElement) {
+            UI.floatinButtonDiv.classList.add("d-none");
+        }
     });
 
-    UI.collapseElement.addEventListener("hide.bs.collapse", () => {
-        stopFOVSync();
+    UI.collapseElement.addEventListener("hide.bs.collapse", (event) => {
+        if (event.target == UI.collapseElement) {
+            stopFOVSync();
 
-        if (editorState.equiAbortController) {
-            editorState.equiAbortController.abort();
-            editorState.equiAbortController = null;
-        }
+            if (editorState.equiAbortController) {
+                editorState.equiAbortController.abort();
+                editorState.equiAbortController = null;
+            }
 
-        if (editorState.activePointId != null) {
-            if (editorState.activePointId == CONSTANTS.TEMP_ID) {
-                // it was temporary marker remove it
-                mapViewer.removeMarker(CONSTANTS.TEMP_ID);
-            } else {
-                if (editorState.originalPointData) {
-                    // it was discarded revert to old data
-                    mapViewer.moveMarkerToImageCoordinates(
-                        editorState.activePointId,
-                        editorState.originalPointData.x,
-                        editorState.originalPointData.y
-                    );
-                    mapViewer.changeMarkerType(editorState.activePointId, "READY");
+            if (editorState.activePointId != null) {
+                if (editorState.activePointId == CONSTANTS.TEMP_ID) {
+                    // it was temporary marker remove it
+                    mapViewer.removeMarker(CONSTANTS.TEMP_ID);
+                } else {
+                    if (editorState.originalPointData) {
+                        // it was discarded revert to old data
+                        mapViewer.moveMarkerToImageCoordinates(
+                            editorState.activePointId,
+                            editorState.originalPointData.x,
+                            editorState.originalPointData.y
+                        );
+                        mapViewer.changeMarkerType(editorState.activePointId, "READY");
+                    }
                 }
             }
+            UI.savePointButton.disabled = true;
+            mapViewer.canvasInput.setDefaultCursor("default");
         }
-        UI.savePointButton.disabled = true;
-        mapViewer.canvasInput.setDefaultCursor("default");
     });
 
-    UI.collapseElement.addEventListener("hidden.bs.collapse", () => {
-        if (equirectangularViewer) {
-            equirectangularViewer.setYaw(0);
-            equirectangularViewer.clearImage();
+    UI.collapseElement.addEventListener("hidden.bs.collapse", (event) => {
+        if (event.target == UI.collapseElement) {
+            if (equirectangularViewer) {
+                equirectangularViewer.setYaw(0);
+                equirectangularViewer.clearImage();
+            }
+
+            // reset UI
+            UI.floatinButtonDiv.classList.remove("d-none");
+
+            // reset state
+            editorState.activePointId = null;
+            editorState.isPlacingMarker = false;
+            editorState.originalPointData = null;
+            editorState.pendingEquirectangularFile = null;
         }
-
-        // reset UI
-        UI.floatinButtonDiv.classList.remove("d-none");
-
-        // reset state
-        editorState.activePointId = null;
-        editorState.isPlacingMarker = false;
-        editorState.originalPointData = null;
-        editorState.pendingEquirectangularFile = null;
     });
 
     UI.plusMarkerBtn.addEventListener("click", () => {
@@ -784,10 +798,12 @@ function addUIEventListeners() {
     UI.saveButton.addEventListener("click", saveMap);
     UI.savePointButton.addEventListener("click", savePointClick);
     UI.closeCollapse.addEventListener("click", closeCollapse);
+    window.addEventListener("resize", updateCollapseDirection);
 }
 
 function setupUIElements() {
     getUIElements();
+    updateCollapseDirection();
     addUIEventListeners();
 }
 

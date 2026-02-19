@@ -165,6 +165,55 @@ main {
     z-index: 10000;
 }
 
+#equirectangularWrapper {
+    min-height: 33vh;
+}
+
+#collapseCard {
+    width: 33vw;
+}
+
+.accordion-item {
+    background-color: transparent;
+    border: 1px solid var(--lila-border);
+    overflow: hidden;
+}
+
+.accordion-button {
+    background-color: rgba(0, 0, 0, 0.2);
+    color: var(--szoveg);
+    transition: all 0.3s ease;
+    font-weight: 500;
+}
+
+.accordion-button:focus {
+    box-shadow: none;
+    border-color: var(--focus-form);
+}
+
+.accordion-button:not(.collapsed) {
+    background-color: var(--lilauveg);
+    color: #fff;
+    box-shadow: 0 0 15px var(--lila-fenylik);
+    border-bottom: 1px solid var(--lila-border);
+}
+
+.accordion-button::after {
+    /* override bootstraps arrow */
+    background-image: url("../images/chevron.svg");
+    transition: transform 0.3s ease;
+}
+
+.accordion-button:not(.collapsed)::after {
+    background-image: url("../images/chevron.svg");
+}
+
+.accordion-body {
+    background-color: rgba(0, 0, 0, 0.15);
+    color: var(--szoveg);
+    border-top: none;
+}
+
 @media (max-width: 992px) {
     #ujPontCollapse {
         top: auto;
@@ -181,13 +230,12 @@ main {
     }
 
     #ujPontCollapse .card {
-        max-height: 50vh;
+        height: 40vh;
+        max-height: 40vh;
+        min-height: 40vh;
+        width: 100vw;
         overflow-y: auto;
         border-bottom-left-radius: 0 !important;
         border-bottom-right-radius: 0 !important;
-    }
-
-    #equirectangularWrapper {
-        min-height: 10vh;
     }
 }
