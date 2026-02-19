@@ -41,6 +41,8 @@ public:
 
     void rotateCamera(float dPitch, float dYaw);
     void setCameraRotation(float pitch, float yaw);
+    void setPitch(float pitch);
+    void setYaw(float yaw);
     void render() { renderer_->render(scene_.get()); };
     uint8_t *initTexture(int width, int height, int meshIndex);
     void uploadTextureToGPU(int meshIndex);
@@ -48,8 +50,8 @@ public:
     void loadTextureFromUrl(const std::string &url, int meshIndex, emscripten::val onSuccess, emscripten::val onError);
     void loadTextureFromUrl(const std::string &url, int meshIndex);
 
-    float getPitch() { return scene_->getCamera()->getPitch(); }
-    float getYaw() { return scene_->getCamera()->getYaw(); }
+    float getPitch() const { return scene_->getCamera()->getPitch(); }
+    float getYaw() const { return scene_->getCamera()->getYaw(); }
 
     void addMesh(std::shared_ptr<Mesh> mesh) { scene_->addMesh(mesh); }
     void removeMesh(int index) { scene_->removeMesh(index); }

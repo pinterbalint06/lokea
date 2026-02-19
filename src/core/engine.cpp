@@ -105,6 +105,16 @@ void Engine::rotateCamera(float dPitch, float dYaw)
     scene_->getCamera()->rotate(dPitch, dYaw);
 }
 
+void Engine::setPitch(float pitch)
+{
+    scene_->getCamera()->setPitch(pitch);
+}
+
+void Engine::setYaw(float yaw)
+{
+    scene_->getCamera()->setYaw(yaw);
+}
+
 void Engine::setCameraRotation(float pitch, float yaw)
 {
     scene_->getCamera()->setRotation(pitch, yaw);

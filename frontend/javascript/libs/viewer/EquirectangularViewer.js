@@ -139,7 +139,21 @@ export class EquirectangularViewer extends WASMViewerBase {
 
     getYaw() {
         this._ensureEngineReady();
-        return this._engine.getYaw();
+        return this._engine.yaw;
+    }
+
+    setYaw(yaw) {
+        this._ensureEngineReady();
+
+        if (Number.isNaN(yaw)) {
+            throw new WebassemblyError(
+                "Invalid yaw",
+                {
+                    "type": EQUIRECTANGULAR_ERROR_TYPES.INVALID_INPUT
+                });
+        }
+
+        this._engine.yaw = yaw;
     }
 
     // |-----------------|

@@ -51,7 +51,8 @@ let editorState = {
     pendingEquirectangularFile: null,
     pendingMapFile: null,
     clickOnMapToast: null,
-    fovSyncAnimationID: null
+    fovSyncAnimationID: null,
+    equiAbortController: null
 };
 
 // |-----------|
@@ -153,7 +154,7 @@ function savePreviousValue(event) {
 }
 
 function getGameMapIdFromUrl() {
-    let pathParts = window.location.pathname.split('/');
+    let pathParts = window.location.pathname.split("/");
     let id = parseInt(pathParts[2]);
     return id;
 }
@@ -161,14 +162,15 @@ function getGameMapIdFromUrl() {
 // |-------------|
 // | API & STATE |
 // |-------------|
-async function loadImage(url, loadImageFunction, successCheckId) {
+async function loadImage(url, loadImageFunction, successCheckId, abortSignal = null) {
     let kepBetolteseToast = showToast("Kép betöltése", "", false, { autohide: false }, ICONS.SPINNER);
     let imageURL;
     try {
         let response = await fetch(
             url,
             {
-                "method": "GET"
+                "method": "GET",
+                "signal": abortSignal
             }
         );
         if (!response.ok) {
@@ -182,14 +184,17 @@ async function loadImage(url, loadImageFunction, successCheckId) {
 
         imageURL = URL.createObjectURL(data);
 
-        // check if the active id is still the same
+        // passed success check
         if (successCheckId()) {
             await loadImageFunction(imageURL, width, height);
             showToast("Kép sikeresen betöltve!", "success", true, { delay: 3000 });
         }
     } catch (error) {
-        console.error(error);
-        showToast("Hiba a kép betöltésekor!", "danger", true, { delay: 3000 });
+        // if it was aborted do not show error
+        if (error.name != "AbortError") {
+            console.error(error);
+            showToast("Hiba a kép betöltésekor!", "danger", true, { delay: 3000 });
+        }
     } finally {
         kepBetolteseToast.hide();
         if (imageURL) {
@@ -497,6 +502,7 @@ async function handleMapLoad(file) {
 function placeOrMoveMarker(cursorX, cursorY) {
     if (mapViewer.doesMarkerExist(editorState.activePointId)) {
         mapViewer.moveMarker(editorState.activePointId, cursorX, cursorY);
+        mapViewer.moveMarker(CONSTANTS.FOV_MARKER_ID, cursorX, cursorY);
     } else {
         UI.savePointButton.disabled = true;
         mapViewer.placeMarker(editorState.activePointId, cursorX, cursorY, CONSTANTS.MARKER_SIZE.width, CONSTANTS.MARKER_SIZE.height, "EMPTY");
@@ -513,12 +519,17 @@ function clickOnCanvas(cursorX, cursorY) {
         placeOrMoveMarker(cursorX, cursorY);
     } else {
         let clickedMarkerIndex = mapViewer.getMarkerAtClick(cursorX, cursorY);
-        if (clickedMarkerIndex != CONSTANTS.TEMP_ID) {
+        if (clickedMarkerIndex != -1) {
             editorState.activePointId = clickedMarkerIndex;
             mapViewer.changeMarkerType(editorState.activePointId, "EDIT");
 
             editorState.originalPointData = mapViewer.getMarkerPosition(editorState.activePointId);
 
+            if (editorState.equiAbortController) {
+                editorState.equiAbortController.abort();
+            }
+            editorState.equiAbortController = new AbortController();
+            let signal = editorState.equiAbortController.signal;
             loadImage(
                 "/api/game_maps/getImageByPointId?pointId=" + editorState.activePointId,
                 (url, width, height) => {
@@ -526,7 +537,8 @@ function clickOnCanvas(cursorX, cursorY) {
                     startFOVSync();
                     UI.equiFullscreenBtn.disabled = false;
                 },
-                () => editorState.activePointId == clickedMarkerIndex
+                () => editorState.activePointId == clickedMarkerIndex, // check if the active id is still the same
+                signal
             );
 
             updateCoordinatesInput();
@@ -711,8 +723,13 @@ function addUIEventListeners() {
     });
 
     UI.collapseElement.addEventListener("hide.bs.collapse", () => {
-
         stopFOVSync();
+
+        if (editorState.equiAbortController) {
+            editorState.equiAbortController.abort();
+            editorState.equiAbortController = null;
+        }
+
         if (editorState.activePointId != null) {
             if (editorState.activePointId == CONSTANTS.TEMP_ID) {
                 // it was temporary marker remove it
@@ -735,6 +752,7 @@ function addUIEventListeners() {
 
     UI.collapseElement.addEventListener("hidden.bs.collapse", () => {
         if (equirectangularViewer) {
+            equirectangularViewer.setYaw(0);
             equirectangularViewer.clearImage();
         }
 

@@ -16,12 +16,11 @@ enum VertexIndex
     BOTTOM_RIGHT = 3
 };
 
-MapMarker::MapMarker(int id, const std::string &type, const std::string &textureUrl, float u, float v, float width, float height) : Mesh(4, 6)
+MapMarker::MapMarker(int id, const std::string &textureUrl, float u, float v, float width, float height) : Mesh(4, 6)
 {
     id_ = id;
     u_ = u;
     v_ = v;
-    type_ = type;
     width_ = width;
     height_ = height;
     rotation_ = 0.0f;
@@ -53,9 +52,8 @@ MapMarker::~MapMarker()
 {
 }
 
-void MapMarker::changeType(const std::string &type, const std::string &textureUrl)
+void MapMarker::changeTexture(const std::string &textureUrl)
 {
-    type_ = type;
     Texture *texture = getMaterial().getTexture();
     texture->clear();
     texture->loadFromUrl(textureUrl);

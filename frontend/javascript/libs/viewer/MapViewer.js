@@ -2,11 +2,11 @@ import ModuleBuilder from "../webassembly/mapViewer/mapViewer.js";
 import { WASMViewerBase, WASM_ERROR_TYPES, WebassemblyError } from "./WASMViewerBase.js";
 
 const MARKER_URLS = {
-    "empty": "/images/empty-marker.webp",
-    "edit": "/images/edit-marker.webp",
-    "ready": "/images/ready-marker.webp",
-    "uploading": "/images/uploading-marker.webp",
-    "fov_cone": "/images/cone.webp"
+    "empty": "/images/markers/empty-marker.webp",
+    "edit": "/images/markers/edit-marker.webp",
+    "ready": "/images/markers/ready-marker.webp",
+    "uploading": "/images/markers/uploading-marker.webp",
+    "fov_cone": "/images/markers/cone.webp"
 }
 
 export const MAP_VIEWER_ERROR_TYPES = {
@@ -32,6 +32,10 @@ export class MapViewer extends WASMViewerBase {
      * @type {number} 
      * The height of the current image*/
     #imageHeight;
+    /** 
+     * @type {Object} 
+     * An object where the keys are the typey and the values are the cached marker URLS*/
+    #markerCache
 
     /**
      * Constructor for MapViewer class.
@@ -47,6 +51,9 @@ export class MapViewer extends WASMViewerBase {
         this.#currentImageRequestID = 0;
         this.#imageWidth = 0;
         this.#imageHeight = 0;
+        this.#markerCache = {};
+
+        this.#cacheMarkers();
     }
 
     // |------------------|
@@ -203,25 +210,9 @@ export class MapViewer extends WASMViewerBase {
                 });
         }
 
-        if (!type || typeof type != "string") {
-            throw new WebassemblyError(
-                "Invalid marker type",
-                {
-                    "type": MAP_VIEWER_ERROR_TYPES.INVALID_INPUT
-                });
-        }
-        let markerType = type.toLowerCase();
-        let markerUrl = MARKER_URLS[markerType];
+        let markerUrl = this.#getMarkerUrl(type);
 
-        if (markerType == undefined) {
-            throw new WebassemblyError(
-                "Invalid marker type",
-                {
-                    "type": MAP_VIEWER_ERROR_TYPES.INVALID_INPUT
-                });
-        }
-
-        this._engine.addMarker(id, locationX, locationY, markerType, markerUrl, width, height);
+        this._engine.addMarker(id, locationX, locationY, markerUrl, width, height);
     }
 
     placeMarkerByImageCoordinates(id, imageX, imageY, width, height, type = "empty") {
@@ -243,25 +234,9 @@ export class MapViewer extends WASMViewerBase {
                 });
         }
 
-        if (!type || typeof type != "string") {
-            throw new WebassemblyError(
-                "Invalid marker type",
-                {
-                    "type": MAP_VIEWER_ERROR_TYPES.INVALID_INPUT
-                });
-        }
-        let markerType = type.toLowerCase();
-        let markerUrl = MARKER_URLS[markerType];
+        let markerUrl = this.#getMarkerUrl(type);
 
-        if (markerType == undefined) {
-            throw new WebassemblyError(
-                "Invalid marker type",
-                {
-                    "type": MAP_VIEWER_ERROR_TYPES.INVALID_INPUT
-                });
-        }
-
-        this._engine.placeMarkerByImageCoordinates(id, imageX, imageY, type, markerUrl, width, height);
+        this._engine.placeMarkerByImageCoordinates(id, imageX, imageY, markerUrl, width, height);
     }
 
     clearMarkers() {
@@ -297,41 +272,10 @@ export class MapViewer extends WASMViewerBase {
         return this._engine.doesMarkerExist(id);
     }
 
-    getMarkerType(id) {
-        this._ensureEngineReady();
-
-        if (!this.doesMarkerExist(id)) {
-            throw new WebassemblyError(
-                "Invalid marker ID",
-                {
-                    "type": MAP_VIEWER_ERROR_TYPES.INVALID_INPUT
-                });
-        }
-
-        return this._engine.getMarkerType(id);
-    }
-
     changeMarkerType(id, type) {
         this._ensureEngineReady();
 
-        if (!type || typeof type != "string") {
-            throw new WebassemblyError(
-                "Invalid marker type",
-                {
-                    "type": MAP_VIEWER_ERROR_TYPES.INVALID_INPUT
-                });
-        }
-
-        let markerType = type.toLowerCase();
-        let markerUrl = MARKER_URLS[markerType];
-
-        if (markerUrl == undefined) {
-            throw new WebassemblyError(
-                "Invalid marker type",
-                {
-                    "type": MAP_VIEWER_ERROR_TYPES.INVALID_INPUT
-                });
-        }
+        let markerUrl = this.#getMarkerUrl(type);
 
         if (!this.doesMarkerExist(id)) {
             throw new WebassemblyError(
@@ -341,7 +285,7 @@ export class MapViewer extends WASMViewerBase {
                 });
         }
 
-        this._engine.changeMarkerType(id, markerType, markerUrl);
+        this._engine.changeMarkerTexture(id, markerUrl);
     }
 
     moveMarker(id, locationX, locationY) {
@@ -423,6 +367,59 @@ export class MapViewer extends WASMViewerBase {
     // |-----------------|
     // | PRIVATE METHODS |
     // |-----------------|
+    #getMarkerUrl(type) {
+        let markerURL;
+        if (!type || typeof type != "string") {
+            throw new WebassemblyError(
+                "Invalid marker type",
+                {
+                    "type": MAP_VIEWER_ERROR_TYPES.INVALID_INPUT
+                });
+        }
+        let lowerType = type.toLowerCase();
+
+        // Check Cache first
+        if (this.#markerCache[lowerType]) {
+            markerURL = this.#markerCache[lowerType];
+        } else {
+            markerURL = MARKER_URLS[lowerType];
+        }
+
+        if (!markerURL) {
+            throw new WebassemblyError(
+                "Invalid marker type",
+                {
+                    "type": MAP_VIEWER_ERROR_TYPES.INVALID_INPUT
+                });
+        }
+        return markerURL;
+    }
+
+    async #cacheMarker(type, url) {
+        try {
+            let response = await fetch(url);
+            if (!response.ok) {
+                throw new Error("Marker failed to load: " + url);
+            }
+            let blob = await response.blob();
+            let markerURL = URL.createObjectURL(blob);
+            this.#markerCache[type] = markerURL;
+        } catch (error) {
+            console.error("Marker caching failed:", error);
+        }
+    }
+
+    async #cacheMarkers() {
+        let promises = [];
+
+        for (const type in MARKER_URLS) {
+            promises.push(this.#cacheMarker(type, MARKER_URLS[type]));
+        }
+
+        await Promise.all(promises);
+        console.log("markers cached");
+    }
+
     // Functions that have to be implemented
     _createEngine(module) {
         return new module.MapViewerEngine(

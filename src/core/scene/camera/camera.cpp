@@ -56,6 +56,18 @@ void Camera::setRotation(float pitch, float yaw)
     newView_ = true;
 }
 
+void Camera::setPitch(float pitch)
+{
+    pitch_ = pitch;
+    newView_ = true;
+}
+
+void Camera::setYaw(float yaw)
+{
+    yaw_ = yaw;
+    newView_ = true;
+}
+
 void Camera::rotate(float dPitch, float dYaw)
 {
     // clamp to [-pi/2;pi/2]

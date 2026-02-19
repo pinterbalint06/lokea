@@ -210,11 +210,11 @@ int MapViewerEngine::getMarkerIndexById(int id)
     return foundIndex;
 }
 
-void MapViewerEngine::addMarkerByUV(int id, float u, float v, const std::string &type, const std::string &textureUrl, float width, float height)
+void MapViewerEngine::addMarkerByUV(int id, float u, float v, const std::string &textureUrl, float width, float height)
 {
     if (isMapLoaded_ && !doesMarkerExist(id))
     {
-        std::shared_ptr<MapMarker> marker = std::make_shared<MapMarker>(id, type, textureUrl, u, v, width, height);
+        std::shared_ptr<MapMarker> marker = std::make_shared<MapMarker>(id, textureUrl, u, v, width, height);
 
         markers_.push_back(marker);
         addMesh(marker);
@@ -227,12 +227,12 @@ void MapViewerEngine::addMarkerByUV(int id, float u, float v, const std::string 
     }
 }
 
-void MapViewerEngine::changeMarkerType(int id, const std::string &type, const std::string &textureUrl)
+void MapViewerEngine::changeMarkerTexture(int id, const std::string &textureUrl)
 {
     int index = getMarkerIndexById(id);
     if (index != -1)
     {
-        markers_[index]->changeType(type, textureUrl);
+        markers_[index]->changeTexture(textureUrl);
     }
     else
     {
@@ -240,7 +240,7 @@ void MapViewerEngine::changeMarkerType(int id, const std::string &type, const st
     }
 }
 
-void MapViewerEngine::addMarker(int id, float screenX, float screenY, const std::string &type, const std::string &textureUrl, float width, float height)
+void MapViewerEngine::addMarker(int id, float screenX, float screenY, const std::string &textureUrl, float width, float height)
 {
     if (isMapLoaded_ && !doesMarkerExist(id))
     {
@@ -249,7 +249,7 @@ void MapViewerEngine::addMarker(int id, float screenX, float screenY, const std:
 
         clickedU = clickedU - std::floor(clickedU);
 
-        addMarkerByUV(id, clickedU, clickedV, type, textureUrl, width, height);
+        addMarkerByUV(id, clickedU, clickedV, textureUrl, width, height);
     }
     else
     {
@@ -257,14 +257,14 @@ void MapViewerEngine::addMarker(int id, float screenX, float screenY, const std:
     }
 }
 
-void MapViewerEngine::addMarkerByImageCoordinates(int id, float imageX, float imageY, const std::string &type, const std::string &textureUrl, float width, float height)
+void MapViewerEngine::addMarkerByImageCoordinates(int id, float imageX, float imageY, const std::string &textureUrl, float width, float height)
 {
     if (isMapLoaded_ && !doesMarkerExist(id))
     {
         float UCoord = imageX / mapWidth_;
         float VCoord = imageY / mapHeight_;
 
-        addMarkerByUV(id, UCoord, VCoord, type, textureUrl, width, height);
+        addMarkerByUV(id, UCoord, VCoord, textureUrl, width, height);
     }
     else
     {
@@ -418,22 +418,6 @@ int MapViewerEngine::getMarkerIdAtScreenCoords(int screenX, int screenY)
     return foundId;
 }
 
-std::string MapViewerEngine::getMarkerType(int id)
-{
-
-    std::string type = "";
-    int index = getMarkerIndexById(id);
-    if (isMapLoaded_ && index != -1)
-    {
-        type = markers_[index]->getType();
-    }
-    else
-    {
-        emscripten_console_error("Point doesn't exist!");
-    }
-
-    return type;
-}
 
 MapViewerEngine::MapViewerEngine(const std::string &canvasID, int width, int height)
     : Engine(canvasID)

@@ -156,6 +156,24 @@ public:
      * @param yaw The new yaw angle (in radians).
      */
     void setRotation(float pitch, float yaw);
+    /**
+     * @brief Sets the pitch of the camera.
+     *
+     * Updates the camera's pitch angle to the specified value,
+     * and marks the view as needing to be updated.
+     *
+     * @param pitch The new pitch angle (in radians).
+     */
+    void setPitch(float pitch);
+    /**
+     * @brief Sets the yaw of the camera.
+     *
+     * Updates the camera's yaw angle to the specified value,
+     * and marks the view as needing to be updated.
+     *
+     * @param yaw The new yaw angle (in radians).
+     */
+    void setYaw(float yaw);
 
     void setProjectionMode(PROJECTIONTYPE mode);
 

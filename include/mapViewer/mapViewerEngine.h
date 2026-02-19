@@ -33,7 +33,7 @@ private:
     void createMapPlane();
     void updateSingleMarker(MapMarker *markerPlane);
     void updateAllMarkers();
-    void addMarkerByUV(int id, float u, float v, const std::string &type, const std::string &textureUrl, float width, float height);
+    void addMarkerByUV(int id, float u, float v, const std::string &textureUrl, float width, float height);
     void recalculateUVPerPixel();
     void limitVCoordinates();
     void fitMapHorizontally();
@@ -61,9 +61,9 @@ public:
     void zoomMapToCenter(float zoomAmount);
     void zoomMap(float zoomAmount, float zoomHereScreenX, float zoomHereScreenY);
     void render() { Engine::render(); }
-    void addMarker(int id, float screenX, float screenY, const std::string &type, const std::string &textureUrl, float width, float height);
-    void addMarkerByImageCoordinates(int id, float imageX, float imageY, const std::string &type, const std::string &textureUrl, float width, float height);
-    void changeMarkerType(int id, const std::string &type, const std::string &textureUrl);
+    void addMarker(int id, float screenX, float screenY, const std::string &textureUrl, float width, float height);
+    void addMarkerByImageCoordinates(int id, float imageX, float imageY, const std::string &textureUrl, float width, float height);
+    void changeMarkerTexture(int id, const std::string &textureUrl);
     void moveMarkerToImageCoordinates(int id, int xCoordinate, int yCoordinate);
     int getMarkerIdAtScreenCoords(int screenX, int screenY);
     void removeMarker(int id);
@@ -71,7 +71,6 @@ public:
     bool doesMarkerExist(int id);
     void clearAllMarkers();
     void rotateMarker(int id, float angleRadians);
-    std::string getMarkerType(int id);
     emscripten::val getMarkerPosition(int id);
     void changeMarkerId(int oldId, int newId);
     void setCanvasSize(int width, int height);
