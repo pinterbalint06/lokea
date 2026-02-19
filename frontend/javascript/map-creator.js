@@ -24,8 +24,8 @@ const CONSTANTS = {
         height: 32.0
     },
     CONE_SIZE: {
-        width: 150,
-        height: 150
+        width: 100,
+        height: 100
     }
 };
 

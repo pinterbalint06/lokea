@@ -4796,6 +4796,65 @@ invokerSignature, rawInvoker, context, isPureVirtual, isAsync, isNonnullReturn) 
   });
 };
 
+var validateThis = (this_, classType, humanName) => {
+  if (!(this_ instanceof Object)) {
+    throwBindingError(`${humanName} with invalid "this": ${this_}`);
+  }
+  if (!(this_ instanceof classType.registeredClass.constructor)) {
+    throwBindingError(`${humanName} incompatible with "this" of type ${this_.constructor.name}`);
+  }
+  if (!this_.$$.ptr) {
+    throwBindingError(`cannot call emscripten binding method ${humanName} on deleted object`);
+  }
+  // todo: kill this
+  return upcastPointer(this_.$$.ptr, this_.$$.ptrType.registeredClass, classType.registeredClass);
+};
+
+var __embind_register_class_property = (classType, fieldName, getterReturnType, getterSignature, getter, getterContext, setterArgumentType, setterSignature, setter, setterContext) => {
+  fieldName = AsciiToString(fieldName);
+  getter = embind__requireFunction(getterSignature, getter);
+  whenDependentTypesAreResolved([], [ classType ], classType => {
+    classType = classType[0];
+    var humanName = `${classType.name}.${fieldName}`;
+    var desc = {
+      get() {
+        throwUnboundTypeError(`Cannot access ${humanName} due to unbound types`, [ getterReturnType, setterArgumentType ]);
+      },
+      enumerable: true,
+      configurable: true
+    };
+    if (setter) {
+      desc.set = () => throwUnboundTypeError(`Cannot access ${humanName} due to unbound types`, [ getterReturnType, setterArgumentType ]);
+    } else {
+      desc.set = v => throwBindingError(humanName + " is a read-only property");
+    }
+    Object.defineProperty(classType.registeredClass.instancePrototype, fieldName, desc);
+    whenDependentTypesAreResolved([], (setter ? [ getterReturnType, setterArgumentType ] : [ getterReturnType ]), types => {
+      var getterReturnType = types[0];
+      var desc = {
+        get() {
+          var ptr = validateThis(this, classType, humanName + " getter");
+          return getterReturnType.fromWireType(getter(getterContext, ptr));
+        },
+        enumerable: true
+      };
+      if (setter) {
+        setter = embind__requireFunction(setterSignature, setter);
+        var setterArgumentType = types[1];
+        desc.set = function(v) {
+          var ptr = validateThis(this, classType, humanName + " setter");
+          var destructors = [];
+          setter(setterContext, ptr, setterArgumentType.toWireType(destructors, v));
+          runDestructors(destructors);
+        };
+      }
+      Object.defineProperty(classType.registeredClass.instancePrototype, fieldName, desc);
+      return [];
+    });
+    return [];
+  });
+};
+
 var emval_freelist = [];
 
 var emval_handles = [ 0, 1, , 1, null, 1, true, 1, false, 1 ];
@@ -6979,7 +7038,7 @@ function handleError(onError, msg) {
   }
 }
 
-function _textureFromURL(textureID, url, ctxId, onSuccessHandle, onErrorHandle) {
+function _textureFromURL(textureID, url, ctxId, needsMipmaps, onSuccessHandle, onErrorHandle) {
   let gl = GL.contexts[ctxId].GLctx;
   let imgUrl = UTF8ToString(url);
   let onSuccess = Emval.toValue(onSuccessHandle);
@@ -6999,9 +7058,9 @@ function _textureFromURL(textureID, url, ctxId, onSuccessHandle, onErrorHandle) 
     if (texture) {
       gl.bindTexture(gl.TEXTURE_2D, texture);
       gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, imageBitmap);
-      gl.generateMipmap(gl.TEXTURE_2D);
-      gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR_MIPMAP_LINEAR);
-      gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
+      if (needsMipmaps) {
+        gl.generateMipmap(gl.TEXTURE_2D);
+      }
       gl.bindTexture(gl.TEXTURE_2D, null);
       if (typeof onSuccess == "function") {
         onSuccess();
@@ -7079,11 +7138,11 @@ Module["FS_createDataFile"] = FS_createDataFile;
 
 Module["FS_createLazyFile"] = FS_createLazyFile;
 
-var missingLibrarySymbols = [ "writeI53ToI64Clamped", "writeI53ToI64Signaling", "writeI53ToU64Clamped", "writeI53ToU64Signaling", "convertI32PairToI53", "convertI32PairToI53Checked", "convertU32PairToI53", "stackAlloc", "getTempRet0", "setTempRet0", "exitJS", "withStackSave", "inetPton4", "inetNtop4", "inetPton6", "inetNtop6", "readSockaddr", "writeSockaddr", "runMainThreadEmAsm", "autoResumeAudioContext", "getDynCaller", "dynCall", "handleException", "runtimeKeepalivePush", "runtimeKeepalivePop", "callUserCallback", "maybeExit", "asmjsMangle", "HandleAllocator", "addOnPreRun", "addOnInit", "addOnPostCtor", "addOnPreMain", "addOnExit", "addOnPostRun", "STACK_SIZE", "STACK_ALIGN", "POINTER_SIZE", "ASSERTIONS", "ccall", "cwrap", "convertJsFunctionToWasm", "getEmptyTableSlot", "updateTableMap", "getFunctionAddress", "addFunction", "removeFunction", "intArrayToString", "stringToAscii", "stringToUTF8OnStack", "writeArrayToMemory", "registerKeyEventCallback", "getBoundingClientRect", "fillMouseEventData", "registerMouseEventCallback", "registerWheelEventCallback", "registerUiEventCallback", "registerFocusEventCallback", "fillDeviceOrientationEventData", "registerDeviceOrientationEventCallback", "fillDeviceMotionEventData", "registerDeviceMotionEventCallback", "screenOrientation", "fillOrientationChangeEventData", "registerOrientationChangeEventCallback", "fillFullscreenChangeEventData", "registerFullscreenChangeEventCallback", "JSEvents_requestFullscreen", "JSEvents_resizeCanvasForFullscreen", "registerRestoreOldStyle", "hideEverythingExceptGivenElement", "restoreHiddenElements", "setLetterbox", "softFullscreenResizeWebGLRenderTarget", "doRequestFullscreen", "fillPointerlockChangeEventData", "registerPointerlockChangeEventCallback", "registerPointerlockErrorEventCallback", "requestPointerLock", "fillVisibilityChangeEventData", "registerVisibilityChangeEventCallback", "registerTouchEventCallback", "fillGamepadEventData", "registerGamepadEventCallback", "registerBeforeUnloadEventCallback", "fillBatteryEventData", "registerBatteryEventCallback", "setCanvasElementSize", "getCanvasElementSize", "getCallstack", "wasiRightsToMuslOFlags", "wasiOFlagsToMuslOFlags", "safeSetTimeout", "setImmediateWrapped", "safeRequestAnimationFrame", "clearImmediateWrapped", "registerPostMainLoop", "registerPreMainLoop", "getPromise", "makePromise", "idsToPromises", "makePromiseCallback", "findMatchingCatch", "Browser_asyncPrepareDataCounter", "isLeapYear", "ydayFromDate", "arraySum", "addDays", "getSocketFromFD", "getSocketAddress", "FS_mkdirTree", "_setNetworkCallback", "webgl_enable_WEBGL_multi_draw", "webgl_enable_EXT_polygon_offset_clamp", "webgl_enable_EXT_clip_control", "webgl_enable_WEBGL_polygon_mode", "emscriptenWebGLGetUniform", "emscriptenWebGLGetVertexAttrib", "__glGetActiveAttribOrUniform", "writeGLArray", "registerWebGlEventCallback", "runAndAbortIfError", "emscriptenWebGLGetIndexed", "webgl_enable_WEBGL_draw_instanced_base_vertex_base_instance", "webgl_enable_WEBGL_multi_draw_instanced_base_vertex_base_instance", "ALLOC_NORMAL", "ALLOC_STACK", "allocate", "writeStringToMemory", "writeAsciiToMemory", "allocateUTF8", "allocateUTF8OnStack", "demangle", "stackTrace", "getNativeTypeSize", "getFunctionArgsName", "createJsInvokerSignature", "PureVirtualError", "registerInheritedInstance", "unregisterInheritedInstance", "getInheritedInstanceCount", "getLiveInheritedInstances", "enumReadValueFromPointer", "setDelayFunction", "validateThis", "count_emval_handles" ];
+var missingLibrarySymbols = [ "writeI53ToI64Clamped", "writeI53ToI64Signaling", "writeI53ToU64Clamped", "writeI53ToU64Signaling", "convertI32PairToI53", "convertI32PairToI53Checked", "convertU32PairToI53", "stackAlloc", "getTempRet0", "setTempRet0", "exitJS", "withStackSave", "inetPton4", "inetNtop4", "inetPton6", "inetNtop6", "readSockaddr", "writeSockaddr", "runMainThreadEmAsm", "autoResumeAudioContext", "getDynCaller", "dynCall", "handleException", "runtimeKeepalivePush", "runtimeKeepalivePop", "callUserCallback", "maybeExit", "asmjsMangle", "HandleAllocator", "addOnPreRun", "addOnInit", "addOnPostCtor", "addOnPreMain", "addOnExit", "addOnPostRun", "STACK_SIZE", "STACK_ALIGN", "POINTER_SIZE", "ASSERTIONS", "ccall", "cwrap", "convertJsFunctionToWasm", "getEmptyTableSlot", "updateTableMap", "getFunctionAddress", "addFunction", "removeFunction", "intArrayToString", "stringToAscii", "stringToUTF8OnStack", "writeArrayToMemory", "registerKeyEventCallback", "getBoundingClientRect", "fillMouseEventData", "registerMouseEventCallback", "registerWheelEventCallback", "registerUiEventCallback", "registerFocusEventCallback", "fillDeviceOrientationEventData", "registerDeviceOrientationEventCallback", "fillDeviceMotionEventData", "registerDeviceMotionEventCallback", "screenOrientation", "fillOrientationChangeEventData", "registerOrientationChangeEventCallback", "fillFullscreenChangeEventData", "registerFullscreenChangeEventCallback", "JSEvents_requestFullscreen", "JSEvents_resizeCanvasForFullscreen", "registerRestoreOldStyle", "hideEverythingExceptGivenElement", "restoreHiddenElements", "setLetterbox", "softFullscreenResizeWebGLRenderTarget", "doRequestFullscreen", "fillPointerlockChangeEventData", "registerPointerlockChangeEventCallback", "registerPointerlockErrorEventCallback", "requestPointerLock", "fillVisibilityChangeEventData", "registerVisibilityChangeEventCallback", "registerTouchEventCallback", "fillGamepadEventData", "registerGamepadEventCallback", "registerBeforeUnloadEventCallback", "fillBatteryEventData", "registerBatteryEventCallback", "setCanvasElementSize", "getCanvasElementSize", "getCallstack", "wasiRightsToMuslOFlags", "wasiOFlagsToMuslOFlags", "safeSetTimeout", "setImmediateWrapped", "safeRequestAnimationFrame", "clearImmediateWrapped", "registerPostMainLoop", "registerPreMainLoop", "getPromise", "makePromise", "idsToPromises", "makePromiseCallback", "findMatchingCatch", "Browser_asyncPrepareDataCounter", "isLeapYear", "ydayFromDate", "arraySum", "addDays", "getSocketFromFD", "getSocketAddress", "FS_mkdirTree", "_setNetworkCallback", "webgl_enable_WEBGL_multi_draw", "webgl_enable_EXT_polygon_offset_clamp", "webgl_enable_EXT_clip_control", "webgl_enable_WEBGL_polygon_mode", "emscriptenWebGLGetUniform", "emscriptenWebGLGetVertexAttrib", "__glGetActiveAttribOrUniform", "writeGLArray", "registerWebGlEventCallback", "runAndAbortIfError", "emscriptenWebGLGetIndexed", "webgl_enable_WEBGL_draw_instanced_base_vertex_base_instance", "webgl_enable_WEBGL_multi_draw_instanced_base_vertex_base_instance", "ALLOC_NORMAL", "ALLOC_STACK", "allocate", "writeStringToMemory", "writeAsciiToMemory", "allocateUTF8", "allocateUTF8OnStack", "demangle", "stackTrace", "getNativeTypeSize", "getFunctionArgsName", "createJsInvokerSignature", "PureVirtualError", "registerInheritedInstance", "unregisterInheritedInstance", "getInheritedInstanceCount", "getLiveInheritedInstances", "enumReadValueFromPointer", "setDelayFunction", "count_emval_handles" ];
 
 missingLibrarySymbols.forEach(missingLibrarySymbol);
 
-var unexportedSymbols = [ "run", "out", "err", "callMain", "abort", "wasmExports", "HEAPF32", "HEAPF64", "HEAP8", "HEAPU8", "HEAP16", "HEAPU16", "HEAP32", "HEAPU32", "HEAP64", "HEAPU64", "WasmSourceMap", "writeStackCookie", "checkStackCookie", "writeI53ToI64", "readI53FromI64", "readI53FromU64", "INT53_MAX", "INT53_MIN", "bigintToI53Checked", "stackSave", "stackRestore", "createNamedFunction", "ptrToString", "zeroMemory", "getHeapMax", "growMemory", "ENV", "ERRNO_CODES", "strError", "DNS", "Protocols", "Sockets", "timers", "warnOnce", "withBuiltinMalloc", "readEmAsmArgsArray", "readEmAsmArgs", "runEmAsmFunction", "jstoi_q", "getExecutableName", "keepRuntimeAlive", "asyncLoad", "alignMemory", "mmapAlloc", "wasmTable", "wasmMemory", "getUniqueRunDependency", "noExitRuntime", "freeTableIndexes", "functionsInTableMap", "setValue", "getValue", "PATH", "PATH_FS", "UTF8Decoder", "UTF8ArrayToString", "stringToUTF8Array", "stringToUTF8", "lengthBytesUTF8", "intArrayFromString", "AsciiToString", "UTF16Decoder", "UTF16ToString", "stringToUTF16", "lengthBytesUTF16", "UTF32ToString", "stringToUTF32", "lengthBytesUTF32", "stringToNewUTF8", "JSEvents", "specialHTMLTargets", "maybeCStringToJsString", "findEventTarget", "findCanvasEventTarget", "currentFullscreenStrategy", "restoreOldWindowedStyle", "jsStackTrace", "UNWIND_CACHE", "convertPCtoSourceLocation", "ExitStatus", "getEnvStrings", "checkWasiClock", "doReadv", "doWritev", "initRandomFill", "randomFill", "emSetImmediate", "emClearImmediate_deps", "emClearImmediate", "promiseMap", "uncaughtExceptionCount", "exceptionLast", "exceptionCaught", "ExceptionInfo", "Browser", "requestFullscreen", "requestFullScreen", "setCanvasSize", "getUserMedia", "createContext", "getPreloadedImageData__data", "wget", "MONTH_DAYS_REGULAR", "MONTH_DAYS_LEAP", "MONTH_DAYS_REGULAR_CUMULATIVE", "MONTH_DAYS_LEAP_CUMULATIVE", "SYSCALLS", "preloadPlugins", "FS_createPreloadedFile", "FS_modeStringToFlags", "FS_getMode", "FS_stdin_getChar_buffer", "FS_stdin_getChar", "FS_readFile", "FS", "FS_root", "FS_mounts", "FS_devices", "FS_streams", "FS_nextInode", "FS_nameTable", "FS_currentPath", "FS_initialized", "FS_ignorePermissions", "FS_filesystems", "FS_syncFSRequests", "FS_lookupPath", "FS_getPath", "FS_hashName", "FS_hashAddNode", "FS_hashRemoveNode", "FS_lookupNode", "FS_createNode", "FS_destroyNode", "FS_isRoot", "FS_isMountpoint", "FS_isFile", "FS_isDir", "FS_isLink", "FS_isChrdev", "FS_isBlkdev", "FS_isFIFO", "FS_isSocket", "FS_flagsToPermissionString", "FS_nodePermissions", "FS_mayLookup", "FS_mayCreate", "FS_mayDelete", "FS_mayOpen", "FS_checkOpExists", "FS_nextfd", "FS_getStreamChecked", "FS_getStream", "FS_createStream", "FS_closeStream", "FS_dupStream", "FS_doSetAttr", "FS_chrdev_stream_ops", "FS_major", "FS_minor", "FS_makedev", "FS_registerDevice", "FS_getDevice", "FS_getMounts", "FS_syncfs", "FS_mount", "FS_unmount", "FS_lookup", "FS_mknod", "FS_statfs", "FS_statfsStream", "FS_statfsNode", "FS_create", "FS_mkdir", "FS_mkdev", "FS_symlink", "FS_rename", "FS_rmdir", "FS_readdir", "FS_readlink", "FS_stat", "FS_fstat", "FS_lstat", "FS_doChmod", "FS_chmod", "FS_lchmod", "FS_fchmod", "FS_doChown", "FS_chown", "FS_lchown", "FS_fchown", "FS_doTruncate", "FS_truncate", "FS_ftruncate", "FS_utime", "FS_open", "FS_close", "FS_isClosed", "FS_llseek", "FS_read", "FS_write", "FS_mmap", "FS_msync", "FS_ioctl", "FS_writeFile", "FS_cwd", "FS_chdir", "FS_createDefaultDirectories", "FS_createDefaultDevices", "FS_createSpecialDirectories", "FS_createStandardStreams", "FS_staticInit", "FS_init", "FS_quit", "FS_findObject", "FS_analyzePath", "FS_createFile", "FS_forceLoadFile", "FS_absolutePath", "FS_createFolder", "FS_createLink", "FS_joinPath", "FS_mmapAlloc", "FS_standardizePath", "MEMFS", "TTY", "PIPEFS", "SOCKFS", "tempFixedLengthArray", "miniTempWebGLFloatBuffers", "miniTempWebGLIntBuffers", "heapObjectForWebGLType", "toTypedArrayIndex", "GL", "emscriptenWebGLGet", "computeUnpackAlignedImageSize", "colorChannelsInGlTextureFormat", "emscriptenWebGLGetTexPixelData", "webglGetUniformLocation", "webglPrepareUniformLocationsBeforeFirstUse", "webglGetLeftBracePos", "AL", "GLUT", "EGL", "GLEW", "IDBStore", "SDL", "SDL_gfx", "print", "printErr", "jstoi_s", "InternalError", "BindingError", "throwInternalError", "throwBindingError", "registeredTypes", "awaitingDependencies", "typeDependencies", "tupleRegistrations", "structRegistrations", "sharedRegisterType", "whenDependentTypesAreResolved", "getTypeName", "getFunctionName", "heap32VectorToArray", "requireRegisteredType", "usesDestructorStack", "checkArgCount", "getRequiredArgCount", "createJsInvoker", "UnboundTypeError", "EmValType", "EmValOptionalType", "throwUnboundTypeError", "ensureOverloadTable", "exposePublicSymbol", "replacePublicSymbol", "embindRepr", "registeredInstances", "getBasestPointer", "getInheritedInstance", "registeredPointers", "registerType", "integerReadValueFromPointer", "floatReadValueFromPointer", "assertIntegerRange", "readPointer", "runDestructors", "craftInvokerFunction", "embind__requireFunction", "genericPointerToWireType", "constNoSmartPtrRawPointerToWireType", "nonConstNoSmartPtrRawPointerToWireType", "init_RegisteredPointer", "RegisteredPointer", "RegisteredPointer_fromWireType", "runDestructor", "releaseClassHandle", "finalizationRegistry", "detachFinalizer_deps", "detachFinalizer", "attachFinalizer", "makeClassHandle", "init_ClassHandle", "ClassHandle", "throwInstanceAlreadyDeleted", "deletionQueue", "flushPendingDeletes", "delayFunction", "RegisteredClass", "shallowCopyInternalPointer", "downcastPointer", "upcastPointer", "char_0", "char_9", "makeLegalFunctionName", "emval_freelist", "emval_handles", "emval_symbols", "getStringOrSymbol", "Emval", "emval_returnValue", "emval_lookupTypes", "emval_methodCallers", "emval_addMethodCaller", "handleError", "equirectangularReportError", "getValidTextures" ];
+var unexportedSymbols = [ "run", "out", "err", "callMain", "abort", "wasmExports", "HEAPF32", "HEAPF64", "HEAP8", "HEAPU8", "HEAP16", "HEAPU16", "HEAP32", "HEAPU32", "HEAP64", "HEAPU64", "WasmSourceMap", "writeStackCookie", "checkStackCookie", "writeI53ToI64", "readI53FromI64", "readI53FromU64", "INT53_MAX", "INT53_MIN", "bigintToI53Checked", "stackSave", "stackRestore", "createNamedFunction", "ptrToString", "zeroMemory", "getHeapMax", "growMemory", "ENV", "ERRNO_CODES", "strError", "DNS", "Protocols", "Sockets", "timers", "warnOnce", "withBuiltinMalloc", "readEmAsmArgsArray", "readEmAsmArgs", "runEmAsmFunction", "jstoi_q", "getExecutableName", "keepRuntimeAlive", "asyncLoad", "alignMemory", "mmapAlloc", "wasmTable", "wasmMemory", "getUniqueRunDependency", "noExitRuntime", "freeTableIndexes", "functionsInTableMap", "setValue", "getValue", "PATH", "PATH_FS", "UTF8Decoder", "UTF8ArrayToString", "stringToUTF8Array", "stringToUTF8", "lengthBytesUTF8", "intArrayFromString", "AsciiToString", "UTF16Decoder", "UTF16ToString", "stringToUTF16", "lengthBytesUTF16", "UTF32ToString", "stringToUTF32", "lengthBytesUTF32", "stringToNewUTF8", "JSEvents", "specialHTMLTargets", "maybeCStringToJsString", "findEventTarget", "findCanvasEventTarget", "currentFullscreenStrategy", "restoreOldWindowedStyle", "jsStackTrace", "UNWIND_CACHE", "convertPCtoSourceLocation", "ExitStatus", "getEnvStrings", "checkWasiClock", "doReadv", "doWritev", "initRandomFill", "randomFill", "emSetImmediate", "emClearImmediate_deps", "emClearImmediate", "promiseMap", "uncaughtExceptionCount", "exceptionLast", "exceptionCaught", "ExceptionInfo", "Browser", "requestFullscreen", "requestFullScreen", "setCanvasSize", "getUserMedia", "createContext", "getPreloadedImageData__data", "wget", "MONTH_DAYS_REGULAR", "MONTH_DAYS_LEAP", "MONTH_DAYS_REGULAR_CUMULATIVE", "MONTH_DAYS_LEAP_CUMULATIVE", "SYSCALLS", "preloadPlugins", "FS_createPreloadedFile", "FS_modeStringToFlags", "FS_getMode", "FS_stdin_getChar_buffer", "FS_stdin_getChar", "FS_readFile", "FS", "FS_root", "FS_mounts", "FS_devices", "FS_streams", "FS_nextInode", "FS_nameTable", "FS_currentPath", "FS_initialized", "FS_ignorePermissions", "FS_filesystems", "FS_syncFSRequests", "FS_lookupPath", "FS_getPath", "FS_hashName", "FS_hashAddNode", "FS_hashRemoveNode", "FS_lookupNode", "FS_createNode", "FS_destroyNode", "FS_isRoot", "FS_isMountpoint", "FS_isFile", "FS_isDir", "FS_isLink", "FS_isChrdev", "FS_isBlkdev", "FS_isFIFO", "FS_isSocket", "FS_flagsToPermissionString", "FS_nodePermissions", "FS_mayLookup", "FS_mayCreate", "FS_mayDelete", "FS_mayOpen", "FS_checkOpExists", "FS_nextfd", "FS_getStreamChecked", "FS_getStream", "FS_createStream", "FS_closeStream", "FS_dupStream", "FS_doSetAttr", "FS_chrdev_stream_ops", "FS_major", "FS_minor", "FS_makedev", "FS_registerDevice", "FS_getDevice", "FS_getMounts", "FS_syncfs", "FS_mount", "FS_unmount", "FS_lookup", "FS_mknod", "FS_statfs", "FS_statfsStream", "FS_statfsNode", "FS_create", "FS_mkdir", "FS_mkdev", "FS_symlink", "FS_rename", "FS_rmdir", "FS_readdir", "FS_readlink", "FS_stat", "FS_fstat", "FS_lstat", "FS_doChmod", "FS_chmod", "FS_lchmod", "FS_fchmod", "FS_doChown", "FS_chown", "FS_lchown", "FS_fchown", "FS_doTruncate", "FS_truncate", "FS_ftruncate", "FS_utime", "FS_open", "FS_close", "FS_isClosed", "FS_llseek", "FS_read", "FS_write", "FS_mmap", "FS_msync", "FS_ioctl", "FS_writeFile", "FS_cwd", "FS_chdir", "FS_createDefaultDirectories", "FS_createDefaultDevices", "FS_createSpecialDirectories", "FS_createStandardStreams", "FS_staticInit", "FS_init", "FS_quit", "FS_findObject", "FS_analyzePath", "FS_createFile", "FS_forceLoadFile", "FS_absolutePath", "FS_createFolder", "FS_createLink", "FS_joinPath", "FS_mmapAlloc", "FS_standardizePath", "MEMFS", "TTY", "PIPEFS", "SOCKFS", "tempFixedLengthArray", "miniTempWebGLFloatBuffers", "miniTempWebGLIntBuffers", "heapObjectForWebGLType", "toTypedArrayIndex", "GL", "emscriptenWebGLGet", "computeUnpackAlignedImageSize", "colorChannelsInGlTextureFormat", "emscriptenWebGLGetTexPixelData", "webglGetUniformLocation", "webglPrepareUniformLocationsBeforeFirstUse", "webglGetLeftBracePos", "AL", "GLUT", "EGL", "GLEW", "IDBStore", "SDL", "SDL_gfx", "print", "printErr", "jstoi_s", "InternalError", "BindingError", "throwInternalError", "throwBindingError", "registeredTypes", "awaitingDependencies", "typeDependencies", "tupleRegistrations", "structRegistrations", "sharedRegisterType", "whenDependentTypesAreResolved", "getTypeName", "getFunctionName", "heap32VectorToArray", "requireRegisteredType", "usesDestructorStack", "checkArgCount", "getRequiredArgCount", "createJsInvoker", "UnboundTypeError", "EmValType", "EmValOptionalType", "throwUnboundTypeError", "ensureOverloadTable", "exposePublicSymbol", "replacePublicSymbol", "embindRepr", "registeredInstances", "getBasestPointer", "getInheritedInstance", "registeredPointers", "registerType", "integerReadValueFromPointer", "floatReadValueFromPointer", "assertIntegerRange", "readPointer", "runDestructors", "craftInvokerFunction", "embind__requireFunction", "genericPointerToWireType", "constNoSmartPtrRawPointerToWireType", "nonConstNoSmartPtrRawPointerToWireType", "init_RegisteredPointer", "RegisteredPointer", "RegisteredPointer_fromWireType", "runDestructor", "releaseClassHandle", "finalizationRegistry", "detachFinalizer_deps", "detachFinalizer", "attachFinalizer", "makeClassHandle", "init_ClassHandle", "ClassHandle", "throwInstanceAlreadyDeleted", "deletionQueue", "flushPendingDeletes", "delayFunction", "RegisteredClass", "shallowCopyInternalPointer", "downcastPointer", "upcastPointer", "validateThis", "char_0", "char_9", "makeLegalFunctionName", "emval_freelist", "emval_handles", "emval_symbols", "getStringOrSymbol", "Emval", "emval_returnValue", "emval_lookupTypes", "emval_methodCallers", "emval_addMethodCaller", "handleError", "equirectangularReportError", "getValidTextures" ];
 
 unexportedSymbols.forEach(unexportedRuntimeSymbol);
 
@@ -7147,195 +7206,195 @@ function checkIncomingModuleAPI() {
 }
 
 var ASM_CONSTS = {
-  306905152: () => {
+  306905440: () => {
     throw ("A böngésződ nem támogatja a WebGL-t!");
   },
-  306905203: () => {},
-  306905204: () => {},
-  306905205: () => {},
-  306905206: () => {},
-  306905207: () => {},
-  306905208: () => {},
-  306905209: () => {},
-  306905210: () => {},
-  306905211: () => {},
-  306905212: () => {},
-  306905213: () => {},
-  306905214: () => {},
-  306905215: () => {},
-  306905216: () => {},
-  306905217: () => {},
-  306905218: () => {},
-  306905219: () => {},
-  306905220: () => {},
-  306905221: () => {},
-  306905222: () => {},
-  306905223: () => {},
-  306905224: () => {},
-  306905225: () => {},
-  306905226: () => {},
-  306905227: () => {},
-  306905228: () => {},
-  306905229: () => {},
-  306905230: () => {},
-  306905231: () => {},
-  306905232: () => {},
-  306905233: () => {},
-  306905234: () => {},
-  306905235: () => {},
-  306905236: () => {},
-  306905237: () => {},
-  306905238: () => {},
-  306905239: () => {},
-  306905240: () => {},
-  306905241: () => {},
-  306905242: () => {},
-  306905243: () => {},
-  306905244: () => {},
-  306905245: () => {},
-  306905246: () => {},
-  306905247: () => {},
-  306905248: $0 => {
+  306905491: () => {},
+  306905492: () => {},
+  306905493: () => {},
+  306905494: () => {},
+  306905495: () => {},
+  306905496: () => {},
+  306905497: () => {},
+  306905498: () => {},
+  306905499: () => {},
+  306905500: () => {},
+  306905501: () => {},
+  306905502: () => {},
+  306905503: () => {},
+  306905504: () => {},
+  306905505: () => {},
+  306905506: () => {},
+  306905507: () => {},
+  306905508: () => {},
+  306905509: () => {},
+  306905510: () => {},
+  306905511: () => {},
+  306905512: () => {},
+  306905513: () => {},
+  306905514: () => {},
+  306905515: () => {},
+  306905516: () => {},
+  306905517: () => {},
+  306905518: () => {},
+  306905519: () => {},
+  306905520: () => {},
+  306905521: () => {},
+  306905522: () => {},
+  306905523: () => {},
+  306905524: () => {},
+  306905525: () => {},
+  306905526: () => {},
+  306905527: () => {},
+  306905528: () => {},
+  306905529: () => {},
+  306905530: () => {},
+  306905531: () => {},
+  306905532: () => {},
+  306905533: () => {},
+  306905534: () => {},
+  306905535: () => {},
+  306905536: $0 => {
     throw ("Sikertelen shader fordítás: " + UTF8ToString($0));
   },
-  306905312: () => {},
-  306905313: () => {},
-  306905314: () => {},
-  306905315: () => {},
-  306905316: () => {},
-  306905317: () => {},
-  306905318: () => {},
-  306905319: () => {},
-  306905320: () => {},
-  306905321: () => {},
-  306905322: () => {},
-  306905323: () => {},
-  306905324: () => {},
-  306905325: () => {},
-  306905326: () => {},
-  306905327: () => {},
-  306905328: () => {},
-  306905329: () => {},
-  306905330: () => {},
-  306905331: () => {},
-  306905332: () => {},
-  306905333: () => {},
-  306905334: () => {},
-  306905335: () => {},
-  306905336: () => {},
-  306905337: () => {},
-  306905338: () => {},
-  306905339: () => {},
-  306905340: () => {},
-  306905341: () => {},
-  306905342: () => {},
-  306905343: () => {},
-  306905344: $0 => {
+  306905600: () => {},
+  306905601: () => {},
+  306905602: () => {},
+  306905603: () => {},
+  306905604: () => {},
+  306905605: () => {},
+  306905606: () => {},
+  306905607: () => {},
+  306905608: () => {},
+  306905609: () => {},
+  306905610: () => {},
+  306905611: () => {},
+  306905612: () => {},
+  306905613: () => {},
+  306905614: () => {},
+  306905615: () => {},
+  306905616: () => {},
+  306905617: () => {},
+  306905618: () => {},
+  306905619: () => {},
+  306905620: () => {},
+  306905621: () => {},
+  306905622: () => {},
+  306905623: () => {},
+  306905624: () => {},
+  306905625: () => {},
+  306905626: () => {},
+  306905627: () => {},
+  306905628: () => {},
+  306905629: () => {},
+  306905630: () => {},
+  306905631: () => {},
+  306905632: $0 => {
     throw ("Sikertelen shader összekapcsolás: " + UTF8ToString($0));
   },
-  306905414: () => {},
-  306905415: () => {},
-  306905416: () => {},
-  306905417: () => {},
-  306905418: () => {},
-  306905419: () => {},
-  306905420: () => {},
-  306905421: () => {},
-  306905422: () => {},
-  306905423: () => {},
-  306905424: () => {},
-  306905425: () => {},
-  306905426: () => {},
-  306905427: () => {},
-  306905428: () => {},
-  306905429: () => {},
-  306905430: () => {},
-  306905431: () => {},
-  306905432: () => {},
-  306905433: () => {},
-  306905434: () => {},
-  306905435: () => {},
-  306905436: () => {},
-  306905437: () => {},
-  306905438: () => {},
-  306905439: () => {},
-  306905440: () => {},
-  306905441: () => {},
-  306905442: () => {},
-  306905443: () => {},
-  306905444: () => {},
-  306905445: () => {},
-  306905446: () => {},
-  306905447: () => {},
-  306905448: () => {},
-  306905449: () => {},
-  306905450: () => {},
-  306905451: () => {},
-  306905452: () => {},
-  306905453: () => {},
-  306905454: () => {},
-  306905455: () => {},
-  306905456: () => {},
-  306905457: () => {},
-  306905458: () => {},
-  306905459: () => {},
-  306905460: () => {},
-  306905461: () => {},
-  306905462: () => {},
-  306905463: () => {},
-  306905464: () => {},
-  306905465: () => {},
-  306905466: () => {},
-  306905467: () => {},
-  306905468: () => {},
-  306905469: () => {},
-  306905470: () => {},
-  306905471: () => {},
-  306905472: ($0, $1) => {
+  306905702: () => {},
+  306905703: () => {},
+  306905704: () => {},
+  306905705: () => {},
+  306905706: () => {},
+  306905707: () => {},
+  306905708: () => {},
+  306905709: () => {},
+  306905710: () => {},
+  306905711: () => {},
+  306905712: () => {},
+  306905713: () => {},
+  306905714: () => {},
+  306905715: () => {},
+  306905716: () => {},
+  306905717: () => {},
+  306905718: () => {},
+  306905719: () => {},
+  306905720: () => {},
+  306905721: () => {},
+  306905722: () => {},
+  306905723: () => {},
+  306905724: () => {},
+  306905725: () => {},
+  306905726: () => {},
+  306905727: () => {},
+  306905728: () => {},
+  306905729: () => {},
+  306905730: () => {},
+  306905731: () => {},
+  306905732: () => {},
+  306905733: () => {},
+  306905734: () => {},
+  306905735: () => {},
+  306905736: () => {},
+  306905737: () => {},
+  306905738: () => {},
+  306905739: () => {},
+  306905740: () => {},
+  306905741: () => {},
+  306905742: () => {},
+  306905743: () => {},
+  306905744: () => {},
+  306905745: () => {},
+  306905746: () => {},
+  306905747: () => {},
+  306905748: () => {},
+  306905749: () => {},
+  306905750: () => {},
+  306905751: () => {},
+  306905752: () => {},
+  306905753: () => {},
+  306905754: () => {},
+  306905755: () => {},
+  306905756: () => {},
+  306905757: () => {},
+  306905758: () => {},
+  306905759: () => {},
+  306905760: ($0, $1) => {
     let fps = document.getElementById(UTF8ToString($1));
     if (fps) {
       fps.innerText = $0;
     }
   },
-  306905562: () => {},
-  306905563: () => {},
-  306905564: () => {},
-  306905565: () => {},
-  306905566: () => {},
-  306905567: () => {},
-  306905568: () => {},
-  306905569: () => {},
-  306905570: () => {},
-  306905571: () => {},
-  306905572: () => {},
-  306905573: () => {},
-  306905574: () => {},
-  306905575: () => {},
-  306905576: () => {},
-  306905577: () => {},
-  306905578: () => {},
-  306905579: () => {},
-  306905580: () => {},
-  306905581: () => {},
-  306905582: () => {},
-  306905583: () => {},
-  306905584: () => {},
-  306905585: () => {},
-  306905586: () => {},
-  306905587: () => {},
-  306905588: () => {},
-  306905589: () => {},
-  306905590: () => {},
-  306905591: () => {},
-  306905592: () => {},
-  306905593: () => {},
-  306905594: () => {},
-  306905595: () => {},
-  306905596: () => {},
-  306905597: () => {},
-  306905598: () => {},
-  306905599: () => {},
-  306905600: $0 => {
+  306905850: () => {},
+  306905851: () => {},
+  306905852: () => {},
+  306905853: () => {},
+  306905854: () => {},
+  306905855: () => {},
+  306905856: () => {},
+  306905857: () => {},
+  306905858: () => {},
+  306905859: () => {},
+  306905860: () => {},
+  306905861: () => {},
+  306905862: () => {},
+  306905863: () => {},
+  306905864: () => {},
+  306905865: () => {},
+  306905866: () => {},
+  306905867: () => {},
+  306905868: () => {},
+  306905869: () => {},
+  306905870: () => {},
+  306905871: () => {},
+  306905872: () => {},
+  306905873: () => {},
+  306905874: () => {},
+  306905875: () => {},
+  306905876: () => {},
+  306905877: () => {},
+  306905878: () => {},
+  306905879: () => {},
+  306905880: () => {},
+  306905881: () => {},
+  306905882: () => {},
+  306905883: () => {},
+  306905884: () => {},
+  306905885: () => {},
+  306905886: () => {},
+  306905887: () => {},
+  306905888: $0 => {
     throw ("Sikertelen fájl beolvasás: " + UTF8ToString($0));
   }
 };
@@ -7474,6 +7533,7 @@ var wasmImports = {
   /** @export */ _embind_register_class: __embind_register_class,
   /** @export */ _embind_register_class_constructor: __embind_register_class_constructor,
   /** @export */ _embind_register_class_function: __embind_register_class_function,
+  /** @export */ _embind_register_class_property: __embind_register_class_property,
   /** @export */ _embind_register_emval: __embind_register_emval,
   /** @export */ _embind_register_float: __embind_register_float,
   /** @export */ _embind_register_integer: __embind_register_integer,

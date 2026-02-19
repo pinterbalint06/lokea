@@ -3,6 +3,3 @@ build/
 **/node_modules/
 backend/temp/*
 private/*
-
-!private/equirectangular/
-!private/map/

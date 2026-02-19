@@ -30,6 +30,7 @@ public:
     void setV(float v) { v_ = v; }
     void setId(int id) { id_ = id; }
     void setRotation(float rotation) { rotation_ = rotation; }
+    void updateRenderPosition(float planeX, float planeY, float screenWidth, float screenHeight);
 
     void changeTexture(const std::string &textureUrl);
 };

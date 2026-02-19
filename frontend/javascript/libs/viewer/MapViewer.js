@@ -417,7 +417,6 @@ export class MapViewer extends WASMViewerBase {
         }
 
         await Promise.all(promises);
-        console.log("markers cached");
     }
 
     // Functions that have to be implemented

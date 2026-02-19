@@ -62,7 +62,10 @@ void MapViewerEngine::createMapPlane()
         std::memcpy(mapPlane_->getIndices(), indices, sizeof(indices));
 
         Materials::Material mat = Materials::Material::Error();
-        mat.setTexture(new Texture());
+        Texture *mapTexture = new Texture();
+        TextureOptions options = TextureStyle::Default;
+        options.wrapT = GL_CLAMP_TO_EDGE;
+        mat.setTexture(mapTexture);
         mapPlane_->setMaterial(mat);
 
         recalculateUVPerPixel();
@@ -103,67 +106,7 @@ void MapViewerEngine::updateSingleMarker(MapMarker *mapMarker)
         float inPlaneX = (inRangeRelativeU * 2.0f) - 1.0f;
         float inPlaneY = 1.0f - (inRangeRelativeV * 2.0f);
 
-        float pixelWidth = mapMarker->getWidth();
-        float pixelHeight = mapMarker->getHeight();
-
-        float inPlaneWidth = (pixelWidth / (float)width_) * 2.0f;
-        float inPlaneHeight = (pixelHeight / (float)height_) * 2.0f;
-        float halfinPlaneHeight = inPlaneHeight * 0.5f;
-        float halfinPlaneWidth = inPlaneWidth * 0.5f;
-
-        Vertex* markerVertices = mapMarker->getVertices();
-        float angle = mapMarker->getRotation();
-
-        if (angle != 0.0f)
-        {
-            float cosine = cos(angle);
-            float sine = sin(angle);
-
-            // Pre-calculate vector components for width and height
-            float widthCosine = halfinPlaneWidth * cosine;
-            float widthSine = halfinPlaneWidth * sine;
-            float heightCosine = halfinPlaneHeight * cosine;
-            float heightSine = halfinPlaneHeight * sine;
-
-            // rotation formula: 
-            // x' = x*cos - y*sin
-            // y' = x*sin + y*cos
-
-            // left is -halfinPlaneWidth so it is -widthCosine (-w, +h)
-            // x' = -x*cos - y*sin 
-            markerVertices[TOP_LEFT].x = inPlaneX - widthCosine - heightSine;
-            markerVertices[TOP_LEFT].y = inPlaneY - widthSine + heightCosine;
-
-            // both half width and height is added to this so it is standard rotation formula (+w, +h)
-            markerVertices[TOP_RIGHT].x = inPlaneX + widthCosine - heightSine;
-            markerVertices[TOP_RIGHT].y = inPlaneY + widthSine + heightCosine;
-
-            // bottom left (-w, -h) both half ...
-            markerVertices[BOTTOM_LEFT].x = inPlaneX - widthCosine + heightSine;
-            markerVertices[BOTTOM_LEFT].y = inPlaneY - widthSine - heightCosine;
-
-            // bottom right (+w, -h)
-            markerVertices[BOTTOM_RIGHT].x = inPlaneX + widthCosine + heightSine;
-            markerVertices[BOTTOM_RIGHT].y = inPlaneY + widthSine - heightCosine;
-        }
-        else
-        {
-            // center x around calculated coordinate
-            markerVertices[TOP_LEFT].x = inPlaneX - halfinPlaneWidth;
-            markerVertices[TOP_RIGHT].x = inPlaneX + halfinPlaneWidth;
-            markerVertices[BOTTOM_LEFT].x = inPlaneX - halfinPlaneWidth;
-            markerVertices[BOTTOM_RIGHT].x = inPlaneX + halfinPlaneWidth;
-
-            // put the bottom to the click not centered around
-            // so the markers bottom middle point marks the point
-            markerVertices[TOP_LEFT].y = inPlaneY + halfinPlaneHeight;
-            markerVertices[TOP_RIGHT].y = inPlaneY + halfinPlaneHeight;
-            markerVertices[BOTTOM_LEFT].y = inPlaneY - halfinPlaneHeight;
-            markerVertices[BOTTOM_RIGHT].y = inPlaneY - halfinPlaneHeight;
-        }
-
-        // update gpu
-        mapMarker->setUpOpenGL();
+        mapMarker->updateRenderPosition(inPlaneX, inPlaneY, (float)width_, (float)height_);
     }
 }
 

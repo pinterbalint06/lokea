@@ -6,6 +6,21 @@
 #include <GLES3/gl3.h>
 #include <emscripten/val.h>
 
+struct TextureOptions
+{
+    GLenum minFilter;
+    GLenum magFilter;
+    GLenum wrapS;
+    GLenum wrapT;
+};
+
+namespace TextureStyle
+{
+    static const TextureOptions Default = {
+        GL_LINEAR_MIPMAP_LINEAR, GL_LINEAR, GL_REPEAT, GL_REPEAT
+    };
+}
+
 class Texture
 {
 private:
@@ -14,9 +29,12 @@ private:
     uint8_t *imgData_;
     GLuint textureGL_;
     bool invisiblePlaceholder_;
+    TextureOptions options_;
 
     void initGL();
     void generatePlaceholder();
+    void updateOptions();
+    bool needsMipmaps();
 
 public:
     Texture(bool invisiblePlaceholder = false);
@@ -28,6 +46,8 @@ public:
 
     uint8_t *getImgData() { return imgData_; }
     GLuint getTextureIndex() const { return textureGL_; }
+
+    void setOptions(TextureOptions options);
 
     void loadFromUrl(const std::string &url);
     void loadFromUrl(const std::string &url, emscripten::val onSuccess, emscripten::val onError);

@@ -6,7 +6,7 @@ mergeInto(LibraryManager.library, {
             console.error(msg);
         }
     },
-    textureFromURL: function (textureID, url, ctxId, onSuccessHandle, onErrorHandle) {
+    textureFromURL: function (textureID, url, ctxId, needsMipmaps, onSuccessHandle, onErrorHandle) {
         let gl = GL.contexts[ctxId].GLctx;
         let imgUrl = UTF8ToString(url);
 
@@ -32,10 +32,10 @@ mergeInto(LibraryManager.library, {
                     gl.bindTexture(gl.TEXTURE_2D, texture);
 
                     gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, imageBitmap);
-                    gl.generateMipmap(gl.TEXTURE_2D);
 
-                    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR_MIPMAP_LINEAR);
-                    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
+                    if (needsMipmaps) {
+                        gl.generateMipmap(gl.TEXTURE_2D);
+                    }
 
                     gl.bindTexture(gl.TEXTURE_2D, null);
                     if (typeof onSuccess == "function") {

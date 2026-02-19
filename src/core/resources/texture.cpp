@@ -9,7 +9,7 @@
 
 extern "C"
 {
-    extern void textureFromURL(int textureID, const char *url, int ctxId, emscripten::EM_VAL onSuccessHandle, emscripten::EM_VAL onErrorHandle);
+    extern void textureFromURL(int textureID, const char *url, int ctxId, bool needsMipmaps, emscripten::EM_VAL onSuccessHandle, emscripten::EM_VAL onErrorHandle);
 }
 
 Texture::Texture(bool invisiblePlaceholder)
@@ -19,6 +19,7 @@ Texture::Texture(bool invisiblePlaceholder)
     textureGL_ = 0;
     invisiblePlaceholder_ = invisiblePlaceholder;
     imgData_ = nullptr;
+    options_ = TextureStyle::Default;
     initGL();
 }
 
@@ -50,7 +51,35 @@ void Texture::initGL()
     if (textureGL_ == 0)
     {
         glGenTextures(1, &textureGL_);
+        setOptions(options_);
         generatePlaceholder();
+    }
+}
+
+bool Texture::needsMipmaps()
+{
+    return options_.minFilter == GL_NEAREST_MIPMAP_NEAREST ||
+        options_.minFilter == GL_LINEAR_MIPMAP_NEAREST ||
+        options_.minFilter == GL_NEAREST_MIPMAP_LINEAR ||
+        options_.minFilter == GL_LINEAR_MIPMAP_LINEAR;
+}
+
+void Texture::setOptions(TextureOptions options)
+{
+    options_ = options;
+    updateOptions();
+}
+
+void Texture::updateOptions()
+{
+    if (textureGL_ != 0)
+    {
+        glBindTexture(GL_TEXTURE_2D, textureGL_);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, options_.minFilter);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, options_.magFilter);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, options_.wrapS);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, options_.wrapT);
+        glBindTexture(GL_TEXTURE_2D, 0);
     }
 }
 
@@ -90,7 +119,7 @@ void Texture::loadFromUrl(const std::string &url, emscripten::val onSuccess, ems
     int ctx = emscripten_webgl_get_current_context();
     if (ctx > 0)
     {
-        textureFromURL(textureGL_, url.c_str(), ctx, onSuccess.as_handle(), onError.as_handle());
+        textureFromURL(textureGL_, url.c_str(), ctx, needsMipmaps(), onSuccess.as_handle(), onError.as_handle());
     }
 }
 
@@ -98,8 +127,7 @@ void Texture::uploadToGPU()
 {
     glBindTexture(GL_TEXTURE_2D, textureGL_);
     glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, width_, height_, 0, GL_RGB, GL_UNSIGNED_BYTE, imgData_);
-    glGenerateMipmap(GL_TEXTURE_2D);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+    updateOptions();
     glBindTexture(GL_TEXTURE_2D, 0);
 }
 
