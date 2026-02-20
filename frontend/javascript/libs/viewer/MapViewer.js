@@ -239,9 +239,10 @@ export class MapViewer extends WASMViewerBase {
         this._engine.placeMarkerByImageCoordinates(id, imageX, imageY, markerUrl, width, height);
     }
 
-    clearMarkers() {
+    clearMarkersAndLines() {
         this._ensureEngineReady();
         this._engine.clearAllMarkers();
+        this._engine.clearAllLines();
     }
 
     getMarkerAtClick(cursorX, cursorY) {
@@ -336,6 +337,12 @@ export class MapViewer extends WASMViewerBase {
         }
 
         this._engine.removeMarker(id);
+    }
+
+    connectMarkers(id1, id2, lineId) {
+        this._ensureEngineReady();
+
+        this._engine.connectMarkers(id1, id2, lineId, 2.5, 255, 0, 0, 130);
     }
 
     changeMarkerId(oldId, newId) {

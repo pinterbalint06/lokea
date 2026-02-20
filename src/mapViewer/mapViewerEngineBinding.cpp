@@ -37,5 +37,8 @@ EMSCRIPTEN_BINDINGS(mapViewerEngineBinding)
         .function("getMarkerIdAtScreenCoords", &MapViewerEngine::getMarkerIdAtScreenCoords)
         .function("changeMarkerId", &MapViewerEngine::changeMarkerId)
         .function("clearAllMarkers", &MapViewerEngine::clearAllMarkers)
-        .function("rotateMarker", &MapViewerEngine::rotateMarker);
+        .function("rotateMarker", &MapViewerEngine::rotateMarker)
+        .function("connectMarkers", &MapViewerEngine::connectMarkers)
+        .function("removeLine", &MapViewerEngine::removeLine)
+        .function("clearAllLines", &MapViewerEngine::clearAllLines);
 }

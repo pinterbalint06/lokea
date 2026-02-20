@@ -11,6 +11,7 @@
 class Mesh;               // defined in "core/resources/mesh.h"
 class Vertex;             // defined in "core/resources/vertex.h"
 class MapMarker;          // defined in "mapViewer/mapMarker.h"
+class MapLine;            // defined in "mapViewer/mapLine.h"
 struct mapViewerSettings; // defined in "mapViewer/mapViewerSettings.h"
 namespace emscripten
 {
@@ -26,6 +27,7 @@ private:
     std::shared_ptr<Mesh> mapPlane_;
     MapViewerSettings settings_;
     std::vector<std::shared_ptr<MapMarker>> markers_;
+    std::vector<std::shared_ptr<MapLine>> lines_;
     int mapWidth_, mapHeight_;
     // used as pan sensitivity so we use dPixel * texture coordinate per pixel when panning
     float uPerPixel_, vPerPixel_;
@@ -40,7 +42,10 @@ private:
     void getUVAtScreenPosition(float screenX, float screenY, float &u, float &v);
     void zoomMapUV(float zoomAmount, float zoomHereU, float zoomHereV);
     int getMarkerIndexById(int id);
+    int getLineIndexById(int id);
     bool doesPointOverlapMarker(MapMarker *marker, float x, float y);
+    void UVToPlaneRelativeCoordinates(float u, float v, float &planeX, float &planeY);
+    void updateAllLines();
 
 public:
     MapViewerEngine(const std::string &canvasID, int width, int height);
@@ -69,11 +74,16 @@ public:
     void removeMarker(int id);
     void moveMarkerToScreen(int id, float screenX, float screenY);
     bool doesMarkerExist(int id);
+    bool doesLineExist(int id);
     void clearAllMarkers();
     void rotateMarker(int id, float angleRadians);
     emscripten::val getMarkerPosition(int id);
     void changeMarkerId(int oldId, int newId);
     void setCanvasSize(int width, int height);
+
+    void connectMarkers(int id1, int id2, int lineId, float thickness, uint8_t r, uint8_t g, uint8_t b, uint8_t a);
+    void removeLine(int id);
+    void clearAllLines();
 };
 
 #endif

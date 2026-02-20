@@ -82,4 +82,4 @@ CREATE TABLE log (
     foreign key (user_id) references users(user_id) ON DELETE CASCADE,
 );
 
-
+-- TODO: pontok összekapcsolásainak tábla

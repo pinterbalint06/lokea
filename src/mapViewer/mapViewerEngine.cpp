@@ -23,6 +23,7 @@
 #include "mapViewer/mapViewerSettings.h"
 #include "mapViewer/mapViewerEngine.h"
 #include "mapViewer/mapMarker.h"
+#include "mapViewer/mapLine.h"
 
 enum VertexIndex
 {
@@ -77,35 +78,8 @@ void MapViewerEngine::updateSingleMarker(MapMarker *mapMarker)
 {
     if (mapMarker && mapPlane_)
     {
-        Vertex* mapVertices = mapPlane_->getVertices();
-
-        float minMapU = mapVertices[TOP_LEFT].u;
-        float minMapV = mapVertices[TOP_LEFT].v;
-        // ranges
-        float uRange = mapVertices[TOP_RIGHT].u - minMapU;
-        float vRange = mapVertices[BOTTOM_LEFT].v - minMapV;
-
-        // calculate which map to put the marker on
-        // it is put on the closest to the view center
-        float currentCenterU = (mapVertices[TOP_LEFT].u + mapVertices[TOP_RIGHT].u) * 0.5f;
-
-        float markerToCenter = currentCenterU - mapMarker->getU();
-
-        float closestMapStart = std::round(markerToCenter);
-        float renderMarkerU = mapMarker->getU() + closestMapStart;
-
-        // marker's coordinates inside the view
-        float inRangeRelativeU = (renderMarkerU - minMapU) / uRange;
-        float inRangeRelativeV = (mapMarker->getV() - minMapV) / vRange;
-
-        // the plane starts at -1 and ends at 1
-        // we have to turn the rangeRelative [0;1] coordinate to [-1;1]
-        // [0;1] * 2 => [0;2]
-        // [0;2] - 1 => [-1;1]
-        // also flip the y axis by subtracting it from 1
-        float inPlaneX = (inRangeRelativeU * 2.0f) - 1.0f;
-        float inPlaneY = 1.0f - (inRangeRelativeV * 2.0f);
-
+        float inPlaneX, inPlaneY;
+        UVToPlaneRelativeCoordinates(mapMarker->getU(), mapMarker->getV(), inPlaneX, inPlaneY);
         mapMarker->updateRenderPosition(inPlaneX, inPlaneY, (float)width_, (float)height_);
     }
 }
@@ -126,6 +100,7 @@ void MapViewerEngine::updateAllMarkers()
     {
         updateSingleMarker(markers_[i].get());
     }
+    updateAllLines();
 }
 
 void MapViewerEngine::clearAllMarkers()
@@ -146,6 +121,22 @@ int MapViewerEngine::getMarkerIndexById(int id)
     }
     int foundIndex = -1;
     if (i < markers_.size())
+    {
+        foundIndex = i;
+    }
+
+    return foundIndex;
+}
+
+int MapViewerEngine::getLineIndexById(int id)
+{
+    int i = 0;
+    while (i < lines_.size() && lines_[i]->getId() != id)
+    {
+        i++;
+    }
+    int foundIndex = -1;
+    if (i < lines_.size())
     {
         foundIndex = i;
     }
@@ -228,6 +219,8 @@ void MapViewerEngine::moveMarkerToImageCoordinates(int id, int xCoordinate, int 
         markers_[index]->setV(newV);
 
         updateSingleMarker(markers_[index].get());
+        // TODO: update only line which have this marker as one endpoint
+        updateAllLines();
     }
     else
     {
@@ -249,6 +242,7 @@ void MapViewerEngine::moveMarkerToScreen(int id, float screenX, float screenY)
         markers_[index]->setV(newV);
 
         updateSingleMarker(markers_[index].get());
+        updateAllLines();
     }
     else
     {
@@ -270,6 +264,20 @@ void MapViewerEngine::removeMarker(int id)
     }
 }
 
+void MapViewerEngine::removeLine(int id)
+{
+    int index = getLineIndexById(id);
+    if (isMapLoaded_ && index != -1)
+    {
+        removeMesh(lines_[index]);
+        lines_.erase(lines_.begin() + index);
+    }
+    else
+    {
+        emscripten_console_error("Line doesn't exist!");
+    }
+}
+
 void MapViewerEngine::changeMarkerId(int oldId, int newId)
 {
     int index = getMarkerIndexById(oldId);
@@ -286,6 +294,11 @@ void MapViewerEngine::changeMarkerId(int oldId, int newId)
 bool MapViewerEngine::doesMarkerExist(int id)
 {
     return getMarkerIndexById(id) != -1;
+}
+
+bool MapViewerEngine::doesLineExist(int id)
+{
+    return getLineIndexById(id) != -1;
 }
 
 emscripten::val MapViewerEngine::getMarkerPosition(int id)
@@ -641,4 +654,102 @@ void MapViewerEngine::setCanvasSize(int width, int height)
     {
         emscripten_console_error("Plane was destroyed!");
     }
+}
+
+void MapViewerEngine::UVToPlaneRelativeCoordinates(float u, float v, float &planeX, float &planeY)
+{
+    if (mapPlane_)
+    {
+        Vertex* mapVertices = mapPlane_->getVertices();
+
+        float minMapU = mapVertices[TOP_LEFT].u;
+        float minMapV = mapVertices[TOP_LEFT].v;
+        // ranges
+        float uRange = mapVertices[TOP_RIGHT].u - minMapU;
+        float vRange = mapVertices[BOTTOM_LEFT].v - minMapV;
+
+        // calculate which map to project to
+        // it is put on the closest to the view center
+        float currentCenterU = (mapVertices[TOP_LEFT].u + mapVertices[TOP_RIGHT].u) * 0.5f;
+
+        float distanceToCenter = currentCenterU - u;
+
+        float closestMapStart = std::round(distanceToCenter);
+        float wrappedU = u + closestMapStart;
+
+        // normalize to [0;1]
+        float inRangeRelativeU = (wrappedU - minMapU) / uRange;
+        float inRangeRelativeV = (v - minMapV) / vRange;
+
+        // the plane starts at -1 and ends at 1
+        // we have to turn the rangeRelative [0;1] coordinate to [-1;1]
+        // [0;1] * 2 => [0;2]
+        // [0;2] - 1 => [-1;1]
+        // also flip the y axis by subtracting it from 1
+        planeX = (inRangeRelativeU * 2.0f) - 1.0f;
+        planeY = 1.0f - (inRangeRelativeV * 2.0f);
+    }
+}
+
+void MapViewerEngine::connectMarkers(int id1, int id2, int lineId, float thickness, uint8_t r, uint8_t g, uint8_t b, uint8_t a)
+{
+    if (isMapLoaded_ && doesMarkerExist(id1) && doesMarkerExist(id2))
+    {
+        if (!doesLineExist(lineId))
+        {
+            std::shared_ptr<MapLine> line = std::make_shared<MapLine>(lineId, id1, id2, thickness, r, g, b, a);
+            lines_.push_back(line);
+
+            addMesh(line);
+
+            updateAllLines();
+        }
+        else
+        {
+            emscripten_console_error("Line with given ID already exists");
+        }
+    }
+    else
+    {
+        emscripten_console_error("Map not loaded or invalid marker ID");
+    }
+}
+
+void MapViewerEngine::updateAllLines()
+{
+    if (mapPlane_)
+    {
+        for (int i = 0; i < lines_.size(); i++)
+        {
+            int startMarkerId = lines_[i]->getStartMarkerId();
+            int endMarkerId = lines_[i]->getEndMarkerId();
+
+            int startMarkerIndex = getMarkerIndexById(startMarkerId);
+            int endMarkerIndex = getMarkerIndexById(endMarkerId);
+            if (startMarkerIndex != -1 && endMarkerIndex != -1)
+            {
+                MapMarker *startMarker = markers_[startMarkerIndex].get();
+                MapMarker *endMarker = markers_[endMarkerIndex].get();
+                float startMarkerX, startMarkerY;
+                float endMarkerX, endMarkerY;
+                UVToPlaneRelativeCoordinates(startMarker->getU(), startMarker->getV(), startMarkerX, startMarkerY);
+                UVToPlaneRelativeCoordinates(endMarker->getU(), endMarker->getV(), endMarkerX, endMarkerY);
+
+                lines_[i]->updateLineGeometry(startMarkerX, startMarkerY, endMarkerX, endMarkerY, (float)width_, (float)height_);
+            }
+            else
+            {
+                emscripten_console_error("One of the endpoints of the line didn't exist");
+            }
+        }
+    }
+}
+
+void MapViewerEngine::clearAllLines()
+{
+    for (int i = 0; i < lines_.size(); i++)
+    {
+        removeMesh(lines_[i]);
+    }
+    lines_.clear();
 }

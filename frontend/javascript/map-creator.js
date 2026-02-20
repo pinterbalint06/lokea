@@ -229,6 +229,9 @@ async function loadPoints(mapID, successCheckId) {
                 pointsCache[points[i].point_id] = points[i];
                 mapViewer.placeMarkerByImageCoordinates(points[i].point_id, points[i].point_x, points[i].point_y, CONSTANTS.MARKER_SIZE.width, CONSTANTS.MARKER_SIZE.height, "ready");
             }
+            // TODO: remove és adatbázisbol kapott összeköttetések megadása
+            mapViewer.connectMarkers(points[0].point_id, points[1].point_id, 321);
+            mapViewer.connectMarkers(points[1].point_id, points[2].point_id, 32);
             showToast("Pontok sikeresen betöltve!", "success", true, { delay: 3000 });
         }
     } catch (error) {
@@ -251,7 +254,7 @@ async function switchMap(mapId) {
 
         if (mapId == CONSTANTS.TEMP_ID) {
             // temporary maps cannot have points
-            mapViewer.clearMarkers();
+            mapViewer.clearMarkersAndLines();
             await mapViewer.loadMap(maps[mapId].temporaryURL, maps[mapId].imgWidth, maps[mapId].imgHeight);
             UI.saveButton.disabled = false;
         } else {
@@ -259,7 +262,7 @@ async function switchMap(mapId) {
             await loadImage(
                 "/api/game_maps/getMapImageById?mapId=" + mapId,
                 (url, width, height) => {
-                    mapViewer.clearMarkers();
+                    mapViewer.clearMarkersAndLines();
                     mapViewer.loadMap(url, width, height)
                 },
                 () => activeMapId == mapId
@@ -513,7 +516,9 @@ async function handleMapLoad(file) {
 function placeOrMoveMarker(cursorX, cursorY) {
     if (mapViewer.doesMarkerExist(editorState.activePointId)) {
         mapViewer.moveMarker(editorState.activePointId, cursorX, cursorY);
-        mapViewer.moveMarker(CONSTANTS.FOV_MARKER_ID, cursorX, cursorY);
+        if (mapViewer.doesMarkerExist(CONSTANTS.FOV_MARKER_ID)) {
+            mapViewer.moveMarker(CONSTANTS.FOV_MARKER_ID, cursorX, cursorY);
+        }
     } else {
         UI.savePointButton.disabled = true;
         mapViewer.placeMarker(editorState.activePointId, cursorX, cursorY, CONSTANTS.MARKER_SIZE.width, CONSTANTS.MARKER_SIZE.height, "EMPTY");
@@ -568,6 +573,9 @@ function handleCoordinateChange(event) {
     if (isValid.correct) {
         event.target.dataset.previousValue = event.target.valueAsNumber;
         mapViewer.moveMarkerToImageCoordinates(editorState.activePointId, xCoordinate, yCoordinate);
+        if (mapViewer.doesMarkerExist(CONSTANTS.FOV_MARKER_ID)) {
+            mapViewer.moveMarkerToImageCoordinates(CONSTANTS.FOV_MARKER_ID, xCoordinate, yCoordinate);
+        }
     } else {
         event.target.value = event.target.dataset.previousValue;
         showToast(isValid.error, "danger", false, { delay: 3000 });
@@ -749,6 +757,10 @@ function addUIEventListeners() {
     UI.collapseElement.addEventListener("show.bs.collapse", (event) => {
         if (event.target == UI.collapseElement) {
             UI.floatinButtonDiv.classList.add("d-none");
+            if (editorState.activePointId == CONSTANTS.TEMP_ID) {
+                UI.northDirectionRange.value = 0;
+                UI.northDirection.value = 0;
+            }
         }
     });
 
@@ -926,3 +938,4 @@ document.addEventListener("DOMContentLoaded", init);
 
 // TODO: látótér állandó méretű (állítható méretű?)
 // TODO: pontok összekapcsolása
+// TODO: új markernél elsőre nincs helyesen rajta a markeren a fov cone
