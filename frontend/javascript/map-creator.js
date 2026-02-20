@@ -1,5 +1,6 @@
 import { MapViewer } from "./libs/viewer/MapViewer.js";
 import { EquirectangularViewer } from "./libs/viewer/EquirectangularViewer.js";
+import { degreeToRadian } from "./libs/math/mathUtils.js";
 
 // |------------------|
 // | GLOBAL VARIABLES |
@@ -40,14 +41,13 @@ let mapViewer;
 let equirectangularViewer;
 let UI = {};
 let maps = {};
+let pointsCache = {};
 let activeMapId = -1;
 let gameMapID = null;
-
 // editor State
 let editorState = {
     activePointId: null,
     isPlacingMarker: false,
-    originalPointData: null,
     pendingEquirectangularFile: null,
     pendingMapFile: null,
     clickOnMapToast: null,
@@ -224,7 +224,9 @@ async function loadPoints(mapID, successCheckId) {
                 throw new Error(data.error);
             }
             let points = data.points;
+            pointsCache = {};
             for (let i = 0; i < points.length; i++) {
+                pointsCache[points[i].point_id] = points[i];
                 mapViewer.placeMarkerByImageCoordinates(points[i].point_id, points[i].point_x, points[i].point_y, CONSTANTS.MARKER_SIZE.width, CONSTANTS.MARKER_SIZE.height, "ready");
             }
             showToast("Pontok sikeresen betöltve!", "success", true, { delay: 3000 });
@@ -342,6 +344,7 @@ async function savePoint() {
 
         formData.append("x", position.x);
         formData.append("y", position.y);
+        formData.append("northDirection", UI.northDirection.valueAsNumber);
 
         let url = "";
         let method = "";
@@ -386,13 +389,21 @@ async function savePoint() {
                 editorState.activePointId = data.pointId;
                 mapViewer.changeMarkerType(editorState.activePointId, "EDIT");
             }
-            editorState.originalPointData = position;
+            if (!pointsCache[editorState.activePointId]) {
+                pointsCache[editorState.activePointId] = {
+                    point_id: editorState.activePointId
+                };
+            }
+            pointsCache[editorState.activePointId].point_x = position.x;
+            pointsCache[editorState.activePointId].point_y = position.y;
+            pointsCache[editorState.activePointId].north_direction = UI.northDirection.valueAsNumber;
         } else {
             throw new Error(data.error);
         }
     } catch (error) {
         pontMentesToast.hide();
         console.error(error.message);
+        console.error(error);
         showToast(error.message, "danger", true, { delay: 3000 });
     } finally {
         editorState.isPlacingMarker = true;
@@ -523,8 +534,6 @@ function clickOnCanvas(cursorX, cursorY) {
             editorState.activePointId = clickedMarkerIndex;
             mapViewer.changeMarkerType(editorState.activePointId, "EDIT");
 
-            editorState.originalPointData = mapViewer.getMarkerPosition(editorState.activePointId);
-
             if (editorState.equiAbortController) {
                 editorState.equiAbortController.abort();
             }
@@ -533,6 +542,7 @@ function clickOnCanvas(cursorX, cursorY) {
             loadImage(
                 "/api/game_maps/getImageByPointId?pointId=" + editorState.activePointId,
                 (url, width, height) => {
+                    equirectangularViewer.setYaw(degreeToRadian(pointsCache[editorState.activePointId].north_direction));
                     equirectangularViewer.loadImage(url, width, height)
                     startFOVSync();
                     UI.equiFullscreenBtn.disabled = false;
@@ -542,6 +552,8 @@ function clickOnCanvas(cursorX, cursorY) {
             );
 
             updateCoordinatesInput();
+            UI.northDirectionRange.value = pointsCache[editorState.activePointId].north_direction;
+            UI.northDirection.value = pointsCache[editorState.activePointId].north_direction;
             editorState.isPlacingMarker = true;
             UI.savePointButton.disabled = false;
             UI.collapseBootstrapElement.show();
@@ -568,7 +580,13 @@ function handleCoordinateChange(event) {
 
 function savePointClick() {
     let position = mapViewer.getMarkerPosition(editorState.activePointId);
-    if (!editorState.originalPointData || position.x != editorState.originalPointData.x || position.y != editorState.originalPointData.y || editorState.pendingEquirectangularFile) {
+    let northDirection = UI.northDirection.valueAsNumber;
+    if (
+        !pointsCache[editorState.activePointId] ||
+        position.x != pointsCache[editorState.activePointId].point_x ||
+        position.y != pointsCache[editorState.activePointId].point_y ||
+        northDirection != pointsCache[editorState.activePointId].north_direction ||
+        editorState.pendingEquirectangularFile) {
         savePoint();
     } else {
         editorState.clickOnMapToast = showToast("A pont nem változott!", "", true, { delay: 2000 });
@@ -692,6 +710,8 @@ function getUIElements() {
     UI.coordinateXInput = document.getElementById("coordinateX");
     UI.coordinateYInput = document.getElementById("coordinateY");
     UI.mapSelect = document.getElementById("mapSelect");
+    UI.northDirectionRange = document.getElementById("northDirectionRange");
+    UI.northDirection = document.getElementById("northDirection");
 
     // canvas
     UI.mapCanvas = document.getElementById(CONSTANTS.MAP_CANVAS_ID);
@@ -746,12 +766,13 @@ function addUIEventListeners() {
                     // it was temporary marker remove it
                     mapViewer.removeMarker(CONSTANTS.TEMP_ID);
                 } else {
-                    if (editorState.originalPointData) {
+                    if (pointsCache[editorState.activePointId]) {
                         // it was discarded revert to old data
+                        let originalPoint = pointsCache[editorState.activePointId];
                         mapViewer.moveMarkerToImageCoordinates(
                             editorState.activePointId,
-                            editorState.originalPointData.x,
-                            editorState.originalPointData.y
+                            originalPoint.point_x,
+                            originalPoint.point_y
                         );
                         mapViewer.changeMarkerType(editorState.activePointId, "READY");
                     }
@@ -766,6 +787,7 @@ function addUIEventListeners() {
         if (event.target == UI.collapseElement) {
             if (equirectangularViewer) {
                 equirectangularViewer.setYaw(0);
+                equirectangularViewer.setZoom(0.05);
                 equirectangularViewer.clearImage();
             }
 
@@ -775,7 +797,6 @@ function addUIEventListeners() {
             // reset state
             editorState.activePointId = null;
             editorState.isPlacingMarker = false;
-            editorState.originalPointData = null;
             editorState.pendingEquirectangularFile = null;
         }
     });
@@ -791,6 +812,24 @@ function addUIEventListeners() {
             editorState.isPlacingMarker = true;
         } else {
             showToast("Először mentsd el a térképet!", "danger", true, { delay: 3000 });
+        }
+    });
+
+    UI.northDirectionRange.addEventListener("input", (e) => {
+        UI.northDirection.value = e.target.value;
+        updateFOVSync();
+    });
+
+    UI.northDirection.addEventListener("focus", savePreviousValue);
+    UI.northDirection.addEventListener("change", (event) => {
+        let degree = event.target.valueAsNumber;
+        if (0 <= degree && degree <= 359) {
+            event.target.dataset.previousValue = event.target.valueAsNumber;
+            UI.northDirectionRange.value = degree;
+            updateFOVSync();
+        } else {
+            event.target.value = event.target.dataset.previousValue;
+            showToast("A szögnek 0 és 359 között kell lennie!", "danger", false, { delay: 3000 });
         }
     });
 
@@ -833,10 +872,17 @@ function startFOVSync() {
 
 function updateFOVSync() {
     if (editorState.activePointId && equirectangularViewer) {
-        // TODO: why does this work with negative instead of pos 3D->2D?
-        let yaw = -equirectangularViewer.getYaw();
+        let viewYaw = -equirectangularViewer.getYaw();
 
-        mapViewer.rotateMarker(CONSTANTS.FOV_MARKER_ID, yaw);
+        let northDirection = 0.0;
+        if (UI.northDirection && UI.northDirection.valueAsNumber) {
+            northDirection = UI.northDirection.valueAsNumber;
+        }
+        let northDirectionRadian = degreeToRadian(northDirection);
+
+        let finalYaw = viewYaw + northDirectionRadian;
+
+        mapViewer.rotateMarker(CONSTANTS.FOV_MARKER_ID, finalYaw);
 
         editorState.fovSyncAnimationID = requestAnimationFrame(updateFOVSync);
     };
@@ -877,3 +923,6 @@ async function init() {
 }
 
 document.addEventListener("DOMContentLoaded", init);
+
+// TODO: látótér állandó méretű (állítható méretű?)
+// TODO: pontok összekapcsolása

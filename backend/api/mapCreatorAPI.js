@@ -140,6 +140,13 @@ router.post("/savePoint", checkAuth, upload.single("equirectangularImage"), asyn
             throw error;
         }
 
+        const northDirection = Number(request.body.northDirection);
+        if (!Number.isFinite(northDirection) || northDirection > 359 || northDirection < 0) {
+            const error = new Error("Helytelen északirány!");
+            error.statusCode = 400;
+            throw error;
+        }
+
         if (!request.file) {
             const error = new Error("Nem adott meg képet!");
             error.statusCode = 400;
@@ -153,7 +160,7 @@ router.post("/savePoint", checkAuth, upload.single("equirectangularImage"), asyn
 
         let imageId = await database.insertImage(dbConnection, imageData.width, imageData.height, "pending");
 
-        let newPointId = await database.insertPoint(dbConnection, mapID, xCoordinate, yCoordinate, imageId);
+        let newPointId = await database.insertPoint(dbConnection, mapID, xCoordinate, yCoordinate, northDirection, imageId);
 
         // private/userId/gameMapId/mapId/point_images/pointId/
         let relativeDestDir = path.join(
@@ -330,6 +337,13 @@ router.put("/point/:pointId", checkAuth, upload.single("equirectangularImage"), 
             throw error;
         }
 
+        const northDirection = Number(request.body.northDirection);
+        if (!Number.isFinite(northDirection) || northDirection > 359 || northDirection < 0) {
+            const error = new Error("Helytelen északirány!");
+            error.statusCode = 400;
+            throw error;
+        }
+
         // TODO: check if has access
         dbConnection = await database.getConnection();
         await dbConnection.beginTransaction();
@@ -341,13 +355,26 @@ router.put("/point/:pointId", checkAuth, upload.single("equirectangularImage"), 
             throw error;
         }
 
-        let affectedRows = await database.updatePointCoordinates(dbConnection, pointId, xCoordinate, yCoordinate);
-        if (affectedRows > 1) {
-            console.error("Multiple rows affected at ID update");
-            let error = {
-                statusCode: 500
-            };
-            throw error;
+        // only update if anything is different
+        if (pointInfo.point_x != xCoordinate || pointInfo.point_y != yCoordinate) {
+            let affectedRows = await database.updatePointCoordinates(dbConnection, pointId, xCoordinate, yCoordinate);
+            if (affectedRows > 1) {
+                console.error("Multiple rows affected at ID update");
+                let error = {
+                    statusCode: 500
+                };
+                throw error;
+            }
+        }
+        if (pointInfo.north_direction != northDirection) {
+            let affectedRows = await database.updatePointNorthDirection(dbConnection, pointId, northDirection);
+            if (affectedRows > 1) {
+                console.error("Multiple rows affected at ID update");
+                let error = {
+                    statusCode: 500
+                };
+                throw error;
+            }
         }
 
         if (request.file) {

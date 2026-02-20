@@ -2,6 +2,7 @@
     --lilauveg: rgba(18, 10, 30, 0.75);
     --lila-border: rgba(180, 100, 255, 0.2);
     --lila-fenylik: rgba(140, 52, 216, 0.75);
+    --halvany-lila: rgba(168, 129, 202, 0.8);
     --focus-form: rgb(157, 78, 221, 0.6);
     --gomb-szin: rgb(123, 44, 191, 0.8);
     --szoveg: #ffffff;
@@ -212,6 +213,63 @@ main {
     background-color: rgba(0, 0, 0, 0.15);
     color: var(--szoveg);
     border-top: none;
+}
+
+.degreeWrapper {
+    position: relative;
+}
+
+.degreeWrapper::after {
+    content: "°";
+    position: absolute;
+    right: 10px;
+    top: 50%;
+    transform: translateY(-50%);
+    pointer-events: none;
+}
+
+/* hide arrows on number input */
+.hide-arrows::-webkit-outer-spin-button,
+.hide-arrows::-webkit-inner-spin-button {
+    -webkit-appearance: none;
+    margin: 0;
+}
+
+.hide-arrows[type=number] {
+    appearance: textfield;
+    -moz-appearance: textfield;
+}
+
+.glass-range::-webkit-slider-thumb {
+    background: var(--gomb-szin);
+}
+
+.glass-range::-moz-range-thumb {
+    background: var(--gomb-szin);
+}
+
+.glass-range::-webkit-slider-thumb:active {
+    background-color: var(--lila-fenylik);
+}
+
+.glass-range::-moz-range-thumb:active {
+    background-color: var(--lila-fenylik);
+}
+
+.glass-range:focus::-webkit-slider-thumb {
+    box-shadow: 0 0 0 0.04rem #ffffff, 0 0 0 0.2rem var(--halvany-lila);
+}
+
+.glass-range:focus::-moz-range-thumb {
+    box-shadow: 0 0 0 0.04rem #ffffff, 0 0 0 0.2rem var(--halvany-lila);
+}
+
+.glass-range::-webkit-slider-runnable-track {
+    background-color: var(--lila-border);
+}
+
+.glass-range::-moz-range-track {
+    background-color: var(--lila-border);
 }
 
 @media (max-width: 992px) {

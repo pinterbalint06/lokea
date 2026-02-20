@@ -49,9 +49,11 @@ CREATE TABLE points (
     map_id int,
     point_x int NOT NULL,
     point_y int NOT NULL,
+    north_direction int NOT NULL DEFAULT 0,
     image_id int,
     foreign key (map_id) references map(map_id) ON DELETE SET NULL,
-    foreign key (image_id) references images(image_id) ON DELETE SET NULL
+    foreign key (image_id) references images(image_id) ON DELETE SET NULL,
+    CONSTRAINT check_north_direction CHECK (north_direction >= 0 AND north_direction <= 359)
 );
 
 CREATE TABLE scores (

@@ -57,12 +57,12 @@ async function insertMap(connection, title, gameMapId, imageId) {
     return result.insertId;
 }
 
-async function insertPoint(connection, mapId, x, y, imageId) {
+async function insertPoint(connection, mapId, x, y, northDirection, imageId) {
     const query = `
-        INSERT INTO points (map_id, point_x, point_y, image_id)
-        VALUES (?, ?, ?, ?)
+        INSERT INTO points (map_id, point_x, point_y, north_direction, image_id)
+        VALUES (?, ?, ?, ?, ?)
     `;
-    const [result] = await connection.execute(query, [mapId, x, y, imageId]);
+    const [result] = await connection.execute(query, [mapId, x, y, northDirection, imageId]);
     return result.insertId;
 }
 
@@ -99,7 +99,7 @@ async function getPointImage(pointId) {
 
 async function getPointsOnMap(mapId) {
     const query = `
-        SELECT points.point_id, points.point_x, points.point_y 
+        SELECT points.point_id, points.point_x, points.point_y, points.north_direction 
         FROM map
             INNER JOIN points ON (map.map_id = points.map_id)
         WHERE map.map_id = ?
@@ -110,7 +110,7 @@ async function getPointsOnMap(mapId) {
 
 async function getPointInfo(pointId) {
     const query = `
-        SELECT points.point_id, points.point_x, points.point_y, map.map_id, game_maps.game_maps_id
+        SELECT points.point_id, points.point_x, points.point_y, points.north_direction, map.map_id, game_maps.game_maps_id
         FROM points
             INNER JOIN map ON (map.map_id = points.map_id)
             INNER JOIN game_maps ON (game_maps.game_maps_id = map.game_maps_id)
@@ -152,6 +152,16 @@ async function updatePointCoordinates(connection, pointId, x, y) {
     return result.affectedRows;
 }
 
+async function updatePointNorthDirection(connection, pointId, northDirection) {
+    const query = `
+        UPDATE points
+        SET points.north_direction = ?
+        WHERE points.point_id = ?
+    `;
+    const [result] = await connection.execute(query, [northDirection, pointId]);
+    return result.affectedRows;
+}
+
 async function updatePointImage(connection, pointId, imageId) {
     const query = `
         UPDATE points
@@ -186,6 +196,7 @@ module.exports = {
     checkUserOwnsGameMap,
     updatePointCoordinates,
     updatePointImage,
+    updatePointNorthDirection,
     deleteImageById,
     getPointInfo,
     newUser,

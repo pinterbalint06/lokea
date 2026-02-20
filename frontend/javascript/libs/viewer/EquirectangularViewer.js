@@ -156,6 +156,20 @@ export class EquirectangularViewer extends WASMViewerBase {
         this._engine.yaw = yaw;
     }
 
+    setZoom(zoom) {
+        this._ensureEngineReady();
+
+        if (Number.isNaN(zoom) || zoom < 0.0 || 10.0 < zoom) {
+            throw new WebassemblyError(
+                "Invalid zoom",
+                {
+                    "type": EQUIRECTANGULAR_ERROR_TYPES.INVALID_INPUT
+                });
+        }
+
+        this._engine.setZoom(zoom);
+    }
+
     // |-----------------|
     // | PRIVATE METHODS |
     // |-----------------|
