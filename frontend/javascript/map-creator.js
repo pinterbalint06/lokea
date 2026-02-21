@@ -237,6 +237,7 @@ async function loadPoints(mapID, successCheckId) {
             UI.newConnectionBtn.disabled = points.length < 2;
 
             // TODO: load connections from database
+            updateConnectionListUI();
             showToast("Pontok sikeresen betöltve!", "success", true, { delay: 3000 });
         }
     } catch (error) {
@@ -570,6 +571,7 @@ function clickOnCanvas(cursorX, cursorY) {
                         end_point_id: clickedMarkerIndex,
                         game_maps_id: activeMapId
                     };
+                    updateConnectionListUI();
                     // TODO: save new connection to database
                     showToast("Kapcsolat létrehozva!", "success", true, { delay: 3000 });
 
@@ -605,6 +607,7 @@ function clickOnCanvas(cursorX, cursorY) {
                     signal
                 );
 
+                updateConnectionListUI();
                 updateCoordinatesInput();
                 UI.northDirectionRange.value = pointsCache[editorState.activePointId].north_direction;
                 UI.northDirection.value = pointsCache[editorState.activePointId].north_direction;
@@ -681,6 +684,31 @@ function updateCollapseDirection() {
         UI.collapseElement.classList.remove("collapse-horizontal");
     } else {
         UI.collapseElement.classList.add("collapse-horizontal");
+    }
+}
+
+function updateConnectionListUI() {
+    UI.connectionsList.innerHTML = "";
+
+    let connections = Object.values(connectionsCache).filter(connection => connection.start_point_id == editorState.activePointId || connection.end_point_id == editorState.activePointId);
+
+    if (connections.length == 0) {
+        UI.emptyConnections.classList.remove("d-none");
+    } else {
+        UI.emptyConnections.classList.add("d-none");
+
+        // TODO: pontoknak nev adas is itt aszerint megjelnites
+        let template = document.getElementById("connection-card-template");
+        for (let i = 0; i < connections.length; i++) {
+            // deep clone true
+            let clone = template.content.cloneNode(true);
+            clone.querySelector(".start-id").textContent = connections[i].start_point_id;
+            clone.querySelector(".end-id").textContent = connections[i].end_point_id;
+            clone.querySelector(".kapcsolat-kartya").addEventListener("click", () => {
+                console.log(connections[i]);
+            });
+            UI.connectionsList.appendChild(clone);
+        }
     }
 }
 
@@ -787,6 +815,8 @@ function getUIElements() {
     UI.collapseElement = document.getElementById("ujPontCollapse");
     UI.mapSelector = document.getElementById("mapSelector");
     UI.floatinButtonDiv = document.getElementById("floatinButtonDiv");
+    UI.connectionsList = document.getElementById("kapcsolatokLista");
+    UI.emptyConnections = document.getElementById("nincsenekKapcsolatok");
     UI.collapseBootstrapElement = new bootstrap.Collapse(
         UI.collapseElement,
         {
@@ -919,18 +949,30 @@ function addUIEventListeners() {
     window.addEventListener("resize", updateCollapseDirection);
 
     UI.newConnectionBtn.addEventListener("click", () => {
-        if (!editorState.isConnectingMarkers) {
-            editorState.isConnectingMarkers = true;
-            mapViewer.canvasInput.setDefaultCursor("crosshair");
-            editorState.connectionToast = showToast(
-                "Kattints a végpontra!",
-                "",
-                true,
-                { autohide: false },
-                "",
-                () => {
-                    cancelConnection();
-                });
+        if (editorState.activePointId != CONSTANTS.TEMP_ID) {
+            if (!editorState.isConnectingMarkers) {
+                editorState.isConnectingMarkers = true;
+                mapViewer.canvasInput.setDefaultCursor("crosshair");
+                editorState.connectionToast = showToast(
+                    "Kattints a végpontra!",
+                    "",
+                    true,
+                    { autohide: false },
+                    "",
+                    () => {
+                        cancelConnection();
+                    });
+            }
+        } else {
+            showToast("Először mentsd el a pontot!", "danger", true, { delay: 3000 });
+        }
+    });
+
+    window.addEventListener("keyup", (event) => {
+        if (event.key == "Escape") {
+            if (UI.collapseBootstrapElement) {
+                UI.collapseBootstrapElement.hide();
+            }
         }
     });
 }
@@ -1021,6 +1063,5 @@ async function init() {
 document.addEventListener("DOMContentLoaded", init);
 
 // TODO: látótér állandó méretű (állítható méretű?)
-// TODO: pontok összekapcsolása
 // TODO: új markernél elsőre nincs helyesen rajta a markeren a fov cone
 // TODO: race condition miközben menti a pontot rányomni egy másik gombra? talán akkor editorState.isPlacingMarker hamis addig és megnyit egy másik létező gombot?

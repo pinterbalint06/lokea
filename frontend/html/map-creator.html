@@ -278,14 +278,13 @@
                                                 Meglévő kapcsolatok
                                             </h6>
                                         </div>
-                                        <!-- TODO: max height vh és görgethető -->
                                         <div id="kapcsolatokWrapper"
                                             class="d-flex flex-column gap-2 max-height-connections">
                                             <div id="nincsenekKapcsolatok"
                                                 class="dangerColor m-0 py-2 px-3 rounded-2 small text-center">
                                                 Nincsenek kapcsolatok
                                             </div>
-                                            <div id="kapcsolatokLista">
+                                            <div id="kapcsolatokLista" class="p-2">
 
                                             </div>
                                         </div>
@@ -303,6 +302,28 @@
         </div>
     </main>
 
+    <template id="connection-card-template">
+        <div class="kapcsolat-kartya uveg d-flex align-items-center justify-content-between p-2 rounded mb-2">
+            <div class="d-flex align-items-center gap-2 flex-grow-1">
+                <span class="badge point-badge rounded-pill">
+                    <span class="opacity-50 small me-1">ID</span>
+                    <span class="start-id"></span>
+                </span>
+
+                <svg class="text-white opacity-50" style="height: 1em; width: 1em;" fill="currentColor"
+                    xmlns="http://www.w3.org/2000/svg" viewBox="0 0 122.88 49.11">
+                    <title>width-arrow</title>
+                    <path
+                        d="M30.73,36.08h0v8.67A4.38,4.38,0,0,1,29,48.5a4.79,4.79,0,0,1-4.35.2,1.73,1.73,0,0,1-.52-.28C15.43,41.63,10.42,34.84,1.76,28.05l-.12-.11a4.31,4.31,0,0,1,0-6.77l.12-.11C10.42,14.27,15.43,7.48,24.09.69a1.73,1.73,0,0,1,.52-.28A4.79,4.79,0,0,1,29,.61a4.4,4.4,0,0,1,1.77,3.75V13H92.15V4.36A4.4,4.4,0,0,1,93.92.61a4.79,4.79,0,0,1,4.35-.2,1.73,1.73,0,0,1,.52.28c8.66,6.79,13.67,13.58,22.33,20.37l.12.11a4.31,4.31,0,0,1,0,6.77l-.12.11c-8.66,6.79-13.67,13.58-22.33,20.37a1.73,1.73,0,0,1-.52.28,4.79,4.79,0,0,1-4.35-.2,4.38,4.38,0,0,1-1.77-3.75V36.08H30.73Z" />
+                </svg>
+
+                <span class="badge point-badge rounded-pill">
+                    <span class="opacity-50 small me-1">ID</span>
+                    <span class="end-id"></span>
+                </span>
+            </div>
+        </div>
+    </template>
     <script src="/bootstrap/js/bootstrap.min.js"></script>
 </body>
 
