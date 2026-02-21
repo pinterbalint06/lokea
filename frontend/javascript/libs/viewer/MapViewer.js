@@ -36,6 +36,14 @@ export class MapViewer extends WASMViewerBase {
      * @type {Object} 
      * An object where the keys are the typey and the values are the cached marker URLS*/
     #markerCache
+    /** 
+     * @type {number} 
+     * The width of the lines between the markers*/
+    #connectionLineWidth
+    /** 
+     * @type {Object {r: number, g: number, b: number, a: number}} 
+     * The color of the lines between the markers*/
+    #connectionLineColor
 
     /**
      * Constructor for MapViewer class.
@@ -52,6 +60,13 @@ export class MapViewer extends WASMViewerBase {
         this.#imageWidth = 0;
         this.#imageHeight = 0;
         this.#markerCache = {};
+        this.#connectionLineWidth = 2.5;
+        this.#connectionLineColor = {
+            r: 255,
+            g: 0,
+            b: 0,
+            a: 130
+        };
 
         this.#cacheMarkers();
     }
@@ -273,6 +288,20 @@ export class MapViewer extends WASMViewerBase {
         return this._engine.doesMarkerExist(id);
     }
 
+    doesLineExist(id) {
+        this._ensureEngineReady();
+
+        if (!Number.isInteger(id)) {
+            throw new WebassemblyError(
+                "Invalid line ID",
+                {
+                    "type": MAP_VIEWER_ERROR_TYPES.INVALID_INPUT
+                });
+        }
+
+        return this._engine.doesLineExist(id);
+    }
+
     changeMarkerType(id, type) {
         this._ensureEngineReady();
 
@@ -339,10 +368,62 @@ export class MapViewer extends WASMViewerBase {
         this._engine.removeMarker(id);
     }
 
+    isAlreadyConnected(id1, id2) {
+        this._ensureEngineReady();
+
+        if (!this.doesMarkerExist(id1) || !this.doesMarkerExist(id2)) {
+            throw new WebassemblyError(
+                "Invalid marker ID",
+                {
+                    "type": MAP_VIEWER_ERROR_TYPES.INVALID_INPUT
+                });
+        }
+
+        return this._engine.isAlreadyConnected(id1, id2);
+    }
+
     connectMarkers(id1, id2, lineId) {
         this._ensureEngineReady();
 
-        this._engine.connectMarkers(id1, id2, lineId, 2.5, 255, 0, 0, 130);
+        if (!this.doesMarkerExist(id1) || !this.doesMarkerExist(id2)) {
+            throw new WebassemblyError(
+                "Invalid marker ID",
+                {
+                    "type": MAP_VIEWER_ERROR_TYPES.INVALID_INPUT
+                });
+        }
+
+        if (this.doesLineExist(lineId)) {
+            throw new WebassemblyError(
+                "Line with given ID already exists",
+                {
+                    "type": MAP_VIEWER_ERROR_TYPES.INVALID_INPUT
+                });
+        }
+
+        if (this.isAlreadyConnected(id1, id2)) {
+            throw new WebassemblyError(
+                "There is already a connection between these markers",
+                {
+                    "type": MAP_VIEWER_ERROR_TYPES.INVALID_INPUT
+                });
+        }
+
+        this._engine.connectMarkers(id1, id2, lineId, this.#connectionLineWidth, this.#connectionLineColor.r, this.#connectionLineColor.g, this.#connectionLineColor.b, this.#connectionLineColor.a);
+    }
+
+    setMarkerSelectable(id, selectable) {
+        this._ensureEngineReady();
+
+        if (!this.doesMarkerExist(id)) {
+            throw new WebassemblyError(
+                "Invalid marker ID",
+                {
+                    "type": MAP_VIEWER_ERROR_TYPES.INVALID_INPUT
+                });
+        }
+
+        this._engine.setMarkerSelectable(id, selectable);
     }
 
     changeMarkerId(oldId, newId) {

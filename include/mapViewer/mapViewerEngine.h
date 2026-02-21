@@ -34,6 +34,8 @@ private:
 
     void createMapPlane();
     void updateSingleMarker(MapMarker *markerPlane);
+    void updateSingleLine(MapLine *line);
+    void updateLinesWithMarker(int markerId);
     void updateAllMarkers();
     void addMarkerByUV(int id, float u, float v, const std::string &textureUrl, float width, float height);
     void recalculateUVPerPixel();
@@ -80,9 +82,11 @@ public:
     emscripten::val getMarkerPosition(int id);
     void changeMarkerId(int oldId, int newId);
     void setCanvasSize(int width, int height);
+    void setMarkerSelectable(int id, bool selectable);
 
     void connectMarkers(int id1, int id2, int lineId, float thickness, uint8_t r, uint8_t g, uint8_t b, uint8_t a);
     void removeLine(int id);
+    bool isAlreadyConnected(int markerId1, int markerId2);
     void clearAllLines();
 };
 

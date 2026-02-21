@@ -13,6 +13,7 @@ private:
     float u_, v_;
     float width_, height_;
     float rotation_;
+    bool selectable_;
 
 public:
     MapMarker(int id, const std::string &textureUrl, float u, float v, float width, float height);
@@ -25,11 +26,14 @@ public:
     float getHeight() const { return height_; }
     float getId() const { return id_; }
     float getRotation() const { return rotation_; }
+    bool isSelectable() const { return selectable_; }
 
     void setU(float u) { u_ = u; }
     void setV(float v) { v_ = v; }
     void setId(int id) { id_ = id; }
     void setRotation(float rotation) { rotation_ = rotation; }
+    void setSelectable(bool selectable) { selectable_ = selectable; }
+
     void updateRenderPosition(float planeX, float planeY, float screenWidth, float screenHeight);
 
     void changeTexture(const std::string &textureUrl);

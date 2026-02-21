@@ -40,5 +40,8 @@ EMSCRIPTEN_BINDINGS(mapViewerEngineBinding)
         .function("rotateMarker", &MapViewerEngine::rotateMarker)
         .function("connectMarkers", &MapViewerEngine::connectMarkers)
         .function("removeLine", &MapViewerEngine::removeLine)
-        .function("clearAllLines", &MapViewerEngine::clearAllLines);
+        .function("clearAllLines", &MapViewerEngine::clearAllLines)
+        .function("setMarkerSelectable", &MapViewerEngine::setMarkerSelectable)
+        .function("doesLineExist", &MapViewerEngine::doesLineExist)
+        .function("isAlreadyConnected", &MapViewerEngine::isAlreadyConnected);
 }

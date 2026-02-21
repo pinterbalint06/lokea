@@ -219,8 +219,7 @@ void MapViewerEngine::moveMarkerToImageCoordinates(int id, int xCoordinate, int 
         markers_[index]->setV(newV);
 
         updateSingleMarker(markers_[index].get());
-        // TODO: update only line which have this marker as one endpoint
-        updateAllLines();
+        updateLinesWithMarker(id);
     }
     else
     {
@@ -242,7 +241,7 @@ void MapViewerEngine::moveMarkerToScreen(int id, float screenX, float screenY)
         markers_[index]->setV(newV);
 
         updateSingleMarker(markers_[index].get());
-        updateAllLines();
+        updateLinesWithMarker(id);
     }
     else
     {
@@ -278,12 +277,42 @@ void MapViewerEngine::removeLine(int id)
     }
 }
 
+bool MapViewerEngine::isAlreadyConnected(int markerId1, int markerId2)
+{
+    int i = 0;
+    while (
+        i < lines_.size()
+        &&
+        !(
+            (lines_[i]->getStartMarkerId() == markerId1 && lines_[i]->getEndMarkerId() == markerId2) ||
+            (lines_[i]->getStartMarkerId() == markerId2 && lines_[i]->getEndMarkerId() == markerId1)
+            )
+    )
+    {
+        i++;
+    }
+    return i < lines_.size();
+}
+
 void MapViewerEngine::changeMarkerId(int oldId, int newId)
 {
     int index = getMarkerIndexById(oldId);
     if (isMapLoaded_ && index != -1)
     {
         markers_[index]->setId(newId);
+    }
+    else
+    {
+        emscripten_console_error("Point doesn't exist!");
+    }
+}
+
+void MapViewerEngine::setMarkerSelectable(int id, bool selectable)
+{
+    int index = getMarkerIndexById(id);
+    if (isMapLoaded_ && index != -1)
+    {
+        markers_[index]->setSelectable(selectable);
     }
     else
     {
@@ -358,7 +387,7 @@ int MapViewerEngine::getMarkerIdAtScreenCoords(int screenX, int screenY)
 
         // iterate backwards so the one on the top will be found first
         int i = markers_.size() - 1;
-        while (i >= 0 && !doesPointOverlapMarker(markers_[i].get(), planeX, planeY))
+        while (i >= 0 && !(doesPointOverlapMarker(markers_[i].get(), planeX, planeY) && markers_[i]->isSelectable()))
         {
             i--;
         }
@@ -373,7 +402,6 @@ int MapViewerEngine::getMarkerIdAtScreenCoords(int screenX, int screenY)
     }
     return foundId;
 }
-
 
 MapViewerEngine::MapViewerEngine(const std::string &canvasID, int width, int height)
     : Engine(canvasID)
@@ -695,18 +723,25 @@ void MapViewerEngine::connectMarkers(int id1, int id2, int lineId, float thickne
 {
     if (isMapLoaded_ && doesMarkerExist(id1) && doesMarkerExist(id2))
     {
-        if (!doesLineExist(lineId))
+        if (!isAlreadyConnected(id1, id2))
         {
-            std::shared_ptr<MapLine> line = std::make_shared<MapLine>(lineId, id1, id2, thickness, r, g, b, a);
-            lines_.push_back(line);
+            if (!doesLineExist(lineId))
+            {
+                std::shared_ptr<MapLine> line = std::make_shared<MapLine>(lineId, id1, id2, thickness, r, g, b, a);
+                lines_.push_back(line);
 
-            addMesh(line);
+                addMesh(line);
 
-            updateAllLines();
+                updateSingleLine(line.get());
+            }
+            else
+            {
+                emscripten_console_error("Line with given ID already exists");
+            }
         }
         else
         {
-            emscripten_console_error("Line with given ID already exists");
+            emscripten_console_error("Markers are already connected");
         }
     }
     else
@@ -715,32 +750,56 @@ void MapViewerEngine::connectMarkers(int id1, int id2, int lineId, float thickne
     }
 }
 
+void MapViewerEngine::updateSingleLine(MapLine *line)
+{
+    int startMarkerId = line->getStartMarkerId();
+    int endMarkerId = line->getEndMarkerId();
+
+    int startMarkerIndex = getMarkerIndexById(startMarkerId);
+    int endMarkerIndex = getMarkerIndexById(endMarkerId);
+    if (startMarkerIndex != -1 && endMarkerIndex != -1)
+    {
+        MapMarker *startMarker = markers_[startMarkerIndex].get();
+        MapMarker *endMarker = markers_[endMarkerIndex].get();
+        float startMarkerX, startMarkerY;
+        float endMarkerX, endMarkerY;
+        UVToPlaneRelativeCoordinates(startMarker->getU(), startMarker->getV(), startMarkerX, startMarkerY);
+        UVToPlaneRelativeCoordinates(endMarker->getU(), endMarker->getV(), endMarkerX, endMarkerY);
+
+        line->updateLineGeometry(startMarkerX, startMarkerY, endMarkerX, endMarkerY, (float)width_, (float)height_);
+    }
+    else
+    {
+        emscripten_console_error("One of the endpoints of the line didn't exist");
+    }
+}
+
+void MapViewerEngine::updateLinesWithMarker(int markerId)
+{
+    if (doesMarkerExist(markerId))
+    {
+        for (int i = 0; i < lines_.size(); i++)
+        {
+            if (lines_[i]->getStartMarkerId() == markerId || lines_[i]->getEndMarkerId() == markerId)
+            {
+                updateSingleLine(lines_[i].get());
+            }
+        }
+    }
+    else
+    {
+        emscripten_console_error("Marker with given ID doesn't exist");
+    }
+}
+
+
 void MapViewerEngine::updateAllLines()
 {
     if (mapPlane_)
     {
         for (int i = 0; i < lines_.size(); i++)
         {
-            int startMarkerId = lines_[i]->getStartMarkerId();
-            int endMarkerId = lines_[i]->getEndMarkerId();
-
-            int startMarkerIndex = getMarkerIndexById(startMarkerId);
-            int endMarkerIndex = getMarkerIndexById(endMarkerId);
-            if (startMarkerIndex != -1 && endMarkerIndex != -1)
-            {
-                MapMarker *startMarker = markers_[startMarkerIndex].get();
-                MapMarker *endMarker = markers_[endMarkerIndex].get();
-                float startMarkerX, startMarkerY;
-                float endMarkerX, endMarkerY;
-                UVToPlaneRelativeCoordinates(startMarker->getU(), startMarker->getV(), startMarkerX, startMarkerY);
-                UVToPlaneRelativeCoordinates(endMarker->getU(), endMarker->getV(), endMarkerX, endMarkerY);
-
-                lines_[i]->updateLineGeometry(startMarkerX, startMarkerY, endMarkerX, endMarkerY, (float)width_, (float)height_);
-            }
-            else
-            {
-                emscripten_console_error("One of the endpoints of the line didn't exist");
-            }
+            updateSingleLine(lines_[i].get());
         }
     }
 }

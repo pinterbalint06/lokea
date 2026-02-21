@@ -79,7 +79,16 @@ CREATE TABLE log (
     user_id int,
     activity varchar(50),
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    foreign key (user_id) references users(user_id) ON DELETE CASCADE,
+    foreign key (user_id) references users(user_id) ON DELETE CASCADE
 );
 
--- TODO: pontok összekapcsolásainak tábla
+CREATE TABLE point_connections (
+    connection_id int AUTO_INCREMENT PRIMARY KEY NOT NULL,
+    start_point_id int NOT NULL,
+    end_point_id int NOT NULL,
+    game_maps_id int NOT NULL,
+    FOREIGN KEY (start_point_id) REFERENCES points(point_id) ON DELETE CASCADE,
+    FOREIGN KEY (end_point_id) REFERENCES points(point_id) ON DELETE CASCADE,
+    FOREIGN KEY (game_maps_id) REFERENCES game_maps(game_maps_id) ON DELETE CASCADE,
+    CONSTRAINT check_different_points CHECK (start_point_id != end_point_id)
+);

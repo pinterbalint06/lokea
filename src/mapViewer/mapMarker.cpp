@@ -25,6 +25,7 @@ MapMarker::MapMarker(int id, const std::string &textureUrl, float u, float v, fl
     v_ = v;
     width_ = width;
     height_ = height;
+    selectable_ = true;
     rotation_ = 0.0f;
     Vertex vertices[4];
     //                        x      y     z     w     nx    ny    nz    u     v
