@@ -11,6 +11,16 @@ function isAllowedToGetImage(request, imageId) {
     return true;
 }
 
+function validateId(id, idName) {
+    let num = Number(id);
+    if (!Number.isInteger(num) || num <= 0) {
+        const err = new Error("Helytelen " + idName);
+        err.statusCode = 400;
+        throw err;
+    }
+    return num;
+};
+
 //?GET /api/game_maps/getImageByPointId
 router.get("/getImageByPointId", async (request, response) => {
     try {
@@ -104,6 +114,41 @@ router.get("/getMapImageById", async (request, response) => {
                     });
                 }
             }
+        });
+    } catch (error) {
+        let message, statusCode;
+        if (error.statusCode) {
+            message = error.message;
+            statusCode = error.statusCode;
+        } else {
+            console.error(error);
+            message = "Váratlan hiba történt!";
+            statusCode = 500;
+        }
+        response.status(statusCode).json({
+            success: false,
+            error: message
+        });
+    }
+});
+
+//?GET /api/game_maps/connections/:pointId
+router.get("/connections/:pointId", async (request, response) => {
+    try {
+        const pointId = validateId(request.params.pointId, "pont ID");
+        // TODO isAllowed pointId
+        // if (!isAllowedToGetConnections(request, pointId)) {
+        //     const error = new Error("Nincs hozzáférése ehhez a ponthoz");
+        //     error.statusCode = 403;
+        //     throw error;
+        // }
+
+        let connectionList = await database.getConnectionsByPointId(pointId);
+
+
+        response.status(200).json({
+            success: true,
+            connections: connectionList
         });
     } catch (error) {
         let message, statusCode;

@@ -42,10 +42,12 @@ let equirectangularViewer;
 let UI = {};
 let maps = {};
 let pointsCache = {};
-let connectionsCache = {};
+let connectionsList = [];
+let unsavedConnections = [];
+let connectionsLoadPromise;
 let activeMapId = -1;
 let gameMapID = null;
-let nextLineId = 1;
+let temporaryConnectionID = -1;
 // editor State
 let editorState = {
     activePointId: null,
@@ -276,10 +278,12 @@ async function switchMap(mapId) {
                 },
                 () => activeMapId == mapId
             );
-            loadPoints(
+            await loadPoints(
                 mapId,
                 () => activeMapId == mapId
             );
+            await connectionsLoadPromise;
+            renderConnectionsForActiveMap();
         }
 
         // show change toast for 1 sec after the map was loaded
@@ -349,7 +353,6 @@ async function saveMap() {
 async function savePoint() {
     editorState.isPlacingMarker = false;
     let pontMentesToast = showToast("Pont mentése", "", false, { autohide: false }, ICONS.SPINNER);
-    UI.savePointButton.disabled = true;
     try {
         let formData = new FormData();
         let position = mapViewer.getMarkerPosition(editorState.activePointId);
@@ -420,8 +423,95 @@ async function savePoint() {
         showToast(error.message, "danger", true, { delay: 3000 });
     } finally {
         editorState.isPlacingMarker = true;
-        UI.savePointButton.disabled = false;
     }
+}
+
+async function saveConnection(connection) {
+    let savedReturn = {};
+    let formData = new FormData();
+    formData.append("startPointId", connection.start_point_id);
+    formData.append("endPointId", connection.end_point_id);
+    formData.append("gameMapID", gameMapID);
+
+    try {
+        let response = await fetch("/api/map_creator/saveConnection", {
+            method: "POST",
+            body: formData
+        });
+
+        if (!response.ok) {
+            let error = await response.json();
+            throw new Error(error && error.error ? error.error : "Szerver hiba: " + response.status);
+        }
+
+        let data = await response.json();
+        if (!data.success) {
+            throw new Error(data.error ? data.error : "Sikertelen mentés!");
+        }
+
+        savedReturn = {
+            connection_id: data.connectionId,
+            start_point_id: connection.start_point_id,
+            end_point_id: connection.end_point_id,
+            game_maps_id: connection.game_maps_id
+        };
+
+        connectionsList.push(savedReturn);
+
+        // Remove the successfully saved connection from unsavedConnections
+        let i = 0;
+        while (
+            i < unsavedConnections.length &&
+            !(unsavedConnections[i].start_point_id == connection.start_point_id &&
+                unsavedConnections[i].end_point_id == connection.end_point_id)
+        ) {
+            i++;
+        }
+        if (i < unsavedConnections.length) {
+            unsavedConnections.splice(i, 1);
+        }
+    } catch (error) {
+        throw {
+            connection: connection,
+            error: error.message
+        };
+    }
+    return savedReturn;
+}
+
+async function saveUnsavedConnections() {
+    let saved = [];
+    let failed = [];
+    if (unsavedConnections.length != 0) {
+        let kapcsolatMentesToast = showToast("Kapcsolatok mentése", "", false, { autohide: false }, ICONS.SPINNER);
+
+        let currentUnsaved = JSON.parse(JSON.stringify(unsavedConnections));
+        try {
+            let savePromises = currentUnsaved.map(connection => saveConnection(connection));
+
+            let results = await Promise.allSettled(savePromises);
+
+            for (let i = 0; i < results.length; i++) {
+                const result = results[i];
+                if (result.status == "fulfilled") {
+                    saved.push(result.value);
+                } else {
+                    if (result.status == "rejected") {
+                        failed.push(result.reason);
+                    }
+                }
+            }
+
+            renderConnectionsForActiveMap();
+            await updateConnectionListUI();
+        } finally {
+            kapcsolatMentesToast.hide();
+        }
+    }
+    return {
+        saved: saved,
+        failed: failed
+    };
 }
 
 async function loadMapList() {
@@ -465,7 +555,37 @@ function cancelConnection() {
             editorState.connectionToast.hide();
             editorState.connectionToast = null;
         }
+        UI.newConnectionBtn.disabled = false;
         mapViewer.canvasInput.setDefaultCursor("default");
+    }
+}
+
+async function loadConnections() {
+    let kapcsolatokBetolteseToast = showToast("Kapcsolatok betöltése", "", false, { autohide: false }, ICONS.SPINNER);
+    try {
+        let response = await fetch(
+            "/api/map_creator/" + gameMapID + "/connections",
+            {
+                "method": "GET"
+            }
+        );
+        if (!response.ok) {
+            let error = await response.json();
+            throw new Error(error.error ? error.error : "Szerver hiba: " + response.status);
+        }
+
+        let data = await response.json();
+        if (!data.success) {
+            throw new Error(data.error);
+        }
+        connectionsList = data.connections;
+        updateConnectionListUI();
+        showToast("Kapcsolatok sikeresen betöltve!", "success", true, { delay: 3000 });
+    } catch (error) {
+        console.error(error);
+        showToast("Hiba a kapcsolatok betöltésekor!", "danger", true, { delay: 3000 });
+    } finally {
+        kapcsolatokBetolteseToast.hide();
     }
 }
 
@@ -506,6 +626,10 @@ async function handleMapLoad(file) {
     editorState.pendingMapFile = file;
     try {
         imgData = await processUploadedImageFile(file);
+
+        if (maps[CONSTANTS.TEMP_ID] && maps[CONSTANTS.TEMP_ID].temporaryURL) {
+            URL.revokeObjectURL(maps[CONSTANTS.TEMP_ID].temporaryURL);
+        }
 
         let newMap = {
             id: CONSTANTS.TEMP_ID,
@@ -563,17 +687,18 @@ function clickOnCanvas(cursorX, cursorY) {
                 if (mapViewer.isAlreadyConnected(editorState.activePointId, clickedMarkerIndex)) {
                     showToast("Ezek a jelölők már össze vannak kapcsolva!", "danger", true, { delay: 3000 });
                 } else {
-                    nextLineId++;
-                    mapViewer.connectMarkers(editorState.activePointId, clickedMarkerIndex, nextLineId);
-                    connectionsCache[nextLineId] = {
-                        connection_id: nextLineId,
+                    mapViewer.connectMarkers(editorState.activePointId, clickedMarkerIndex, temporaryConnectionID, "unsaved");
+                    unsavedConnections.push({
+                        connection_id: temporaryConnectionID,
                         start_point_id: editorState.activePointId,
                         end_point_id: clickedMarkerIndex,
                         game_maps_id: activeMapId
-                    };
+                    });
+                    temporaryConnectionID--;
+                    UI.newConnectionBtn.disabled = false;
                     updateConnectionListUI();
-                    // TODO: save new connection to database
-                    showToast("Kapcsolat létrehozva!", "success", true, { delay: 3000 });
+
+                    showToast("Új kapcsolat létrehozva!", "success", true, { delay: 3000 });
 
                     cancelConnection();
                 }
@@ -608,6 +733,7 @@ function clickOnCanvas(cursorX, cursorY) {
                 );
 
                 updateConnectionListUI();
+                renderConnectionsForActiveMap();
                 updateCoordinatesInput();
                 UI.northDirectionRange.value = pointsCache[editorState.activePointId].north_direction;
                 UI.northDirection.value = pointsCache[editorState.activePointId].north_direction;
@@ -639,19 +765,56 @@ function handleCoordinateChange(event) {
 // | UI |
 // |----|
 
-function savePointClick() {
+function renderConnectionsForActiveMap() {
+    mapViewer.clearLines();
+    let connectionsForActiveMap = connectionsList.filter(connection => pointsCache[connection.start_point_id] && pointsCache[connection.end_point_id]);
+    for (let i = 0; i < connectionsForActiveMap.length; i++) {
+        let type = "default";
+        if (editorState.activePointId == connectionsForActiveMap[i].start_point_id || editorState.activePointId == connectionsForActiveMap[i].end_point_id) {
+            type = "editing";
+        }
+        mapViewer.connectMarkers(connectionsForActiveMap[i].start_point_id, connectionsForActiveMap[i].end_point_id, connectionsForActiveMap[i].connection_id, type);
+    }
+    for (let i = 0; i < unsavedConnections.length; i++) {
+        mapViewer.connectMarkers(unsavedConnections[i].start_point_id, unsavedConnections[i].end_point_id, unsavedConnections[i].connection_id, "unsaved");
+    }
+}
+
+async function savePointClick() {
     let position = mapViewer.getMarkerPosition(editorState.activePointId);
     let northDirection = UI.northDirection.valueAsNumber;
-    if (
-        !pointsCache[editorState.activePointId] ||
+    let hasUnsavedConnections = unsavedConnections.length > 0;
+    let didPointChange = !pointsCache[editorState.activePointId] ||
         position.x != pointsCache[editorState.activePointId].point_x ||
         position.y != pointsCache[editorState.activePointId].point_y ||
         northDirection != pointsCache[editorState.activePointId].north_direction ||
-        editorState.pendingEquirectangularFile) {
-        savePoint();
-    } else {
+        editorState.pendingEquirectangularFile;
+
+    UI.savePointButton.disabled = true;
+    if (didPointChange) {
+        await savePoint();
+    }
+    if (hasUnsavedConnections) {
+        let result = await saveUnsavedConnections();
+        let saved = result.saved;
+        let failed = result.failed;
+
+        if (saved.length > 0 && failed.length == 0) {
+            showToast(saved.length + " kapcsolat sikeresen mentve!", "success", true, { delay: 3000 }, ICONS.UPLOAD_TO_CLOUD);
+        } else {
+            if (saved.length > 0 && failed.length > 0) {
+                showToast(saved.length + " kapcsolat sikeresen mentve, " + failed.length + " kapcsolat mentésekor hiba történt!", "warning", true, { delay: 4000 });
+            } else {
+                if (failed.length > 0) {
+                    showToast(failed.length + " kapcsolat mentése sikertelen!", "danger", true, { delay: 4000 });
+                }
+            }
+        }
+    }
+    if (!didPointChange && !hasUnsavedConnections) {
         showToast("A pont nem változott!", "", true, { delay: 2000 });
     }
+    UI.savePointButton.disabled = false;
 }
 
 function updateMapSelectorUI() {
@@ -687,15 +850,23 @@ function updateCollapseDirection() {
     }
 }
 
-function updateConnectionListUI() {
+async function updateConnectionListUI() {
+    await connectionsLoadPromise;
+
     UI.connectionsList.innerHTML = "";
 
-    let connections = Object.values(connectionsCache).filter(connection => connection.start_point_id == editorState.activePointId || connection.end_point_id == editorState.activePointId);
+    let connections = connectionsList.filter(connection => connection.start_point_id == editorState.activePointId || connection.end_point_id == editorState.activePointId);
+
+    for (let i = 0; i < unsavedConnections.length; i++) {
+        connections.push(unsavedConnections[i]);
+    }
 
     if (connections.length == 0) {
         UI.emptyConnections.classList.remove("d-none");
+        UI.connectionsList.classList.add("d-none");
     } else {
         UI.emptyConnections.classList.add("d-none");
+        UI.connectionsList.classList.remove("d-none");
 
         // TODO: pontoknak nev adas is itt aszerint megjelnites
         let template = document.getElementById("connection-card-template");
@@ -814,7 +985,7 @@ function getUIElements() {
     UI.toastPlace = document.getElementById("toastPlace");
     UI.collapseElement = document.getElementById("ujPontCollapse");
     UI.mapSelector = document.getElementById("mapSelector");
-    UI.floatinButtonDiv = document.getElementById("floatinButtonDiv");
+    UI.floatingButtonDiv = document.getElementById("floatingButtonDiv");
     UI.connectionsList = document.getElementById("kapcsolatokLista");
     UI.emptyConnections = document.getElementById("nincsenekKapcsolatok");
     UI.collapseBootstrapElement = new bootstrap.Collapse(
@@ -837,7 +1008,7 @@ function addUIEventListeners() {
 
     UI.collapseElement.addEventListener("show.bs.collapse", (event) => {
         if (event.target == UI.collapseElement) {
-            UI.floatinButtonDiv.classList.add("d-none");
+            UI.floatingButtonDiv.classList.add("d-none");
             if (editorState.activePointId == CONSTANTS.TEMP_ID) {
                 UI.northDirectionRange.value = 0;
                 UI.northDirection.value = 0;
@@ -871,9 +1042,20 @@ function addUIEventListeners() {
                     }
                 }
             }
+
+            // remove temporary connections
+            for (let i = 0; i < unsavedConnections.length; i++) {
+                if (mapViewer.doesLineExist(unsavedConnections[i].connection_id)) {
+                    mapViewer.removeLine(unsavedConnections[i].connection_id);
+                }
+            }
+            temporaryConnectionID = -1;
+            unsavedConnections = [];
             UI.savePointButton.disabled = true;
             cancelConnection();
             mapViewer.canvasInput.setDefaultCursor("default");
+            editorState.activePointId = null;
+            renderConnectionsForActiveMap();
         }
     });
 
@@ -886,7 +1068,7 @@ function addUIEventListeners() {
             }
 
             // reset UI
-            UI.floatinButtonDiv.classList.remove("d-none");
+            UI.floatingButtonDiv.classList.remove("d-none");
 
             // reset state
             editorState.activePointId = null;
@@ -897,7 +1079,7 @@ function addUIEventListeners() {
 
     UI.plusMarkerBtn.addEventListener("click", () => {
         if (activeMapId != CONSTANTS.TEMP_ID) {
-            UI.floatinButtonDiv.classList.add("d-none");
+            UI.floatingButtonDiv.classList.add("d-none");
             mapViewer.canvasInput.setDefaultCursor("crosshair");
 
             editorState.activePointId = CONSTANTS.TEMP_ID;
@@ -914,7 +1096,7 @@ function addUIEventListeners() {
                         editorState.activePointId = null;
                         editorState.isPlacingMarker = false;
                         mapViewer.canvasInput.setDefaultCursor("default");
-                        UI.floatinButtonDiv.classList.remove("d-none");
+                        UI.floatingButtonDiv.classList.remove("d-none");
                     }
                 }
             );
@@ -963,6 +1145,7 @@ function addUIEventListeners() {
                         cancelConnection();
                     });
             }
+            UI.newConnectionBtn.disabled = true;
         } else {
             showToast("Először mentsd el a pontot!", "danger", true, { delay: 3000 });
         }
@@ -1005,7 +1188,7 @@ function startFOVSync() {
     mapViewer.placeMarkerByImageCoordinates(CONSTANTS.FOV_MARKER_ID, pos.x, pos.y, CONSTANTS.CONE_SIZE.width, CONSTANTS.CONE_SIZE.height, "fov_cone");
     mapViewer.setMarkerSelectable(CONSTANTS.FOV_MARKER_ID, false);
 
-    editorState.fovSyncAnimationID = requestAnimationFrame(updateFOVSync);
+    editorState.fovSyncAnimationID = requestAnimationFrame(updateFOVSyncLoop);
 }
 
 function updateFOVSync() {
@@ -1021,9 +1204,12 @@ function updateFOVSync() {
         let finalYaw = viewYaw + northDirectionRadian;
 
         mapViewer.rotateMarker(CONSTANTS.FOV_MARKER_ID, finalYaw);
-
-        editorState.fovSyncAnimationID = requestAnimationFrame(updateFOVSync);
     };
+}
+
+function updateFOVSyncLoop() {
+    updateFOVSync();
+    editorState.fovSyncAnimationID = requestAnimationFrame(updateFOVSync);
 }
 
 function stopFOVSync() {
@@ -1047,6 +1233,8 @@ async function init() {
     setupUploadHandler(UI.dropZoneMap, UI.uploadButtonMap, UI.fileInputMap, handleMapLoad);
     setupUploadHandler(UI.dropZoneEquirectangular, UI.uploadButtonEquirectangular, UI.fileInputEquirectangular, handleEquirectangularLoad);
 
+    connectionsLoadPromise = loadConnections();
+
     let mapList = await loadMapList();
     let hasMaps = mapList.length > 0;
     setEditorState(hasMaps);
@@ -1065,3 +1253,5 @@ document.addEventListener("DOMContentLoaded", init);
 // TODO: látótér állandó méretű (állítható méretű?)
 // TODO: új markernél elsőre nincs helyesen rajta a markeren a fov cone
 // TODO: race condition miközben menti a pontot rányomni egy másik gombra? talán akkor editorState.isPlacingMarker hamis addig és megnyit egy másik létező gombot?
+// TODO: térképek, pontok és kapcsolatok törlése
+// TODO: biztos hogy elakarod vetni a változtatásokat ha a user bezárja a collapset vagy elakarod menteni a változtatásokat egy modalban?

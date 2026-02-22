@@ -812,3 +812,16 @@ void MapViewerEngine::clearAllLines()
     }
     lines_.clear();
 }
+
+void MapViewerEngine::changeLineColor(int lineId, uint8_t r, uint8_t g, uint8_t b, uint8_t a)
+{
+    int index = getLineIndexById(lineId);
+    if (index != -1)
+    {
+        lines_[index]->setColor(r, g, b, a);
+    }
+    else
+    {
+        emscripten_console_error("Line with given ID doesn't exist");
+    }
+}

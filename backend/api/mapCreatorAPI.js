@@ -50,7 +50,7 @@ const checkAuth = (request, response, next) => {
 function validateId(id, idName) {
     let num = Number(id);
     if (!Number.isInteger(num) || num <= 0) {
-        const err = new Error("Invalid " + idName);
+        const err = new Error("Helytelen " + idName);
         err.statusCode = 400;
         throw err;
     }
@@ -70,7 +70,7 @@ async function deleteFile(filePath) {
             await fs.unlink(filePath);
         } catch (err) {
             // error no entry file doesn't exist
-            if (err.code != 'ENOENT') {
+            if (err.code != "ENOENT") {
                 console.error("Failed to delete " + filePath + ":", err.message);
             }
         }
@@ -91,8 +91,8 @@ async function handleUploadError(response, error, file, dbConnection, finalPath)
     }    // Delete destination file if moved
 
 
-    if (file) {
-        await deleteFile(file);
+    if (file && file.path) {
+        await deleteFile(file.path);
     }
     let statusCode = error.statusCode ? error.statusCode : 500;
     let message = error.statusCode ? error.message : "Váratlan hiba történt!";
@@ -264,15 +264,55 @@ router.post("/saveNewMap", checkAuth, upload.single("mapImage"), async (request,
     }
 });
 
+//?POST /api/map_creator/saveConnection
+router.post("/saveConnection", checkAuth, upload.none(), async (request, response) => {
+    let dbConnection;
+    try {
+        const userId = request.session.user.user_id;
+
+        // TODO: CHECK IF USER HAS ACCESS
+        const startPointId = validateId(request.body.startPointId, "kezdőpont ID");
+        const endPointId = validateId(request.body.endPointId, "végpont ID");
+        const gameMapID = validateId(request.body.gameMapID, "pálya ID");
+
+        dbConnection = await database.getConnection();
+        await dbConnection.beginTransaction();
+
+        if (!await database.arePointsInSameGameMap(dbConnection, startPointId, endPointId)) {
+            const err = new Error("A megadott pontok nem ugyanahhoz a pályához tartoznak!");
+            err.statusCode = 400;
+            throw err;
+        }
+
+        if (await database.doesConnectionAlreadyExist(dbConnection, startPointId, endPointId)) {
+            const err = new Error("A megadott pontok már össze vannak kapcsolva!");
+            err.statusCode = 400;
+            throw err;
+        }
+
+        let connectionId = await database.insertConnection(dbConnection, startPointId, endPointId, gameMapID);
+
+        await dbConnection.commit();
+
+        response.status(200).json({
+            success: true,
+            connectionId: connectionId,
+            message: "Kapcsolat sikeresen mentve!"
+        });
+
+    } catch (error) {
+        await handleUploadError(response, error, null, dbConnection, null);
+    } finally {
+        if (dbConnection) {
+            dbConnection.release();
+        }
+    }
+});
+
 //?GET /api/map_creator/:mapid/points
 router.get("/:mapid/points", async (request, response) => {
     try {
-        let mapId = Number(request.params.mapid);
-        if (!Number.isInteger(mapId)) {
-            const error = new Error("Helytelen map ID");
-            error.statusCode = 400;
-            throw error;
-        }
+        let mapId = validateId(request.params.mapid, "térkép ID");
 
         // TODO: check if has access
         let point_data = await database.getPointsOnMap(mapId);
@@ -298,6 +338,7 @@ router.get("/:mapid/points", async (request, response) => {
 //?GET /api/map_creator/maps?gameMapID=1
 router.get("/maps", checkAuth, async (request, response) => {
     try {
+        // TODO: check if has access to gameMapID
         const gameMapID = validateId(request.query.gameMapID, "pálya ID");
 
         let mapList = await database.getMapsByGameMapId(gameMapID);
@@ -449,6 +490,47 @@ router.put("/point/:pointId", checkAuth, upload.single("equirectangularImage"), 
             dbConnection.release();
         }
     }
+});
+
+//?GET /api/map_creator/:gameMapID/connections
+router.get("/:gameMapID/connections", checkAuth, async (request, response) => {
+    try {
+        // TODO: check if has access to gameMapID
+        const gameMapID = validateId(request.params.gameMapID, "pálya ID");
+
+        let connectionList = await database.getConnectionsByGameMapId(gameMapID);
+
+        response.status(200).json({
+            success: true,
+            connections: connectionList
+        });
+    } catch (error) {
+        let statusCode = error.statusCode ? error.statusCode : 500;
+        let message = error.message || "Váratlan hiba történt!";
+
+        if (statusCode === 500) console.error(error);
+
+        response.status(statusCode).json({
+            success: false,
+            error: message
+        });
+    }
+});
+
+router.use((error, request, response, next) => {
+    if (error instanceof multer.MulterError) {
+        if (error.code === "LIMIT_FILE_SIZE") {
+            return response.status(413).json({
+                success: false,
+                error: "Túl nagy fájlméret! (Max 10MB)"
+            });
+        }
+        return response.status(400).json({
+            success: false,
+            error: "Fájlfeltöltési hiba történt!"
+        });
+    }
+    next(error);
 });
 
 module.exports = router;

@@ -98,6 +98,13 @@ main {
     box-shadow: 0 0 15px var(--accent-glow);
 }
 
+.uvegbutton:disabled {
+    filter: opacity(0.5);
+    cursor: not-allowed;
+    background-color: var(--color-disabled-bg) !important;
+    border-color: var(--color-disabled-border) !important;
+}
+
 .uvegform:focus {
     box-shadow: 0 0 0 0.2rem var(--accent-glow) !important;
     border-color: var(--accent-focus) !important;

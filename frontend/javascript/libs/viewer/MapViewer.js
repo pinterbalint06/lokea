@@ -9,6 +9,27 @@ const MARKER_URLS = {
     "fov_cone": "/images/markers/cone.webp"
 }
 
+const CONNECTION_TYPES = {
+    "default": {
+        r: 180,
+        g: 100,
+        b: 255,
+        a: 130
+    },
+    "editing": {
+        r: 66,
+        g: 133,
+        b: 244,
+        a: 130
+    },
+    "unsaved": {
+        r: 244,
+        g: 0,
+        b: 0,
+        a: 130
+    }
+}
+
 export const MAP_VIEWER_ERROR_TYPES = {
     ...WASM_ERROR_TYPES,
     INVALID_INPUT: "INVALID_INPUT",
@@ -40,10 +61,6 @@ export class MapViewer extends WASMViewerBase {
      * @type {number} 
      * The width of the lines between the markers*/
     #connectionLineWidth
-    /** 
-     * @type {Object {r: number, g: number, b: number, a: number}} 
-     * The color of the lines between the markers*/
-    #connectionLineColor
 
     /**
      * Constructor for MapViewer class.
@@ -61,12 +78,6 @@ export class MapViewer extends WASMViewerBase {
         this.#imageHeight = 0;
         this.#markerCache = {};
         this.#connectionLineWidth = 2.5;
-        this.#connectionLineColor = {
-            r: 255,
-            g: 0,
-            b: 0,
-            a: 130
-        };
 
         this.#cacheMarkers();
     }
@@ -254,6 +265,11 @@ export class MapViewer extends WASMViewerBase {
         this._engine.placeMarkerByImageCoordinates(id, imageX, imageY, markerUrl, width, height);
     }
 
+    clearLines() {
+        this._ensureEngineReady();
+        this._engine.clearAllLines();
+    }
+
     clearMarkersAndLines() {
         this._ensureEngineReady();
         this._engine.clearAllMarkers();
@@ -368,6 +384,20 @@ export class MapViewer extends WASMViewerBase {
         this._engine.removeMarker(id);
     }
 
+    removeLine(id) {
+        this._ensureEngineReady();
+
+        if (!this.doesLineExist(id)) {
+            throw new WebassemblyError(
+                "Invalid line ID",
+                {
+                    "type": MAP_VIEWER_ERROR_TYPES.INVALID_INPUT
+                });
+        }
+
+        this._engine.removeLine(id);
+    }
+
     isAlreadyConnected(id1, id2) {
         this._ensureEngineReady();
 
@@ -382,7 +412,7 @@ export class MapViewer extends WASMViewerBase {
         return this._engine.isAlreadyConnected(id1, id2);
     }
 
-    connectMarkers(id1, id2, lineId) {
+    connectMarkers(id1, id2, lineId, type = "default") {
         this._ensureEngineReady();
 
         if (!this.doesMarkerExist(id1) || !this.doesMarkerExist(id2)) {
@@ -408,8 +438,9 @@ export class MapViewer extends WASMViewerBase {
                     "type": MAP_VIEWER_ERROR_TYPES.INVALID_INPUT
                 });
         }
+        let connectionColor = CONNECTION_TYPES[type] ? CONNECTION_TYPES[type] : CONNECTION_TYPES["default"];
 
-        this._engine.connectMarkers(id1, id2, lineId, this.#connectionLineWidth, this.#connectionLineColor.r, this.#connectionLineColor.g, this.#connectionLineColor.b, this.#connectionLineColor.a);
+        this._engine.connectMarkers(id1, id2, lineId, this.#connectionLineWidth, connectionColor.r, connectionColor.g, connectionColor.b, connectionColor.a);
     }
 
     setMarkerSelectable(id, selectable) {
@@ -446,6 +477,19 @@ export class MapViewer extends WASMViewerBase {
         }
 
         this._engine.changeMarkerId(oldId, newId);
+    }
+
+    changeLineType(lineId, type) {
+        this._ensureEngineReady();
+        if (!this.doesLineExist(lineId)) {
+            throw new WebassemblyError(
+                "Invalid line ID",
+                {
+                    "type": MAP_VIEWER_ERROR_TYPES.INVALID_INPUT
+                });
+        }
+        let connectionColor = CONNECTION_TYPES[type] ? CONNECTION_TYPES[type] : CONNECTION_TYPES["default"];
+        this._engine.changeLineColor(lineId, connectionColor.r, connectionColor.g, connectionColor.b, connectionColor.a);
     }
 
     onClickHandler = (cursorX, cursorY) => {

@@ -82,6 +82,7 @@ CREATE TABLE log (
     foreign key (user_id) references users(user_id) ON DELETE CASCADE
 );
 
+-- TODO: trigger start_point_id mindig kisebb legyen?
 CREATE TABLE point_connections (
     connection_id int AUTO_INCREMENT PRIMARY KEY NOT NULL,
     start_point_id int NOT NULL,
@@ -90,5 +91,6 @@ CREATE TABLE point_connections (
     FOREIGN KEY (start_point_id) REFERENCES points(point_id) ON DELETE CASCADE,
     FOREIGN KEY (end_point_id) REFERENCES points(point_id) ON DELETE CASCADE,
     FOREIGN KEY (game_maps_id) REFERENCES game_maps(game_maps_id) ON DELETE CASCADE,
-    CONSTRAINT check_different_points CHECK (start_point_id != end_point_id)
+    CONSTRAINT check_different_points CHECK (start_point_id != end_point_id),
+    CONSTRAINT unique_connection UNIQUE (game_maps_id, start_point_id, end_point_id)
 );
