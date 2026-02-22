@@ -18,26 +18,242 @@ const pool = mysql.createPool({
 // }
 
 async function newUser(username, email, password) {
-    const query = 'INSERT INTO users (username, email, password) VALUES (?, ?, ?)';
-    const [result] = await pool.execute(query, [username, email, password]);
-    return result;
+    let success = false;
+    let error;
+    const queryUserExistsCheck = 'SELECT email, username FROM users WHERE username LIKE ? OR email LIKE ?';
+    let [result] = await pool.execute(queryUserExistsCheck, [username, email]);
+    if (result.length == 0) {
+        try {
+            const queryInsertNewUser = 'INSERT INTO users (username, email, password) VALUES (?, ?, ?)';
+            [result] = await pool.execute(queryInsertNewUser, [username, email, password]);
+            if (result.affectedRows == 1) {
+                success = true;
+            }
+            else {
+                error = "Failed insert";
+            }
+        } catch (fault) {
+            if (fault.code == 'ER_DUP_ENTRY') {
+                error = "User exists";
+            }
+            else {
+                error = "Failed insert";
+            }
+        }
+    }
+    else {
+        error = "User exists";
+    }
+
+    return success ? { success } : { success, error };
+}
+
+async function newUserFromAdmin(username, email, password, role, is_2fa) {
+    let success = false;
+    let error;
+    const queryUserExistsCheck = 'SELECT email, username FROM users WHERE username LIKE ? OR email LIKE ?';
+    let [result] = await pool.execute(queryUserExistsCheck, [username, email]);
+    if (result.length == 0) {
+        try {
+            const queryInsertNewUser = 'INSERT INTO users (username, email, password, role, is_2fa) VALUES (?, ?, ?, ?, ?)';
+            [result] = await pool.execute(queryInsertNewUser, [username, email, password, role, is_2fa]);
+            if (result.affectedRows == 1) {
+                success = true;
+            }
+            else {
+                error = "Failed insert";
+            }
+        } catch (fault) {
+            if (fault.code == 'ER_DUP_ENTRY') {
+                error = "User exists";
+            }
+            else {
+                error = "Failed insert";
+            }
+        }
+    }
+    else {
+        error = "User exists";
+    }
+
+    return success ? { success } : { success, error };
 }
 
 async function getUserByUsername(username) {
-    const query = 'SELECT users.password, users.userid, users.role FROM users WHERE users.username = ?';
+    const query = 'SELECT users.password, users.user_id, users.role, users.deleted_at FROM users WHERE users.username = ?';
     const [result] = await pool.execute(query, [username]);
     return result;
 }
 
 async function getUserByEmail(email) {
-    const query = 'SELECT users.password, users.userid, users.role FROM users WHERE users.email = ?';
+    const query = 'SELECT users.password, users.user_id, users.role, users.deleted_at FROM users WHERE users.email = ?';
     const [result] = await pool.execute(query, [email]);
     return result;
+}
+
+async function getUsers() {
+    const query = 'SELECT users.deleted_at, users.user_id, users.username, users.email, users.role FROM users';
+    const [rows] = await pool.execute(query);
+    return rows;
+}
+
+async function getUser(id) {
+    const query = 'SELECT users.user_id, users.username, users.email, users.role, users.is_2fa, images.filepath FROM users LEFT JOIN images ON (images.image_id = users.pfp) WHERE users.user_id = ?';
+    const [result] = await pool.execute(query, [id]);
+    return result;
+}
+
+async function sortedUsers(mireKeresek, mit, status, adminChecked, modChecked, userChecked) {
+    let query = 'SELECT deleted_at, user_id, username, email, role FROM users';
+    let conditions = [];
+    let params = [];
+
+    // 1. Keresés (ID, Username vagy Email alapján)
+    // Csak akkor szűrünk, ha a 'mit' nem üres string
+    if (mit && mit.trim() !== '') {
+        // A 'mireKeresek' változó tartalmazza az oszlopnevet (id, username, email)
+        // A biztonság kedvéért itt ellenőrizni kell az oszlopnevet, 
+        // mert az oszlopnevek nem lehetnek paraméterek (?)
+        const validColumns = ['user_id', 'username', 'email'];
+        const targetColumn = validColumns.includes(mireKeresek) ? mireKeresek : 'username';
+
+        conditions.push(`${targetColumn} LIKE ?`);
+        params.push(`%${mit}%`);
+    }
+
+    // 2. Státusz szűrés
+    // Ha üres string, akkor nem szűrünk (vagyis az összes jön)
+    if (status && status !== '') {
+        if (status === 'statusActive') {
+            conditions.push('deleted_at IS NULL');
+        } else {
+            if (status === 'statusDeleted') {
+                conditions.push('deleted_at IS NOT NULL');
+            }
+        }
+    }
+
+    // 3. Role szűrés (Checkboxok halmaza)
+    let roles = [];
+    if (adminChecked) roles.push('ADMIN');
+    if (modChecked) roles.push('MODERATOR');
+    if (userChecked) roles.push('USER');
+
+    if (roles.length > 0) {
+        // IN ('ADMIN', 'USER') formátum létrehozása
+        const placeHolders = roles.map(() => '?').join(',');
+        conditions.push(`role IN (${placeHolders})`);
+        params.push(...roles);
+    }
+
+    // WHERE feltételek összefűzése, ha vannak
+    if (conditions.length > 0) {
+        query += ' WHERE ' + conditions.join(' AND ');
+    }
+    const [rows] = await pool.execute(query, params);
+    return rows;
+}
+
+async function updateUser(user_id, username, email, role, is_2fa) {
+    let query = 'UPDATE users ';
+    let updates = [];
+    let params = [];
+
+    if (username != null) {
+        updates.push('users.username = ?');
+        params.push(username);
+    }
+    if (email != null) {
+        updates.push('users.email = ?');
+        params.push(email);
+    }
+    if (role != null) {
+        updates.push('users.role = ?');
+        params.push(role);
+    }
+    // if (pfp != null) {
+    //     updates.push('users.pfp = ?');
+    //     params.push(pfp);
+    // }
+    if (is_2fa != null) {
+        updates.push('users.is_2fa = ?');
+        params.push(is_2fa);
+    }
+
+    if (updates.length === 0) {
+        throw new Error('Nincs frissítendő mező');
+    }
+    query += ' SET ' + updates.join(' , ');
+    query += ` WHERE users.user_id = ?`;
+    params.push(user_id);
+
+    const [rows] = await pool.execute(query, params);
+    return rows.affectedRows;
+}
+
+async function userToInactive(userId) {
+    const query = 'UPDATE users SET deleted_at = CURRENT_TIMESTAMP WHERE user_id = ? AND deleted_at IS NULL';
+    const [result] = await pool.execute(query, [userId]);
+    return result.affectedRows;
+}
+
+async function uploadProfilePic(filepath, width, height, user_id) {
+    //Régi profilkép elérési útvonala + id lekérése későbbi törlésre
+
+    const queryGetLastImage = 'SELECT images.image_id, images.filepath FROM users LEFT JOIN images ON users.pfp = images.image_id WHERE users.user_id = ?'
+    const [oldImageData] = await pool.execute(queryGetLastImage, [user_id]);
+
+    let oldFilePath = oldImageData[0] ? oldImageData[0].filepath : null;
+    let oldImageId = oldImageData[0] ? oldImageData[0].image_id : null;
+
+    //Új profilkép adatainak feltöltése + users táblában az pfp frissitése
+    const queryInsertNewPic = 'INSERT INTO images (filepath, width, height) VALUES (?, ?, ?)';
+    let [id] = await pool.execute(queryInsertNewPic, [filepath, width, height]);
+    const queryUpdatePfpId = 'UPDATE users SET pfp = ? WHERE user_id = ?';
+    await pool.execute(queryUpdatePfpId, [id.insertId, user_id]);
+
+    //Ha volt előtte egy másik profilkép, törli
+    if (oldImageId != null) {
+        const queryDeleteOldPic = 'DELETE FROM images WHERE image_id = ?';
+        await pool.execute(queryDeleteOldPic, [oldImageId]);
+    }
+
+    //Visszaadja a régi kép elérési útvonalát, hogy törlésre kerülhessen. Amennyiben nem volt, null értéket ad vissza.
+    return oldFilePath;
+}
+
+async function deleteProfilePic(user_id) {
+    //Régi profilkép elérési útvonala + id lekérése a törlésre
+
+    const queryGetLastImage = 'SELECT images.image_id, images.filepath FROM users LEFT JOIN images ON users.pfp = images.image_id WHERE users.user_id = ?'
+    const [oldImageData] = await pool.execute(queryGetLastImage, [user_id]);
+
+    let oldFilePath = oldImageData[0] ? oldImageData[0].filepath : null;
+    let oldImageId = oldImageData[0] ? oldImageData[0].image_id : null;
+
+    //Users táblában az adott felhasználónak a pfp-t NULL-ra állitja
+    const queryUpdatePfpId = 'UPDATE users SET pfp = NULL WHERE user_id = ?';
+    await pool.execute(queryUpdatePfpId, [user_id]);
+
+    //Törlés az images táblából
+    const queryDeleteOldPic = 'DELETE FROM images WHERE image_id = ?';
+    await pool.execute(queryDeleteOldPic, [oldImageId]);
+
+    //Visszaadja a régi kép elérési útvonalát a törléshez.
+    return oldFilePath;
 }
 //!Export
 module.exports = {
     // selectall,
-    newUser, 
+    newUser,
+    newUserFromAdmin,
     getUserByUsername,
-    getUserByEmail
+    getUserByEmail,
+    getUsers,
+    getUser,
+    sortedUsers,
+    updateUser,
+    userToInactive,
+    uploadProfilePic,
+    deleteProfilePic
 };

@@ -15,6 +15,16 @@ app.use(cors());
 app.use(express.json()); //?Middleware JSON
 app.set('trust proxy', 1); //?Middleware Proxy
 
+const checkRole = (...roles) => {
+    return (request, response, next) => {
+        if (!roles.includes(request.session.role)) {
+            response.redirect('/notfound');
+        }
+        else {
+            next();
+        }
+    };
+}
 //!Session beállítása:
 app.use(session({
     name: 'geo.sid',
@@ -29,10 +39,6 @@ app.use(session({
         maxAge: 60 * 60 * 1000
     }
 }));
-
-
-
-
 
 //!Routing
 //?Főoldal:
@@ -53,6 +59,12 @@ router.get('/map', (request, response) => {
 });
 router.get('/login_page', (request, response) => {
     response.sendFile(path.join(__dirname, '../frontend/html/login.html'));
+});
+router.get('/admin', checkRole("ADMIN"), (request, response) => {
+    response.sendFile(path.join(__dirname, '../frontend/html/admin.html'));
+});
+router.get('/notfound', (request, response) => {
+    response.sendFile(path.join(__dirname, '../frontend/html/notfound.html'));
 });
 
 //!API endpoints

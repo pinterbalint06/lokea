@@ -1,0 +1,157 @@
+<!DOCTYPE html>
+<html lang="hu">
+
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Admin</title>
+    <!--!Bootstrap-->
+    <link rel="stylesheet" href="../bootstrap/css/bootstrap.min.css" />
+    <!--?Popper: dropdowns, popovers, tooltips-->
+    <script src="../bootstrap/js/popper.min.js"></script>
+    <script src="../bootstrap/js/bootstrap.min.js"></script>
+    <!--!CSS-->
+    <link rel="stylesheet" href="../css/admin.css" />
+    <!--!JavaScript-->
+    <script src="../javascript/adminpage.js"></script>
+</head>
+
+<body>
+    <div class="container-fluid p-0">
+        <div class="row">
+            <div id="sidebardiv" class="col-2 sticky bg-dark top-0">
+                <div id="sidebar" class="sidebar d-flex flex-column h-100 p-3 text-light justify-content-between">
+                    <div>
+                        <div class="d-flex align-items-center justify-content-center">
+                            <a href="/"
+                                class="d-flex align-items-center mb-3 mb-md-0 me-md-auto text-white text-decoration-none sidebarElementText">
+                                <!-- ide logo -->
+                                <span class="fs-5">Admin</span>
+                            </a>
+                            <input type="button" value="☰" id="toggleSidebar"
+                                class="btn btn-sm btn-outline-light align-content-center" title="Collapse">
+                        </div>
+
+                        <hr>
+                        <ul class="nav nav-pills flex-column">
+                            <li class="nav-item">
+                                <a class="nav-link link-light active" href="#" title="Dashboard" data-route="dashboard">
+                                    <svg class="sidebar-icons">
+                                        <use href="../images/icons/sprite.svg#home"></use>
+                                    </svg>
+                                    <span class="sidebarElementText">Dashboard</span>
+                                </a>
+                            </li>
+                            <li class="nav-item">
+                                <a class="nav-link link-light" href="#" title="Users" data-route="users">
+                                    <svg class="sidebar-icons">
+                                        <use href="../images/icons/sprite.svg#users"></use>
+                                    </svg>
+                                    <span class="sidebarElementText">Users</span>
+                                </a>
+                            </li>
+                            <li class="nav-item">
+                                <a class="nav-link link-light" href="#" title="Files" data-route="files">
+                                    <svg class="sidebar-icons">
+                                        <use href="../images/icons/sprite.svg#file-text"></use>
+                                    </svg>
+                                    <span class="sidebarElementText">Files</span>
+                                </a>
+                            </li>
+                            <li class="nav-item">
+                                <a class="nav-link link-light" href="#" title="Transactions" data-route="transactions">
+                                    <svg class="sidebar-icons">
+                                        <use href="../images/icons/sprite.svg#shopping-bag"></use>
+                                    </svg>
+                                    <span class="sidebarElementText">Transactions</span>
+                                </a>
+                            </li>
+                            <li class="nav-item">
+                                <a class="nav-link link-light" href="#" title="Logs" data-route="logs">
+                                    <svg class="sidebar-icons">
+                                        <use href="../images/icons/sprite.svg#bar-chart-2"></use>
+                                    </svg>
+                                    <span class="sidebarElementText">Logs</span>
+                                </a>
+                            </li>
+                            <li class="nav-item">
+                                <a class="nav-link link-light" href="#" title="Settings" data-route="settings">
+                                    <svg class="sidebar-icons">
+                                        <use href="../images/icons/sprite.svg#settings"></use>
+                                    </svg>
+                                    <span class="sidebarElementText">Settings</span>
+                                </a>
+                            </li>
+                        </ul>
+                        <h6
+                            class="sidebar-heading d-flex justify-content-between align-items-center px-3 mt-4 mb-1 text-uppercase">
+                            Dev tools</h6>
+                        <ul class="nav nav-pills flex-column">
+                            <li class="nav-item">
+                                <a class="nav-link link-light" href="#" title="Write Devlog" data-route="devlog">
+                                    <svg class="sidebar-icons">
+                                        <use href="../images/icons/sprite.svg#edit"></use>
+                                    </svg>
+                                    <span class="sidebarElementText">Write Devlog</span>
+                                </a>
+                            </li>
+                            <li class="nav-item">
+                                <a class="nav-link link-light" href="#" title="Test tools" data-route="ttools">
+                                    <svg class="sidebar-icons">
+                                        <use href="../images/icons/sprite.svg#tool"></use>
+                                    </svg>
+                                    <span class="sidebarElementText">Test tools</span>
+                                </a>
+                            </li>
+                            <li class="nav-item">
+                                <a class="nav-link link-light" href="#" title="Feature flags" data-route="fflags">
+                                    <svg class="sidebar-icons">
+                                        <use href="../images/icons/sprite.svg#flag"></use>
+                                    </svg>
+                                    <span class="sidebarElementText">Feature flags</span>
+                                </a>
+                            </li>
+                        </ul>
+                    </div>
+                    <div class="d-flex flex-column justify-content-center">
+                        <input type="button" value="Leave Admin" class="btn btn-light">
+                        <input type="button" value="Sign out" id="signoutBtn" class="btn btn-light mt-1">
+                    </div>
+                </div>
+            </div>
+            <div id="contentDisplay" class="col-10">
+                <div class="container-fluid">
+                    <div id="content">
+
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="modal fade" id="modalView" tabindex="-1" aria-labelledby="exampleModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-xl" id="modalSize">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="modalTitle">Felhasználó szerkesztése</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Bezárás"
+                        title="Bezár"></button>
+                </div>
+                <div class="modal-body" id="modalContent">
+
+                </div>
+                <div class="modal-footer justify-content-between">
+                    <p class="text-danger" id="footerText">
+                        Kilépés után a változtatásokat nem lehet visszavonni!
+                    </p>
+                    <div id="footerButtons">
+                        <button type="button" class="btn btn-danger">Változtatások visszavonása</button>
+                        <button type="button" class="btn btn-primary">Mentés</button>
+                        <button type="button" class="btn btn-primary">Mentés és kilépés</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</body>
+
+</html>

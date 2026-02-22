@@ -5,6 +5,7 @@ const fs = require('fs/promises');
 const bcrypt = require('bcrypt');
 const validator = require('validator');
 const { body, validationResult } = require("express-validator");
+const sharp = require('sharp');
 
 //!Multer
 const multer = require('multer'); //?npm install multer
@@ -19,34 +20,46 @@ const storage = multer.diskStorage({
     }
 });
 
-const upload = multer({ storage });
+const upload = multer({
+    storage: storage,
+    limits: { fileSize: 5 * 1024 * 1024 } // 5 MB
+}); 
 
-//!Endpoints:
-//?GET /api/test
+const checkAuth = (request, response, next) => {
+    if (!request.session.userid) {
+        response.status(401).json({ message: "Bejelentkezés szükséges!" });
+    }
+    else {
+        next();
+    }
+
+};
+
+const checkRole = (...roles) => {
+    return (request, response, next) => {
+        if (!roles.includes(request.session.role)) {
+            return response.status(403).json({ message: "Nincs hozzáférésed!" });
+        }
+        else {
+            next();
+        }
+    };
+};
+
+//!ENDPOINTS
+//test
 router.get('/test', (request, response) => {
     response.status(200).json({
         message: 'Ez a végpont működik.'
     });
 });
 
-//?GET /api/testsql
-router.get('/testsql', async (request, response) => {
-    try {
-        const selectall = await database.selectall();
-        response.status(200).json({
-            message: 'Ez a végpont működik.',
-            results: selectall
-        });
-    } catch (error) {
-        response.status(500).json({
-            message: 'Ez a végpont nem működik.'
-        });
-    }
-});
-
+//Endpoints - signup, login, signout
 router.post("/signup",
     [
         body("username")
+            .not().isEmail().withMessage("Felhasználónév nem lehet email cim!")
+            .matches(/^[a-zA-Z0-9áéíóöőúüűÁÉÍÓÖŐÚÜŰ_-]+$/).withMessage('A felhasználónév csak betűket, számokat, - vagy _ karaktert, és ékezetes betűket tartalmazhat.')
             .isLength({ min: 1, max: 20 }).withMessage("Felhasználónév hossza nem megfelelő!"),
         body("email")
             .isEmail().withMessage("Hibás email formátum")
@@ -69,22 +82,22 @@ router.post("/signup",
             else {
                 const { username, email, password } = request.body;
                 const hashedPassword = await bcrypt.hash(password, 10);
-                let feltolt = await database.newUser(username, email, hashedPassword);
-                console.log(feltolt);
-                response.status(201).json({
-                    success: true,
-                    message: "Sikeres regisztráció"
-                });
+                let insert = await database.newUser(username, email, hashedPassword);
+                if (insert.success) {
+                    response.status(201).json({
+                        success: true,
+                        message: "Sikeres regisztráció"
+                    });
+                }
+                else {
+                    response.status(500).json({
+                        success: false,
+                        message: insert.error
+                    })
+                }
             }
         } catch (error) {
-            if (error.code === "ER_DUP_ENTRY") {
-                response.status(400).json({
-                    error: "A felhasználónév vagy email már foglalt!"
-                });
-            }
-            else {
-                response.status(500).json({ error: "Hiba az adatbázis művelet során!" });
-            }
+            response.status(500).json({ error: error });
         }
     }
 );
@@ -114,14 +127,14 @@ router.post("/login",
                 else {
                     rows = await database.getUserByUsername(username);
                 }
-                if (rows.length === 0) {
-                    return response.status(401).json({ message: "Hibás email vagy jelszó" });
+                if (rows.length === 0 || rows[0].deleted_at != null) {
+                    response.status(401).json({ message: "Hibás email vagy jelszó" });
                 }
                 else {
                     let sPass = rows[0].password;
                     let egyezes = await bcrypt.compare(password, sPass);
                     if (!egyezes) {
-                        return response.status(401).json({ message: "Hibás email vagy jelszó" });
+                        response.status(401).json({ message: "Hibás email vagy jelszó" });
                     }
                     else {
                         let sesRole = rows[0].role;
@@ -133,7 +146,7 @@ router.post("/login",
                             request.session.cookie.maxAge = 2 * 60 * 60 * 1000;
                         }
 
-                        request.session.userid = rows[0].userid;
+                        request.session.userid = rows[0].user_id;
                         request.session.role = sesRole;
                         response.status(200).json({ message: "Sikeres bejelentkezés", role: sesRole });
                     }
@@ -144,16 +157,224 @@ router.post("/login",
         }
     });
 
-router.post('/signout', (request, response) => {
-    request.session.destroy(error => { 
+router.post('/signout', checkAuth, (request, response) => {
+    request.session.destroy(error => {
         if (error) {
-            response.status(500).json({success: false, error: error});
+            response.status(500).json({ success: false, error: error });
         }
         else {
             response.clearCookie('geo.sid');
-            response.status(200).json({success: true});
+            response.status(200).json({ success: true });
         }
     });
 });
+
+//Endpoints - admin
+
+router.post("/admin/signupFromAdmin", checkAuth, checkRole("ADMIN"),
+    [
+        body("username")
+            .not().isEmail().withMessage("Felhasználónév nem lehet email cim!")
+            .matches(/^[a-zA-Z0-9áéíóöőúüűÁÉÍÓÖŐÚÜŰ_-]+$/).withMessage('A felhasználónév csak betűket, számokat, - vagy _ karaktert, és ékezetes betűket tartalmazhat.')
+            .isLength({ min: 1, max: 20 }).withMessage("Felhasználónév hossza nem megfelelő!"),
+        body("email")
+            .isEmail().withMessage("Hibás email formátum")
+            .isLength({ min: 5, max: 250 }).withMessage("Email max 250 karakter"),
+        body("password")
+            .isLength({ min: 8, max: 50 }).withMessage("Jelszó hossza 8-50")
+            .matches(/\d/).withMessage("Kell benne szám")
+            .matches(/[A-Z]/).withMessage("Kell benne nagybetű"),
+        body("is_2fa")
+            .isBoolean().withMessage("Nem kapott értéket a kétlépcsős azonosítás!")
+    ],
+    async (request, response) => {
+        try {
+            const errors = validationResult(request);
+            if (!errors.isEmpty()) {
+                response.status(400).json({
+                    success: false,
+                    error: errors.array()
+                });
+            }
+            else {
+                const { username, email, password, role, is_2fa } = request.body;
+                const hashedPassword = await bcrypt.hash(password, 10);
+                let insert = await database.newUserFromAdmin(username, email, hashedPassword, role, is_2fa);
+                if (insert.success) {
+                    response.status(201).json({
+                        success: true,
+                        message: "Sikeres regisztráció!"
+                    });
+                }
+                else {
+                    response.status(500).json({
+                        success: false,
+                        message: insert.error
+                    })
+                }
+            }
+        } catch (error) {
+            response.status(500).json({ error: "Hiba az adatbázis művelet során!" });
+        }
+    }
+);
+
+router.get('/admin/users', checkAuth, checkRole("ADMIN"), async (request, response) => {
+    try {
+        let users = await database.getUsers();
+        response.status(200).json({ message: "Sikeres lekérés", users: users });
+    } catch (error) {
+        response.status(500).json({ error: error });
+    }
+})
+
+router.get('/admin/user', checkAuth, checkRole("ADMIN"), async (request, response) => {
+    try {
+        let params = request.query.id;
+        let users = await database.getUser(params);
+        response.status(200).json({ message: "Sikeres lekérés", users: users });
+    } catch (error) {
+        response.status(500).json({ error: error });
+    }
+})
+
+router.post('/admin/sortedUsers', checkAuth, checkRole("ADMIN"), async (request, response) => {
+    try {
+        let { mireKeresek, mit, status, adminChecked, modChecked, userChecked } = request.body;
+        let users = await database.sortedUsers(mireKeresek, mit, status, adminChecked, modChecked, userChecked);
+        response.status(200).json({ message: "Sikeres lekérés", users: users });
+    } catch (error) {
+        response.status(500).json({ error: error });
+    }
+})
+
+router.post('/admin/updateUser', checkAuth, checkRole("ADMIN"),
+    [
+        body("username")
+            .not().isEmail().withMessage("Felhasználónév nem lehet email cim!")
+            .matches(/^[a-zA-Z0-9áéíóöőúüűÁÉÍÓÖŐÚÜŰ_-]+$/).withMessage('A felhasználónév csak betűket, számokat, - vagy _ karaktert, és ékezetes betűket tartalmazhat.')
+            .isLength({ min: 1, max: 20 }).withMessage("Felhasználónév hossza nem megfelelő!"),
+        body("email")
+            .isEmail().withMessage("Hibás email formátum")
+            .isLength({ min: 5, max: 250 }).withMessage("Email max 250 karakter")
+    ],
+    async (request, response) => {
+        try {
+            const errors = validationResult(request);
+            if (!errors.isEmpty()) {
+                response.status(400).json({
+                    success: false,
+                    error: errors.array()
+                });
+            }
+            else {
+                let { user_id, username, email, role, is_2fa } = request.body;
+                let success = await database.updateUser(user_id, username, email, role, is_2fa);
+                if (success == 1) {
+                    response.status(204).json({ message: "Sikeres felhasználófrissités!" });
+                }
+                else {
+                    response.status(404).json({ message: "Nincs ilyen felhasználó!" });
+                }
+            }
+        } catch (error) {
+            response.status(500).json({ error: error });
+        }
+    })
+
+router.post('/admin/userToInactive', checkAuth, checkRole("ADMIN"), async (request, response) => {
+    try {
+        let { userId } = request.body;
+        let sorok = await database.userToInactive(userId);
+        if (sorok === 0) {
+            response.status(200).json({ message: "A felhasználó már inaktiv volt!" })
+        }
+        else {
+            response.status(204).end();
+        }
+    } catch (error) {
+        response.status(500).json({ error: error });
+    }
+})
+
+//Endpoints - settings
+
+router.post('/updateProfilePic', checkAuth, upload.single('profilePic'), async (request, response) => {
+    try {
+        if (!request.file) {
+            response.status(400).json({ message: "Nincs kép!" });
+        }
+        else {
+            let originalFile = request.file.path;
+
+            let newFileName = `processed-${Date.now()}.webp`;
+            let newFilePath = path.join('uploads', newFileName);
+
+            //Kép tömöritése
+            sharp.cache(false);
+            const metadata = await sharp(originalFile)
+                .resize(400, 400, {
+                    fit: 'cover',
+                    position: 'center'
+                })
+                .toFormat('webp')
+                .toFile(newFilePath);
+
+            let { width, height } = metadata;
+            let finalUrl = `/uploads/${newFileName}`;
+
+            let lastPfp = await database.uploadProfilePic(finalUrl, width, height, request.body.user_id);
+
+            try {
+                await fs.unlink(originalFile);
+            } catch (error) {
+                console.log("nem sikerült a törlés!" + error);
+            }
+
+            if (lastPfp) {
+                let lastPfpPath = path.join(__dirname, '..', lastPfp);
+                try {
+                    await fs.unlink(lastPfpPath);
+                } catch (error) {
+                    console.log("a kép nincs a szerveren!" + error);
+                }
+            }
+            response.status(201).json({ success: true, message: "Profilkép frissítve!" });
+        }
+    } catch (error) {
+        response.status(500).json({ error: error.message, details: error.stack });
+    }
+})
+
+router.post('/deleteProfilePic', checkAuth, async (request, response) => {
+    try {
+        let lastPfp = await database.deleteProfilePic(request.body.user_id);
+        if (!lastPfp) {
+            response.status(200).json({ success: true, message: "A profilkép már alapértelmezett volt." });
+        }
+        else {
+            let lastPfpPath = path.join(__dirname, '..', lastPfp);
+            try {
+                await fs.unlink(lastPfpPath);
+            } catch (error) {
+                console.log("a kép nincs a szerveren!" + error);
+            }
+            response.status(201).json({ success: true, message: "Profilkép törölve!" });
+        }
+    } catch (error) {
+        response.status(500).json({ error: error });
+    }
+})
+
+router.get('/getProfilePic', checkAuth, (request, response) => {
+    try {
+        let pfproute = request.query.route;
+        let filePath = path.join(__dirname, '..', pfproute);
+
+        response.sendFile(filePath);
+    } catch (error) {
+        console.log(error);
+    }
+})
 
 module.exports = router;
