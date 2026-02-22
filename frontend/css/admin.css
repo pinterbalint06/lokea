@@ -2,6 +2,11 @@ body {
     overflow-y: hidden;
 }
 
+.sidebar-icons {
+    height: 24px;
+    width: 24px;
+}
+
 .sidebar {
     transition: width 0.3s ease;
     height: 100%;
@@ -44,4 +49,10 @@ body {
 
 #usersTable th:last-child {
     text-align: center;
+}
+
+.buttonIcon {
+    height: 15px;
+    width: 15px;
+    margin-right: 8px;
 }

@@ -15,7 +15,6 @@ feature flags oldal
 hibak amiket javitani kell:
 
 -stack trace
--revert nem jo
 
 kerdes:
 -compare attetele database.js-be

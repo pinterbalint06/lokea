@@ -1,4 +1,6 @@
 document.addEventListener("DOMContentLoaded", function () {
+    modalElement = document.getElementById('modalView');
+    modal = new bootstrap.Modal(modalElement);
     document.getElementById('signoutBtn').addEventListener("click", async function () {
         kijelentkezes();
     });
@@ -294,11 +296,10 @@ async function usersDisplayre() {
     cim.innerText = "Users";
     cim.classList.add("h2");
 
-    let newUserGomb = gombGeneral("button", "Create new user", "green", null);
+    let newUserGomb = gombGeneral("button", "Create new user", "user-plus", "green", null);
     newUserGomb.addEventListener("click", async function () {
         modalView("Új felhasználó létrehozása", "new", newUserToModal());
-        let modalElement = document.getElementById('modalView');
-        let modal = new bootstrap.Modal(modalElement);
+
         modal.show();
     });
 
@@ -524,22 +525,18 @@ function tablazatGeneral(data) {
         modositoGombokDiv.classList.add("d-flex", "justify-content-evenly");
         let editGomb;
         if (adatok[i].role != "ADMIN" && adatok[i].deleted_at == null) {
-            editGomb = gombGeneral("click", "Szerkesztés", "blue", null);
+            editGomb = gombGeneral("click", "Szerkesztés", "edit", "blue", null);
             editGomb.addEventListener("click", async function () {
                 currentData = (await getUser(adatok[i].user_id)).users[0];
                 modalView("Felhasználó módosítása", "edit", await editUserToModal(currentData));
-                let modalElement = document.getElementById('modalView');
-                let modal = new bootstrap.Modal(modalElement);
                 modal.show();
             })
         }
         else {
-            editGomb = gombGeneral("click", "Megtekintés", "blue", null);
+            editGomb = gombGeneral("click", "Megtekintés", "eye", "blue", null);
             editGomb.addEventListener("click", async function () {
                 currentData = (await getUser(adatok[i].user_id)).users[0];
                 modalView("Felhasználó megtekintése", "view", await viewUserToModal(currentData));
-                let modalElement = document.getElementById('modalView');
-                let modal = new bootstrap.Modal(modalElement);
                 modal.show();
             })
         }
@@ -547,7 +544,7 @@ function tablazatGeneral(data) {
         modositoGombokDiv.appendChild(editGomb);
 
         if (adatok[i].role != "ADMIN" && adatok[i].deleted_at == null) {
-            let torloGomb = gombGeneral("click", "Törlés", "red", null);
+            let torloGomb = gombGeneral("click", "Törlés", "trash-2", "red", null);
             torloGomb.addEventListener("click", async function () {
                 alert(await userToInactive(adatok[i].user_id));
             });
@@ -566,10 +563,18 @@ function tablazatGeneral(data) {
     kontener.appendChild(tablazat);
 }
 
-function gombGeneral(type, text, color, id) {
+function gombGeneral(type, text, svg, color, id) {
     let button = document.createElement('button');
     button.type = type;
-    button.innerText = text;
+    if (svg == null) {
+        button.innerText = text;
+    }
+    else {
+        button.appendChild(svggeneral(svg, "buttonIcon"));
+        let textNode = document.createTextNode(text);
+        button.appendChild(textNode);
+    }
+
     if (id != null) {
         button.id = id;
     }
@@ -613,6 +618,17 @@ function inputGeneral(type, placeholder, value, id, osztalyok, disabled) {
     return input;
 }
 
+function svggeneral(name, className) {
+    const svg = document.createElementNS("http://www.w3.org/2000/svg", "svg");
+    svg.classList.add(className);
+
+    const use = document.createElementNS("http://www.w3.org/2000/svg", "use");
+    use.setAttributeNS("http://www.w3.org/1999/xlink", "xlink:href", `../images/icons/sprite.svg#${name}`);
+
+    svg.appendChild(use);
+    return svg;
+}
+
 //MODAL FUNCTIONS
 
 function modalView(title, type, content) {
@@ -632,7 +648,7 @@ function modalView(title, type, content) {
             footertext.innerHTML = "Minden mezőbe kell valamit irni!";
             footertext.classList.add("text-danger");
 
-            button = gombGeneral("button", "Létrehozás", "blue", null);
+            button = gombGeneral("button", "Létrehozás", "user-check", "blue", null);
             button.addEventListener('click', async function () {
                 let ures = false;
                 let inInput = {
@@ -651,8 +667,6 @@ function modalView(title, type, content) {
                     await newUser(inInput.username, inInput.email, inInput.password, inInput.role, inInput.is_2fa);
                     tablazatGeneral(await sortedUser());
                 }
-                const modalElement = document.getElementById("modalView");
-                const modal = bootstrap.Modal.getInstance(modalElement);
                 modal.hide();
             })
             footerButtons.appendChild(button);
@@ -663,11 +677,16 @@ function modalView(title, type, content) {
             footertext.innerHTML = "Kilépés után a változtatásokat nem lehet visszavonni!";
             footertext.classList.add("text-danger");
 
-            button = gombGeneral("reset", "Változtatások visszavonása", "red", null);
-            button.setAttribute("form", "editUserForm");
+            button = gombGeneral("button", "Változtatások visszavonása", "refresh-ccw", "red", null);
+            button.addEventListener("click", function () {
+                document.getElementById("editUsernameInput").value = currentData.username;
+                document.getElementById("editEmailInput").value = currentData.email;
+                document.getElementById("editRoleSelect").value = currentData.role;
+                document.getElementById("edit2faInput").checked = currentData.is_2fa;
+            })
             footerButtons.appendChild(button);
 
-            button = gombGeneral("button", "Mentés", "blue", null);
+            button = gombGeneral("button", "Mentés", "save", "blue", null);
             button.addEventListener('click', async function () {
                 let valtozas = false;
                 let inInput = {
@@ -680,7 +699,6 @@ function modalView(title, type, content) {
                 Object.keys(inInput).forEach(key => {
                     if (inInput[key] == currentData[key]) {
                         console.log(inInput[key], currentData[key])
-                        inInput[key] = null;
                     }
                     else {
                         valtozas = true;
@@ -690,8 +708,6 @@ function modalView(title, type, content) {
                     let siker = await userUpdate(currentData.user_id, inInput.username, inInput.email, inInput.role, inInput.is_2fa);
                     if (siker) {
                         tablazatGeneral(await sortedUser());
-                        const modalElement = document.getElementById("modalView");
-                        const modal = bootstrap.Modal.getInstance(modalElement);
                         modal.hide();
                     }
                 }
@@ -701,10 +717,8 @@ function modalView(title, type, content) {
         case "view":
             modalSize.classList.add("modal-dialog", "modal-xl");
 
-            button = gombGeneral("button", "Kilépés", "blue", null);
+            button = gombGeneral("button", "Kilépés", null, "blue", null);
             button.addEventListener("click", function () {
-                const modalElement = document.getElementById("modalView");
-                const modal = bootstrap.Modal.getInstance(modalElement);
                 modal.hide();
             })
             footerButtons.appendChild(button);
@@ -712,7 +726,7 @@ function modalView(title, type, content) {
         case "information":
             modalSize.classList.add("modal-dialog", "modal-sm");
 
-            button = gombGeneral("button", "OK", "blue", null);
+            button = gombGeneral("button", "OK", null, "blue", null);
             footerButtons.appendChild(button);
             break;
     }
@@ -825,7 +839,7 @@ async function editUserToModal(data) {
     }
     else {
         pfp.src = await getProfilePicture(pfproute);
-        deletePfpButton = gombGeneral("button", "Profilkép törlése", "red", null);
+        deletePfpButton = gombGeneral("button", "Profilkép törlése", "trash-2", "red", null);
         deletePfpButton.addEventListener("click", async function () {
             await deleteProfilePicture(user_id);
         })
@@ -837,7 +851,7 @@ async function editUserToModal(data) {
 
     let newPfpInput = inputGeneral("file", null, null, "newPfpInput", ["form-control"], false);
     newPfpInput.setAttribute("accept", "image/*");
-    let newPfpButton = gombGeneral("button", "Profilkép feltöltése", "green", null);
+    let newPfpButton = gombGeneral("button", "Profilkép feltöltése", "upload", "green", null);
     newPfpButton.addEventListener("click", async function () {
         let feltoltott = document.getElementById('newPfpInput');
         if (feltoltott.files.length === 0) {
@@ -1116,7 +1130,5 @@ function infoToModal(text) {
 //VARIABLES
 
 let currentData = {};
-
-
-
-
+let modalElement;
+let modal;
