@@ -19,11 +19,11 @@ layout(std140) uniform CameraData {
 };
 
 layout(std140) uniform MaterialData {
-    vec3 uMatAlbedo;       // 0-12
-    float uMatDiffuseness; // 12-16
-    float uMatSpecularity; // 16-20
-    float uMatShininess;   // 20-24
-                           // 24-28-32
+    vec4 uMatAlbedo;       // 0-15
+    float uMatDiffuseness; // 16-19
+    float uMatSpecularity; // 20-23
+    float uMatShininess;   // 24-27
+                           // 28-31
 };
 
 layout(std140) uniform DistantLightData {

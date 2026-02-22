@@ -1209,7 +1209,7 @@ function updateFOVSync() {
 
 function updateFOVSyncLoop() {
     updateFOVSync();
-    editorState.fovSyncAnimationID = requestAnimationFrame(updateFOVSync);
+    editorState.fovSyncAnimationID = requestAnimationFrame(updateFOVSyncLoop);
 }
 
 function stopFOVSync() {

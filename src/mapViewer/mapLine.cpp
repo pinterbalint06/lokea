@@ -44,8 +44,7 @@ MapLine::MapLine(int id, int startMarkerId, int endMarkerId, float thickness, ui
     std::memcpy(getVertices(), vertices, sizeof(vertices));
     std::memcpy(getIndices(), indices, sizeof(indices));
 
-    // TODO: materialban alpha csatorna támogatása
-    Materials::Material lineMaterial = Materials::Material(Materials::Color::fromRGB(r, g, b), 1.0f, 0.0f, 1.0f);
+    Materials::Material lineMaterial = Materials::Material(Materials::Color::fromRGBA(r, g, b, a), 1.0f, 0.0f, 1.0f);
     setMaterial(lineMaterial);
 }
 
@@ -99,6 +98,6 @@ void MapLine::updateLineGeometry(float startX, float startY, float endX, float e
 void MapLine::setColor(uint8_t r, uint8_t g, uint8_t b, uint8_t a)
 {
     Materials::Material mat = getMaterial();
-    mat.setAlbedo(Materials::Color::fromRGB(r, g, b));
+    mat.setAlbedo(Materials::Color::fromRGBA(r, g, b, a));
     setMaterial(mat);
 }
