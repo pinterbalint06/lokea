@@ -23,9 +23,7 @@ const storage = multer.diskStorage({
 const upload = multer({
     storage: storage,
     limits: { fileSize: 5 * 1024 * 1024 } // 5 MB
-});
-
-//UTILITY FUNCTIONS
+}); 
 
 const checkAuth = (request, response, next) => {
     if (!request.session.userid) {
@@ -379,4 +377,4 @@ router.get('/getProfilePic', checkAuth, (request, response) => {
     }
 })
 
-module.exports = { checkAuth, checkRole };
+module.exports = router;

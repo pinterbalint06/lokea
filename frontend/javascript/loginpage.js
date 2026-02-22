@@ -132,11 +132,31 @@ async function bejelentkezes(username, jelszo) {
         let data = await response.json();
         alert(data.message);
         if (response.ok) {
+            if (data.role == "ADMIN") {
+                admingomb();
+            }
             kijelentkezesgomb();
         }
     } catch (error) {
         alert(`hálózati hiba: ${error}`);
     }
+}
+
+function admingomb() {
+    let admingomb = document.getElementById('adminbutton');
+    if (admingomb) {
+        admingomb.remove();
+    }
+    let a = document.createElement('button');
+    a.innerText = "Adminra lépés";
+    a.id = 'adminbutton';
+    a.classList.add("btn", "btn-danger");
+    a.addEventListener("click", function(e) {
+        e.preventDefault();
+        window.location.href = '/admin';
+    })
+    let hova = document.getElementById('buttons');
+    hova.appendChild(a);
 }
 
 function kijelentkezesgomb() {
