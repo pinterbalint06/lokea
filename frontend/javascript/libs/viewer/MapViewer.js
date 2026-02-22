@@ -27,7 +27,17 @@ const CONNECTION_TYPES = {
         g: 0,
         b: 0,
         a: 130
+    },
+    "focused": {
+        r: 0,
+        g: 224,
+        b: 255,
+        a: 190
     }
+}
+
+const DEFAULT_OPTIONS = {
+    "panAnimationSpeed": 3.0
 }
 
 export const MAP_VIEWER_ERROR_TYPES = {
@@ -62,6 +72,49 @@ export class MapViewer extends WASMViewerBase {
      * The width of the lines between the markers*/
     #connectionLineWidth
 
+    // MOVETO STATE RELATED
+    /** 
+     * @type {number} 
+     * The target image x-coordinates to move to */
+    #panTargetX;
+    /** 
+     * @type {number} 
+     * The target image y-coordinates to move to */
+    #panTargetY;
+    /**
+     * @type {number|null}
+     * The ID given by requestAnimationFrame (used to cancel the move to animation) */
+    #panAnimationId;
+    /** 
+     * @type {number} 
+     * The time when the last pan animation occured*/
+    #lastPanTime;
+    /** 
+     * @type {number} 
+     * The speed of the pan animation*/
+    #panAnimationSpeed;
+    /** 
+     * @type {number} 
+     * Previous image x-coordinates remaining to the target move to */
+    #lastRemainingX;
+    /** 
+     * @type {number} 
+     * Previous image y-coordinates remaining to the target move to */
+    #lastRemainingY;
+    /** 
+     * @type {number} 
+     * The last movement x amount used to cancel the loop if the movement is blocked by the boundaries of the map */
+    #lastStepX;
+    /** 
+     * @type {number} 
+     * The last movement y amount used to cancel the loop if the movement is blocked by the boundaries of the map */
+    #lastStepY;
+    // TODO: remaining zoom nem relatívan hanem fixen egy zoom szintre menjen
+    /** 
+     * @type {number} 
+     * The relative zoom amount remaining to be applied during the pan animation */
+    #panRemainingZoom;
+
     /**
      * Constructor for MapViewer class.
      *
@@ -69,6 +122,7 @@ export class MapViewer extends WASMViewerBase {
      * @param {Object} [options={}] - Optional configuration options.
      * @param {number} [options.canvasWidth=DEFAULT_OPTIONS["canvasWidth"]] - The width of the canvas.
      * @param {number} [options.canvasHeight=DEFAULT_OPTIONS["canvasHeight"]] - The height of the canvas.
+     * @param {number} [options.panAnimationSpeed=DEFAULT_OPTIONS["panAnimationSpeed"]] - The speed of the pan animation
      * @throws {Error} Throws an error if the canvas element with the specified ID does not exist.
      */
     constructor(canvasId, options = {}) {
@@ -78,6 +132,12 @@ export class MapViewer extends WASMViewerBase {
         this.#imageHeight = 0;
         this.#markerCache = {};
         this.#connectionLineWidth = 2.5;
+        this.#panTargetX = 0;
+        this.#panTargetY = 0;
+        this.#panRemainingZoom = 0;
+        this.#panAnimationId = null;
+        this.#lastPanTime = 0;
+        this.#panAnimationSpeed = options.panAnimationSpeed ? options.panAnimationSpeed : DEFAULT_OPTIONS.panAnimationSpeed;
 
         this.#cacheMarkers();
     }
@@ -252,13 +312,15 @@ export class MapViewer extends WASMViewerBase {
                 });
         }
 
-        if (Number.isNaN(imageX) || Number.isNaN(imageY) || imageX < 0 || imageY < 0) {
-            throw new WebassemblyError(
-                "Invalid marker location",
-                {
-                    "type": MAP_VIEWER_ERROR_TYPES.INVALID_INPUT
-                });
-        }
+        let valid = this.checkCoordinateValid(imageX, imageY);
+        // TODO #2 uncomment when TODO #2 is done
+        // if (!valid.correct) {
+        //     console.log(imageX, imageY);
+        //     console.log(this.#imageWidth, this.#imageHeight);
+        //     throw new WebassemblyError(valid.error, {
+        //         "type": MAP_VIEWER_ERROR_TYPES.INVALID_INPUT
+        //     });
+        // }
 
         let markerUrl = this.#getMarkerUrl(type);
 
@@ -358,6 +420,13 @@ export class MapViewer extends WASMViewerBase {
 
     moveMarkerToImageCoordinates(id, imageX, imageY) {
         this._ensureEngineReady();
+
+        let valid = this.checkCoordinateValid(imageX, imageY);
+        if (!valid.correct) {
+            throw new WebassemblyError(valid.error, {
+                "type": MAP_VIEWER_ERROR_TYPES.INVALID_INPUT
+            });
+        }
 
         if (!this.doesMarkerExist(id)) {
             throw new WebassemblyError(
@@ -496,6 +565,32 @@ export class MapViewer extends WASMViewerBase {
         this.placeMarker(cursorX, cursorY);
     }
 
+    moveTo(imageX, imageY, zoomAmount = 0) {
+        this._ensureEngineReady();
+
+        if (Number.isNaN(imageX) || Number.isNaN(imageY) || imageX < 0 || imageY < 0) {
+            throw new WebassemblyError(
+                "Invalid marker location",
+                {
+                    "type": MAP_VIEWER_ERROR_TYPES.INVALID_INPUT
+                });
+        }
+
+        this.#panTargetX = imageX;
+        this.#panTargetY = imageY;
+        this.#panRemainingZoom = zoomAmount;
+
+        this.#lastRemainingX = undefined;
+        this.#lastRemainingY = undefined;
+        this.#lastStepX = undefined;
+        this.#lastStepY = undefined;
+
+        if (this.#panAnimationId == null) {
+            this.#lastPanTime = performance.now();
+            this.#panAnimationId = requestAnimationFrame(this.#animatePan);
+        }
+    }
+
     // |-----------------|
     // | PRIVATE METHODS |
     // |-----------------|
@@ -551,6 +646,91 @@ export class MapViewer extends WASMViewerBase {
         await Promise.all(promises);
     }
 
+    #animatePan = () => {
+        let now = performance.now();
+        let deltaTime = (now - this.#lastPanTime) / 1000;
+        this.#lastPanTime = now;
+
+        // distance to to the target in image coordinates
+        let offset = this._engine.getCenterOffsetByImageCoords(this.#panTargetX, this.#panTargetY);
+        let remainingX = offset.x;
+        let remainingY = offset.y;
+        let remainingZoom = this.#panRemainingZoom;
+
+        // Verify if we're hitting a map boundary (Engine's limitVCoordinates blocks Y movement)
+        let blockedX = false;
+        let blockedY = false;
+        if (this.#lastRemainingX != undefined && this.#lastRemainingY != undefined) {
+            let movedX = Math.abs(this.#lastRemainingX - remainingX);
+            let movedY = Math.abs(this.#lastRemainingY - remainingY);
+
+            // if we wanted to move atleast 0.5 pixels but could only move less than 0.1 pixel then it is blocked by map boundaries
+            if (Math.abs(this.#lastStepX) > 0.5 && movedX < 0.1) {
+                blockedX = true
+            };
+            if (Math.abs(this.#lastStepY) > 0.5 && movedY < 0.1) {
+                blockedY = true
+            };
+        }
+
+        let closeX = Math.abs(remainingX) < 1.0;
+        let closeY = Math.abs(remainingY) < 1.0;
+        let closeZoom = Math.abs(remainingZoom) < 0.001;
+
+        // we stop if the zoom is close AND
+        // 1. both is 1 pixel or less to the target
+        // 2. one is close to the target and other is also close or blocked
+        // 3. both of them are blocked
+        if (closeZoom && (closeX || blockedX) && (closeY || blockedY)) {
+            // if it is not blocked move the last remaining distance
+            let finalStepX = blockedX ? 0 : remainingX;
+            let finalStepY = blockedY ? 0 : remainingY;
+            let finalStepZoom = remainingZoom;
+
+            if (finalStepX != 0 || finalStepY != 0) {
+                this._engine.moveMap(finalStepX, finalStepY);
+            }
+            if (finalStepZoom != 0) {
+                this._engine.zoomMap(finalStepZoom, this.#panTargetX, this.#panTargetY);
+            }
+
+            this.#panRemainingZoom = 0;
+            this.#panAnimationId = null;
+        } else {
+            // ease out curve
+            let timeAndSpeedFactor = 1 - Math.exp(-this.#panAnimationSpeed * deltaTime);
+
+            // only try to move if it is not blocked
+            let stepX = blockedX ? 0 : (remainingX * timeAndSpeedFactor);
+            let stepY = blockedY ? 0 : (remainingY * timeAndSpeedFactor);
+            let stepZoom = remainingZoom * timeAndSpeedFactor;
+
+            this.#lastRemainingX = remainingX;
+            this.#lastRemainingY = remainingY;
+            this.#lastStepX = stepX;
+            this.#lastStepY = stepY;
+
+            this.#panRemainingZoom -= stepZoom;
+
+            if (stepX != 0 || stepY != 0) {
+                this._engine.moveMap(stepX, stepY);
+            }
+
+            if (stepZoom != 0) {
+                this._engine.zoomMap(stepZoom, this._canvasWidth / 2, this._canvasHeight / 2);
+            }
+
+            this.#panAnimationId = requestAnimationFrame(this.#animatePan);
+        }
+    }
+
+    #cancelPanAnimation() {
+        if (this.#panAnimationId != null) {
+            cancelAnimationFrame(this.#panAnimationId);
+            this.#panAnimationId = null;
+        }
+    }
+
     // Functions that have to be implemented
     _createEngine(module) {
         return new module.MapViewerEngine(
@@ -566,13 +746,16 @@ export class MapViewer extends WASMViewerBase {
             "grabbingCursor": "move",
             onRotate: (deltaX, deltaY) => {
                 this._ensureEngineReady();
+                this.#cancelPanAnimation();
                 this._engine.moveMap(deltaX, deltaY);
             },
             onZoom: (zoomAmount, cursorX, cursorY) => {
                 this._ensureEngineReady();
+                this.#cancelPanAnimation();
                 this._engine.zoomMap(zoomAmount, cursorX, cursorY);
             },
             onClick: (cursorX, cursorY) => {
+                this.#cancelPanAnimation();
                 this.onClickHandler(cursorX, cursorY);
             }
         };

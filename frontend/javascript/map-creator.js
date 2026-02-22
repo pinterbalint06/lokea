@@ -238,7 +238,6 @@ async function loadPoints(mapID, successCheckId) {
             }
             UI.newConnectionBtn.disabled = points.length < 2;
 
-            // TODO: load connections from database
             updateConnectionListUI();
             showToast("Pontok sikeresen betöltve!", "success", true, { delay: 3000 });
         }
@@ -270,6 +269,7 @@ async function switchMap(mapId) {
             UI.saveButton.disabled = false;
         } else {
             UI.saveButton.disabled = true;
+            // TODO #2: rework this await, maybe start loading points and map at the same time and when the image also loaded into the viewer draw points
             await loadImage(
                 "/api/game_maps/getMapImageById?mapId=" + mapId,
                 (url, width, height) => {
@@ -739,6 +739,8 @@ function clickOnCanvas(cursorX, cursorY) {
                 UI.northDirection.value = pointsCache[editorState.activePointId].north_direction;
                 editorState.isPlacingMarker = true;
                 UI.savePointButton.disabled = false;
+                let position = mapViewer.getMarkerPosition(editorState.activePointId);
+                mapViewer.moveTo(position.x, position.y, 100);
                 UI.collapseBootstrapElement.show();
             }
         }
@@ -870,16 +872,31 @@ async function updateConnectionListUI() {
 
         // TODO: pontoknak nev adas is itt aszerint megjelnites
         let template = document.getElementById("connection-card-template");
+        let fragment = document.createDocumentFragment();
         for (let i = 0; i < connections.length; i++) {
             // deep clone true
             let clone = template.content.cloneNode(true);
             clone.querySelector(".start-id").textContent = connections[i].start_point_id;
             clone.querySelector(".end-id").textContent = connections[i].end_point_id;
-            clone.querySelector(".kapcsolat-kartya").addEventListener("click", () => {
-                console.log(connections[i]);
+            clone.querySelector(".kapcsolat-kartya").addEventListener("mouseenter", () => {
+                let pos1 = mapViewer.getMarkerPosition(connections[i].start_point_id);
+                let pos2 = mapViewer.getMarkerPosition(connections[i].end_point_id);
+                let centerX = (pos1.x + pos2.x) / 2;
+                let centerY = (pos1.y + pos2.y) / 2;
+                mapViewer.changeLineType(connections[i].connection_id, "focused");
+                mapViewer.moveTo(centerX, centerY);
             });
-            UI.connectionsList.appendChild(clone);
+            clone.querySelector(".kapcsolat-kartya").addEventListener("mouseleave", () => {
+                // temporary ids are negative, saved connections are positive
+                if (connections[i].connection_id < 0) {
+                    mapViewer.changeLineType(connections[i].connection_id, "unsaved");
+                } else {
+                    mapViewer.changeLineType(connections[i].connection_id, "editing");
+                }
+            });
+            fragment.appendChild(clone);
         }
+        UI.connectionsList.appendChild(fragment);
     }
 }
 
@@ -1255,3 +1272,11 @@ document.addEventListener("DOMContentLoaded", init);
 // TODO: race condition miközben menti a pontot rányomni egy másik gombra? talán akkor editorState.isPlacingMarker hamis addig és megnyit egy másik létező gombot?
 // TODO: térképek, pontok és kapcsolatok törlése
 // TODO: biztos hogy elakarod vetni a változtatásokat ha a user bezárja a collapset vagy elakarod menteni a változtatásokat egy modalban?
+/* TODO: ha a collapse bezáródása közben nyomunk rá a markerre akkor
+MapViewer.js:358 Uncaught WebassemblyError: Invalid marker ID
+    at MapViewer.doesMarkerExist (MapViewer.js:358:19)
+    at placeOrMoveMarker (map-creator.js:664:19)
+    at MapViewer.clickOnCanvas [as onClickHandler] (map-creator.js:712:13)
+    at CanvasInput.onClick (MapViewer.js:758:22)
+    at #pointerUp (CanvasInput.js:287:30)
+    at #pointerUpListener (CanvasInput.js:220:57) */

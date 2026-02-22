@@ -320,6 +320,39 @@ void MapViewerEngine::setMarkerSelectable(int id, bool selectable)
     }
 }
 
+emscripten::val MapViewerEngine::getCenterOffsetByImageCoords(float imageX, float imageY)
+{
+    emscripten::val offset = emscripten::val::object();
+    if (isMapLoaded_ && mapPlane_ != nullptr)
+    {
+        // target UV coords
+        float targetU = imageX / mapWidth_;
+        float targetV = imageY / mapHeight_;
+
+        Vertex *vertices = mapPlane_->getVertices();
+
+        // curruent center UV coords
+        float currentCenterU = (vertices[TOP_LEFT].u + vertices[TOP_RIGHT].u) * 0.5f;
+        float currentCenterV = (vertices[TOP_LEFT].v + vertices[BOTTOM_LEFT].v) * 0.5f;
+
+        float diffU = targetU - currentCenterU;
+        float diffV = targetV - currentCenterV;
+
+        // convert back to pixel
+        float deltaX = diffU / uPerPixel_;
+        float deltaY = diffV / vPerPixel_;
+
+        offset.set("x", deltaX);
+        offset.set("y", deltaY);
+    }
+    else
+    {
+        offset.set("x", 0.0f);
+        offset.set("y", 0.0f);
+    }
+    return offset;
+}
+
 bool MapViewerEngine::doesMarkerExist(int id)
 {
     return getMarkerIndexById(id) != -1;

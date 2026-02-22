@@ -43,5 +43,7 @@ EMSCRIPTEN_BINDINGS(mapViewerEngineBinding)
         .function("clearAllLines", &MapViewerEngine::clearAllLines)
         .function("setMarkerSelectable", &MapViewerEngine::setMarkerSelectable)
         .function("doesLineExist", &MapViewerEngine::doesLineExist)
-        .function("isAlreadyConnected", &MapViewerEngine::isAlreadyConnected);
+        .function("isAlreadyConnected", &MapViewerEngine::isAlreadyConnected)
+        .function("getCenterOffsetByImageCoords", &MapViewerEngine::getCenterOffsetByImageCoords)
+        .function("changeLineColor", &MapViewerEngine::changeLineColor);
 }
