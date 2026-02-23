@@ -466,8 +466,6 @@ router.put("/point/:pointId", checkAuth, upload.single("equirectangularImage"), 
                 }
             }
 
-            await dbConnection.commit();
-
             if (oldImageInfo && oldImageInfo.filepath) {
                 let absoluteOldPath = path.join(UPLOAD_ROOT, oldImageInfo.filepath);
                 // delete old file
@@ -477,6 +475,8 @@ router.put("/point/:pointId", checkAuth, upload.single("equirectangularImage"), 
                     });
             }
         }
+
+        await dbConnection.commit();
 
         response.status(200).json({
             success: true,

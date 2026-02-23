@@ -355,15 +355,12 @@ export class MapViewer extends WASMViewerBase {
     doesMarkerExist(id) {
         this._ensureEngineReady();
 
-        if (!Number.isInteger(id)) {
-            throw new WebassemblyError(
-                "Invalid marker ID",
-                {
-                    "type": MAP_VIEWER_ERROR_TYPES.INVALID_INPUT
-                });
+        let returnValue = false;
+        if (Number.isInteger(id)) {
+            returnValue = this._engine.doesMarkerExist(id);
         }
 
-        return this._engine.doesMarkerExist(id);
+        return returnValue;
     }
 
     doesLineExist(id) {
