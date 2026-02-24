@@ -427,3 +427,5 @@ export class CanvasInput {
         this.#canvas.style.cursor = this.#pointers.length === 1 ? this.grabbingCursor : this.#defaultCursor;
     }
 }
+
+// TODO: telefonon a rotating nem működik helyesen "huzigalni" kell

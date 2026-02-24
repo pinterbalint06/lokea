@@ -8,7 +8,6 @@ class Texture; // defined in "core/resources/texture.h"
 
 namespace Materials
 {
-    // TODO: alignas(16) használata
     struct MaterialData
     {
         float albedo[4];   ///< Base color of the material.

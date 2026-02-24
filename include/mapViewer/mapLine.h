@@ -17,7 +17,7 @@ public:
     MapLine(int id, int startMarkerId, int endMarkerId, float thickness, uint8_t r, uint8_t g, uint8_t b, uint8_t a);
     ~MapLine();
 
-    void updateLineGeometry(float startX, float startY, float endX, float endY, float screenWidth, float screenHeight);
+    void updateLineGeometry(const std::vector<Vec2> &startPositions, const std::vector<Vec2> &endPositions, float screenWidth, float screenHeight);
 
     int getId() const { return id_; }
     int getStartMarkerId() const { return startMarkerId_; }

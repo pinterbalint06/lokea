@@ -15,6 +15,8 @@ private:
     float rotation_;
     bool selectable_;
 
+    bool doesPointOverlapRepetition(float pointX, float pointY, int repetitionIndex);
+
 public:
     MapMarker(int id, const std::string &textureUrl, float u, float v, float width, float height);
     ~MapMarker();
@@ -34,7 +36,8 @@ public:
     void setRotation(float rotation) { rotation_ = rotation; }
     void setSelectable(bool selectable) { selectable_ = selectable; }
 
-    void updateRenderPosition(float planeX, float planeY, float screenWidth, float screenHeight);
+    void updateRenderPosition(const std::vector<Vec2> &positions, float screenWidth, float screenHeight);
+    bool doesPointOverlap(float pointX, float pointY);
 
     void changeTexture(const std::string &textureUrl);
 };

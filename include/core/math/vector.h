@@ -47,6 +47,11 @@ struct Vec2
     {
         return vec1.x * vec2.x + vec1.y * vec2.y;
     }
+
+    inline Vec2 operator-(const Vec2& other) const
+    {
+        return Vec2(x - other.x, y - other.y);
+    }
 };
 
 #endif

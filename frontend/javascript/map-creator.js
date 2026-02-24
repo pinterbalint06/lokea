@@ -1363,6 +1363,5 @@ document.addEventListener("DOMContentLoaded", init);
 // TODO: látótér állandó méretű (állítható méretű?)
 // TODO: új markernél elsőre nincs helyesen rajta a markeren a fov cone
 // TODO: biztos hogy elakarod vetni a változtatásokat ha a user bezárja a collapset vagy elakarod menteni a változtatásokat egy modalban?
-// TODO: kapcsolatok átívelnek a térkép overwrappeken furcsán
 // TODO: moveTo a jelenlegi térképre vigyen
-// TODO: fájl szétontása több részre pl ui.js, constants.js, utils.js, events.js, api.js, state.js és a main pl map-creator.js maradjon csak a setup és a fő logika
+// TODO: fájl szétbontása több részre pl ui.js, constants.js, utils.js, events.js, api.js, state.js és a main pl map-creator.js maradjon csak a setup és a fő logika

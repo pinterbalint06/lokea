@@ -1,7 +1,10 @@
 #include <string>
 #include <cstring>
 #include <cmath>
+#include <vector>
 #include <GLES3/gl3.h>
+
+#include "core/math/vector.h"
 
 #include "core/resources/mesh.h"
 #include "core/resources/vertex.h"
@@ -9,6 +12,8 @@
 #include "core/resources/texture.h"
 
 #include "mapViewer/mapMarker.h"
+
+constexpr int MAX_MARKER_REPETITIONS = 10; // Cap to prevent geometry overflow
 
 enum VertexIndex
 {
@@ -18,7 +23,7 @@ enum VertexIndex
     BOTTOM_RIGHT = 3
 };
 
-MapMarker::MapMarker(int id, const std::string &textureUrl, float u, float v, float width, float height) : Mesh(4, 6)
+MapMarker::MapMarker(int id, const std::string &textureUrl, float u, float v, float width, float height) : Mesh(4 * MAX_MARKER_REPETITIONS, 6 * MAX_MARKER_REPETITIONS)
 {
     id_ = id;
     u_ = u;
@@ -27,17 +32,31 @@ MapMarker::MapMarker(int id, const std::string &textureUrl, float u, float v, fl
     height_ = height;
     selectable_ = true;
     rotation_ = 0.0f;
-    Vertex vertices[4];
-    //                        x      y     z     w     nx    ny    nz    u     v
-    vertices[TOP_LEFT] = { 0.0f,  0.0f, 0.0f, 1.0f, 0.0f, 0.0f, 1.0f, 0.0f, 0.0f };
-    vertices[TOP_RIGHT] = { 0.0f,  0.0f, 0.0f, 1.0f, 0.0f, 0.0f, 1.0f, 1.0f, 0.0f };
-    vertices[BOTTOM_LEFT] = { 0.0f, 0.0f, 0.0f, 1.0f, 0.0f, 0.0f, 1.0f, 0.0f, 1.0f };
-    vertices[BOTTOM_RIGHT] = { 0.0f, 0.0f, 0.0f, 1.0f, 0.0f, 0.0f, 1.0f, 1.0f, 1.0f };
 
-    constexpr uint32_t indices[] = {
-            TOP_RIGHT, BOTTOM_LEFT, TOP_LEFT,
-            TOP_RIGHT, BOTTOM_RIGHT, BOTTOM_LEFT
-    };
+    Vertex vertices[4 * MAX_MARKER_REPETITIONS];
+
+    for (int i = 0; i < MAX_MARKER_REPETITIONS; ++i)
+    {
+        int markerRepetitionId = i * 4;
+        //                                             x        y     z     w     nx    ny    nz    u     v
+        vertices[markerRepetitionId + TOP_LEFT] = { -10.0f,  -10.0f, 0.0f, 1.0f, 0.0f, 0.0f, 1.0f, 0.0f, 0.0f };
+        vertices[markerRepetitionId + TOP_RIGHT] = { -10.0f,  -10.0f, 0.0f, 1.0f, 0.0f, 0.0f, 1.0f, 1.0f, 0.0f };
+        vertices[markerRepetitionId + BOTTOM_LEFT] = { -10.0f, -10.0f, 0.0f, 1.0f, 0.0f, 0.0f, 1.0f, 0.0f, 1.0f };
+        vertices[markerRepetitionId + BOTTOM_RIGHT] = { -10.0f, -10.0f, 0.0f, 1.0f, 0.0f, 0.0f, 1.0f, 1.0f, 1.0f };
+    }
+
+    uint32_t indices[6 * MAX_MARKER_REPETITIONS];
+    int indicesIndex = 0;
+    for (int i = 0; i < MAX_MARKER_REPETITIONS; ++i)
+    {
+        int markerRepetitionId = i * 4;
+        indices[indicesIndex++] = markerRepetitionId + TOP_RIGHT;
+        indices[indicesIndex++] = markerRepetitionId + BOTTOM_LEFT;
+        indices[indicesIndex++] = markerRepetitionId + TOP_LEFT;
+        indices[indicesIndex++] = markerRepetitionId + TOP_RIGHT;
+        indices[indicesIndex++] = markerRepetitionId + BOTTOM_RIGHT;
+        indices[indicesIndex++] = markerRepetitionId + BOTTOM_LEFT;
+    }
 
     std::memcpy(getVertices(), vertices, sizeof(vertices));
     std::memcpy(getIndices(), indices, sizeof(indices));
@@ -68,7 +87,7 @@ void MapMarker::changeTexture(const std::string &textureUrl)
     texture->loadFromUrl(textureUrl);
 }
 
-void MapMarker::updateRenderPosition(float planeX, float planeY, float screenWidth, float screenHeight)
+void MapMarker::updateRenderPosition(const std::vector<Vec2> &positions, float screenWidth, float screenHeight)
 {
     Vertex* vertices = getVertices();
 
@@ -76,57 +95,109 @@ void MapMarker::updateRenderPosition(float planeX, float planeY, float screenWid
     float halfinPlaneWidth = width_ / screenWidth;
     float inPlaneHeight = (height_ / screenHeight) * 2.0f;
 
+    float cosine = 1.0f;
+    float sine = 0.0f;
 
-    // left side is -half and right side is +half so it is centered alng the x axis
-    // and add the height to both bottom and top so it starts at the given coordinate
     if (rotation_ != 0.0f)
     {
-        float cosine = cos(rotation_);
-        float sine = sin(rotation_);
-
-        // Pre-calculate vector components for width and height
-        float widthCosine = halfinPlaneWidth * cosine;
-        float widthSine = halfinPlaneWidth * sine;
-        float heightCosine = inPlaneHeight * cosine;
-        float heightSine = inPlaneHeight * sine;
-
-        // rotation formula: 
-        // x' = x*cos - y*sin
-        // y' = x*sin + y*cos
-        // left is -halfinPlaneWidth so it is -widthCosine (-w, +h)
-        // x' = -x*cos - y*sin 
-        vertices[TOP_LEFT].x = planeX - widthCosine - heightSine;
-        vertices[TOP_LEFT].y = planeY - widthSine + heightCosine;
-
-        // both half width and height is added to this so it is standard rotation formula (+w, +h)
-        vertices[TOP_RIGHT].x = planeX + widthCosine - heightSine;
-        vertices[TOP_RIGHT].y = planeY + widthSine + heightCosine;
-
-        // we only add the height to top so here y is 0
-        // bottom left (-w, 0) is -halfinPlaneWidth and +
-        vertices[BOTTOM_LEFT].x = planeX - widthCosine;
-        vertices[BOTTOM_LEFT].y = planeY - widthSine;
-
-        // bottom right (+w, 0)
-        vertices[BOTTOM_RIGHT].x = planeX + widthCosine;
-        vertices[BOTTOM_RIGHT].y = planeY + widthSine;
+        cosine = cos(rotation_);
+        sine = sin(rotation_);
     }
-    else
-    {
-        // center x around calculated coordinate
-        vertices[TOP_LEFT].x = planeX - halfinPlaneWidth;
-        vertices[TOP_RIGHT].x = planeX + halfinPlaneWidth;
-        vertices[BOTTOM_LEFT].x = planeX - halfinPlaneWidth;
-        vertices[BOTTOM_RIGHT].x = planeX + halfinPlaneWidth;
 
-        // put the bottom to the click not centered around
-        // so the markers bottom middle point marks the point
-        vertices[TOP_LEFT].y = planeY + inPlaneHeight;
-        vertices[TOP_RIGHT].y = planeY + inPlaneHeight;
-        vertices[BOTTOM_LEFT].y = planeY;
-        vertices[BOTTOM_RIGHT].y = planeY;
+    // Pre-calculate vector components for width and height
+    // rotation formula: 
+    // x' = x*cos - y*sin
+    // y' = x*sin + y*cos
+    // x' = widthCosine - widthSine
+    // y' = heightSine + heightCosine
+    float widthCosine = halfinPlaneWidth * cosine;
+    float widthSine = halfinPlaneWidth * sine;
+    float heightCosine = inPlaneHeight * cosine;
+    float heightSine = inPlaneHeight * sine;
+
+    for (int i = 0; i < MAX_MARKER_REPETITIONS; ++i)
+    {
+        int markerRepetitionId = i * 4;
+
+        if (i < positions.size())
+        {
+            float planeX = positions[i].x;
+            float planeY = positions[i].y;
+
+            // left side is -half and right side is +half so it is centered alng the x axis
+            // and add the whole height to the top so it the bottom starts at the given coordinates
+            if (rotation_ != 0.0f)
+            {
+                // rotation formula: 
+                // x' = x*cos - y*sin
+                // y' = x*sin + y*cos
+
+                // left is -halfinPlaneWidth so it is -widthCosine (-w, +h)
+                // x' = -x*cos - y*sin 
+                vertices[markerRepetitionId + TOP_LEFT].x = planeX - widthCosine - heightSine;
+                vertices[markerRepetitionId + TOP_LEFT].y = planeY - widthSine + heightCosine;
+
+                // both half width and height is positive so it is standard rotation formula (+w, +h)
+                vertices[markerRepetitionId + TOP_RIGHT].x = planeX + widthCosine - heightSine;
+                vertices[markerRepetitionId + TOP_RIGHT].y = planeY + widthSine + heightCosine;
+
+                // we only add the height to top so here y is 0
+                // bottom left (-w, 0) is -halfinPlaneWidth
+                vertices[markerRepetitionId + BOTTOM_LEFT].x = planeX - widthCosine;
+                vertices[markerRepetitionId + BOTTOM_LEFT].y = planeY - widthSine;
+
+                // bottom right (+w, 0)
+                vertices[markerRepetitionId + BOTTOM_RIGHT].x = planeX + widthCosine;
+                vertices[markerRepetitionId + BOTTOM_RIGHT].y = planeY + widthSine;
+            }
+            else
+            {
+                // center x around calculated coordinate
+                vertices[markerRepetitionId + TOP_LEFT].x = planeX - halfinPlaneWidth;
+                vertices[markerRepetitionId + TOP_RIGHT].x = planeX + halfinPlaneWidth;
+                vertices[markerRepetitionId + BOTTOM_LEFT].x = planeX - halfinPlaneWidth;
+                vertices[markerRepetitionId + BOTTOM_RIGHT].x = planeX + halfinPlaneWidth;
+
+                // put the bottom to the given coordinate
+                // so the markers bottom middle point marks the point
+                vertices[markerRepetitionId + TOP_LEFT].y = planeY + inPlaneHeight;
+                vertices[markerRepetitionId + TOP_RIGHT].y = planeY + inPlaneHeight;
+                vertices[markerRepetitionId + BOTTOM_LEFT].y = planeY;
+                vertices[markerRepetitionId + BOTTOM_RIGHT].y = planeY;
+            }
+        }
+        else
+        {
+            // hide unused offscreen
+            for (int j = 0; j < 4; ++j)
+            {
+                vertices[markerRepetitionId + j].x = -10.0f;
+                vertices[markerRepetitionId + j].y = -10.0f;
+            }
+        }
     }
 
     // update gpu
     setUpOpenGL();
+}
+
+bool MapMarker::doesPointOverlapRepetition(float pointX, float pointY, int repetitionIndex)
+{
+    float minX = vertices_[repetitionIndex * 4 + TOP_LEFT].x;
+    float maxX = vertices_[repetitionIndex * 4 + TOP_RIGHT].x;
+    float minY = vertices_[repetitionIndex * 4 + BOTTOM_LEFT].y;
+    float maxY = vertices_[repetitionIndex * 4 + TOP_LEFT].y;
+
+    // if pointX in [minX;maxX] and y in [minY;maxY] then the point overlaps the marker (rectangle)
+    return (minX <= pointX && pointX <= maxX && minY <= pointY && pointY <= maxY);
+}
+
+bool MapMarker::doesPointOverlap(float pointX, float pointY)
+{
+    int i = 0;
+    while (i < MAX_MARKER_REPETITIONS && !doesPointOverlapRepetition(pointX, pointY, i))
+    {
+        i++;
+    }
+    return i < MAX_MARKER_REPETITIONS;
 }

@@ -3,6 +3,7 @@
 #include <emscripten/console.h>
 #include <string>
 #include <cstring>
+#include <vector>
 #include <algorithm>
 #include <cmath>
 #include <GLES3/gl3.h>
@@ -10,6 +11,7 @@
 #include "core/rendering/shader.h"
 
 #include "core/math/mathUtils.h"
+#include "core/math/vector.h"
 
 #include "core/resources/mesh.h"
 #include "core/resources/vertex.h"
@@ -78,9 +80,36 @@ void MapViewerEngine::updateSingleMarker(MapMarker *mapMarker)
 {
     if (mapMarker && mapPlane_)
     {
-        float inPlaneX, inPlaneY;
-        UVToPlaneRelativeCoordinates(mapMarker->getU(), mapMarker->getV(), inPlaneX, inPlaneY);
-        mapMarker->updateRenderPosition(inPlaneX, inPlaneY, (float)width_, (float)height_);
+        std::vector<Vec2> positions;
+
+        Vertex* mapVertices = mapPlane_->getVertices();
+        float minMapU = mapVertices[TOP_LEFT].u;
+        float minMapV = mapVertices[TOP_LEFT].v;
+        float uRange = mapVertices[TOP_RIGHT].u - minMapU;
+        float vRange = mapVertices[BOTTOM_LEFT].v - minMapV;
+
+        float u = mapMarker->getU();
+        float v = mapMarker->getV();
+
+        float distanctToLeftEdge = minMapU - u;
+        int startOffset = std::floor(distanctToLeftEdge);
+
+        float distanctToRightEdge = minMapU + uRange - u;
+        int endOffset = std::ceil(distanctToRightEdge);
+
+        for (int offset = startOffset; offset <= endOffset; offset++)
+        {
+            float wrappedU = u + offset;
+            float inRangeRelativeU = (wrappedU - minMapU) / uRange;
+            float inRangeRelativeV = (v - minMapV) / vRange;
+
+            float planeX = (inRangeRelativeU * 2.0f) - 1.0f;
+            float planeY = 1.0f - (inRangeRelativeV * 2.0f);
+
+            positions.push_back(Vec2(planeX, planeY));
+        }
+
+        mapMarker->updateRenderPosition(positions, (float)width_, (float)height_);
     }
 }
 
@@ -390,20 +419,6 @@ emscripten::val MapViewerEngine::getMarkerPosition(int id)
     return imageCoordinates;
 }
 
-bool MapViewerEngine::doesPointOverlapMarker(MapMarker *marker, float x, float y)
-{
-    Vertex* vertices = marker->getVertices();
-
-    float minX = vertices[TOP_LEFT].x;
-    float maxX = vertices[TOP_RIGHT].x;
-    float minY = vertices[BOTTOM_LEFT].y;
-    float maxY = vertices[TOP_LEFT].y;
-
-    // if x in [minX;maxX] and y in [minY;maxY] then the point overlaps the marker (rectangle)
-    return minX <= x && x <= maxX &&
-        minY <= y && y <= maxY;
-}
-
 int MapViewerEngine::getMarkerIdAtScreenCoords(int screenX, int screenY)
 {
     int foundId = -1;
@@ -420,7 +435,7 @@ int MapViewerEngine::getMarkerIdAtScreenCoords(int screenX, int screenY)
 
         // iterate backwards so the one on the top will be found first
         int i = markers_.size() - 1;
-        while (i >= 0 && !(doesPointOverlapMarker(markers_[i].get(), planeX, planeY) && markers_[i]->isSelectable()))
+        while (i >= 0 && !(markers_[i]->doesPointOverlap(planeX, planeY) && markers_[i]->isSelectable()))
         {
             i--;
         }
@@ -794,12 +809,50 @@ void MapViewerEngine::updateSingleLine(MapLine *line)
     {
         MapMarker *startMarker = markers_[startMarkerIndex].get();
         MapMarker *endMarker = markers_[endMarkerIndex].get();
-        float startMarkerX, startMarkerY;
-        float endMarkerX, endMarkerY;
-        UVToPlaneRelativeCoordinates(startMarker->getU(), startMarker->getV(), startMarkerX, startMarkerY);
-        UVToPlaneRelativeCoordinates(endMarker->getU(), endMarker->getV(), endMarkerX, endMarkerY);
 
-        line->updateLineGeometry(startMarkerX, startMarkerY, endMarkerX, endMarkerY, (float)width_, (float)height_);
+        float uStart = startMarker->getU();
+        float vStart = startMarker->getV();
+        float uEnd = endMarker->getU();
+        float vEnd = endMarker->getV();
+
+        Vertex* mapVertices = mapPlane_->getVertices();
+        float minMapU = mapVertices[TOP_LEFT].u;
+        float minMapV = mapVertices[TOP_LEFT].v;
+        float uRange = mapVertices[TOP_RIGHT].u - minMapU;
+        float vRange = mapVertices[BOTTOM_LEFT].v - minMapV;
+
+        std::vector<Vec2> startPositions;
+        std::vector<Vec2> endPositions;
+
+        float minU = std::min(uStart, uEnd);
+        float maxU = std::max(uStart, uEnd);
+
+        // Find repetition loop bounds relative to visible extent
+        float distanceToLeftEdge = minMapU - maxU;
+        int startOffset = std::floor(distanceToLeftEdge);
+        float distanceToRightEdge = minMapU + uRange - minU;
+        int endOffset = std::ceil(distanceToRightEdge);
+
+        for (int offset = startOffset; offset <= endOffset; offset++)
+        {
+            // starting point
+            float wrappedU1 = uStart + offset;
+            float inRangeRelativeU1 = (wrappedU1 - minMapU) / uRange;
+            float inRangeRelativeV1 = (vStart - minMapV) / vRange;
+            float planeX1 = (inRangeRelativeU1 * 2.0f) - 1.0f;
+            float planeY1 = 1.0f - (inRangeRelativeV1 * 2.0f);
+            startPositions.push_back(Vec2(planeX1, planeY1));
+
+            // ending point
+            float wrappedU2 = uEnd + offset;
+            float inRangeRelativeU2 = (wrappedU2 - minMapU) / uRange;
+            float inRangeRelativeV2 = (vEnd - minMapV) / vRange;
+            float planeX2 = (inRangeRelativeU2 * 2.0f) - 1.0f;
+            float planeY2 = 1.0f - (inRangeRelativeV2 * 2.0f);
+            endPositions.push_back(Vec2(planeX2, planeY2));
+        }
+
+        line->updateLineGeometry(startPositions, endPositions, (float)width_, (float)height_);
     }
     else
     {
@@ -824,7 +877,6 @@ void MapViewerEngine::updateLinesWithMarker(int markerId)
         emscripten_console_error("Marker with given ID doesn't exist");
     }
 }
-
 
 void MapViewerEngine::updateAllLines()
 {
