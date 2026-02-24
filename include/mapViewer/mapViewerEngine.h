@@ -53,6 +53,7 @@ public:
     ~MapViewerEngine();
 
     MapViewerSettings &getSettings() { return settings_; }
+    float getZoomLevel() const { return zoomLevel_; }
 
     void setSettings(MapViewerSettings newSettings)
     {

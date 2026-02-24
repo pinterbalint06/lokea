@@ -640,8 +640,6 @@ async function handleEquirectangularLoad(file) {
                 startFOVSync();
 
                 mapViewer.changeMarkerType(editorState.activePointId, "UPLOADING");
-
-                UI.equiFullscreenBtn.disabled = false;
             }
         }
     } catch (error) {
@@ -771,7 +769,6 @@ function clickOnCanvas(cursorX, cursorY) {
                                     if (editorState.activePointId == clickedMarkerIndex) {
                                         startFOVSync();
                                     }
-                                    UI.equiFullscreenBtn.disabled = false;
                                 } catch (error) {
                                     if (error.name != "AbortError" && !(error.type && error.type == "REQUEST_CANCELLED")) {
                                         throw error;
@@ -790,7 +787,11 @@ function clickOnCanvas(cursorX, cursorY) {
                         editorState.isPlacingMarker = true;
                         UI.savePointButton.disabled = false;
                         let position = mapViewer.getMarkerPosition(editorState.activePointId);
-                        mapViewer.moveTo(position.x, position.y, 100);
+                        let zoomLevel;
+                        if (mapViewer.getZoomLevel() < 4) {
+                            zoomLevel = 4;
+                        }
+                        mapViewer.moveTo(position.x, position.y, 4);
                         showCollapseWithDelay();
                     }
                 }
@@ -940,11 +941,13 @@ async function updateConnectionListUI() {
             clone.querySelector(".start-id").textContent = connections[i].start_point_id;
             clone.querySelector(".end-id").textContent = connections[i].end_point_id;
             clone.querySelector(".kapcsolat-kartya").addEventListener("mouseenter", () => {
+                mapViewer.changeLineType(connections[i].connection_id, "focused");
+            });
+            clone.querySelector(".kapcsolat-kartya").addEventListener("click", () => {
                 let pos1 = mapViewer.getMarkerPosition(connections[i].start_point_id);
                 let pos2 = mapViewer.getMarkerPosition(connections[i].end_point_id);
                 let centerX = (pos1.x + pos2.x) / 2;
                 let centerY = (pos1.y + pos2.y) / 2;
-                mapViewer.changeLineType(connections[i].connection_id, "focused");
                 mapViewer.moveTo(centerX, centerY);
             });
             clone.querySelector(".kapcsolat-kartya").addEventListener("mouseleave", () => {
@@ -1155,6 +1158,7 @@ function addUIEventListeners() {
                             mapViewer.removeLine(unsavedConnections[i].connection_id);
                         }
                     }
+                    mapViewer.cancelPanAnimation();
                     temporaryConnectionID = -1;
                     unsavedConnections = [];
                     UI.savePointButton.disabled = true;
@@ -1363,5 +1367,4 @@ document.addEventListener("DOMContentLoaded", init);
 // TODO: látótér állandó méretű (állítható méretű?)
 // TODO: új markernél elsőre nincs helyesen rajta a markeren a fov cone
 // TODO: biztos hogy elakarod vetni a változtatásokat ha a user bezárja a collapset vagy elakarod menteni a változtatásokat egy modalban?
-// TODO: moveTo a jelenlegi térképre vigyen
 // TODO: fájl szétbontása több részre pl ui.js, constants.js, utils.js, events.js, api.js, state.js és a main pl map-creator.js maradjon csak a setup és a fő logika

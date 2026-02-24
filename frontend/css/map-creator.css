@@ -329,6 +329,10 @@ main {
     border: var(--badge-border);
 }
 
+#equirectangularFullscreen {
+    cursor: pointer;
+}
+
 @media (max-width: 992px) {
     #ujPontCollapse {
         top: auto;

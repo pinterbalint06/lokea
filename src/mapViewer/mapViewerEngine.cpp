@@ -364,7 +364,12 @@ emscripten::val MapViewerEngine::getCenterOffsetByImageCoords(float imageX, floa
         float currentCenterU = (vertices[TOP_LEFT].u + vertices[TOP_RIGHT].u) * 0.5f;
         float currentCenterV = (vertices[TOP_LEFT].v + vertices[BOTTOM_LEFT].v) * 0.5f;
 
-        float diffU = targetU - currentCenterU;
+        // find the closest repeating map on the U axis to prevent jumping
+        float distanceToCenterU = currentCenterU - targetU;
+        float closestMapStart = std::round(distanceToCenterU);
+        float wrappedTargetU = targetU + closestMapStart;
+
+        float diffU = wrappedTargetU - currentCenterU;
         float diffV = targetV - currentCenterV;
 
         // convert back to pixel

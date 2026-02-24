@@ -192,6 +192,7 @@ export class CanvasInput {
         this.#wheelListener = null;
 
         this.#canvas.style.cursor = this.#defaultCursor;
+        this.#canvas.style.touchAction = "none";
         this.#addListeners();
     }
 
@@ -211,6 +212,15 @@ export class CanvasInput {
         this.#canvas.removeEventListener("wheel", this.#wheelListener);
 
         window.removeEventListener("blur", this.#resetPointers);
+    }
+
+    stopMomentum() {
+        if (this.#momentumAnimationId) {
+            cancelAnimationFrame(this.#momentumAnimationId);
+            this.#momentumAnimationId = null;
+        }
+        this.#velocityX = 0;
+        this.#velocityY = 0;
     }
 
     #addListeners() {
@@ -237,12 +247,7 @@ export class CanvasInput {
     }
 
     #pointerDown(e) {
-        if (this.#momentumAnimationId) {
-            cancelAnimationFrame(this.#momentumAnimationId);
-            this.#momentumAnimationId = null;
-        }
-        this.#velocityX = 0;
-        this.#velocityY = 0;
+        this.stopMomentum();
 
         this.#canvas.setPointerCapture(e.pointerId);
 
@@ -427,5 +432,3 @@ export class CanvasInput {
         this.#canvas.style.cursor = this.#pointers.length === 1 ? this.grabbingCursor : this.#defaultCursor;
     }
 }
-
-// TODO: telefonon a rotating nem működik helyesen "huzigalni" kell
