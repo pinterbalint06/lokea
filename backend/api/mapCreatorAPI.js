@@ -8,14 +8,19 @@ const sharp = require("sharp");
 sharp.cache(false);
 
 //!Multer
-const multer = require("multer"); //?npm in stall multer
+const multer = require("multer"); //?npm install multer
 const path = require("path");
 
 const { TEMP_DIR, UPLOAD_ROOT, MAX_FILE_SIZE } = require("../config/mapStorage.js");
 
 const storage = multer.diskStorage({
-    destination: (request, file, callback) => {
-        callback(null, TEMP_DIR);
+    destination: async (request, file, callback) => {
+        try {
+            await fs.mkdir(TEMP_DIR, { recursive: true });
+            callback(null, TEMP_DIR);
+        } catch (error) {
+            callback(error, null);
+        }
     },
     filename: (request, file, callback) => {
         let uuid = crypto.randomBytes(16).toString("hex");
