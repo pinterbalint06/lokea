@@ -235,12 +235,12 @@ main {
 
 .accordion-button::after {
     /* override bootstraps arrow */
-    background-image: url("../images/chevron.svg");
+    background-image: url("../images/map-creator-icons.svg#icon-chevron");
     transition: transform var(--transition-soft);
 }
 
 .accordion-button:not(.collapsed)::after {
-    background-image: url("../images/chevron.svg");
+    background-image: url("../images/map-creator-icons.svg#icon-chevron");
 }
 
 .accordion-body {
