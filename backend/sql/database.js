@@ -36,27 +36,30 @@ async function getUserByEmail(email) {
 }
 
 //Játékhoz szükséges ab adatok lekérése
-async function getGameMapsByCreated() {
-    const query = 'SELECT game_maps.game_maps_id, game_maps.creator_id, game_maps.title, game_maps.cover_image_id, game_maps.rating, game_maps.plays, game_maps.game_created, game_maps.game_description FROM game_maps ORDER BY game_maps.game_created DESC;';
-    const [result] = await pool.execute(query);
-    return result;
-}
+async function getGameMaps(sort = 'plays', user_id = null) {
+    const safeSort = String(sort).toLowerCase();
+    const baseSelect = 'SELECT game_maps.game_maps_id, game_maps.creator_id, game_maps.title, game_maps.cover_image_id, game_maps.rating, game_maps.plays, game_maps.game_created, game_maps.game_description FROM game_maps';
+    let query;
+    let params = [];
+    switch (safeSort) {
+        case 'created':
+            query = `${baseSelect} ORDER BY game_maps.game_created DESC;`;
+            break;
+        case 'rating':
+            query = `${baseSelect} ORDER BY game_maps.rating DESC;`;
+            break;
+        case 'plays':
+            query = `${baseSelect} ORDER BY game_maps.plays DESC;`;
+            break;
+        case 'favorites':
+            query = `${baseSelect} INNER JOIN favorites ON game_maps.game_maps_id = favorites.game_maps_id WHERE favorites.user_id = ? ORDER BY game_maps.game_created DESC;`;
+            params = [user_id];
+            break;
+        default:
+            throw new Error('INVALID_SORT');
+    }
 
-async function getGameMapsByRating() {
-    const query = 'SELECT game_maps.game_maps_id, game_maps.creator_id, game_maps.title, game_maps.cover_image_id, game_maps.rating, game_maps.plays, game_maps.game_created, game_maps.game_description FROM game_maps ORDER BY game_maps.rating DESC;';
-    const [result] = await pool.execute(query);
-    return result;
-}
-
-async function getGameMapsByPlays() {
-    const query = 'SELECT game_maps.game_maps_id, game_maps.creator_id, game_maps.title, game_maps.cover_image_id, game_maps.rating, game_maps.plays, game_maps.game_created, game_maps.game_description FROM game_maps ORDER BY game_maps.plays DESC;';
-    const [result] = await pool.execute(query);
-    return result;
-}
-
-async function getGameMapsByFavorites(user_id) {
-    const query = 'SELECT game_maps.game_maps_id, game_maps.creator_id, game_maps.title, game_maps.cover_image_id, game_maps.rating, game_maps.plays, game_maps.game_created, game_maps.game_description FROM game_maps INNER JOIN favorites ON game_maps.game_maps_id = favorites.game_maps_id WHERE favorites.user_id = ? ORDER BY game_maps.game_created DESC;';
-    const [result] = await pool.execute(query, [user_id]);
+    const [result] = await pool.execute(query, params);
     return result;
 }
 
@@ -78,9 +81,6 @@ module.exports = {
     newUser, 
     getUserByUsername,
     getUserByEmail,
-    getGameMapsByCreated,
-    getGameMapsByRating,
-    getGameMapsByPlays,
-    getGameMapsByFavorites,
+    getGameMaps,
     getImagePath
 };

@@ -157,72 +157,41 @@ router.post('/signout', (request, response) => {
 });
 
 //játékhoz szükséges api-k
-router.get('/game_maps_by_created', async (request, response) => {
+router.get('/game_maps', async (request, response) => {
     try {
-        const palyak = await database.getGameMapsByCreated();
+        const sort = String(request.query.sort || 'created').toLowerCase();
+        const validSorts = ['created', 'rating', 'plays', 'favorites'];
+        if (!validSorts.includes(sort)) {
+            return response.status(400).json({
+                success: false,
+                message: 'Érvénytelen rendezés. Használható: created, rating, plays, favorites'
+            });
+        }
+
+        const user_id = request.session?.userid || 1; //TODO: teszt user törlése session stabilizálás után
+        const palyak = await database.getGameMaps(sort, user_id);
+
         response.status(200).json({
             success: true,
             results: palyak
         });
     } catch (error) {
         response.status(500).json({
+            success: false,
             message: error
         });
     }
 });
 
-router.get('/game_maps_by_rating', async (request, response) => {
-    try {
-        const palyak = await database.getGameMapsByRating();
-        response.status(200).json({
-            success: true,
-            results: palyak
-        });
-    } catch (error) {
-        response.status(500).json({
-            message: error
-        });
-    }
-});
-
-router.get('/game_maps_by_plays', async (request, response) => {
-    try {
-        const palyak = await database.getGameMapsByPlays();
-        response.status(200).json({
-            success: true,
-            results: palyak
-        });
-    } catch (error) {
-        response.status(500).json({
-            message: error
-        });
-    }
-});
-
-router.get('/game_maps_by_favorites', async (request, response) => {
-    try {
-        let user_id = 1; //Ide majd a sessionből kell majd kinyerni a user_id-t, ez most csak tesztelés miatt van itt fixen
-        const palyak = await database.getGameMapsByFavorites(user_id);
-        response.status(200).json({
-            success: true,
-            results: palyak
-        });
-    } catch (error) {
-        response.status(500).json({
-            message: error
-        });
-    }
-});
-
-router.post('/get_cover_image', async (request, response) => {
+router.get('/get_cover_image/:cover_image_id', async (request, response) => {
 
     try {
         let uploads = path.join(__dirname, '../uploads');
         let fileRes;
-        if (!request.body || !request.body.image_id) {
+        if (!request.params || !request.params.cover_image_id) {
             fileRes = 'cover_images/image-not-found.jpg';
         } else {
-            let filePath = await database.getImagePath(request.body.image_id);
+            let filePath = await database.getImagePath(request.params.cover_image_id);
             if (!filePath) {
                 fileRes = 'cover_images/image-not-found.jpg';
             } else {

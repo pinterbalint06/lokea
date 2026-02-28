@@ -1,38 +1,46 @@
 document.addEventListener("DOMContentLoaded", function () {
-    let selectedButton = document.getElementById('sortByCreated');
+    let selectedButton = document.getElementById('sortByPlays');
     let closeBtn = document.querySelector('.modal-close-btn');
     closeBtn.addEventListener('click', () => {
         document.getElementById('myModal').classList.remove('active');
     });
-    loadGame_Maps('created');
+    loadGameMaps('plays');
     document.getElementById('sortByCreated').addEventListener('click', function () {
-        loadGame_Maps('created');
+        loadGameMaps('created');
         selectedButton.classList.remove('btnPushed');
+        selectedButton.removeAttribute('disabled');
         this.classList.add('btnPushed');
+        this.disabled = true;
         selectedButton = this;
     });
     document.getElementById('sortByRating').addEventListener('click', function () {
-        loadGame_Maps('rating');
+        loadGameMaps('rating');
         selectedButton.classList.remove('btnPushed');
+        selectedButton.removeAttribute('disabled');
         this.classList.add('btnPushed');
+        this.disabled = true;
         selectedButton = this;
     });
     document.getElementById('sortByPlays').addEventListener('click', function () {
-        loadGame_Maps('plays');
+        loadGameMaps('plays');
         selectedButton.classList.remove('btnPushed');
+        selectedButton.removeAttribute('disabled');
         this.classList.add('btnPushed');
+        this.disabled = true;
         selectedButton = this;
     });
     document.getElementById('sortByFavorites').addEventListener('click', function () {
-        loadGame_Maps('favorites');
+        loadGameMaps('favorites');
         selectedButton.classList.remove('btnPushed');
+        selectedButton.removeAttribute('disabled');
         this.classList.add('btnPushed');
+        this.disabled = true;
         selectedButton = this;
     });
 });
 
-async function loadGame_Maps(sort) {
-    const gameMaps = await fetchURL('http://127.0.0.1:3000/api/game_maps_by_' + sort);
+async function loadGameMaps(sort) {
+    const gameMaps = await fetchURL('http://127.0.0.1:3000/api/game_maps?sort=' + sort);
     let gameMapsContainer = document.getElementById('game_maps_container');
     gameMapsContainer.innerHTML = '';
     if (gameMaps.success) {
@@ -45,20 +53,20 @@ async function loadGame_Maps(sort) {
         p.innerText = 'Nincsenek elérhető játékok.';
         gameMapsContainer.appendChild(p);
     }
+}
 
-    async function fetchURL(url) {
-        let re;
-        try {
-            const response = await fetch(url);
-            if (!response.ok) {
-                throw new Error('Hiba a játék pályák lekérésekor: ' + response.statusText);
-            }
-            re = await response.json();
-        } catch (error) {
-            re = { success: false };
+async function fetchURL(url) {
+    let re;
+    try {
+        const response = await fetch(url);
+        if (!response.ok) {
+            throw new Error('Hiba a játék pályák lekérésekor: ' + response.statusText);
         }
-        return re;
+        re = await response.json();
+    } catch (error) {
+        re = { success: false };
     }
+    return re;
 }
 
 
@@ -90,16 +98,12 @@ async function createCard(game_map) {
 }
 
 async function getCoverImage(cover_image_id) {
-    const c_image_id = {
-        image_id: cover_image_id
-    };
     try {
-        const response = await fetch('http://127.0.0.1:3000/api/get_cover_image', {
-            method: 'POST',
+        const response = await fetch('http://127.0.0.1:3000/api/get_cover_image/' + cover_image_id, {
+            method: 'GET',
             headers: {
                 'Content-Type': 'application/json'
-            },
-            body: JSON.stringify(c_image_id)
+            }
         });
         if (response.ok) {
             const blob = await response.blob();
@@ -107,7 +111,7 @@ async function getCoverImage(cover_image_id) {
             return url;
         }
     } catch (error) {
-        console.error('POST hiba:', error);
+        console.error('GET hiba:', error);
     }
 }
 
