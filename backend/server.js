@@ -68,6 +68,8 @@ router.get('/notfound', (request, response) => {
 app.use('/', router);
 const endpoints = require('./api/api.js');
 app.use('/api', endpoints);
+const adminEndpoints = require('./api/admin.js');
+app.use('/api/admin', adminEndpoints);
 
 //!Szerver futtatása
 app.use(express.static(path.join(__dirname, '../frontend'))); //?frontend mappa tartalmának betöltése az oldal működéséhez
