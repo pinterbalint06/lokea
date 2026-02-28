@@ -1,5 +1,9 @@
 document.addEventListener("DOMContentLoaded", function () {
     let selectedButton = document.getElementById('sortByCreated');
+    let closeBtn = document.querySelector('.modal-close-btn');
+        closeBtn.addEventListener('click', () => {
+            document.getElementById('myModal').classList.remove('active');
+        });
     loadGame_Maps('created');
     document.getElementById('sortByCreated').addEventListener('click', function () {
         loadGame_Maps('created');
@@ -122,8 +126,5 @@ async function loadGame_Maps(sort) {
         modalTitle.innerText = game_map.title;
         modalStars.style.setProperty('--rating', game_map.rating);
         modalDesc.innerText = game_map.game_description;
-        let closeBtn = document.querySelector('.modal-close-btn');
-        closeBtn.addEventListener('click', () => {
-            modal.classList.remove('active');
-        });
+        
     }
