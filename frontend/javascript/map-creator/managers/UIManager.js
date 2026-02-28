@@ -19,7 +19,7 @@ export class UIManager {
     #gatherElements() {
         this.elements = {
             // buttons
-            saveButton: document.getElementById("saveButton"),
+            saveMapButton: document.getElementById("saveMapButton"),
             uploadButtonMap: document.getElementById("uploadBtn"),
             addNewMarkerBtn: document.getElementById("plusBtn"),
             uploadButtonEquirectangular: document.getElementById("uploadEquirectangularBtn"),
@@ -68,6 +68,7 @@ export class UIManager {
     #bindUIEvents() {
         this.elements.mapSelect.addEventListener("change", (event) => this.bus.emit(EVENTS.UI_SWITCH_MAP_REQUEST, { mapId: parseInt(event.target.value) }));
         this.elements.addNewMarkerBtn.addEventListener("click", () => this.bus.emit(EVENTS.UI_ADD_NEW_MARKER_REQUEST));
+        this.elements.saveMapButton.addEventListener("click", () => this.bus.emit(EVENTS.UI_SAVE_MAP_CLICKED));
 
         let coordInputs = [this.elements.coordinateXInput, this.elements.coordinateYInput];
         coordInputs.forEach(coordinateInput => {
@@ -97,13 +98,13 @@ export class UIManager {
 
                 this.bus.emit(EVENTS.UI_COLLAPSE_CLOSE_REQUESTED, request);
 
-                if (!request.canProceed) {
-                    event.preventDefault();
-                    this.bus.emit(EVENTS.TOAST_SHOW, { msg: request.reason, type: "danger" });
-                } else {
+                if (request.canProceed) {
                     this.animations.isCollapsing = true;
                     this.elements.savePointButton.disabled = true;
                     this.bus.emit(EVENTS.UI_COLLAPSE_HIDE_STARTED);
+                } else {
+                    event.preventDefault();
+                    this.bus.emit(EVENTS.TOAST_SHOW, { msg: request.reason, type: "danger" });
                 }
             }
         });
@@ -113,6 +114,23 @@ export class UIManager {
                 this.animations.isCollapsing = false;
             }
         });
+
+        this.elements.addNewMapBtn.addEventListener("click", (event) => {
+            let request = { canProceed: true, reason: "" };
+
+            this.bus.emit(EVENTS.UI_ADD_NEW_MAP_REQUEST, request);
+
+            if (request.canProceed) {
+                this.elements.fileInputMap.value = "";
+                this.elements.fileInputMap.click();
+            } else {
+                event.preventDefault();
+                this.bus.emit(EVENTS.TOAST_SHOW, { msg: request.reason, type: "danger" });
+            }
+        });
+
+        this.#setupUploadHandler(this.elements.dropZoneMap, this.elements.uploadButtonMap, this.elements.fileInputMap, EVENTS.UI_MAP_FILE_DROPPED);
+        this.#setupUploadHandler(this.elements.dropZoneEquirectangular, this.elements.uploadButtonEquirectangular, this.elements.fileInputEquirectangular, EVENTS.UI_EQUIRECTANGULAR_FILE_DROPPED);
     }
 
     #bindBusEvents() {
@@ -122,20 +140,16 @@ export class UIManager {
             this.elements.newConnectionBtn.disabled = true;
         });
 
-        this.bus.on(EVENTS.MARKER_PLACING_STARTED, () => {
-            this.elements.floatingButtonDiv.classList.add("d-none");
-        });
+        this.bus.on(EVENTS.MARKER_PLACING_STARTED, () => this.elements.floatingButtonDiv.classList.add("d-none"));
 
-        this.bus.on(EVENTS.MARKER_PLACING_CANCELLED, () => {
-            this.elements.floatingButtonDiv.classList.remove("d-none");
-        });
+        this.bus.on(EVENTS.MARKER_PLACING_CANCELLED, () => this.elements.floatingButtonDiv.classList.remove("d-none"));
 
         this.bus.on(EVENTS.TOAST_SHOW, ({ id, msg, type, closable = true, iconObject, duration = 3000, autohide = true, spinner = false, callback }) => {
             let icon;
             if (spinner) {
                 icon = createSpinnerIcon();
             } else {
-                icon = iconObject ? createSvgIcon(iconObject, "2em") : null;
+                icon = iconObject ? createSvgIcon(iconObject, "1em") : null;
             }
             let options = { autohide, delay: duration };
             let toast = showToast(this.elements.toastPlace, msg, type, closable, options, icon, callback);
@@ -151,9 +165,7 @@ export class UIManager {
             }
         });
 
-        this.bus.on(EVENTS.NEW_MARKER_PLACED, () => {
-            this.elements.collapseBootstrapElement.show();
-        });
+        this.bus.on(EVENTS.NEW_MARKER_PLACED, () => this.elements.collapseBootstrapElement.show());
 
         this.bus.on(EVENTS.MARKER_MOVED, ({ x, y }) => this.#updateCoordinatesInput(x, y));
 
@@ -164,7 +176,7 @@ export class UIManager {
             if (hasMaps) {
                 this.elements.uploadOverlay.classList.add("d-none");
                 this.elements.mapSelector.classList.remove("d-none");
-                this.elements.saveButton.disabled = true;
+                this.elements.saveMapButton.disabled = true;
                 this.elements.newConnectionBtn.disabled = true;
 
                 this.#updateMapSelector(maps);
@@ -180,6 +192,53 @@ export class UIManager {
             this.elements.northDirection.value = data ? data.north_direction : 0;
             this.elements.northDirectionRange.value = data ? data.north_direction : 0;
             this.#showCollapse();
+        });
+
+        this.bus.on(EVENTS.NEW_MAP_LOADED, ({ maps, loadedMapId }) => {
+            this.elements.mapSelector.classList.remove("d-none");
+            this.elements.uploadOverlay.classList.add("d-none");
+            this.#updateMapSelector(maps);
+            this.elements.mapSelect.value = loadedMapId;
+        });
+
+        this.bus.on(EVENTS.MAP_SAVE_STARTED, () => this.elements.saveMapButton.disabled = true);
+
+        this.bus.on(EVENTS.MAP_SAVE_AVAILABILITY_CHANGED, ({ canSave }) => this.elements.saveMapButton.disabled = !canSave);
+
+        this.bus.on(EVENTS.MAP_SWITCH_REQUEST_REJECTED, ({ revertToId }) => this.elements.mapSelect.value = revertToId);
+    }
+
+    #setupUploadHandler(dropZone, button, input, eventToEmit) {
+        button.addEventListener("click", () => input.click());
+        input.addEventListener("change", (event) => {
+            if (event.target.files.length > 0) {
+                this.bus.emit(eventToEmit, { file: event.target.files[0] });
+            }
+            event.target.value = "";
+        });
+
+        dropZone.addEventListener("dragover", (event) => {
+            event.preventDefault();
+            let draggedFiles = event.dataTransfer.items.filter(item => item.kind == "file");
+
+            if (draggedFiles.length > 0) {
+                event.dataTransfer.dropEffect = "copy";
+                dropZoneElement.classList.add("dropfocus");
+            } else {
+                event.dataTransfer.dropEffect = "none";
+            }
+        });
+        dropZone.addEventListener("dragleave", (event) => {
+            event.preventDefault();
+            dropZone.classList.remove("dropfocus");
+        });
+        dropZone.addEventListener("drop", (event) => {
+            event.preventDefault();
+            dropZone.classList.remove("dropfocus");
+            let files = event.dataTransfer.files;
+            if (files.length > 0) {
+                this.bus.emit(eventToEmit, { file: files[0] });
+            }
         });
     }
 

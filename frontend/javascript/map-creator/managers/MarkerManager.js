@@ -18,6 +18,7 @@ export class MarkerManager {
 
     #bindBusEvents() {
         this.bus.on(EVENTS.MAP_LOADED, async ({ mapId }) => {
+            this.bus.emit(EVENTS.TOAST_HIDE_ID, { id: "placeMarker" });
             this.#loadPoints(mapId);
         });
 
@@ -36,10 +37,7 @@ export class MarkerManager {
                     callback: () => {
                         // if temporary marker was not placed then it was cancelled => reset state
                         if (!this.mapViewer.doesMarkerExist(CONSTANTS.TEMP_ID)) {
-                            this.activePointId = null;
-                            this.isPlacingMarker = false;
-                            this.mapViewer.canvasInput.setDefaultCursor("default");
-                            this.bus.emit(EVENTS.MARKER_PLACING_CANCELLED);
+                            this.#resetMarkerPlacingState();
                         }
                     }
                 });
@@ -97,6 +95,15 @@ export class MarkerManager {
             }
         });
 
+        this.bus.on(EVENTS.UI_ADD_NEW_MAP_REQUEST, (request) => {
+            if (this.isSaving) {
+                request.canProceed = false;
+                request.reason = "Pont mentése folyamatban, kérlek várj!";
+            }
+        });
+
+        this.bus.on(EVENTS.MAP_SWITCHED, () => this.#resetMarkerPlacingState());
+
         this.bus.on(EVENTS.UI_COLLAPSE_HIDE_STARTED, () => {
             if (this.activePointId != null) {
                 if (this.activePointId == CONSTANTS.TEMP_ID) {
@@ -114,8 +121,7 @@ export class MarkerManager {
                         this.mapViewer.changeMarkerType(this.activePointId, "READY");
                     }
                 }
-                this.activePointId = null;
-                this.isPlacingMarker = false;
+                this.#resetMarkerPlacingState();
             }
         });
 
@@ -136,6 +142,15 @@ export class MarkerManager {
                 this.bus.emit(EVENTS.MARKER_SELECTED, { id, position, data: this.markersCache[id] });
             }
         });
+    }
+
+    #resetMarkerPlacingState() {
+        if (this.isPlacingMarker) {
+            this.activePointId = null;
+            this.isPlacingMarker = false;
+            this.mapViewer.canvasInput.setDefaultCursor("default");
+            this.bus.emit(EVENTS.MARKER_PLACING_CANCELLED);
+        }
     }
 
     async #loadPoints(mapId) {
