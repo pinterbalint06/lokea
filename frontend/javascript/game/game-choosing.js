@@ -51,7 +51,7 @@ async function loadGame_Maps(sort) {
             }
             re = await response.json();
         } catch (error) {
-            re = { success: false, results: [] };
+            re = { success: false };
         }
         return re;
     }}
