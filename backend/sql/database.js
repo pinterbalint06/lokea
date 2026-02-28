@@ -36,9 +36,27 @@ async function getUserByEmail(email) {
 }
 
 //Játékhoz szükséges ab adatok lekérése
-async function getGameMaps() {
-    const query = 'SELECT game_maps.game_maps_id, game_maps.creator_id, game_maps.title, game_maps.cover_image_id, game_maps.rating, game_maps.plays, game_maps.game_created, game_maps.game_description FROM game_maps;';
+async function getGameMapsByCreated() {
+    const query = 'SELECT game_maps.game_maps_id, game_maps.creator_id, game_maps.title, game_maps.cover_image_id, game_maps.rating, game_maps.plays, game_maps.game_created, game_maps.game_description FROM game_maps ORDER BY game_maps.game_created DESC;';
     const [result] = await pool.execute(query);
+    return result;
+}
+
+async function getGameMapsByRating() {
+    const query = 'SELECT game_maps.game_maps_id, game_maps.creator_id, game_maps.title, game_maps.cover_image_id, game_maps.rating, game_maps.plays, game_maps.game_created, game_maps.game_description FROM game_maps ORDER BY game_maps.rating DESC;';
+    const [result] = await pool.execute(query);
+    return result;
+}
+
+async function getGameMapsByPlays() {
+    const query = 'SELECT game_maps.game_maps_id, game_maps.creator_id, game_maps.title, game_maps.cover_image_id, game_maps.rating, game_maps.plays, game_maps.game_created, game_maps.game_description FROM game_maps ORDER BY game_maps.plays DESC;';
+    const [result] = await pool.execute(query);
+    return result;
+}
+
+async function getGameMapsByFavorites(user_id) {
+    const query = 'SELECT game_maps.game_maps_id, game_maps.creator_id, game_maps.title, game_maps.cover_image_id, game_maps.rating, game_maps.plays, game_maps.game_created, game_maps.game_description FROM game_maps INNER JOIN favorites ON game_maps.game_maps_id = favorites.game_maps_id WHERE favorites.user_id = ? ORDER BY game_maps.game_created DESC;';
+    const [result] = await pool.execute(query, [user_id]);
     return result;
 }
 
@@ -54,6 +72,9 @@ module.exports = {
     newUser, 
     getUserByUsername,
     getUserByEmail,
-    getGameMaps,
+    getGameMapsByCreated,
+    getGameMapsByRating,
+    getGameMapsByPlays,
+    getGameMapsByFavorites,
     getImagePath
 };

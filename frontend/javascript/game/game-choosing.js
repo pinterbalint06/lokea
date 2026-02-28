@@ -1,9 +1,34 @@
 document.addEventListener("DOMContentLoaded", function () {
-    loadGame_Maps();
+    let selectedButton = document.getElementById('sortByCreated');
+    loadGame_Maps('created');
+    document.getElementById('sortByCreated').addEventListener('click', function () {
+        loadGame_Maps('created');
+        selectedButton.classList.remove('btnPushed');
+        this.classList.add('btnPushed');
+        selectedButton = this;
+    });
+    document.getElementById('sortByRating').addEventListener('click', function () {
+        loadGame_Maps('rating');
+        selectedButton.classList.remove('btnPushed');
+        this.classList.add('btnPushed');
+        selectedButton = this;
+    });
+    document.getElementById('sortByPlays').addEventListener('click', function () {
+        loadGame_Maps('plays');
+        selectedButton.classList.remove('btnPushed');
+        this.classList.add('btnPushed');
+        selectedButton = this;
+    });
+    document.getElementById('sortByFavorites').addEventListener('click', function () {
+        loadGame_Maps('favorites');
+        selectedButton.classList.remove('btnPushed');
+        this.classList.add('btnPushed');
+        selectedButton = this;
+    });
 });
 
-async function loadGame_Maps() {
-    const gameMaps = await fetchURL('http://127.0.0.1:3000/api/game_maps');
+async function loadGame_Maps(sort) {
+    const gameMaps = await fetchURL('http://127.0.0.1:3000/api/game_maps_by_' + sort);
     let gameMapsContainer = document.getElementById('game_maps_container');
     gameMapsContainer.innerHTML = '';
     for (let i = 0; i < gameMaps.results.length; i++) {
