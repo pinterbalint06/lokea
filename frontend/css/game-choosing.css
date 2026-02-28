@@ -193,6 +193,10 @@ body {
     display: block;
 }
 
+.dropdown:focus-within .dropdown-menu {
+    display: block;
+}
+
 .navbar {
     position: sticky;
     top: 0;
