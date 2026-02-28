@@ -28,12 +28,12 @@ async function fetchAndValidate(url, returnKey) {
     return data[returnKey];
 }
 
-export async function fetchImage(url, abortSignal = null) {
+export async function fetchImage(mapId, abortSignal = null) {
     let imageURL = null;
 
     try {
         let response = await fetch(
-            url,
+            `/api/game_maps/getMapImageById?mapId=${mapId}`,
             {
                 "method": "GET",
                 "signal": abortSignal

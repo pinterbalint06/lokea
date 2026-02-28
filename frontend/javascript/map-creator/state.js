@@ -2,7 +2,6 @@ export const appState = {
     mapViewer: null,
     equirectangularViewer: null,
     maps: {},
-    pointsCache: {},
     connectionsList: [],
     connectionsLoadPromise: null,
     activeMapId: -1,
@@ -10,8 +9,6 @@ export const appState = {
 };
 
 export const editorState = {
-    activePointId: null,
-    isPlacingMarker: false,
     isConnectingMarkers: false,
     unsavedConnections: [],
     temporaryConnectionID: -1,

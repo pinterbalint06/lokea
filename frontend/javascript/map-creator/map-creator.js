@@ -3,9 +3,13 @@ import { EquirectangularViewer } from "../libs/viewer/EquirectangularViewer.js";
 import { degreeToRadian } from "../libs/math/mathUtils.js";
 import { CONSTANTS, ICONS } from "./constants.js";
 import { appState, editorState, resetEditorState, uiState } from "./state.js";
-import { fetchImage, fetchPoints, fetchMapList, fetchConnections, saveNewMap, savePoint as savePointApi, saveUnsavedConnections as saveUnsavedConnectionsApi } from "./api.js";
+import { fetchImage, fetchConnections, saveNewMap, savePoint as savePointApi, saveUnsavedConnections as saveUnsavedConnectionsApi } from "./api.js";
 import { createSvgIcon, createSpinnerIcon, processUploadedImageFile, showToast, savePreviousValue, getGameMapIdFromUrl } from "./utils.js";
-import { UI, getUIElements, updateMapSelectorUI, updateCoordinatesInput, updateConnectionListUI, closeCollapse, setEditorState, showCollapseWithDelay } from "./ui.js";
+import { UI, getUIElements, updateConnectionListUI, closeCollapse, showCollapseWithDelay } from "./ui.js";
+import { eventBus, EVENTS } from './events/EventBus.js';
+import { MarkerManager } from "./managers/MarkerManager.js";
+import { MapManager } from "./managers/MapManager.js";
+import { UIManager } from "./managers/UIManager.js";
 
 // |-------------|
 // | API & STATE |
@@ -38,90 +42,6 @@ async function loadImage(url, loadImageFunction, successCheckId, abortSignal = n
     }
 }
 
-async function loadPoints(mapID, successCheckId) {
-    let loadingIcon = createSpinnerIcon();
-    let pontokBetolteseToast = showToast(UI.toastPlace, "Pontok betöltése", "", false, { autohide: false }, loadingIcon);
-    try {
-        let points = await fetchPoints(mapID);
-        // check if the active id is still the same
-        if (successCheckId()) {
-            appState.pointsCache = {};
-            for (let i = 0; i < points.length; i++) {
-                appState.pointsCache[points[i].point_id] = points[i];
-                appState.mapViewer.placeMarkerByImageCoordinates(points[i].point_id, points[i].point_x, points[i].point_y, CONSTANTS.MARKER_SIZE.width, CONSTANTS.MARKER_SIZE.height, "ready");
-            }
-            UI.newConnectionBtn.disabled = points.length < 2;
-
-            updateConnectionListUI();
-            showToast(UI.toastPlace, "Pontok sikeresen betöltve!", "success", true, { delay: 3000 });
-        }
-    } catch (error) {
-        console.error(error);
-        showToast(UI.toastPlace, "Hiba a pontok betöltésekor!", "danger", true, { delay: 3000 });
-    } finally {
-        pontokBetolteseToast.hide();
-    }
-}
-
-async function switchMap(mapId) {
-    if (!editorState.isSaving.connections) {
-        if (!editorState.isSaving.point) {
-            if (!editorState.isSaving.map) {
-                closeCollapse();
-                cancelConnection();
-
-                if (appState.maps[mapId]) {
-                    appState.activeMapId = mapId;
-                    let mapData = appState.maps[mapId];
-
-                    UI.mapSelect.value = mapId;
-
-                    let valtasToast = showToast(UI.toastPlace, "Váltás: " + mapData.name, "", false, { autohide: false });
-
-                    UI.newConnectionBtn.disabled = true;
-                    if (mapId == CONSTANTS.TEMP_ID) {
-                        // temporary maps cannot have points
-                        appState.mapViewer.clearMarkersAndLines();
-                        await appState.mapViewer.loadMap(appState.maps[mapId].temporaryURL, appState.maps[mapId].imgWidth, appState.maps[mapId].imgHeight);
-                        UI.saveButton.disabled = false;
-                    } else {
-                        UI.saveButton.disabled = true;
-                        // TODO #2: rework this await, maybe start loading points and map at the same time and when the image also loaded into the viewer draw points
-                        await loadImage(
-                            "/api/game_maps/getMapImageById?mapId=" + mapId,
-                            (url, width, height) => {
-                                appState.mapViewer.clearMarkersAndLines();
-                                appState.mapViewer.loadMap(url, width, height)
-                            },
-                            () => appState.activeMapId == mapId
-                        );
-                        await loadPoints(
-                            mapId,
-                            () => appState.activeMapId == mapId
-                        );
-                        await appState.connectionsLoadPromise;
-                        if (appState.activeMapId == mapId) {
-                            renderConnectionsForActiveMap();
-                        }
-                    }
-
-                    // show change toast for 1 sec after the map was loaded
-                    setTimeout(() => valtasToast.hide(), 1000);
-                }
-            } else {
-                showToast(UI.toastPlace, "Térkép mentése folyamatban, kérlek várj!", "danger", true, { delay: 2000 });
-                UI.mapSelect.value = appState.activeMapId;
-            }
-        } else {
-            showToast(UI.toastPlace, "Pont mentése folyamatban, kérlek várj!", "danger", true, { delay: 2000 });
-            UI.mapSelect.value = appState.activeMapId;
-        }
-    } else {
-        showToast(UI.toastPlace, "Kapcsolatok mentése folyamatban, kérlek várj!", "danger", true, { delay: 2000 });
-        UI.mapSelect.value = appState.activeMapId;
-    }
-}
-
 async function saveMap() {
     editorState.isSaving.map = true;
     let loadingIcon = createSpinnerIcon();
@@ -148,7 +68,7 @@ async function saveMap() {
         }
 
         delete appState.maps[oldId];
-        updateMapSelectorUI();
+        // updateMapSelectorUI();
 
         if (appState.activeMapId == oldId) {
             appState.activeMapId = newId;
@@ -272,17 +192,6 @@ async function saveUnsavedConnections() {
     };
 }
 
-async function loadMapList() {
-    let maps = [];
-    try {
-        maps = await fetchMapList(appState.gameMapID);
-    } catch (error) {
-        console.error(error);
-        showToast(UI.toastPlace, "Nem sikerült betölteni a térképeket.", "danger", true);
-    }
-    return maps;
-}
-
 function cancelConnection() {
     if (editorState.isConnectingMarkers) {
         editorState.isConnectingMarkers = false;
@@ -384,128 +293,89 @@ async function handleMapLoad(file) {
 // | MAP INTERACTION |
 // |-----------------|
 
-function placeOrMoveMarker(cursorX, cursorY) {
-    if (editorState.activePointId) {
-        if (appState.mapViewer.doesMarkerExist(editorState.activePointId)) {
-            appState.mapViewer.moveMarker(editorState.activePointId, cursorX, cursorY);
-            if (appState.mapViewer.doesMarkerExist(CONSTANTS.FOV_MARKER_ID)) {
-                appState.mapViewer.moveMarker(CONSTANTS.FOV_MARKER_ID, cursorX, cursorY);
-            }
-        } else {
-            UI.savePointButton.disabled = true;
-            appState.mapViewer.placeMarker(editorState.activePointId, cursorX, cursorY, CONSTANTS.MARKER_SIZE.width, CONSTANTS.MARKER_SIZE.height, "EMPTY");
-            if (uiState.toasts.clickOnMap) {
-                uiState.toasts.clickOnMap.hide();
-            }
-            UI.collapseBootstrapElement.show();
-        }
-        updateCoordinatesInput();
-    }
-}
+// function clickOnCanvas(cursorX, cursorY) {
+//     if (!uiState.animations.isCollapsing) { isCollapsing yet to be implemented in new architecture
+//         if (editorState.isConnectingMarkers) {
+//             let clickedMarkerIndex = appState.mapViewer.getMarkerAtClick(cursorX, cursorY);
 
-function clickOnCanvas(cursorX, cursorY) {
-    if (!uiState.animations.isCollapsing) {
-        if (editorState.isConnectingMarkers) {
-            let clickedMarkerIndex = appState.mapViewer.getMarkerAtClick(cursorX, cursorY);
+//             if (clickedMarkerIndex != -1 && clickedMarkerIndex != CONSTANTS.TEMP_ID) {
+//                 if (editorState.activePointId == clickedMarkerIndex) {
+//                     showToast(UI.toastPlace, "Ugyanarra a pontra kattintottál. Válassz másik pontot!", "danger", true, { delay: 3000 });
+//                 } else {
+//                     if (appState.mapViewer.isAlreadyConnected(editorState.activePointId, clickedMarkerIndex)) {
+//                         showToast(UI.toastPlace, "Ezek a jelölők már össze vannak kapcsolva!", "danger", true, { delay: 3000 });
+//                     } else {
+//                         appState.mapViewer.connectMarkers(editorState.activePointId, clickedMarkerIndex, editorState.temporaryConnectionID, "unsaved");
+//                         editorState.unsavedConnections.push({
+//                             connection_id: editorState.temporaryConnectionID,
+//                             start_point_id: editorState.activePointId,
+//                             end_point_id: clickedMarkerIndex,
+//                             game_maps_id: appState.activeMapId
+//                         });
+//                         editorState.temporaryConnectionID--;
+//                         UI.newConnectionBtn.disabled = false;
+//                         updateConnectionListUI();
 
-            if (clickedMarkerIndex != -1 && clickedMarkerIndex != CONSTANTS.TEMP_ID) {
-                if (editorState.activePointId == clickedMarkerIndex) {
-                    showToast(UI.toastPlace, "Ugyanarra a pontra kattintottál. Válassz másik pontot!", "danger", true, { delay: 3000 });
-                } else {
-                    if (appState.mapViewer.isAlreadyConnected(editorState.activePointId, clickedMarkerIndex)) {
-                        showToast(UI.toastPlace, "Ezek a jelölők már össze vannak kapcsolva!", "danger", true, { delay: 3000 });
-                    } else {
-                        appState.mapViewer.connectMarkers(editorState.activePointId, clickedMarkerIndex, editorState.temporaryConnectionID, "unsaved");
-                        editorState.unsavedConnections.push({
-                            connection_id: editorState.temporaryConnectionID,
-                            start_point_id: editorState.activePointId,
-                            end_point_id: clickedMarkerIndex,
-                            game_maps_id: appState.activeMapId
-                        });
-                        editorState.temporaryConnectionID--;
-                        UI.newConnectionBtn.disabled = false;
-                        updateConnectionListUI();
+//                         showToast(UI.toastPlace, "Új kapcsolat létrehozva!", "success", true, { delay: 3000 });
 
-                        showToast(UI.toastPlace, "Új kapcsolat létrehozva!", "success", true, { delay: 3000 });
+//                         cancelConnection();
+//                     }
+//                 }
+//             } else {
+//                 showToast(UI.toastPlace, "Kattints egy térképjelölőre!", "", true, { delay: 2000 });
+//             }
+//         } else {
+//                 if (editorState.isPlacingMarker) {
+//                     placeOrMoveMarker(cursorX, cursorY);
+//                 } else {
+//                     let clickedMarkerIndex = appState.mapViewer.getMarkerAtClick(cursorX, cursorY);
+//                     if (clickedMarkerIndex != -1) {
+//                         editorState.activePointId = clickedMarkerIndex;
+//                         appState.mapViewer.changeMarkerType(editorState.activePointId, "EDIT");
 
-                        cancelConnection();
-                    }
-                }
-            } else {
-                showToast(UI.toastPlace, "Kattints egy térképjelölőre!", "", true, { delay: 2000 });
-            }
-        } else {
-            if (editorState.isSaving.point) {
-                showToast(UI.toastPlace, "Pont mentése folyamatban...", "", true, { delay: 2000 });
-            } else {
-                if (editorState.isPlacingMarker) {
-                    placeOrMoveMarker(cursorX, cursorY);
-                } else {
-                    let clickedMarkerIndex = appState.mapViewer.getMarkerAtClick(cursorX, cursorY);
-                    if (clickedMarkerIndex != -1) {
-                        editorState.activePointId = clickedMarkerIndex;
-                        appState.mapViewer.changeMarkerType(editorState.activePointId, "EDIT");
+//                         if (editorState.equiAbortController) {
+//                             editorState.equiAbortController.abort();
+//                         }
+//                         editorState.equiAbortController = new AbortController();
+//                         let signal = editorState.equiAbortController.signal;
+//                         loadImage(
+//                             "/api/game_maps/getImageByPointId?pointId=" + editorState.activePointId,
+//                             async (url, width, height) => {
+//                                 try {
+//                                     appState.equirectangularViewer.setYaw(degreeToRadian(appState.pointsCache[editorState.activePointId].north_direction));
+//                                     await appState.equirectangularViewer.loadImage(url, width, height);
+//                                     if (editorState.activePointId == clickedMarkerIndex) {
+//                                         startFOVSync();
+//                                     }
+//                                 } catch (error) {
+//                                     if (error.name != "AbortError" && !(error.type && error.type == "REQUEST_CANCELLED")) {
+//                                         throw error;
+//                                     }
+//                                 }
+//                             },
+//                             () => editorState.activePointId == clickedMarkerIndex, // check if the active id is still the same
+//                             signal
+//                         );
 
-                        if (editorState.equiAbortController) {
-                            editorState.equiAbortController.abort();
-                        }
-                        editorState.equiAbortController = new AbortController();
-                        let signal = editorState.equiAbortController.signal;
-                        loadImage(
-                            "/api/game_maps/getImageByPointId?pointId=" + editorState.activePointId,
-                            async (url, width, height) => {
-                                try {
-                                    appState.equirectangularViewer.setYaw(degreeToRadian(appState.pointsCache[editorState.activePointId].north_direction));
-                                    await appState.equirectangularViewer.loadImage(url, width, height);
-                                    if (editorState.activePointId == clickedMarkerIndex) {
-                                        startFOVSync();
-                                    }
-                                } catch (error) {
-                                    if (error.name != "AbortError" && !(error.type && error.type == "REQUEST_CANCELLED")) {
-                                        throw error;
-                                    }
-                                }
-                            },
-                            () => editorState.activePointId == clickedMarkerIndex, // check if the active id is still the same
-                            signal
-                        );
-
-                        updateConnectionListUI();
-                        renderConnectionsForActiveMap();
-                        updateCoordinatesInput();
-                        UI.northDirectionRange.value = appState.pointsCache[editorState.activePointId].north_direction;
-                        UI.northDirection.value = appState.pointsCache[editorState.activePointId].north_direction;
-                        editorState.isPlacingMarker = true;
-                        UI.savePointButton.disabled = false;
-                        let position = appState.mapViewer.getMarkerPosition(editorState.activePointId);
-                        let zoomLevel;
-                        if (appState.mapViewer.getZoomLevel() < 4) {
-                            zoomLevel = 4;
-                        }
-                        appState.mapViewer.moveTo(position.x, position.y, 4);
-                        showCollapseWithDelay();
-                    }
-                }
-            }
-        }
-    }
-}
-
-function handleCoordinateChange(event) {
-    let xCoordinate = UI.coordinateXInput.valueAsNumber;
-    let yCoordinate = UI.coordinateYInput.valueAsNumber;
-    let isValid = appState.mapViewer.checkCoordinateValid(xCoordinate, yCoordinate);
-    if (isValid.correct) {
-        event.target.dataset.previousValue = event.target.valueAsNumber;
-        appState.mapViewer.moveMarkerToImageCoordinates(editorState.activePointId, xCoordinate, yCoordinate);
-        if (appState.mapViewer.doesMarkerExist(CONSTANTS.FOV_MARKER_ID)) {
-            appState.mapViewer.moveMarkerToImageCoordinates(CONSTANTS.FOV_MARKER_ID, xCoordinate, yCoordinate);
-        }
-    } else {
-        event.target.value = event.target.dataset.previousValue;
-        showToast(UI.toastPlace, isValid.error, "danger", false, { delay: 3000 });
-    }
-}
+//                         updateConnectionListUI();
+//                         renderConnectionsForActiveMap();
+//                         updateCoordinatesInput();
+//                         UI.northDirectionRange.value = appState.pointsCache[editorState.activePointId].north_direction;
+//                         UI.northDirection.value = appState.pointsCache[editorState.activePointId].north_direction;
+//                         editorState.isPlacingMarker = true;
+//                         UI.savePointButton.disabled = false;
+//                         let position = appState.mapViewer.getMarkerPosition(editorState.activePointId);
+//                         let zoomLevel;
+//                         if (appState.mapViewer.getZoomLevel() < 4) {
+//                             zoomLevel = 4;
+//                         }
+//                         appState.mapViewer.moveTo(position.x, position.y, 4);
+//                         showCollapseWithDelay();
+//                     }
+//                 }
+//         }
+//     }
+// }
 
 // |----|
 // | UI |
@@ -581,12 +451,6 @@ function updateCollapseDirection() {
 // |  SETUP & INITIALIZATION  |
 // |--------------------------|
 
-function setupCoordinateInput() {
-    UI.coordinateXInput.addEventListener("focus", savePreviousValue);
-    UI.coordinateYInput.addEventListener("focus", savePreviousValue);
-    UI.coordinateXInput.addEventListener("change", handleCoordinateChange);
-    UI.coordinateYInput.addEventListener("change", handleCoordinateChange);
-}
 
 function setupEquirectangularViewer() {
     appState.equirectangularViewer = new EquirectangularViewer(CONSTANTS.EQUIRECTANGULAR_CANVAS_ID);
@@ -594,7 +458,6 @@ function setupEquirectangularViewer() {
 
 function setupMapViewer() {
     appState.mapViewer = new MapViewer(CONSTANTS.MAP_CANVAS_ID);
-    appState.mapViewer.onClickHandler = clickOnCanvas;
 }
 
 function setupFileUploadInput(buttonElement, inputElement, onFileLoaded) {
@@ -645,10 +508,6 @@ function setupUploadHandler(dropZoneElement, buttonElement, inputElement, onFile
 }
 
 function addUIEventListeners() {
-    UI.mapSelect.addEventListener("change", (event) => {
-        switchMap(parseInt(event.target.value));
-    });
-
     UI.addNewMapBtn.addEventListener("click", () => {
         if (!editorState.isSaving.connections) {
             if (!editorState.isSaving.point) {
@@ -663,23 +522,6 @@ function addUIEventListeners() {
             }
         } else {
             showToast(UI.toastPlace, "Kapcsolatok mentése folyamatban, kérlek várj!", "danger", true, { delay: 3000 });
-        }
-    });
-
-    UI.collapseElement.addEventListener("show.bs.collapse", (event) => {
-        if (event.target == UI.collapseElement) {
-            uiState.animations.isCollapsing = true;
-            UI.floatingButtonDiv.classList.add("d-none");
-            if (editorState.activePointId == CONSTANTS.TEMP_ID) {
-                UI.northDirectionRange.value = 0;
-                UI.northDirection.value = 0;
-            }
-        }
-    });
-
-    UI.collapseElement.addEventListener("shown.bs.collapse", (event) => {
-        if (event.target == UI.collapseElement) {
-            uiState.animations.isCollapsing = false;
         }
     });
 
@@ -699,24 +541,6 @@ function addUIEventListeners() {
                     if (editorState.equiAbortController) {
                         editorState.equiAbortController.abort();
                         editorState.equiAbortController = null;
-                    }
-
-                    if (editorState.activePointId != null) {
-                        if (editorState.activePointId == CONSTANTS.TEMP_ID) {
-                            // it was temporary marker remove it
-                            appState.mapViewer.removeMarker(CONSTANTS.TEMP_ID);
-                        } else {
-                            if (appState.pointsCache[editorState.activePointId]) {
-                                // it was discarded revert to old data
-                                let originalPoint = appState.pointsCache[editorState.activePointId];
-                                appState.mapViewer.moveMarkerToImageCoordinates(
-                                    editorState.activePointId,
-                                    originalPoint.point_x,
-                                    originalPoint.point_y
-                                );
-                                appState.mapViewer.changeMarkerType(editorState.activePointId, "READY");
-                            }
-                        }
                     }
 
                     // remove temporary connections
@@ -747,36 +571,6 @@ function addUIEventListeners() {
 
             // reset UI
             UI.floatingButtonDiv.classList.remove("d-none");
-        }
-    });
-
-    UI.plusMarkerBtn.addEventListener("click", () => {
-        if (appState.activeMapId != CONSTANTS.TEMP_ID) {
-            UI.floatingButtonDiv.classList.add("d-none");
-            appState.mapViewer.canvasInput.setDefaultCursor("crosshair");
-
-            editorState.activePointId = CONSTANTS.TEMP_ID;
-
-            let pointingHandIcon = createSvgIcon(ICONS.POINTING_HAND, "2em");
-            uiState.toasts.clickOnMap = showToast(UI.toastPlace,
-                "Kattints a térképre a jelölő elhelyezéséhez!",
-                "",
-                true,
-                { autohide: false },
-                pointingHandIcon,
-                () => {
-                    // if temporary marker was not placed then it was cancelled => reset state
-                    if (!appState.mapViewer.doesMarkerExist(CONSTANTS.TEMP_ID)) {
-                        editorState.activePointId = null;
-                        editorState.isPlacingMarker = false;
-                        appState.mapViewer.canvasInput.setDefaultCursor("default");
-                        UI.floatingButtonDiv.classList.remove("d-none");
-                    }
-                }
-            );
-            editorState.isPlacingMarker = true;
-        } else {
-            showToast(UI.toastPlace, "Először mentsd el a térképet!", "danger", true, { delay: 3000 });
         }
     });
 
@@ -840,20 +634,6 @@ function setupUIElements() {
     addUIEventListeners();
 }
 
-function processMapList(mapList) {
-    appState.maps = {};
-
-    for (let i = 0; i < mapList.length; i++) {
-        const element = mapList[i];
-        appState.maps[element.map_id] = {
-            id: element.map_id,
-            name: element.title,
-        };
-    }
-
-    updateMapSelectorUI();
-}
-
 function startFOVSync() {
     stopFOVSync();
 
@@ -896,30 +676,30 @@ function stopFOVSync() {
 }
 
 async function init() {
+    let uiManager = new UIManager(eventBus);
     appState.gameMapID = getGameMapIdFromUrl();
     setupUIElements();
 
     // setup
     setupMapViewer();
+    let markerManager = new MarkerManager(eventBus, appState.mapViewer, appState);
+    let mapManager = new MapManager(eventBus, appState.mapViewer, appState);
+    eventBus.emit(EVENTS.APP_INIT);
     setupEquirectangularViewer();
-    setupCoordinateInput();
 
     setupUploadHandler(UI.dropZoneMap, UI.uploadButtonMap, UI.fileInputMap, handleMapLoad);
     setupUploadHandler(UI.dropZoneEquirectangular, UI.uploadButtonEquirectangular, UI.fileInputEquirectangular, handleEquirectangularLoad);
 
     appState.connectionsLoadPromise = loadConnections();
 
-    let mapList = await loadMapList();
-    let hasMaps = mapList.length > 0;
-    setEditorState(hasMaps);
-    if (hasMaps) {
-        await appState.mapViewer.ready();
-        processMapList(mapList);
+    eventBus.emit(EVENTS.HIDE_LOADING);
 
-        let firstMapId = mapList[0].map_id;
-        switchMap(firstMapId);
-    }
-    UI.loadingOverlay.classList.add("d-none");
+    // temporary solutions until managers are complete
+    eventBus.on(EVENTS.POINTS_LOADED, (points) => {
+        UI.newConnectionBtn.disabled = points.length < 2;
+
+        updateConnectionListUI();
+    })
 }
 
 document.addEventListener("DOMContentLoaded", init);

@@ -1,0 +1,47 @@
+export const EVENTS = {
+    APP_INIT: "APP_INIT",
+    HIDE_LOADING: "HIDE_LOADING",
+
+    MAP_SWITCHED: "MAP_SWITCHED",
+    MAP_LOADED: "MAP_LOADED",
+    MAPS_LOADED: "MAPS_LOADED",
+    MAP_CLICKED: "MAP_CLICKED",
+    MAP_SWITCH_REQUESTED: "MAP_SWITCH_REQUESTED",
+
+    UI_ADD_NEW_MARKER_REQUEST: "UI_ADD_NEW_MARKER_REQUEST",
+    UI_SWITCH_MAP_REQUEST: "UI_SWITCH_MAP_REQUEST",
+    UI_COORDINATE_CHANGED: "UI_COORDINATE_CHANGED",
+    UI_COLLAPSE_SHOW_STARTED: "UI_COLLAPSE_SHOW_STARTED",
+    UI_COLLAPSE_HIDE_STARTED: "UI_COLLAPSE_HIDE_STARTED",
+    UI_COLLAPSE_CLOSE_REQUESTED: "UI_COLLAPSE_CLOSE_REQUESTED",
+
+    MARKER_PLACING_STARTED: "MARKER_PLACING_STARTED",
+    MARKER_PLACING_CANCELLED: "MARKER_PLACING_CANCELLED",
+    MARKER_CLICKED: "MARKER_CLICKED",
+    MARKER_SELECTED: "MARKER_SELECTED",
+    POINTS_LOADED: "POINTS_LOADED",
+    NEW_MARKER_PLACED: "NEW_MARKER_PLACED",
+    MARKER_MOVED: "MARKER_MOVED",
+
+    TOAST_SHOW: "TOAST_SHOW",
+    TOAST_HIDE_ID: "TOAST_HIDE_ID"
+};
+
+class EventBus extends EventTarget {
+    emit(eventName, detail = {}) {
+        this.dispatchEvent(new CustomEvent(eventName, { detail }));
+    }
+
+    on(eventName, listener) {
+        listener._wrapped = (event) => listener(event.detail);
+        this.addEventListener(eventName, listener._wrapped);
+    }
+
+    off(eventName, listener) {
+        if (listener._wrapped) {
+            this.removeEventListener(eventName, listener._wrapped);
+        }
+    }
+}
+
+export const eventBus = new EventBus();

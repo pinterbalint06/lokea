@@ -49,17 +49,6 @@ export function getUIElements() {
     );
 }
 
-export function updateMapSelectorUI() {
-    UI.mapSelect.innerHTML = "";
-
-    for (const mapObject in appState.maps) {
-        let option = document.createElement("option");
-        option.value = appState.maps[mapObject].id;
-        option.text = appState.maps[mapObject].name;
-        UI.mapSelect.appendChild(option);
-    }
-}
-
 export function updateCoordinatesInput() {
     let coordinates = appState.mapViewer.getMarkerPosition(editorState.activePointId);
     UI.coordinateXInput.value = coordinates.x;
@@ -120,18 +109,6 @@ export async function updateConnectionListUI() {
 
 export function closeCollapse() {
     UI.collapseBootstrapElement.hide();
-}
-
-export function setEditorState(hasMaps) {
-    if (hasMaps) {
-        UI.uploadOverlay.classList.add("d-none");
-        UI.mapSelector.classList.remove("d-none");
-        UI.saveButton.disabled = true;
-        UI.newConnectionBtn.disabled = true;
-    } else {
-        UI.uploadOverlay.classList.remove("d-none");
-        UI.mapSelector.classList.add("d-none");
-    }
 }
 
 export function showCollapseWithDelay() {
