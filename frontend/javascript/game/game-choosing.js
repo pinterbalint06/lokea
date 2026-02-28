@@ -27,7 +27,7 @@ async function fetchURL(url) {
 async function createCard(game_map) {
     let game_maps_card = document.createElement('div');
     const image = await getCoverImage(game_map.cover_image_id);
-    game_maps_card.classList.add('card');
+    game_maps_card.classList.add('card', 'glass');
     game_maps_card.style.backgroundImage = "url('" + image + "')";
     let game_maps_card_content = document.createElement('div');
     game_maps_card_content.classList.add('card-content');
