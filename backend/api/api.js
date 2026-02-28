@@ -201,7 +201,7 @@ router.get('/game_maps_by_plays', async (request, response) => {
 
 router.get('/game_maps_by_favorites', async (request, response) => {
     try {
-        let user_id = 1; //Ide majd a sessionből kell majd kinyerni a user_id-t
+        let user_id = 1; //Ide majd a sessionből kell majd kinyerni a user_id-t, ez most csak tesztelés miatt van itt fixen
         const palyak = await database.getGameMapsByFavorites(user_id);
         response.status(200).json({
             success: true,
