@@ -15,6 +15,8 @@ feature flags oldal
 hibak amiket javitani kell:
 
 -stack trace
+-oldal nyelvet egysegesiteni kell
+-insert -> tranzakciokezeles
 
 kerdes:
 -compare attetele database.js-be

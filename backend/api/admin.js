@@ -113,7 +113,9 @@ router.post('/updateUser', auth.checkAuth, auth.checkRole("ADMIN"),
             .isLength({ min: 1, max: 20 }).withMessage("Felhasználónév hossza nem megfelelő!"),
         body("email")
             .isEmail().withMessage("Hibás email formátum")
-            .isLength({ min: 5, max: 250 }).withMessage("Email max 250 karakter")
+            .isLength({ min: 5, max: 250 }).withMessage("Email max 250 karakter!"),
+        body("deleted")
+            .custom(value => value === true).withMessage("Inaktiv felhasználót nem frissithetsz!")
     ],
     async (request, response) => {
         try {
@@ -126,12 +128,17 @@ router.post('/updateUser', auth.checkAuth, auth.checkRole("ADMIN"),
             }
             else {
                 let { user_id, username, email, role, is_2fa } = request.body;
-                let success = await database.updateUser(user_id, username, email, role, is_2fa);
-                if (success == 1) {
-                    response.status(204).json({ message: "Sikeres felhasználófrissités!" });
+                if (role == "ADMIN" && request.session.role != "LORD") {
+                    response.status(403).json({ message: "Nincs jogosultságod ehhez!" });
                 }
                 else {
-                    response.status(404).json({ message: "Nincs ilyen felhasználó!" });
+                    let success = await database.updateUser(user_id, username, email, role, is_2fa);
+                    if (success == 1) {
+                        response.status(204).json({ message: "Sikeres felhasználófrissités!" });
+                    }
+                    else {
+                        response.status(404).json({ message: "Nincs ilyen felhasználó!" });
+                    }
                 }
             }
         } catch (error) {
@@ -139,19 +146,35 @@ router.post('/updateUser', auth.checkAuth, auth.checkRole("ADMIN"),
         }
     })
 
-router.post('/userToInactive', auth.checkAuth, auth.checkRole("ADMIN"), async (request, response) => {
-    try {
-        let { userId } = request.body;
-        let sorok = await database.userToInactive(userId);
-        if (sorok === 0) {
-            response.status(200).json({ message: "A felhasználó már inaktiv volt!" })
+router.post('/userToInactive', auth.checkAuth, auth.checkRole("ADMIN"),
+    [
+        body("role")
+            .not().matches("ADMIN").withMessage("Nem frissithetsz admin-t!"),
+        body("deleted")
+            .custom(value => value === true).withMessage("Inaktiv felhasználót nem frissithetsz!")
+    ],
+    async (request, response) => {
+        try {
+            const errors = validationResult(request);
+            if (!errors.isEmpty()) {
+                response.status(400).json({
+                    success: false,
+                    error: errors.array()
+                });
+            }
+            else {
+                let { userId } = request.body;
+                let sorok = await database.userToInactive(userId);
+                if (sorok === 0) {
+                    response.status(200).json({ message: "A felhasználó már inaktiv volt!" })
+                }
+                else {
+                    response.status(204).end();
+                }
+            }
+        } catch (error) {
+            response.status(500).json({ error: error });
         }
-        else {
-            response.status(204).end();
-        }
-    } catch (error) {
-        response.status(500).json({ error: error });
-    }
-})
+    })
 
 module.exports = router;

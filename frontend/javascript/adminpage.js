@@ -121,7 +121,7 @@ async function newUser(username, email, password, role, is_2fa) {
     }
 }
 
-async function userUpdate(user_id, username, email, role, is_2fa) {
+async function userUpdate(user_id, username, email, role, is_2fa, deleted) {
     try {
         let response = await fetch("/api/admin/updateUser", {
             method: "POST",
@@ -133,7 +133,8 @@ async function userUpdate(user_id, username, email, role, is_2fa) {
                 username,
                 email,
                 role,
-                is_2fa
+                is_2fa,
+                deleted
             })
         });
         return response.ok;
@@ -142,7 +143,7 @@ async function userUpdate(user_id, username, email, role, is_2fa) {
     }
 }
 
-async function userToInactive(id) {
+async function userToInactive(id, role, deleted) {
     let mitadokvissza;
     try {
         let response = await fetch("/api/admin/userToInactive", {
@@ -151,7 +152,9 @@ async function userToInactive(id) {
                 "Content-Type": "application/json"
             },
             body: JSON.stringify({
-                userId: id
+                userId: id,
+                role,
+                deleted
             })
         });
         if (response.status == 204) {
@@ -542,7 +545,7 @@ function tablazatGeneral(data) {
 
             torloGomb = gombGeneral("button", "Törlés", "trash-2", "red", null);
             torloGomb.addEventListener("click", async function () {
-                alert(await userToInactive(adatok[i].user_id));
+                alert(await userToInactive(adatok[i].user_id, adatok[i].role, adatok[i].deleted_at == null));
             });
 
         }
@@ -712,7 +715,8 @@ function modalView(title, type, content) {
                     }
                 });
                 if (valtozas) {
-                    let siker = await userUpdate(currentData.user_id, inInput.username, inInput.email, inInput.role, inInput.is_2fa);
+                    console.log(currentData);
+                    let siker = await userUpdate(currentData.user_id, inInput.username, inInput.email, inInput.role, inInput.is_2fa, currentData.deleted_at == null);
                     if (siker) {
                         tablazatGeneral(await sortedUser());
                     }

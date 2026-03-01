@@ -5,7 +5,7 @@ const auth = require('../auth.js')
 const fs = require('fs/promises');
 const bcrypt = require('bcrypt');
 const validator = require('validator');
-const { body, validationResult } = require("express-validator");
+const { body, check, validationResult } = require("express-validator");
 const sharp = require('sharp');
 
 //!Multer
@@ -174,7 +174,7 @@ router.post('/updateProfilePic', auth.checkAuth, upload.single('profilePic'), as
                 .toFile(newFilePath);
 
             let { width, height } = metadata;
-            let finalUrl = `/uploads/${newFileName}`;
+            let finalUrl = `${newFileName}`;
 
             let lastPfp = await database.uploadProfilePic(finalUrl, width, height, request.body.user_id);
 
@@ -217,16 +217,33 @@ router.post('/deleteProfilePic', auth.checkAuth, async (request, response) => {
     }
 })
 
-router.get('/getProfilePic', auth.checkAuth, (request, response) => {
-    let pfproute = request.query.route;
-    let filePath = path.join(__dirname, '..', pfproute);
+router.get('/getProfilePic', auth.checkAuth,
+    [
+        check("route")
+            .matches(/^[a-zA-Z0-9_\-]+\.[a-zA-Z0-9]+$/).withMessage('Érvénytelen fájl név!')
+    ], (request, response) => {
+        try {
+            const errors = validationResult(request);
+            if (!errors.isEmpty()) {
+                response.status(400).json({
+                    success: false,
+                    error: errors.array()
+                });
+            }
+            else {
+                let pfproute = request.query.route;
+                const root = path.join(__dirname, '..', 'uploads');
 
-    response.sendFile(filePath, (err) => {
-        if (err) {
-            console.log("Hiba a fájl küldéskor:", err);
-            response.status(err.status || 404).send();
+                response.sendFile(pfproute, { root: root }, (err) => {
+                    if (err) {
+                        console.log("Hiba a fájl küldéskor:", err);
+                        response.status(err.status || 404).send();
+                    }
+                });
+            }
+        } catch (error) {
+            response.status(500).json({ message: error })
         }
-    });
-})
+    })
 
 module.exports = router;
