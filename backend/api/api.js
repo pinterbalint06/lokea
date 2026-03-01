@@ -1,10 +1,11 @@
 const express = require('express');
 const router = express.Router();
 const database = require('../sql/database.js');
+const auth = require('../auth.js')
 const fs = require('fs/promises');
 const bcrypt = require('bcrypt');
 const validator = require('validator');
-const { body, validationResult } = require("express-validator");
+const { body, check, validationResult } = require("express-validator");
 const sharp = require('sharp');
 
 //!Multer
@@ -23,28 +24,7 @@ const storage = multer.diskStorage({
 const upload = multer({
     storage: storage,
     limits: { fileSize: 5 * 1024 * 1024 } // 5 MB
-}); 
-
-const checkAuth = (request, response, next) => {
-    if (!request.session.userid) {
-        response.status(401).json({ message: "Bejelentkezés szükséges!" });
-    }
-    else {
-        next();
-    }
-
-};
-
-const checkRole = (...roles) => {
-    return (request, response, next) => {
-        if (!roles.includes(request.session.role)) {
-            return response.status(403).json({ message: "Nincs hozzáférésed!" });
-        }
-        else {
-            next();
-        }
-    };
-};
+});
 
 //!ENDPOINTS
 //test
@@ -157,7 +137,7 @@ router.post("/login",
         }
     });
 
-router.post('/signout', checkAuth, (request, response) => {
+router.post('/signout', auth.checkAuth, (request, response) => {
     request.session.destroy(error => {
         if (error) {
             response.status(500).json({ success: false, error: error });
@@ -169,146 +149,19 @@ router.post('/signout', checkAuth, (request, response) => {
     });
 });
 
-//Endpoints - admin
-
-router.post("/admin/signupFromAdmin", checkAuth, checkRole("ADMIN"),
-    [
-        body("username")
-            .not().isEmail().withMessage("Felhasználónév nem lehet email cim!")
-            .matches(/^[a-zA-Z0-9áéíóöőúüűÁÉÍÓÖŐÚÜŰ_-]+$/).withMessage('A felhasználónév csak betűket, számokat, - vagy _ karaktert, és ékezetes betűket tartalmazhat.')
-            .isLength({ min: 1, max: 20 }).withMessage("Felhasználónév hossza nem megfelelő!"),
-        body("email")
-            .isEmail().withMessage("Hibás email formátum")
-            .isLength({ min: 5, max: 250 }).withMessage("Email max 250 karakter"),
-        body("password")
-            .isLength({ min: 8, max: 50 }).withMessage("Jelszó hossza 8-50")
-            .matches(/\d/).withMessage("Kell benne szám")
-            .matches(/[A-Z]/).withMessage("Kell benne nagybetű"),
-        body("is_2fa")
-            .isBoolean().withMessage("Nem kapott értéket a kétlépcsős azonosítás!")
-    ],
-    async (request, response) => {
-        try {
-            const errors = validationResult(request);
-            if (!errors.isEmpty()) {
-                response.status(400).json({
-                    success: false,
-                    error: errors.array()
-                });
-            }
-            else {
-                const { username, email, password, role, is_2fa } = request.body;
-                const hashedPassword = await bcrypt.hash(password, 10);
-                let insert = await database.newUserFromAdmin(username, email, hashedPassword, role, is_2fa);
-                if (insert.success) {
-                    response.status(201).json({
-                        success: true,
-                        message: "Sikeres regisztráció!"
-                    });
-                }
-                else {
-                    response.status(500).json({
-                        success: false,
-                        message: insert.error
-                    })
-                }
-            }
-        } catch (error) {
-            response.status(500).json({ error: "Hiba az adatbázis művelet során!" });
-        }
-    }
-);
-
-router.get('/admin/users', checkAuth, checkRole("ADMIN"), async (request, response) => {
-    try {
-        let users = await database.getUsers();
-        response.status(200).json({ message: "Sikeres lekérés", users: users });
-    } catch (error) {
-        response.status(500).json({ error: error });
-    }
-})
-
-router.get('/admin/user', checkAuth, checkRole("ADMIN"), async (request, response) => {
-    try {
-        let params = request.query.id;
-        let users = await database.getUser(params);
-        response.status(200).json({ message: "Sikeres lekérés", users: users });
-    } catch (error) {
-        response.status(500).json({ error: error });
-    }
-})
-
-router.post('/admin/sortedUsers', checkAuth, checkRole("ADMIN"), async (request, response) => {
-    try {
-        let { mireKeresek, mit, status, adminChecked, modChecked, userChecked } = request.body;
-        let users = await database.sortedUsers(mireKeresek, mit, status, adminChecked, modChecked, userChecked);
-        response.status(200).json({ message: "Sikeres lekérés", users: users });
-    } catch (error) {
-        response.status(500).json({ error: error });
-    }
-})
-
-router.post('/admin/updateUser', checkAuth, checkRole("ADMIN"),
-    [
-        body("username")
-            .not().isEmail().withMessage("Felhasználónév nem lehet email cim!")
-            .matches(/^[a-zA-Z0-9áéíóöőúüűÁÉÍÓÖŐÚÜŰ_-]+$/).withMessage('A felhasználónév csak betűket, számokat, - vagy _ karaktert, és ékezetes betűket tartalmazhat.')
-            .isLength({ min: 1, max: 20 }).withMessage("Felhasználónév hossza nem megfelelő!"),
-        body("email")
-            .isEmail().withMessage("Hibás email formátum")
-            .isLength({ min: 5, max: 250 }).withMessage("Email max 250 karakter")
-    ],
-    async (request, response) => {
-        try {
-            const errors = validationResult(request);
-            if (!errors.isEmpty()) {
-                response.status(400).json({
-                    success: false,
-                    error: errors.array()
-                });
-            }
-            else {
-                let { user_id, username, email, role, is_2fa } = request.body;
-                let success = await database.updateUser(user_id, username, email, role, is_2fa);
-                if (success == 1) {
-                    response.status(204).json({ message: "Sikeres felhasználófrissités!" });
-                }
-                else {
-                    response.status(404).json({ message: "Nincs ilyen felhasználó!" });
-                }
-            }
-        } catch (error) {
-            response.status(500).json({ error: error });
-        }
-    })
-
-router.post('/admin/userToInactive', checkAuth, checkRole("ADMIN"), async (request, response) => {
-    try {
-        let { userId } = request.body;
-        let sorok = await database.userToInactive(userId);
-        if (sorok === 0) {
-            response.status(200).json({ message: "A felhasználó már inaktiv volt!" })
-        }
-        else {
-            response.status(204).end();
-        }
-    } catch (error) {
-        response.status(500).json({ error: error });
-    }
-})
-
 //Endpoints - settings
 
-router.post('/updateProfilePic', checkAuth, upload.single('profilePic'), async (request, response) => {
+router.post('/updateProfilePic', auth.checkAuth, upload.single('profilePic'), async (request, response) => {
+    let originalFile;
+    let newFilePath;
     try {
         if (!request.file) {
             response.status(400).json({ message: "Nincs kép!" });
         }
         else {
-            let originalFile = request.file.path;
-
+            originalFile = request.file.path;
             let newFileName = `processed-${Date.now()}.webp`;
-            let newFilePath = path.join('uploads', newFileName);
+            newFilePath = path.join('uploads', newFileName);
 
             //Kép tömöritése
             sharp.cache(false);
@@ -321,32 +174,30 @@ router.post('/updateProfilePic', checkAuth, upload.single('profilePic'), async (
                 .toFile(newFilePath);
 
             let { width, height } = metadata;
-            let finalUrl = `/uploads/${newFileName}`;
+            let finalUrl = `${newFileName}`;
 
             let lastPfp = await database.uploadProfilePic(finalUrl, width, height, request.body.user_id);
 
-            try {
-                await fs.unlink(originalFile);
-            } catch (error) {
-                console.log("nem sikerült a törlés!" + error);
-            }
+            await fs.unlink(originalFile).catch(() => { });
 
             if (lastPfp) {
                 let lastPfpPath = path.join(__dirname, '..', lastPfp);
-                try {
-                    await fs.unlink(lastPfpPath);
-                } catch (error) {
-                    console.log("a kép nincs a szerveren!" + error);
-                }
+                await fs.unlink(lastPfpPath).catch(() => { });
             }
             response.status(201).json({ success: true, message: "Profilkép frissítve!" });
         }
     } catch (error) {
+        if (originalFile) {
+            await fs.unlink(originalFile).catch(() => { });
+        }
+        if (newFilePath) {
+            await fs.unlink(newFilePath).catch(() => { });
+        }
         response.status(500).json({ error: error.message, details: error.stack });
     }
 })
 
-router.post('/deleteProfilePic', checkAuth, async (request, response) => {
+router.post('/deleteProfilePic', auth.checkAuth, async (request, response) => {
     try {
         let lastPfp = await database.deleteProfilePic(request.body.user_id);
         if (!lastPfp) {
@@ -366,15 +217,33 @@ router.post('/deleteProfilePic', checkAuth, async (request, response) => {
     }
 })
 
-router.get('/getProfilePic', checkAuth, (request, response) => {
-    try {
-        let pfproute = request.query.route;
-        let filePath = path.join(__dirname, '..', pfproute);
+router.get('/getProfilePic', auth.checkAuth,
+    [
+        check("route")
+            .matches(/^[a-zA-Z0-9_\-]+\.[a-zA-Z0-9]+$/).withMessage('Érvénytelen fájl név!')
+    ], (request, response) => {
+        try {
+            const errors = validationResult(request);
+            if (!errors.isEmpty()) {
+                response.status(400).json({
+                    success: false,
+                    error: errors.array()
+                });
+            }
+            else {
+                let pfproute = request.query.route;
+                const root = path.join(__dirname, '..', 'uploads');
 
-        response.sendFile(filePath);
-    } catch (error) {
-        console.log(error);
-    }
-})
+                response.sendFile(pfproute, { root: root }, (err) => {
+                    if (err) {
+                        console.log("Hiba a fájl küldéskor:", err);
+                        response.status(err.status || 404).send();
+                    }
+                });
+            }
+        } catch (error) {
+            response.status(500).json({ message: error })
+        }
+    })
 
 module.exports = router;

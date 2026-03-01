@@ -1,5 +1,11 @@
 document.addEventListener("DOMContentLoaded", function () {
     modalElement = document.getElementById('modalView');
+    modalElement.addEventListener('hidden.bs.modal', function () {
+        if (objectURL) {
+            URL.revokeObjectURL(objectURL);
+            objectURL = null;
+        }
+    });
     modal = new bootstrap.Modal(modalElement);
     document.getElementById('signoutBtn').addEventListener("click", async function () {
         kijelentkezes();
@@ -28,7 +34,7 @@ async function osszesUser() {
 async function getUser(id) {
     let response = await fetch(`/api/admin/user?id=${id}`);
     let data = await response.json();
-    return data;
+    return data.users[0];
 }
 
 async function sortedUser() {
@@ -115,7 +121,7 @@ async function newUser(username, email, password, role, is_2fa) {
     }
 }
 
-async function userUpdate(user_id, username, email, role, is_2fa) {
+async function userUpdate(user_id, username, email, role, is_2fa, deleted) {
     try {
         let response = await fetch("/api/admin/updateUser", {
             method: "POST",
@@ -127,7 +133,8 @@ async function userUpdate(user_id, username, email, role, is_2fa) {
                 username,
                 email,
                 role,
-                is_2fa
+                is_2fa,
+                deleted
             })
         });
         return response.ok;
@@ -136,7 +143,7 @@ async function userUpdate(user_id, username, email, role, is_2fa) {
     }
 }
 
-async function userToInactive(id) {
+async function userToInactive(id, role, deleted) {
     let mitadokvissza;
     try {
         let response = await fetch("/api/admin/userToInactive", {
@@ -145,7 +152,9 @@ async function userToInactive(id) {
                 "Content-Type": "application/json"
             },
             body: JSON.stringify({
-                userId: id
+                userId: id,
+                role,
+                deleted
             })
         });
         if (response.status == 204) {
@@ -505,49 +514,52 @@ function tablazatGeneral(data) {
     for (let i = 0; i < adatok.length; i++) {
         let tr = document.createElement('tr');
         let ertekek = Object.values(adatok[i]);
-        for (let j = 0; j < ertekek.length; j++) {
+        if (ertekek.length > 0) {
             let td = document.createElement('td');
-            if (j == 0) {
-                let circle = document.createElement('span');
-                circle.style.display = "inline-block";
-                circle.style.width = "12px";
-                circle.style.height = "12px";
-                circle.style.borderRadius = "50%";
-                circle.style.backgroundColor = ertekek[j] === null ? "green" : "red";
-                td.appendChild(circle);
-            } else {
-                td.innerText = ertekek[j];
-            }
+            let circle = document.createElement('span');
+            circle.style.display = "inline-block";
+            circle.style.width = "12px";
+            circle.style.height = "12px";
+            circle.style.borderRadius = "50%";
+            circle.style.backgroundColor = ertekek[0] === null ? "green" : "red";
+            td.appendChild(circle);
             tr.appendChild(td);
         }
+        for (let j = 1; j < ertekek.length; j++) {
+            let td = document.createElement('td');
+            td.innerText = ertekek[j];
+            tr.appendChild(td);
+        }
+
         let td = document.createElement('td');
         let modositoGombokDiv = document.createElement('div');
         modositoGombokDiv.classList.add("d-flex", "justify-content-evenly");
-        let editGomb;
+        let editGomb, torloGomb;
         if (adatok[i].role != "ADMIN" && adatok[i].deleted_at == null) {
-            editGomb = gombGeneral("click", "Szerkesztés", "edit", "blue", null);
+            editGomb = gombGeneral("button", "Szerkesztés", "edit", "blue", null);
             editGomb.addEventListener("click", async function () {
-                currentData = (await getUser(adatok[i].user_id)).users[0];
+                currentData = await getUser(adatok[i].user_id);
                 modalView("Felhasználó módosítása", "edit", await editUserToModal(currentData));
                 modal.show();
             })
+
+            torloGomb = gombGeneral("button", "Törlés", "trash-2", "red", null);
+            torloGomb.addEventListener("click", async function () {
+                alert(await userToInactive(adatok[i].user_id, adatok[i].role, adatok[i].deleted_at == null));
+            });
+
         }
         else {
-            editGomb = gombGeneral("click", "Megtekintés", "eye", "blue", null);
+            editGomb = gombGeneral("button", "Megtekintés", "eye", "blue", null);
             editGomb.addEventListener("click", async function () {
-                currentData = (await getUser(adatok[i].user_id)).users[0];
+                currentData = await getUser(adatok[i].user_id);
                 modalView("Felhasználó megtekintése", "view", await viewUserToModal(currentData));
                 modal.show();
             })
         }
 
         modositoGombokDiv.appendChild(editGomb);
-
-        if (adatok[i].role != "ADMIN" && adatok[i].deleted_at == null) {
-            let torloGomb = gombGeneral("click", "Törlés", "trash-2", "red", null);
-            torloGomb.addEventListener("click", async function () {
-                alert(await userToInactive(adatok[i].user_id));
-            });
+        if (torloGomb) {
             modositoGombokDiv.appendChild(torloGomb);
         }
 
@@ -610,9 +622,7 @@ function inputGeneral(type, placeholder, value, id, osztalyok, disabled) {
     }
     input.id = id;
     if (osztalyok != null) {
-        for (let i = 0; i < osztalyok.length; i++) {
-            input.classList.add(osztalyok[i]);
-        }
+        input.classList.add(...osztalyok);
     }
     input.disabled = disabled;
     return input;
@@ -659,7 +669,7 @@ function modalView(title, type, content) {
                     is_2fa: document.getElementById("new2faInput").checked
                 }
                 Object.keys(inInput).forEach(key => {
-                    if (inInput[key] == null) {
+                    if (inInput[key] == "") {
                         alert('baj')
                     }
                 });
@@ -705,12 +715,13 @@ function modalView(title, type, content) {
                     }
                 });
                 if (valtozas) {
-                    let siker = await userUpdate(currentData.user_id, inInput.username, inInput.email, inInput.role, inInput.is_2fa);
+                    console.log(currentData);
+                    let siker = await userUpdate(currentData.user_id, inInput.username, inInput.email, inInput.role, inInput.is_2fa, currentData.deleted_at == null);
                     if (siker) {
                         tablazatGeneral(await sortedUser());
-                        modal.hide();
                     }
                 }
+                modal.hide();
             })
             footerButtons.appendChild(button);
             break;
@@ -838,7 +849,8 @@ async function editUserToModal(data) {
         pfp.src = "../images/default.png";
     }
     else {
-        pfp.src = await getProfilePicture(pfproute);
+        objectURL = await getProfilePicture(pfproute);
+        pfp.src = objectURL;
         deletePfpButton = gombGeneral("button", "Profilkép törlése", "trash-2", "red", null);
         deletePfpButton.addEventListener("click", async function () {
             await deleteProfilePicture(user_id);
@@ -994,7 +1006,8 @@ async function viewUserToModal(data) {
         pfp.src = "../images/default.png";
     }
     else {
-        pfp.src = await getProfilePicture(pfproute);
+        objectURL = await getProfilePicture(pfproute);
+        pfp.src = objectURL;
     }
     pfp.alt = "Profile picture";
     pfp.title = "Profile picture";
@@ -1124,7 +1137,7 @@ function infoToModal(text) {
     content.classList.add('text-center');
     content.innerText = text;
 
-    return text;
+    return content;
 }
 
 //VARIABLES
@@ -1132,3 +1145,4 @@ function infoToModal(text) {
 let currentData = {};
 let modalElement;
 let modal;
+let objectURL;
