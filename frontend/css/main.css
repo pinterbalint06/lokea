@@ -1,0 +1,37 @@
+body {
+    background-color: purple;
+}
+
+.navbar {
+    background-color: black;
+    opacity: 0.8;
+    margin: 0;
+}
+
+.navbar p {
+    color: aliceblue;
+}
+
+.logo {
+    width: 300px;
+}
+
+.customMap {
+    background: url(../images/examplelocation.jpg);
+    background-repeat: no-repeat;
+    background-size:cover;
+    background-position: center;
+    height: 800px;
+}
+
+.customMapTitle {
+    background-color: black;
+    opacity: 0.8;
+    color: white;
+}
+
+.customMapRatings{
+    background-color: black;
+    opacity: 0.8;
+    color: white;
+}

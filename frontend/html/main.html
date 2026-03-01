@@ -1,0 +1,161 @@
+<!DOCTYPE html>
+<html lang="hu">
+
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Főoldal</title>
+    <!--!Bootstrap-->
+    <link rel="stylesheet" href="../bootstrap/css/bootstrap.min.css" />
+    <!--?Popper: dropdowns, popovers, tooltips-->
+    <script src="../bootstrap/js/popper.min.js"></script>
+    <script src="../bootstrap/js/bootstrap.min.js"></script>
+    <!--!CSS-->
+    <link rel="stylesheet" href="../css/main.css" />
+    <!--!JavaScript-->
+    <script src="../javascript/index.js"></script>
+</head>
+
+<body>
+    <div class="container-fluid">
+        <nav class="nav navbar justify-content-between align-items-start">
+            <div>
+                <p>ip: lokea.com</p>
+                <p>Online játékosok: 1</p>
+            </div>
+            <div>
+                <img src="../images/logo.png" alt="" class="img-fluid logo">
+                <p style="font-size: 15px;" class="text-center">Légy bárhol</p>
+            </div>
+            <div>
+                <img src="../images/default.png" alt="Profile pic" class="img-fluid rounded-5 border"
+                    style="width: 30px;">
+                <select name="d" id="profileSelection">
+                    <option value="editSettings">Fiókom</option>
+                    <option value="ownGames">Saját játékaim</option>
+                    <option value="enterAdmin" disabled>Admin oldal</option>
+                    <option value="signOut">Kijelentkezés</option>
+                </select>
+            </div>
+        </nav>
+        <div class="row">
+            <div class="col-12 d-flex justify-content-center mt-5">
+                <div class="w-25 text-wrap text-center">
+                    <h1 class="h1">Legyél ott ahol nem tudsz! Lokea.</h1>
+                </div>
+            </div>
+        </div>
+        <div class="row">
+            <div class="col-12 d-flex flex-column align-items-center mt-5">
+                <p>Zászló</p>
+                <p>Zászló</p>
+                <p>Zászló</p>
+                <p>Zászló</p>
+            </div>
+        </div>
+        <div class="row">
+            <div class="col-6">
+                <h5 class="h5 text-center">Játékmódok</h5>
+                <ul>
+                    <li>Pinpoint a google térképén</li>
+                    <li>Pinpoint a felhasználók térképein + képein</li>
+                    <li>Guess the country a google térképen</li>
+                    <li>Guess the country a felhasználók képein</li>
+                </ul>
+            </div>
+            <div class="col-6">
+                <h5 class="h5 text-center">Miért jobb a lokea?</h5>
+                <table class="table">
+                    <thead>
+                        <tr>
+                            <th></th>
+                            <th>Geoguessr</th>
+                            <th>Lokea</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td>Google street view általi játék</td>
+                            <td>Igen</td>
+                            <td>Igen</td>
+                        </tr>
+                        <tr>
+                            <td>Multiplayer</td>
+                            <td>Igen</td>
+                            <td>Igen</td>
+                        </tr>
+                        <tr>
+                            <td>Pénzzel finanszirozott bajnokságok</td>
+                            <td>Igen</td>
+                            <td>Nem</td>
+                        </tr>
+                        <tr>
+                            <td>Egyedi helyszineken játék (Játékok térképei, valós épületek alaprajzai, települések, stb.)</td>
+                            <td>Nem</td>
+                            <td>Igen</td>
+                        </tr>
+                        <tr>
+                            <td>Ingyenes</td>
+                            <td>Nem, előfizetéshez kötött</td>
+                            <td>Részben, egyedi helyszineken 5 perc break-time jatekok kozott, max. 10 jatek/nap</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+            <hr>
+        </div>
+        <div class="row">
+            <div class="col-12">
+                <h3 class="text-center">Egyedi térképek, amit a felhasználók hoztak létre</h3>
+                <div class="container">
+                    <div class="row">
+                        <div class="col-4">
+                            <div class="border-2 border-black rounded-5 d-flex flex-column justify-content-between overflow-hidden customMap">
+                                <p class="text-center py-2 m-0 customMapTitle">Főcim focim</p>
+                                <div class="d-flex justify-content-between px-2 customMapRatings">
+                                    <div>
+                                        <p>Csillag 4.0</p>
+                                        <p style="font-size: 10px;">(400 értékelés)</p>
+                                    </div>
+                                    <div>
+                                        <p>Játékok 10k+</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-4">
+                            <div class="border-2 border-black rounded-5 d-flex flex-column justify-content-between overflow-hidden customMap">
+                                <p class="text-center py-2 m-0 customMapTitle">Főcim focim</p>
+                                <div class="d-flex justify-content-between px-2 customMapRatings">
+                                    <div>
+                                        <p>Csillag 4.0</p>
+                                        <p style="font-size: 10px;">(400 értékelés)</p>
+                                    </div>
+                                    <div>
+                                        <p>Játékok 10k+</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-4">
+                            <div class="border-2 border-black rounded-5 d-flex flex-column justify-content-between overflow-hidden customMap">
+                                <p class="text-center py-2 m-0 customMapTitle">Főcim focim</p>
+                                <div class="d-flex justify-content-between px-2 customMapRatings">
+                                    <div>
+                                        <p>Csillag 4.0</p>
+                                        <p style="font-size: 10px;">(400 értékelés)</p>
+                                    </div>
+                                    <div>
+                                        <p>Játékok 10k+</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</body>
+
+</html>
