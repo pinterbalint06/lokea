@@ -1,0 +1,23 @@
+1. alertek megjelenitese modalon belul es azon kivul
+2. formdata hasznalata?
+3. külön fájl létrehozása az admin dolgoknak (pl. admin_api.js)
+4. kommentelés
+
+logs oldal
+files oldal
+settings oldal
+write devlog oldal
+test tools oldal
+transactions oldal
+feature flags oldal
+2fa megcsinalasa - email kuldese
+
+hibak amiket javitani kell:
+
+-stack trace
+-oldal nyelvet egysegesiteni kell
+-insert -> tranzakciokezeles
+
+kerdes:
+-compare attetele database.js-be
+-adminbol inditott updateuser/adduser kell frontend validalas?
