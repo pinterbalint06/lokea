@@ -3,6 +3,7 @@ const express = require('express'); //?npm install express
 const session = require('express-session'); //?npm install express-session
 const path = require('path');
 const cors = require('cors');
+const auth = require('./auth.js')
 
 //!Beállítások
 const app = express();
@@ -15,16 +16,6 @@ app.use(cors());
 app.use(express.json()); //?Middleware JSON
 app.set('trust proxy', 1); //?Middleware Proxy
 
-const checkRole = (...roles) => {
-    return (request, response, next) => {
-        if (!roles.includes(request.session.role)) {
-            response.redirect('/notfound');
-        }
-        else {
-            next();
-        }
-    };
-}
 //!Session beállítása:
 app.use(session({
     name: 'geo.sid',
@@ -57,22 +48,24 @@ router.get('/webgl', (request, response) => {
 router.get('/login_page', (request, response) => {
     response.sendFile(path.join(__dirname, '../frontend/html/login.html'));
 });
-router.get('/admin', checkRole("ADMIN"), (request, response) => {
+router.get('/admin', auth.checkRole("ADMIN"), (request, response) => {
     response.sendFile(path.join(__dirname, '../frontend/html/admin.html'));
 });
-router.get('/notfound', (request, response) => {
-    response.sendFile(path.join(__dirname, '../frontend/html/notfound.html'));
+router.use((request, response) => {
+    response.status(404).sendFile(path.join(__dirname, '../frontend/html/notfound.html'));
 });
 
+
 //!API endpoints
-app.use('/', router);
-const endpoints = require('./api/api.js');
-app.use('/api', endpoints);
+app.use(express.static(path.join(__dirname, '../frontend')));
 const adminEndpoints = require('./api/admin.js');
 app.use('/api/admin', adminEndpoints);
+const endpoints = require('./api/api.js');
+app.use('/api', endpoints);
+app.use('/', router);
+
 
 //!Szerver futtatása
-app.use(express.static(path.join(__dirname, '../frontend'))); //?frontend mappa tartalmának betöltése az oldal működéséhez
 app.listen(port, ip, () => {
     console.log(`Szerver elérhetősége: http://${ip}:${port}`);
 });

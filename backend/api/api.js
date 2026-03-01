@@ -152,15 +152,16 @@ router.post('/signout', auth.checkAuth, (request, response) => {
 //Endpoints - settings
 
 router.post('/updateProfilePic', auth.checkAuth, upload.single('profilePic'), async (request, response) => {
+    let originalFile;
+    let newFilePath;
     try {
         if (!request.file) {
             response.status(400).json({ message: "Nincs kép!" });
         }
         else {
-            let originalFile = request.file.path;
-
+            originalFile = request.file.path;
             let newFileName = `processed-${Date.now()}.webp`;
-            let newFilePath = path.join('uploads', newFileName);
+            newFilePath = path.join('uploads', newFileName);
 
             //Kép tömöritése
             sharp.cache(false);
@@ -177,23 +178,21 @@ router.post('/updateProfilePic', auth.checkAuth, upload.single('profilePic'), as
 
             let lastPfp = await database.uploadProfilePic(finalUrl, width, height, request.body.user_id);
 
-            try {
-                await fs.unlink(originalFile);
-            } catch (error) {
-                console.log("nem sikerült a törlés!" + error);
-            }
+            await fs.unlink(originalFile).catch(() => { });
 
             if (lastPfp) {
                 let lastPfpPath = path.join(__dirname, '..', lastPfp);
-                try {
-                    await fs.unlink(lastPfpPath);
-                } catch (error) {
-                    console.log("a kép nincs a szerveren!" + error);
-                }
+                await fs.unlink(lastPfpPath).catch(() => { });
             }
             response.status(201).json({ success: true, message: "Profilkép frissítve!" });
         }
     } catch (error) {
+        if (originalFile) {
+            await fs.unlink(originalFile).catch(() => { });
+        }
+        if (newFilePath) {
+            await fs.unlink(newFilePath).catch(() => { });
+        }
         response.status(500).json({ error: error.message, details: error.stack });
     }
 })
@@ -219,14 +218,15 @@ router.post('/deleteProfilePic', auth.checkAuth, async (request, response) => {
 })
 
 router.get('/getProfilePic', auth.checkAuth, (request, response) => {
-    try {
-        let pfproute = request.query.route;
-        let filePath = path.join(__dirname, '..', pfproute);
+    let pfproute = request.query.route;
+    let filePath = path.join(__dirname, '..', pfproute);
 
-        response.sendFile(filePath);
-    } catch (error) {
-        console.log(error);
-    }
+    response.sendFile(filePath, (err) => {
+        if (err) {
+            console.log("Hiba a fájl küldéskor:", err);
+            response.status(err.status || 404).send();
+        }
+    });
 })
 
 module.exports = router;

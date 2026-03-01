@@ -1,3 +1,5 @@
+const path = require('path');
+
 const checkAuth = (request, response, next) => {
     if (!request.session.userid) {
         response.status(401).json({ message: "Bejelentkezés szükséges!" });
@@ -11,7 +13,7 @@ const checkAuth = (request, response, next) => {
 const checkRole = (...roles) => {
     return (request, response, next) => {
         if (!roles.includes(request.session.role)) {
-            return response.status(403).send();
+            response.status(404).sendFile(path.join(__dirname, '../frontend/html/notfound.html'));
         }
         else {
             next();
