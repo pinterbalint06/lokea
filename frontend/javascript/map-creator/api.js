@@ -28,12 +28,12 @@ async function fetchAndValidate(url, returnKey) {
     return data[returnKey];
 }
 
-export async function fetchImage(mapId, abortSignal = null) {
+async function fetchImage(url, abortSignal = null) {
     let imageURL = null;
 
     try {
         let response = await fetch(
-            `/api/game_maps/getMapImageById?mapId=${mapId}`,
+            url,
             {
                 "method": "GET",
                 "signal": abortSignal
@@ -66,6 +66,20 @@ export async function fetchImage(mapId, abortSignal = null) {
         }
         throw error;
     }
+}
+
+export async function fetchMapImage(mapId, abortSignal = null) {
+    return await fetchImage(
+        `/api/game_maps/getMapImageById?mapId=${mapId}`,
+        abortSignal
+    );
+}
+
+export async function fetchEquirectangularImage(pointId, abortSignal = null) {
+    return await fetchImage(
+        `/api/game_maps/getImageByPointId?pointId=${pointId}`,
+        abortSignal
+    );
 }
 
 export async function saveNewMap(mapFile, gameMapID, mapTitle) {

@@ -1,6 +1,6 @@
 import { EVENTS } from "../events/EventBus.js";
 import { CONSTANTS, ICONS } from "../constants.js";
-import { fetchMapList, saveNewMap, fetchImage } from "../api.js";
+import { fetchMapList, saveNewMap, fetchMapImage } from "../api.js";
 import { processUploadedImageFile } from "../utils.js";
 
 export class MapManager {
@@ -181,7 +181,7 @@ export class MapManager {
                         setTimeout(() => this.bus.emit(EVENTS.TOAST_HIDE_ID, { id: "mapSwitching" }), 1000);
                     } else {
                         try {
-                            let imgData = await fetchImage(mapId);
+                            let imgData = await fetchMapImage(mapId);
                             if (mapId == this.appState.activeMapId) {
                                 this.viewer.clearMarkersAndLines();
                                 this.viewer.loadMap(imgData.url, imgData.width, imgData.height);

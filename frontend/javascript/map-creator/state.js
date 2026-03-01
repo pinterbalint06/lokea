@@ -34,13 +34,3 @@ export const uiState = {
         fovSyncID: null
     }
 };
-
-export function resetEditorState() {
-    editorState.activePointId = null;
-    editorState.isPlacingMarker = false;
-    editorState.isConnectingMarkers = false;
-    editorState.unsavedConnections = [];
-    editorState.temporaryConnectionID = -1;
-    editorState.pendingFiles.equirectangular = null;
-    editorState.pendingFiles.map = null;
-}

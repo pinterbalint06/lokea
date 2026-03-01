@@ -53,16 +53,18 @@ export class MarkerManager {
                 if (this.isPlacingMarker && this.activePointId) {
                     if (this.mapViewer.doesMarkerExist(this.activePointId)) {
                         this.mapViewer.moveMarker(this.activePointId, x, y);
-                        if (this.mapViewer.doesMarkerExist(CONSTANTS.FOV_MARKER_ID)) {
-                            // TODO: move this to equirectangularManager when it is created
-                            this.mapViewer.moveMarker(CONSTANTS.FOV_MARKER_ID, cursorX, cursorY);
-                        }
                     } else {
                         this.mapViewer.placeMarker(this.activePointId, x, y, CONSTANTS.MARKER_SIZE.width, CONSTANTS.MARKER_SIZE.height, "EMPTY");
                         this.bus.emit(EVENTS.TOAST_HIDE_ID, { id: "placeMarker" });
                         this.bus.emit(EVENTS.NEW_MARKER_PLACED);
                     }
-                    this.bus.emit(EVENTS.MARKER_MOVED, this.mapViewer.getMarkerPosition(this.activePointId));
+                    let pos = this.mapViewer.getMarkerPosition(this.activePointId);
+                    this.bus.emit(EVENTS.MARKER_MOVED, {
+                        x: pos.x,
+                        y: pos.y,
+                        screenX: x,
+                        screenY: y
+                    });
                 }
             }
         });
@@ -138,9 +140,13 @@ export class MarkerManager {
                 }
                 this.mapViewer.moveTo(position.x, position.y, 4);
 
-                // LOAD IMAGE, SHOW COLLAPSE
+                // TODO: LOAD IMAGE, SHOW COLLAPSE
                 this.bus.emit(EVENTS.MARKER_SELECTED, { id, position, data: this.markersCache[id] });
             }
+        });
+
+        this.bus.on(EVENTS.EQUIRECTANGULAR_IMAGE_LOADED, () => {
+            this.mapViewer.changeMarkerType(this.activePointId, "UPLOADING");
         });
     }
 

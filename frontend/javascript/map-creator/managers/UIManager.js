@@ -12,6 +12,7 @@ export class UIManager {
         };
 
         this.#gatherElements();
+        this.#updateCollapseDirection();
         this.#bindUIEvents();
         this.#bindBusEvents();
     }
@@ -78,6 +79,25 @@ export class UIManager {
             });
         });
 
+        this.elements.northDirection.addEventListener("focus", savePreviousValue);
+        this.elements.northDirection.addEventListener("change", (event) => {
+            let degree = event.target.valueAsNumber;
+            if (0 <= degree && degree <= 359) {
+                event.target.dataset.previousValue = event.target.valueAsNumber;
+                this.elements.northDirectionRange.value = degree;
+                this.bus.emit(EVENTS.UI_NORTH_DIRECTION_CHANGED, { northDirection: this.elements.northDirection.valueAsNumber });
+            } else {
+                event.target.value = event.target.dataset.previousValue;
+                this.bus.emit(EVENTS.TOAST_SHOW, { msg: "A szögnek 0 és 359 között kell lennie!", type: "danger" });
+            }
+        });
+
+
+        this.elements.northDirectionRange.addEventListener("input", (e) => {
+            this.elements.northDirection.value = e.target.value;
+            this.bus.emit(EVENTS.UI_NORTH_DIRECTION_CHANGED, { northDirection: this.elements.northDirection.valueAsNumber });
+        });
+
         this.elements.collapseElement.addEventListener("show.bs.collapse", (event) => {
             if (event.target == this.elements.collapseElement) {
                 this.animations.isCollapsing = true;
@@ -112,6 +132,9 @@ export class UIManager {
         this.elements.collapseElement.addEventListener("hidden.bs.collapse", (event) => {
             if (event.target == this.elements.collapseElement) {
                 this.animations.isCollapsing = false;
+                this.elements.northDirection.value = 0;
+                this.elements.northDirectionRange.value = 0;
+                this.bus.emit(EVENTS.UI_COLLAPSE_HIDDEN);
             }
         });
 
@@ -128,6 +151,22 @@ export class UIManager {
                 this.bus.emit(EVENTS.TOAST_SHOW, { msg: request.reason, type: "danger" });
             }
         });
+
+
+        this.elements.equiFullscreenBtn.addEventListener("click", () => this.bus.emit(EVENTS.UI_EQUIRECTANGULAR_FULLSCREEN_REQUEST));
+
+        this.elements.closeCollapse.addEventListener("click", () => {
+            // "hide.bs.collapse" event will be called and handles the rest
+            this.elements.collapseBootstrapElement.hide();
+        });
+
+        window.addEventListener("keyup", (event) => {
+            if (event.key == "Escape" && this.elements.collapseBootstrapElement) {
+                this.elements.collapseBootstrapElement.hide();
+            }
+        });
+
+        window.addEventListener("resize", () => this.#updateCollapseDirection());
 
         this.#setupUploadHandler(this.elements.dropZoneMap, this.elements.uploadButtonMap, this.elements.fileInputMap, EVENTS.UI_MAP_FILE_DROPPED);
         this.#setupUploadHandler(this.elements.dropZoneEquirectangular, this.elements.uploadButtonEquirectangular, this.elements.fileInputEquirectangular, EVENTS.UI_EQUIRECTANGULAR_FILE_DROPPED);
@@ -223,7 +262,7 @@ export class UIManager {
 
             if (draggedFiles.length > 0) {
                 event.dataTransfer.dropEffect = "copy";
-                dropZoneElement.classList.add("dropfocus");
+                dropZone.classList.add("dropfocus");
             } else {
                 event.dataTransfer.dropEffect = "none";
             }
@@ -263,6 +302,14 @@ export class UIManager {
             setTimeout(() => this.#showCollapse(), 50);
         } else {
             this.elements.collapseBootstrapElement.show();
+        }
+    }
+
+    #updateCollapseDirection() {
+        if (window.innerWidth < 992) {
+            this.elements.collapseElement.classList.remove("collapse-horizontal");
+        } else {
+            this.elements.collapseElement.classList.add("collapse-horizontal");
         }
     }
 }

@@ -1,46 +1,19 @@
 import { MapViewer } from "../libs/viewer/MapViewer.js";
 import { EquirectangularViewer } from "../libs/viewer/EquirectangularViewer.js";
-import { degreeToRadian } from "../libs/math/mathUtils.js";
 import { CONSTANTS, ICONS } from "./constants.js";
-import { appState, editorState, resetEditorState, uiState } from "./state.js";
-import { fetchImage, fetchConnections, saveNewMap, savePoint as savePointApi, saveUnsavedConnections as saveUnsavedConnectionsApi } from "./api.js";
-import { createSvgIcon, createSpinnerIcon, processUploadedImageFile, showToast, savePreviousValue, getGameMapIdFromUrl } from "./utils.js";
-import { UI, getUIElements, updateConnectionListUI, closeCollapse, showCollapseWithDelay } from "./ui.js";
+import { appState, editorState, uiState } from "./state.js";
+import { fetchConnections, savePoint as savePointApi, saveUnsavedConnections as saveUnsavedConnectionsApi } from "./api.js";
+import { createSvgIcon, createSpinnerIcon, showToast, getGameMapIdFromUrl } from "./utils.js";
+import { UI, getUIElements, updateConnectionListUI } from "./ui.js";
 import { eventBus, EVENTS } from './events/EventBus.js';
 import { MarkerManager } from "./managers/MarkerManager.js";
 import { MapManager } from "./managers/MapManager.js";
 import { UIManager } from "./managers/UIManager.js";
+import { EquirectangularManager } from "./managers/EquirectangularManager.js";
 
 // |-------------|
 // | API & STATE |
 // |-------------|
-async function loadImage(url, loadImageFunction, successCheckId, abortSignal = null) {
-    const loadingIcon = createSpinnerIcon();
-    const kepBetolteseToast = showToast(UI.toastPlace, "Kép betöltése", "", false, { autohide: false }, loadingIcon);
-
-    let imageData = null;
-
-    try {
-        imageData = await fetchImage(url, abortSignal);
-
-        // passed success check
-        if (successCheckId()) {
-            await loadImageFunction(imageData.url, imageData.width, imageData.height);
-            showToast(UI.toastPlace, "Kép sikeresen betöltve!", "success", true, { delay: 3000 });
-        }
-    } catch (error) {
-        // if it was aborted do not show error
-        if (error.name != "AbortError" && !(error.type && error.type === "REQUEST_CANCELLED")) {
-            console.error(error);
-            showToast(UI.toastPlace, "Hiba a kép betöltésekor!", "danger", true, { delay: 3000 });
-        }
-    } finally {
-        kepBetolteseToast.hide();
-        if (imageData) {
-            imageData.cleanup();
-        }
-    }
-}
 
 async function savePoint() {
     editorState.isSaving.point = true;
@@ -172,40 +145,6 @@ async function loadConnections() {
     }
 }
 
-// |-----------------|
-// | FILE PROCESSING |
-// |-----------------|
-
-async function handleEquirectangularLoad(file) {
-    appState.equirectangularViewer.clearImage();
-    UI.savePointButton.disabled = false;
-    editorState.pendingFiles.equirectangular = file;
-
-    let imgData;
-    try {
-        imgData = await processUploadedImageFile(file);
-
-        if (editorState.pendingFiles.equirectangular == file) {
-            await appState.equirectangularViewer.loadImage(imgData.url, imgData.width, imgData.height);
-            // if collapse was closed activePointIs is null we have to check that
-            if (editorState.activePointId) {
-                startFOVSync();
-
-                appState.mapViewer.changeMarkerType(editorState.activePointId, "UPLOADING");
-            }
-        }
-    } catch (error) {
-        console.error(error);
-        editorState.pendingFiles.equirectangular = null;
-        showToast(UI.toastPlace, error.message, "danger", false, { delay: 3000 });
-    } finally {
-        if (imgData) {
-            if (imgData.url) {
-                URL.revokeObjectURL(imgData.url);
-            }
-        }
-    }
-}
 
 // |----|
 // | UI |
@@ -264,55 +203,12 @@ async function savePointClick() {
     }
     UI.savePointButton.disabled = false;
 }
-
-function fullscreenEquirectangular() {
-    appState.equirectangularViewer.toggleFullscreen();
-}
-
-function updateCollapseDirection() {
-    if (window.innerWidth < 992) {
-        UI.collapseElement.classList.remove("collapse-horizontal");
-    } else {
-        UI.collapseElement.classList.add("collapse-horizontal");
-    }
-}
-
 // |--------------------------|
 // |  SETUP & INITIALIZATION  |
 // |--------------------------|
 
-
-function setupEquirectangularViewer() {
-    appState.equirectangularViewer = new EquirectangularViewer(CONSTANTS.EQUIRECTANGULAR_CANVAS_ID);
-}
-
-function setupMapViewer() {
-    appState.mapViewer = new MapViewer(CONSTANTS.MAP_CANVAS_ID);
-}
-
 function addUIEventListeners() {
-    UI.northDirectionRange.addEventListener("input", (e) => {
-        UI.northDirection.value = e.target.value;
-        updateFOVSync();
-    });
-
-    UI.northDirection.addEventListener("focus", savePreviousValue);
-    UI.northDirection.addEventListener("change", (event) => {
-        let degree = event.target.valueAsNumber;
-        if (0 <= degree && degree <= 359) {
-            event.target.dataset.previousValue = event.target.valueAsNumber;
-            UI.northDirectionRange.value = degree;
-            updateFOVSync();
-        } else {
-            event.target.value = event.target.dataset.previousValue;
-            showToast(UI.toastPlace, "A szögnek 0 és 359 között kell lennie!", "danger", false, { delay: 3000 });
-        }
-    });
-
-    UI.equiFullscreenBtn.addEventListener("click", fullscreenEquirectangular);
     UI.savePointButton.addEventListener("click", savePointClick);
-    UI.closeCollapse.addEventListener("click", closeCollapse);
-    window.addEventListener("resize", updateCollapseDirection);
 
     UI.newConnectionBtn.addEventListener("click", () => {
         if (editorState.activePointId != CONSTANTS.TEMP_ID) {
@@ -334,74 +230,28 @@ function addUIEventListeners() {
             showToast(UI.toastPlace, "Először mentsd el a pontot!", "danger", true, { delay: 3000 });
         }
     });
-
-    window.addEventListener("keyup", (event) => {
-        if (event.key == "Escape") {
-            if (UI.collapseBootstrapElement) {
-                UI.collapseBootstrapElement.hide();
-            }
-        }
-    });
 }
 
 function setupUIElements() {
     getUIElements();
-    updateCollapseDirection();
     addUIEventListeners();
 }
 
-function startFOVSync() {
-    stopFOVSync();
-
-    let pos = appState.mapViewer.getMarkerPosition(editorState.activePointId);
-
-    appState.mapViewer.placeMarkerByImageCoordinates(CONSTANTS.FOV_MARKER_ID, pos.x, pos.y, CONSTANTS.CONE_SIZE.width, CONSTANTS.CONE_SIZE.height, "fov_cone");
-    appState.mapViewer.setMarkerSelectable(CONSTANTS.FOV_MARKER_ID, false);
-
-    uiState.animations.fovSyncID = requestAnimationFrame(updateFOVSyncLoop);
-}
-
-function updateFOVSync() {
-    if (editorState.activePointId && appState.equirectangularViewer) {
-        let viewYaw = -appState.equirectangularViewer.getYaw();
-
-        let northDirection = 0.0;
-        if (UI.northDirection && UI.northDirection.valueAsNumber) {
-            northDirection = UI.northDirection.valueAsNumber;
-        }
-        let northDirectionRadian = degreeToRadian(northDirection);
-
-        let finalYaw = viewYaw + northDirectionRadian;
-
-        appState.mapViewer.rotateMarker(CONSTANTS.FOV_MARKER_ID, finalYaw);
-    };
-}
-
-function updateFOVSyncLoop() {
-    updateFOVSync();
-    uiState.animations.fovSyncID = requestAnimationFrame(updateFOVSyncLoop);
-}
-
-function stopFOVSync() {
-    if (uiState.animations.fovSyncID) {
-        cancelAnimationFrame(uiState.animations.fovSyncID);
-    }
-    if (appState.mapViewer.doesMarkerExist(CONSTANTS.FOV_MARKER_ID)) {
-        appState.mapViewer.removeMarker(CONSTANTS.FOV_MARKER_ID);
-    }
-}
 
 async function init() {
-    let uiManager = new UIManager(eventBus);
     appState.gameMapID = getGameMapIdFromUrl();
     setupUIElements();
 
     // setup
-    setupMapViewer();
-    let markerManager = new MarkerManager(eventBus, appState.mapViewer, appState);
-    let mapManager = new MapManager(eventBus, appState.mapViewer, appState);
+    appState.mapViewer = new MapViewer(CONSTANTS.MAP_CANVAS_ID);
+    appState.equirectangularViewer = new EquirectangularViewer(CONSTANTS.EQUIRECTANGULAR_CANVAS_ID);
+
+    new UIManager(eventBus);
+    new MarkerManager(eventBus, appState.mapViewer, appState);
+    new MapManager(eventBus, appState.mapViewer, appState);
+    new EquirectangularManager(eventBus, appState.equirectangularViewer, appState.mapViewer, appState);
+
     eventBus.emit(EVENTS.APP_INIT);
-    setupEquirectangularViewer();
 
     appState.connectionsLoadPromise = loadConnections();
 
@@ -425,3 +275,7 @@ document.addEventListener("DOMContentLoaded", init);
 // TODO: mapok közti kapcsolatok
 // TODO: "hidden.bs.collapse" és "hide.bs.collapse" események kezelése majd a ConnectionManagerben és EquirectangularManagerben
 // TODO: UI_ADD_NEW_MAP_REQUEST, MAP_SWITCH_REQUESTED és "hide.bs.collapse" preventDefault ConnectionManagerben ha a mentés folyamatban van
+// TODO: markerek fixálása pixel koordinátákra? mindig egy adott pixelen legyenek?
+// TODO: maradék az átdolgozásból
+// 1. MarkerManagerben pont mentésének elkészítése
+// 2. ConnectionManager elkészítése, kapcsolatok betöltése, megjelenítése a térképen, kapcsolatok mentése
