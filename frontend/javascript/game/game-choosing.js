@@ -1,3 +1,12 @@
+var loadedURLs = [];
+
+function clearLoadedURLs() {
+    for (let url of loadedURLs) {
+        window.URL.revokeObjectURL(url);
+    }
+    loadedURLs = [];
+}
+
 document.addEventListener("DOMContentLoaded", function () {
     let selectedButton = document.getElementById('sortByPlays');
     let closeBtn = document.querySelector('.modal-close-btn');
@@ -7,6 +16,7 @@ document.addEventListener("DOMContentLoaded", function () {
     loadGameMaps('plays');
     document.getElementById('sortByCreated').addEventListener('click', function () {
         loadGameMaps('created');
+        clearLoadedURLs();
         selectedButton.classList.remove('btnPushed');
         selectedButton.removeAttribute('disabled');
         this.classList.add('btnPushed');
@@ -15,6 +25,7 @@ document.addEventListener("DOMContentLoaded", function () {
     });
     document.getElementById('sortByRating').addEventListener('click', function () {
         loadGameMaps('rating');
+        clearLoadedURLs();
         selectedButton.classList.remove('btnPushed');
         selectedButton.removeAttribute('disabled');
         this.classList.add('btnPushed');
@@ -23,6 +34,7 @@ document.addEventListener("DOMContentLoaded", function () {
     });
     document.getElementById('sortByPlays').addEventListener('click', function () {
         loadGameMaps('plays');
+        clearLoadedURLs();
         selectedButton.classList.remove('btnPushed');
         selectedButton.removeAttribute('disabled');
         this.classList.add('btnPushed');
@@ -31,6 +43,7 @@ document.addEventListener("DOMContentLoaded", function () {
     });
     document.getElementById('sortByFavorites').addEventListener('click', function () {
         loadGameMaps('favorites');
+        clearLoadedURLs();
         selectedButton.classList.remove('btnPushed');
         selectedButton.removeAttribute('disabled');
         this.classList.add('btnPushed');
@@ -45,7 +58,7 @@ async function loadGameMaps(sort) {
     gameMapsContainer.innerHTML = '';
     if (gameMaps.success) {
         for (let i = 0; i < gameMaps.results.length; i++) {
-            gameMapsContainer.appendChild(await createCard(gameMaps.results[i]));
+            gameMapsContainer.appendChild(createCard(gameMaps.results[i]));
         }
     } else {
         let p = document.createElement('p');
@@ -70,11 +83,9 @@ async function fetchURL(url) {
 }
 
 
-async function createCard(game_map) {
+function createCard(game_map) {
     let game_maps_card = document.createElement('div');
-    const image = await getCoverImage(game_map.cover_image_id);
     game_maps_card.classList.add('card', 'glass');
-    game_maps_card.style.backgroundImage = "url('" + image + "')";
     let game_maps_card_content = document.createElement('div');
     game_maps_card_content.classList.add('card-content');
     let card_name = document.createElement('h3');
@@ -94,7 +105,16 @@ async function createCard(game_map) {
     game_maps_card.addEventListener('click', function () {
         createModal(game_map);
     });
+
+    loadCardBackground(game_maps_card, game_map.cover_image_id);
+
     return game_maps_card;
+}
+
+async function loadCardBackground(card, cover_image_id) {
+    const image = await getCoverImage(cover_image_id);
+    loadedURLs.push(image);
+    card.style.backgroundImage = "url('" + image + "')";
 }
 
 async function getCoverImage(cover_image_id) {
@@ -131,5 +151,8 @@ function createModal(game_map) {
     modalTitle.innerText = game_map.title;
     modalStars.style.setProperty('--rating', game_map.rating);
     modalDesc.innerText = game_map.game_description;
-
 }
+
+//TODO: játék indítása modalból
+//revokeURL használata a blob URL-ekre, ha már nincs rájuk szükség, hogy felszabadítsuk a memóriát
+//képek cache-elése, hogy ne kelljen minden alkalommal újra lekérni őket a szerverről, amikor megjelennek a kártyákon vagy placeholder kép használata, amíg a kép betöltődik, hogy ne legyen üres hely a kártyákon, amíg a képek megérkeznek a szerverről, vagy külön betöltés
