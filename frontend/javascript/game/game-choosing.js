@@ -14,41 +14,17 @@ document.addEventListener("DOMContentLoaded", function () {
         document.getElementById('myModal').classList.remove('active');
     });
     loadGameMaps('plays');
-    document.getElementById('sortByCreated').addEventListener('click', function () {
-        loadGameMaps('created');
-        clearLoadedURLs();
-        selectedButton.classList.remove('btnPushed');
-        selectedButton.removeAttribute('disabled');
-        this.classList.add('btnPushed');
-        this.disabled = true;
-        selectedButton = this;
+    document.querySelectorAll('.sortDiv button').forEach(button => {
+        button.addEventListener('click', function () {
+            loadGameMaps(this.id.replace('sortBy', '').toLowerCase());
+            clearLoadedURLs();
+            selectedButton.classList.remove('btnPushed');
+            selectedButton.removeAttribute('disabled');
+            this.classList.add('btnPushed');
+            this.disabled = true;
+            selectedButton = this;
+        });
     });
-    document.getElementById('sortByRating').addEventListener('click', function () {
-        loadGameMaps('rating');
-        clearLoadedURLs();
-        selectedButton.classList.remove('btnPushed');
-        selectedButton.removeAttribute('disabled');
-        this.classList.add('btnPushed');
-        this.disabled = true;
-        selectedButton = this;
-    });
-    document.getElementById('sortByPlays').addEventListener('click', function () {
-        loadGameMaps('plays');
-        clearLoadedURLs();
-        selectedButton.classList.remove('btnPushed');
-        selectedButton.removeAttribute('disabled');
-        this.classList.add('btnPushed');
-        this.disabled = true;
-        selectedButton = this;
-    });
-    document.getElementById('sortByFavorites').addEventListener('click', function () {
-        loadGameMaps('favorites');
-        clearLoadedURLs();
-        selectedButton.classList.remove('btnPushed');
-        selectedButton.removeAttribute('disabled');
-        this.classList.add('btnPushed');
-        this.disabled = true;
-        selectedButton = this;
     });
 });
 
@@ -154,5 +130,3 @@ function createModal(game_map) {
 }
 
 //TODO: játék indítása modalból
-//revokeURL használata a blob URL-ekre, ha már nincs rájuk szükség, hogy felszabadítsuk a memóriát
-//képek cache-elése, hogy ne kelljen minden alkalommal újra lekérni őket a szerverről, amikor megjelennek a kártyákon vagy placeholder kép használata, amíg a kép betöltődik, hogy ne legyen üres hely a kártyákon, amíg a képek megérkeznek a szerverről, vagy külön betöltés
