@@ -12,11 +12,11 @@ uniform int uUseTexture;
 uniform sampler2D uAlbedo;
 
 void main() {
-    vec3 baseColor;
+    vec4 baseColor;
     if(uUseTexture == 1) {
-        baseColor = texture(uAlbedo, vTex).rgb;
+        baseColor = texture(uAlbedo, vTex);
     } else {
-        baseColor = uMatAlbedo;
+        baseColor = vec4(uMatAlbedo, 1.0);
     }
-    outColor = vec4(baseColor, 1.0f);
+    outColor = baseColor;
 }

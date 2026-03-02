@@ -5511,6 +5511,9 @@ var convertPCtoSourceLocation = pc => {
   if (UNWIND_CACHE.last_get_source_pc == pc) return UNWIND_CACHE.last_source;
   var match;
   var source;
+  if (wasmSourceMap) {
+    source = wasmSourceMap.lookup(pc);
+  }
   if (!source) {
     var frame = UNWIND_CACHE[pc];
     if (!frame) return null;
@@ -6050,7 +6053,7 @@ function _equirectangularFromURL(url, ctxId, tiles, textureIdsHandle, onSuccessH
             glContext.bindTexture(glContext.TEXTURE_2D, null);
           } catch (error) {
             imageBitmap.close();
-            equirectangularReportError(onError, "Failed to upload texture to GPU", "WEBGL", url, requestID, error);
+            equirectangularReportError(onError, "Failed to upload texture to GPU", "WEBGL", imgUrl, requestID, error);
           }
           imageBitmap.close();
           if (typeof onSuccess == "function") {
@@ -6058,22 +6061,22 @@ function _equirectangularFromURL(url, ctxId, tiles, textureIdsHandle, onSuccessH
           }
         } else {
           imageBitmap.close();
-          equirectangularReportError(onError, "Texture doesn't fit in MAX_TEXTURE_SIZE (" + maxSize + ")", "WEBGL", url, requestID);
+          equirectangularReportError(onError, "Texture doesn't fit in MAX_TEXTURE_SIZE (" + maxSize + ")", "WEBGL", imgUrl, requestID);
         }
       } else {
         imageBitmap.close();
         if (textures.length != tileCount) {
-          equirectangularReportError(onError, "Textures no longer exist", "WEBGL", url, requestID);
+          equirectangularReportError(onError, "Textures no longer exist", "WEBGL", imgUrl, requestID);
         } else {
-          equirectangularReportError(onError, "New image was requested. Aborting old request", "REQUEST_CANCELLED", url, requestID);
+          equirectangularReportError(onError, "New image was requested. Aborting old request", "REQUEST_CANCELLED", imgUrl, requestID);
         }
       }
     }).catch(function(err) {
       let msg = "Texture failed to load (Fetch/decoding error)";
-      equirectangularReportError(onError, msg, "IMAGE_DECODE", url, requestID);
+      equirectangularReportError(onError, msg, "IMAGE_DECODE", imgUrl, requestID);
     });
   } else {
-    equirectangularReportError(onError, "Invalid WebGL context", "WEBGL", url, requestID);
+    equirectangularReportError(onError, "Invalid WebGL context", "WEBGL", imgUrl, requestID);
   }
 }
 
@@ -6968,17 +6971,34 @@ var _proc_exit = code => {
   quit_(code, new ExitStatus(code));
 };
 
+function handleError(onError, msg) {
+  if (typeof onError == "function") {
+    onError(msg);
+  } else {
+    console.error(msg);
+  }
+}
+
 function _textureFromURL(textureID, url, ctxId, onSuccessHandle, onErrorHandle) {
   let gl = GL.contexts[ctxId].GLctx;
-  let img = new Image;
   let imgUrl = UTF8ToString(url);
   let onSuccess = Emval.toValue(onSuccessHandle);
   let onError = Emval.toValue(onErrorHandle);
-  img.onload = function() {
+  fetch(imgUrl).then(function(response) {
+    if (response.ok) {
+      let contentType = response.headers.get("content-type");
+      if (contentType && !contentType.startsWith("image/")) {
+        handleError(onError, "Invalid content-type:\t" + contentType);
+      }
+      return response.blob();
+    }
+  }).then(function(blob) {
+    return createImageBitmap(blob);
+  }).then(function(imageBitmap) {
     let texture = GL.textures[textureID];
     if (texture) {
       gl.bindTexture(gl.TEXTURE_2D, texture);
-      gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, img);
+      gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, imageBitmap);
       gl.generateMipmap(gl.TEXTURE_2D);
       gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR_MIPMAP_LINEAR);
       gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
@@ -6988,16 +7008,12 @@ function _textureFromURL(textureID, url, ctxId, onSuccessHandle, onErrorHandle) 
       }
     } else {
       if (typeof onError == "function") {
-        onError("Texture failed to load (it no longer exists):\t" + imgUrl);
+        handleError(onError, "Texture failed to load (it no longer exists):\t" + imgUrl);
       }
     }
-  };
-  img.onerror = function() {
-    if (typeof onError == "function") {
-      onError("Texture failed to load:\t" + imgUrl);
-    }
-  };
-  img.src = imgUrl;
+  }).catch(function(eror) {
+    handleError(onError, "Texture failed to load (Fetch/decoding error):\t" + imgUrl);
+  });
 }
 
 var FS_createPath = (...args) => FS.createPath(...args);
@@ -7067,7 +7083,7 @@ var missingLibrarySymbols = [ "writeI53ToI64Clamped", "writeI53ToI64Signaling", 
 
 missingLibrarySymbols.forEach(missingLibrarySymbol);
 
-var unexportedSymbols = [ "run", "out", "err", "callMain", "abort", "wasmExports", "HEAPF32", "HEAPF64", "HEAP8", "HEAPU8", "HEAP16", "HEAPU16", "HEAP32", "HEAPU32", "HEAP64", "HEAPU64", "writeStackCookie", "checkStackCookie", "writeI53ToI64", "readI53FromI64", "readI53FromU64", "INT53_MAX", "INT53_MIN", "bigintToI53Checked", "stackSave", "stackRestore", "createNamedFunction", "ptrToString", "zeroMemory", "getHeapMax", "growMemory", "ENV", "ERRNO_CODES", "strError", "DNS", "Protocols", "Sockets", "timers", "warnOnce", "withBuiltinMalloc", "readEmAsmArgsArray", "readEmAsmArgs", "runEmAsmFunction", "jstoi_q", "getExecutableName", "keepRuntimeAlive", "asyncLoad", "alignMemory", "mmapAlloc", "wasmTable", "wasmMemory", "getUniqueRunDependency", "noExitRuntime", "freeTableIndexes", "functionsInTableMap", "setValue", "getValue", "PATH", "PATH_FS", "UTF8Decoder", "UTF8ArrayToString", "stringToUTF8Array", "stringToUTF8", "lengthBytesUTF8", "intArrayFromString", "AsciiToString", "UTF16Decoder", "UTF16ToString", "stringToUTF16", "lengthBytesUTF16", "UTF32ToString", "stringToUTF32", "lengthBytesUTF32", "stringToNewUTF8", "JSEvents", "specialHTMLTargets", "maybeCStringToJsString", "findEventTarget", "findCanvasEventTarget", "currentFullscreenStrategy", "restoreOldWindowedStyle", "jsStackTrace", "UNWIND_CACHE", "convertPCtoSourceLocation", "ExitStatus", "getEnvStrings", "checkWasiClock", "doReadv", "doWritev", "initRandomFill", "randomFill", "emSetImmediate", "emClearImmediate_deps", "emClearImmediate", "promiseMap", "uncaughtExceptionCount", "exceptionLast", "exceptionCaught", "ExceptionInfo", "Browser", "requestFullscreen", "requestFullScreen", "setCanvasSize", "getUserMedia", "createContext", "getPreloadedImageData__data", "wget", "MONTH_DAYS_REGULAR", "MONTH_DAYS_LEAP", "MONTH_DAYS_REGULAR_CUMULATIVE", "MONTH_DAYS_LEAP_CUMULATIVE", "SYSCALLS", "preloadPlugins", "FS_createPreloadedFile", "FS_modeStringToFlags", "FS_getMode", "FS_stdin_getChar_buffer", "FS_stdin_getChar", "FS_readFile", "FS", "FS_root", "FS_mounts", "FS_devices", "FS_streams", "FS_nextInode", "FS_nameTable", "FS_currentPath", "FS_initialized", "FS_ignorePermissions", "FS_filesystems", "FS_syncFSRequests", "FS_lookupPath", "FS_getPath", "FS_hashName", "FS_hashAddNode", "FS_hashRemoveNode", "FS_lookupNode", "FS_createNode", "FS_destroyNode", "FS_isRoot", "FS_isMountpoint", "FS_isFile", "FS_isDir", "FS_isLink", "FS_isChrdev", "FS_isBlkdev", "FS_isFIFO", "FS_isSocket", "FS_flagsToPermissionString", "FS_nodePermissions", "FS_mayLookup", "FS_mayCreate", "FS_mayDelete", "FS_mayOpen", "FS_checkOpExists", "FS_nextfd", "FS_getStreamChecked", "FS_getStream", "FS_createStream", "FS_closeStream", "FS_dupStream", "FS_doSetAttr", "FS_chrdev_stream_ops", "FS_major", "FS_minor", "FS_makedev", "FS_registerDevice", "FS_getDevice", "FS_getMounts", "FS_syncfs", "FS_mount", "FS_unmount", "FS_lookup", "FS_mknod", "FS_statfs", "FS_statfsStream", "FS_statfsNode", "FS_create", "FS_mkdir", "FS_mkdev", "FS_symlink", "FS_rename", "FS_rmdir", "FS_readdir", "FS_readlink", "FS_stat", "FS_fstat", "FS_lstat", "FS_doChmod", "FS_chmod", "FS_lchmod", "FS_fchmod", "FS_doChown", "FS_chown", "FS_lchown", "FS_fchown", "FS_doTruncate", "FS_truncate", "FS_ftruncate", "FS_utime", "FS_open", "FS_close", "FS_isClosed", "FS_llseek", "FS_read", "FS_write", "FS_mmap", "FS_msync", "FS_ioctl", "FS_writeFile", "FS_cwd", "FS_chdir", "FS_createDefaultDirectories", "FS_createDefaultDevices", "FS_createSpecialDirectories", "FS_createStandardStreams", "FS_staticInit", "FS_init", "FS_quit", "FS_findObject", "FS_analyzePath", "FS_createFile", "FS_forceLoadFile", "FS_absolutePath", "FS_createFolder", "FS_createLink", "FS_joinPath", "FS_mmapAlloc", "FS_standardizePath", "MEMFS", "TTY", "PIPEFS", "SOCKFS", "tempFixedLengthArray", "miniTempWebGLFloatBuffers", "miniTempWebGLIntBuffers", "heapObjectForWebGLType", "toTypedArrayIndex", "GL", "emscriptenWebGLGet", "computeUnpackAlignedImageSize", "colorChannelsInGlTextureFormat", "emscriptenWebGLGetTexPixelData", "webglGetUniformLocation", "webglPrepareUniformLocationsBeforeFirstUse", "webglGetLeftBracePos", "AL", "GLUT", "EGL", "GLEW", "IDBStore", "SDL", "SDL_gfx", "print", "printErr", "jstoi_s", "InternalError", "BindingError", "throwInternalError", "throwBindingError", "registeredTypes", "awaitingDependencies", "typeDependencies", "tupleRegistrations", "structRegistrations", "sharedRegisterType", "whenDependentTypesAreResolved", "getTypeName", "getFunctionName", "heap32VectorToArray", "requireRegisteredType", "usesDestructorStack", "checkArgCount", "getRequiredArgCount", "createJsInvoker", "UnboundTypeError", "EmValType", "EmValOptionalType", "throwUnboundTypeError", "ensureOverloadTable", "exposePublicSymbol", "replacePublicSymbol", "embindRepr", "registeredInstances", "getBasestPointer", "getInheritedInstance", "registeredPointers", "registerType", "integerReadValueFromPointer", "floatReadValueFromPointer", "assertIntegerRange", "readPointer", "runDestructors", "craftInvokerFunction", "embind__requireFunction", "genericPointerToWireType", "constNoSmartPtrRawPointerToWireType", "nonConstNoSmartPtrRawPointerToWireType", "init_RegisteredPointer", "RegisteredPointer", "RegisteredPointer_fromWireType", "runDestructor", "releaseClassHandle", "finalizationRegistry", "detachFinalizer_deps", "detachFinalizer", "attachFinalizer", "makeClassHandle", "init_ClassHandle", "ClassHandle", "throwInstanceAlreadyDeleted", "deletionQueue", "flushPendingDeletes", "delayFunction", "RegisteredClass", "shallowCopyInternalPointer", "downcastPointer", "upcastPointer", "char_0", "char_9", "makeLegalFunctionName", "emval_freelist", "emval_handles", "emval_symbols", "getStringOrSymbol", "Emval", "emval_returnValue", "emval_lookupTypes", "emval_methodCallers", "emval_addMethodCaller", "equirectangularReportError", "getValidTextures" ];
+var unexportedSymbols = [ "run", "out", "err", "callMain", "abort", "wasmExports", "HEAPF32", "HEAPF64", "HEAP8", "HEAPU8", "HEAP16", "HEAPU16", "HEAP32", "HEAPU32", "HEAP64", "HEAPU64", "WasmSourceMap", "writeStackCookie", "checkStackCookie", "writeI53ToI64", "readI53FromI64", "readI53FromU64", "INT53_MAX", "INT53_MIN", "bigintToI53Checked", "stackSave", "stackRestore", "createNamedFunction", "ptrToString", "zeroMemory", "getHeapMax", "growMemory", "ENV", "ERRNO_CODES", "strError", "DNS", "Protocols", "Sockets", "timers", "warnOnce", "withBuiltinMalloc", "readEmAsmArgsArray", "readEmAsmArgs", "runEmAsmFunction", "jstoi_q", "getExecutableName", "keepRuntimeAlive", "asyncLoad", "alignMemory", "mmapAlloc", "wasmTable", "wasmMemory", "getUniqueRunDependency", "noExitRuntime", "freeTableIndexes", "functionsInTableMap", "setValue", "getValue", "PATH", "PATH_FS", "UTF8Decoder", "UTF8ArrayToString", "stringToUTF8Array", "stringToUTF8", "lengthBytesUTF8", "intArrayFromString", "AsciiToString", "UTF16Decoder", "UTF16ToString", "stringToUTF16", "lengthBytesUTF16", "UTF32ToString", "stringToUTF32", "lengthBytesUTF32", "stringToNewUTF8", "JSEvents", "specialHTMLTargets", "maybeCStringToJsString", "findEventTarget", "findCanvasEventTarget", "currentFullscreenStrategy", "restoreOldWindowedStyle", "jsStackTrace", "UNWIND_CACHE", "convertPCtoSourceLocation", "ExitStatus", "getEnvStrings", "checkWasiClock", "doReadv", "doWritev", "initRandomFill", "randomFill", "emSetImmediate", "emClearImmediate_deps", "emClearImmediate", "promiseMap", "uncaughtExceptionCount", "exceptionLast", "exceptionCaught", "ExceptionInfo", "Browser", "requestFullscreen", "requestFullScreen", "setCanvasSize", "getUserMedia", "createContext", "getPreloadedImageData__data", "wget", "MONTH_DAYS_REGULAR", "MONTH_DAYS_LEAP", "MONTH_DAYS_REGULAR_CUMULATIVE", "MONTH_DAYS_LEAP_CUMULATIVE", "SYSCALLS", "preloadPlugins", "FS_createPreloadedFile", "FS_modeStringToFlags", "FS_getMode", "FS_stdin_getChar_buffer", "FS_stdin_getChar", "FS_readFile", "FS", "FS_root", "FS_mounts", "FS_devices", "FS_streams", "FS_nextInode", "FS_nameTable", "FS_currentPath", "FS_initialized", "FS_ignorePermissions", "FS_filesystems", "FS_syncFSRequests", "FS_lookupPath", "FS_getPath", "FS_hashName", "FS_hashAddNode", "FS_hashRemoveNode", "FS_lookupNode", "FS_createNode", "FS_destroyNode", "FS_isRoot", "FS_isMountpoint", "FS_isFile", "FS_isDir", "FS_isLink", "FS_isChrdev", "FS_isBlkdev", "FS_isFIFO", "FS_isSocket", "FS_flagsToPermissionString", "FS_nodePermissions", "FS_mayLookup", "FS_mayCreate", "FS_mayDelete", "FS_mayOpen", "FS_checkOpExists", "FS_nextfd", "FS_getStreamChecked", "FS_getStream", "FS_createStream", "FS_closeStream", "FS_dupStream", "FS_doSetAttr", "FS_chrdev_stream_ops", "FS_major", "FS_minor", "FS_makedev", "FS_registerDevice", "FS_getDevice", "FS_getMounts", "FS_syncfs", "FS_mount", "FS_unmount", "FS_lookup", "FS_mknod", "FS_statfs", "FS_statfsStream", "FS_statfsNode", "FS_create", "FS_mkdir", "FS_mkdev", "FS_symlink", "FS_rename", "FS_rmdir", "FS_readdir", "FS_readlink", "FS_stat", "FS_fstat", "FS_lstat", "FS_doChmod", "FS_chmod", "FS_lchmod", "FS_fchmod", "FS_doChown", "FS_chown", "FS_lchown", "FS_fchown", "FS_doTruncate", "FS_truncate", "FS_ftruncate", "FS_utime", "FS_open", "FS_close", "FS_isClosed", "FS_llseek", "FS_read", "FS_write", "FS_mmap", "FS_msync", "FS_ioctl", "FS_writeFile", "FS_cwd", "FS_chdir", "FS_createDefaultDirectories", "FS_createDefaultDevices", "FS_createSpecialDirectories", "FS_createStandardStreams", "FS_staticInit", "FS_init", "FS_quit", "FS_findObject", "FS_analyzePath", "FS_createFile", "FS_forceLoadFile", "FS_absolutePath", "FS_createFolder", "FS_createLink", "FS_joinPath", "FS_mmapAlloc", "FS_standardizePath", "MEMFS", "TTY", "PIPEFS", "SOCKFS", "tempFixedLengthArray", "miniTempWebGLFloatBuffers", "miniTempWebGLIntBuffers", "heapObjectForWebGLType", "toTypedArrayIndex", "GL", "emscriptenWebGLGet", "computeUnpackAlignedImageSize", "colorChannelsInGlTextureFormat", "emscriptenWebGLGetTexPixelData", "webglGetUniformLocation", "webglPrepareUniformLocationsBeforeFirstUse", "webglGetLeftBracePos", "AL", "GLUT", "EGL", "GLEW", "IDBStore", "SDL", "SDL_gfx", "print", "printErr", "jstoi_s", "InternalError", "BindingError", "throwInternalError", "throwBindingError", "registeredTypes", "awaitingDependencies", "typeDependencies", "tupleRegistrations", "structRegistrations", "sharedRegisterType", "whenDependentTypesAreResolved", "getTypeName", "getFunctionName", "heap32VectorToArray", "requireRegisteredType", "usesDestructorStack", "checkArgCount", "getRequiredArgCount", "createJsInvoker", "UnboundTypeError", "EmValType", "EmValOptionalType", "throwUnboundTypeError", "ensureOverloadTable", "exposePublicSymbol", "replacePublicSymbol", "embindRepr", "registeredInstances", "getBasestPointer", "getInheritedInstance", "registeredPointers", "registerType", "integerReadValueFromPointer", "floatReadValueFromPointer", "assertIntegerRange", "readPointer", "runDestructors", "craftInvokerFunction", "embind__requireFunction", "genericPointerToWireType", "constNoSmartPtrRawPointerToWireType", "nonConstNoSmartPtrRawPointerToWireType", "init_RegisteredPointer", "RegisteredPointer", "RegisteredPointer_fromWireType", "runDestructor", "releaseClassHandle", "finalizationRegistry", "detachFinalizer_deps", "detachFinalizer", "attachFinalizer", "makeClassHandle", "init_ClassHandle", "ClassHandle", "throwInstanceAlreadyDeleted", "deletionQueue", "flushPendingDeletes", "delayFunction", "RegisteredClass", "shallowCopyInternalPointer", "downcastPointer", "upcastPointer", "char_0", "char_9", "makeLegalFunctionName", "emval_freelist", "emval_handles", "emval_symbols", "getStringOrSymbol", "Emval", "emval_returnValue", "emval_lookupTypes", "emval_methodCallers", "emval_addMethodCaller", "handleError", "equirectangularReportError", "getValidTextures" ];
 
 unexportedSymbols.forEach(unexportedRuntimeSymbol);
 
@@ -7131,195 +7147,195 @@ function checkIncomingModuleAPI() {
 }
 
 var ASM_CONSTS = {
-  306902688: () => {
+  306904768: () => {
     throw ("A böngésződ nem támogatja a WebGL-t!");
   },
-  306902739: () => {},
-  306902740: () => {},
-  306902741: () => {},
-  306902742: () => {},
-  306902743: () => {},
-  306902744: () => {},
-  306902745: () => {},
-  306902746: () => {},
-  306902747: () => {},
-  306902748: () => {},
-  306902749: () => {},
-  306902750: () => {},
-  306902751: () => {},
-  306902752: () => {},
-  306902753: () => {},
-  306902754: () => {},
-  306902755: () => {},
-  306902756: () => {},
-  306902757: () => {},
-  306902758: () => {},
-  306902759: () => {},
-  306902760: () => {},
-  306902761: () => {},
-  306902762: () => {},
-  306902763: () => {},
-  306902764: () => {},
-  306902765: () => {},
-  306902766: () => {},
-  306902767: () => {},
-  306902768: () => {},
-  306902769: () => {},
-  306902770: () => {},
-  306902771: () => {},
-  306902772: () => {},
-  306902773: () => {},
-  306902774: () => {},
-  306902775: () => {},
-  306902776: () => {},
-  306902777: () => {},
-  306902778: () => {},
-  306902779: () => {},
-  306902780: () => {},
-  306902781: () => {},
-  306902782: () => {},
-  306902783: () => {},
-  306902784: $0 => {
+  306904819: () => {},
+  306904820: () => {},
+  306904821: () => {},
+  306904822: () => {},
+  306904823: () => {},
+  306904824: () => {},
+  306904825: () => {},
+  306904826: () => {},
+  306904827: () => {},
+  306904828: () => {},
+  306904829: () => {},
+  306904830: () => {},
+  306904831: () => {},
+  306904832: () => {},
+  306904833: () => {},
+  306904834: () => {},
+  306904835: () => {},
+  306904836: () => {},
+  306904837: () => {},
+  306904838: () => {},
+  306904839: () => {},
+  306904840: () => {},
+  306904841: () => {},
+  306904842: () => {},
+  306904843: () => {},
+  306904844: () => {},
+  306904845: () => {},
+  306904846: () => {},
+  306904847: () => {},
+  306904848: () => {},
+  306904849: () => {},
+  306904850: () => {},
+  306904851: () => {},
+  306904852: () => {},
+  306904853: () => {},
+  306904854: () => {},
+  306904855: () => {},
+  306904856: () => {},
+  306904857: () => {},
+  306904858: () => {},
+  306904859: () => {},
+  306904860: () => {},
+  306904861: () => {},
+  306904862: () => {},
+  306904863: () => {},
+  306904864: $0 => {
     throw ("Sikertelen shader fordítás: " + UTF8ToString($0));
   },
-  306902848: () => {},
-  306902849: () => {},
-  306902850: () => {},
-  306902851: () => {},
-  306902852: () => {},
-  306902853: () => {},
-  306902854: () => {},
-  306902855: () => {},
-  306902856: () => {},
-  306902857: () => {},
-  306902858: () => {},
-  306902859: () => {},
-  306902860: () => {},
-  306902861: () => {},
-  306902862: () => {},
-  306902863: () => {},
-  306902864: () => {},
-  306902865: () => {},
-  306902866: () => {},
-  306902867: () => {},
-  306902868: () => {},
-  306902869: () => {},
-  306902870: () => {},
-  306902871: () => {},
-  306902872: () => {},
-  306902873: () => {},
-  306902874: () => {},
-  306902875: () => {},
-  306902876: () => {},
-  306902877: () => {},
-  306902878: () => {},
-  306902879: () => {},
-  306902880: $0 => {
+  306904928: () => {},
+  306904929: () => {},
+  306904930: () => {},
+  306904931: () => {},
+  306904932: () => {},
+  306904933: () => {},
+  306904934: () => {},
+  306904935: () => {},
+  306904936: () => {},
+  306904937: () => {},
+  306904938: () => {},
+  306904939: () => {},
+  306904940: () => {},
+  306904941: () => {},
+  306904942: () => {},
+  306904943: () => {},
+  306904944: () => {},
+  306904945: () => {},
+  306904946: () => {},
+  306904947: () => {},
+  306904948: () => {},
+  306904949: () => {},
+  306904950: () => {},
+  306904951: () => {},
+  306904952: () => {},
+  306904953: () => {},
+  306904954: () => {},
+  306904955: () => {},
+  306904956: () => {},
+  306904957: () => {},
+  306904958: () => {},
+  306904959: () => {},
+  306904960: $0 => {
     throw ("Sikertelen shader összekapcsolás: " + UTF8ToString($0));
   },
-  306902950: () => {},
-  306902951: () => {},
-  306902952: () => {},
-  306902953: () => {},
-  306902954: () => {},
-  306902955: () => {},
-  306902956: () => {},
-  306902957: () => {},
-  306902958: () => {},
-  306902959: () => {},
-  306902960: () => {},
-  306902961: () => {},
-  306902962: () => {},
-  306902963: () => {},
-  306902964: () => {},
-  306902965: () => {},
-  306902966: () => {},
-  306902967: () => {},
-  306902968: () => {},
-  306902969: () => {},
-  306902970: () => {},
-  306902971: () => {},
-  306902972: () => {},
-  306902973: () => {},
-  306902974: () => {},
-  306902975: () => {},
-  306902976: () => {},
-  306902977: () => {},
-  306902978: () => {},
-  306902979: () => {},
-  306902980: () => {},
-  306902981: () => {},
-  306902982: () => {},
-  306902983: () => {},
-  306902984: () => {},
-  306902985: () => {},
-  306902986: () => {},
-  306902987: () => {},
-  306902988: () => {},
-  306902989: () => {},
-  306902990: () => {},
-  306902991: () => {},
-  306902992: () => {},
-  306902993: () => {},
-  306902994: () => {},
-  306902995: () => {},
-  306902996: () => {},
-  306902997: () => {},
-  306902998: () => {},
-  306902999: () => {},
-  306903e3: () => {},
-  306903001: () => {},
-  306903002: () => {},
-  306903003: () => {},
-  306903004: () => {},
-  306903005: () => {},
-  306903006: () => {},
-  306903007: () => {},
-  306903008: ($0, $1) => {
+  306905030: () => {},
+  306905031: () => {},
+  306905032: () => {},
+  306905033: () => {},
+  306905034: () => {},
+  306905035: () => {},
+  306905036: () => {},
+  306905037: () => {},
+  306905038: () => {},
+  306905039: () => {},
+  306905040: () => {},
+  306905041: () => {},
+  306905042: () => {},
+  306905043: () => {},
+  306905044: () => {},
+  306905045: () => {},
+  306905046: () => {},
+  306905047: () => {},
+  306905048: () => {},
+  306905049: () => {},
+  306905050: () => {},
+  306905051: () => {},
+  306905052: () => {},
+  306905053: () => {},
+  306905054: () => {},
+  306905055: () => {},
+  306905056: () => {},
+  306905057: () => {},
+  306905058: () => {},
+  306905059: () => {},
+  306905060: () => {},
+  306905061: () => {},
+  306905062: () => {},
+  306905063: () => {},
+  306905064: () => {},
+  306905065: () => {},
+  306905066: () => {},
+  306905067: () => {},
+  306905068: () => {},
+  306905069: () => {},
+  306905070: () => {},
+  306905071: () => {},
+  306905072: () => {},
+  306905073: () => {},
+  306905074: () => {},
+  306905075: () => {},
+  306905076: () => {},
+  306905077: () => {},
+  306905078: () => {},
+  306905079: () => {},
+  306905080: () => {},
+  306905081: () => {},
+  306905082: () => {},
+  306905083: () => {},
+  306905084: () => {},
+  306905085: () => {},
+  306905086: () => {},
+  306905087: () => {},
+  306905088: ($0, $1) => {
     let fps = document.getElementById(UTF8ToString($1));
     if (fps) {
       fps.innerText = $0;
     }
   },
-  306903098: () => {},
-  306903099: () => {},
-  306903100: () => {},
-  306903101: () => {},
-  306903102: () => {},
-  306903103: () => {},
-  306903104: () => {},
-  306903105: () => {},
-  306903106: () => {},
-  306903107: () => {},
-  306903108: () => {},
-  306903109: () => {},
-  306903110: () => {},
-  306903111: () => {},
-  306903112: () => {},
-  306903113: () => {},
-  306903114: () => {},
-  306903115: () => {},
-  306903116: () => {},
-  306903117: () => {},
-  306903118: () => {},
-  306903119: () => {},
-  306903120: () => {},
-  306903121: () => {},
-  306903122: () => {},
-  306903123: () => {},
-  306903124: () => {},
-  306903125: () => {},
-  306903126: () => {},
-  306903127: () => {},
-  306903128: () => {},
-  306903129: () => {},
-  306903130: () => {},
-  306903131: () => {},
-  306903132: () => {},
-  306903133: () => {},
-  306903134: () => {},
-  306903135: () => {},
-  306903136: $0 => {
+  306905178: () => {},
+  306905179: () => {},
+  306905180: () => {},
+  306905181: () => {},
+  306905182: () => {},
+  306905183: () => {},
+  306905184: () => {},
+  306905185: () => {},
+  306905186: () => {},
+  306905187: () => {},
+  306905188: () => {},
+  306905189: () => {},
+  306905190: () => {},
+  306905191: () => {},
+  306905192: () => {},
+  306905193: () => {},
+  306905194: () => {},
+  306905195: () => {},
+  306905196: () => {},
+  306905197: () => {},
+  306905198: () => {},
+  306905199: () => {},
+  306905200: () => {},
+  306905201: () => {},
+  306905202: () => {},
+  306905203: () => {},
+  306905204: () => {},
+  306905205: () => {},
+  306905206: () => {},
+  306905207: () => {},
+  306905208: () => {},
+  306905209: () => {},
+  306905210: () => {},
+  306905211: () => {},
+  306905212: () => {},
+  306905213: () => {},
+  306905214: () => {},
+  306905215: () => {},
+  306905216: $0 => {
     throw ("Sikertelen fájl beolvasás: " + UTF8ToString($0));
   }
 };
@@ -7552,6 +7568,115 @@ var wasmImports = {
 
 // include: postamble.js
 // === Auto-generated postamble setup entry stuff ===
+// include: source_map_support.js
+class WasmSourceMap {
+  mapping={};
+  offsets=[];
+  constructor(sourceMap) {
+    this.version = sourceMap.version;
+    this.sources = sourceMap.sources;
+    this.names = sourceMap.names;
+    var vlqMap = {};
+    "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/=".split("").forEach((c, i) => vlqMap[c] = i);
+    // based on https://github.com/Rich-Harris/vlq/blob/master/src/vlq.ts
+    function decodeVLQ(string) {
+      var result = [];
+      var shift = 0;
+      var value = 0;
+      for (var ch of string) {
+        var integer = vlqMap[ch];
+        if (integer === undefined) {
+          throw new Error(`Invalid character (${ch})`);
+        }
+        value += (integer & 31) << shift;
+        if (integer & 32) {
+          shift += 5;
+        } else {
+          var negate = value & 1;
+          value >>= 1;
+          result.push(negate ? -value : value);
+          value = shift = 0;
+        }
+      }
+      return result;
+    }
+    var offset = 0, src = 0, line = 1, col = 1, name = 0;
+    for (const [index, segment] of sourceMap.mappings.split(",").entries()) {
+      if (!segment) continue;
+      var data = decodeVLQ(segment);
+      var info = {};
+      offset += data[0];
+      if (data.length >= 2) info.source = src += data[1];
+      if (data.length >= 3) info.line = line += data[2];
+      if (data.length >= 4) info.column = col += data[3];
+      if (data.length >= 5) info.name = name += data[4];
+      this.mapping[offset] = info;
+      this.offsets.push(offset);
+    }
+    this.offsets.sort((a, b) => a - b);
+  }
+  lookup(offset) {
+    var normalized = this.normalizeOffset(offset);
+    var info = this.mapping[normalized];
+    if (!info) {
+      return null;
+    }
+    return {
+      file: this.sources[info.source],
+      line: info.line,
+      column: info.column,
+      name: this.names[info.name]
+    };
+  }
+  normalizeOffset(offset) {
+    var lo = 0;
+    var hi = this.offsets.length;
+    var mid;
+    while (lo < hi) {
+      mid = Math.floor((lo + hi) / 2);
+      if (this.offsets[mid] > offset) {
+        hi = mid;
+      } else {
+        lo = mid + 1;
+      }
+    }
+    return this.offsets[lo - 1];
+  }
+}
+
+var wasmSourceMap;
+
+var wasmSourceMapFile = locateFile("equirectangular_debug.wasm.map");
+
+function receiveSourceMapJSON(sourceMap) {
+  wasmSourceMap = new WasmSourceMap(sourceMap);
+}
+
+function getSourceMap() {
+  var buf = readBinary(wasmSourceMapFile);
+  return JSON.parse(UTF8ArrayToString(buf));
+}
+
+async function getSourceMapAsync() {
+  if (ENVIRONMENT_IS_WEB) {
+    try {
+      var response = await fetch(wasmSourceMapFile, {
+        credentials: "same-origin"
+      });
+      return response.json();
+    } catch {}
+  }
+  return getSourceMap();
+}
+
+addRunDependency("source-map");
+
+getSourceMapAsync().then(json => {
+  receiveSourceMapJSON(json);
+  removeRunDependency("source-map");
+});
+
+// end include: source_map_support.js
 var calledRun;
 
 function stackCheckInit() {

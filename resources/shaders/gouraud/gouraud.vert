@@ -17,13 +17,14 @@ uniform int uIsTerrain;
 out vec4 vColor;
 
 void main() {
-    vec3 baseColor;
+    vec4 baseColor;
     if(uUseTexture == 1) {
-        baseColor = texture(uAlbedo, aTexCoords).rgb;
+        baseColor = texture(uAlbedo, aTexCoords);
     } else {
-        baseColor = uMatAlbedo;
+        baseColor = vec4(uMatAlbedo, 1.0);
     }
     vec4 worldPos = uM * aPosition;
-    vColor = phongReflectionModel(aNormal, worldPos.xyz, uCamPos, uLightVec, uLightColorPreCalc, uLightColor, uAmbientLight, baseColor, uMatDiffuseness, uMatSpecularity, uMatShininess);
+    vec3 phongResult = phongReflectionModel(aNormal, worldPos.xyz, uCamPos, uLightVec, uLightColorPreCalc, uLightColor, uAmbientLight, baseColor.rgb, uMatDiffuseness, uMatSpecularity, uMatShininess);
+    vColor = vec4(phongResult, baseColor.a);
     gl_Position = uVP * worldPos;
 }

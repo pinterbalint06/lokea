@@ -5,9 +5,6 @@ import ModuleBuilder from './libs/webassembly/terrain/terrain.js';
 // |------------------|
 // | GLOBAL VARIABLES |
 // |------------------|
-// Camera properties
-let fokuszTavolsag = 18.0;
-
 // Canvas settings
 const jsCanvasSzelesseg = 1000;
 const jsCanvasMagassag = 1000;
@@ -140,12 +137,12 @@ function initModule() {
     // Setup user input
     let canvas = document.getElementById(canvasId);
     let inputControls = new CanvasInput(canvas, {
-        focalLength: fokuszTavolsag,
+        "friction": 0.96,
         onRotate: (pitch, yaw) => {
             rotateCamera(pitch, yaw);
         },
-        onZoom: (ujFokuszTavolsag) => {
-            terrainEngine.setFocalLength(ujFokuszTavolsag);
+        onZoom: (zoomAmount) => {
+            terrainEngine.zoom(zoomAmount);
         }
     });
 
@@ -181,7 +178,7 @@ function mainLoop() {
 
 // rotate camera by degree
 function rotateCamera(pitch, yaw) {
-    terrainEngine.rotateCamera(degreeToRadian(pitch), degreeToRadian(yaw))
+    terrainEngine.rotateCamera(degreeToRadian(pitch), degreeToRadian(yaw));
 }
 
 window.xyForgas = rotateCamera;

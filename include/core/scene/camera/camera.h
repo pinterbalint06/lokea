@@ -1,6 +1,20 @@
 #ifndef CAMERA_H
 #define CAMERA_H
 
+#include <memory>
+
+#include "core/projection/projectionMatrix.h"
+
+#include "core/scene/camera/cameraConfig.h"
+
+#include "core/math/mathUtils.h"
+
+enum class PROJECTIONTYPE
+{
+    PERSPECTIVE = 0,
+    ORTHOGRAPHIC = 1
+};
+
 struct CameraData
 {
     float VP[16]; // 0 -> 64
@@ -18,14 +32,15 @@ private:
      * This matrix defines the transformation from world space to camera (view) space.
      * It is a 4x4 matrix stored in a contiguous float array in row-major order.
      */
-    float *viewMatrix_;
+    float viewMatrix_[16];
+
+    PROJECTIONTYPE currentProjectionType_;
 
     /**
      * @brief Pointer to the projection matrix used by the camera for transforming 3D coordinates to 2D screen space.
      *
-     * It is a 4x4 matrix stored in a contiguous float array in row-major order.
      */
-    float *projMatrix_;
+    std::unique_ptr<ProjectionMatrix> projectionMatrix_;
 
     CameraData data_;
 
@@ -41,19 +56,13 @@ private:
     /// @brief Indicates whether the camera view projeciton has to be updated
     bool newViewProj_;
 
+    float zoomFactor_;
+
     /// @brief Camera properties
-    float focalLength_, filmW_, filmH_, n_, f_;
+    float filmW_, filmH_;
     int imageW_, imageH_;
 
-    /**
-     * @brief Sets the perspective projection matrix for the camera.
-     *
-     * Configures the camera's projection matrix based on focal length, film size,
-     * image size, and near/far clipping planes. Adjusts for differences between the film and image
-     * aspect ratios to ensure correct field of view and image coverage.
-     *
-     */
-    void updatePerspective();
+    void recalculateCanvasBoundaries();
 
 public:
     /**
@@ -74,20 +83,6 @@ public:
     ~Camera();
 
     // getters
-    /**
-     * @brief Returns the view matrix.
-     *
-     * @return Pointer to the view matrix.
-     */
-    float *getViewMatrix() const { return viewMatrix_; }
-
-    /**
-     * @brief Returns the projection matrix.
-     *
-     * @return Pointer to the projection matrix.
-     */
-    float *getProjMatrix() const { return projMatrix_; }
-
     // position getters
     /**
      * @brief Returns the current x-coordinate of the camera.
@@ -133,16 +128,9 @@ public:
     const CameraData &getUBOData() const { return data_; };
 
     // camera propery sett
-    /**
-     * @brief Sets the focal length of the camera.
-     *
-     * Updates the camera's focal length to the specified value,
-     * and calls updatePerspective().
-     *
-     * @param pitch The new pitch angle (in radians).
-     * @param yaw The new yaw angle (in radians).
-     */
-    void setFocalLength(float focalLength);
+    void zoom(float amount);
+
+    void setZoom(float amount);
 
     // position setter
     /**
@@ -168,6 +156,8 @@ public:
      * @param yaw The new yaw angle (in radians).
      */
     void setRotation(float pitch, float yaw);
+
+    void setProjectionMode(PROJECTIONTYPE mode);
 
     /**
      * @brief Rotates the camera by adjusting its pitch and yaw angles.
@@ -197,7 +187,7 @@ public:
     void updateViewProjectionMatrix();
 
     /**
-     * @brief Sets the camera's properties and calls updatePerspective().
+     * @brief Sets the camera's properties and calls recalculateCanvasBoundaries().
      *
      * @param focal   The focal length of the camera lens.
      * @param filmW   The width of the film/sensor.
@@ -207,16 +197,28 @@ public:
      * @param n       The near clipping plane distance.
      * @param f       The far clipping plane distance.
      */
-    void setPerspective(float focal, float filmW, float filmH,
+    void setPerspective(float filmW, float filmH,
                         int imageW, int imageH, float n, float f);
 
+    void setOrthographic(int imageW, int imageH, float n, float f);
+
     /**
-     * @brief Sets the camera's image dimensions and calls updatePerspective().
+     * @brief Sets the camera's image dimensions and calls recalculateCanvasBoundaries().
      *
      * @param imageW  The width of the output image in pixels.
      * @param imageH  The height of the output image in pixels.
      */
     void setImageDimensions(int imageW, int imageH);
+
+    inline float getFocalLength()
+    {
+        return MathUtils::interpolation(DEFAULT_CAMERA_SETTINGS.minFocalLength, DEFAULT_CAMERA_SETTINGS.maxFocalLength, zoomFactor_);
+    }
+
+    inline float getOrthoHeight()
+    {
+        return MathUtils::interpolation(DEFAULT_CAMERA_SETTINGS.minOrthoHeight, DEFAULT_CAMERA_SETTINGS.maxOrthoHeight, zoomFactor_);
+    }
 };
 
 #endif

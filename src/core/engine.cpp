@@ -1,6 +1,7 @@
 #include <string>
 #include <vector>
 #include <memory>
+#include <emscripten/val.h>
 #include <emscripten/html5.h>
 
 #include "core/rendering/renderer.h"
@@ -24,16 +25,16 @@ Engine::Engine(std::string canvID)
     std::vector<std::string> helpers = {
         "shaders/helpers/UBOs.glsl",
         "shaders/helpers/phongReflectionModel.glsl",
-        "shaders/helpers/perlinNoise.glsl"};
+        "shaders/helpers/perlinNoise.glsl" };
     renderer_->addNewShader(Shaders::SHADINGMODE::PHONG, ShaderBuilder::createShader("shaders/phong/phong.vert", "shaders/phong/phong.frag", helpers));
+
+    renderer_->setImageDimensions(1000.0f, 1000.0f);
 
     // "shaders/perlinNoise.glsl" is not needed in gouraud or noshader
     helpers.pop_back();
 
     renderer_->addNewShader(Shaders::SHADINGMODE::GOURAUD, ShaderBuilder::createShader("shaders/gouraud/gouraud.vert", "shaders/gouraud/gouraud.frag", helpers));
     renderer_->addNewShader(Shaders::SHADINGMODE::NO_SHADING, ShaderBuilder::createShader("shaders/noShader/noShader.vert", "shaders/noShader/noShader.frag", helpers));
-
-    setFrustum(18.0f, 25.4f, 25.4f, 1000, 1000, 0.1f, 1000.0f);
 }
 
 Engine::~Engine()
@@ -55,10 +56,10 @@ void Engine::setShadingMode(Shaders::SHADINGMODE shadingmode)
     renderer_->setShadingMode(shadingmode);
 }
 
-void Engine::setFrustum(float focal, float filmW, float filmH, int imageW, int imageH, float n, float f)
+void Engine::setFrustum(float filmW, float filmH, int imageW, int imageH, float n, float f)
 {
     renderer_->setImageDimensions(imageW, imageH);
-    scene_->getCamera()->setPerspective(focal, filmW, filmH, imageW, imageH, n, f);
+    scene_->getCamera()->setPerspective(filmW, filmH, imageW, imageH, n, f);
 }
 
 void Engine::setLightColor(float r, float g, float b)
@@ -71,9 +72,24 @@ void Engine::setAmbientLight(float ambientLightIntensity)
     scene_->setAmbientLight(ambientLightIntensity);
 }
 
-void Engine::setFocalLength(float focal)
+void Engine::setZoom(float amount)
 {
-    scene_->getCamera()->setFocalLength(focal);
+    scene_->getCamera()->setZoom(amount);
+}
+
+void Engine::zoom(float amount)
+{
+    scene_->getCamera()->zoom(amount);
+}
+
+void Engine::setProjectionType(PROJECTIONTYPE type)
+{
+    scene_->getCamera()->setProjectionMode(type);
+}
+
+void Engine::setProjectionType(int type)
+{
+    scene_->getCamera()->setProjectionMode(static_cast<PROJECTIONTYPE>(type));
 }
 
 void Engine::setCanvasSize(int width, int height)
@@ -91,7 +107,6 @@ void Engine::rotateCamera(float dPitch, float dYaw)
 
 void Engine::setCameraRotation(float pitch, float yaw)
 {
-
     scene_->getCamera()->setRotation(pitch, yaw);
 }
 
@@ -138,7 +153,7 @@ void Engine::deleteTexture(int meshIndex)
     }
 }
 
-void Engine::loadTextureFromUrl(const std::string &url, int meshIndex)
+void Engine::loadTextureFromUrl(const std::string &url, int meshIndex, emscripten::val onSuccess, emscripten::val onError)
 {
     Mesh *mesh = scene_->getMesh(meshIndex);
     if (mesh != nullptr)
@@ -148,7 +163,7 @@ void Engine::loadTextureFromUrl(const std::string &url, int meshIndex)
         {
             Texture *texture = new Texture();
 
-            texture->loadFromUrl(url);
+            texture->loadFromUrl(url, onSuccess, onError);
 
             Materials::Material newTexMat = mesh->getMaterial();
             newTexMat.setTexture(texture);
@@ -156,7 +171,12 @@ void Engine::loadTextureFromUrl(const std::string &url, int meshIndex)
         }
         else
         {
-            texture->loadFromUrl(url);
+            texture->loadFromUrl(url, onSuccess, onError);
         }
     }
+}
+
+void Engine::loadTextureFromUrl(const std::string &url, int meshIndex)
+{
+    loadTextureFromUrl(url, meshIndex, emscripten::val::undefined(), emscripten::val::undefined());
 }

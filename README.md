@@ -53,16 +53,24 @@
 
     #### 1. terrain
 
-    A terrain és webgl oldalakhoz használt fájlok. A domborzat generálás tesztelésének optimalizált verziója.
+    A terrain és webgl oldalakhoz használt fájlok. A domborzat generálásának tesztelésének optimalizált verziója.
 
     #### 2. terrain_debug
 
-    A terrain és webgl oldalakhoz használt fájlok. A domborzat generálás tesztelésének debugolható verziója.
+    A terrain és webgl oldalakhoz használt fájlok. A domborzat generálásának tesztelésének debugolható verziója.
 
     #### 3. equirectangular
 
-    Az equirectangular oldalon használt fájlok. Az ekvirektanguláris képek megjelenítés tesztelésének optimalizált verziója.
+    Az equirectangular oldalon használt fájlok. Az ekvirektanguláris képek megjelenítésének tesztelésének optimalizált verziója.
 
     #### 4. equirectangular_debug
 
-    Az equirectangular oldalon használt fájlok. Az ekvirektanguláris képek megjelenítés tesztelésének debugolható verziója.
+    Az equirectangular oldalon használt fájlok. Az ekvirektanguláris képek megjelenítésének tesztelésének debugolható verziója.
+
+    #### 5. mapViewer
+
+    A test-map oldalon használt fájlok. Az 2D-s térképek megjelenítésének tesztelésének optimalizált verziója.
+
+    #### 6. mapViewer_debug
+
+    Az test-map oldalon használt fájlok. Az 2D-s térképek megjelenítésének tesztelésének debugolható verziója.

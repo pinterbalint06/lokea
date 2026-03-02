@@ -4,23 +4,24 @@ COLLATE utf8_hungarian_ci;
 
 USE bigprojekt_db;
 
+CREATE TABLE images (
+    image_id int AUTO_INCREMENT PRIMARY KEY NOT NULL,
+    width int NOT NULL,
+    height int NOT NULL,
+    filepath varchar(255) NOT NULL
+);
+
 CREATE TABLE users (
     user_id INT AUTO_INCREMENT PRIMARY KEY,
     username VARCHAR(20) NOT NULL UNIQUE,
     email VARCHAR(254) NOT NULL UNIQUE,
     password VARCHAR(60) NOT NULL,
     role VARCHAR(5) DEFAULT 'user',
-    pfp VARCHAR(30) DEFAULT 'default.png',
+    pfp INT DEFAULT NULL,
     is_2fa BOOLEAN DEFAULT 0,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    deleted_at TIMESTAMP NULL
-);
-
-CREATE TABLE images (
-    image_id int AUTO_INCREMENT PRIMARY KEY NOT NULL,
-    width int NOT NULL,
-    height int NOT NULL,
-    filepath varchar(255) NOT NULL
+    deleted_at TIMESTAMP NULL,
+    foreign key (pfp) references images(image_id) ON DELETE SET NULL
 );
 
 CREATE TABLE game_maps (

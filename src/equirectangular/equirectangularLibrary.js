@@ -109,7 +109,7 @@ mergeInto(LibraryManager.library, {
                                 glContext.bindTexture(glContext.TEXTURE_2D, null);
                             } catch (error) {
                                 imageBitmap.close()
-                                equirectangularReportError(onError, "Failed to upload texture to GPU", "WEBGL", url, requestID, error);
+                                equirectangularReportError(onError, "Failed to upload texture to GPU", "WEBGL", imgUrl, requestID, error);
                             }
                             imageBitmap.close()
 
@@ -118,24 +118,24 @@ mergeInto(LibraryManager.library, {
                             }
                         } else {
                             imageBitmap.close()
-                            equirectangularReportError(onError, "Texture doesn't fit in MAX_TEXTURE_SIZE (" + maxSize + ")", "WEBGL", url, requestID);
+                            equirectangularReportError(onError, "Texture doesn't fit in MAX_TEXTURE_SIZE (" + maxSize + ")", "WEBGL", imgUrl, requestID);
                         }
                     }
                     else {
                         imageBitmap.close()
                         if (textures.length != tileCount) {
-                            equirectangularReportError(onError, "Textures no longer exist", "WEBGL", url, requestID);
+                            equirectangularReportError(onError, "Textures no longer exist", "WEBGL", imgUrl, requestID);
                         } else {
-                            equirectangularReportError(onError, "New image was requested. Aborting old request", "REQUEST_CANCELLED", url, requestID);
+                            equirectangularReportError(onError, "New image was requested. Aborting old request", "REQUEST_CANCELLED", imgUrl, requestID);
                         }
                     }
                 })
                 .catch(function (err) {
                     let msg = "Texture failed to load (Fetch/decoding error)";
-                    equirectangularReportError(onError, msg, "IMAGE_DECODE", url, requestID);
+                    equirectangularReportError(onError, msg, "IMAGE_DECODE", imgUrl, requestID);
                 });
         } else {
-            equirectangularReportError(onError, "Invalid WebGL context", "WEBGL", url, requestID);
+            equirectangularReportError(onError, "Invalid WebGL context", "WEBGL", imgUrl, requestID);
         }
     },
     equirectangularFromURL__deps: ["$equirectangularReportError", "$getValidTextures"]

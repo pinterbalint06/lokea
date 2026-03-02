@@ -24,11 +24,12 @@ void main() {
     } else {
         normal = normalize(vNormal);
     }
-    vec3 baseColor;
+    vec4 baseColor;
     if(uUseTexture == 1) {
-        baseColor = texture(uAlbedo, vTexCoords).rgb;
+        baseColor = texture(uAlbedo, vTexCoords);
     } else {
-        baseColor = uMatAlbedo;
+        baseColor = vec4(uMatAlbedo, 1.0);
     }
-    outColor = phongReflectionModel(normal, vPosition.xyz, uCamPos, uLightVec, uLightColorPreCalc, uLightColor, uAmbientLight, baseColor, uMatDiffuseness, uMatSpecularity, uMatShininess);
+    vec3 phongResult = phongReflectionModel(normal, vPosition.xyz, uCamPos, uLightVec, uLightColorPreCalc, uLightColor, uAmbientLight, baseColor.rgb, uMatDiffuseness, uMatSpecularity, uMatShininess);
+    outColor = vec4(phongResult, baseColor.a);
 }
