@@ -1,4 +1,5 @@
 var loadedURLs = [];
+var cardLoadedTimes = 0;
 
 function clearLoadedURLs() {
     for (let url of loadedURLs) {
@@ -16,6 +17,8 @@ document.addEventListener("DOMContentLoaded", function () {
     loadGameMaps('plays');
     document.querySelectorAll('.sortDiv button').forEach(button => {
         button.addEventListener('click', function () {
+            cardLoadedTimes = 0;
+            document.getElementById('game_maps_container').innerHTML = '';
             loadGameMaps(this.id.replace('sortBy', '').toLowerCase());
             clearLoadedURLs();
             selectedButton.classList.remove('btnPushed');
@@ -25,13 +28,15 @@ document.addEventListener("DOMContentLoaded", function () {
             selectedButton = this;
         });
     });
+    document.getElementById('loadMoreBtn').addEventListener('click', function () {
+        cardLoadedTimes++;
+        loadGameMaps(selectedButton.id.replace('sortBy', '').toLowerCase());
     });
 });
 
 async function loadGameMaps(sort) {
-    const gameMaps = await fetchURL('http://127.0.0.1:3000/api/game_maps?sort=' + sort);
+    const gameMaps = await fetchURL('http://127.0.0.1:3000/api/game_maps?sort=' + sort + '&offset=' + (cardLoadedTimes * 20));
     let gameMapsContainer = document.getElementById('game_maps_container');
-    gameMapsContainer.innerHTML = '';
     if (gameMaps.success) {
         for (let i = 0; i < gameMaps.results.length; i++) {
             gameMapsContainer.appendChild(createCard(gameMaps.results[i]));

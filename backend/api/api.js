@@ -160,6 +160,7 @@ router.post('/signout', (request, response) => {
 router.get('/game_maps', async (request, response) => {
     try {
         const sort = String(request.query.sort || 'created').toLowerCase();
+        const offset = parseInt(request.query.offset) || 0;
         const validSorts = ['created', 'rating', 'plays', 'favorites'];
         if (!validSorts.includes(sort)) {
             return response.status(400).json({
@@ -169,7 +170,7 @@ router.get('/game_maps', async (request, response) => {
         }
 
         const user_id = request.session?.userid || 1; //TODO: teszt user törlése session stabilizálás után
-        const palyak = await database.getGameMaps(sort, user_id);
+        const palyak = await database.getGameMaps(sort, user_id, offset);
 
         response.status(200).json({
             success: true,
