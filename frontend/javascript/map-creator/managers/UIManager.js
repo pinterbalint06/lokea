@@ -10,6 +10,10 @@ export class UIManager {
         this.animations = {
             isCollapsing: false
         };
+        this.connectionUiState = {
+            hasEnoughPoints: false,
+            isConnecting: false
+        };
 
         this.#gatherElements();
         this.#updateCollapseDirection();
@@ -72,6 +76,7 @@ export class UIManager {
         this.elements.mapSelect.addEventListener("change", (event) => this.bus.emit(EVENTS.UI_SWITCH_MAP_REQUEST, { mapId: parseInt(event.target.value) }));
         this.elements.addNewMarkerBtn.addEventListener("click", () => this.bus.emit(EVENTS.UI_ADD_NEW_MARKER_REQUEST));
         this.elements.saveMapButton.addEventListener("click", () => this.bus.emit(EVENTS.UI_SAVE_MAP_CLICKED));
+        this.elements.newConnectionBtn.addEventListener("click", () => this.bus.emit(EVENTS.UI_CONNECTION_CREATE_REQUEST));
 
         let coordInputs = [this.elements.coordinateXInput, this.elements.coordinateYInput];
         coordInputs.forEach(coordinateInput => {
@@ -182,7 +187,9 @@ export class UIManager {
         this.bus.on(EVENTS.MAP_SWITCHED, ({ mapId }) => {
             this.elements.collapseBootstrapElement.hide();
             this.elements.mapSelect.value = mapId;
-            this.elements.newConnectionBtn.disabled = true;
+            this.connectionUiState.hasEnoughPoints = false;
+            this.connectionUiState.isConnecting = false;
+            this.#updateNewConnectionButtonState();
         });
 
         this.bus.on(EVENTS.MARKER_PLACING_STARTED, () => this.elements.floatingButtonDiv.classList.add("d-none"));
@@ -217,7 +224,8 @@ export class UIManager {
         this.bus.on(EVENTS.HIDE_LOADING, () => this.elements.loadingOverlay.classList.add("d-none"));
 
         this.bus.on(EVENTS.POINTS_LOADED, ({ points }) => {
-            this.elements.newConnectionBtn.disabled = Object.keys(points).length < 2;
+            this.connectionUiState.hasEnoughPoints = Object.keys(points).length >= 2;
+            this.#updateNewConnectionButtonState();
         });
 
         this.bus.on(EVENTS.MAPS_LOADED, ({ maps }) => {
@@ -226,13 +234,27 @@ export class UIManager {
                 this.elements.uploadOverlay.classList.add("d-none");
                 this.elements.mapSelector.classList.remove("d-none");
                 this.elements.saveMapButton.disabled = true;
-                this.elements.newConnectionBtn.disabled = true;
+                this.connectionUiState.hasEnoughPoints = false;
+                this.connectionUiState.isConnecting = false;
+                this.#updateNewConnectionButtonState();
 
                 this.#updateMapSelector(maps);
             } else {
                 this.elements.uploadOverlay.classList.remove("d-none");
                 this.elements.mapSelector.classList.add("d-none");
+                this.connectionUiState.hasEnoughPoints = false;
+                this.connectionUiState.isConnecting = false;
+                this.#updateNewConnectionButtonState();
             }
+        });
+
+        this.bus.on(EVENTS.CONNECTION_MODE_CHANGED, ({ isConnecting }) => {
+            this.connectionUiState.isConnecting = isConnecting;
+            this.#updateNewConnectionButtonState();
+        });
+
+        this.bus.on(EVENTS.CONNECTION_LIST_UI_UPDATE, ({ connections, unsavedConnections }) => {
+            this.#renderConnectionList(connections, unsavedConnections);
         });
 
         this.bus.on(EVENTS.MARKER_SELECTED, ({ position, data }) => {
@@ -324,6 +346,64 @@ export class UIManager {
             this.elements.collapseElement.classList.remove("collapse-horizontal");
         } else {
             this.elements.collapseElement.classList.add("collapse-horizontal");
+        }
+    }
+
+    #updateNewConnectionButtonState() {
+        this.elements.newConnectionBtn.disabled = !this.connectionUiState.hasEnoughPoints || this.connectionUiState.isConnecting;
+    }
+
+    #renderConnectionList(connections, unsavedConnections) {
+        this.elements.connectionsList.innerHTML = "";
+
+        let allConnections = [...connections, ...unsavedConnections];
+
+        if (allConnections.length == 0) {
+            this.elements.emptyConnections.classList.remove("d-none");
+            this.elements.connectionsList.classList.add("d-none");
+        } else {
+
+            this.elements.emptyConnections.classList.add("d-none");
+            this.elements.connectionsList.classList.remove("d-none");
+
+            let template = document.getElementById("connection-card-template");
+            let fragment = new DocumentFragment();
+
+            for (let i = 0; i < allConnections.length; i++) {
+                let connection = allConnections[i];
+                let clone = template.content.cloneNode(true);
+
+                clone.querySelector(".start-id").textContent = connection.start_point_id;
+                clone.querySelector(".end-id").textContent = connection.end_point_id;
+
+                let card = clone.querySelector(".kapcsolat-kartya");
+
+                card.addEventListener("mouseenter", () => {
+                    this.bus.emit(EVENTS.UI_CONNECTION_HIGHLIGHT, {
+                        connectionId: connection.connection_id,
+                        type: "focused"
+                    });
+                });
+
+                card.addEventListener("click", () => {
+                    this.bus.emit(EVENTS.UI_CONNECTION_CENTER_VIEW, {
+                        startPointId: connection.start_point_id,
+                        endPointId: connection.end_point_id
+                    });
+                });
+
+                card.addEventListener("mouseleave", () => {
+                    let type = connection.connection_id < 0 ? "unsaved" : "editing";
+                    this.bus.emit(EVENTS.UI_CONNECTION_HIGHLIGHT, {
+                        connectionId: connection.connection_id,
+                        type: type
+                    });
+                });
+
+                fragment.appendChild(clone);
+            }
+
+            this.elements.connectionsList.appendChild(fragment);
         }
     }
 }

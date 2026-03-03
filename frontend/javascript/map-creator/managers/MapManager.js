@@ -9,6 +9,7 @@ export class MapManager {
         this.viewer = mapViewer;
         this.appState = appState; // gameMapId, activeMapId
         this.isSaving = false;
+        this.isConnectionMode = false;
 
         this.maps = {};
         this.pendingMapFile = null;
@@ -22,6 +23,7 @@ export class MapManager {
         this.viewer.onClickHandler = (cursorX, cursorY) => {
             let clickedMarkerId = this.viewer.getMarkerAtClick(cursorX, cursorY);
             if (clickedMarkerId != -1) {
+                // TODO: har rányom egyre is mozogjon
                 this.bus.emit(EVENTS.MARKER_CLICKED, { id: clickedMarkerId, x: cursorX, y: cursorY });
             } else {
                 this.bus.emit(EVENTS.MAP_CLICKED, { x: cursorX, y: cursorY });

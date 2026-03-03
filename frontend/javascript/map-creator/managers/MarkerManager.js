@@ -13,6 +13,7 @@ export class MarkerManager {
         this.isPlacingMarker = false;
         this.northDirection = 0;
         this.unsavedConnectionCount = 0;
+        this.isConnectionMode = false;
 
         this.#bindBusEvents();
     }
@@ -51,7 +52,7 @@ export class MarkerManager {
             if (this.isSaving) {
                 this.bus.emit(EVENTS.TOAST_SHOW, { msg: "Pont mentés folyamatban, kérlek várj!", type: "danger" });
             } else {
-                if (this.isPlacingMarker && this.activePointId) {
+                if (this.isPlacingMarker && this.activePointId && !this.isConnectionMode) {
                     if (this.mapViewer.doesMarkerExist(this.activePointId)) {
                         this.mapViewer.moveMarker(this.activePointId, x, y);
                     } else {
@@ -114,8 +115,13 @@ export class MarkerManager {
             this.#emitDirtyStateChange();
         });
 
-        this.bus.on(EVENTS.NEW_CONNECTION_ADDED, ({ totalUnsavedCount }) => {
-            this.unsavedConnectionCount = totalUnsavedCount;
+        this.bus.on(EVENTS.NEW_CONNECTION_ADDED, () => {
+            this.unsavedConnectionCount++;
+            this.#emitDirtyStateChange();
+        });
+
+        this.bus.on(EVENTS.CONNECTIONS_SAVED, ({ successCount }) => {
+            this.unsavedConnectionCount = Math.max(0, this.unsavedConnectionCount - successCount);
             this.#emitDirtyStateChange();
         });
 
@@ -141,7 +147,7 @@ export class MarkerManager {
         });
 
         this.bus.on(EVENTS.MARKER_CLICKED, ({ id }) => {
-            if (!this.isPlacingMarker && id && id != CONSTANTS.TEMP_ID) {
+            if (!this.isPlacingMarker && id && id != CONSTANTS.TEMP_ID && !this.isConnectionMode) {
                 this.activePointId = id;
                 this.mapViewer.changeMarkerType(id, "EDIT");
                 this.isPlacingMarker = true;
@@ -176,6 +182,8 @@ export class MarkerManager {
                 this.bus.emit(EVENTS.TOAST_SHOW, { msg: "A pont nem változott!" });
             }
         });
+
+        this.bus.on(EVENTS.CONNECTION_MODE_CHANGED, ({ isConnecting }) => this.isConnectionMode = isConnecting);
     }
 
     #resetMarkerPlacingState() {
