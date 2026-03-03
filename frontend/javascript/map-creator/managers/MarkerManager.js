@@ -1,6 +1,6 @@
 import { EVENTS } from "../events/EventBus.js";
-import { CONSTANTS, ICONS } from "../constants.js";
-import { fetchPoints, savePoint as savePointApi } from "../api.js";
+import { CONSTANTS, ICONS } from "../shared/constants.js";
+import { fetchPoints, savePoint as savePointApi } from "../shared/api.js";
 
 export class MarkerManager {
     constructor(eventBus, mapViewer, appState) {
@@ -176,10 +176,12 @@ export class MarkerManager {
         });
 
         this.bus.on(EVENTS.UI_POINT_SAVE_REQUESTED, async () => {
-            if (this.#hasUnsavedChanges()) {
+            if (this.#hasMarkerChanges()) {
                 this.#savePoint();
             } else {
-                this.bus.emit(EVENTS.TOAST_SHOW, { msg: "A pont nem változott!" });
+                if (!this.#hasUnsavedChanges()) {
+                    this.bus.emit(EVENTS.TOAST_SHOW, { msg: "A pont nem változott!" });
+                }
             }
         });
 
@@ -195,7 +197,7 @@ export class MarkerManager {
         }
     }
 
-    #hasUnsavedChanges() {
+    #hasMarkerChanges() {
         let isDirty = false;
         if (this.activePointId) {
             if (this.activePointId == CONSTANTS.TEMP_ID) {
@@ -203,13 +205,28 @@ export class MarkerManager {
             } else {
                 let position = this.mapViewer.getMarkerPosition(this.activePointId);
                 let cached = this.markersCache[this.activePointId];
-                let hasPositionChange = !cached || position.x != cached.point_x || position.y != cached.point_y;
-                let hasNorthDirChange = this.northDirection != cached.north_direction;
-                let hasPendingImage = this.appState.pendingEquirectangularFile != null;
-                let hasUnsavedConnections = this.unsavedConnectionCount > 0;
 
-                isDirty = hasPositionChange || hasNorthDirChange || hasPendingImage || hasUnsavedConnections;
+                if (!cached) {
+                    isDirty = true;
+                } else {
+                    let hasPositionChange = position.x != cached.point_x || position.y != cached.point_y;
+                    let hasNorthDirChange = this.northDirection != cached.north_direction;
+                    let hasPendingImage = this.appState.pendingEquirectangularFile != null;
+
+                    isDirty = hasPositionChange || hasNorthDirChange || hasPendingImage;
+                }
             }
+        }
+
+        return isDirty;
+    }
+
+    #hasUnsavedChanges() {
+        let isDirty = this.#hasMarkerChanges();
+
+        if (this.activePointId && this.activePointId != CONSTANTS.TEMP_ID) {
+            let hasUnsavedConnections = this.unsavedConnectionCount > 0;
+            isDirty = isDirty || hasUnsavedConnections;
         }
 
         return isDirty;
@@ -271,15 +288,16 @@ export class MarkerManager {
 
             this.bus.emit(EVENTS.TOAST_HIDE_ID, { id: "savingPoint" });
             if (data.success) {
+                let previousPointId = pointToSave;
                 if (isNewPoint) {
                     this.mapViewer.changeMarkerId(pointToSave, data.pointId);
                     if (this.activePointId == CONSTANTS.TEMP_ID) {
-                        this.activePointId = data.point_id;
+                        this.activePointId = data.pointId;
                         this.mapViewer.changeMarkerType(data.pointId, "EDIT");
                     } else {
                         this.mapViewer.changeMarkerType(data.pointId, "READY");
                     }
-                    pointToSave = data.point_id;
+                    pointToSave = data.pointId;
                 }
                 if (!this.markersCache[pointToSave]) {
                     this.markersCache[pointToSave] = {
@@ -290,6 +308,15 @@ export class MarkerManager {
                 this.markersCache[pointToSave].point_y = position.y;
                 this.markersCache[pointToSave].north_direction = this.northDirection;
                 this.appState.pendingEquirectangularFile = null;
+
+                this.bus.emit(EVENTS.POINT_SAVED, {
+                    previousPointId,
+                    pointId: pointToSave,
+                    isNewPoint,
+                    position,
+                    data: this.markersCache[pointToSave]
+                });
+
                 this.bus.emit(EVENTS.TOAST_SHOW, { msg: "Pont sikeresen mentve!", type: "success", iconObject: ICONS.SAVE_FLOPPY });
                 this.#emitDirtyStateChange();
             } else {

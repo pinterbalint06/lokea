@@ -122,4 +122,3 @@ export function getGameMapIdFromUrl() {
     let id = parseInt(pathParts[2]);
     return id;
 }
-

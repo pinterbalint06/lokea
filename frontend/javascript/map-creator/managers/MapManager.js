@@ -1,7 +1,7 @@
 import { EVENTS } from "../events/EventBus.js";
-import { CONSTANTS, ICONS } from "../constants.js";
-import { fetchMapList, saveNewMap, fetchMapImage } from "../api.js";
-import { processUploadedImageFile } from "../utils.js";
+import { CONSTANTS, ICONS } from "../shared/constants.js";
+import { fetchMapList, saveNewMap, fetchMapImage } from "../shared/api.js";
+import { processUploadedImageFile } from "../shared/utils.js";
 
 export class MapManager {
     constructor(eventBus, mapViewer, appState) {
@@ -84,9 +84,9 @@ export class MapManager {
 
     async #saveMap() {
         this.isSaving = true;
-        this.bus.emit(EVENTS.TOAST_SHOW, { id: "savingMap", msg: "Térkép mentése folyamatban...", closable: false, autohide: false, spinner: true });
+        let oldId = this.appState.activeMapId;
+        this.bus.emit(EVENTS.TOAST_SHOW, { id: `savingMap${oldId}`, msg: "Térkép mentése folyamatban...", closable: false, autohide: false, spinner: true });
         try {
-            let oldId = this.appState.activeMapId;
             let currentMap = this.maps[oldId];
 
             if (!this.pendingMapFile || !currentMap) {
@@ -113,11 +113,11 @@ export class MapManager {
 
             this.pendingMapFile = null;
             this.pendingMapFileMapId = null;
-            this.bus.emit(EVENTS.TOAST_HIDE_ID, { id: "savingMap" });
+            this.bus.emit(EVENTS.TOAST_HIDE_ID, { id: `savingMap${oldId}` });
             this.bus.emit(EVENTS.TOAST_SHOW, { msg: "Térkép sikeresen mentve!", type: "success", iconObject: ICONS.SAVE_FLOPPY });
             this.bus.emit(EVENTS.MAP_SAVE_SUCCEEDED, { oldMapId: oldId, newMapId: newId });
         } catch (error) {
-            this.bus.emit(EVENTS.TOAST_HIDE_ID, { id: "savingMap" });
+            this.bus.emit(EVENTS.TOAST_HIDE_ID, { id: `savingMap${oldId}` });
             this.bus.emit(EVENTS.TOAST_SHOW, { msg: error.message, type: "danger" });
             this.bus.emit(EVENTS.MAP_SAVE_FAILED, { error });
         } finally {
@@ -174,13 +174,13 @@ export class MapManager {
                     let mapData = this.maps[mapId];
 
                     this.bus.emit(EVENTS.MAP_SWITCHED, { mapId });
-                    this.bus.emit(EVENTS.TOAST_SHOW, { id: "mapSwitching", msg: "Váltás: " + mapData.name, closable: false, autohide: false });
+                    this.bus.emit(EVENTS.TOAST_SHOW, { id: `mapSwitching${mapId}`, msg: "Váltás: " + mapData.name, closable: false, autohide: false });
 
                     if (mapId == CONSTANTS.TEMP_ID) {
                         this.viewer.clearMarkersAndLines();
                         await this.viewer.loadMap(mapData.temporaryURL, mapData.imgWidth, mapData.imgHeight);
                         // show change toast for 1 sec after the map was loaded then hide it
-                        setTimeout(() => this.bus.emit(EVENTS.TOAST_HIDE_ID, { id: "mapSwitching" }), 1000);
+                        setTimeout(() => this.bus.emit(EVENTS.TOAST_HIDE_ID, { id: `mapSwitching${mapId}` }), 1000);
                     } else {
                         try {
                             let imgData = await fetchMapImage(mapId);
@@ -191,9 +191,9 @@ export class MapManager {
                             }
 
                             // show change toast for 1 sec after the map was loaded then hide it
-                            setTimeout(() => this.bus.emit(EVENTS.TOAST_HIDE_ID, { id: "mapSwitching" }), 1000);
+                            setTimeout(() => this.bus.emit(EVENTS.TOAST_HIDE_ID, { id: `mapSwitching${mapId}` }), 1000);
                         } catch (e) {
-                            this.bus.emit(EVENTS.TOAST_HIDE_ID, { id: "mapSwitching" });
+                            this.bus.emit(EVENTS.TOAST_HIDE_ID, { id: `mapSwitching${mapId}` });
                             this.bus.emit(EVENTS.TOAST_SHOW, { msg: "Hiba a kép betöltésekor!", type: "danger" });
                         }
                     }

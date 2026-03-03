@@ -1,6 +1,6 @@
 import { EVENTS } from "../events/EventBus.js";
-import { CONSTANTS, ICONS } from "../constants.js";
-import { showToast, createSvgIcon, createSpinnerIcon, savePreviousValue } from "../utils.js";
+import { CONSTANTS, ICONS } from "../shared/constants.js";
+import { showToast, createSvgIcon, createSpinnerIcon, savePreviousValue } from "../shared/utils.js";
 
 export class UIManager {
     constructor(eventBus) {

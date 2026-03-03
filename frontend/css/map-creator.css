@@ -334,6 +334,19 @@ main {
 }
 
 @media (max-width: 992px) {
+    #toastPlace {
+        top: 4.5rem !important;
+        left: 50% !important;
+        transform: translateX(-50%);
+        margin-top: 0 !important;
+        margin-left: 0 !important;
+        width: min(92vw, 420px);
+    }
+
+    #toastPlace .toast {
+        width: 100%;
+    }
+
     #ujPontCollapse {
         top: auto;
         bottom: 0;

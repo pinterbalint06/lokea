@@ -1,5 +1,5 @@
-import { fetchConnections } from "../api.js";
-import { CONSTANTS } from "../constants.js";
+import { fetchConnections, saveUnsavedConnections } from "../shared/api.js";
+import { CONSTANTS, ICONS } from "../shared/constants.js";
 import { EVENTS } from "../events/EventBus.js";
 
 export class ConnectionManager {
@@ -40,6 +40,14 @@ export class ConnectionManager {
             this.#emitConnectionListUpdate();
         });
 
+        this.bus.on(EVENTS.POINT_SAVED, ({ previousPointId, pointId, isNewPoint }) => {
+            if (isNewPoint && this.activePointId == previousPointId) {
+                this.activePointId = pointId;
+                this.#renderConnectionsForActiveMap();
+                this.#emitConnectionListUpdate();
+            }
+        });
+
         this.bus.on(EVENTS.MARKER_PLACING_STARTED, () => {
             this.activePointId = CONSTANTS.TEMP_ID;
         });
@@ -52,7 +60,7 @@ export class ConnectionManager {
             this.activePointId = null;
         });
 
-        this.bus.on(EVENTS.MAP_CLICKED, ({ id }) => {
+        this.bus.on(EVENTS.MAP_CLICKED, () => {
             if (this.isConnecting) {
                 this.bus.emit(EVENTS.TOAST_SHOW, { msg: "Kattints egy térképjelölőre!", type: "danger", duration: 1500 });
             }
@@ -99,7 +107,11 @@ export class ConnectionManager {
             this.#startConnectingMode();
         });
 
-
+        this.bus.on(EVENTS.UI_POINT_SAVE_REQUESTED, async () => {
+            if (this.activePointId != CONSTANTS.TEMP_ID && this.unsavedConnections.length > 0) {
+                this.#saveConnections();
+            }
+        });
 
         this.bus.on(EVENTS.UI_COLLAPSE_CLOSE_REQUESTED, (request) => {
             if (this.isSaving) {
@@ -169,6 +181,46 @@ export class ConnectionManager {
             this.mapViewer.canvasInput.setDefaultCursor("default");
             this.bus.emit(EVENTS.TOAST_HIDE_ID, { id: this.connectionToastId });
             this.bus.emit(EVENTS.CONNECTION_MODE_CHANGED, { isConnecting: false });
+        }
+    }
+
+    async #saveConnections() {
+        this.isSaving = true;
+        this.bus.emit(EVENTS.TOAST_SHOW, { msg: "Kapcsolatok mentése", id: "savingConnections", closable: false, autohide: false, spinner: true });
+
+        try {
+            let result = await saveUnsavedConnections(this.appState.gameMapID, this.unsavedConnections);
+
+            let successCount = result.saved.length;
+            let failedCount = result.failed.length;
+
+            if (successCount > 0) {
+                this.bus.emit(EVENTS.TOAST_SHOW, { msg: `${successCount} kapcsolat sikeresen mentve!`, type: "success", iconObject: ICONS.SAVE_FLOPPY });
+                this.connectionsList.push(...result.saved);
+
+                this.unsavedConnections = this.unsavedConnections.filter(connection =>
+                    !result.saved.some(savedConn =>
+                        savedConn.start_point_id == connection.start_point_id &&
+                        savedConn.end_point_id == connection.end_point_id
+                    )
+                );
+
+                this.bus.emit(EVENTS.CONNECTIONS_SAVED, { successCount });
+            }
+
+            if (failedCount > 0) {
+                this.bus.emit(EVENTS.TOAST_SHOW, { msg: `${failedCount} kapcsolat mentése sikertelen!`, type: "danger" });
+            }
+
+            this.#renderConnectionsForActiveMap();
+            this.#emitConnectionListUpdate();
+
+        } catch (error) {
+            console.error("Error saving connections:", error);
+            this.bus.emit(EVENTS.TOAST_SHOW, { msg: "Hiba a kapcsolatok mentésekor!", type: "danger" });
+        } finally {
+            this.bus.emit(EVENTS.TOAST_HIDE_ID, { id: "savingConnections" });
+            this.isSaving = false;
         }
     }
 

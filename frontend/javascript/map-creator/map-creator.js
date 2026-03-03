@@ -1,8 +1,8 @@
 import { MapViewer } from "../libs/viewer/MapViewer.js";
 import { EquirectangularViewer } from "../libs/viewer/EquirectangularViewer.js";
-import { CONSTANTS } from "./constants.js";
-import { appState } from "./state.js";
-import { getGameMapIdFromUrl } from "./utils.js";
+import { CONSTANTS } from "./shared/constants.js";
+import { appState } from "./shared/state.js";
+import { getGameMapIdFromUrl } from "./shared/utils.js";
 import { eventBus, EVENTS } from './events/EventBus.js';
 import { MarkerManager } from "./managers/MarkerManager.js";
 import { MapManager } from "./managers/MapManager.js";
@@ -11,8 +11,6 @@ import { EquirectangularManager } from "./managers/EquirectangularManager.js";
 import { ConnectionManager } from "./managers/ConnectionManager.js";
 
 async function init() {
-
-    // setup
     const mapViewer = new MapViewer(CONSTANTS.MAP_CANVAS_ID);
     const equirectangularViewer = new EquirectangularViewer(CONSTANTS.EQUIRECTANGULAR_CANVAS_ID);
 
@@ -38,5 +36,3 @@ document.addEventListener("DOMContentLoaded", init);
 // TODO: mapok közti kapcsolatok
 // TODO: "hidden.bs.collapse" és "hide.bs.collapse" események kezelése majd a ConnectionManagerben és EquirectangularManagerben
 // TODO: markerek fixálása pixel koordinátákra? mindig egy adott pixelen legyenek?
-// TODO: maradék az átdolgozásból
-// 1. ConnectionManager kapcsolatok mentése

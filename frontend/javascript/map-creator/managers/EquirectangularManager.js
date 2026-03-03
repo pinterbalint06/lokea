@@ -1,7 +1,7 @@
 import { EVENTS } from "../events/EventBus.js";
-import { CONSTANTS } from "../constants.js";
-import { fetchEquirectangularImage } from "../api.js";
-import { processUploadedImageFile } from "../utils.js";
+import { CONSTANTS } from "../shared/constants.js";
+import { fetchEquirectangularImage } from "../shared/api.js";
+import { processUploadedImageFile } from "../shared/utils.js";
 import { degreeToRadian } from "../../libs/math/mathUtils.js";
 
 
@@ -25,7 +25,7 @@ export class EquirectangularManager {
 
         this.bus.on(EVENTS.MARKER_SELECTED, async ({ id, data }) => {
             this.activePointId = id;
-            this.currentNorthDirection = data.north_direction;
+            this.currentNorthDirection = degreeToRadian(data.north_direction);
             this.bus.emit(EVENTS.TOAST_SHOW, { msg: "Kép betöltése", id: "equirectangularLoading", closable: false, spinner: true });
 
             if (this.abortController) {
@@ -57,6 +57,12 @@ export class EquirectangularManager {
         });
 
         this.bus.on(EVENTS.NEW_MARKER_PLACED, () => this.activePointId = CONSTANTS.TEMP_ID);
+
+        this.bus.on(EVENTS.POINT_SAVED, ({ previousPointId, pointId, isNewPoint }) => {
+            if (isNewPoint && this.activePointId == previousPointId) {
+                this.activePointId = pointId;
+            }
+        });
 
         this.bus.on(EVENTS.MARKER_MOVED, ({ x, y, screenX, screenY }) => {
             if (this.mapViewer.doesMarkerExist(CONSTANTS.FOV_MARKER_ID)) {
