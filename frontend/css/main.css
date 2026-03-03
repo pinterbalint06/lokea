@@ -1,25 +1,56 @@
 body {
-    background-color: purple;
+    background: #943ec9;
+    background: linear-gradient(132deg, rgba(148, 62, 201, 1) 1%, rgba(201, 66, 153, 1) 52%, rgba(148, 62, 201, 1) 100%);
+}
+
+header {
+    background-color: black;
+    opacity: 0.7;
 }
 
 .navbar {
-    background-color: black;
-    opacity: 0.8;
-    margin: 0;
+    color: aliceblue;
+    font-family: monospace;
 }
 
-.navbar p {
-    color: aliceblue;
+.online-dot {
+  display: inline-block;
+  width: 10px;
+  height: 10px;
+  background-color: #2ecc71; /* Szép zöld szín */
+  border-radius: 50%; /* Ettől lesz kör alakú */
+  margin-right: 5px;
+  box-shadow: 0 0 0 rgba(46, 204, 113, 0.4);
+  animation: pulse 2s infinite; /* 2 másodperces lüktetés */
+}
+
+@keyframes pulse {
+  0% {
+    transform: scale(0.95);
+    box-shadow: 0 0 0 0 rgba(46, 204, 113, 0.7);
+  }
+  70% {
+    transform: scale(1);
+    box-shadow: 0 0 0 10px rgba(46, 204, 113, 0);
+  }
+  100% {
+    transform: scale(0.95);
+    box-shadow: 0 0 0 0 rgba(46, 204, 113, 0);
+  }
 }
 
 .logo {
-    width: 300px;
+    width: 200px;
+}
+
+.logoTitle {
+    font-size: 20px;
 }
 
 .customMap {
     background: url(../images/examplelocation.jpg);
     background-repeat: no-repeat;
-    background-size:cover;
+    background-size: cover;
     background-position: center;
     height: 800px;
 }
@@ -30,8 +61,35 @@ body {
     color: white;
 }
 
-.customMapRatings{
+.customMapRatings {
     background-color: black;
     opacity: 0.8;
     color: white;
 }
+
+.dropdown:hover .dropdown-menu {
+    display: block;
+}
+
+.dropdown:focus-within .dropdown-menu {
+    display: block;
+}
+
+.dropdown-menu a:hover {
+    /* background-color: rgb(25, 31, 197); */
+    cursor: pointer;
+}
+
+.dropdown-icons {
+    width: 20px;
+    height: 20px;
+}
+
+/* .dropdown-menu {
+    z-index: 1200;
+}
+
+.dropdown-menu-end {
+    right: 0;
+    left: auto;
+} */
