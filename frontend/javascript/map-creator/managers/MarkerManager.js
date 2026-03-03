@@ -6,12 +6,13 @@ export class MarkerManager {
     constructor(eventBus, mapViewer, appState) {
         this.bus = eventBus;
         this.mapViewer = mapViewer;
-        this.appState = appState; // gameMapId, activeMapId
+        this.appState = appState; // gameMapId, activeMapId, pendingEquirectangularFile
         this.isSaving = false;
         this.markersCache = {};
         this.activePointId = null;
         this.isPlacingMarker = false;
-        this.pendingEquirectangularFile = null;
+        this.northDirection = 0;
+        this.unsavedConnectionCount = 0;
 
         this.#bindBusEvents();
     }
@@ -57,6 +58,7 @@ export class MarkerManager {
                         this.mapViewer.placeMarker(this.activePointId, x, y, CONSTANTS.MARKER_SIZE.width, CONSTANTS.MARKER_SIZE.height, "EMPTY");
                         this.bus.emit(EVENTS.TOAST_HIDE_ID, { id: "placeMarker" });
                         this.bus.emit(EVENTS.NEW_MARKER_PLACED);
+                        this.#emitDirtyStateChange();
                     }
                     let pos = this.mapViewer.getMarkerPosition(this.activePointId);
                     this.bus.emit(EVENTS.MARKER_MOVED, {
@@ -65,6 +67,7 @@ export class MarkerManager {
                         screenX: x,
                         screenY: y
                     });
+                    this.#emitDirtyStateChange();
                 }
             }
         });
@@ -76,6 +79,7 @@ export class MarkerManager {
                     event.target.dataset.previousValue = event.target.valueAsNumber;
                     this.mapViewer.moveMarkerToImageCoordinates(this.activePointId, x, y);
                     this.bus.emit(EVENTS.MARKER_MOVED, this.mapViewer.getMarkerPosition(this.activePointId));
+                    this.#emitDirtyStateChange();
                 } else {
                     event.target.value = event.target.dataset.previousValue;
                     this.bus.emit(EVENTS.TOAST_SHOW, { msg: isValid.error, type: "danger" });
@@ -104,7 +108,16 @@ export class MarkerManager {
             }
         });
 
-        this.bus.on(EVENTS.MAP_SWITCHED, () => this.#resetMarkerPlacingState());
+        this.bus.on(EVENTS.MAP_SWITCHED, () => {
+            this.#resetMarkerPlacingState();
+            this.unsavedConnectionCount = 0;
+            this.#emitDirtyStateChange();
+        });
+
+        this.bus.on(EVENTS.NEW_CONNECTION_ADDED, ({ totalUnsavedCount }) => {
+            this.unsavedConnectionCount = totalUnsavedCount;
+            this.#emitDirtyStateChange();
+        });
 
         this.bus.on(EVENTS.UI_COLLAPSE_HIDE_STARTED, () => {
             if (this.activePointId != null) {
@@ -138,15 +151,30 @@ export class MarkerManager {
                 if (this.mapViewer.getZoomLevel() < 4) {
                     zoomLevel = 4;
                 }
-                this.mapViewer.moveTo(position.x, position.y, 4);
+                this.mapViewer.moveTo(position.x, position.y, zoomLevel);
 
-                // TODO: LOAD IMAGE, SHOW COLLAPSE
+                this.northDirection = this.markersCache[id].north_direction;
                 this.bus.emit(EVENTS.MARKER_SELECTED, { id, position, data: this.markersCache[id] });
+                this.#emitDirtyStateChange();
             }
         });
 
         this.bus.on(EVENTS.EQUIRECTANGULAR_IMAGE_LOADED, () => {
             this.mapViewer.changeMarkerType(this.activePointId, "UPLOADING");
+            this.#emitDirtyStateChange();
+        });
+
+        this.bus.on(EVENTS.UI_NORTH_DIRECTION_CHANGED, ({ northDirection }) => {
+            this.northDirection = northDirection;
+            this.#emitDirtyStateChange();
+        });
+
+        this.bus.on(EVENTS.UI_POINT_SAVE_REQUESTED, async () => {
+            if (this.#hasUnsavedChanges()) {
+                this.#savePoint();
+            } else {
+                this.bus.emit(EVENTS.TOAST_SHOW, { msg: "A pont nem változott!" });
+            }
         });
     }
 
@@ -157,6 +185,34 @@ export class MarkerManager {
             this.mapViewer.canvasInput.setDefaultCursor("default");
             this.bus.emit(EVENTS.MARKER_PLACING_CANCELLED);
         }
+    }
+
+    #hasUnsavedChanges() {
+        let isDirty = false;
+        if (this.activePointId) {
+            if (this.activePointId == CONSTANTS.TEMP_ID) {
+                isDirty = this.appState.pendingEquirectangularFile != null;
+            } else {
+                let position = this.mapViewer.getMarkerPosition(this.activePointId);
+                let cached = this.markersCache[this.activePointId];
+                let hasPositionChange = !cached || position.x != cached.point_x || position.y != cached.point_y;
+                let hasNorthDirChange = this.northDirection != cached.north_direction;
+                let hasPendingImage = this.appState.pendingEquirectangularFile != null;
+                let hasUnsavedConnections = this.unsavedConnectionCount > 0;
+
+                isDirty = hasPositionChange || hasNorthDirChange || hasPendingImage || hasUnsavedConnections;
+            }
+        }
+
+        return isDirty;
+    }
+
+    #emitDirtyStateChange() {
+        let isDirty = this.#hasUnsavedChanges();
+        this.bus.emit(EVENTS.POINT_DIRTY_STATE_CHANGED, {
+            isDirty: isDirty,
+            activePointId: this.activePointId
+        });
     }
 
     async #loadPoints(mapId) {
@@ -177,6 +233,66 @@ export class MarkerManager {
             this.bus.emit(EVENTS.TOAST_SHOW, { msg: "Hiba a pontok betöltésekor!", type: "danger" });
         } finally {
             this.bus.emit(EVENTS.TOAST_HIDE_ID, { id: "loadingPoints" });
+        }
+    }
+
+    async #savePoint() {
+        this.isSaving = true;
+        let pointToSave = this.activePointId;
+        this.bus.emit(EVENTS.TOAST_SHOW, { msg: "Pont mentése", id: "savingPoint", closable: false, autohide: false, spinner: true });
+        try {
+            let position = this.mapViewer.getMarkerPosition(pointToSave);
+            let isNewPoint = pointToSave == CONSTANTS.TEMP_ID;
+
+            if (this.appState.activeMapId == CONSTANTS.TEMP_ID) {
+                throw new Error("Először mentsd el a térképet!");
+            }
+            if (isNewPoint && !this.appState.pendingEquirectangularFile) {
+                throw new Error("Nincs kép kiválasztva!");
+            }
+
+            let data = await savePointApi({
+                pointId: pointToSave,
+                position: position,
+                northDirection: this.northDirection,
+                equirectangularFile: this.appState.pendingEquirectangularFile,
+                gameMapID: this.appState.gameMapID,
+                mapID: this.appState.activeMapId,
+                isNew: isNewPoint
+            });
+
+            this.bus.emit(EVENTS.TOAST_HIDE_ID, { id: "savingPoint" });
+            if (data.success) {
+                if (isNewPoint) {
+                    this.mapViewer.changeMarkerId(pointToSave, data.pointId);
+                    if (this.activePointId == CONSTANTS.TEMP_ID) {
+                        this.activePointId = data.point_id;
+                        this.mapViewer.changeMarkerType(data.pointId, "EDIT");
+                    } else {
+                        this.mapViewer.changeMarkerType(data.pointId, "READY");
+                    }
+                    pointToSave = data.point_id;
+                }
+                if (!this.markersCache[pointToSave]) {
+                    this.markersCache[pointToSave] = {
+                        point_id: pointToSave
+                    };
+                }
+                this.markersCache[pointToSave].point_x = position.x;
+                this.markersCache[pointToSave].point_y = position.y;
+                this.markersCache[pointToSave].north_direction = this.northDirection;
+                this.appState.pendingEquirectangularFile = null;
+                this.bus.emit(EVENTS.TOAST_SHOW, { msg: "Pont sikeresen mentve!", type: "success", iconObject: ICONS.SAVE_FLOPPY });
+                this.#emitDirtyStateChange();
+            } else {
+                throw new Error(data.error || "Hiba a pont mentésekor!");
+            }
+        } catch (error) {
+            this.bus.emit(EVENTS.TOAST_HIDE_ID, { id: "savingPoint" });
+            console.error(error);
+            this.bus.emit(EVENTS.TOAST_SHOW, { msg: error.message || "Hiba a pont mentésekor!", type: "danger" });
+        } finally {
+            this.isSaving = false;
         }
     }
 }

@@ -10,14 +10,12 @@ export class EquirectangularManager {
         this.bus = eventBus;
         this.mapViewer = mapViewer;
         this.equirectangularViewer = equirectangularViewer;
-        this.appState = appState; // gameMapId, activeMapId
-
+        this.appState = appState; // gameMapId, activeMapId, pendingEquirectangularFile
 
         this.fovSyncID = null;
         this.currentNorthDirection = 0;
         this.abortController = null;
         this.activePointId = null;
-        this.pendingEquirectangularFile = null;
 
         this.#bindBusEvents();
     }
@@ -73,7 +71,7 @@ export class EquirectangularManager {
         this.bus.on(EVENTS.UI_COLLAPSE_HIDE_STARTED, () => {
             this.#stopFOVSync();
             this.currentNorthDirection = 0;
-            this.pendingEquirectangularFile = null;
+            this.appState.pendingEquirectangularFile = null;
             this.activePointId = null;
         });
 
@@ -96,14 +94,14 @@ export class EquirectangularManager {
     async #handleEquirectangularLoad(file) {
         this.equirectangularViewer.clearImage();
         // TODO: emit event to so UI nows savePointBUtton should be disabled until the image is loaded
-        this.pendingEquirectangularFile = file;
+        this.appState.pendingEquirectangularFile = file;
 
         let imgData;
         try {
             imgData = await processUploadedImageFile(file);
 
             // check if the same file is still pending
-            if (this.pendingEquirectangularFile == file) {
+            if (this.appState.pendingEquirectangularFile == file) {
                 await this.equirectangularViewer.loadImage(imgData.url, imgData.width, imgData.height);
 
                 if (this.activePointId) {
@@ -113,7 +111,7 @@ export class EquirectangularManager {
             }
         } catch (error) {
             console.error(error);
-            this.pendingEquirectangularFile = null;
+            this.appState.pendingEquirectangularFile = null;
             this.bus.emit(EVENTS.TOAST_SHOW, { msg: error.message, type: "danger" });
         } finally {
             if (imgData) {

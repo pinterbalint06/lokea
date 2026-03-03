@@ -5,7 +5,8 @@ export const appState = {
     connectionsList: [],
     connectionsLoadPromise: null,
     activeMapId: -1,
-    gameMapID: null
+    gameMapID: null,
+    pendingEquirectangularFile: null
 };
 
 export const editorState = {

@@ -64,6 +64,8 @@ export class UIManager {
                 toggle: false
             }
         );
+
+        this.elements.savePointButton.disabled = true;
     }
 
     #bindUIEvents() {
@@ -134,6 +136,7 @@ export class UIManager {
                 this.animations.isCollapsing = false;
                 this.elements.northDirection.value = 0;
                 this.elements.northDirectionRange.value = 0;
+                this.elements.savePointButton.disabled = true;
                 this.bus.emit(EVENTS.UI_COLLAPSE_HIDDEN);
             }
         });
@@ -152,6 +155,9 @@ export class UIManager {
             }
         });
 
+        this.elements.savePointButton.addEventListener("click", () => {
+            this.bus.emit(EVENTS.UI_POINT_SAVE_REQUESTED);
+        });
 
         this.elements.equiFullscreenBtn.addEventListener("click", () => this.bus.emit(EVENTS.UI_EQUIRECTANGULAR_FULLSCREEN_REQUEST));
 
@@ -210,6 +216,10 @@ export class UIManager {
 
         this.bus.on(EVENTS.HIDE_LOADING, () => this.elements.loadingOverlay.classList.add("d-none"));
 
+        this.bus.on(EVENTS.POINTS_LOADED, ({ points }) => {
+            this.elements.newConnectionBtn.disabled = Object.keys(points).length < 2;
+        });
+
         this.bus.on(EVENTS.MAPS_LOADED, ({ maps }) => {
             let hasMaps = Object.keys(maps).length > 0;
             if (hasMaps) {
@@ -245,6 +255,10 @@ export class UIManager {
         this.bus.on(EVENTS.MAP_SAVE_AVAILABILITY_CHANGED, ({ canSave }) => this.elements.saveMapButton.disabled = !canSave);
 
         this.bus.on(EVENTS.MAP_SWITCH_REQUEST_REJECTED, ({ revertToId }) => this.elements.mapSelect.value = revertToId);
+
+        this.bus.on(EVENTS.POINT_DIRTY_STATE_CHANGED, ({ isDirty }) => {
+            this.elements.savePointButton.disabled = !isDirty;
+        });
     }
 
     #setupUploadHandler(dropZone, button, input, eventToEmit) {
