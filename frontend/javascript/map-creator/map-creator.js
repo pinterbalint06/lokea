@@ -32,7 +32,6 @@ document.addEventListener("DOMContentLoaded", init);
 // TODO: pontok, kapcsolatok, térképek törlése
 // TODO: térkép, pontok átnevezése
 // TODO: térkép képének cseréje mentés után
-// TODO: biztos hogy elakarod vetni a változtatásokat ha a user bezárja a collapset vagy elakarod menteni a változtatásokat egy modalban?
 // TODO: mapok közti kapcsolatok
 // TODO: "hidden.bs.collapse" és "hide.bs.collapse" események kezelése majd a ConnectionManagerben és EquirectangularManagerben
 // TODO: markerek fixálása pixel koordinátákra? mindig egy adott pixelen legyenek?

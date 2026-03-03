@@ -14,6 +14,8 @@ export class UIManager {
             hasEnoughPoints: false,
             isConnecting: false
         };
+        this.hasUnsavedChanges = false;
+        this.pendingAction = null;
 
         this.#gatherElements();
         this.#updateCollapseDirection();
@@ -33,6 +35,7 @@ export class UIManager {
             closeCollapse: document.getElementById("closeCollapse"),
             addNewMapBtn: document.getElementById("addNewMapBtn"),
             newConnectionBtn: document.getElementById("kapcsolatLetrehozasaBtn"),
+            discardChangesBtn: document.getElementById("valtoztatasokElveteseBtn"),
 
             // inputs
             fileInputMap: document.getElementById("fileInput"),
@@ -59,7 +62,8 @@ export class UIManager {
             mapSelector: document.getElementById("mapSelector"),
             floatingButtonDiv: document.getElementById("floatingButtonDiv"),
             connectionsList: document.getElementById("kapcsolatokLista"),
-            emptyConnections: document.getElementById("nincsenekKapcsolatok")
+            emptyConnections: document.getElementById("nincsenekKapcsolatok"),
+            changesModal: document.getElementById("valtoztatasok")
         };
 
         this.elements.collapseBootstrapElement = new bootstrap.Collapse(
@@ -69,11 +73,35 @@ export class UIManager {
             }
         );
 
+        this.elements.changesModalBootstrapElement = new bootstrap.Modal(this.elements.changesModal);
+
         this.elements.savePointButton.disabled = true;
     }
 
     #bindUIEvents() {
-        this.elements.mapSelect.addEventListener("change", (event) => this.bus.emit(EVENTS.UI_SWITCH_MAP_REQUEST, { mapId: parseInt(event.target.value) }));
+        this.elements.mapSelect.addEventListener("focus", savePreviousValue);
+
+        this.elements.mapSelect.addEventListener("change", (event) => {
+            let targetMapId = parseInt(event.target.value);
+
+            let request = { canProceed: true, reason: "" };
+            this.bus.emit(EVENTS.MAP_SWITCH_REQUESTED, request);
+
+            if (request.canProceed) {
+                if (this.hasUnsavedChanges) {
+                    event.target.value = event.target.dataset.previousValue;
+                    this.pendingAction = { type: "map_switch", targetMapId: targetMapId };
+                    this.elements.changesModalBootstrapElement.show();
+                } else {
+                    event.target.dataset.previousValue = targetMapId;
+                    this.bus.emit(EVENTS.UI_SWITCH_MAP_REQUEST, { mapId: targetMapId });
+                }
+            } else {
+                event.target.value = event.target.dataset.previousValue;
+                this.bus.emit(EVENTS.TOAST_SHOW, { msg: request.reason, type: "danger" });
+            }
+        });
+
         this.elements.addNewMarkerBtn.addEventListener("click", () => this.bus.emit(EVENTS.UI_ADD_NEW_MARKER_REQUEST));
         this.elements.saveMapButton.addEventListener("click", () => this.bus.emit(EVENTS.UI_SAVE_MAP_CLICKED));
         this.elements.newConnectionBtn.addEventListener("click", () => this.bus.emit(EVENTS.UI_CONNECTION_CREATE_REQUEST));
@@ -126,14 +154,47 @@ export class UIManager {
                 this.bus.emit(EVENTS.UI_COLLAPSE_CLOSE_REQUESTED, request);
 
                 if (request.canProceed) {
-                    this.animations.isCollapsing = true;
-                    this.elements.savePointButton.disabled = true;
-                    this.bus.emit(EVENTS.UI_COLLAPSE_HIDE_STARTED);
+                    if (this.hasUnsavedChanges) {
+                        event.preventDefault();
+                        this.pendingAction = { type: "collapse_close" };
+                        this.elements.changesModalBootstrapElement.show();
+                    } else {
+                        this.animations.isCollapsing = true;
+                        this.elements.savePointButton.disabled = true;
+                        this.bus.emit(EVENTS.UI_COLLAPSE_HIDE_STARTED);
+                    }
                 } else {
                     event.preventDefault();
                     this.bus.emit(EVENTS.TOAST_SHOW, { msg: request.reason, type: "danger" });
                 }
             }
+        });
+
+        this.elements.discardChangesBtn.addEventListener("click", (event) => {
+            event.target.blur(); // valami aria warning miatt kell
+            this.elements.changesModalBootstrapElement.hide();
+            this.hasUnsavedChanges = false;
+            if (this.pendingAction) {
+                switch (this.pendingAction.type) {
+                    case "map_switch":
+                        this.elements.mapSelect.value = this.pendingAction.targetMapId;
+                        this.elements.mapSelect.dataset.previousValue = this.pendingAction.targetMapId;
+                        this.bus.emit(EVENTS.UI_SWITCH_MAP_REQUEST, { mapId: this.pendingAction.targetMapId });
+                        break;
+                    case "collapse_close":
+                        this.elements.collapseBootstrapElement.hide();
+                        break;
+                    case "add_new_map":
+                        this.elements.fileInputMap.value = "";
+                        this.elements.fileInputMap.click();
+                        break;
+                }
+                this.pendingAction = null;
+            }
+        });
+
+        this.elements.changesModal.addEventListener("hidden.bs.modal", () => {
+            this.pendingAction = null;
         });
 
         this.elements.collapseElement.addEventListener("hidden.bs.collapse", (event) => {
@@ -152,10 +213,14 @@ export class UIManager {
             this.bus.emit(EVENTS.UI_ADD_NEW_MAP_REQUEST, request);
 
             if (request.canProceed) {
-                this.elements.fileInputMap.value = "";
-                this.elements.fileInputMap.click();
+                if (this.hasUnsavedChanges) {
+                    this.pendingAction = { type: "add_new_map" };
+                    this.elements.changesModalBootstrapElement.show();
+                } else {
+                    this.elements.fileInputMap.value = "";
+                    this.elements.fileInputMap.click();
+                }
             } else {
-                event.preventDefault();
                 this.bus.emit(EVENTS.TOAST_SHOW, { msg: request.reason, type: "danger" });
             }
         });
@@ -187,6 +252,7 @@ export class UIManager {
         this.bus.on(EVENTS.MAP_SWITCHED, ({ mapId }) => {
             this.elements.collapseBootstrapElement.hide();
             this.elements.mapSelect.value = mapId;
+            this.elements.mapSelect.dataset.previousValue = mapId;
             this.connectionUiState.hasEnoughPoints = false;
             this.connectionUiState.isConnecting = false;
             this.#updateNewConnectionButtonState();
@@ -270,15 +336,16 @@ export class UIManager {
             this.elements.uploadOverlay.classList.add("d-none");
             this.#updateMapSelector(maps);
             this.elements.mapSelect.value = loadedMapId;
+            this.elements.mapSelect.dataset.previousValue = loadedMapId;
         });
 
         this.bus.on(EVENTS.MAP_SAVE_STARTED, () => this.elements.saveMapButton.disabled = true);
 
         this.bus.on(EVENTS.MAP_SAVE_AVAILABILITY_CHANGED, ({ canSave }) => this.elements.saveMapButton.disabled = !canSave);
 
-        this.bus.on(EVENTS.MAP_SWITCH_REQUEST_REJECTED, ({ revertToId }) => this.elements.mapSelect.value = revertToId);
-
         this.bus.on(EVENTS.POINT_DIRTY_STATE_CHANGED, ({ isDirty }) => {
+            this.hasUnsavedChanges = isDirty;
+
             this.elements.savePointButton.disabled = !isDirty;
         });
     }

@@ -114,7 +114,7 @@ export function showToast(container, message, type = "", isClosable, options = {
 }
 
 export function savePreviousValue(event) {
-    event.target.dataset.previousValue = event.target.valueAsNumber;
+    event.target.dataset.previousValue = event.target.value;
 }
 
 export function getGameMapIdFromUrl() {
