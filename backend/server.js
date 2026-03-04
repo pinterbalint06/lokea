@@ -4,6 +4,7 @@ const session = require('express-session'); //?npm install express-session
 const path = require('path');
 const cors = require('cors');
 const database = require("./sql/database.js");
+const auth = require('./auth.js')
 
 //!Beállítások
 const app = express();
@@ -78,9 +79,20 @@ router.get('/maps/:gameMapId/edit', async (request, response) => {
 router.get('/login_page', (request, response) => {
     response.sendFile(path.join(__dirname, '../frontend/html/login.html'));
 });
+router.get('/admin', auth.checkRole("ADMIN"), (request, response) => {
+    response.sendFile(path.join(__dirname, '../frontend/html/admin.html'));
+});
+router.get('/choose_game', (request, response) => {
+    response.sendFile(path.join(__dirname, '../frontend/html/game-choosing.html'));
+});
+router.use((request, response) => {
+    response.status(404).sendFile(path.join(__dirname, '../frontend/html/notfound.html'));
+});
 
 //!API endpoints
-app.use('/', router);
+app.use(express.static(path.join(__dirname, '../frontend')));
+const adminEndpoints = require('./api/admin.js');
+app.use('/api/admin', adminEndpoints);
 const endpoints = require('./api/api.js');
 app.use('/api', endpoints);
 //!Map Creation API endpoints
@@ -89,9 +101,10 @@ app.use('/api/map_creator', mapCreationEndpoints);
 //!game maps API endpoints
 const gameMapsEndpoints = require('./api/gameMaps.js');
 app.use('/api/game_maps', gameMapsEndpoints);
+app.use('/', router);
+
 
 //!Szerver futtatása
-app.use(express.static(path.join(__dirname, '../frontend'))); //?frontend mappa tartalmának betöltése az oldal működéséhez
 app.listen(port, ip, () => {
     console.log(`Szerver elérhetősége: http://${ip}:${port}`);
 });

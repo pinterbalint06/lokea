@@ -1,10 +1,12 @@
 const express = require('express');
 const router = express.Router();
 const database = require('../sql/database.js');
+const auth = require('../auth.js')
 const fs = require('fs/promises');
 const bcrypt = require('bcrypt');
 const validator = require('validator');
-const { body, validationResult } = require("express-validator");
+const { body, check, validationResult } = require("express-validator");
+const sharp = require('sharp');
 
 //!Multer
 const multer = require('multer'); //?npm install multer
@@ -19,34 +21,25 @@ const storage = multer.diskStorage({
     }
 });
 
-const upload = multer({ storage });
+const upload = multer({
+    storage: storage,
+    limits: { fileSize: 5 * 1024 * 1024 } // 5 MB
+});
 
-//!Endpoints:
-//?GET /api/test
+//!ENDPOINTS
+//test
 router.get('/test', (request, response) => {
     response.status(200).json({
         message: 'Ez a végpont működik.'
     });
 });
 
-//?GET /api/testsql
-router.get('/testsql', async (request, response) => {
-    try {
-        const selectall = await database.selectall();
-        response.status(200).json({
-            message: 'Ez a végpont működik.',
-            results: selectall
-        });
-    } catch (error) {
-        response.status(500).json({
-            message: 'Ez a végpont nem működik.'
-        });
-    }
-});
-
+//Endpoints - signup, login, signout
 router.post("/signup",
     [
         body("username")
+            .not().isEmail().withMessage("Felhasználónév nem lehet email cim!")
+            .matches(/^[a-zA-Z0-9áéíóöőúüűÁÉÍÓÖŐÚÜŰ_-]+$/).withMessage('A felhasználónév csak betűket, számokat, - vagy _ karaktert, és ékezetes betűket tartalmazhat.')
             .isLength({ min: 1, max: 20 }).withMessage("Felhasználónév hossza nem megfelelő!"),
         body("email")
             .isEmail().withMessage("Hibás email formátum")
@@ -69,22 +62,22 @@ router.post("/signup",
             else {
                 const { username, email, password } = request.body;
                 const hashedPassword = await bcrypt.hash(password, 10);
-                let feltolt = await database.newUser(username, email, hashedPassword);
-                console.log(feltolt);
-                response.status(201).json({
-                    success: true,
-                    message: "Sikeres regisztráció"
-                });
+                let insert = await database.newUser(username, email, hashedPassword);
+                if (insert.success) {
+                    response.status(201).json({
+                        success: true,
+                        message: "Sikeres regisztráció"
+                    });
+                }
+                else {
+                    response.status(500).json({
+                        success: false,
+                        message: insert.error
+                    })
+                }
             }
         } catch (error) {
-            if (error.code === "ER_DUP_ENTRY") {
-                response.status(400).json({
-                    error: "A felhasználónév vagy email már foglalt!"
-                });
-            }
-            else {
-                response.status(500).json({ error: "Hiba az adatbázis művelet során!" });
-            }
+            response.status(500).json({ error: error });
         }
     }
 );
@@ -114,14 +107,14 @@ router.post("/login",
                 else {
                     rows = await database.getUserByUsername(username);
                 }
-                if (rows.length === 0) {
-                    return response.status(401).json({ message: "Hibás email vagy jelszó" });
+                if (rows.length === 0 || rows[0].deleted_at != null) {
+                    response.status(401).json({ message: "Hibás email vagy jelszó" });
                 }
                 else {
                     let sPass = rows[0].password;
                     let egyezes = await bcrypt.compare(password, sPass);
                     if (!egyezes) {
-                        return response.status(401).json({ message: "Hibás email vagy jelszó" });
+                        response.status(401).json({ message: "Hibás email vagy jelszó" });
                     }
                     else {
                         let sesRole = rows[0].role;
@@ -133,7 +126,7 @@ router.post("/login",
                             request.session.cookie.maxAge = 2 * 60 * 60 * 1000;
                         }
 
-                        request.session.userid = rows[0].userid;
+                        request.session.userid = rows[0].user_id;
                         request.session.role = sesRole;
                         response.status(200).json({ message: "Sikeres bejelentkezés", role: sesRole });
                     }
@@ -144,16 +137,164 @@ router.post("/login",
         }
     });
 
-router.post('/signout', (request, response) => {
-    request.session.destroy(error => { 
+router.post('/signout', auth.checkAuth, (request, response) => {
+    request.session.destroy(error => {
         if (error) {
-            response.status(500).json({success: false, error: error});
+            response.status(500).json({ success: false, error: error });
         }
         else {
             response.clearCookie('geo.sid');
-            response.status(200).json({success: true});
+            response.status(200).json({ success: true });
         }
     });
 });
+//Endpoints - settings
 
+router.post('/updateProfilePic', auth.checkAuth, upload.single('profilePic'), async (request, response) => {
+    let originalFile;
+    let newFilePath;
+    try {
+        if (!request.file) {
+            response.status(400).json({ message: "Nincs kép!" });
+        }
+        else {
+            originalFile = request.file.path;
+            let newFileName = `processed-${Date.now()}.webp`;
+            newFilePath = path.join('uploads', newFileName);
+
+            //Kép tömöritése
+            sharp.cache(false);
+            const metadata = await sharp(originalFile)
+                .resize(400, 400, {
+                    fit: 'cover',
+                    position: 'center'
+                })
+                .toFormat('webp')
+                .toFile(newFilePath);
+
+            let { width, height } = metadata;
+            let finalUrl = `${newFileName}`;
+
+            let lastPfp = await database.uploadProfilePic(finalUrl, width, height, request.body.user_id);
+
+            await fs.unlink(originalFile).catch(() => { });
+
+            if (lastPfp) {
+                let lastPfpPath = path.join(__dirname, '..', lastPfp);
+                await fs.unlink(lastPfpPath).catch(() => { });
+            }
+            response.status(201).json({ success: true, message: "Profilkép frissítve!" });
+        }
+    } catch (error) {
+        if (originalFile) {
+            await fs.unlink(originalFile).catch(() => { });
+        }
+        if (newFilePath) {
+            await fs.unlink(newFilePath).catch(() => { });
+        }
+        response.status(500).json({ error: error.message, details: error.stack });
+    }
+})
+
+router.post('/deleteProfilePic', auth.checkAuth, async (request, response) => {
+    try {
+        let lastPfp = await database.deleteProfilePic(request.body.user_id);
+        if (!lastPfp) {
+            response.status(200).json({ success: true, message: "A profilkép már alapértelmezett volt." });
+        }
+        else {
+            let lastPfpPath = path.join(__dirname, '..', lastPfp);
+            try {
+                await fs.unlink(lastPfpPath);
+            } catch (error) {
+                console.log("a kép nincs a szerveren!" + error);
+            }
+            response.status(201).json({ success: true, message: "Profilkép törölve!" });
+        }
+    } catch (error) {
+        response.status(500).json({ error: error });
+    }
+})
+
+router.get('/getProfilePic', auth.checkAuth,
+    [
+        check("route")
+            .matches(/^[a-zA-Z0-9_\-]+\.[a-zA-Z0-9]+$/).withMessage('Érvénytelen fájl név!')
+    ], (request, response) => {
+        try {
+            const errors = validationResult(request);
+            if (!errors.isEmpty()) {
+                response.status(400).json({
+                    success: false,
+                    error: errors.array()
+                });
+            }
+            else {
+                let pfproute = request.query.route;
+                const root = path.join(__dirname, '..', 'uploads');
+
+                response.sendFile(pfproute, { root: root }, (err) => {
+                    if (err) {
+                        console.log("Hiba a fájl küldéskor:", err);
+                        response.status(err.status || 404).send();
+                    }
+                });
+            }
+        } catch (error) {
+            response.status(500).json({ message: error })
+        }
+    })
+
+
+//játékhoz szükséges api-k
+router.get('/game_maps', async (request, response) => {
+    try {
+        const sort = String(request.query.sort || 'created').toLowerCase();
+        const offset = parseInt(request.query.offset) || 0;
+        const validSorts = ['created', 'rating', 'plays', 'favorites'];
+        if (!validSorts.includes(sort)) {
+            return response.status(400).json({
+                success: false,
+                message: 'Érvénytelen rendezés. Használható: created, rating, plays, favorites'
+            });
+        }
+
+        const user_id = request.session?.userid || 1; //TODO: teszt user törlése session stabilizálás után
+        const palyak = await database.getGameMaps(sort, user_id, offset);
+
+        response.status(200).json({
+            success: true,
+            results: palyak
+        });
+    } catch (error) {
+        response.status(500).json({
+            success: false,
+            message: error
+        });
+    }
+});
+
+router.get('/get_cover_image/:cover_image_id', async (request, response) => {
+
+    try {
+        let uploads = path.join(__dirname, '../uploads');
+        let fileRes;
+        if (!request.params || !request.params.cover_image_id) {
+            fileRes = 'cover_images/image-not-found.jpg';
+        } else {
+            let filePath = await database.getImagePath(request.params.cover_image_id);
+            if (!filePath) {
+                fileRes = 'cover_images/image-not-found.jpg';
+            } else {
+                fileRes = filePath;
+            }
+        }
+        let res = path.join(uploads, fileRes);
+        response.sendFile(res);
+    } catch (error) {
+        response.status(500).json({
+            message: error
+        });
+    }
+});
 module.exports = router;
