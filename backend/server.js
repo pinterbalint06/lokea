@@ -54,10 +54,12 @@ router.get('/login_page', (request, response) => {
 router.get('/admin', auth.checkRole("ADMIN"), (request, response) => {
     response.sendFile(path.join(__dirname, '../frontend/html/admin.html'));
 });
+router.get('/choose_game', (request, response) => {
+    response.sendFile(path.join(__dirname, '../frontend/html/game-choosing.html'));
+});
 router.use((request, response) => {
     response.status(404).sendFile(path.join(__dirname, '../frontend/html/notfound.html'));
 });
-
 
 //!API endpoints
 app.use(express.static(path.join(__dirname, '../frontend')));
