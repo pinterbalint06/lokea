@@ -16,6 +16,7 @@ export class UIManager {
         };
         this.hasUnsavedChanges = false;
         this.pendingAction = null;
+        this.previousWidth = window.innerWidth;
 
         this.#gatherElements();
         this.#updateCollapseDirection();
@@ -63,11 +64,28 @@ export class UIManager {
             floatingButtonDiv: document.getElementById("floatingButtonDiv"),
             connectionsList: document.getElementById("kapcsolatokLista"),
             emptyConnections: document.getElementById("nincsenekKapcsolatok"),
-            changesModal: document.getElementById("valtoztatasok")
+            changesModal: document.getElementById("valtoztatasok"),
+
+            // settings
+            settingsBtn: document.getElementById("settingsBtn"),
+            beallitasokCollapseElement: document.getElementById("beallitasokCollapse"),
+            closeBeallitasok: document.getElementById("closeBeallitasok"),
+            fovToggle: document.getElementById("fovToggle"),
+            fovWidthRange: document.getElementById("fovWidthRange"),
+            fovWidthNumber: document.getElementById("fovWidthNumber"),
+            fovHeightRange: document.getElementById("fovHeightRange"),
+            fovHeightNumber: document.getElementById("fovHeightNumber")
         };
 
         this.elements.collapseBootstrapElement = new bootstrap.Collapse(
             this.elements.collapseElement,
+            {
+                toggle: false
+            }
+        );
+
+        this.elements.beallitasokCollapseBootstrapElement = new bootstrap.Collapse(
+            this.elements.beallitasokCollapseElement,
             {
                 toggle: false
             }
@@ -135,6 +153,9 @@ export class UIManager {
 
         this.elements.collapseElement.addEventListener("show.bs.collapse", (event) => {
             if (event.target == this.elements.collapseElement) {
+                if (window.innerWidth <= 992) {
+                    this.elements.beallitasokCollapseBootstrapElement.hide();
+                }
                 this.animations.isCollapsing = true;
                 this.elements.floatingButtonDiv.classList.add("d-none");
                 this.bus.emit(EVENTS.UI_COLLAPSE_SHOW_STARTED);
@@ -207,6 +228,18 @@ export class UIManager {
             }
         });
 
+        this.elements.beallitasokCollapseElement.addEventListener("show.bs.collapse", (event) => {
+            if (event.target == this.elements.beallitasokCollapseElement && window.innerWidth < 992) {
+                this.elements.floatingButtonDiv.classList.add("d-none");
+            }
+        });
+
+        this.elements.beallitasokCollapseElement.addEventListener("hidden.bs.collapse", (event) => {
+            if (event.target == this.elements.beallitasokCollapseElement && window.innerWidth < 992) {
+                this.elements.floatingButtonDiv.classList.remove("d-none");
+            }
+        });
+
         this.elements.addNewMapBtn.addEventListener("click", (event) => {
             let request = { canProceed: true, reason: "" };
 
@@ -242,7 +275,20 @@ export class UIManager {
             }
         });
 
-        window.addEventListener("resize", () => this.#updateCollapseDirection());
+        window.addEventListener("resize", () => {
+            this.#updateCollapseDirection();
+            this.#handleTwoCollapseResize();
+        });
+        
+        this.elements.fovToggle.addEventListener("change", (event) => {
+            this.bus.emit(EVENTS.UI_SETTINGS_FOV_TOGGLED, { enabled: event.target.checked });
+        });
+
+        this.#syncFovInputs(this.elements.fovWidthRange, this.elements.fovWidthNumber, "width");
+        this.#syncFovInputs(this.elements.fovWidthNumber, this.elements.fovWidthRange, "width");
+
+        this.#syncFovInputs(this.elements.fovHeightRange, this.elements.fovHeightNumber, "height");
+        this.#syncFovInputs(this.elements.fovHeightNumber, this.elements.fovHeightRange, "height");
 
         this.#setupUploadHandler(this.elements.dropZoneMap, this.elements.uploadButtonMap, this.elements.fileInputMap, EVENTS.UI_MAP_FILE_DROPPED);
         this.#setupUploadHandler(this.elements.dropZoneEquirectangular, this.elements.uploadButtonEquirectangular, this.elements.fileInputEquirectangular, EVENTS.UI_EQUIRECTANGULAR_FILE_DROPPED);
@@ -384,6 +430,13 @@ export class UIManager {
         });
     }
 
+    #syncFovInputs(source, target, propertyName) {
+        source.addEventListener("input", (event) => {
+            target.value = event.target.value;
+            this.bus.emit(EVENTS.UI_SETTINGS_FOV_SIZE_CHANGED, { [propertyName]: parseInt(event.target.value) });
+        });
+    }
+
     #updateMapSelector(maps) {
         this.elements.mapSelect.innerHTML = "";
 
@@ -411,13 +464,44 @@ export class UIManager {
     #updateCollapseDirection() {
         if (window.innerWidth < 992) {
             this.elements.collapseElement.classList.remove("collapse-horizontal");
+            this.elements.beallitasokCollapseElement.classList.remove("collapse-horizontal");
         } else {
             this.elements.collapseElement.classList.add("collapse-horizontal");
+            this.elements.beallitasokCollapseElement.classList.add("collapse-horizontal");
         }
     }
 
     #updateNewConnectionButtonState() {
         this.elements.newConnectionBtn.disabled = !this.connectionUiState.hasEnoughPoints || this.connectionUiState.isConnecting;
+    }
+
+    #handleTwoCollapseResize() {
+        let currentWidth = window.innerWidth;
+        let wasAbove992 = this.previousWidth > 992;
+        let isBelow992 = currentWidth <= 992;
+
+        if (wasAbove992 && isBelow992) {
+            let mainCollapseOpen = this.elements.collapseElement.classList.contains("show");
+            let settingsCollapseOpen = this.elements.beallitasokCollapseElement.classList.contains("show");
+
+            if (settingsCollapseOpen) {
+                this.elements.floatingButtonDiv.classList.add("d-none");
+                if (mainCollapseOpen) {
+                    this.elements.beallitasokCollapseElement.classList.remove("show");
+                    this.elements.beallitasokCollapseElement.classList.add("hide");
+                }
+            }
+        } else {
+            if (!wasAbove992 && !isBelow992) {
+                // wasBelow992 && isAbove992
+                let settingsCollapseOpen = this.elements.beallitasokCollapseElement.classList.contains("show");
+                if (settingsCollapseOpen) {
+                    this.elements.floatingButtonDiv.classList.remove("d-none");
+                }
+            }
+        }
+
+        this.previousWidth = currentWidth;
     }
 
     #renderConnectionList(connections, unsavedConnections) {

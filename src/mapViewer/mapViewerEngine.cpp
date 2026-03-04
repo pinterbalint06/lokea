@@ -203,6 +203,22 @@ void MapViewerEngine::changeMarkerTexture(int id, const std::string &textureUrl)
     }
 }
 
+void MapViewerEngine::resizeMarker(int id, float newWidth, float newHeight)
+{
+    int index = getMarkerIndexById(id);
+    if (index != -1)
+    {
+        markers_[index]->setWidth(newWidth);
+        markers_[index]->setHeight(newHeight);
+        updateSingleMarker(markers_[index].get());
+    }
+    else
+    {
+        emscripten_console_error("Point doesn't exist!");
+    }
+
+}
+
 void MapViewerEngine::addMarker(int id, float screenX, float screenY, const std::string &textureUrl, float width, float height)
 {
     if (isMapLoaded_ && !doesMarkerExist(id))

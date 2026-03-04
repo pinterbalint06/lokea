@@ -173,10 +173,21 @@ main {
     right: 0;
 }
 
-#ujPontCollapse .card {
+#beallitasokCollapse {
+    top: 0;
+    bottom: 0;
+    left: 0;
+}
+
+#ujPontCollapse .card,
+#beallitasokCollapse .card {
     background: transparent;
     border: none;
     color: var(--text-main);
+}
+
+.number-input-width {
+    width: 4.5em !important;
 }
 
 .successColor {
@@ -204,7 +215,8 @@ main {
     min-height: 33vh;
 }
 
-#collapseCard {
+#collapseCard,
+#beallitasokCard {
     width: 33vw;
 }
 
@@ -235,12 +247,16 @@ main {
 
 .accordion-button::after {
     /* override bootstraps arrow */
-    background-image: url("../images/map-creator-icons.svg#icon-chevron");
+    background-image: none;
+    background-color: var(--text-main);
+    mask-image: url("../images/map-creator-icons.svg#icon-chevron");
     transition: transform var(--transition-soft);
 }
 
 .accordion-button:not(.collapsed)::after {
-    background-image: url("../images/map-creator-icons.svg#icon-chevron");
+    background-image: none;
+    background-color: var(--text-main);
+    mask-image: url("../images/map-creator-icons.svg#icon-chevron");
 }
 
 .accordion-body {
@@ -337,9 +353,12 @@ main {
     #toastPlace {
         top: 4.5rem !important;
         left: 50% !important;
+        right: auto !important;
+        bottom: auto !important;
         transform: translateX(-50%);
         margin-top: 0 !important;
         margin-left: 0 !important;
+        margin-right: 0 !important;
         width: min(92vw, 420px);
     }
 
@@ -347,7 +366,8 @@ main {
         width: 100%;
     }
 
-    #ujPontCollapse {
+    #ujPontCollapse,
+    #beallitasokCollapse {
         top: auto;
         bottom: 0;
         left: 0;
@@ -361,7 +381,8 @@ main {
         border-bottom-right-radius: 0;
     }
 
-    #ujPontCollapse .card {
+    #ujPontCollapse .card,
+    #beallitasokCollapse .card {
         height: 40vh;
         max-height: 40vh;
         min-height: 40vh;

@@ -30,6 +30,9 @@ public:
     float getRotation() const { return rotation_; }
     bool isSelectable() const { return selectable_; }
 
+    // setters
+    void setWidth(float width) { width_ = width; }
+    void setHeight(float height) { height_ = height; }
     void setU(float u) { u_ = u; }
     void setV(float v) { v_ = v; }
     void setId(int id) { id_ = id; }

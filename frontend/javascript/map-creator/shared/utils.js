@@ -100,7 +100,7 @@ export function showToast(container, message, type = "", isClosable, options = {
 
     toastElement.appendChild(toastDiv);
 
-    container.appendChild(toastElement);
+    container.prepend(toastElement);
 
     let toast = new bootstrap.Toast(toastElement, options);
     toast.show();

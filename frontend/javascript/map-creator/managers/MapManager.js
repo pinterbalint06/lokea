@@ -156,7 +156,7 @@ export class MapManager {
             };
 
             this.maps[CONSTANTS.TEMP_ID] = newMap;
-            // TODO: itt
+            // TODO: itt??? valamit akartam
             this.switchMap(CONSTANTS.TEMP_ID);
             this.bus.emit(EVENTS.NEW_MAP_LOADED, { maps: this.maps, loadedMapId: CONSTANTS.TEMP_ID });
         } catch (error) {
@@ -175,13 +175,14 @@ export class MapManager {
             let mapData = this.maps[mapId];
 
             this.bus.emit(EVENTS.MAP_SWITCHED, { mapId });
-            this.bus.emit(EVENTS.TOAST_SHOW, { id: `mapSwitching${mapId}`, msg: "Váltás: " + mapData.name, closable: false, autohide: false });
+            let randomIdForToast = Math.floor(Math.random() * 100000);
+            this.bus.emit(EVENTS.TOAST_SHOW, { id: `mapSwitching${mapId}-${randomIdForToast}`, msg: "Váltás: " + mapData.name, closable: false, autohide: false });
 
             if (mapId == CONSTANTS.TEMP_ID) {
                 this.viewer.clearMarkersAndLines();
                 await this.viewer.loadMap(mapData.temporaryURL, mapData.imgWidth, mapData.imgHeight);
                 // show change toast for 1 sec after the map was loaded then hide it
-                setTimeout(() => this.bus.emit(EVENTS.TOAST_HIDE_ID, { id: `mapSwitching${mapId}` }), 1000);
+                setTimeout(() => this.bus.emit(EVENTS.TOAST_HIDE_ID, { id: `mapSwitching${mapId}-${randomIdForToast}` }), 1000);
             } else {
                 try {
                     let imgData = await fetchMapImage(mapId);
@@ -190,9 +191,9 @@ export class MapManager {
                         this.viewer.loadMap(imgData.url, imgData.width, imgData.height);
                         this.bus.emit(EVENTS.MAP_LOADED, { mapId });
                     }
-                    setTimeout(() => this.bus.emit(EVENTS.TOAST_HIDE_ID, { id: `mapSwitching${mapId}` }), 1000);
+                    setTimeout(() => this.bus.emit(EVENTS.TOAST_HIDE_ID, { id: `mapSwitching${mapId}-${randomIdForToast}` }), 1000);
                 } catch (e) {
-                    this.bus.emit(EVENTS.TOAST_HIDE_ID, { id: `mapSwitching${mapId}` });
+                    this.bus.emit(EVENTS.TOAST_HIDE_ID, { id: `mapSwitching${mapId}-${randomIdForToast}` });
                     this.bus.emit(EVENTS.TOAST_SHOW, { msg: "Hiba a kép betöltésekor!", type: "danger" });
                 }
             }

@@ -71,6 +71,7 @@ public:
     void addMarker(int id, float screenX, float screenY, const std::string &textureUrl, float width, float height);
     void addMarkerByImageCoordinates(int id, float imageX, float imageY, const std::string &textureUrl, float width, float height);
     void changeMarkerTexture(int id, const std::string &textureUrl);
+    void resizeMarker(int id, float newWidth, float newHeight);
     void moveMarkerToImageCoordinates(int id, int xCoordinate, int yCoordinate);
     int getMarkerIdAtScreenCoords(int screenX, int screenY);
     void removeMarker(int id);

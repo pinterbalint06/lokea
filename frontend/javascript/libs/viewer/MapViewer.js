@@ -337,6 +337,28 @@ export class MapViewer extends WASMViewerBase {
         this._engine.placeMarkerByImageCoordinates(id, imageX, imageY, markerUrl, width, height);
     }
 
+    resizeMarker(id, width, height) {
+        this._ensureEngineReady();
+
+        if (!Number.isFinite(width) || !Number.isFinite(height) || width < 0 || height < 0) {
+            throw new WebassemblyError(
+                "Invalid marker size",
+                {
+                    "type": MAP_VIEWER_ERROR_TYPES.INVALID_INPUT
+                });
+        }
+
+        if (!this.doesMarkerExist(id)) {
+            throw new WebassemblyError(
+                "Invalid marker ID",
+                {
+                    "type": MAP_VIEWER_ERROR_TYPES.INVALID_INPUT
+                });
+        }
+
+        this._engine.resizeMarker(id, width, height);
+    }
+
     clearLines() {
         this._ensureEngineReady();
         this._engine.clearAllLines();

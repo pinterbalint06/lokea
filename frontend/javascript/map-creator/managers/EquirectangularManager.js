@@ -95,6 +95,30 @@ export class EquirectangularManager {
         this.bus.on(EVENTS.EQUIRECTANGULAR_IMAGE_LOADED, () => this.#startFOVSync());
 
         this.bus.on(EVENTS.UI_EQUIRECTANGULAR_FULLSCREEN_REQUEST, () => this.equirectangularViewer.toggleFullscreen());
+
+        this.bus.on(EVENTS.UI_SETTINGS_FOV_TOGGLED, ({ enabled }) => {
+            if (this.appState.settings) {
+                this.appState.settings.fovEnabled = enabled;
+            }
+            if (enabled && this.activePointId) {
+                this.#startFOVSync();
+            } else {
+                this.#stopFOVSync();
+            }
+        });
+
+        this.bus.on(EVENTS.UI_SETTINGS_FOV_SIZE_CHANGED, ({ width, height }) => {
+            if (width != undefined) {
+                this.appState.settings.fovWidth = width
+            };
+            if (height != undefined) {
+                this.appState.settings.fovHeight = height
+            };
+
+            if (this.mapViewer.doesMarkerExist(CONSTANTS.FOV_MARKER_ID)) {
+                this.mapViewer.resizeMarker(CONSTANTS.FOV_MARKER_ID, this.appState.settings.fovWidth, this.appState.settings.fovHeight);
+            }
+        });
     }
 
     async #handleEquirectangularLoad(file) {
@@ -147,12 +171,18 @@ export class EquirectangularManager {
     #startFOVSync() {
         this.#stopFOVSync();
 
-        let pos = this.mapViewer.getMarkerPosition(this.activePointId);
+        if (this.appState.settings.fovEnabled) {
+            let pos = this.mapViewer.getMarkerPosition(this.activePointId);
 
-        this.mapViewer.placeMarkerByImageCoordinates(CONSTANTS.FOV_MARKER_ID, pos.x, pos.y, CONSTANTS.CONE_SIZE.width, CONSTANTS.CONE_SIZE.height, "fov_cone");
-        this.mapViewer.setMarkerSelectable(CONSTANTS.FOV_MARKER_ID, false);
+            this.mapViewer.placeMarkerByImageCoordinates(
+                CONSTANTS.FOV_MARKER_ID,
+                pos.x, pos.y,
+                this.appState.settings.fovWidth, this.appState.settings.fovHeight,
+                "fov_cone");
+            this.mapViewer.setMarkerSelectable(CONSTANTS.FOV_MARKER_ID, false);
 
-        this.fovSyncID = requestAnimationFrame(this.#syncFOVLoop);
+            this.fovSyncID = requestAnimationFrame(this.#syncFOVLoop);
+        }
     }
 
     #stopFOVSync() {

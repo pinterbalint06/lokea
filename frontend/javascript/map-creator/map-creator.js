@@ -27,11 +27,10 @@ async function init() {
 
 document.addEventListener("DOMContentLoaded", init);
 
-// TODO: látótér állandó méretű (állítható méretű?)
-// TODO: új markernél elsőre nincs helyesen rajta a markeren a fov cone
-// TODO: pontok, kapcsolatok, térképek törlése
-// TODO: térkép, pontok átnevezése
-// TODO: térkép képének cseréje mentés után
-// TODO: mapok közti kapcsolatok
-// TODO: "hidden.bs.collapse" és "hide.bs.collapse" események kezelése majd a ConnectionManagerben és EquirectangularManagerben
-// TODO: markerek fixálása pixel koordinátákra? mindig egy adott pixelen legyenek?
+// TODO!!!!: látótér a beállított méretű maradjon
+// TODO!: új markernél elsőre nincs helyesen rajta a markeren a fov cone
+// TODO!!!: pontok, kapcsolatok, térképek törlése
+// TODO!!!: térkép, pontok átnevezése
+// TODO!!: térkép képének cseréje mentés után
+// TODO!!: mapok közti kapcsolatok
+// TODO!: markerek fixálása pixel koordinátákra? mindig egy adott pixelen legyenek?
