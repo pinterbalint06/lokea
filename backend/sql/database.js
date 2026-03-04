@@ -267,8 +267,7 @@ async function getGameMaps(sort = 'plays', user_id = null, offset = 0) {
         default:
             throw new Error('INVALID_SORT');
     }
-    query = `${query} LIMIT 20 OFFSET ?`;
-    console.log(query, params);
+    query = `${query} LIMIT 20 OFFSET ${offset}`;
     const [result] = await pool.execute(query, params);
     return result;
 }
