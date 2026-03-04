@@ -128,7 +128,7 @@ router.post("/login",
 
                         request.session.userid = rows[0].user_id;
                         request.session.role = sesRole;
-                        response.status(200).json({ message: "Sikeres bejelentkezés", role: sesRole });
+                        response.status(200).json({ message: "Sikeres bejelentkezés", role: sesRole, username: rows[0].username});
                     }
                 }
             }

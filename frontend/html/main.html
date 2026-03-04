@@ -13,7 +13,7 @@
     <!--!CSS-->
     <link rel="stylesheet" href="../css/main.css" />
     <!--!JavaScript-->
-    <script src="../javascript/index.js"></script>
+    <script src="../javascript/mainpage.js"></script>
 </head>
 
 <body>
@@ -28,7 +28,8 @@
                     <img src="../images/logo.png" alt="" class="img-fluid logo">
                     <p class="text-center logoTitle">Légy bárhol</p>
                 </div>
-                <div class="dropdown">
+                <button type="button" data-bs-toggle="modal" data-bs-target="#modalRegLog" class="btn btn-info">Bejelentkezés</button>
+                <!-- <div class="dropdown">
                     <a href="#" class="d-block link-light text-decoration-none dropdown-toggle">
                         <img src="../images/default.png" alt="Profile pic" class="img-fluid rounded-5 border"
                             style="width: 40px;">
@@ -44,7 +45,7 @@
                             </a>
                         </li>
                         <li>
-                            <hr class="dropdown-divider"> <!--elvalaszto-->
+                            <hr class="dropdown-divider">
                         </li>
                         <li>
                             <a class="dropdown-item" id="enterGames">
@@ -55,7 +56,7 @@
                             </a>
                         </li>
                         <li>
-                            <hr class="dropdown-divider"> <!--elvalaszto-->
+                            <hr class="dropdown-divider">
                         </li>
                         <li>
                             <a class="dropdown-item" href="/admin">
@@ -66,7 +67,7 @@
                             </a>
                         </li>
                         <li>
-                            <hr class="dropdown-divider"> <!--elvalaszto-->
+                            <hr class="dropdown-divider">
                         </li>
                         <li>
                             <a class="dropdown-item text-danger" id="signOut">
@@ -77,7 +78,7 @@
                             </a>
                         </li>
                     </ul>
-                </div>
+                </div> -->
             </nav>
         </div>
     </header>
@@ -210,6 +211,71 @@
     <footer>
 
     </footer>
+    <div class="modal fade" id="modalRegLog" tabindex="-1" aria-labelledby="exampleModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-md modalRegLog">
+            <div class="modal-content">
+                <div class="modal-body">
+                    <div class="d-flex flex-column align-items-center">
+                        <div class="login-container" id="loginContainer">
+                            <img src="../images/logo_o.png" alt="" class="loge">
+
+                            <svg class="progress-svg" viewBox="0 0 100 100">
+                                <circle class="progress-circle" cx="50" cy="50" r="45"></circle>
+                            </svg>
+
+                            <svg class="check-svg" viewBox="0 0 100 100">
+                                <path class="check-mark" d="M30 52 l15 15 l30 -35" fill="none" />
+                            </svg>
+                        </div>
+                        <h5 class="h5 text-center" id="loginTitle">Bejelentkezés</h5>
+                    </div>
+                    <form method="POST" id="loginForm">
+                        <h6 class="h6">Jelentkezz be a játék folytatásához!</h6>
+                        <div class="input-container">
+                            <input type="text" id="loginUser" placeholder=" " required>
+                            <label for="loginUser">Felhasználónév vagy e-mail</label>
+                        </div>
+                        <div class="input-container">
+                            <input type="password" id="loginPass" placeholder=" " required>
+                            <label for="loginPass">Jelszó</label>
+                        </div>
+                        <div>
+                            <input type="checkbox" id="rememberMe">
+                            <label for="rememberMe">Emlékezz rám</label>
+                        </div>
+                        <p class="text-center">Nincs még fiókod? <a href="/register">Regisztrálás</a></p>
+                        <div class="form-group mt-3 d-flex justify-content-evenly" id="buttons">
+                            <button type="submit" class="btn btn-primary" id="loginButton">Bejelentkezés</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="modal fade" id="modalSettings" tabindex="-1" aria-labelledby="exampleModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-xl" id="modalSize">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="modalTitle">Felhasználó szerkesztése</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Bezárás" title="Bezár"
+                        id="modalClose"></button>
+                </div>
+                <div class="modal-body" id="modalContent">
+
+                </div>
+                <div class="modal-footer justify-content-between">
+                    <p class="text-danger" id="footerText">
+                        Kilépés után a változtatásokat nem lehet visszavonni!
+                    </p>
+                    <div id="footerButtons">
+                        <button type="button" class="btn btn-danger">Változtatások visszavonása</button>
+                        <button type="button" class="btn btn-primary">Mentés</button>
+                        <button type="button" class="btn btn-primary">Mentés és kilépés</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
 </body>
 
 </html>

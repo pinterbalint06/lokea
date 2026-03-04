@@ -33,7 +33,7 @@ app.use(session({
 
 //!Routing
 //?Főoldal:
-router.get('/', (request, response) => {
+router.get('/main', (request, response) => {
     response.sendFile(path.join(__dirname, '../frontend/html/main.html'));
 });
 router.get('/terrain', (request, response) => {

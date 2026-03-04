@@ -80,13 +80,13 @@ async function newUserFromAdmin(username, email, password, role, is_2fa) {
 }
 
 async function getUserByUsername(username) {
-    const query = 'SELECT users.password, users.user_id, users.role, users.deleted_at FROM users WHERE users.username = ?';
+    const query = 'SELECT users.username, users.password, users.user_id, users.role, users.deleted_at FROM users WHERE users.username = ?';
     const [result] = await pool.execute(query, [username]);
     return result;
 }
 
 async function getUserByEmail(email) {
-    const query = 'SELECT users.password, users.user_id, users.role, users.deleted_at FROM users WHERE users.email = ?';
+    const query = 'SELECT users.username, users.password, users.user_id, users.role, users.deleted_at FROM users WHERE users.email = ?';
     const [result] = await pool.execute(query, [email]);
     return result;
 }
