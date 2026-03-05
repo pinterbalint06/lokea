@@ -113,25 +113,31 @@ export class ConnectionManager {
             }
         });
 
-        this.bus.on(EVENTS.UI_COLLAPSE_CLOSE_REQUESTED, (request) => {
-            if (this.isSaving) {
-                request.canProceed = false;
-                request.reason = "Kapcsolatok mentése folyamatban, kérlek várj!";
-            }
+        this.bus.on(EVENTS.MARKER_DELETED, ({ pointId }) => {
+            this.connectionsList = this.connectionsList.filter(connection =>
+                connection.start_point_id != pointId && connection.end_point_id != pointId
+            );
+            this.unsavedConnections = this.unsavedConnections.filter(connection =>
+                connection.start_point_id != pointId && connection.end_point_id != pointId
+            );
+            this.#renderConnectionsForActiveMap();
+            this.#emitConnectionListUpdate();
         });
 
-        this.bus.on(EVENTS.MAP_SWITCH_REQUESTED, (request) => {
-            if (this.isSaving) {
-                request.canProceed = false;
-                request.reason = "Kapcsolatok mentése folyamatban, kérlek várj!";
-            }
-        });
+        const eventsToBlock = [
+            EVENTS.UI_COLLAPSE_CLOSE_REQUESTED,
+            EVENTS.MAP_SWITCH_REQUESTED,
+            EVENTS.UI_ADD_NEW_MAP_REQUEST,
+            EVENTS.UI_DELETE_POINT_REQUESTED
+        ];
 
-        this.bus.on(EVENTS.UI_ADD_NEW_MAP_REQUEST, (request) => {
-            if (this.isSaving) {
-                request.canProceed = false;
-                request.reason = "Kapcsolatok mentése folyamatban, kérlek várj!";
-            }
+        eventsToBlock.forEach(event => {
+            this.bus.on(event, (request) => {
+                if (this.isSaving) {
+                    request.canProceed = false;
+                    request.reason = "Kapcsolatok mentése folyamatban, kérlek várj!";
+                }
+            });
         });
 
         this.bus.on(EVENTS.UI_CONNECTION_HIGHLIGHT, ({ connectionId, type }) => {

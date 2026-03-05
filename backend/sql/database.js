@@ -485,6 +485,15 @@ async function doesConnectionAlreadyExist(connection, pointId1, pointId2) {
     return rows[0].count == 1;
 }
 
+async function deletePointById(connection, pointId) {
+    const query = `
+        DELETE FROM points
+        WHERE points.point_id = ?
+    `;
+    const [result] = await connection.execute(query, [pointId]);
+    return result.affectedRows == 1;
+}
+
 //!Export
 module.exports = {
     // selectall,
@@ -512,6 +521,7 @@ module.exports = {
     getUserByEmail,
     arePointsInSameGameMap,
     doesConnectionAlreadyExist,
+    deletePointById,
     getUsers,
     getUser,
     sortedUsers,

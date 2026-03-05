@@ -307,13 +307,21 @@
                         </div>
                     </div>
                 </div>
-                <div class="card-footer d-flex justify-content-center flex-shrink-0">
-                    <button id="savePointButton" class="btn successColor rounded-pill" disabled>Pont
+                <div class="card-footer d-flex justify-content-between align-items-center w-100 flex-shrink-0">
+                    <button id="deletePointBtn"
+                        class="btn btn-outline-danger btn-sm rounded-pill d-flex align-items-center gap-1 px-3">
+                        <svg style="height: 1em; fill: currentColor;" viewBox="0 0 456 511.82">
+                            <use href="/images/map-creator-icons.svg#icon-trash"></use>
+                        </svg>
+                        Pont törlése
+                    </button>
+
+                    <button id="savePointButton" class="btn successColor rounded-pill px-3" disabled>Pont
                         mentése</button>
                 </div>
             </div>
         </div>
-        <div class="modal fade" id="valtoztatasok" tabindex="-1" aria-labelledby="valtoztatasokLabel"
+        <div class="modal fade" id="valtoztatasokModal" tabindex="-1" aria-labelledby="valtoztatasokLabel"
             aria-hidden="true">
             <div class="modal-dialog modal-dialog-centered">
                 <div class="modal-content uveg">
@@ -326,9 +334,42 @@
                     </div>
                     <div class="modal-footer">
                         <!-- TODO: secondary szín -->
-                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Mégse</button>
-                        <button type="button" class="btn btn-danger" id="valtoztatasokElveteseBtn">Elvetem a
+                        <button type="button" class="btn btn-outline-secondary rounded-pill px-3"
+                            data-bs-dismiss="modal">Mégse</button>
+                        <button type="button" class="btn btn-danger rounded-pill px-3"
+                            id="valtoztatasokElveteseBtn">Elvetem a
                             változtatásokat</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="modal fade" id="pontTorlesModal" data-bs-backdrop="static" tabindex="-1"
+            aria-labelledby="pontTorlesLabel" aria-hidden="true">
+            <div class="modal-dialog modal-dialog-centered">
+                <div class="modal-content uveg border-danger border-opacity-25">
+                    <div class="modal-header border-bottom border-secondary border-opacity-25">
+                        <h1 class="modal-title fs-5 text-danger d-flex align-items-center gap-2" id="pontTorlesLabel">
+                            <svg style="height: 1.2em; fill: currentColor;" viewBox="0 0 511.999 463.377">
+                                <use href="/images/map-creator-icons.svg#icon-warning"></use>
+                            </svg>
+                            Pont törlése
+                        </h1>
+                        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"
+                            aria-label="Close"></button>
+                    </div>
+                    <div class="modal-body">
+                        <p>Biztosan törölni szeretnéd ezt a pontot?</p>
+                        <p class="text-muted small mb-0">
+                            Ez a művelet nem vonható vissza. A ponthoz tartozó
+                            <strong>összes kapcsolat és a 360°-os kép is törlésre kerül</strong>.
+                        </p>
+                    </div>
+                    <div class="modal-footer border-top border-secondary border-opacity-25">
+                        <button type="button" class="btn btn-outline-secondary rounded-pill px-3"
+                            data-bs-dismiss="modal">Mégse</button>
+                        <button type="button" class="btn btn-danger rounded-pill px-3" id="veglegesTorlesBtn">Pont
+                            végleges
+                            törlése</button>
                     </div>
                 </div>
             </div>

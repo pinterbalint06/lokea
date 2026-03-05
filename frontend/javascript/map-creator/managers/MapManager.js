@@ -44,18 +44,18 @@ export class MapManager {
             this.bus.emit(EVENTS.HIDE_LOADING);
         });
 
-        this.bus.on(EVENTS.UI_ADD_NEW_MAP_REQUEST, (request) => {
-            if (this.isSaving) {
-                request.canProceed = false;
-                request.reason = "Térkép mentése folyamatban, kérlek várj!";
-            }
-        });
+        const eventsToBlock = [
+            EVENTS.UI_ADD_NEW_MAP_REQUEST,
+            EVENTS.MAP_SWITCH_REQUESTED
+        ];
 
-        this.bus.on(EVENTS.MAP_SWITCH_REQUESTED, (request) => {
-            if (this.isSaving) {
-                request.canProceed = false;
-                request.reason = "Térkép mentése folyamatban, kérlek várj!";
-            }
+        eventsToBlock.forEach(event => {
+            this.bus.on(event, (request) => {
+                if (this.isSaving) {
+                    request.canProceed = false;
+                    request.reason = "Térkép mentése folyamatban, kérlek várj!";
+                }
+            });
         });
 
         this.bus.on(EVENTS.UI_SWITCH_MAP_REQUEST, ({ mapId }) => this.switchMap(mapId));

@@ -57,6 +57,10 @@ body {
     color: var(--text-main);
 }
 
+.text-main {
+    color: var(--text-main);
+}
+
 .uveg {
     background: var(--surface-glass) !important;
     backdrop-filter: blur(12px);
@@ -352,6 +356,48 @@ main {
 
 #equirectangularFullscreen {
     cursor: pointer;
+}
+
+#veglegesTorlesBtn {
+    position: relative;
+    overflow: hidden;
+    background-color: transparent !important;
+    color: var(--state-danger) !important;
+    border: 1px solid var(--state-danger) !important;
+    transition: color var(--transition-soft), box-shadow var(--transition-soft);
+    z-index: 1;
+    cursor: not-allowed;
+    user-select: none;
+}
+
+#veglegesTorlesBtn::before {
+    content: "";
+    position: absolute;
+    top: 0;
+    left: 0;
+    height: 100%;
+    width: 0%;
+    background: linear-gradient(90deg, #ffb703, var(--state-danger));
+    z-index: -1;
+    transition: width var(--transition-fast) ease-out;
+}
+
+#veglegesTorlesBtn.filling::before {
+    width: 100%;
+    transition: width 2s linear;
+}
+
+#veglegesTorlesBtn.unlocked {
+    color: var(--text-main) !important;
+    background-color: var(--state-danger) !important;
+    cursor: pointer;
+    box-shadow: 0 0 15px var(--state-danger);
+}
+
+#veglegesTorlesBtn.unlocked::before {
+    width: 100%;
+    background: var(--state-danger);
+    transition: none;
 }
 
 @media (max-width: 992px) {

@@ -37,6 +37,8 @@ export class UIManager {
             addNewMapBtn: document.getElementById("addNewMapBtn"),
             newConnectionBtn: document.getElementById("kapcsolatLetrehozasaBtn"),
             discardChangesBtn: document.getElementById("valtoztatasokElveteseBtn"),
+            deletePointBtn: document.getElementById("deletePointBtn"),
+            finalDeleteBtn: document.getElementById("veglegesTorlesBtn"),
 
             // inputs
             fileInputMap: document.getElementById("fileInput"),
@@ -64,7 +66,10 @@ export class UIManager {
             floatingButtonDiv: document.getElementById("floatingButtonDiv"),
             connectionsList: document.getElementById("kapcsolatokLista"),
             emptyConnections: document.getElementById("nincsenekKapcsolatok"),
-            changesModal: document.getElementById("valtoztatasok"),
+
+            // modals
+            changesModal: document.getElementById("valtoztatasokModal"),
+            deletePointModal: document.getElementById("pontTorlesModal"),
 
             // settings
             settingsBtn: document.getElementById("settingsBtn"),
@@ -92,6 +97,8 @@ export class UIManager {
         );
 
         this.elements.changesModalBootstrapElement = new bootstrap.Modal(this.elements.changesModal);
+
+        this.elements.deletePointModalBootstrapElement = new bootstrap.Modal(this.elements.deletePointModal);
 
         this.elements.savePointButton.disabled = true;
     }
@@ -191,6 +198,19 @@ export class UIManager {
             }
         });
 
+        this.elements.deletePointBtn.addEventListener("click", (event) => {
+            let request = { canProceed: true, reason: "" };
+
+            this.bus.emit(EVENTS.UI_DELETE_POINT_REQUESTED, { request });
+
+            if (request.canProceed) {
+                this.elements.deletePointModalBootstrapElement.show();
+            } else {
+                event.preventDefault();
+                this.bus.emit(EVENTS.TOAST_SHOW, { msg: request.reason, type: "danger" });
+            }
+        });
+
         this.elements.discardChangesBtn.addEventListener("click", (event) => {
             event.target.blur(); // valami aria warning miatt kell
             this.elements.changesModalBootstrapElement.hide();
@@ -284,6 +304,8 @@ export class UIManager {
             this.bus.emit(EVENTS.UI_SETTINGS_FOV_TOGGLED, { enabled: event.target.checked });
         });
 
+        this.#setupFinalDeleteButton();
+
         this.#syncFovInputs(this.elements.fovWidthRange, this.elements.fovWidthNumber, "width");
         this.#syncFovInputs(this.elements.fovWidthNumber, this.elements.fovWidthRange, "width");
 
@@ -292,6 +314,66 @@ export class UIManager {
 
         this.#setupUploadHandler(this.elements.dropZoneMap, this.elements.uploadButtonMap, this.elements.fileInputMap, EVENTS.UI_MAP_FILE_DROPPED);
         this.#setupUploadHandler(this.elements.dropZoneEquirectangular, this.elements.uploadButtonEquirectangular, this.elements.fileInputEquirectangular, EVENTS.UI_EQUIRECTANGULAR_FILE_DROPPED);
+    }
+
+    #setupFinalDeleteButton() {
+        let deleteTimer = null;
+        let isDeleteUnlocked = false;
+
+        const resetDeleteButton = () => {
+            clearTimeout(deleteTimer);
+            isDeleteUnlocked = false;
+            this.elements.finalDeleteBtn.classList.remove("filling", "unlocked");
+        };
+
+        this.elements.deletePointModal.addEventListener("hidden.bs.modal", (event) => {
+            if (event.target == this.elements.deletePointModal) {
+                resetDeleteButton();
+            }
+        });
+        this.elements.deletePointModal.addEventListener("show.bs.modal", (event) => {
+            if (event.target == this.elements.deletePointModal) {
+                resetDeleteButton();
+            }
+        });
+
+        const startFill = () => {
+            if (!isDeleteUnlocked) {
+                this.elements.finalDeleteBtn.classList.add("filling");
+
+                deleteTimer = setTimeout(() => {
+                    isDeleteUnlocked = true;
+                    this.elements.finalDeleteBtn.classList.remove("filling");
+                    this.elements.finalDeleteBtn.classList.add("unlocked");
+                }, 2000);
+            }
+        };
+
+        const stopFill = () => {
+            if (!isDeleteUnlocked) {
+                clearTimeout(deleteTimer);
+                this.elements.finalDeleteBtn.classList.remove("filling");
+            }
+        };
+
+        this.elements.finalDeleteBtn.addEventListener("mouseenter", startFill);
+        this.elements.finalDeleteBtn.addEventListener("mouseleave", stopFill);
+
+        this.elements.finalDeleteBtn.addEventListener("touchstart", startFill, { passive: true });
+        this.elements.finalDeleteBtn.addEventListener("touchend", stopFill);
+        this.elements.finalDeleteBtn.addEventListener("touchcancel", stopFill);
+
+        this.elements.finalDeleteBtn.addEventListener("click", (event) => {
+            if (isDeleteUnlocked) {
+                event.target.blur(); // valami aria warning miatt kell
+
+                this.elements.finalDeleteBtn.disabled = true;
+                this.bus.emit(EVENTS.UI_DELETE_POINT_CONFIRMED);
+            } else {
+                event.preventDefault();
+                event.stopPropagation();
+            }
+        });
     }
 
     #bindBusEvents() {
@@ -388,6 +470,17 @@ export class UIManager {
             this.#updateMapSelector(maps);
             this.elements.mapSelect.value = loadedMapId;
             this.elements.mapSelect.dataset.previousValue = loadedMapId;
+        });
+
+        this.bus.on(EVENTS.MARKER_DELETED, () => {
+            this.elements.deletePointModalBootstrapElement.hide();
+            this.elements.collapseBootstrapElement.hide();
+            this.elements.finalDeleteBtn.disabled = false;
+        });
+
+        this.bus.on(EVENTS.MARKER_DELETE_FAILED, () => {
+            this.elements.deletePointModalBootstrapElement.hide();
+            this.elements.finalDeleteBtn.disabled = false;
         });
 
         this.bus.on(EVENTS.MAP_SAVE_STARTED, () => this.elements.saveMapButton.disabled = true);

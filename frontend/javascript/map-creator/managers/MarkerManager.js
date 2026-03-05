@@ -1,6 +1,6 @@
 import { EVENTS } from "../events/EventBus.js";
 import { CONSTANTS, ICONS } from "../shared/constants.js";
-import { fetchPoints, savePoint as savePointApi } from "../shared/api.js";
+import { fetchPoints, savePoint as savePointApi, deletePoint as deletePointApi } from "../shared/api.js";
 
 export class MarkerManager {
     constructor(eventBus, mapViewer, appState) {
@@ -88,25 +88,20 @@ export class MarkerManager {
             }
         });
 
-        this.bus.on(EVENTS.UI_COLLAPSE_CLOSE_REQUESTED, (request) => {
-            if (this.isSaving) {
-                request.canProceed = false;
-                request.reason = "Pont mentése folyamatban, kérlek várj!";
-            }
-        });
+        const eventsToBlock = [
+            EVENTS.UI_COLLAPSE_CLOSE_REQUESTED,
+            EVENTS.MAP_SWITCH_REQUESTED,
+            EVENTS.UI_ADD_NEW_MAP_REQUEST,
+            EVENTS.UI_DELETE_POINT_REQUESTED
+        ];
 
-        this.bus.on(EVENTS.MAP_SWITCH_REQUESTED, (request) => {
-            if (this.isSaving) {
-                request.canProceed = false;
-                request.reason = "Pont mentése folyamatban, kérlek várj!";
-            }
-        });
-
-        this.bus.on(EVENTS.UI_ADD_NEW_MAP_REQUEST, (request) => {
-            if (this.isSaving) {
-                request.canProceed = false;
-                request.reason = "Pont mentése folyamatban, kérlek várj!";
-            }
+        eventsToBlock.forEach(event => {
+            this.bus.on(event, (request) => {
+                if (this.isSaving) {
+                    request.canProceed = false;
+                    request.reason = "Pont mentése folyamatban, kérlek várj!";
+                }
+            });
         });
 
         this.bus.on(EVENTS.MAP_SWITCHED, () => {
@@ -186,6 +181,38 @@ export class MarkerManager {
         });
 
         this.bus.on(EVENTS.CONNECTION_MODE_CHANGED, ({ isConnecting }) => this.isConnectionMode = isConnecting);
+
+        this.bus.on(EVENTS.UI_DELETE_POINT_CONFIRMED, async () => {
+            let deletedPointId = this.activePointId;
+            if (deletedPointId) {
+                if (deletedPointId != CONSTANTS.TEMP_ID) {
+                    try {
+                        await deletePointApi(deletedPointId);
+                        this.mapViewer.removeMarker(deletedPointId);
+                        if (this.markersCache[deletedPointId]) {
+                            delete this.markersCache[deletedPointId];
+                        }
+                        if (deletedPointId == this.activePointId) {
+                            this.activePointId = null;
+                        }
+                        this.isPlacingMarker = false;
+                        this.bus.emit(EVENTS.MARKER_DELETED, { pointId: deletedPointId });
+                        this.bus.emit(EVENTS.TOAST_SHOW, { msg: "Pont sikeresen törölve!", type: "success" });
+                        this.#emitDirtyStateChange();
+                    } catch (error) {
+                        console.error("Error deleting point: ", error);
+                        this.bus.emit(EVENTS.TOAST_SHOW, { msg: "Hiba a pont törlésekor!", type: "danger" });
+                        this.bus.emit(EVENTS.MARKER_DELETE_FAILED);
+                    }
+                } else {
+                    this.mapViewer.removeMarker(deletedPointId);
+                    this.activePointId = null;
+                    this.isPlacingMarker = false;
+                    this.bus.emit(EVENTS.MARKER_DELETED);
+                    this.#emitDirtyStateChange();
+                }
+            }
+        });
     }
 
     #resetMarkerPlacingState() {

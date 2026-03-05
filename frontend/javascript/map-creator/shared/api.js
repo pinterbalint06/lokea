@@ -160,6 +160,19 @@ export async function savePoint({
     return data;
 }
 
+export async function deletePoint(pointId) {
+    let response = await fetch(`/api/map_creator/point/${pointId}`, {
+        method: "DELETE"
+    });
+    let data = await response.json();
+
+    if (!response.ok) {
+        await handleResponseError(response);
+    }
+
+    validateJsonResponse(data, "Sikertelen pont törlés!");
+}
+
 export async function saveConnection(gameMapID, connection) {
     let formData = new FormData();
     formData.append("startPointId", connection.start_point_id);

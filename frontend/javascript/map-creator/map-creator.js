@@ -27,8 +27,9 @@ async function init() {
 
 document.addEventListener("DOMContentLoaded", init);
 
+// TODO!: látótérhez svg renderelés
 // TODO!: új markernél elsőre nincs helyesen rajta a markeren a fov cone
-// TODO!!!: pontok, kapcsolatok, térképek törlése
+// TODO!!!: kapcsolatok, térképek törlése
 // TODO!!!: térkép, pontok átnevezése
 // TODO!!: térkép képének cseréje mentés után
 // TODO!!: mapok közti kapcsolatok
