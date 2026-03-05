@@ -279,7 +279,7 @@ export class UIManager {
             this.#updateCollapseDirection();
             this.#handleTwoCollapseResize();
         });
-        
+
         this.elements.fovToggle.addEventListener("change", (event) => {
             this.bus.emit(EVENTS.UI_SETTINGS_FOV_TOGGLED, { enabled: event.target.checked });
         });
@@ -362,6 +362,11 @@ export class UIManager {
 
         this.bus.on(EVENTS.CONNECTION_MODE_CHANGED, ({ isConnecting }) => {
             this.connectionUiState.isConnecting = isConnecting;
+            this.#updateNewConnectionButtonState();
+        });
+
+        this.bus.on(EVENTS.POINT_SAVED, ({ pointCount }) => {
+            this.connectionUiState.hasEnoughPoints = pointCount >= 2;
             this.#updateNewConnectionButtonState();
         });
 

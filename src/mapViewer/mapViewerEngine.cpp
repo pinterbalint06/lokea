@@ -109,7 +109,7 @@ void MapViewerEngine::updateSingleMarker(MapMarker *mapMarker)
             positions.push_back(Vec2(planeX, planeY));
         }
 
-        mapMarker->updateRenderPosition(positions, (float)width_, (float)height_);
+        mapMarker->updateRenderPosition(positions, (float)width_, (float)height_, (float)mapWidth_, (float)mapHeight_, uPerPixel_, vPerPixel_);
     }
 }
 
@@ -358,6 +358,20 @@ void MapViewerEngine::setMarkerSelectable(int id, bool selectable)
     if (isMapLoaded_ && index != -1)
     {
         markers_[index]->setSelectable(selectable);
+    }
+    else
+    {
+        emscripten_console_error("Point doesn't exist!");
+    }
+}
+
+void MapViewerEngine::setMarkerFixedToMap(int id, bool fixedToMap)
+{
+    int index = getMarkerIndexById(id);
+    if (isMapLoaded_ && index != -1)
+    {
+        markers_[index]->setFixedToMap(fixedToMap);
+        updateSingleMarker(markers_[index].get());
     }
     else
     {

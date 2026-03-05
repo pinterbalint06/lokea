@@ -180,6 +180,7 @@ export class EquirectangularManager {
                 this.appState.settings.fovWidth, this.appState.settings.fovHeight,
                 "fov_cone");
             this.mapViewer.setMarkerSelectable(CONSTANTS.FOV_MARKER_ID, false);
+            this.mapViewer.setMarkerFixedToMap(CONSTANTS.FOV_MARKER_ID, true);
 
             this.fovSyncID = requestAnimationFrame(this.#syncFOVLoop);
         }

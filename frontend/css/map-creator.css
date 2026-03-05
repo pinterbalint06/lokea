@@ -46,6 +46,11 @@ body {
     overflow: hidden;
 }
 
+.navPic {
+    height: 45px;
+    width: auto;
+}
+
 body {
     display: flex;
     flex-direction: column;

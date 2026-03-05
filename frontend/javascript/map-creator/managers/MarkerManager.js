@@ -314,7 +314,8 @@ export class MarkerManager {
                     pointId: pointToSave,
                     isNewPoint,
                     position,
-                    data: this.markersCache[pointToSave]
+                    data: this.markersCache[pointToSave],
+                    pointCount: Object.keys(this.markersCache).length
                 });
 
                 this.bus.emit(EVENTS.TOAST_SHOW, { msg: "Pont sikeresen mentve!", type: "success", iconObject: ICONS.SAVE_FLOPPY });

@@ -31,6 +31,7 @@ MapMarker::MapMarker(int id, const std::string &textureUrl, float u, float v, fl
     width_ = width;
     height_ = height;
     selectable_ = true;
+    fixedToMap_ = false;
     rotation_ = 0.0f;
 
     Vertex vertices[4 * MAX_MARKER_REPETITIONS];
@@ -87,13 +88,32 @@ void MapMarker::changeTexture(const std::string &textureUrl)
     texture->loadFromUrl(textureUrl);
 }
 
-void MapMarker::updateRenderPosition(const std::vector<Vec2> &positions, float screenWidth, float screenHeight)
+void MapMarker::updateRenderPosition(const std::vector<Vec2> &positions, float screenWidth, float screenHeight, float totalMapWidth, float totalMapHeight, float mapRatioPerPixelX, float mapRatioPerPixelY)
 {
     Vertex* vertices = getVertices();
 
-    // calculate half width to be able to center it along the x axis
-    float halfinPlaneWidth = width_ / screenWidth;
-    float inPlaneHeight = (height_ / screenHeight) * 2.0f;
+    float markerWidthInScreenPixels;
+    float markerHeightInScreenPixels;
+
+    bool isMapValid = (totalMapWidth > 0.0f && totalMapHeight > 0.0f);
+    bool isZoomValid = (mapRatioPerPixelX > 0.0f && mapRatioPerPixelY > 0.0f);
+
+    if (isFixedToMap_ && isMapValid && isZoomValid)
+    {
+        float markerWidthU = width_ / totalMapWidth;
+        float markerHeightU = height_ / totalMapHeight;
+
+        markerWidthInScreenPixels = markerWidthU / mapRatioPerPixelX;
+        markerHeightInScreenPixels = markerHeightU / mapRatioPerPixelY;
+    }
+    else
+    {
+        markerWidthInScreenPixels = width_;
+        markerHeightInScreenPixels = height_;
+    }
+
+    float normalizedHalfWidth = markerWidthInScreenPixels / screenWidth;
+    float normalizedFullHeight = (markerHeightInScreenPixels / screenHeight) * 2.0f;
 
     float cosine = 1.0f;
     float sine = 0.0f;
@@ -110,10 +130,10 @@ void MapMarker::updateRenderPosition(const std::vector<Vec2> &positions, float s
     // y' = x*sin + y*cos
     // x' = widthCosine - widthSine
     // y' = heightSine + heightCosine
-    float widthCosine = halfinPlaneWidth * cosine;
-    float widthSine = halfinPlaneWidth * sine;
-    float heightCosine = inPlaneHeight * cosine;
-    float heightSine = inPlaneHeight * sine;
+    float widthCosine = normalizedHalfWidth * cosine;
+    float widthSine = normalizedHalfWidth * sine;
+    float heightCosine = normalizedFullHeight * cosine;
+    float heightSine = normalizedFullHeight * sine;
 
     for (int i = 0; i < MAX_MARKER_REPETITIONS; ++i)
     {
@@ -124,15 +144,15 @@ void MapMarker::updateRenderPosition(const std::vector<Vec2> &positions, float s
             float planeX = positions[i].x;
             float planeY = positions[i].y;
 
-            // left side is -half and right side is +half so it is centered alng the x axis
-            // and add the whole height to the top so it the bottom starts at the given coordinates
+            // left side is -half and right side is +half so it is centered along the x axis
+            // and add the whole height to the top so the bottom starts at the given coordinates
             if (rotation_ != 0.0f)
             {
                 // rotation formula: 
                 // x' = x*cos - y*sin
                 // y' = x*sin + y*cos
 
-                // left is -halfinPlaneWidth so it is -widthCosine (-w, +h)
+                // left is -normalizedHalfWidth so it is -widthCosine (-w, +h)
                 // x' = -x*cos - y*sin 
                 vertices[markerRepetitionId + TOP_LEFT].x = planeX - widthCosine - heightSine;
                 vertices[markerRepetitionId + TOP_LEFT].y = planeY - widthSine + heightCosine;
@@ -142,7 +162,7 @@ void MapMarker::updateRenderPosition(const std::vector<Vec2> &positions, float s
                 vertices[markerRepetitionId + TOP_RIGHT].y = planeY + widthSine + heightCosine;
 
                 // we only add the height to top so here y is 0
-                // bottom left (-w, 0) is -halfinPlaneWidth
+                // bottom left (-w, 0) is -normalizedHalfWidth
                 vertices[markerRepetitionId + BOTTOM_LEFT].x = planeX - widthCosine;
                 vertices[markerRepetitionId + BOTTOM_LEFT].y = planeY - widthSine;
 
@@ -153,15 +173,15 @@ void MapMarker::updateRenderPosition(const std::vector<Vec2> &positions, float s
             else
             {
                 // center x around calculated coordinate
-                vertices[markerRepetitionId + TOP_LEFT].x = planeX - halfinPlaneWidth;
-                vertices[markerRepetitionId + TOP_RIGHT].x = planeX + halfinPlaneWidth;
-                vertices[markerRepetitionId + BOTTOM_LEFT].x = planeX - halfinPlaneWidth;
-                vertices[markerRepetitionId + BOTTOM_RIGHT].x = planeX + halfinPlaneWidth;
+                vertices[markerRepetitionId + TOP_LEFT].x = planeX - normalizedHalfWidth;
+                vertices[markerRepetitionId + TOP_RIGHT].x = planeX + normalizedHalfWidth;
+                vertices[markerRepetitionId + BOTTOM_LEFT].x = planeX - normalizedHalfWidth;
+                vertices[markerRepetitionId + BOTTOM_RIGHT].x = planeX + normalizedHalfWidth;
 
                 // put the bottom to the given coordinate
                 // so the markers bottom middle point marks the point
-                vertices[markerRepetitionId + TOP_LEFT].y = planeY + inPlaneHeight;
-                vertices[markerRepetitionId + TOP_RIGHT].y = planeY + inPlaneHeight;
+                vertices[markerRepetitionId + TOP_LEFT].y = planeY + normalizedFullHeight;
+                vertices[markerRepetitionId + TOP_RIGHT].y = planeY + normalizedFullHeight;
                 vertices[markerRepetitionId + BOTTOM_LEFT].y = planeY;
                 vertices[markerRepetitionId + BOTTOM_RIGHT].y = planeY;
             }

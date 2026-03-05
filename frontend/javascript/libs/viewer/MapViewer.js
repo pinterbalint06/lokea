@@ -555,6 +555,28 @@ export class MapViewer extends WASMViewerBase {
         this._engine.setMarkerSelectable(id, selectable);
     }
 
+    setMarkerFixedToMap(id, fixedToMap) {
+        this._ensureEngineReady();
+
+        if (!this.doesMarkerExist(id)) {
+            throw new WebassemblyError(
+                "Invalid marker ID",
+                {
+                    "type": MAP_VIEWER_ERROR_TYPES.INVALID_INPUT
+                });
+        }
+
+        if (typeof fixedToMap != "boolean") {
+            throw new WebassemblyError(
+                "Invalid fixedToMap value",
+                {
+                    "type": MAP_VIEWER_ERROR_TYPES.INVALID_INPUT
+                });
+        }
+
+        this._engine.setMarkerFixedToMap(id, fixedToMap);
+    }
+
     changeMarkerId(oldId, newId) {
         this._ensureEngineReady();
 

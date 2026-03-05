@@ -27,7 +27,6 @@ async function init() {
 
 document.addEventListener("DOMContentLoaded", init);
 
-// TODO!!!!: látótér a beállított méretű maradjon
 // TODO!: új markernél elsőre nincs helyesen rajta a markeren a fov cone
 // TODO!!!: pontok, kapcsolatok, térképek törlése
 // TODO!!!: térkép, pontok átnevezése
