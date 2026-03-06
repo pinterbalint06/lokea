@@ -28,57 +28,9 @@
                     <img src="../images/logo.png" alt="" class="img-fluid logo">
                     <p class="text-center logoTitle">Légy bárhol</p>
                 </div>
-                <button type="button" data-bs-toggle="modal" data-bs-target="#modalRegLog" class="btn btn-info">Bejelentkezés</button>
-                <!-- <div class="dropdown">
-                    <a href="#" class="d-block link-light text-decoration-none dropdown-toggle">
-                        <img src="../images/default.png" alt="Profile pic" class="img-fluid rounded-5 border"
-                            style="width: 40px;">
-                        <span class="">Username123</span>
-                    </a>
-                    <ul class="dropdown-menu dropdown-menu-end text-small">
-                        <li>
-                            <a class="dropdown-item" id="editProfile">
-                                <svg class="dropdown-icons">
-                                    <use href="../images/icons/sprite.svg#sliders"></use>
-                                </svg>
-                                <span>Fiókom</span>
-                            </a>
-                        </li>
-                        <li>
-                            <hr class="dropdown-divider">
-                        </li>
-                        <li>
-                            <a class="dropdown-item" id="enterGames">
-                                <svg class="dropdown-icons">
-                                    <use href="../images/icons/sprite.svg#map"></use>
-                                </svg>
-                                <span>Saját játékaim</span>
-                            </a>
-                        </li>
-                        <li>
-                            <hr class="dropdown-divider">
-                        </li>
-                        <li>
-                            <a class="dropdown-item" href="/admin">
-                                <svg class="dropdown-icons">
-                                    <use href="../images/icons/sprite.svg#shield"></use>
-                                </svg>
-                                <span>Belépés az admin oldalra</span>
-                            </a>
-                        </li>
-                        <li>
-                            <hr class="dropdown-divider">
-                        </li>
-                        <li>
-                            <a class="dropdown-item text-danger" id="signOut">
-                                <svg class="dropdown-icons">
-                                    <use href="../images/icons/sprite.svg#logout"></use>
-                                </svg>
-                                <span>Kijelentkezés</span>
-                            </a>
-                        </li>
-                    </ul>
-                </div> -->
+                <div id="LogOrDropdown">
+                    <button type="button" data-bs-toggle="modal" data-bs-target="#modalRegLog" class="btn btn-info">Bejelentkezés</button>
+                </div>
             </nav>
         </div>
     </header>
@@ -229,7 +181,7 @@
                         </div>
                         <h5 class="h5 text-center" id="loginTitle">Bejelentkezés</h5>
                     </div>
-                    <form method="POST" id="loginForm">
+                    <form id="loginForm">
                         <h6 class="h6">Jelentkezz be a játék folytatásához!</h6>
                         <div class="input-container">
                             <input type="text" id="loginUser" placeholder=" " required>

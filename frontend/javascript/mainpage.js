@@ -1,31 +1,120 @@
 document.addEventListener("DOMContentLoaded", async function () {
-    document.getElementById('loginButton').addEventListener("click", async function (e) {
-        e.preventDefault();
-        let username = document.getElementById('loginUser');
-        let password = document.getElementById('loginPass');
-        if (!validalvaBej(username, password)) {
-            await bejelentkezes(username, password);
-        }
-    })
+    if (!await logined()) {
+        document.getElementById('loginButton').addEventListener("click", async function (e) {
+            e.preventDefault();
+            let username = document.getElementById('loginUser');
+            let password = document.getElementById('loginPass');
+            if (!validalvaBej(username, password)) {
+                await bejelentkezes(username, password);
+            }
+        })
+    }
+
 })
 
-function bejelentkezett(username) {
-    let form = document.getElementById('loginForm');
-    let container = document.getElementById('loginContainer');
-    let title = document.getElementById('loginTitle');
+async function logined() {
+    try {
+        console.log("halo")
+        let response = await fetch("/api/loginRole");
+        let data = await response.json();
+        if (response.ok) {
+            if (data.login) {
+                if (data.adminLink) {
+                    dropdownLetrehoz(data.adminLink, data.user[0].username, "data.user[0].filepath");
+                }
+                else {
+                    dropdownLetrehoz(null);
+                }
+            }
+            else {
+                if (data.error) {
+                    console.log(error);
+                }
+            }
+        }
 
-    container.classList.add('spinning');
-    container.classList.add('success-draw');
-    title.innerText = `Üdvözöljük, ${username}!`;
-    title.classList.replace("h5", "h2");
-    form.classList.add('collapse-out');
-    setTimeout(() => {
-        container.classList.remove('spinning');
-        form.innerHTML = "";
-        setTimeout(() => {
-            location.reload();
-        }, 3000);
-    }, 500);
+        return data.login;
+    } catch (error) {
+        console.log(`hálózati hiba: ${error}`);
+    }
+}
+
+function dropdownLetrehoz(link, nev, kep) {
+    let hova = document.getElementById('LogOrDropdown');
+    hova.innerHTML = "";
+    let div = document.createElement('div');
+    div.classList.add("dropdown");
+
+    let a = document.createElement('a');
+    a.classList.add("d-block", "link-light", "text-decoration-none", "dropdown-toggle");
+    let img = document.createElement('img');
+    img.src = "../images/default.png";
+    img.alt = "Profile pic";
+    img.classList.add("img-fluid", "profilePicture");
+    let username = document.createElement("span");
+    username.id = "profileUsername";
+    username.innerText = nev
+    a.appendChild(img);
+    a.appendChild(username);
+    div.appendChild(a);
+
+    let ul = document.createElement('ul');
+    ul.classList.add("dropdown-menu", "dropdown-menu-end", "text-small");
+    ul.appendChild(dropdownLink("Fiókom", null, null, "sliders"));
+    ul.appendChild(dropdownDivider());
+    ul.appendChild(dropdownLink("Saját játékaim", null, null, "map"));
+    ul.appendChild(dropdownDivider());
+    if (link) {
+        ul.appendChild(dropdownLink("Belépés az admin oldalra", 'enterAdmin', null, "shield"));
+        ul.appendChild(dropdownDivider());
+    }
+
+    ul.appendChild(dropdownLink("Kijelentkezés", 'signOut', ["text-danger"], "logout"));
+
+    div.appendChild(ul);
+    hova.appendChild(div);
+
+    if (link) {
+        document.getElementById('enterAdmin').href = link;
+    } //javitani!
+}
+
+function dropdownLink(title, id, customClasses, svgName) {
+    let li = document.createElement('li');
+
+    let a = document.createElement('a');
+    a.classList.add("dropdown-item");
+    if (customClasses) {
+        a.classList.add(...customClasses);
+    }
+    if (id) {
+        a.id = id;
+    }
+    let span = document.createElement('span');
+    span.innerText = title;
+    a.appendChild(makeSvg(svgName, "dropdown-icons"));
+    a.appendChild(span);
+
+    li.appendChild(a);
+    return li;
+}
+
+function dropdownDivider() {
+    let li = document.createElement('li');
+    let hr = document.createElement('hr');
+    hr.classList.add('dropdown-divider');
+    li.appendChild(hr);
+    return li;
+}
+
+function makeSvg(name, className) {
+    let svg = document.createElementNS("http://www.w3.org/2000/svg", "svg");
+    svg.classList.add(className);
+    let use = document.createElementNS("http://www.w3.org/2000/svg", "use");
+    use.setAttributeNS("http://www.w3.org/1999/xlink", "xlink:href", `../images/icons/sprite.svg#${name}`);
+
+    svg.appendChild(use);
+    return svg;
 }
 
 function validalvaBej(a, b) {
@@ -46,6 +135,7 @@ function validalvaBej(a, b) {
     else {
         b.classList.remove("border-danger");
     }
+    console.log(fail);
     return fail;
 }
 
@@ -72,4 +162,23 @@ async function bejelentkezes(username, jelszo) {
     } catch (error) {
         console.log(`hálózati hiba: ${error}`);
     }
+}
+
+function bejelentkezett(username) {
+    let form = document.getElementById('loginForm');
+    let container = document.getElementById('loginContainer');
+    let title = document.getElementById('loginTitle');
+
+    container.classList.add('spinning');
+    container.classList.add('success-draw');
+    title.innerText = `Üdvözöljük, ${username}!`;
+    title.classList.replace("h5", "h2");
+    form.classList.add('collapse-out');
+    setTimeout(() => {
+        container.classList.remove('spinning');
+        form.innerHTML = "";
+        setTimeout(() => {
+            location.reload();
+        }, 3000);
+    }, 500);
 }

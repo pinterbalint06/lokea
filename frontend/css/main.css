@@ -52,6 +52,12 @@ header {
     font-size: 20px;
 }
 
+.profilePicture {
+    width: 40px;
+    border: 1px solid black;
+    border-radius: 100%;
+}
+
 .customMap {
     background: url(../images/examplelocation.jpg);
     background-repeat: no-repeat;

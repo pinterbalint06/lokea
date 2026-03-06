@@ -103,6 +103,12 @@ async function getUser(id) {
     return result;
 }
 
+async function getUserNameProfile(id) {
+    const query = 'SELECT users.username, images.filepath FROM users LEFT JOIN images ON (images.image_id = users.pfp) WHERE users.user_id = ?';
+    const [result] = await pool.execute(query, [id]);
+    return result;
+}
+
 async function sortedUsers(mireKeresek, mit, status, adminChecked, modChecked, userChecked) {
     let query = 'SELECT deleted_at, user_id, username, email, role FROM users';
     let conditions = [];
@@ -251,6 +257,7 @@ module.exports = {
     getUserByEmail,
     getUsers,
     getUser,
+    getUserNameProfile,
     sortedUsers,
     updateUser,
     userToInactive,

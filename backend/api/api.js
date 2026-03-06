@@ -128,7 +128,7 @@ router.post("/login",
 
                         request.session.userid = rows[0].user_id;
                         request.session.role = sesRole;
-                        response.status(200).json({ message: "Sikeres bejelentkezés", role: sesRole, username: rows[0].username});
+                        response.status(200).json({ message: "Sikeres bejelentkezés", role: sesRole, username: rows[0].username });
                     }
                 }
             }
@@ -148,6 +148,27 @@ router.post('/signout', auth.checkAuth, (request, response) => {
         }
     });
 });
+
+router.get('/loginRole', async (request, response) => {
+    try {
+        let login = false;
+        if (!request.session.userid) {
+            response.status(200).json({ login })
+        }
+        else {
+            login = true;
+            let user = await database.getUserNameProfile(request.session.userid);
+            if (request.session.role == "ADMIN") {
+                response.status(200).json({ login, adminLink: "/admin", user });
+            }
+            else {
+                response.status(200).json({ login, user });
+            }
+        }
+    } catch (error) {
+        response.status(500).json({ login, error: error });
+    }
+})
 
 //Endpoints - settings
 
