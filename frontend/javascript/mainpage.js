@@ -5,7 +5,7 @@ document.addEventListener("DOMContentLoaded", async function () {
             let username = document.getElementById('loginUser');
             let password = document.getElementById('loginPass');
             if (!validalvaBej(username, password)) {
-                await bejelentkezes(username, password);
+                await bejelentkezes(username, password, document.getElementById('rememberMe').checked);
             }
         })
     }
@@ -20,10 +20,10 @@ async function logined() {
         if (response.ok) {
             if (data.login) {
                 if (data.adminLink) {
-                    dropdownLetrehoz(data.adminLink, data.user[0].username, "data.user[0].filepath");
+                    await dropdownLetrehoz(data.adminLink, data.user[0].username, data.user[0].filepath);
                 }
                 else {
-                    dropdownLetrehoz(null);
+                    await dropdownLetrehoz(null, data.user[0].username, data.user[0].filepath);
                 }
             }
             else {
@@ -39,7 +39,7 @@ async function logined() {
     }
 }
 
-function dropdownLetrehoz(link, nev, kep) {
+async function dropdownLetrehoz(link, nev, kep) {
     let hova = document.getElementById('LogOrDropdown');
     hova.innerHTML = "";
     let div = document.createElement('div');
@@ -48,7 +48,12 @@ function dropdownLetrehoz(link, nev, kep) {
     let a = document.createElement('a');
     a.classList.add("d-block", "link-light", "text-decoration-none", "dropdown-toggle");
     let img = document.createElement('img');
-    img.src = "../images/default.png";
+    if (kep != null) {
+        img.src = await getProfilePicture(kep);
+    }
+    else {
+        img.src = "../images/default.png";
+    }
     img.alt = "Profile pic";
     img.classList.add("img-fluid", "profilePicture");
     let username = document.createElement("span");
@@ -77,6 +82,10 @@ function dropdownLetrehoz(link, nev, kep) {
     if (link) {
         document.getElementById('enterAdmin').href = link;
     } //javitani!
+
+    document.getElementById('signOut').addEventListener("click", async function () {
+        await kijelentkezes()
+    });
 }
 
 function dropdownLink(title, id, customClasses, svgName) {
@@ -117,6 +126,18 @@ function makeSvg(name, className) {
     return svg;
 }
 
+async function getProfilePicture(route) {
+    try {
+        let response = await fetch(`/api/getProfilePic?route=${route}`);
+        let blob = await response.blob();
+
+        let objectURL = URL.createObjectURL(blob);
+        return objectURL;
+    } catch (error) {
+        console.log(error);
+    }
+}
+
 function validalvaBej(a, b) {
     let fail = false;
     let username = a.value;
@@ -139,7 +160,7 @@ function validalvaBej(a, b) {
     return fail;
 }
 
-async function bejelentkezes(username, jelszo) {
+async function bejelentkezes(username, jelszo, remember) {
     try {
         let response = await fetch("/api/login", {
             method: "POST",
@@ -148,7 +169,8 @@ async function bejelentkezes(username, jelszo) {
             },
             body: JSON.stringify({
                 username: username.value,
-                password: jelszo.value
+                password: jelszo.value,
+                remember: remember
             })
         });
         let data = await response.json();
@@ -181,4 +203,27 @@ function bejelentkezett(username) {
             location.reload();
         }, 3000);
     }, 500);
+}
+
+async function kijelentkezes() {
+    try {
+        let response = await fetch("/api/signout", {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json"
+            }
+        });
+        let data = await response.json();
+        if (data.success) {
+            setTimeout(() => {
+                location.reload();
+            }, 1000);
+        }
+        else {
+            console.error("baj a kijelentkezésben, baj: " + data.error);
+        }
+
+    } catch (error) {
+        console.error(`hálózati hiba: ${error}`);
+    }
 }

@@ -99,7 +99,7 @@ router.post("/login",
                 });
             }
             else {
-                const { username, password } = request.body;
+                const { username, password, remember } = request.body;
                 let rows;
                 if (validator.isEmail(username)) {
                     rows = await database.getUserByEmail(username);
@@ -118,14 +118,17 @@ router.post("/login",
                     }
                     else {
                         let sesRole = rows[0].role;
-
-                        if (sesRole.role === 'ADMIN') {
-                            request.session.cookie.maxAge = 15 * 60 * 1000;
+                        if (remember) {
+                            if (sesRole.role === 'ADMIN') {
+                                request.session.cookie.maxAge = 15 * 60 * 1000;
+                            }
+                            else {
+                                request.session.cookie.maxAge = 2 * 60 * 60 * 1000;
+                            }
                         }
                         else {
-                            request.session.cookie.maxAge = 2 * 60 * 60 * 1000;
+                            request.session.cookie.expires = false;
                         }
-
                         request.session.userid = rows[0].user_id;
                         request.session.role = sesRole;
                         response.status(200).json({ message: "Sikeres bejelentkezés", role: sesRole, username: rows[0].username });

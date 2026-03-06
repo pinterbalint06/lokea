@@ -126,7 +126,8 @@ async function bejelentkezes(username, jelszo) {
             },
             body: JSON.stringify({
                 username: username.value,
-                password: jelszo.value
+                password: jelszo.value,
+                remember: true
             })
         });
         let data = await response.json();

@@ -52,6 +52,10 @@ header {
     font-size: 20px;
 }
 
+#profileUsername {
+    margin-left: 15px;
+}
+
 .profilePicture {
     width: 40px;
     border: 1px solid black;
