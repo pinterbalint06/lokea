@@ -1,4 +1,4 @@
-import { fetchConnections, saveUnsavedConnections } from "../shared/api.js";
+import { fetchConnections, saveUnsavedConnections, deleteConnection } from "../shared/api.js";
 import { CONSTANTS, ICONS } from "../shared/constants.js";
 import { EVENTS } from "../events/EventBus.js";
 
@@ -151,6 +151,21 @@ export class ConnectionManager {
             let centerY = (pos1.y + pos2.y) / 2;
             this.mapViewer.moveTo(centerX, centerY);
         });
+
+        this.bus.on(EVENTS.UI_CONNECTION_DELETE_REQUEST, async ({ connectionId, startPointId, endPointId }) => {
+            if (connectionId < 0) {
+                // unsaved connection
+                this.unsavedConnections = this.unsavedConnections.filter(connection =>
+                    connection.connection_id != connectionId
+                );
+                this.#renderConnectionsForActiveMap();
+                this.#emitConnectionListUpdate();
+                this.bus.emit(EVENTS.UNSAVED_CONNECTION_DELETED);
+                this.bus.emit(EVENTS.TOAST_SHOW, { msg: "Kapcsolat sikeresen törölve!", type: "success" });
+            } else {
+                await this.#deleteConnection(connectionId);
+            }
+        });
     }
 
     #startConnectingMode() {
@@ -289,5 +304,27 @@ export class ConnectionManager {
             connections: currentMarkerConnections,
             unsavedConnections: this.unsavedConnections
         });
+    }
+
+    async #deleteConnection(connectionId) {
+        this.bus.emit(EVENTS.TOAST_SHOW, { msg: "Kapcsolat törlése", id: "deletingConnection", closable: false, autohide: false, spinner: true });
+
+        try {
+            await deleteConnection(connectionId);
+
+            this.connectionsList = this.connectionsList.filter(connection =>
+                connection.connection_id != connectionId
+            );
+
+            this.#renderConnectionsForActiveMap();
+            this.#emitConnectionListUpdate();
+
+            this.bus.emit(EVENTS.TOAST_SHOW, { msg: "Kapcsolat sikeresen törölve!", type: "success" });
+        } catch (error) {
+            console.error("Error deleting connection:", error);
+            this.bus.emit(EVENTS.TOAST_SHOW, { msg: "Hiba a kapcsolat törlésekor!", type: "danger" });
+        } finally {
+            this.bus.emit(EVENTS.TOAST_HIDE_ID, { id: "deletingConnection" });
+        }
     }
 }

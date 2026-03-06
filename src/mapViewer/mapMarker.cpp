@@ -98,7 +98,7 @@ void MapMarker::updateRenderPosition(const std::vector<Vec2> &positions, float s
     bool isMapValid = (totalMapWidth > 0.0f && totalMapHeight > 0.0f);
     bool isZoomValid = (mapRatioPerPixelX > 0.0f && mapRatioPerPixelY > 0.0f);
 
-    if (isFixedToMap_ && isMapValid && isZoomValid)
+    if (fixedToMap_ && isMapValid && isZoomValid)
     {
         float markerWidthU = width_ / totalMapWidth;
         float markerHeightU = height_ / totalMapHeight;
@@ -124,16 +124,8 @@ void MapMarker::updateRenderPosition(const std::vector<Vec2> &positions, float s
         sine = sin(rotation_);
     }
 
-    // Pre-calculate vector components for width and height
-    // rotation formula: 
-    // x' = x*cos - y*sin
-    // y' = x*sin + y*cos
-    // x' = widthCosine - widthSine
-    // y' = heightSine + heightCosine
-    float widthCosine = normalizedHalfWidth * cosine;
-    float widthSine = normalizedHalfWidth * sine;
-    float heightCosine = normalizedFullHeight * cosine;
-    float heightSine = normalizedFullHeight * sine;
+    float planePerPixelX = 2.0f / screenWidth;
+    float planePerPixelY = 2.0f / screenHeight;
 
     for (int i = 0; i < MAX_MARKER_REPETITIONS; ++i)
     {
@@ -148,42 +140,74 @@ void MapMarker::updateRenderPosition(const std::vector<Vec2> &positions, float s
             // and add the whole height to the top so the bottom starts at the given coordinates
             if (rotation_ != 0.0f)
             {
+                float halfWidthPx = markerWidthInScreenPixels * 0.5f;
+                float fullHeightPx = markerHeightInScreenPixels;
+
                 // rotation formula: 
                 // x' = x*cos - y*sin
                 // y' = x*sin + y*cos
-
-                // left is -normalizedHalfWidth so it is -widthCosine (-w, +h)
-                // x' = -x*cos - y*sin 
-                vertices[markerRepetitionId + TOP_LEFT].x = planeX - widthCosine - heightSine;
-                vertices[markerRepetitionId + TOP_LEFT].y = planeY - widthSine + heightCosine;
+                float topLeftX = (-halfWidthPx * cosine) - (fullHeightPx * sine);
+                float topLeftY = (-halfWidthPx * sine) + (fullHeightPx * cosine);
 
                 // both half width and height is positive so it is standard rotation formula (+w, +h)
-                vertices[markerRepetitionId + TOP_RIGHT].x = planeX + widthCosine - heightSine;
-                vertices[markerRepetitionId + TOP_RIGHT].y = planeY + widthSine + heightCosine;
+                float topRightX = (halfWidthPx * cosine) - (fullHeightPx * sine);
+                float topRightY = (halfWidthPx * sine) + (fullHeightPx * cosine);
 
                 // we only add the height to top so here y is 0
                 // bottom left (-w, 0) is -normalizedHalfWidth
-                vertices[markerRepetitionId + BOTTOM_LEFT].x = planeX - widthCosine;
-                vertices[markerRepetitionId + BOTTOM_LEFT].y = planeY - widthSine;
+                float bottomLeftX = -halfWidthPx * cosine;
+                float bottomLeftY = -halfWidthPx * sine;
 
                 // bottom right (+w, 0)
-                vertices[markerRepetitionId + BOTTOM_RIGHT].x = planeX + widthCosine;
-                vertices[markerRepetitionId + BOTTOM_RIGHT].y = planeY + widthSine;
+                float bottomRightX = halfWidthPx * cosine;
+                float bottomRightY = halfWidthPx * sine;
+
+                // left is -normalizedHalfWidth so it is -widthCosine (-w, +h)
+                // x' = -x*cos - y*sin 
+                float topLeftPlaneOffsetX = topLeftX * planePerPixelX;
+                float topLeftPlaneOffsetY = topLeftY * planePerPixelY;
+
+                vertices[markerRepetitionId + TOP_LEFT].x = planeX + topLeftPlaneOffsetX;
+                vertices[markerRepetitionId + TOP_LEFT].y = planeY + topLeftPlaneOffsetY;
+
+                float topRightPlaneOffsetX = topRightX * planePerPixelX;
+                float topRightPlaneOffsetY = topRightY * planePerPixelY;
+
+                vertices[markerRepetitionId + TOP_RIGHT].x = planeX + topRightPlaneOffsetX;
+                vertices[markerRepetitionId + TOP_RIGHT].y = planeY + topRightPlaneOffsetY;
+
+                float bottomLeftPlaneOffsetX = bottomLeftX * planePerPixelX;
+                float bottomLeftPlaneOffsetY = bottomLeftY * planePerPixelY;
+
+                vertices[markerRepetitionId + BOTTOM_LEFT].x = planeX + bottomLeftPlaneOffsetX;
+                vertices[markerRepetitionId + BOTTOM_LEFT].y = planeY + bottomLeftPlaneOffsetY;
+
+                float bottomRightPlaneOffsetX = bottomRightX * planePerPixelX;
+                float bottomRightPlaneOffsetY = bottomRightY * planePerPixelY;
+
+                vertices[markerRepetitionId + BOTTOM_RIGHT].x = planeX + bottomRightPlaneOffsetX;
+                vertices[markerRepetitionId + BOTTOM_RIGHT].y = planeY + bottomRightPlaneOffsetY;
             }
             else
             {
                 // center x around calculated coordinate
-                vertices[markerRepetitionId + TOP_LEFT].x = planeX - normalizedHalfWidth;
-                vertices[markerRepetitionId + TOP_RIGHT].x = planeX + normalizedHalfWidth;
-                vertices[markerRepetitionId + BOTTOM_LEFT].x = planeX - normalizedHalfWidth;
-                vertices[markerRepetitionId + BOTTOM_RIGHT].x = planeX + normalizedHalfWidth;
+                float leftX = planeX - normalizedHalfWidth;
+                float rightX = planeX + normalizedHalfWidth;
+
+                vertices[markerRepetitionId + TOP_LEFT].x = leftX;
+                vertices[markerRepetitionId + TOP_RIGHT].x = rightX;
+                vertices[markerRepetitionId + BOTTOM_LEFT].x = leftX;
+                vertices[markerRepetitionId + BOTTOM_RIGHT].x = rightX;
 
                 // put the bottom to the given coordinate
                 // so the markers bottom middle point marks the point
-                vertices[markerRepetitionId + TOP_LEFT].y = planeY + normalizedFullHeight;
-                vertices[markerRepetitionId + TOP_RIGHT].y = planeY + normalizedFullHeight;
-                vertices[markerRepetitionId + BOTTOM_LEFT].y = planeY;
-                vertices[markerRepetitionId + BOTTOM_RIGHT].y = planeY;
+                float topY = planeY + normalizedFullHeight;
+                float bottomY = planeY;
+
+                vertices[markerRepetitionId + TOP_LEFT].y = topY;
+                vertices[markerRepetitionId + TOP_RIGHT].y = topY;
+                vertices[markerRepetitionId + BOTTOM_LEFT].y = bottomY;
+                vertices[markerRepetitionId + BOTTOM_RIGHT].y = bottomY;
             }
         }
         else

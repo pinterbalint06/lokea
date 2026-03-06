@@ -29,8 +29,9 @@ document.addEventListener("DOMContentLoaded", init);
 
 // TODO!: látótérhez svg renderelés
 // TODO!: új markernél elsőre nincs helyesen rajta a markeren a fov cone
-// TODO!!!: kapcsolatok, térképek törlése
+// TODO!!!: térképek törlése
 // TODO!!!: térkép, pontok átnevezése
 // TODO!!: térkép képének cseréje mentés után
 // TODO!!: mapok közti kapcsolatok
+// TODO!!: backenden a hozzáférés ellenőrzése
 // TODO!: markerek fixálása pixel koordinátákra? mindig egy adott pixelen legyenek?

@@ -358,7 +358,7 @@ main {
     cursor: pointer;
 }
 
-#veglegesTorlesBtn {
+.btn-hold-to-unlock {
     position: relative;
     overflow: hidden;
     background-color: transparent !important;
@@ -370,7 +370,7 @@ main {
     user-select: none;
 }
 
-#veglegesTorlesBtn::before {
+.btn-hold-to-unlock::before {
     content: "";
     position: absolute;
     top: 0;
@@ -382,22 +382,34 @@ main {
     transition: width var(--transition-fast) ease-out;
 }
 
-#veglegesTorlesBtn.filling::before {
+.btn-hold-to-unlock.filling::before {
     width: 100%;
-    transition: width 2s linear;
 }
 
-#veglegesTorlesBtn.unlocked {
+.btn-hold-to-unlock.unlocked {
     color: var(--text-main) !important;
     background-color: var(--state-danger) !important;
     cursor: pointer;
     box-shadow: 0 0 15px var(--state-danger);
 }
 
-#veglegesTorlesBtn.unlocked::before {
+.btn-hold-to-unlock.unlocked::before {
     width: 100%;
     background: var(--state-danger);
     transition: none;
+}
+
+#veglegesTorlesBtn.filling::before {
+    transition: width 2s linear;
+}
+
+.btn-delete-connection {
+    width: 32px;
+    height: 32px;
+}
+
+.btn-delete-connection.filling::before {
+    transition: width 1s linear;
 }
 
 @media (max-width: 992px) {

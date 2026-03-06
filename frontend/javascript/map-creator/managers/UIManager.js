@@ -244,6 +244,7 @@ export class UIManager {
                 this.elements.northDirection.value = 0;
                 this.elements.northDirectionRange.value = 0;
                 this.elements.savePointButton.disabled = true;
+                this.elements.floatingButtonDiv.classList.remove("d-none");
                 this.bus.emit(EVENTS.UI_COLLAPSE_HIDDEN);
             }
         });
@@ -316,62 +317,104 @@ export class UIManager {
         this.#setupUploadHandler(this.elements.dropZoneEquirectangular, this.elements.uploadButtonEquirectangular, this.elements.fileInputEquirectangular, EVENTS.UI_EQUIRECTANGULAR_FILE_DROPPED);
     }
 
-    #setupFinalDeleteButton() {
-        let deleteTimer = null;
-        let isDeleteUnlocked = false;
+    #setupHoldToUnlockButton(button, duration, onUnlockedClick) {
+        let timer = null;
+        let isUnlocked = false;
+        let unlockedDuringPress = false;
 
-        const resetDeleteButton = () => {
-            clearTimeout(deleteTimer);
-            isDeleteUnlocked = false;
-            this.elements.finalDeleteBtn.classList.remove("filling", "unlocked");
+        let clickCount = 0;
+        let clickTimeout = null;
+
+        const reset = () => {
+            clearTimeout(timer);
+            isUnlocked = false;
+            unlockedDuringPress = false;
+            button.classList.remove("filling", "unlocked");
+            clickCount = 0;
         };
+
+        const unlock = () => {
+            isUnlocked = true;
+            unlockedDuringPress = true;
+            button.classList.remove("filling");
+            button.classList.add("unlocked");
+            clickCount = 0;
+        };
+
+        const startHold = (event) => {
+            // not right click
+            if (!(event.pointerType == "mouse" && event.button != 0)) {
+                if (!isUnlocked) {
+                    clearTimeout(timer);
+                    button.classList.add("filling");
+                    timer = setTimeout(unlock, duration);
+                }
+            }
+        };
+
+        const stopHold = () => {
+            if (!isUnlocked) {
+                clearTimeout(timer);
+                button.classList.remove("filling");
+            }
+        };
+
+        button.addEventListener("pointerdown", startHold);
+        button.addEventListener("pointerup", stopHold);
+        button.addEventListener("pointerleave", stopHold);
+        button.addEventListener("pointercancel", stopHold);
+
+        button.addEventListener("click", (event) => {
+            if (isUnlocked) {
+                if (unlockedDuringPress) {
+                    unlockedDuringPress = false;
+                } else {
+                    onUnlockedClick(event);
+                    reset();
+                }
+            } else {
+                event.preventDefault();
+                event.stopPropagation();
+
+                clickCount++;
+                clearTimeout(clickTimeout);
+
+                if (clickCount >= 2) {
+                    this.bus.emit(EVENTS.TOAST_SHOW, {
+                        msg: "A törlés feloldásához tartsa lenyomva a gombot!",
+                        duration: 3000
+                    });
+                    clickCount = 0;
+                } else {
+                    clickTimeout = setTimeout(() => {
+                        clickCount = 0;
+                    }, 2000);
+                }
+            }
+        });
+
+        return { reset: reset };
+    }
+
+    #setupFinalDeleteButton() {
+        const buttonControl = this.#setupHoldToUnlockButton(
+            this.elements.finalDeleteBtn,
+            2000,
+            (event) => {
+                event.target.blur(); // valami aria warning miatt kell
+                this.elements.finalDeleteBtn.disabled = true;
+                this.bus.emit(EVENTS.UI_DELETE_POINT_CONFIRMED);
+            }
+        );
 
         this.elements.deletePointModal.addEventListener("hidden.bs.modal", (event) => {
             if (event.target == this.elements.deletePointModal) {
-                resetDeleteButton();
+                buttonControl.reset();
             }
         });
         this.elements.deletePointModal.addEventListener("show.bs.modal", (event) => {
             if (event.target == this.elements.deletePointModal) {
-                resetDeleteButton();
-            }
-        });
-
-        const startFill = () => {
-            if (!isDeleteUnlocked) {
-                this.elements.finalDeleteBtn.classList.add("filling");
-
-                deleteTimer = setTimeout(() => {
-                    isDeleteUnlocked = true;
-                    this.elements.finalDeleteBtn.classList.remove("filling");
-                    this.elements.finalDeleteBtn.classList.add("unlocked");
-                }, 2000);
-            }
-        };
-
-        const stopFill = () => {
-            if (!isDeleteUnlocked) {
-                clearTimeout(deleteTimer);
-                this.elements.finalDeleteBtn.classList.remove("filling");
-            }
-        };
-
-        this.elements.finalDeleteBtn.addEventListener("mouseenter", startFill);
-        this.elements.finalDeleteBtn.addEventListener("mouseleave", stopFill);
-
-        this.elements.finalDeleteBtn.addEventListener("touchstart", startFill, { passive: true });
-        this.elements.finalDeleteBtn.addEventListener("touchend", stopFill);
-        this.elements.finalDeleteBtn.addEventListener("touchcancel", stopFill);
-
-        this.elements.finalDeleteBtn.addEventListener("click", (event) => {
-            if (isDeleteUnlocked) {
-                event.target.blur(); // valami aria warning miatt kell
-
-                this.elements.finalDeleteBtn.disabled = true;
-                this.bus.emit(EVENTS.UI_DELETE_POINT_CONFIRMED);
-            } else {
-                event.preventDefault();
-                event.stopPropagation();
+                buttonControl.reset();
             }
         });
     }
@@ -648,6 +691,20 @@ export class UIManager {
                         type: type
                     });
                 });
+
+                let deleteBtn = clone.querySelector(".btn-delete-connection");
+                this.#setupHoldToUnlockButton(
+                    deleteBtn,
+                    1000,
+                    (event) => {
+                        event.stopPropagation();
+                        this.bus.emit(EVENTS.UI_CONNECTION_DELETE_REQUEST, {
+                            connectionId: connection.connection_id,
+                            startPointId: connection.start_point_id,
+                            endPointId: connection.end_point_id
+                        });
+                    }
+                );
 
                 fragment.appendChild(clone);
             }

@@ -120,6 +120,11 @@ export class MarkerManager {
             this.#emitDirtyStateChange();
         });
 
+        this.bus.on(EVENTS.UNSAVED_CONNECTION_DELETED, () => {
+            this.unsavedConnectionCount = Math.max(0, this.unsavedConnectionCount - 1);
+            this.#emitDirtyStateChange();
+        });
+
         this.bus.on(EVENTS.UI_COLLAPSE_HIDE_STARTED, () => {
             if (this.activePointId != null) {
                 if (this.activePointId == CONSTANTS.TEMP_ID) {
@@ -192,13 +197,10 @@ export class MarkerManager {
                         if (this.markersCache[deletedPointId]) {
                             delete this.markersCache[deletedPointId];
                         }
-                        if (deletedPointId == this.activePointId) {
-                            this.activePointId = null;
-                        }
-                        this.isPlacingMarker = false;
+                        this.#resetMarkerPlacingState();
+                        this.#emitDirtyStateChange();
                         this.bus.emit(EVENTS.MARKER_DELETED, { pointId: deletedPointId });
                         this.bus.emit(EVENTS.TOAST_SHOW, { msg: "Pont sikeresen törölve!", type: "success" });
-                        this.#emitDirtyStateChange();
                     } catch (error) {
                         console.error("Error deleting point: ", error);
                         this.bus.emit(EVENTS.TOAST_SHOW, { msg: "Hiba a pont törlésekor!", type: "danger" });
@@ -206,10 +208,9 @@ export class MarkerManager {
                     }
                 } else {
                     this.mapViewer.removeMarker(deletedPointId);
-                    this.activePointId = null;
-                    this.isPlacingMarker = false;
-                    this.bus.emit(EVENTS.MARKER_DELETED);
+                    this.#resetMarkerPlacingState();
                     this.#emitDirtyStateChange();
+                    this.bus.emit(EVENTS.MARKER_DELETED);
                 }
             }
         });

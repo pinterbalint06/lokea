@@ -236,3 +236,16 @@ export async function fetchMapList(gameMapID) {
 export async function fetchConnections(gameMapID) {
     return fetchAndValidate(`/api/map_creator/${gameMapID}/connections`, "connections");
 }
+
+export async function deleteConnection(connectionId) {
+    let response = await fetch(`/api/map_creator/connection/${connectionId}`, {
+        method: "DELETE"
+    });
+    let data = await response.json();
+
+    if (!response.ok) {
+        await handleResponseError(response);
+    }
+
+    validateJsonResponse(data, "Sikertelen kapcsolat törlés!");
+}

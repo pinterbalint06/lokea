@@ -165,7 +165,7 @@
                                         <div class="d-inline-flex flex-column flex-grow-1 ms-2">
                                             <h6 class="h6 text-uppercase text-body-secondary m-0">Koordináták</h6>
                                             <div
-                                                class="d-flex align-items-center gap-2 w-auto flex-grow-1 justify-content-around">
+                                                class="d-flex flex-wrap align-items-center gap-2 w-auto flex-grow-1 justify-content-around">
                                                 <div class="d-flex gap-1 justify-content-center align-items-center">
                                                     <label class="form-label m-0" for="coordinateX">X: </label>
                                                     <input class="form-control uvegform p-1" type="number"
@@ -307,7 +307,8 @@
                         </div>
                     </div>
                 </div>
-                <div class="card-footer d-flex justify-content-between align-items-center w-100 flex-shrink-0">
+                <div
+                    class="card-footer d-flex flex-wrap justify-content-between align-items-center w-100 flex-shrink-0">
                     <button id="deletePointBtn"
                         class="btn btn-outline-danger btn-sm rounded-pill d-flex align-items-center gap-1 px-3">
                         <svg style="height: 1em; fill: currentColor;" viewBox="0 0 456 511.82">
@@ -367,7 +368,8 @@
                     <div class="modal-footer border-top border-secondary border-opacity-25">
                         <button type="button" class="btn btn-outline-secondary rounded-pill px-3"
                             data-bs-dismiss="modal">Mégse</button>
-                        <button type="button" class="btn btn-danger rounded-pill px-3" id="veglegesTorlesBtn">Pont
+                        <button type="button" class="btn btn-danger rounded-pill px-3 btn-hold-to-unlock"
+                            id="veglegesTorlesBtn">Pont
                             végleges
                             törlése</button>
                     </div>
@@ -377,8 +379,8 @@
     </main>
 
     <template id="connection-card-template">
-        <div class="kapcsolat-kartya uveg d-flex align-items-center justify-content-between p-2 rounded mb-2">
-            <div class="d-flex align-items-center gap-2 flex-grow-1">
+        <div class="kapcsolat-kartya uveg d-flex align-items-center justify-content-between p-2 rounded mb-2 flex-wrap">
+            <div class="d-flex align-items-center gap-2 flex-grow-1 flex-wrap">
                 <span class="badge point-badge rounded-pill">
                     <span class="opacity-50 small me-1">ID</span>
                     <span class="start-id"></span>
@@ -393,6 +395,13 @@
                     <span class="end-id"></span>
                 </span>
             </div>
+            <button
+                class="btn-delete-connection btn-hold-to-unlock d-inline-flex align-items-center justify-content-center rounded-circle p-0 flex-shrink-0"
+                title="Kapcsolat törlése">
+                <svg style="height: 1em; width: 1em; fill: currentColor;" viewBox="0 0 456 511.82">
+                    <use href="/images/map-creator-icons.svg#icon-trash"></use>
+                </svg>
+            </button>
         </div>
     </template>
     <script src="/bootstrap/js/bootstrap.min.js"></script>

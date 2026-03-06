@@ -494,6 +494,15 @@ async function deletePointById(connection, pointId) {
     return result.affectedRows == 1;
 }
 
+async function deleteConnectionById(connection, connectionId) {
+    const query = `
+        DELETE FROM point_connections
+        WHERE point_connections.connection_id = ?
+    `;
+    const [result] = await connection.execute(query, [connectionId]);
+    return result.affectedRows == 1;
+}
+
 //!Export
 module.exports = {
     // selectall,
@@ -522,6 +531,7 @@ module.exports = {
     arePointsInSameGameMap,
     doesConnectionAlreadyExist,
     deletePointById,
+    deleteConnectionById,
     getUsers,
     getUser,
     sortedUsers,

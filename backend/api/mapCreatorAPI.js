@@ -388,6 +388,41 @@ router.post("/saveConnection", checkAuth, upload.none(), async (request, respons
     }
 });
 
+//?DELETE /api/map_creator/connection/:connectionId
+router.delete("/connection/:connectionId", checkAuth, async (request, response) => {
+    let dbConnection;
+    try {
+        const userId = request.session.user.user_id;
+
+        // TODO: CHECK IF USER HAS ACCESS
+        const connectionId = validateId(request.params.connectionId, "kapcsolat ID");
+
+        dbConnection = await database.getConnection();
+        await dbConnection.beginTransaction();
+
+        let successConnectionDeletion = await database.deleteConnectionById(dbConnection, connectionId);
+
+        if (!successConnectionDeletion) {
+            const err = new Error("A kapcsolat nem található vagy már törölve lett!");
+            err.statusCode = 404;
+            throw err;
+        }
+
+        await dbConnection.commit();
+
+        response.status(200).json({
+            success: true
+        });
+
+    } catch (error) {
+        await handleUploadError(response, error, null, dbConnection, null);
+    } finally {
+        if (dbConnection) {
+            dbConnection.release();
+        }
+    }
+});
+
 //?GET /api/map_creator/:mapid/points
 router.get("/:mapid/points", async (request, response) => {
     try {
