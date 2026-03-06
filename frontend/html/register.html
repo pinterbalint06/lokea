@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html lang="hu">
+
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Regisztráció</title>
+    <!--!Bootstrap-->
+    <link rel="stylesheet" href="../bootstrap/css/bootstrap.min.css" />
+    <!--?Popper: dropdowns, popovers, tooltips-->
+    <script src="../bootstrap/js/popper.min.js"></script>
+    <script src="../bootstrap/js/bootstrap.min.js"></script>
+    <!--!CSS-->
+    <link rel="stylesheet" href="../css/register.css" />
+    <!--!JavaScript-->
+    <script src="../javascript/register.js"></script>
+</head>
+
+<body>
+    <div class="container-fluid d-flex justify-content-center align-items-center vh-100">
+        <div class="card registercard w-50 p-5">
+            <div class="row">
+                <div class="col-lg-6 col-md-12 d-flex flex-column justify-content-center">
+                    <div>
+                        <h4 class="h4 text-center mb-3" id="regTitle">Regisztrálj még ma!</h4>
+                        <form id="registerForm">
+                            <div class="input-container">
+                                <input type="text" id="regUser" placeholder=" " required>
+                                <label for="regUser">Felhasználónév</label>
+                            </div>
+                            <div class="input-container">
+                                <input type="text" id="regEmail" placeholder=" " required>
+                                <label for="regEmail">E-mail cim</label>
+                            </div>
+                            <div class="input-container">
+                                <input type="password" id="regPass" placeholder=" " required>
+                                <label for="regPass">Jelszó</label>
+                            </div>
+                            <div>
+                                <input type="checkbox" id="twofactorCheckbox">
+                                <label for="twofactorCheckbox">Két lépcsős azonositás</label>
+                            </div>
+                            <div class="form-group mt-2 d-flex justify-content-evenly" id="buttons">
+                                <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#modalReg" id="regButton">Regisztrálás</button>
+                            </div>
+                        </form>
+                    </div>
+
+                </div>
+                <div class="col-lg-6 col-md-12 d-flex flex-column justify-content-center">
+                    <img src="../images/kedvcsinalo.png" class="img-fluid" title="Kedvcsináló">
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="modal fade" id="modalReg" tabindex="-1" aria-labelledby="exampleModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-md modalReg">
+            <div class="modal-content">
+                <div class="modal-body">
+                    <div class="d-flex flex-column align-items-center">
+                        <div class="reg-container spinning" id="regContainer">
+                            <img src="../images/logo_o.png" alt="" class="logo">
+
+                            <svg class="progress-svg" viewBox="0 0 100 100">
+                                <circle class="progress-circle" cx="50" cy="50" r="45"></circle>
+                            </svg>
+
+                            <svg class="check-svg" viewBox="0 0 100 100">
+                                <path class="check-mark" d="M30 52 l15 15 l30 -35" fill="none" />
+                            </svg>
+                        </div>
+                        <h5 class="h5 text-center" id="regModalTitle">Regisztráció véglegesitése</h5>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</body>
+
+</html>
