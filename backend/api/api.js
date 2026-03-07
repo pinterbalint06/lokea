@@ -56,7 +56,8 @@ router.post("/signup",
             if (!errors.isEmpty()) {
                 response.status(400).json({
                     success: false,
-                    error: errors.array()
+                    message: "Helytelen karakter(ek) a felhasználónévben/emailben/jelszóban!",
+                    error_code: 400
                 });
             }
             else {
@@ -66,18 +67,19 @@ router.post("/signup",
                 if (insert.success) {
                     response.status(201).json({
                         success: true,
-                        message: "Sikeres regisztráció"
+                        message: "Sikeres regisztráció!"
                     });
                 }
                 else {
                     response.status(500).json({
                         success: false,
-                        message: insert.error
+                        message: insert.error,
+                        error_code: 500
                     })
                 }
             }
         } catch (error) {
-            response.status(500).json({ error: error });
+            response.status(500).json({ error: error, error_code: 500 });
         }
     }
 );

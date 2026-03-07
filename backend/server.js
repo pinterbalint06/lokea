@@ -36,6 +36,9 @@ app.use(session({
 router.get('/main', (request, response) => {
     response.sendFile(path.join(__dirname, '../frontend/html/main.html'));
 });
+router.get('/register', (request, response) => {
+    response.sendFile(path.join(__dirname, '../frontend/html/register.html'));
+});
 router.get('/terrain', (request, response) => {
     response.sendFile(path.join(__dirname, '../frontend/html/test-terrain.html'));
 });

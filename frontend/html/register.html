@@ -27,21 +27,32 @@
                             <div class="input-container">
                                 <input type="text" id="regUser" placeholder=" " required>
                                 <label for="regUser">Felhasználónév</label>
+                                <div class="input-requirement" id="user-req">
+                                    <ul>
+                                        <li>Min. 1, max. 20 karakter (betűk, számok, _, -)</li>
+                                    </ul>
+                                </div>
                             </div>
                             <div class="input-container">
                                 <input type="text" id="regEmail" placeholder=" " required>
-                                <label for="regEmail">E-mail cim</label>
+                                <label for="regEmail">E-mail cím</label>
                             </div>
                             <div class="input-container">
                                 <input type="password" id="regPass" placeholder=" " required>
                                 <label for="regPass">Jelszó</label>
+                                <div class="input-requirement" id="pass-req">
+                                    <ul>
+                                        <li>Min. 8, max. 50 karakter</li>
+                                        <li>legalább 1 nagybetű és 1 szám</li>
+                                    </ul>
+                                </div>
                             </div>
                             <div>
                                 <input type="checkbox" id="twofactorCheckbox">
                                 <label for="twofactorCheckbox">Két lépcsős azonositás</label>
                             </div>
                             <div class="form-group mt-2 d-flex justify-content-evenly" id="buttons">
-                                <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#modalReg" id="regButton">Regisztrálás</button>
+                                <button type="button" class="btn btn-primary" id="regButton">Regisztrálás</button>
                             </div>
                         </form>
                     </div>
@@ -58,18 +69,17 @@
             <div class="modal-content">
                 <div class="modal-body">
                     <div class="d-flex flex-column align-items-center">
-                        <div class="reg-container spinning" id="regContainer">
+                        <div class="reg-container" id="regModalContainer">
                             <img src="../images/logo_o.png" alt="" class="logo">
-
-                            <svg class="progress-svg" viewBox="0 0 100 100">
-                                <circle class="progress-circle" cx="50" cy="50" r="45"></circle>
+                            <svg class="progress-svg">
+                                <use class="progress-circle" href="../images/icons/sprite.svg#circle-border"></use>
                             </svg>
-
-                            <svg class="check-svg" viewBox="0 0 100 100">
-                                <path class="check-mark" d="M30 52 l15 15 l30 -35" fill="none" />
+                            <svg class="check-svg">
+                                <use class="mark" href="../images/icons/sprite.svg#checkmark"></use>
                             </svg>
                         </div>
-                        <h5 class="h5 text-center" id="regModalTitle">Regisztráció véglegesitése</h5>
+                        <h4 class="h4 text-center" id="regModalTitle">Regisztrálás...</h4>
+                        <h6 class="h6 text-center" id="regModalText"></h6>
                     </div>
                 </div>
             </div>

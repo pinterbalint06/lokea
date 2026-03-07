@@ -71,7 +71,8 @@ async function regisztracio(username, email, jelszo) {
             body: JSON.stringify({
                 username: username.value,
                 email: email.value,
-                password: jelszo.value
+                password: jelszo.value,
+                is2fa: false
             })
         });
 
