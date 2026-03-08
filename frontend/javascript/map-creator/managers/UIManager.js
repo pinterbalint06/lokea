@@ -1,9 +1,10 @@
 import { EVENTS } from "../events/EventBus.js";
 import { CONSTANTS } from "../shared/constants.js";
-import { createSvgIcon } from "../../libs/utils/svgUtils.js";
+import { createSVGIcon } from "../../libs/utils/svgUtils.js";
 import { showToast, createSpinnerIcon, savePreviousValue } from "../shared/utils.js";
 import { CustomSelect } from "../../libs/elements/CustomSelect.js";
 import { createElement } from "../../libs/utils/DOMUtils.js";
+import { ICONS } from "../../libs/icons/icons.js";
 
 export class UIManager {
     constructor(eventBus) {
@@ -105,7 +106,41 @@ export class UIManager {
 
         this.elements.savePointButton.disabled = true;
 
-        this.elements.customMapSelector = new CustomSelect(this.elements.mapSelectWrapped);
+        this.elements.customMapSelector = new CustomSelect(
+            this.elements.mapSelectWrapped,
+            (value, text) => {
+                let textSpan = document.createElement("span");
+                textSpan.innerText = text;
+
+                let deleteIcon = createSVGIcon(ICONS.TRASH,
+                    {
+                        height: "1em",
+                        width: "1em",
+                        fill: "currentColor"
+                    }
+                );
+
+                let deleteButton = createElement("button",
+                    {
+                        type: "button",
+                        class: "btn-delete btn btn-outline-danger btn-sm rounded-circle d-flex align-items-center justify-content-center p-0"
+                    },
+                    [deleteIcon]
+                );
+
+                deleteButton.addEventListener("click", (event) => {
+                    event.stopPropagation();
+
+                    console.log(value);
+                    // TODO!!!!: map törlése
+                });
+
+                let wrapperDiv = createElement("div", {
+                    class: "d-flex align-items-center justify-content-between gap-2"
+                }, [textSpan, deleteButton]);
+                return wrapperDiv;
+            }
+        );
     }
 
     #bindUIEvents() {
@@ -438,7 +473,7 @@ export class UIManager {
             if (spinner) {
                 icon = createSpinnerIcon();
             } else {
-                icon = iconObject ? createSvgIcon(iconObject, "1em") : null;
+                icon = iconObject ? createSVGIcon(iconObject, { height: "1em" }) : null;
             }
             let options = { autohide, delay: duration };
             let toast = showToast(this.elements.toastPlace, msg, type, closable, options, icon, callback);

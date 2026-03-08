@@ -10,5 +10,9 @@ export const ICONS = {
     CHEVRON: {
         href: "/images/map-creator-icons.svg#icon-chevron",
         viewBox: "0 0 16 16"
+    },
+    TRASH: {
+        href: "/images/map-creator-icons.svg#icon-trash",
+        viewBox: "0 0 456 511.82"
     }
 };

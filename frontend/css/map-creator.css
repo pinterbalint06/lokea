@@ -367,7 +367,7 @@ main {
     transition: width 2s linear;
 }
 
-.btn-delete-connection {
+.btn-delete {
     width: 32px;
     height: 32px;
 }

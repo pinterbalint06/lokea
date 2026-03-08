@@ -1,4 +1,4 @@
-import { createSvgIcon } from "../utils/svgUtils.js";
+import { createSVGIcon } from "../utils/svgUtils.js";
 import { ICONS } from "../icons/icons.js";
 import { createElement } from "../utils/DOMUtils.js";
 
@@ -6,8 +6,9 @@ export class CustomSelect extends EventTarget {
     #selectedValue;
     #options;
     #documentClickListener;
+    #optionBuilder;
 
-    constructor(wrapperElement, customFooterElements = []) {
+    constructor(wrapperElement, optionBuilder = null) {
         super();
 
         this.#selectedValue = null;
@@ -16,10 +17,23 @@ export class CustomSelect extends EventTarget {
         this.isOpen = false;
         let fragment = new DocumentFragment();
 
+        if (typeof optionBuilder == "function") {
+            this.#optionBuilder = optionBuilder;
+        } else {
+            this.#optionBuilder = (value, text) => {
+                let textSpan = document.createElement("span");
+                textSpan.innerText = text;
+                return textSpan;
+            }
+        }
+
         this.triggerText = createElement("span");
-        this.chevronIcon = createSvgIcon(ICONS.CHEVRON, "1.2em");
+        this.chevronIcon = createSVGIcon(ICONS.CHEVRON, {
+            height: "1.2em",
+            fill: "white",
+            transition: "transform 0.3s ease"
+        });
         this.chevronIcon.classList.add("custom-select-chevron");
-        this.chevronIcon.style.transition = "transform 0.3s ease";
 
         this.triggerButton = createElement("button",
             {
@@ -44,16 +58,6 @@ export class CustomSelect extends EventTarget {
 
         fragment.appendChild(this.triggerButton);
         fragment.appendChild(this.dropdown);
-
-        if (customFooterElements.length > 0) {
-            let horizontalSeparator = createElement("div", {
-                class: "hr my-1"
-            });
-            fragment.appendChild(horizontalSeparator);
-            for (const element of customFooterElements) {
-                fragment.appendChild(element);
-            }
-        }
 
         this.wrapperElement.appendChild(fragment);
     }
@@ -124,11 +128,13 @@ export class CustomSelect extends EventTarget {
 
     addOption(value, text) {
         this.#options[value] = text;
-        const optionDiv = createElement("div", {
-            class: "custom-option",
-            "data-value": value
-        });
-        optionDiv.innerText = text;
+        const optionDiv = createElement("div",
+            {
+                class: "custom-option",
+                "data-value": value
+            },
+            [this.#optionBuilder(value, text)]
+        );
         this.optionsContainer.appendChild(optionDiv);
     }
 
