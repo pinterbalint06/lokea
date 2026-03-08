@@ -1,5 +1,6 @@
 import { EVENTS } from "../events/EventBus.js";
-import { CONSTANTS, ICONS } from "../shared/constants.js";
+import { ICONS } from "../../libs/icons/icons.js";
+import { CONSTANTS } from "../shared/constants.js";
 import { fetchMapList, saveNewMap, fetchMapImage } from "../shared/api.js";
 import { processUploadedImageFile } from "../shared/utils.js";
 

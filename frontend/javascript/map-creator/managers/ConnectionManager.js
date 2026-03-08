@@ -1,5 +1,6 @@
 import { fetchConnections, saveUnsavedConnections, deleteConnection } from "../shared/api.js";
-import { CONSTANTS, ICONS } from "../shared/constants.js";
+import { ICONS } from "../../libs/icons/icons.js";
+import { CONSTANTS } from "../shared/constants.js";
 import { EVENTS } from "../events/EventBus.js";
 
 export class ConnectionManager {

@@ -1,5 +1,6 @@
 import { EVENTS } from "../events/EventBus.js";
-import { CONSTANTS, ICONS } from "../shared/constants.js";
+import { ICONS } from "../../libs/icons/icons.js";
+import { CONSTANTS } from "../shared/constants.js";
 import { fetchPoints, savePoint as savePointApi, deletePoint as deletePointApi } from "../shared/api.js";
 
 export class MarkerManager {

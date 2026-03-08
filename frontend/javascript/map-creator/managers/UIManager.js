@@ -1,6 +1,9 @@
 import { EVENTS } from "../events/EventBus.js";
-import { CONSTANTS, ICONS } from "../shared/constants.js";
-import { showToast, createSvgIcon, createSpinnerIcon, savePreviousValue } from "../shared/utils.js";
+import { CONSTANTS } from "../shared/constants.js";
+import { createSvgIcon } from "../../libs/utils/svgUtils.js";
+import { showToast, createSpinnerIcon, savePreviousValue } from "../shared/utils.js";
+import { CustomSelect } from "../../libs/elements/CustomSelect.js";
+import { createElement } from "../../libs/utils/DOMUtils.js";
 
 export class UIManager {
     constructor(eventBus) {
@@ -45,7 +48,6 @@ export class UIManager {
             fileInputEquirectangular: document.getElementById("fileInputEquirectangular"),
             coordinateXInput: document.getElementById("coordinateX"),
             coordinateYInput: document.getElementById("coordinateY"),
-            mapSelect: document.getElementById("mapSelect"),
             northDirectionRange: document.getElementById("northDirectionRange"),
             northDirection: document.getElementById("northDirection"),
 
@@ -66,6 +68,7 @@ export class UIManager {
             floatingButtonDiv: document.getElementById("floatingButtonDiv"),
             connectionsList: document.getElementById("kapcsolatokLista"),
             emptyConnections: document.getElementById("nincsenekKapcsolatok"),
+            mapSelectWrapped: document.getElementById("customSelect"),
 
             // modals
             changesModal: document.getElementById("valtoztatasokModal"),
@@ -101,28 +104,27 @@ export class UIManager {
         this.elements.deletePointModalBootstrapElement = new bootstrap.Modal(this.elements.deletePointModal);
 
         this.elements.savePointButton.disabled = true;
+
+        this.elements.customMapSelector = new CustomSelect(this.elements.mapSelectWrapped);
     }
 
     #bindUIEvents() {
-        this.elements.mapSelect.addEventListener("focus", savePreviousValue);
-
-        this.elements.mapSelect.addEventListener("change", (event) => {
-            let targetMapId = parseInt(event.target.value);
+        this.elements.customMapSelector.addEventListener("change", (event) => {
+            let targetMapId = parseInt(event.detail.value);
 
             let request = { canProceed: true, reason: "" };
             this.bus.emit(EVENTS.MAP_SWITCH_REQUESTED, request);
 
             if (request.canProceed) {
                 if (this.hasUnsavedChanges) {
-                    event.target.value = event.target.dataset.previousValue;
+                    event.preventDefault();
                     this.pendingAction = { type: "map_switch", targetMapId: targetMapId };
                     this.elements.changesModalBootstrapElement.show();
                 } else {
-                    event.target.dataset.previousValue = targetMapId;
                     this.bus.emit(EVENTS.UI_SWITCH_MAP_REQUEST, { mapId: targetMapId });
                 }
             } else {
-                event.target.value = event.target.dataset.previousValue;
+                event.preventDefault();
                 this.bus.emit(EVENTS.TOAST_SHOW, { msg: request.reason, type: "danger" });
             }
         });
@@ -218,8 +220,7 @@ export class UIManager {
             if (this.pendingAction) {
                 switch (this.pendingAction.type) {
                     case "map_switch":
-                        this.elements.mapSelect.value = this.pendingAction.targetMapId;
-                        this.elements.mapSelect.dataset.previousValue = this.pendingAction.targetMapId;
+                        this.elements.customMapSelector.setValue(this.pendingAction.targetMapId);
                         this.bus.emit(EVENTS.UI_SWITCH_MAP_REQUEST, { mapId: this.pendingAction.targetMapId });
                         break;
                     case "collapse_close":
@@ -422,8 +423,7 @@ export class UIManager {
     #bindBusEvents() {
         this.bus.on(EVENTS.MAP_SWITCHED, ({ mapId }) => {
             this.elements.collapseBootstrapElement.hide();
-            this.elements.mapSelect.value = mapId;
-            this.elements.mapSelect.dataset.previousValue = mapId;
+            this.elements.customMapSelector.setValue(mapId);
             this.connectionUiState.hasEnoughPoints = false;
             this.connectionUiState.isConnecting = false;
             this.#updateNewConnectionButtonState();
@@ -511,8 +511,7 @@ export class UIManager {
             this.elements.mapSelector.classList.remove("d-none");
             this.elements.uploadOverlay.classList.add("d-none");
             this.#updateMapSelector(maps);
-            this.elements.mapSelect.value = loadedMapId;
-            this.elements.mapSelect.dataset.previousValue = loadedMapId;
+            this.elements.customMapSelector.setValue(loadedMapId);
         });
 
         this.bus.on(EVENTS.MARKER_DELETED, () => {
@@ -579,13 +578,10 @@ export class UIManager {
     }
 
     #updateMapSelector(maps) {
-        this.elements.mapSelect.innerHTML = "";
+        this.elements.customMapSelector.clearOptions();
 
         for (const mapObject in maps) {
-            let option = document.createElement("option");
-            option.value = maps[mapObject].id;
-            option.text = maps[mapObject].name;
-            this.elements.mapSelect.appendChild(option);
+            this.elements.customMapSelector.addOption(maps[mapObject].id, maps[mapObject].name);
         }
     }
 

@@ -40,14 +40,14 @@
         </div>
         <div id="mapSelector" class="position-absolute top-0 start-50 translate-middle-x mt-3 z-1">
             <div class="d-flex align-items-center uveg border shadow-sm rounded-pill px-3 py-2 gap-2">
-                <svg viewBox="0 0 119.4 122.88" style="height: 2em; fill: white;">
+                <svg viewBox="0 0 119.4 122.88" style="height: 1.5em; fill: white;">
                     <use href="/images/map-creator-icons.svg#icon-map"></use>
                 </svg>
-                <!--TODO: custom select kinézetért-->
-                <select id="mapSelect" class="form-select form-select-sm uvegform border-0 bg-transparent fw-bold">
-                </select>
 
-                <div class="vr"></div>
+                <div id="customSelect" class="custom-select">
+                </div>
+
+                <div class="vr mx-1"></div>
 
                 <button id="addNewMapBtn"
                     class="btn btn-sm btn-link text-decoration-none p-0 d-flex align-items-center">
