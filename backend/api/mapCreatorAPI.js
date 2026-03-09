@@ -239,6 +239,8 @@ router.delete("/point/:pointId", checkAuth, async (request, response) => {
             throw error;
         }
 
+        await dbConnection.commit();
+
         let gameMapID = pointInfo.game_maps_id;
         let mapID = pointInfo.map_id;
         // userId/gameMapId/mapId/point_images/pointId/
@@ -255,8 +257,6 @@ router.delete("/point/:pointId", checkAuth, async (request, response) => {
             UPLOAD_ROOT,
             relativeDestDir
         );
-
-        await dbConnection.commit();
 
         try {
             await fs.rm(targetPath, { recursive: true, force: true });
@@ -336,6 +336,80 @@ router.post("/saveNewMap", checkAuth, upload.single("mapImage"), async (request,
 
     } catch (error) {
         await handleUploadError(response, error, request.file, dbConnection, finalPath);
+    } finally {
+        if (dbConnection) {
+            dbConnection.release();
+        }
+    }
+});
+
+
+//?DELETE /api/map_creator/map/:mapId
+router.delete("/map/:mapId", checkAuth, async (request, response) => {
+    let dbConnection;
+    try {
+        const userId = request.session.user.user_id;
+
+        // TODO: CHECK IF USER HAS ACCESS
+        const mapID = validateId(request.params.mapId, "térkép ID");
+
+        let mapInfo = await database.getMapInfo(mapID);
+        if (!mapInfo) {
+            const error = new Error("A térkép nem létezik");
+            error.statusCode = 404;
+            throw error;
+        }
+
+        dbConnection = await database.getConnection();
+        await dbConnection.beginTransaction();
+
+        let imageIdsToDelete = await database.getAllImageIdsForMap(dbConnection, mapID);
+
+        let successMapDeletion = await database.deleteMapById(dbConnection, mapID);
+        if (!successMapDeletion) {
+            const error = new Error("A térkép törlése nem sikerült");
+            error.statusCode = 500;
+            throw error;
+        }
+
+        for (const imageId of imageIdsToDelete) {
+            let deletedRows = await database.deleteImageById(dbConnection, imageId);
+            if (deletedRows > 1) {
+                console.error("Multiple rows affected at ID delete");
+                let error = {
+                    statusCode: 500
+                };
+                throw error;
+            }
+        }
+
+        await dbConnection.commit();
+
+        let gameMapID = mapInfo.game_maps_id;
+        // userId/gameMapId/mapId/
+        let relativeDestDir = path.join(
+            userId.toString(),
+            gameMapID.toString(),
+            mapID.toString()
+        );
+
+        // private/userId/gameMapId/mapId/
+        let targetPath = path.join(
+            UPLOAD_ROOT,
+            relativeDestDir
+        );
+
+        try {
+            await fs.rm(targetPath, { recursive: true, force: true });
+        } catch (err) {
+            console.error(`Error deleting directory ${targetPath}: ${err.message}`);
+        }
+
+        response.status(200).json({
+            success: true
+        });
+    } catch (error) {
+        await handleUploadError(response, error, null, dbConnection, null);
     } finally {
         if (dbConnection) {
             dbConnection.release();

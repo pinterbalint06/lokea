@@ -33,5 +33,5 @@ document.addEventListener("DOMContentLoaded", init);
 // TODO!!!: térkép, pontok átnevezése
 // TODO!!: térkép képének cseréje mentés után
 // TODO!!: mapok közti kapcsolatok
-// TODO!!: backenden a hozzáférés ellenőrzése
+// TODO!!!: backenden a hozzáférés ellenőrzése
 // TODO!: markerek fixálása pixel koordinátákra? mindig egy adott pixelen legyenek?

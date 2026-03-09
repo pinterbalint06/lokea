@@ -20,6 +20,7 @@ export class UIManager {
         };
         this.hasUnsavedChanges = false;
         this.pendingAction = null;
+        this.deleteContext = null;
         this.previousWidth = window.innerWidth;
 
         this.#gatherElements();
@@ -42,7 +43,7 @@ export class UIManager {
             newConnectionBtn: document.getElementById("kapcsolatLetrehozasaBtn"),
             discardChangesBtn: document.getElementById("valtoztatasokElveteseBtn"),
             deletePointBtn: document.getElementById("deletePointBtn"),
-            finalDeleteBtn: document.getElementById("veglegesTorlesBtn"),
+            confirmDeleteBtn: document.getElementById("confirmDeleteBtn"),
 
             // inputs
             fileInputMap: document.getElementById("fileInput"),
@@ -73,7 +74,7 @@ export class UIManager {
 
             // modals
             changesModal: document.getElementById("valtoztatasokModal"),
-            deletePointModal: document.getElementById("pontTorlesModal"),
+            deleteModal: document.getElementById("deleteModal"),
 
             // settings
             settingsBtn: document.getElementById("settingsBtn"),
@@ -83,7 +84,12 @@ export class UIManager {
             fovWidthRange: document.getElementById("fovWidthRange"),
             fovWidthNumber: document.getElementById("fovWidthNumber"),
             fovHeightRange: document.getElementById("fovHeightRange"),
-            fovHeightNumber: document.getElementById("fovHeightNumber")
+            fovHeightNumber: document.getElementById("fovHeightNumber"),
+
+            // shared delete modal content
+            deleteTitle: document.getElementById("deleteTitle"),
+            deleteDescription: document.getElementById("deleteDescription"),
+            deleteWarning: document.getElementById("deleteWarning")
         };
 
         this.elements.collapseBootstrapElement = new bootstrap.Collapse(
@@ -102,7 +108,7 @@ export class UIManager {
 
         this.elements.changesModalBootstrapElement = new bootstrap.Modal(this.elements.changesModal);
 
-        this.elements.deletePointModalBootstrapElement = new bootstrap.Modal(this.elements.deletePointModal);
+        this.elements.deleteModalBootstrapElement = new bootstrap.Modal(this.elements.deleteModal);
 
         this.elements.savePointButton.disabled = true;
 
@@ -131,8 +137,15 @@ export class UIManager {
                 deleteButton.addEventListener("click", (event) => {
                     event.stopPropagation();
 
-                    console.log(value);
-                    // TODO!!!!: map törlése
+                    let mapId = parseInt(value);
+                    let request = { canProceed: true, reason: "" };
+                    this.bus.emit(EVENTS.UI_DELETE_MAP_REQUESTED, { request, mapId });
+
+                    if (request.canProceed) {
+                        this.#showDeleteModal({ type: "map", id: mapId, name: text });
+                    } else {
+                        this.bus.emit(EVENTS.TOAST_SHOW, { msg: request.reason, type: "danger" });
+                    }
                 });
 
                 let wrapperDiv = createElement("div", {
@@ -241,7 +254,7 @@ export class UIManager {
             this.bus.emit(EVENTS.UI_DELETE_POINT_REQUESTED, { request });
 
             if (request.canProceed) {
-                this.elements.deletePointModalBootstrapElement.show();
+                this.#showDeleteModal({ type: "point" });
             } else {
                 event.preventDefault();
                 this.bus.emit(EVENTS.TOAST_SHOW, { msg: request.reason, type: "danger" });
@@ -434,25 +447,67 @@ export class UIManager {
 
     #setupFinalDeleteButton() {
         const buttonControl = this.#setupHoldToUnlockButton(
-            this.elements.finalDeleteBtn,
+            this.elements.confirmDeleteBtn,
             2000,
             (event) => {
                 event.target.blur(); // valami aria warning miatt kell
-                this.elements.finalDeleteBtn.disabled = true;
-                this.bus.emit(EVENTS.UI_DELETE_POINT_CONFIRMED);
+                this.elements.confirmDeleteBtn.disabled = true;
+
+                if (this.deleteContext && this.deleteContext.type == "map") {
+                    this.bus.emit(EVENTS.UI_DELETE_MAP_CONFIRMED, { mapId: this.deleteContext.id });
+                } else {
+                    this.bus.emit(EVENTS.UI_DELETE_POINT_CONFIRMED);
+                }
             }
         );
 
-        this.elements.deletePointModal.addEventListener("hidden.bs.modal", (event) => {
-            if (event.target == this.elements.deletePointModal) {
+        this.elements.deleteModal.addEventListener("hidden.bs.modal", (event) => {
+            if (event.target == this.elements.deleteModal) {
                 buttonControl.reset();
+                this.deleteContext = null;
+                this.elements.confirmDeleteBtn.disabled = false;
             }
         });
-        this.elements.deletePointModal.addEventListener("show.bs.modal", (event) => {
-            if (event.target == this.elements.deletePointModal) {
+        this.elements.deleteModal.addEventListener("show.bs.modal", (event) => {
+            if (event.target == this.elements.deleteModal) {
                 buttonControl.reset();
+                this.elements.confirmDeleteBtn.disabled = false;
             }
         });
+    }
+
+    #showDeleteModal(context) {
+        this.deleteContext = context;
+
+        if (context.type == "map") {
+            this.elements.deleteTitle.textContent = "Térkép törlése";
+            this.elements.deleteDescription.textContent = `Biztosan törölni szeretnéd ezt a térképet${context.name ? `: ${context.name}` : ""}?`;
+            this.#setDeleteWarning("Ez a művelet nem vonható vissza. A térképhez tartozó ", "összes pont, kapcsolat és kép is törlésre kerül", ".");
+            this.elements.confirmDeleteBtn.textContent = "Térkép végleges törlése";
+        } else {
+            this.elements.deleteTitle.textContent = "Pont törlése";
+            this.elements.deleteDescription.textContent = "Biztosan törölni szeretnéd ezt a pontot?";
+            this.#setDeleteWarning("Ez a művelet nem vonható vissza. A ponthoz tartozó ", "összes kapcsolat és a 360°-os kép is törlésre kerül", ".");
+            this.elements.confirmDeleteBtn.textContent = "Pont végleges törlése";
+        }
+
+        this.elements.deleteModalBootstrapElement.show();
+    }
+
+    #setDeleteWarning(prefix, strongText, suffix) {
+        this.elements.deleteWarning.textContent = "";
+
+        if (prefix) {
+            this.elements.deleteWarning.appendChild(document.createTextNode(prefix));
+        }
+
+        let strong = document.createElement("strong");
+        strong.textContent = strongText;
+        this.elements.deleteWarning.appendChild(strong);
+
+        if (suffix) {
+            this.elements.deleteWarning.appendChild(document.createTextNode(suffix));
+        }
     }
 
     #bindBusEvents() {
@@ -473,7 +528,7 @@ export class UIManager {
             if (spinner) {
                 icon = createSpinnerIcon();
             } else {
-                icon = iconObject ? createSVGIcon(iconObject, { height: "1em" }) : null;
+                icon = iconObject ? createSVGIcon(iconObject, { height: "1em", fill: "currentColor" }) : null;
             }
             let options = { autohide, delay: duration };
             let toast = showToast(this.elements.toastPlace, msg, type, closable, options, icon, callback);
@@ -549,15 +604,32 @@ export class UIManager {
             this.elements.customMapSelector.setValue(loadedMapId);
         });
 
+        this.bus.on(EVENTS.MAP_SAVE_SUCCEEDED, ({ maps, newMapId }) => {
+            this.#updateMapSelector(maps);
+            this.elements.customMapSelector.setValue(newMapId);
+        });
+
         this.bus.on(EVENTS.MARKER_DELETED, () => {
-            this.elements.deletePointModalBootstrapElement.hide();
+            this.elements.deleteModalBootstrapElement.hide();
             this.elements.collapseBootstrapElement.hide();
-            this.elements.finalDeleteBtn.disabled = false;
+            this.elements.confirmDeleteBtn.disabled = false;
         });
 
         this.bus.on(EVENTS.MARKER_DELETE_FAILED, () => {
-            this.elements.deletePointModalBootstrapElement.hide();
-            this.elements.finalDeleteBtn.disabled = false;
+            this.elements.deleteModalBootstrapElement.hide();
+            this.elements.confirmDeleteBtn.disabled = false;
+        });
+
+        this.bus.on(EVENTS.MAP_DELETED, () => {
+            this.elements.deleteModalBootstrapElement.hide();
+            this.elements.collapseBootstrapElement.hide();
+            this.elements.beallitasokCollapseBootstrapElement.hide();
+            this.elements.confirmDeleteBtn.disabled = false;
+        });
+
+        this.bus.on(EVENTS.MAP_DELETE_FAILED, () => {
+            this.elements.deleteModalBootstrapElement.hide();
+            this.elements.confirmDeleteBtn.disabled = false;
         });
 
         this.bus.on(EVENTS.MAP_SAVE_STARTED, () => this.elements.saveMapButton.disabled = true);

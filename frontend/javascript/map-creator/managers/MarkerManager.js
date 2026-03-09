@@ -93,7 +93,8 @@ export class MarkerManager {
             EVENTS.UI_COLLAPSE_CLOSE_REQUESTED,
             EVENTS.MAP_SWITCH_REQUESTED,
             EVENTS.UI_ADD_NEW_MAP_REQUEST,
-            EVENTS.UI_DELETE_POINT_REQUESTED
+            EVENTS.UI_DELETE_POINT_REQUESTED,
+            EVENTS.UI_DELETE_MAP_REQUESTED
         ];
 
         eventsToBlock.forEach(event => {

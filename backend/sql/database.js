@@ -336,7 +336,7 @@ async function updateImagePath(connection, imageId, filepath) {
 
 async function getMapImage(mapId) {
     const query = `
-        SELECT images.filepath, images.width, images.height 
+        SELECT images.image_id, images.filepath, images.width, images.height
         FROM map
             INNER JOIN images ON (map.image_id = images.image_id)
         WHERE map.map_id = ?
@@ -397,6 +397,47 @@ async function getPointInfo(pointId) {
     `;
     const [rows] = await pool.execute(query, [pointId]);
     return rows[0];
+}
+
+async function getMapImageIdByMapId(mapId) {
+    const query = `
+        SELECT map.image_id, images.filepath
+        FROM map
+            INNER JOIN images ON (map.image_id = images.image_id)
+        WHERE map.map_id = ?
+    `;
+    const [rows] = await pool.execute(query, [mapId]);
+    let ret = null;
+    if (rows.length > 0) {
+        ret = rows[0].image_id;
+    }
+    return ret;
+}
+
+async function getMapInfo(mapId) {
+    const query = `
+        SELECT map.title, map.game_maps_id
+        FROM map
+        WHERE map.map_id = ?
+    `;
+    const [rows] = await pool.execute(query, [mapId]);
+    let retu = null;
+    if (rows.length > 0) {
+        retu = rows[0];
+    }
+    return retu;
+}
+
+async function getAllImageIdsForMap(connection, mapId) {
+    const query = `
+        SELECT DISTINCT images.image_id
+        FROM map
+            LEFT JOIN points ON (map.map_id = points.map_id)
+            INNER JOIN images ON (points.image_id = images.image_id OR map.image_id = images.image_id)
+        WHERE map.map_id = ?
+    `;
+    const [rows] = await connection.execute(query, [mapId]);
+    return rows.map((row) => row.image_id);
 }
 
 async function getMapsByGameMapId(gameMapId) {
@@ -494,6 +535,15 @@ async function deletePointById(connection, pointId) {
     return result.affectedRows == 1;
 }
 
+async function deleteMapById(connection, mapId) {
+    const query = `
+        DELETE FROM map
+        WHERE map.map_id = ?
+    `;
+    const [result] = await connection.execute(query, [mapId]);
+    return result.affectedRows == 1;
+}
+
 async function deleteConnectionById(connection, connectionId) {
     const query = `
         DELETE FROM point_connections
@@ -531,6 +581,7 @@ module.exports = {
     arePointsInSameGameMap,
     doesConnectionAlreadyExist,
     deletePointById,
+    deleteMapById,
     deleteConnectionById,
     getUsers,
     getUser,
@@ -540,5 +591,8 @@ module.exports = {
     uploadProfilePic,
     deleteProfilePic,
     getGameMaps,
-    getImagePath
+    getImagePath,
+    getMapImageIdByMapId,
+    getMapInfo,
+    getAllImageIdsForMap
 };

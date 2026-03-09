@@ -363,7 +363,7 @@ main {
     transition: none;
 }
 
-#veglegesTorlesBtn.filling::before {
+.btn-delete-confirm.filling::before {
     transition: width 2s linear;
 }
 
