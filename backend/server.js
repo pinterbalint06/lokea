@@ -34,10 +34,8 @@ app.use(session({
 
 
 async function hasPermissionToEdit(request, gameMapID) {
-    // TODO: change when login works
-    // let userId = request.session.user.user_id;
-    let userId = 1;
-    let isTheirs = await database.checkUserOwnsGameMap(userId, gameMapID);
+    const userId = request.session.userid;
+    const isTheirs = await database.checkUserOwnsGameMap(userId, gameMapID);
     return isTheirs;
 }
 
@@ -59,7 +57,7 @@ router.get('/webgl', (request, response) => {
 router.get('/map', (request, response) => {
     response.sendFile(path.join(__dirname, '../frontend/html/test-map.html'));
 });
-router.get('/maps/:gameMapId/edit', async (request, response) => {
+router.get('/maps/:gameMapId/edit', auth.checkAuth, async (request, response) => {
     try {
         let gameMapID = Number(request.params.gameMapId);
         if (!Number.isInteger(gameMapID) || gameMapID <= 0) {
@@ -69,7 +67,7 @@ router.get('/maps/:gameMapId/edit', async (request, response) => {
         if (hasPermission) {
             response.sendFile(path.join(__dirname, '../frontend/html/map-creator.html'));
         } else {
-            response.status(404).send();
+            response.status(403).send();
         }
     } catch (error) {
         console.error(error);

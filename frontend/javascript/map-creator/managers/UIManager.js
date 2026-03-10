@@ -843,10 +843,18 @@ export class UIManager {
     #updateMapSelector(maps) {
         this.#cancelRenameSessions();
 
+        let selectedMapId = this.elements.customMapSelector.getValue();
+        let mapList = Object.values(maps);
+
         this.elements.customMapSelector.clearOptions();
 
-        for (const mapObject in maps) {
-            this.elements.customMapSelector.addOption(maps[mapObject].id, maps[mapObject].name);
+        for (const map of mapList) {
+            this.elements.customMapSelector.addOption(map.id, map.name);
+        }
+
+        if (mapList.length > 0) {
+            let exists = mapList.some(map => map.id == selectedMapId);
+            this.elements.customMapSelector.setValue(exists ? selectedMapId : mapList[0].id);
         }
     }
 

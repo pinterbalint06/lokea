@@ -1,5 +1,8 @@
 async function handleResponseError(response) {
     let error = await response.json();
+    if (response.status == 401) {
+        throw new Error("Nem vagy bejelentkezve!");
+    }
     throw new Error(error.error || "Szerver hiba: " + response.status);
 }
 

@@ -29,9 +29,7 @@ document.addEventListener("DOMContentLoaded", init);
 
 // TODO!: látótérhez svg renderelés
 // TODO!!: új markernél elsőre nincs helyesen rajta a markeren a fov cone
-// TODO!!!: pontok átnevezése
 // TODO!!: térkép képének cseréje mentés után
 // TODO!!: mapok közti kapcsolatok
-// TODO!!!: backenden a hozzáférés ellenőrzése
 // TODO!!: markerek fixálása pixel koordinátákra? mindig egy adott pixelen legyenek?
 // TODO!: UIManager kezd nagy lenni lehet szét kéne szedni több kisebbre (pl. MapListManager, MapEditManager, btn to holdos cucc, meg tobi)

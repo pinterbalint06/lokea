@@ -2,6 +2,7 @@ const express = require("express");
 const router = express.Router();
 const database = require("../sql/database.js");
 const fs = require("fs/promises");
+const { checkAuth } = require("../auth.js");
 const crypto = require("crypto");
 const sharp = require("sharp");
 
@@ -35,22 +36,6 @@ const upload = multer({
     storage,
     limits: { fileSize: MAX_FILE_SIZE }
 });
-
-//TESZT
-const checkAuth = (request, response, next) => {
-    // TODO: check authentication and logged in
-    request.session.user = {
-        user_id: 1
-    }
-    if (request.session && request.session.user && request.session.user.user_id) {
-        next();
-    } else {
-        response.status(401).json({
-            success: false,
-            error: "Jogosulatlan feltöltés"
-        });
-    }
-};
 
 function validateId(id, idName) {
     let num = Number(id);
@@ -125,17 +110,50 @@ async function processImageMetadata(filePath) {
     };
 }
 
+async function assertUserOwnsGameMap(userId, gameMapID) {
+    if (!await database.checkUserOwnsGameMap(userId, gameMapID)) {
+        const error = new Error("Nincs hozzáférése ehhez a pályához");
+        error.statusCode = 403;
+        throw error;
+    }
+}
+
+async function assertUserOwnsMap(userId, mapID) {
+    if (!await database.checkUserOwnsMap(userId, mapID)) {
+        const error = new Error("Nincs hozzáférése ehhez a térképhez");
+        error.statusCode = 403;
+        throw error;
+    }
+}
+
+async function assertUserOwnsPoint(userId, pointID) {
+    if (!await database.checkUserOwnsPoint(userId, pointID)) {
+        const error = new Error("Nincs hozzáférése ehhez a ponthoz");
+        error.statusCode = 403;
+        throw error;
+    }
+}
+
+async function assertUserOwnsConnection(userId, connectionID) {
+    if (!await database.checkUserOwnsConnection(userId, connectionID)) {
+        const error = new Error("Nincs hozzáférése ehhez a kapcsolathoz");
+        error.statusCode = 403;
+        throw error;
+    }
+}
+
 //!Endpoints:
 //?POST /api/map_creator/savePoint
 router.post("/savePoint", checkAuth, upload.single("equirectangularImage"), async (request, response) => {
     let dbConnection;
     let finalPath;
     try {
-        const userId = request.session.user.user_id;
+        const userId = request.session.userid;
 
-        // TODO: CHECK IF USER HAS ACCESS
         const gameMapID = validateId(request.body.gameMapID, "pálya ID");
         const mapID = validateId(request.body.mapID, "térkép ID");
+
+        await assertUserOwnsGameMap(userId, gameMapID);
 
         const xCoordinate = Number(request.body.x);
         const yCoordinate = Number(request.body.y);
@@ -281,10 +299,12 @@ router.post("/saveNewMap", checkAuth, upload.single("mapImage"), async (request,
     let dbConnection;
     let finalPath;
     try {
-        const userId = request.session.user.user_id;
+        const userId = request.session.userid;
 
-        // TODO: CHECK IF USER HAS ACCESS
         const gameMapID = validateId(request.body.gameMapID, "pálya ID");
+        
+        await assertUserOwnsGameMap(userId, gameMapID);
+
         const title = request.body.title;
         // ^\w{1,20}$ atleast one character long and only characters numbers or underscores
         if (!title || typeof title != "string") {
@@ -354,8 +374,10 @@ router.post("/saveNewMap", checkAuth, upload.single("mapImage"), async (request,
 router.put("/map/:mapId", checkAuth, upload.none(), async (request, response) => {
     let dbConnection;
     try {
-        const userId = request.session.user.user_id;
+        const userId = request.session.userid;
         const mapID = validateId(request.params.mapId, "térkép ID");
+
+        await assertUserOwnsMap(userId, mapID);
 
         const title = request.body.title;
         // ^\w{1,20}$ atleast one character long and only characters numbers or underscores
@@ -413,10 +435,11 @@ router.put("/map/:mapId", checkAuth, upload.none(), async (request, response) =>
 router.delete("/map/:mapId", checkAuth, async (request, response) => {
     let dbConnection;
     try {
-        const userId = request.session.user.user_id;
+        const userId = request.session.userid;
 
-        // TODO: CHECK IF USER HAS ACCESS
         const mapID = validateId(request.params.mapId, "térkép ID");
+
+        await assertUserOwnsMap(userId, mapID);
 
         let mapInfo = await database.getMapInfo(mapID);
         if (!mapInfo) {
@@ -486,12 +509,13 @@ router.delete("/map/:mapId", checkAuth, async (request, response) => {
 router.post("/saveConnection", checkAuth, upload.none(), async (request, response) => {
     let dbConnection;
     try {
-        const userId = request.session.user.user_id;
+        const userId = request.session.userid;
 
-        // TODO: CHECK IF USER HAS ACCESS
         const startPointId = validateId(request.body.startPointId, "kezdőpont ID");
         const endPointId = validateId(request.body.endPointId, "végpont ID");
         const gameMapID = validateId(request.body.gameMapID, "pálya ID");
+
+        await assertUserOwnsGameMap(userId, gameMapID);
 
         dbConnection = await database.getConnection();
         await dbConnection.beginTransaction();
@@ -531,10 +555,11 @@ router.post("/saveConnection", checkAuth, upload.none(), async (request, respons
 router.delete("/connection/:connectionId", checkAuth, async (request, response) => {
     let dbConnection;
     try {
-        const userId = request.session.user.user_id;
+        const userId = request.session.userid;
 
-        // TODO: CHECK IF USER HAS ACCESS
         const connectionId = validateId(request.params.connectionId, "kapcsolat ID");
+
+        await assertUserOwnsConnection(userId, connectionId);
 
         dbConnection = await database.getConnection();
         await dbConnection.beginTransaction();
@@ -563,11 +588,13 @@ router.delete("/connection/:connectionId", checkAuth, async (request, response) 
 });
 
 //?GET /api/map_creator/:mapid/points
-router.get("/:mapid/points", async (request, response) => {
+router.get("/:mapid/points", checkAuth, async (request, response) => {
     try {
+        const userId = request.session.userid;
         let mapId = validateId(request.params.mapid, "térkép ID");
 
-        // TODO: check if has access
+        await assertUserOwnsMap(userId, mapId);
+
         let point_data = await database.getPointsOnMap(mapId);
 
         response.status(200).json({
@@ -591,8 +618,10 @@ router.get("/:mapid/points", async (request, response) => {
 //?GET /api/map_creator/maps?gameMapID=1
 router.get("/maps", checkAuth, async (request, response) => {
     try {
-        // TODO: check if has access to gameMapID
+        const userId = request.session.userid;
         const gameMapID = validateId(request.query.gameMapID, "pálya ID");
+
+        await assertUserOwnsGameMap(userId, gameMapID);
 
         let mapList = await database.getMapsByGameMapId(gameMapID);
 
@@ -619,10 +648,12 @@ router.put("/point/:pointId", checkAuth, upload.single("equirectangularImage"), 
     let finalPath;
 
     try {
-        const userId = request.session.user.user_id;
+        const userId = request.session.userid;
 
-        // TODO: CHECK IF USER HAS ACCESS
         let pointId = validateId(request.params.pointId, "pont ID");
+
+        await assertUserOwnsPoint(userId, pointId);
+
         const xCoordinate = Number(request.body.x);
         const yCoordinate = Number(request.body.y);
         if (!Number.isFinite(xCoordinate) || !Number.isFinite(yCoordinate)) {
@@ -748,8 +779,10 @@ router.put("/point/:pointId", checkAuth, upload.single("equirectangularImage"), 
 //?GET /api/map_creator/:gameMapID/connections
 router.get("/:gameMapID/connections", checkAuth, async (request, response) => {
     try {
-        // TODO: check if has access to gameMapID
+        const userId = request.session.userid;
         const gameMapID = validateId(request.params.gameMapID, "pálya ID");
+
+        await assertUserOwnsGameMap(userId, gameMapID);
 
         let connectionList = await database.getConnectionsByGameMapId(gameMapID);
 

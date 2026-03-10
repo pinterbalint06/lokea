@@ -461,6 +461,40 @@ async function checkUserOwnsGameMap(userId, gameMapId) {
     return rows[0].count > 0;
 }
 
+async function checkUserOwnsMap(userId, mapId) {
+    const query = `
+        SELECT COUNT(*) as count
+        FROM map
+            INNER JOIN game_maps ON (map.game_maps_id = game_maps.game_maps_id)
+        WHERE game_maps.creator_id = ? AND map.map_id = ?
+    `;
+    const [rows] = await pool.execute(query, [userId, mapId]);
+    return rows[0].count > 0;
+}
+
+async function checkUserOwnsPoint(userId, pointId) {
+    const query = `
+        SELECT COUNT(*) as count
+        FROM points
+            INNER JOIN map ON (points.map_id = map.map_id)
+            INNER JOIN game_maps ON (map.game_maps_id = game_maps.game_maps_id)
+        WHERE game_maps.creator_id = ? AND points.point_id = ?
+    `;
+    const [rows] = await pool.execute(query, [userId, pointId]);
+    return rows[0].count > 0;
+}
+
+async function checkUserOwnsConnection(userId, connectionId) {
+    const query = `
+        SELECT COUNT(*) as count
+        FROM point_connections
+            INNER JOIN game_maps ON (point_connections.game_maps_id = game_maps.game_maps_id)
+        WHERE game_maps.creator_id = ? AND point_connections.connection_id = ?
+    `;
+    const [rows] = await pool.execute(query, [userId, connectionId]);
+    return rows[0].count > 0;
+}
+
 async function updatePointCoordinates(connection, pointId, x, y) {
     const query = `
         UPDATE points
@@ -579,6 +613,9 @@ module.exports = {
     getConnectionsByPointId,
     getMapsByGameMapId,
     checkUserOwnsGameMap,
+    checkUserOwnsMap,
+    checkUserOwnsPoint,
+    checkUserOwnsConnection,
     updatePointCoordinates,
     updatePointImage,
     updatePointNorthDirection,
