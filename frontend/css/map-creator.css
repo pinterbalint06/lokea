@@ -10,6 +10,41 @@ body {
     overflow: hidden;
 }
 
+.map-name-container {
+    display: flex;
+    align-items: center;
+    flex: 1;
+    min-width: 0;
+}
+
+.map-name-text {
+    word-break: break-word;
+    flex: 1;
+    min-width: 0;
+}
+
+.map-name-input {
+    flex: 1;
+    min-width: 0;
+    background: var(--surface-glass-input) !important;
+    border: 2px solid var(--accent-focus) !important;
+    color: var(--text-main) !important;
+    font-size: 0.9rem;
+    font-weight: 500;
+    box-shadow: 0 0 8px var(--accent-glow) !important;
+}
+
+.map-name-input:focus {
+    outline: none;
+    border-color: var(--accent-main) !important;
+    box-shadow: 0 0 12px var(--accent-glow) !important;
+}
+
+.map-name-input::selection {
+    background: var(--accent-main);
+    color: var(--color-white);
+}
+
 .navPic {
     height: 45px;
     width: auto;
@@ -320,6 +355,30 @@ main {
 
 #equirectangularFullscreen {
     cursor: pointer;
+}
+
+.uvegbutton-outline {
+    background-color: transparent;
+    border-color: var(--accent-soft);
+    color: var(--text-main);
+    transition: all var(--transition-fast);
+}
+
+.uvegbutton-outline:hover {
+    background-color: var(--accent-main);
+    border-color: var(--accent-focus);
+    color: var(--text-main);
+    box-shadow: 0 0 15px var(--accent-glow);
+}
+
+.uvegbutton-outline:focus {
+    box-shadow: 0 0 0 0.2rem var(--accent-glow);
+}
+
+.uvegbutton-outline:disabled {
+    filter: opacity(0.5);
+    cursor: not-allowed !important;
+    box-shadow: none;
 }
 
 .btn-hold-to-unlock {

@@ -185,6 +185,28 @@ export async function deleteMap(mapId) {
     validateJsonResponse(data, "Sikertelen térkép törlés!");
 }
 
+export async function renameMap(mapId, title) {
+    let formData = new FormData();
+    formData.append("title", title);
+
+    let response = await fetch(`/api/map_creator/map/${mapId}`, {
+        method: "PUT",
+        body: formData
+    });
+
+    if (!response.ok) {
+        await handleResponseError(response);
+    }
+
+    let data = await response.json();
+    validateJsonResponse(data, "Sikertelen átnevezés!");
+
+    return {
+        mapId: data.mapId,
+        title: data.title
+    };
+}
+
 export async function saveConnection(gameMapID, connection) {
     let formData = new FormData();
     formData.append("startPointId", connection.start_point_id);

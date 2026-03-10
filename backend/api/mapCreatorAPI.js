@@ -287,8 +287,15 @@ router.post("/saveNewMap", checkAuth, upload.single("mapImage"), async (request,
         const gameMapID = validateId(request.body.gameMapID, "pálya ID");
         const title = request.body.title;
         // ^\w{1,20}$ atleast one character long and only characters numbers or underscores
-        if (!title || title.trim() == "" || !title.match(/^\w{1,20}$/)) {
-            const error = new Error("Helytelen cím!");
+        if (!title || typeof title != "string") {
+            const error = new Error("Helytelen térképnév!");
+            error.statusCode = 400;
+            throw error;
+        }
+
+        const trimmedTitle = title.trim();
+        if (!trimmedTitle.match(/^\w{1,20}$/)) {
+            const error = new Error("Helytelen térképnév!");
             error.statusCode = 400;
             throw error;
         }
@@ -306,7 +313,7 @@ router.post("/saveNewMap", checkAuth, upload.single("mapImage"), async (request,
 
         let imageId = await database.insertImage(dbConnection, imageData.width, imageData.height, "pending");
 
-        let newMapId = await database.insertMap(dbConnection, title, gameMapID, imageId);
+        let newMapId = await database.insertMap(dbConnection, trimmedTitle, gameMapID, imageId);
 
         // private/userId/gameMapId/mapId/
         let relativeDestDir = path.join(
@@ -343,6 +350,64 @@ router.post("/saveNewMap", checkAuth, upload.single("mapImage"), async (request,
     }
 });
 
+//?PUT /api/map_creator/map/:mapId
+router.put("/map/:mapId", checkAuth, upload.none(), async (request, response) => {
+    let dbConnection;
+    try {
+        const userId = request.session.user.user_id;
+        const mapID = validateId(request.params.mapId, "térkép ID");
+
+        const title = request.body.title;
+        // ^\w{1,20}$ atleast one character long and only characters numbers or underscores
+        if (!title || typeof title != "string") {
+            const error = new Error("Helytelen térképnév!");
+            error.statusCode = 400;
+            throw error;
+        }
+
+        const trimmedTitle = title.trim();
+        if (!trimmedTitle.match(/^\w{1,20}$/)) {
+            const error = new Error("Helytelen térképnév!");
+            error.statusCode = 400;
+            throw error;
+        }
+
+        // Check if map exists
+        let mapInfo = await database.getMapInfo(mapID);
+        if (!mapInfo) {
+            let error = new Error("A térkép nem létezik");
+            error.statusCode = 404;
+            throw error;
+        }
+
+        // TODO: CHECK IF USER HAS ACCESS to game_maps_id
+
+        dbConnection = await database.getConnection();
+        await dbConnection.beginTransaction();
+
+        let affectedRows = await database.updateMapTitle(dbConnection, mapID, trimmedTitle);
+
+        if (affectedRows != 1) {
+            let error = new Error("A térkép átnevezése nem sikerült");
+            error.statusCode = 500;
+            throw error;
+        }
+
+        await dbConnection.commit();
+
+        response.status(200).json({
+            success: true,
+            mapId: mapID,
+            title: trimmedTitle
+        });
+    } catch (error) {
+        await handleUploadError(response, error, null, dbConnection, null);
+    } finally {
+        if (dbConnection) {
+            dbConnection.release();
+        }
+    }
+});
 
 //?DELETE /api/map_creator/map/:mapId
 router.delete("/map/:mapId", checkAuth, async (request, response) => {

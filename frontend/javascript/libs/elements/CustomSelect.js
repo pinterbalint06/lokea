@@ -7,6 +7,7 @@ export class CustomSelect extends EventTarget {
     #options;
     #documentClickListener;
     #optionBuilder;
+    #isOpen;
 
     constructor(wrapperElement, optionBuilder = null) {
         super();
@@ -14,7 +15,7 @@ export class CustomSelect extends EventTarget {
         this.#selectedValue = null;
         this.#options = {};
         this.wrapperElement = wrapperElement;
-        this.isOpen = false;
+        this.#isOpen = false;
         let fragment = new DocumentFragment();
 
         if (typeof optionBuilder == "function") {
@@ -64,7 +65,7 @@ export class CustomSelect extends EventTarget {
 
     #bindUIEvents() {
         this.triggerButton.addEventListener("click", () => {
-            this.isOpen ? this.close() : this.open();
+            this.#isOpen ? this.close() : this.open();
         });
 
         this.optionsContainer.addEventListener("click", (event) => {
@@ -92,7 +93,7 @@ export class CustomSelect extends EventTarget {
         });
 
         this.#documentClickListener = (event) => {
-            if (this.isOpen && !this.wrapperElement.contains(event.target)) {
+            if (this.#isOpen && !this.wrapperElement.contains(event.target)) {
                 this.close();
             }
         };
@@ -108,21 +109,27 @@ export class CustomSelect extends EventTarget {
     }
 
     close() {
-        this.isOpen = false;
+        this.#isOpen = false;
         this.dropdown.classList.add("opacity-0", "pointer-events-none");
         this.dropdown.classList.remove("show");
         this.chevronIcon.classList.remove("open");
     }
 
     open() {
-        this.isOpen = true;
+        this.#isOpen = true;
         this.dropdown.classList.remove("opacity-0", "pointer-events-none");
         this.dropdown.classList.add("show");
         this.chevronIcon.classList.add("open");
     }
 
+    isOpened() {
+        return this.#isOpen;
+    }
+
     clearOptions() {
         this.#options = {};
+        this.#selectedValue = null;
+        this.triggerText.innerText = "";
         this.optionsContainer.innerHTML = "";
     }
 
@@ -158,6 +165,16 @@ export class CustomSelect extends EventTarget {
 
                 option.classList.add("selected");
                 this.triggerText.innerText = chosenOptionValue;
+            }
+        }
+    }
+
+    updateOptionText(value, text) {
+        if (this.#options[value] != undefined) {
+            this.#options[value] = text;
+
+            if (this.#selectedValue == value) {
+                this.triggerText.innerText = text;
             }
         }
     }

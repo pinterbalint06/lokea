@@ -14,5 +14,9 @@ export const ICONS = {
     TRASH: {
         href: "/images/map-creator-icons.svg#icon-trash",
         viewBox: "0 0 456 511.82"
+    },
+    EDIT: {
+        href: "/images/map-creator-icons.svg#icon-pencil",
+        viewBox: "0 0 121.48 122.88"
     }
 };

@@ -492,6 +492,16 @@ async function updatePointImage(connection, pointId, imageId) {
     return result.affectedRows;
 }
 
+async function updateMapTitle(connection, mapId, title) {
+    const query = `
+        UPDATE map
+        SET map.title = ?
+        WHERE map.map_id = ?
+    `;
+    const [result] = await connection.execute(query, [title, mapId]);
+    return result.affectedRows;
+}
+
 async function deleteImageById(connection, imageId) {
     const query = `
         DELETE FROM images
@@ -572,6 +582,7 @@ module.exports = {
     updatePointCoordinates,
     updatePointImage,
     updatePointNorthDirection,
+    updateMapTitle,
     deleteImageById,
     getPointInfo,
     newUser,

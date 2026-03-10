@@ -1,7 +1,7 @@
 import { EVENTS } from "../events/EventBus.js";
 import { ICONS } from "../../libs/icons/icons.js";
 import { CONSTANTS } from "../shared/constants.js";
-import { fetchMapList, saveNewMap, fetchMapImage, deleteMap as deleteMapApi } from "../shared/api.js";
+import { fetchMapList, saveNewMap, fetchMapImage, deleteMap as deleteMapApi, renameMap as renameMapApi } from "../shared/api.js";
 import { processUploadedImageFile } from "../shared/utils.js";
 
 export class MapManager {
@@ -76,6 +76,8 @@ export class MapManager {
         });
 
         this.bus.on(EVENTS.UI_DELETE_MAP_CONFIRMED, ({ mapId }) => this.#deleteMap(mapId));
+
+        this.bus.on(EVENTS.UI_MAP_RENAME_REQUEST, ({ mapId, newTitle }) => this.#renameMap(mapId, newTitle));
     }
 
     async #loadMaps() {
@@ -219,6 +221,43 @@ export class MapManager {
         this.bus.emit(EVENTS.MAP_SAVE_AVAILABILITY_CHANGED, {
             canSave: !!this.pendingMapFile && this.pendingMapFileMapId == this.appState.activeMapId
         });
+    }
+
+    async #renameMap(mapId, newTitle) {
+        this.bus.emit(EVENTS.TOAST_SHOW, { msg: "Térkép átnevezése folyamatban", id: `renamingMap${mapId}`, closable: false, autohide: false, spinner: true });
+        try {
+            if (!this.maps[mapId]) {
+                throw new Error("A térkép nem található!");
+            }
+
+            let finalTitle;
+            if (mapId != CONSTANTS.TEMP_ID) {
+                let result = await renameMapApi(mapId, newTitle);
+                finalTitle = result.title;
+            } else {
+                finalTitle = newTitle.trim();
+            }
+
+            if (this.maps[mapId]) {
+                this.maps[mapId].name = finalTitle;
+            }
+
+            this.bus.emit(EVENTS.MAP_RENAME_SUCCEEDED, { mapId, newTitle: finalTitle });
+            this.bus.emit(EVENTS.TOAST_HIDE_ID, { id: `renamingMap${mapId}` });
+            this.bus.emit(EVENTS.TOAST_SHOW, {
+                msg: "Térkép sikeresen átnevezve!",
+                type: "success",
+                duration: 2000
+            });
+        } catch (error) {
+            console.error("Rename failed:", error);
+            this.bus.emit(EVENTS.MAP_RENAME_FAILED, { mapId, error });
+            this.bus.emit(EVENTS.TOAST_HIDE_ID, { id: `renamingMap${mapId}` });
+            this.bus.emit(EVENTS.TOAST_SHOW, {
+                msg: error.message || "A térkép átnevezése sikertelen!",
+                type: "danger"
+            });
+        }
     }
 
     async #deleteMap(mapId) {
