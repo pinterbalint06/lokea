@@ -1,7 +1,8 @@
 import { EVENTS } from "../events/EventBus.js";
 import { ICONS } from "../../libs/icons/icons.js";
 import { CONSTANTS } from "../shared/constants.js";
-import { fetchMapList, saveNewMap, fetchMapImage, deleteMap as deleteMapApi, renameMap as renameMapApi } from "../shared/api.js";
+import { fetchMapList, saveNewMap, deleteMap as deleteMapApi, renameMap as renameMapApi } from "../shared/api.js";
+import { fetchMapImage } from "../../libs/network/gameMapsApi.js";
 import { processUploadedImageFile } from "../shared/utils.js";
 
 export class MapManager {
@@ -24,7 +25,7 @@ export class MapManager {
         this.viewer.onClickHandler = (cursorX, cursorY) => {
             let clickedMarkerId = this.viewer.getMarkerAtClick(cursorX, cursorY);
             if (clickedMarkerId != -1) {
-                // TODO: har rányom egyre is mozogjon
+                // TODOp: har rányom egyre is mozogjon
                 this.bus.emit(EVENTS.MARKER_CLICKED, { id: clickedMarkerId, x: cursorX, y: cursorY });
             } else {
                 this.bus.emit(EVENTS.MAP_CLICKED, { x: cursorX, y: cursorY });
@@ -109,7 +110,7 @@ export class MapManager {
     async #saveMap() {
         this.isSaving = true;
         let oldId = this.appState.activeMapId;
-        this.bus.emit(EVENTS.TOAST_SHOW, { id: `savingMap${oldId}`, msg: "Térkép mentése folyamatban...", closable: false, autohide: false, spinner: true });
+        this.bus.emit(EVENTS.TOAST_SHOW, { id: `savingMap${oldId}`, msg: "Térkép mentése folyamatban", closable: false, autohide: false, spinner: true });
         try {
             let currentMap = this.maps[oldId];
 
@@ -173,7 +174,7 @@ export class MapManager {
             };
 
             this.maps[CONSTANTS.TEMP_ID] = newMap;
-            // TODO: itt??? valamit akartam
+            // TODOp: itt??? valamit akartam
             this.switchMap(CONSTANTS.TEMP_ID);
             this.bus.emit(EVENTS.NEW_MAP_LOADED, { maps: this.maps, loadedMapId: CONSTANTS.TEMP_ID });
         } catch (error) {

@@ -1,8 +1,8 @@
 import { EVENTS } from "../events/EventBus.js";
 import { CONSTANTS } from "../shared/constants.js";
-import { fetchEquirectangularImage } from "../shared/api.js";
 import { processUploadedImageFile } from "../shared/utils.js";
 import { degreeToRadian } from "../../libs/math/mathUtils.js";
+import { isCancellationError, loadPointEquirectangularLowThenHigh } from "../../libs/network/progressiveImage.js";
 
 
 export class EquirectangularManager {
@@ -16,6 +16,7 @@ export class EquirectangularManager {
         this.currentNorthDirection = 0;
         this.abortController = null;
         this.activePointId = null;
+        this.activeLoadGeneration = 0;
 
         this.#bindBusEvents();
     }
@@ -27,30 +28,42 @@ export class EquirectangularManager {
             this.activePointId = id;
             this.currentNorthDirection = degreeToRadian(data.north_direction);
             this.bus.emit(EVENTS.TOAST_SHOW, { msg: "Kép betöltése", id: "equirectangularLoading", closable: false, spinner: true });
+            this.activeLoadGeneration++
+            const loadGeneration = this.activeLoadGeneration;
 
             if (this.abortController) {
                 this.abortController.abort();
                 this.abortController = null;
             }
 
-            let imgData;
             try {
                 this.abortController = new AbortController();
                 let signal = this.abortController.signal;
-                imgData = await fetchEquirectangularImage(id, signal);
-                // check if the same point is still active
-                if (this.activePointId == id) {
-                    await this.#loadImage(imgData.url, imgData.width, imgData.height, id);
-                }
+
+                await loadPointEquirectangularLowThenHigh({
+                    pointId: id,
+                    signal,
+                    loadToViewer: async (imgData) => {
+                        await this.equirectangularViewer.loadImage(imgData.url, imgData.width, imgData.height);
+                    },
+                    isCurrent: () => this.activePointId == id && this.activeLoadGeneration == loadGeneration,
+                    onLowReady: () => {
+                        this.equirectangularViewer.setYaw(this.currentNorthDirection);
+                        if (this.activePointId == id && this.activeLoadGeneration == loadGeneration) {
+                            this.bus.emit(EVENTS.TOAST_SHOW, { msg: "Kép sikeresen betöltve!", type: "success" });
+                            this.#startFOVSync();
+                        }
+                    }
+                });
             } catch (error) {
-                if (error.name != "AbortError" && !(error.type && error.type === "REQUEST_CANCELLED")) {
+                if (!isCancellationError(error) && this.activePointId == id && this.activeLoadGeneration == loadGeneration) {
                     console.error(error);
                     this.bus.emit(EVENTS.TOAST_SHOW, { msg: "Hiba a kép betöltésekor!", type: "danger" });
                 }
             } finally {
                 this.bus.emit(EVENTS.TOAST_HIDE_ID, { id: "equirectangularLoading" });
-                if (imgData) {
-                    imgData.cleanup();
+                if (this.abortController && this.activeLoadGeneration == loadGeneration) {
+                    this.abortController = null;
                 }
             }
 
@@ -79,6 +92,12 @@ export class EquirectangularManager {
             this.currentNorthDirection = 0;
             this.appState.pendingEquirectangularFile = null;
             this.activePointId = null;
+            this.activeLoadGeneration++;
+
+            if (this.abortController) {
+                this.abortController.abort();
+                this.abortController = null;
+            }
         });
 
         this.bus.on(EVENTS.UI_COLLAPSE_HIDDEN, () => {
@@ -123,7 +142,7 @@ export class EquirectangularManager {
 
     async #handleEquirectangularLoad(file) {
         this.equirectangularViewer.clearImage();
-        // TODO: emit event to so UI nows savePointBUtton should be disabled until the image is loaded
+        // TODOp: emit event to so UI nows savePointBUtton should be disabled until the image is loaded
         this.appState.pendingEquirectangularFile = file;
 
         let imgData;
@@ -148,22 +167,6 @@ export class EquirectangularManager {
                 if (imgData.url) {
                     URL.revokeObjectURL(imgData.url);
                 }
-            }
-        }
-    }
-
-    async #loadImage(url, width, height, id) {
-        try {
-            this.equirectangularViewer.setYaw(this.currentNorthDirection);
-            await this.equirectangularViewer.loadImage(url, width, height);
-            if (this.activePointId == id) {
-                this.bus.emit(EVENTS.TOAST_SHOW, { msg: "Kép sikeresen betöltve!", type: "success" });
-                this.#startFOVSync();
-            }
-        } catch (error) {
-            if (!(error.type && error.type == "REQUEST_CANCELLED")) {
-                console.error(error);
-                this.bus.emit(EVENTS.TOAST_SHOW, { msg: "Hiba a kép betöltésekor!", type: "danger" });
             }
         }
     }

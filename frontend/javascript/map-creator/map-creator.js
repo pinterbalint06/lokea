@@ -14,6 +14,9 @@ async function init() {
     const mapViewer = new MapViewer(CONSTANTS.MAP_CANVAS_ID);
     const equirectangularViewer = new EquirectangularViewer(CONSTANTS.EQUIRECTANGULAR_CANVAS_ID);
 
+    await mapViewer.ready();
+    await equirectangularViewer.ready();
+
     new UIManager(eventBus);
     new MarkerManager(eventBus, mapViewer, appState);
     new MapManager(eventBus, mapViewer, appState);
@@ -27,9 +30,9 @@ async function init() {
 
 document.addEventListener("DOMContentLoaded", init);
 
-// TODO!: látótérhez svg renderelés
-// TODO!!: új markernél elsőre nincs helyesen rajta a markeren a fov cone
-// TODO!!: térkép képének cseréje mentés után
-// TODO!!: mapok közti kapcsolatok
-// TODO!!: markerek fixálása pixel koordinátákra? mindig egy adott pixelen legyenek?
-// TODO!: UIManager kezd nagy lenni lehet szét kéne szedni több kisebbre (pl. MapListManager, MapEditManager, btn to holdos cucc, meg tobi)
+// TODOp!: látótérhez svg renderelés
+// TODOp!!: új markernél elsőre nincs helyesen rajta a markeren a fov cone
+// TODOp!!: térkép képének cseréje mentés után
+// TODOp!!: mapok közti kapcsolatok
+// TODOp!!: markerek fixálása pixel koordinátákra? mindig egy adott pixelen legyenek?
+// TODOp!: UIManager kezd nagy lenni lehet szét kéne szedni több kisebbre (pl. MapListManager, MapEditManager, btn to holdos cucc, meg tobi)

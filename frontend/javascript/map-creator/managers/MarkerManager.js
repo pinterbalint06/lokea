@@ -98,7 +98,7 @@ export class MarkerManager {
         ];
 
         eventsToBlock.forEach(event => {
-            this.bus.on(event, (request) => {
+            this.bus.on(event, ({ request }) => {
                 if (this.isSaving) {
                     request.canProceed = false;
                     request.reason = "Pont mentése folyamatban, kérlek várj!";
@@ -328,6 +328,8 @@ export class MarkerManager {
                         this.mapViewer.changeMarkerType(data.pointId, "READY");
                     }
                     pointToSave = data.pointId;
+                } else {
+                    this.mapViewer.changeMarkerType(pointToSave, "EDIT");
                 }
                 if (!this.markersCache[pointToSave]) {
                     this.markersCache[pointToSave] = {

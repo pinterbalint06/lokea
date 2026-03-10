@@ -603,12 +603,26 @@ export class UIManager {
             2000,
             (event) => {
                 event.target.blur(); // valami aria warning miatt kell
-                this.elements.confirmDeleteBtn.disabled = true;
-
                 if (this.deleteContext && this.deleteContext.type == "map") {
-                    this.bus.emit(EVENTS.UI_DELETE_MAP_CONFIRMED, { mapId: this.deleteContext.id });
+                    let request = { canProceed: true, reason: "" };
+                    this.bus.emit(EVENTS.UI_DELETE_MAP_REQUESTED, { request, mapId: this.deleteContext.id });
+
+                    if (request.canProceed) {
+                        this.elements.confirmDeleteBtn.disabled = true;
+                        this.bus.emit(EVENTS.UI_DELETE_MAP_CONFIRMED, { mapId: this.deleteContext.id });
+                    } else {
+                        this.bus.emit(EVENTS.TOAST_SHOW, { msg: request.reason, type: "danger" });
+                    }
                 } else {
-                    this.bus.emit(EVENTS.UI_DELETE_POINT_CONFIRMED);
+                    let request = { canProceed: true, reason: "" };
+                    this.bus.emit(EVENTS.UI_DELETE_POINT_REQUESTED, { request });
+
+                    if (request.canProceed) {
+                        this.elements.confirmDeleteBtn.disabled = true;
+                        this.bus.emit(EVENTS.UI_DELETE_POINT_CONFIRMED);
+                    } else {
+                        this.bus.emit(EVENTS.TOAST_SHOW, { msg: request.reason, type: "danger" });
+                    }
                 }
             }
         );

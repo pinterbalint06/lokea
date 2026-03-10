@@ -21,6 +21,16 @@ function validateId(id, idName) {
     return num;
 };
 
+function resolvePointImagePath(filePath, resolution) {
+    let finalFilePath = filePath;
+    if (resolution == "low") {
+        let imagePath = path.parse(filePath);
+
+        finalFilePath = path.join(imagePath.dir, imagePath.name + "_low_res" + imagePath.ext);
+    }
+    return finalFilePath;
+}
+
 //?GET /api/game_maps/getImageByPointId
 router.get("/getImageByPointId", async (request, response) => {
     try {
@@ -41,7 +51,24 @@ router.get("/getImageByPointId", async (request, response) => {
             throw error;
         }
 
+        let resolution = "high";
+        if (request.query.resolution != undefined) {
+            if (typeof request.query.resolution != "string") {
+                const error = new Error("Helytelen felbontás");
+                error.statusCode = 400;
+                throw error;
+            }
+
+            resolution = request.query.resolution.trim().toLowerCase();
+            if (resolution != "low" && resolution != "high") {
+                const error = new Error("Helytelen felbontás");
+                error.statusCode = 400;
+                throw error;
+            }
+        }
+
         let imageData = await database.getPointImage(pointId);
+        let imagePath = resolvePointImagePath(imageData.filepath, resolution);
 
         let options = {
             root: UPLOAD_ROOT
@@ -49,7 +76,7 @@ router.get("/getImageByPointId", async (request, response) => {
         response.set("Access-Control-Expose-Headers", "imageWidth, imageHeight");
         response.set("imageWidth", imageData.width);
         response.set("imageHeight", imageData.height);
-        response.sendFile(imageData.filepath, options, function (err) {
+        response.sendFile(imagePath, options, function (err) {
             if (err) {
                 if (!response.headersSent) {
                     return response.status(404).json({
@@ -90,7 +117,7 @@ router.get("/getMapImageById", async (request, response) => {
             error.statusCode = 400;
             throw error;
         }
-        // TODO isAllowed mapId
+        // TODOp isAllowed mapId
         // if (!isAllowedToGetImage(request, mapId)) {
         //     const error = new Error("Nincs hozzáférése ehhez a ponthoz");
         //     error.statusCode = 403;
@@ -136,7 +163,7 @@ router.get("/getMapImageById", async (request, response) => {
 router.get("/connections/:pointId", async (request, response) => {
     try {
         const pointId = validateId(request.params.pointId, "pont ID");
-        // TODO isAllowed pointId
+        // TODOp isAllowed pointId
         // if (!isAllowedToGetConnections(request, pointId)) {
         //     const error = new Error("Nincs hozzáférése ehhez a ponthoz");
         //     error.statusCode = 403;

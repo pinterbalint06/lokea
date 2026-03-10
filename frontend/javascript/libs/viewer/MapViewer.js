@@ -323,7 +323,7 @@ export class MapViewer extends WASMViewerBase {
         }
 
         let valid = this.checkCoordinateValid(imageX, imageY);
-        // TODO #2 uncomment when TODO #2 is done
+        // TODOp #2 uncomment when TODOp #2 is done
         // if (!valid.correct) {
         //     console.log(imageX, imageY);
         //     console.log(this.#imageWidth, this.#imageHeight);
@@ -814,7 +814,7 @@ export class MapViewer extends WASMViewerBase {
             onZoom: (zoomAmount, cursorX, cursorY) => {
                 this._ensureEngineReady();
                 this.cancelPanAnimation();
-                // TODO: check previous zoom if didn't change stop momentum
+                // TODOp: check previous zoom if didn't change stop momentum
                 this._engine.zoomMap(zoomAmount, cursorX, cursorY);
             },
             onClick: (cursorX, cursorY) => {

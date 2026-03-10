@@ -87,7 +87,7 @@ async function handleUploadError(response, error, file, dbConnection, finalPath)
     let statusCode = error.statusCode ? error.statusCode : 500;
     let message = error.statusCode ? error.message : "Váratlan hiba történt!";
 
-    if (statusCode == 500) {
+    if (!error.statusCode) {
         // unexpected errors are logged
         console.error(error);
     }
@@ -104,6 +104,7 @@ async function processImageMetadata(filePath) {
     let image = sharp(filePath);
     let metadata = await image.metadata();
     return {
+        sharpInstance: image,
         width: metadata.width,
         height: metadata.height,
         extension: "." + metadata.format
@@ -197,11 +198,31 @@ router.post("/savePoint", checkAuth, upload.single("equirectangularImage"), asyn
             UPLOAD_ROOT,
             relativeDestDir
         );
-        let targetFileName = newPointId.toString() + "_" + crypto.randomBytes(4).toString("hex") + imageData.extension;
+        let baseName = newPointId.toString() + "_" + crypto.randomBytes(4).toString("hex");
 
-        finalPath = await moveUpload(request.file.path, targetPath, targetFileName);
+        let targetFileName = baseName + ".webp";
+        let lowResFileName = baseName + "_low_res.webp";
 
-        // TODO: create low resolution version of the image
+        await fs.mkdir(targetPath, { recursive: true });
+
+        await imageData.sharpInstance
+            .webp(
+                {
+                    quality: 80
+                })
+            .toFile(path.join(targetPath, targetFileName));
+
+        await imageData.sharpInstance
+            .webp(
+                {
+                    quality: 50
+                })
+            .resize(
+                {
+                    width: 600
+                })
+            .toFile(path.join(targetPath, lowResFileName));
+
         let dbPath = path.join(relativeDestDir, targetFileName);
         await database.updateImagePath(dbConnection, imageId, dbPath);
 
@@ -224,10 +245,11 @@ router.post("/savePoint", checkAuth, upload.single("equirectangularImage"), asyn
 router.delete("/point/:pointId", checkAuth, async (request, response) => {
     let dbConnection;
     try {
-        const userId = request.session.user.user_id;
+        const userId = request.session.userid;
 
-        // TODO: CHECK IF USER HAS ACCESS
         const pointID = validateId(request.params.pointId, "pont ID");
+
+        await assertUserOwnsPoint(userId, pointID);
 
         dbConnection = await database.getConnection();
         await dbConnection.beginTransaction();
@@ -302,7 +324,7 @@ router.post("/saveNewMap", checkAuth, upload.single("mapImage"), async (request,
         const userId = request.session.userid;
 
         const gameMapID = validateId(request.body.gameMapID, "pálya ID");
-        
+
         await assertUserOwnsGameMap(userId, gameMapID);
 
         const title = request.body.title;
@@ -345,7 +367,7 @@ router.post("/saveNewMap", checkAuth, upload.single("mapImage"), async (request,
             UPLOAD_ROOT,
             relativeDestDir
         );
-        // TODO: create low res version
+        // TODOp: create low res version
         let targetFileName = newMapId.toString() + "_" + crypto.randomBytes(4).toString("hex") + imageData.extension;
 
         finalPath = await moveUpload(request.file.path, targetPath, targetFileName);
@@ -401,8 +423,6 @@ router.put("/map/:mapId", checkAuth, upload.none(), async (request, response) =>
             error.statusCode = 404;
             throw error;
         }
-
-        // TODO: CHECK IF USER HAS ACCESS to game_maps_id
 
         dbConnection = await database.getConnection();
         await dbConnection.beginTransaction();
@@ -669,7 +689,6 @@ router.put("/point/:pointId", checkAuth, upload.single("equirectangularImage"), 
             throw error;
         }
 
-        // TODO: check if has access
         dbConnection = await database.getConnection();
         await dbConnection.beginTransaction();
 
@@ -721,9 +740,23 @@ router.put("/point/:pointId", checkAuth, upload.single("equirectangularImage"), 
                 UPLOAD_ROOT,
                 relativeDestDir
             );
-            let targetFileName = pointId.toString() + "_" + crypto.randomBytes(4).toString("hex") + imageData.extension;
+            let baseName = pointId.toString() + "_" + crypto.randomBytes(4).toString("hex");
+            let targetFileName = baseName + ".webp";
+            let lowResFileName = baseName + "_low_res.webp";
 
-            finalPath = await moveUpload(request.file.path, targetPath, targetFileName);
+            await fs.mkdir(targetPath, { recursive: true });
+
+            await imageData.sharpInstance
+                .webp({ quality: 80 })
+                .toFile(path.join(targetPath, targetFileName));
+
+            finalPath = path.join(targetPath, targetFileName);
+
+            await imageData.sharpInstance
+                .webp({ quality: 50 })
+                .resize({ width: 600 })
+                .toFile(path.join(targetPath, lowResFileName));
+
             let dbPath = path.join(relativeDestDir, targetFileName);
 
             await database.updateImagePath(dbConnection, newImageId, dbPath);
@@ -752,10 +785,18 @@ router.put("/point/:pointId", checkAuth, upload.single("equirectangularImage"), 
 
             if (oldImageInfo && oldImageInfo.filepath) {
                 let absoluteOldPath = path.join(UPLOAD_ROOT, oldImageInfo.filepath);
-                // delete old file
+                // delete old full-res file
                 fs.unlink(absoluteOldPath)
                     .catch(function () {
                         console.error("unsuccessful deletion: " + absoluteOldPath);
+                    });
+                // delete old low-res file
+                let imagePath = path.parse(absoluteOldPath);
+
+                let oldLowResPath = path.join(imagePath.dir, imagePath.name + "_low_res" + imagePath.ext);
+                fs.unlink(oldLowResPath)
+                    .catch(function () {
+                        console.error("unsuccessful deletion: " + oldLowResPath);
                     });
             }
         }
@@ -820,3 +861,7 @@ router.use((error, request, response, next) => {
 });
 
 module.exports = router;
+
+// TODOp!!: api vegpontok atirasa pls /saveNewMap helyett /map POST stb.
+// TODOp!!!: webp konvertálás és low res egységesítése
+// TODOp!!!: webp konvertálás és low res verzó térképhez is

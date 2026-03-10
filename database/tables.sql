@@ -85,7 +85,7 @@ CREATE TABLE log (
     foreign key (user_id) references users(user_id) ON DELETE CASCADE
 );
 
--- TODO: trigger start_point_id mindig kisebb legyen?
+-- TODOp: trigger start_point_id mindig kisebb legyen?
 CREATE TABLE point_connections (
     connection_id int AUTO_INCREMENT PRIMARY KEY NOT NULL,
     start_point_id int NOT NULL,
