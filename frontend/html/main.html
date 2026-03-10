@@ -29,7 +29,8 @@
                     <p class="text-center logoTitle">Légy bárhol</p>
                 </div>
                 <div class="col-4 d-flex justify-content-end" id="LogOrDropdown">
-                    <button type="button" data-bs-toggle="modal" data-bs-target="#modalRegLog" class="btn btn-info">Bejelentkezés</button>
+                    <button type="button" data-bs-toggle="modal" data-bs-target="#modalRegLog"
+                        class="btn btn-info">Bejelentkezés</button>
                 </div>
             </nav>
         </div>
@@ -161,7 +162,9 @@
         </div>
     </main>
     <footer>
-
+        <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#settingsModal">
+            Beállítások megnyitása
+        </button>
     </footer>
     <div class="modal fade" id="modalRegLog" tabindex="-1" aria-labelledby="exampleModalLabel" aria-hidden="true">
         <div class="modal-dialog modal-md modalRegLog">
@@ -204,26 +207,58 @@
             </div>
         </div>
     </div>
-    <div class="modal fade" id="modalSettings" tabindex="-1" aria-labelledby="exampleModalLabel" aria-hidden="true">
-        <div class="modal-dialog modal-xl" id="modalSize">
-            <div class="modal-content">
-                <div class="modal-header">
-                    <h5 class="modal-title" id="modalTitle">Felhasználó szerkesztése</h5>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Bezárás" title="Bezár"
-                        id="modalClose"></button>
-                </div>
-                <div class="modal-body" id="modalContent">
+    <div class="modal fade" id="settingsModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content custom-modal-content">
 
+                <div class="modal-header custom-modal-header">
+                    <ul class="nav nav-tabs nav-browser-tabs" id="settingsTab">
+                        <li class="nav-item">
+                            <button type="button" class="nav-link active" data-bs-toggle="tab"
+                                data-bs-target="#accountSettingsTab">Fiók</button>
+                        </li>
+                        <li class="nav-item">
+                            <button type="button" class="nav-link" data-bs-toggle="tab"
+                                data-bs-target="#uiSettingsTab">Megjelenés</button>
+                        </li>
+                    </ul>
+                    <button type="button" class="btn-close mb-2" data-bs-dismiss="modal"></button>
                 </div>
-                <div class="modal-footer justify-content-between">
-                    <p class="text-danger" id="footerText">
-                        Kilépés után a változtatásokat nem lehet visszavonni!
-                    </p>
-                    <div id="footerButtons">
-                        <button type="button" class="btn btn-danger">Változtatások visszavonása</button>
-                        <button type="button" class="btn btn-primary">Mentés</button>
-                        <button type="button" class="btn btn-primary">Mentés és kilépés</button>
+
+                <div class="modal-body settings-content">
+                    <div class="tab-content">
+
+                        <div class="tab-pane fade show active" id="accountSettingsTab">
+                            <h5 class="section-title">Fiókbeállítások</h5>
+                            <div id="dynamicUserData">
+                                <h3 class="text-center">Nem vagy bejelentkezve!</h3>
+                            </div>
+                        </div>
+
+                        <div class="tab-pane fade" id="uiSettingsTab">
+                            <h5 class="section-title">UI beállítások</h5>
+                            <div class="d-flex flex-column">
+                                <h6 class="subtitle">Nyelvválasztás</h6>
+                                <select name="lang" class="form-select" id="languageSelect">
+                                    <option value="hu" selected>Magyar</option>
+                                    <option value="en">English</option>
+                                </select>
+                            </div>
+
+                            <div class="d-flex flex-column mt-5">
+                                <h6 class="subtitle">Megjelenés</h6>
+                                <div
+                                    class="form-check form-switch p-0 d-flex justify-content-between align-items-center">
+                                    <label class="form-check-label" for="darkMode">Éjszakai üzemmód (Dark
+                                        Mode)</label>
+                                    <input class="form-check-input ms-0" type="checkbox" id="darkMode">
+                                </div>
+                            </div>
+                        </div>
                     </div>
+                </div>
+                <div class="modal-footer border-0 bg-light">
+                    <button class="btn btn-purple px-5 rounded-pill" onclick="saveSettings()">Mentés</button>
                 </div>
             </div>
         </div>

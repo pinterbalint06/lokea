@@ -100,16 +100,6 @@ header {
     height: 20px;
 }
 
-/* .dropdown-menu {
-    z-index: 1200;
-}
-
-.dropdown-menu-end {
-    right: 0;
-    left: auto;
-} */
-
-
 /* torold */
 
 /* Konténer, ami összefogja az inputot és a labelt */
@@ -254,4 +244,68 @@ body.modal-open> :not(.modal):not(.modal-backdrop) {
 
 #loginTitle {
     transition: transform 0.5s ease, color 0.5s ease;
+}
+
+.custom-modal-content {
+    border: none;
+    border-radius: 12px;
+    overflow: hidden;
+}
+
+.custom-modal-header {
+    background-color: #f8f9fa;
+    padding-bottom: 0;
+    border-bottom: none;
+}
+
+/* Tab stílusok */
+.nav-browser-tabs .nav-link {
+    border: 1px solid transparent;
+    border-radius: 10px 10px 0px 0px;
+    color: #6c757d;
+    padding: 10px 25px;
+    margin-bottom: -1px;
+    transition: all 0.2s ease;
+}
+
+.nav-browser-tabs .nav-link:hover {
+    background-color: #dbdee2;
+}
+
+.nav-browser-tabs .nav-link.active {
+    background-color: #943ec9 !important;
+    border-color: #dee2e6 #dee2e6 #ffffff !important; /* Az alsó vonal eltűnik */
+    color: white;
+    font-weight: 600;
+}
+
+.settings-content {
+    min-height: 300px;
+    padding: 2rem;
+}
+
+.section-title {
+    font-weight: 700;
+    margin-bottom: 1.5rem;
+    color: #343a40;
+}
+
+.subtitle {
+    font-weight: 700;
+    margin-bottom: 1rem;
+}
+
+.form-check-input:checked {
+    background-color: #943ec9;
+    border-color: #943ec9;
+}
+
+.btn-purple {
+    background-color: #943ec9;
+    color: white;
+}
+
+.btn-purple:hover {
+    background-color: purple;;
+    color: white;
 }

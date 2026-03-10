@@ -24,7 +24,7 @@ function validalvaReg(username, email, password) {
     if (password.length > 50 || password.length < 8 || !isCorrectPassword(password)) {
         fail = true;
     }
-    console.log(fail)
+    //ide meg kell valami hogy mutassa hogy megbukott a validalason
     return fail;
 }
 
