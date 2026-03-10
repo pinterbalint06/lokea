@@ -9,6 +9,10 @@ document.addEventListener("DOMContentLoaded", async function () {
             }
         })
     }
+    else {
+        modalElement = document.getElementById('settingsModal');
+        settingsModal = new bootstrap.Modal(modalElement);
+    }
 
 })
 
@@ -65,27 +69,29 @@ async function dropdownLetrehoz(link, nev, kep) {
 
     let ul = document.createElement('ul');
     ul.classList.add("dropdown-menu", "dropdown-menu-end", "text-small");
-    ul.appendChild(dropdownLink("Fiókom", null, null, "sliders"));
+
+    let li = dropdownLink("Fiókom", null, null, "sliders");
+    li.addEventListener("click", async function () {
+        await showSettingsModal();
+    })
+    ul.appendChild(li);
     ul.appendChild(dropdownDivider());
     ul.appendChild(dropdownLink("Saját játékaim", null, null, "map"));
     ul.appendChild(dropdownDivider());
     if (link) {
-        ul.appendChild(dropdownLink("Belépés az admin oldalra", 'enterAdmin', null, "shield"));
+        li = dropdownLink("Belépés az admin oldalra", 'enterAdmin', null, "shield")
+        li.href = link;
+        ul.appendChild(li);
         ul.appendChild(dropdownDivider());
     }
-
-    ul.appendChild(dropdownLink("Kijelentkezés", 'signOut', ["text-danger"], "logout"));
+    li = dropdownLink("Kijelentkezés", 'signOut', ["text-danger"], "logout");
+    li.addEventListener("click", async function () {
+        await kijelentkezes();
+    });
+    ul.appendChild(li);
 
     div.appendChild(ul);
     hova.appendChild(div);
-
-    if (link) {
-        document.getElementById('enterAdmin').href = link;
-    } //javitani!
-
-    document.getElementById('signOut').addEventListener("click", async function () {
-        await kijelentkezes()
-    });
 }
 
 function dropdownLink(title, id, customClasses, svgName) {
@@ -116,6 +122,59 @@ function dropdownDivider() {
     return li;
 }
 
+function inputGeneral(type, placeholder, value, id, osztalyok, disabled) {
+    let input = document.createElement('input');
+    input.type = type;
+    if (placeholder != null) {
+        input.placeholder = placeholder;
+    }
+    if (value != null) {
+        input.value = value;
+    }
+    input.id = id;
+    if (osztalyok != null) {
+        input.classList.add(...osztalyok);
+    }
+    input.disabled = disabled;
+    return input;
+}
+
+function gombGeneral(type, text, svg, color, id) {
+    let button = document.createElement('button');
+    button.type = type;
+    if (svg == null) {
+        button.innerText = text;
+    }
+    else {
+        button.appendChild(makeSvg(svg, "buttonIcon"));
+        let textNode = document.createTextNode(text);
+        button.appendChild(textNode);
+    }
+
+    if (id != null) {
+        button.id = id;
+    }
+    button.classList.add('btn');
+    switch (color) {
+        case "red":
+            button.classList.add('btn-danger');
+            break;
+        case "blue":
+            button.classList.add('btn-primary');
+            break;
+        case "lightblue":
+            button.classList.add('btn-info');
+            break;
+        case "green":
+            button.classList.add('btn-success');
+            break;
+        case "link":
+            button.classList.add('btn-link');
+            break;
+    }
+    return button;
+}
+
 function makeSvg(name, className) {
     let svg = document.createElementNS("http://www.w3.org/2000/svg", "svg");
     svg.classList.add(className);
@@ -124,6 +183,13 @@ function makeSvg(name, className) {
 
     svg.appendChild(use);
     return svg;
+}
+
+function makeSubtitle(text) {
+    let subtitle = document.createElement('h5');
+    subtitle.classList.add("subtitle");
+    subtitle.innerText = text;
+    return subtitle;
 }
 
 async function getProfilePicture(route) {
@@ -135,6 +201,44 @@ async function getProfilePicture(route) {
         return objectURL;
     } catch (error) {
         console.log(error);
+    }
+}
+
+async function uploadProfilePic(picture, id) {
+    let fd = new FormData();
+    fd.append("profilePic", picture);
+    fd.append("user_id", id);
+    try {
+        let response = await fetch("/api/updateProfilePic", {
+            method: "POST",
+            body: fd
+        });
+
+        if (response.ok) {
+            console.log("sikerult a feltoltes");
+        }
+    } catch (error) {
+        console.log(`hálózati hiba: ${error}`);
+    }
+}
+
+async function deleteProfilePicture(id) {
+    try {
+        let response = await fetch("/api/deleteProfilePic", {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json"
+            },
+            body: JSON.stringify({
+                user_id: id
+            })
+        });
+
+        if (response.ok) {
+            console.log("sikerult a torles");
+        }
+    } catch (error) {
+        console.log(`hálózati hiba: ${error}`);
     }
 }
 
@@ -227,3 +331,104 @@ async function kijelentkezes() {
         console.error(`hálózati hiba: ${error}`);
     }
 }
+
+async function showSettingsModal() {
+    let hova = document.getElementById('userData');
+    hova.innerHTML = "";
+    let data = await getUserData();
+
+    let container = document.createElement('div');
+    container.classList.add('container');
+
+    let row = document.createElement("div");
+    row.classList.add("row");
+
+    let div = document.createElement("div");
+    div.classList.add("col-4");
+    //kimasolt adminbol!
+    // let pfp = document.createElement("img");
+    // let deletePfpButton;
+    // if (data.filepath == null) {
+    //     pfp.src = "../images/default.png";
+    // }
+    // else {
+    //     objectURL = await getProfilePicture(data.filepath);
+    //     pfp.src = objectURL;
+    //     deletePfpButton = gombGeneral("button", "Profilkép törlése", "trash-2", "red", null);
+    //     deletePfpButton.addEventListener("click", async function () {
+    //         await deleteProfilePicture(user_id);
+    //     })
+    // }
+    // pfp.alt = "Profile picture";
+    // pfp.title = "Profile picture";
+    // pfp.classList.add("img-fluid", "img-thumbnail", "rounded-circle", "h-75"
+    // );
+
+    // let newPfpInput = inputGeneral("file", null, null, "newPfpInput", ["form-control"], false);
+    // newPfpInput.setAttribute("accept", "image/*");
+    // let newPfpButton = gombGeneral("button", "Profilkép feltöltése", "upload", "green", null);
+    // newPfpButton.addEventListener("click", async function () {
+    //     let feltoltott = document.getElementById('newPfpInput');
+    //     if (feltoltott.files.length === 0) {
+    //         alert("Kérlek, válassz ki egy képet!");
+    //     }
+    //     else {
+    //         await uploadProfilePic(feltoltott.files[0]);
+    //     }
+    // })
+
+    // let pfpTitle = document.createElement("h6");
+    // pfpTitle.textContent = data.username;
+
+    // div.appendChild(pfp);
+    // div.appendChild(newPfpInput);
+    // div.appendChild(newPfpButton);
+    // if (pfproute != null) {
+    //     div.appendChild(deletePfpButton);
+    // }
+    // div.appendChild(pfpTitle);
+    row.appendChild(div);
+
+    div = document.createElement("div");
+    div.classList.add("col-8");
+
+    console.log(data);
+
+    hova.appendChild(makeSubtitle(`Regisztrált: ${data.created_at}`));
+
+    hova.appendChild(makeSubtitle("Felhasználónév"));
+    hova.appendChild(inputGeneral("text", "mintajancsi123", data.username, "usernameInput", ["form-control"], false));
+
+    hova.appendChild(makeSubtitle("E-mail-cim"));
+    hova.appendChild(inputGeneral("text", "mintajan@gmail.com", data.email, "emailInput", ["form-control"], false));
+
+    hova.appendChild(makeSubtitle("Jelszó"));
+    hova.appendChild(inputGeneral("password", null, data.password, "passwordInput", ["form-control"], false)); //nem adunk vissza jelszot
+
+    hova.appendChild(makeSubtitle("Két lépcsős azonositás"));
+    hova.appendChild(inputGeneral("checkbox", null, data.username, "is2faInput", null, false));
+
+    row.appendChild(div);
+    container.appendChild(row);
+    hova.appendChild(container);
+
+    settingsModal.show();
+}
+
+async function getUserData() {
+    try {
+        let response = await fetch('/api/getUserData');
+        if (response.ok) {
+            let data = await response.json();
+            return data.users;
+        }
+        else {
+            throw new Error("baj");
+        }
+    } catch (error) {
+        console.error(error);
+    }
+}
+
+let modalElement;
+let settingsModal;

@@ -177,6 +177,15 @@ router.get('/loginRole', async (request, response) => {
 
 //Endpoints - settings
 
+router.get('/getUserData', auth.checkAuth, async (request, response) => {
+    try {
+        let users = await database.getUser(request.session.userid);
+        response.status(200).json({ users: users[0] });
+    } catch (error) {
+        response.status(500).json({ error: error });
+    }
+})
+
 router.post('/updateProfilePic', auth.checkAuth, upload.single('profilePic'), async (request, response) => {
     let originalFile;
     let newFilePath;

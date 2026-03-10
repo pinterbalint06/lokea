@@ -18,6 +18,7 @@ hibak amiket javitani kell:
 -oldal nyelvet egysegesiteni kell
 -insert -> tranzakciokezeles
 -szuresnel a moderatort nem szuri jol
+-par get keresnel nincs try catch
 
 kerdes:
 -compare attetele database.js-be
