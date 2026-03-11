@@ -40,16 +40,16 @@ async function fetchImage(url, abortSignal = null) {
     }
 }
 
-export async function fetchMapImage(mapId, abortSignal = null) {
+export async function fetchMapImage(mapId, abortSignal = null, resolution = "high") {
     return await fetchImage(
-        `/api/game_maps/getMapImageById?mapId=${mapId}`,
+        `/api/game-maps/maps/${mapId}/image?resolution=${resolution}`,
         abortSignal
     );
 }
 
 export async function fetchEquirectangularImage(pointId, abortSignal = null, resolution = "high") {
     return await fetchImage(
-        `/api/game_maps/getImageByPointId?pointId=${pointId}&resolution=${resolution}`,
+        `/api/game-maps/points/${pointId}/image?resolution=${resolution}`,
         abortSignal
     );
 }

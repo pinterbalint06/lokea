@@ -3,10 +3,10 @@ import { fetchAndValidate, handleResponseError, validateJsonResponse } from "../
 export async function saveNewMap(mapFile, gameMapID, mapTitle) {
     let formData = new FormData();
     formData.append("mapImage", mapFile);
-    formData.append("gameMapID", gameMapID);
     formData.append("title", mapTitle);
 
-    let response = await fetch("/api/map_creator/saveNewMap", {
+    //?POST /api/map-creator/game-maps/:gameMapID/maps
+    let response = await fetch(`/api/map-creator/game-maps/${gameMapID}/maps`, {
         method: "POST",
         body: formData
     });
@@ -28,7 +28,6 @@ export async function savePoint({
     position,
     northDirection,
     equirectangularFile,
-    gameMapID,
     mapID,
     isNew
 }) {
@@ -51,15 +50,13 @@ export async function savePoint({
             throw new Error("Nincs kép megadva!");
         }
         formData.append("equirectangularImage", equirectangularFile);
-        formData.append("gameMapID", gameMapID);
-        formData.append("mapID", mapID);
-        url = "/api/map_creator/savePoint";
+        url = `/api/map-creator/maps/${mapID}/points`;
         method = "POST";
     } else {
         if (equirectangularFile) {
             formData.append("equirectangularImage", equirectangularFile);
         }
-        url = `/api/map_creator/point/${pointId}`;
+        url = `/api/map-creator/points/${pointId}`;
         method = "PUT";
     }
 
@@ -79,35 +76,29 @@ export async function savePoint({
 }
 
 export async function deletePoint(pointId) {
-    let response = await fetch(`/api/map_creator/point/${pointId}`, {
+    let response = await fetch(`/api/map-creator/points/${pointId}`, {
         method: "DELETE"
     });
-    let data = await response.json();
 
     if (!response.ok) {
         await handleResponseError(response);
     }
-
-    validateJsonResponse(data, "Sikertelen pont törlés!");
 }
 
 export async function deleteMap(mapId) {
-    let response = await fetch(`/api/map_creator/map/${mapId}`, {
+    let response = await fetch(`/api/map-creator/maps/${mapId}`, {
         method: "DELETE"
     });
-    let data = await response.json();
-
     if (!response.ok) {
         await handleResponseError(response);
     }
-    validateJsonResponse(data, "Sikertelen térkép törlés!");
 }
 
 export async function renameMap(mapId, title) {
     let formData = new FormData();
     formData.append("title", title);
 
-    let response = await fetch(`/api/map_creator/map/${mapId}`, {
+    let response = await fetch(`/api/map-creator/maps/${mapId}`, {
         method: "PUT",
         body: formData
     });
@@ -129,9 +120,8 @@ export async function saveConnection(gameMapID, connection) {
     let formData = new FormData();
     formData.append("startPointId", connection.start_point_id);
     formData.append("endPointId", connection.end_point_id);
-    formData.append("gameMapID", gameMapID);
 
-    let response = await fetch("/api/map_creator/saveConnection", {
+    let response = await fetch(`/api/map-creator/game-maps/${gameMapID}/connections`, {
         method: "POST",
         body: formData
     });
@@ -178,26 +168,23 @@ export async function saveUnsavedConnections(gameMapID, unsavedConnections) {
 }
 
 export async function fetchPoints(mapID) {
-    return fetchAndValidate(`/api/map_creator/${mapID}/points`, "points");
+    return fetchAndValidate(`/api/map-creator/maps/${mapID}/points`, "points");
 }
 
 export async function fetchMapList(gameMapID) {
-    return fetchAndValidate(`/api/map_creator/maps?gameMapID=${gameMapID}`, "maps");
+    return fetchAndValidate(`/api/map-creator/game-maps/${gameMapID}/maps`, "maps");
 }
 
 export async function fetchConnections(gameMapID) {
-    return fetchAndValidate(`/api/map_creator/${gameMapID}/connections`, "connections");
+    return fetchAndValidate(`/api/map-creator/game-maps/${gameMapID}/connections`, "connections");
 }
 
 export async function deleteConnection(connectionId) {
-    let response = await fetch(`/api/map_creator/connection/${connectionId}`, {
+    let response = await fetch(`/api/map-creator/connections/${connectionId}`, {
         method: "DELETE"
     });
-    let data = await response.json();
 
     if (!response.ok) {
         await handleResponseError(response);
     }
-
-    validateJsonResponse(data, "Sikertelen kapcsolat törlés!");
 }

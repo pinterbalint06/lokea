@@ -48,8 +48,8 @@ export class EquirectangularManager {
                     },
                     isCurrent: () => this.activePointId == id && this.activeLoadGeneration == loadGeneration,
                     onLowReady: () => {
-                        this.equirectangularViewer.setYaw(this.currentNorthDirection);
                         if (this.activePointId == id && this.activeLoadGeneration == loadGeneration) {
+                            this.equirectangularViewer.setYaw(this.currentNorthDirection);
                             this.bus.emit(EVENTS.TOAST_SHOW, { msg: "Kép sikeresen betöltve!", type: "success" });
                             this.#startFOVSync();
                         }

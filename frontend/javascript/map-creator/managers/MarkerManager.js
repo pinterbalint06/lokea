@@ -311,7 +311,6 @@ export class MarkerManager {
                 position: position,
                 northDirection: this.northDirection,
                 equirectangularFile: this.appState.pendingEquirectangularFile,
-                gameMapID: this.appState.gameMapID,
                 mapID: this.appState.activeMapId,
                 isNew: isNewPoint
             });

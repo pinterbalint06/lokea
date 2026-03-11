@@ -1,14 +1,16 @@
 export async function handleResponseError(response) {
-    let error = await response.json();
-    if (response.status == 401) {
-        throw new Error("Nem vagy bejelentkezve!");
+    let errorMessage;
+    try {
+        let errorData = await response.json();
+        errorMessage = errorData.error || errorData.message;
+    } catch (error) {
     }
-    throw new Error(error.error || "Szerver hiba: " + response.status);
+    throw new Error(errorMessage || "Szerver hiba: " + response.status);
 }
 
 export function validateJsonResponse(data, defaultErrorMsg = "Sikertelen művelet!") {
     if (!data.success) {
-        throw new Error(data.error || defaultErrorMsg);
+        throw new Error(data.error || data.message || defaultErrorMsg);
     }
     return data;
 }

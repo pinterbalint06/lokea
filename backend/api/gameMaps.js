@@ -31,21 +31,16 @@ function resolvePointImagePath(filePath, resolution) {
     return finalFilePath;
 }
 
-//?GET /api/game_maps/getImageByPointId
-router.get("/getImageByPointId", async (request, response) => {
+//?GET /api/game-maps/points/:pointID/image
+router.get("/points/:pointID/image", async (request, response) => {
     try {
-        if (!request.query.pointId || request.query.pointId.trim() == "") {
-            const error = new Error("Nem adott pont ID-t");
-            error.statusCode = 400;
-            throw error;
-        }
-        let pointId = Number(request.query.pointId);
-        if (!Number.isInteger(pointId)) {
+        const pointID = parseInt(request.params.pointID);
+        if (isNaN(pointID)) {
             const error = new Error("Helytelen pont ID");
             error.statusCode = 400;
             throw error;
         }
-        if (!isAllowedToGetImage(request, pointId)) {
+        if (!isAllowedToGetImage(request, pointID)) {
             const error = new Error("Nincs hozzáférése ehhez a ponthoz");
             error.statusCode = 403;
             throw error;
@@ -67,7 +62,7 @@ router.get("/getImageByPointId", async (request, response) => {
             }
         }
 
-        let imageData = await database.getPointImage(pointId);
+        let imageData = await database.getPointImage(pointID);
         let imagePath = resolvePointImagePath(imageData.filepath, resolution);
 
         let options = {
@@ -103,17 +98,12 @@ router.get("/getImageByPointId", async (request, response) => {
     }
 });
 
-//?GET /api/game_maps/getMapImageById
-router.get("/getMapImageById", async (request, response) => {
+//?GET /api/game-maps/maps/:mapID/image
+router.get("/maps/:mapID/image", async (request, response) => {
     try {
-        if (!request.query.mapId || request.query.mapId.trim() == "") {
-            const error = new Error("Nem adott térkép ID-t");
-            error.statusCode = 400;
-            throw error;
-        }
-        let mapId = Number(request.query.mapId);
-        if (!Number.isInteger(mapId)) {
-            const error = new Error("Helytelen pont ID");
+        const mapID = parseInt(request.params.mapID);
+        if (isNaN(mapID)) {
+            const error = new Error("Helytelen térkép ID");
             error.statusCode = 400;
             throw error;
         }
@@ -124,7 +114,24 @@ router.get("/getMapImageById", async (request, response) => {
         //     throw error;
         // }
 
-        let imageData = await database.getMapImage(mapId);
+        let resolution = "high";
+        if (request.query.resolution != undefined) {
+            if (typeof request.query.resolution != "string") {
+                const error = new Error("Helytelen felbontás");
+                error.statusCode = 400;
+                throw error;
+            }
+
+            resolution = request.query.resolution.trim().toLowerCase();
+            if (resolution != "low" && resolution != "high") {
+                const error = new Error("Helytelen felbontás");
+                error.statusCode = 400;
+                throw error;
+            }
+        }
+
+        let imageData = await database.getMapImage(mapID);
+        let imagePath = resolvePointImagePath(imageData.filepath, resolution);
 
         let options = {
             root: UPLOAD_ROOT
@@ -132,7 +139,7 @@ router.get("/getMapImageById", async (request, response) => {
         response.set("Access-Control-Expose-Headers", "imageWidth, imageHeight");
         response.set("imageWidth", imageData.width);
         response.set("imageHeight", imageData.height);
-        response.sendFile(imageData.filepath, options, function (err) {
+        response.sendFile(imagePath, options, function (err) {
             if (err) {
                 if (!response.headersSent) {
                     return response.status(404).json({
@@ -159,10 +166,10 @@ router.get("/getMapImageById", async (request, response) => {
     }
 });
 
-//?GET /api/game_maps/connections/:pointId
-router.get("/connections/:pointId", async (request, response) => {
+//?GET /api/game-maps/points/:pointID/connections
+router.get("/points/:pointID/connections", async (request, response) => {
     try {
-        const pointId = validateId(request.params.pointId, "pont ID");
+        const pointID = validateId(request.params.pointID, "pont ID");
         // TODOp isAllowed pointId
         // if (!isAllowedToGetConnections(request, pointId)) {
         //     const error = new Error("Nincs hozzáférése ehhez a ponthoz");
@@ -170,7 +177,7 @@ router.get("/connections/:pointId", async (request, response) => {
         //     throw error;
         // }
 
-        let connectionList = await database.getConnectionsByPointId(pointId);
+        let connectionList = await database.getConnectionsByPointId(pointID);
 
 
         response.status(200).json({

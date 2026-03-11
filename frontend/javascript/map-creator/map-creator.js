@@ -35,4 +35,5 @@ document.addEventListener("DOMContentLoaded", init);
 // TODOp!!: térkép képének cseréje mentés után
 // TODOp!!: mapok közti kapcsolatok
 // TODOp!!: markerek fixálása pixel koordinátákra? mindig egy adott pixelen legyenek?
+// TODOp!!!!!: markerek első mentésénél többször meg lehet nyomni a mentés gombot és akkor több marker jön létre ugyanazzal a pozícióval
 // TODOp!: UIManager kezd nagy lenni lehet szét kéne szedni több kisebbre (pl. MapListManager, MapEditManager, btn to holdos cucc, meg tobi)

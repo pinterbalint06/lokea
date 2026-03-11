@@ -4,9 +4,7 @@ const database = require("../sql/database.js");
 const fs = require("fs/promises");
 const { checkAuth } = require("../auth.js");
 const crypto = require("crypto");
-const sharp = require("sharp");
-
-sharp.cache(false);
+const { processImageMetadata, createWebpAndLowRes, deleteImageAndLowResByMainPath } = require("../utils/imageProcessor.js");
 
 //!Multer
 const multer = require("multer"); //?npm install multer
@@ -38,8 +36,8 @@ const upload = multer({
 });
 
 function validateId(id, idName) {
-    let num = Number(id);
-    if (!Number.isInteger(num) || num <= 0) {
+    let num = parseInt(id);
+    if (isNaN(num) || num <= 0) {
         const err = new Error("Helytelen " + idName);
         err.statusCode = 400;
         throw err;
@@ -67,7 +65,7 @@ async function deleteFile(filePath) {
     }
 }
 
-async function handleUploadError(response, error, file, dbConnection, finalPath) {
+async function handleUploadError(response, error, file, dbConnection, processedImagePaths) {
     if (dbConnection) {
         try {
             await dbConnection.rollback();
@@ -76,9 +74,20 @@ async function handleUploadError(response, error, file, dbConnection, finalPath)
         }
     }
 
-    if (finalPath) {
-        await deleteFile(finalPath);
-    }    // Delete destination file if moved
+    if (processedImagePaths) {
+        let pathsToDelete = [];
+        if (processedImagePaths.mainPath) {
+            pathsToDelete.push(processedImagePaths.mainPath)
+        };
+        if (processedImagePaths.lowResPath) {
+            pathsToDelete.push(processedImagePaths.lowResPath)
+        };
+        if (processedImagePaths.finalPath) {
+            pathsToDelete.push(processedImagePaths.finalPath)
+        };
+
+        await Promise.all(pathsToDelete.map(path => deleteFile(path)));
+    }
 
 
     if (file && file.path) {
@@ -98,17 +107,6 @@ async function handleUploadError(response, error, file, dbConnection, finalPath)
             error: message
         });
     }
-}
-
-async function processImageMetadata(filePath) {
-    let image = sharp(filePath);
-    let metadata = await image.metadata();
-    return {
-        sharpInstance: image,
-        width: metadata.width,
-        height: metadata.height,
-        extension: "." + metadata.format
-    };
 }
 
 async function assertUserOwnsGameMap(userId, gameMapID) {
@@ -144,17 +142,18 @@ async function assertUserOwnsConnection(userId, connectionID) {
 }
 
 //!Endpoints:
-//?POST /api/map_creator/savePoint
-router.post("/savePoint", checkAuth, upload.single("equirectangularImage"), async (request, response) => {
+//?POST /api/map-creator/maps/:mapID/points
+router.post("/maps/:mapID/points", checkAuth, upload.single("equirectangularImage"), async (request, response) => {
     let dbConnection;
-    let finalPath;
+    let processedImagePaths = null;
     try {
         const userId = request.session.userid;
 
-        const gameMapID = validateId(request.body.gameMapID, "pálya ID");
-        const mapID = validateId(request.body.mapID, "térkép ID");
+        const mapID = validateId(request.params.mapID, "térkép ID");
 
-        await assertUserOwnsGameMap(userId, gameMapID);
+        await assertUserOwnsMap(userId, mapID);
+
+        const gameMapID = await database.getGameMapIdByMapId(mapID);
 
         const xCoordinate = Number(request.body.x);
         const yCoordinate = Number(request.body.y);
@@ -186,7 +185,7 @@ router.post("/savePoint", checkAuth, upload.single("equirectangularImage"), asyn
 
         let newPointId = await database.insertPoint(dbConnection, mapID, xCoordinate, yCoordinate, northDirection, imageId);
 
-        // private/userId/gameMapId/mapId/point_images/pointId/
+        // private/userId/gameMapId/mapId/point_images/pointID/
         let relativeDestDir = path.join(
             userId.toString(),
             gameMapID.toString(),
@@ -200,40 +199,24 @@ router.post("/savePoint", checkAuth, upload.single("equirectangularImage"), asyn
         );
         let baseName = newPointId.toString() + "_" + crypto.randomBytes(4).toString("hex");
 
-        let targetFileName = baseName + ".webp";
-        let lowResFileName = baseName + "_low_res.webp";
+        processedImagePaths = await createWebpAndLowRes({
+            inputFilePath: request.file.path,
+            outputDirPath: targetPath,
+            baseName: baseName
+        });
 
-        await fs.mkdir(targetPath, { recursive: true });
+        let dbPath = path.join(relativeDestDir, processedImagePaths.targetFileName);
 
-        await imageData.sharpInstance
-            .webp(
-                {
-                    quality: 80
-                })
-            .toFile(path.join(targetPath, targetFileName));
-
-        await imageData.sharpInstance
-            .webp(
-                {
-                    quality: 50
-                })
-            .resize(
-                {
-                    width: 600
-                })
-            .toFile(path.join(targetPath, lowResFileName));
-
-        let dbPath = path.join(relativeDestDir, targetFileName);
         await database.updateImagePath(dbConnection, imageId, dbPath);
 
         await dbConnection.commit();
 
-        response.status(200).json({
+        response.status(201).json({
             success: true,
             pointId: newPointId
         });
     } catch (error) {
-        await handleUploadError(response, error, request.file, dbConnection, finalPath);
+        await handleUploadError(response, error, request.file, dbConnection, processedImagePaths);
     } finally {
         if (dbConnection) {
             dbConnection.release();
@@ -241,13 +224,13 @@ router.post("/savePoint", checkAuth, upload.single("equirectangularImage"), asyn
     }
 });
 
-//?DELETE /api/map_creator/point/:pointId
-router.delete("/point/:pointId", checkAuth, async (request, response) => {
+//?DELETE /api/map-creator/points/:pointID
+router.delete("/points/:pointID", checkAuth, async (request, response) => {
     let dbConnection;
     try {
         const userId = request.session.userid;
 
-        const pointID = validateId(request.params.pointId, "pont ID");
+        const pointID = validateId(request.params.pointID, "pont ID");
 
         await assertUserOwnsPoint(userId, pointID);
 
@@ -283,7 +266,7 @@ router.delete("/point/:pointId", checkAuth, async (request, response) => {
 
         let gameMapID = pointInfo.game_maps_id;
         let mapID = pointInfo.map_id;
-        // userId/gameMapId/mapId/point_images/pointId/
+        // userId/gameMapId/mapId/point_images/pointID/
         let relativeDestDir = path.join(
             userId.toString(),
             gameMapID.toString(),
@@ -292,7 +275,7 @@ router.delete("/point/:pointId", checkAuth, async (request, response) => {
             pointID.toString()
         );
 
-        // private/userId/gameMapId/mapId/point_images/pointId/
+        // private/userId/gameMapId/mapId/point_images/pointID/
         let targetPath = path.join(
             UPLOAD_ROOT,
             relativeDestDir
@@ -304,9 +287,7 @@ router.delete("/point/:pointId", checkAuth, async (request, response) => {
             console.error(`Error deleting directory ${targetPath}: ${err.message}`);
         }
 
-        response.status(200).json({
-            success: true
-        });
+        response.status(204).send();
     } catch (error) {
         await handleUploadError(response, error, null, dbConnection, null);
     } finally {
@@ -316,14 +297,14 @@ router.delete("/point/:pointId", checkAuth, async (request, response) => {
     }
 });
 
-//?POST /api/map_creator/saveNewMap
-router.post("/saveNewMap", checkAuth, upload.single("mapImage"), async (request, response) => {
+//?POST /api/map-creator/game-maps/:gameMapID/maps
+router.post("/game-maps/:gameMapID/maps", checkAuth, upload.single("mapImage"), async (request, response) => {
     let dbConnection;
-    let finalPath;
+    let processedImagePaths = null;
     try {
         const userId = request.session.userid;
 
-        const gameMapID = validateId(request.body.gameMapID, "pálya ID");
+        const gameMapID = validateId(request.params.gameMapID, "pálya ID");
 
         await assertUserOwnsGameMap(userId, gameMapID);
 
@@ -367,24 +348,26 @@ router.post("/saveNewMap", checkAuth, upload.single("mapImage"), async (request,
             UPLOAD_ROOT,
             relativeDestDir
         );
-        // TODOp: create low res version
-        let targetFileName = newMapId.toString() + "_" + crypto.randomBytes(4).toString("hex") + imageData.extension;
+        let baseName = newMapId.toString() + "_" + crypto.randomBytes(4).toString("hex");
+        processedImagePaths = await createWebpAndLowRes({
+            inputFilePath: request.file.path,
+            outputDirPath: targetPath,
+            baseName: baseName
+        });
 
-        finalPath = await moveUpload(request.file.path, targetPath, targetFileName);
-
-        let dbPath = path.join(relativeDestDir, targetFileName);
+        let dbPath = path.join(relativeDestDir, processedImagePaths.targetFileName);
         await database.updateImagePath(dbConnection, imageId, dbPath);
 
         await dbConnection.commit();
 
-        response.status(200).json({
+        response.status(201).json({
             success: true,
             mapId: newMapId,
             message: "Térkép sikeresen mentve!"
         });
 
     } catch (error) {
-        await handleUploadError(response, error, request.file, dbConnection, finalPath);
+        await handleUploadError(response, error, request.file, dbConnection, processedImagePaths);
     } finally {
         if (dbConnection) {
             dbConnection.release();
@@ -392,12 +375,12 @@ router.post("/saveNewMap", checkAuth, upload.single("mapImage"), async (request,
     }
 });
 
-//?PUT /api/map_creator/map/:mapId
-router.put("/map/:mapId", checkAuth, upload.none(), async (request, response) => {
+//?PUT /api/map-creator/maps/:mapID
+router.put("/maps/:mapID", checkAuth, upload.none(), async (request, response) => {
     let dbConnection;
     try {
         const userId = request.session.userid;
-        const mapID = validateId(request.params.mapId, "térkép ID");
+        const mapID = validateId(request.params.mapID, "térkép ID");
 
         await assertUserOwnsMap(userId, mapID);
 
@@ -451,13 +434,13 @@ router.put("/map/:mapId", checkAuth, upload.none(), async (request, response) =>
     }
 });
 
-//?DELETE /api/map_creator/map/:mapId
-router.delete("/map/:mapId", checkAuth, async (request, response) => {
+//?DELETE /api/map-creator/maps/:mapID
+router.delete("/maps/:mapID", checkAuth, async (request, response) => {
     let dbConnection;
     try {
         const userId = request.session.userid;
 
-        const mapID = validateId(request.params.mapId, "térkép ID");
+        const mapID = validateId(request.params.mapID, "térkép ID");
 
         await assertUserOwnsMap(userId, mapID);
 
@@ -513,9 +496,7 @@ router.delete("/map/:mapId", checkAuth, async (request, response) => {
             console.error(`Error deleting directory ${targetPath}: ${err.message}`);
         }
 
-        response.status(200).json({
-            success: true
-        });
+        response.status(204).send();
     } catch (error) {
         await handleUploadError(response, error, null, dbConnection, null);
     } finally {
@@ -525,15 +506,15 @@ router.delete("/map/:mapId", checkAuth, async (request, response) => {
     }
 });
 
-//?POST /api/map_creator/saveConnection
-router.post("/saveConnection", checkAuth, upload.none(), async (request, response) => {
+//?POST /api/map-creator/game-maps/:gameMapID/connections
+router.post("/game-maps/:gameMapID/connections", checkAuth, upload.none(), async (request, response) => {
     let dbConnection;
     try {
         const userId = request.session.userid;
 
         const startPointId = validateId(request.body.startPointId, "kezdőpont ID");
         const endPointId = validateId(request.body.endPointId, "végpont ID");
-        const gameMapID = validateId(request.body.gameMapID, "pálya ID");
+        const gameMapID = validateId(request.params.gameMapID, "pálya ID");
 
         await assertUserOwnsGameMap(userId, gameMapID);
 
@@ -556,7 +537,7 @@ router.post("/saveConnection", checkAuth, upload.none(), async (request, respons
 
         await dbConnection.commit();
 
-        response.status(200).json({
+        response.status(201).json({
             success: true,
             connectionId: connectionId,
             message: "Kapcsolat sikeresen mentve!"
@@ -571,20 +552,20 @@ router.post("/saveConnection", checkAuth, upload.none(), async (request, respons
     }
 });
 
-//?DELETE /api/map_creator/connection/:connectionId
-router.delete("/connection/:connectionId", checkAuth, async (request, response) => {
+//?DELETE /api/map-creator/connections/:connectionID
+router.delete("/connections/:connectionID", checkAuth, async (request, response) => {
     let dbConnection;
     try {
         const userId = request.session.userid;
 
-        const connectionId = validateId(request.params.connectionId, "kapcsolat ID");
+        const connectionID = validateId(request.params.connectionID, "kapcsolat ID");
 
-        await assertUserOwnsConnection(userId, connectionId);
+        await assertUserOwnsConnection(userId, connectionID);
 
         dbConnection = await database.getConnection();
         await dbConnection.beginTransaction();
 
-        let successConnectionDeletion = await database.deleteConnectionById(dbConnection, connectionId);
+        let successConnectionDeletion = await database.deleteConnectionById(dbConnection, connectionID);
 
         if (!successConnectionDeletion) {
             const err = new Error("A kapcsolat nem található vagy már törölve lett!");
@@ -594,7 +575,7 @@ router.delete("/connection/:connectionId", checkAuth, async (request, response) 
 
         await dbConnection.commit();
 
-        response.status(200).json({
+        response.status(204).json({
             success: true
         });
 
@@ -607,15 +588,15 @@ router.delete("/connection/:connectionId", checkAuth, async (request, response) 
     }
 });
 
-//?GET /api/map_creator/:mapid/points
-router.get("/:mapid/points", checkAuth, async (request, response) => {
+//?GET /api/map-creator/maps/:mapID/points
+router.get("/maps/:mapID/points", checkAuth, async (request, response) => {
     try {
         const userId = request.session.userid;
-        let mapId = validateId(request.params.mapid, "térkép ID");
+        const mapID = validateId(request.params.mapID, "térkép ID");
 
-        await assertUserOwnsMap(userId, mapId);
+        await assertUserOwnsMap(userId, mapID);
 
-        let point_data = await database.getPointsOnMap(mapId);
+        let point_data = await database.getPointsOnMap(mapID);
 
         response.status(200).json({
             success: true,
@@ -635,11 +616,11 @@ router.get("/:mapid/points", checkAuth, async (request, response) => {
     }
 });
 
-//?GET /api/map_creator/maps?gameMapID=1
-router.get("/maps", checkAuth, async (request, response) => {
+//?GET /api/map-creator/game-maps/:gameMapID/maps
+router.get("/game-maps/:gameMapID/maps", checkAuth, async (request, response) => {
     try {
         const userId = request.session.userid;
-        const gameMapID = validateId(request.query.gameMapID, "pálya ID");
+        const gameMapID = validateId(request.params.gameMapID, "pálya ID");
 
         await assertUserOwnsGameMap(userId, gameMapID);
 
@@ -662,17 +643,17 @@ router.get("/maps", checkAuth, async (request, response) => {
     }
 });
 
-//?PUT /api/map_creator/point/:pointId
-router.put("/point/:pointId", checkAuth, upload.single("equirectangularImage"), async (request, response) => {
+//?PUT /api/map-creator/points/:pointID
+router.put("/points/:pointID", checkAuth, upload.single("equirectangularImage"), async (request, response) => {
     let dbConnection;
-    let finalPath;
+    let processedImagePaths = null;
 
     try {
         const userId = request.session.userid;
 
-        let pointId = validateId(request.params.pointId, "pont ID");
+        const pointID = validateId(request.params.pointID, "pont ID");
 
-        await assertUserOwnsPoint(userId, pointId);
+        await assertUserOwnsPoint(userId, pointID);
 
         const xCoordinate = Number(request.body.x);
         const yCoordinate = Number(request.body.y);
@@ -692,7 +673,7 @@ router.put("/point/:pointId", checkAuth, upload.single("equirectangularImage"), 
         dbConnection = await database.getConnection();
         await dbConnection.beginTransaction();
 
-        let pointInfo = await database.getPointInfo(pointId);
+        let pointInfo = await database.getPointInfo(pointID);
         if (!pointInfo) {
             const error = new Error("A pont nem létezik");
             error.statusCode = 400;
@@ -701,7 +682,7 @@ router.put("/point/:pointId", checkAuth, upload.single("equirectangularImage"), 
 
         // only update if anything is different
         if (pointInfo.point_x != xCoordinate || pointInfo.point_y != yCoordinate) {
-            let affectedRows = await database.updatePointCoordinates(dbConnection, pointId, xCoordinate, yCoordinate);
+            let affectedRows = await database.updatePointCoordinates(dbConnection, pointID, xCoordinate, yCoordinate);
             if (affectedRows > 1) {
                 console.error("Multiple rows affected at ID update");
                 let error = {
@@ -711,7 +692,7 @@ router.put("/point/:pointId", checkAuth, upload.single("equirectangularImage"), 
             }
         }
         if (pointInfo.north_direction != northDirection) {
-            let affectedRows = await database.updatePointNorthDirection(dbConnection, pointId, northDirection);
+            let affectedRows = await database.updatePointNorthDirection(dbConnection, pointID, northDirection);
             if (affectedRows > 1) {
                 console.error("Multiple rows affected at ID update");
                 let error = {
@@ -722,7 +703,7 @@ router.put("/point/:pointId", checkAuth, upload.single("equirectangularImage"), 
         }
 
         if (request.file) {
-            let oldImageInfo = await database.getPointImage(pointId);
+            let oldImageInfo = await database.getPointImage(pointID);
 
             let imageData = await processImageMetadata(request.file.path);
             let newImageId = await database.insertImage(dbConnection, imageData.width, imageData.height, "pending");
@@ -734,35 +715,25 @@ router.put("/point/:pointId", checkAuth, upload.single("equirectangularImage"), 
                 gameMapID.toString(),
                 mapID.toString(),
                 "point_images",
-                pointId.toString()
+                pointID.toString()
             );
             let targetPath = path.join(
                 UPLOAD_ROOT,
                 relativeDestDir
             );
-            let baseName = pointId.toString() + "_" + crypto.randomBytes(4).toString("hex");
-            let targetFileName = baseName + ".webp";
-            let lowResFileName = baseName + "_low_res.webp";
+            let baseName = pointID.toString() + "_" + crypto.randomBytes(4).toString("hex");
+            processedImagePaths = await createWebpAndLowRes({
+                inputFilePath: request.file.path,
+                outputDirPath: targetPath,
+                baseName: baseName
+            });
 
-            await fs.mkdir(targetPath, { recursive: true });
-
-            await imageData.sharpInstance
-                .webp({ quality: 80 })
-                .toFile(path.join(targetPath, targetFileName));
-
-            finalPath = path.join(targetPath, targetFileName);
-
-            await imageData.sharpInstance
-                .webp({ quality: 50 })
-                .resize({ width: 600 })
-                .toFile(path.join(targetPath, lowResFileName));
-
-            let dbPath = path.join(relativeDestDir, targetFileName);
+            let dbPath = path.join(relativeDestDir, processedImagePaths.targetFileName);
 
             await database.updateImagePath(dbConnection, newImageId, dbPath);
 
             // update point's image to the new id
-            let imageUpdateRows = await database.updatePointImage(dbConnection, pointId, newImageId);
+            let imageUpdateRows = await database.updatePointImage(dbConnection, pointID, newImageId);
             if (imageUpdateRows > 1) {
                 console.error("Multiple rows affected at ID update");
                 let error = {
@@ -785,18 +756,9 @@ router.put("/point/:pointId", checkAuth, upload.single("equirectangularImage"), 
 
             if (oldImageInfo && oldImageInfo.filepath) {
                 let absoluteOldPath = path.join(UPLOAD_ROOT, oldImageInfo.filepath);
-                // delete old full-res file
-                fs.unlink(absoluteOldPath)
+                deleteImageAndLowResByMainPath(absoluteOldPath)
                     .catch(function () {
                         console.error("unsuccessful deletion: " + absoluteOldPath);
-                    });
-                // delete old low-res file
-                let imagePath = path.parse(absoluteOldPath);
-
-                let oldLowResPath = path.join(imagePath.dir, imagePath.name + "_low_res" + imagePath.ext);
-                fs.unlink(oldLowResPath)
-                    .catch(function () {
-                        console.error("unsuccessful deletion: " + oldLowResPath);
                     });
             }
         }
@@ -809,7 +771,7 @@ router.put("/point/:pointId", checkAuth, upload.single("equirectangularImage"), 
         });
 
     } catch (error) {
-        await handleUploadError(response, error, request.file, dbConnection, finalPath);
+        await handleUploadError(response, error, request.file, dbConnection, processedImagePaths);
     } finally {
         if (dbConnection) {
             dbConnection.release();
@@ -817,8 +779,8 @@ router.put("/point/:pointId", checkAuth, upload.single("equirectangularImage"), 
     }
 });
 
-//?GET /api/map_creator/:gameMapID/connections
-router.get("/:gameMapID/connections", checkAuth, async (request, response) => {
+//?GET /api/map-creator/game-maps/:gameMapID/connections
+router.get("/game-maps/:gameMapID/connections", checkAuth, async (request, response) => {
     try {
         const userId = request.session.userid;
         const gameMapID = validateId(request.params.gameMapID, "pálya ID");
@@ -861,7 +823,3 @@ router.use((error, request, response, next) => {
 });
 
 module.exports = router;
-
-// TODOp!!: api vegpontok atirasa pls /saveNewMap helyett /map POST stb.
-// TODOp!!!: webp konvertálás és low res egységesítése
-// TODOp!!!: webp konvertálás és low res verzó térképhez is

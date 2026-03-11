@@ -2,7 +2,7 @@ import { EVENTS } from "../events/EventBus.js";
 import { ICONS } from "../../libs/icons/icons.js";
 import { CONSTANTS } from "../shared/constants.js";
 import { fetchMapList, saveNewMap, deleteMap as deleteMapApi, renameMap as renameMapApi } from "../shared/api.js";
-import { fetchMapImage } from "../../libs/network/gameMapsApi.js";
+import { isCancellationError, loadMapImageLowThenHigh } from "../../libs/network/progressiveImage.js";
 import { processUploadedImageFile } from "../shared/utils.js";
 
 export class MapManager {
@@ -16,6 +16,8 @@ export class MapManager {
         this.maps = {};
         this.pendingMapFile = null;
         this.pendingMapFileMapId = null;
+        this.abortController = null;
+        this.activeLoadGeneration = 0;
 
         this.#bindBusEvents();
         this.#setupViewerClicks();
@@ -202,17 +204,43 @@ export class MapManager {
                 // show change toast for 1 sec after the map was loaded then hide it
                 setTimeout(() => this.bus.emit(EVENTS.TOAST_HIDE_ID, { id: `mapSwitching${mapId}-${randomIdForToast}` }), 1000);
             } else {
+                this.activeLoadGeneration++
+                const loadGeneration = this.activeLoadGeneration;
+
+                if (this.abortController) {
+                    this.abortController.abort();
+                    this.abortController = null;
+                }
                 try {
-                    let imgData = await fetchMapImage(mapId);
-                    if (mapId == this.appState.activeMapId) {
-                        this.viewer.clearMarkersAndLines();
-                        this.viewer.loadMap(imgData.url, imgData.width, imgData.height);
-                        this.bus.emit(EVENTS.MAP_LOADED, { mapId });
-                    }
+                    this.abortController = new AbortController();
+                    let signal = this.abortController.signal;
+
+                    await loadMapImageLowThenHigh({
+                        mapId: mapId,
+                        signal,
+                        loadToViewer: async (imgData) => {
+                            await this.viewer.loadMap(imgData.url, imgData.width, imgData.height);
+                        },
+                        isCurrent: () => this.appState.activeMapId == mapId && this.activeLoadGeneration == loadGeneration,
+                        onLowReady: () => {
+                            if (this.appState.activeMapId == mapId && this.activeLoadGeneration == loadGeneration) {
+                                this.viewer.clearMarkersAndLines();
+                                this.bus.emit(EVENTS.TOAST_SHOW, { msg: "Térkép sikeresen betöltve!", type: "success" });
+                                this.bus.emit(EVENTS.MAP_LOADED, { mapId });
+                            }
+                        }
+                    });
                     setTimeout(() => this.bus.emit(EVENTS.TOAST_HIDE_ID, { id: `mapSwitching${mapId}-${randomIdForToast}` }), 1000);
-                } catch (e) {
+                } catch (error) {
+                    if (!isCancellationError(error) && this.activePointId == id && this.activeLoadGeneration == loadGeneration) {
+                        console.error(error);
+                        this.bus.emit(EVENTS.TOAST_SHOW, { msg: "Hiba a kép betöltésekor!", type: "danger" });
+                    }
+                } finally {
                     this.bus.emit(EVENTS.TOAST_HIDE_ID, { id: `mapSwitching${mapId}-${randomIdForToast}` });
-                    this.bus.emit(EVENTS.TOAST_SHOW, { msg: "Hiba a kép betöltésekor!", type: "danger" });
+                    if (this.abortController && this.activeLoadGeneration == loadGeneration) {
+                        this.abortController = null;
+                    }
                 }
             }
         }

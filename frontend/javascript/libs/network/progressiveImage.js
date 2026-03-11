@@ -1,4 +1,4 @@
-import { fetchEquirectangularImage } from "./gameMapsApi.js";
+import { fetchEquirectangularImage, fetchMapImage } from "./gameMapsApi.js";
 
 export function isCancellationError(error) {
     return error && (error.name == "AbortError" || error.type == "REQUEST_CANCELLED");
@@ -103,7 +103,7 @@ async function loadLowThenHigh({ fetchLow, fetchHigh, loadToViewer, isCurrent, o
 }
 
 /**
- * Loads a point's equirectangular image low resolution first for
+ * Loads a point's equirectangular image. Low resolution first for
  * fast display, then upgraded to high resolution when available.
  *
  * @param {number} pointId                            - The point whose image to load
@@ -117,6 +117,28 @@ export async function loadPointEquirectangularLowThenHigh({ pointId, signal = nu
     return await loadLowThenHigh({
         fetchLow: () => fetchEquirectangularImage(pointId, signal, "low"),
         fetchHigh: () => fetchEquirectangularImage(pointId, signal, "high"),
+        loadToViewer,
+        isCurrent,
+        onLowReady,
+        onHighReady
+    });
+}
+
+/**
+ * Loads a map's image. Low resolution first for
+ * fast display, then upgraded to high resolution when available.
+ *
+ * @param {number} mapId                              - The map whose image to load
+ * @param {AbortSignal|null} [signal]                 - Aborts ongoing fetches
+ * @param {function(): boolean} isCurrent             - Should return false if the load is no longer relevant
+ * @param {function(imageData): Promise} loadToViewer - Loads the image into the viewer
+ * @param {function(): void} [onLowReady]             - Called after low-res is displayed
+ * @param {function(): void} [onHighReady]            - Called after high-res is displayed
+ */
+export async function loadMapImageLowThenHigh({ mapId, signal = null, isCurrent, loadToViewer, onLowReady, onHighReady }) {
+    return await loadLowThenHigh({
+        fetchLow: () => fetchMapImage(mapId, signal, "low"),
+        fetchHigh: () => fetchMapImage(mapId, signal, "high"),
         loadToViewer,
         isCurrent,
         onLowReady,

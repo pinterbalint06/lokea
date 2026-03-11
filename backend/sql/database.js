@@ -451,6 +451,16 @@ async function getMapsByGameMapId(gameMapId) {
     return rows;
 }
 
+async function getGameMapIdByMapId(mapId) {
+    const query = `
+        SELECT map.game_maps_id
+        FROM map
+        WHERE map.map_id = ?
+    `;
+    const [rows] = await pool.execute(query, [mapId]);
+    return rows.length > 0 ? rows[0].game_maps_id : null;
+}
+
 async function checkUserOwnsGameMap(userId, gameMapId) {
     const query = `
         SELECT COUNT(*) as count
@@ -612,6 +622,7 @@ module.exports = {
     getConnectionsByGameMapId,
     getConnectionsByPointId,
     getMapsByGameMapId,
+    getGameMapIdByMapId,
     checkUserOwnsGameMap,
     checkUserOwnsMap,
     checkUserOwnsPoint,

@@ -95,10 +95,10 @@ const endpoints = require('./api/api.js');
 app.use('/api', endpoints);
 //!Map Creation API endpoints
 const mapCreationEndpoints = require('./api/mapCreatorAPI.js');
-app.use('/api/map_creator', mapCreationEndpoints);
+app.use('/api/map-creator', mapCreationEndpoints);
 //!game maps API endpoints
 const gameMapsEndpoints = require('./api/gameMaps.js');
-app.use('/api/game_maps', gameMapsEndpoints);
+app.use('/api/game-maps', gameMapsEndpoints);
 app.use('/', router);
 
 

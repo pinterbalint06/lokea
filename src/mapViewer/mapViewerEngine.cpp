@@ -691,10 +691,6 @@ void MapViewerEngine::loadMap(const std::string & url, int mapWidth, int mapHeig
 {
     if (mapPlane_ != nullptr)
     {
-        if (mapPlane_->getMaterial().getTexture())
-        {
-            mapPlane_->getMaterial().getTexture()->clear();
-        }
         loadTextureFromUrl(url, 0, onSuccess, onError);
         mapWidth_ = mapWidth;
         mapHeight_ = mapHeight;
