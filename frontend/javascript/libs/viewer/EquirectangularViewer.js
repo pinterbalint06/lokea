@@ -196,6 +196,7 @@ export class EquirectangularViewer extends WASMViewerBase {
                 if (this._engine) {
                     this._engine.zoom(zoomAmount);
                 }
+                return true;
             }
         };
     }

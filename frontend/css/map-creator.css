@@ -118,6 +118,26 @@ main {
     border-color: var(--accent-focus) !important;
 }
 
+.form-check-input:checked {
+    background-color: var(--accent-main) !important;
+    border-color: var(--accent-main) !important;
+}
+
+.form-check-input:focus {
+    outline: none;
+    border-color: var(--accent-focus) !important;
+    box-shadow: 0 0 0 0.25rem var(--accent-glow) !important;
+}
+
+.form-switch .form-check-input:focus {
+    --bs-form-switch-bg: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='-4 -4 8 8'%3e%3ccircle r='3' fill='%23ffffff' stroke='%23000000' stroke-opacity='0.12'/%3e%3c/svg%3e");
+}
+
+.form-check-input:disabled {
+    opacity: 0.6;
+}
+
+
 #upload-overlay {
     background: var(--bg-radial-overlay);
     backdrop-filter: blur(5px);
@@ -381,6 +401,27 @@ main {
     box-shadow: none;
 }
 
+.btn-outline-secondary {
+    background: transparent;
+    color: var(--secondary-main);
+    border-color: var(--secondary-border);
+}
+
+.btn-outline-secondary:hover,
+.btn-outline-secondary:focus {
+    background: var(--secondary-soft);
+    color: var(--secondary-contrast-text);
+    border-color: var(--secondary-focus);
+    box-shadow: 0 0 8px var(--secondary-focus);
+}
+
+.btn-outline-secondary:disabled {
+    color: rgba(255, 255, 255, 0.45);
+    border-color: rgba(255, 255, 255, 0.08);
+    cursor: not-allowed;
+    background: transparent;
+}
+
 .btn-hold-to-unlock {
     position: relative;
     overflow: hidden;
@@ -420,6 +461,18 @@ main {
     width: 100%;
     background: var(--state-danger);
     transition: none;
+}
+
+.btn-hold-to-unlock:hover,
+.btn-hold-to-unlock:focus {
+    box-shadow: 0 0 14px rgba(217, 4, 41, 0.18), 0 6px 18px rgba(0, 0, 0, 0.35);
+    transform: translateY(-2px);
+    cursor: pointer;
+}
+
+.btn-hold-to-unlock:hover::before,
+.btn-hold-to-unlock:focus::before {
+    background: linear-gradient(90deg, rgba(255, 183, 3, 0.08), rgba(217, 4, 41, 0.18));
 }
 
 .btn-delete-confirm.filling::before {

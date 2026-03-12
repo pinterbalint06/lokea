@@ -19,6 +19,7 @@ export class UIManager {
             isConnecting: false
         };
         this.pointSaveInProgress = false;
+        this.pointImageLoading = false;
         this.hasUnsavedChanges = false;
         this.pendingAction = null;
         this.deleteContext = null;
@@ -762,6 +763,16 @@ export class UIManager {
             this.#updateSavePointButtonState();
         });
 
+        this.bus.on(EVENTS.EQUIRECTANGULAR_IMAGE_LOADING_STARTED, () => {
+            this.pointImageLoading = true;
+            this.#updateSavePointButtonState();
+        });
+
+        this.bus.on(EVENTS.EQUIRECTANGULAR_IMAGE_LOADED, () => {
+            this.pointImageLoading = false;
+            this.#updateSavePointButtonState();
+        });
+
         this.bus.on(EVENTS.CONNECTION_LIST_UI_UPDATE, ({ connections, unsavedConnections }) => {
             this.#renderConnectionList(connections, unsavedConnections);
         });
@@ -910,7 +921,7 @@ export class UIManager {
     }
 
     #updateSavePointButtonState() {
-        this.elements.savePointButton.disabled = this.pointSaveInProgress || !this.hasUnsavedChanges;
+        this.elements.savePointButton.disabled = this.pointSaveInProgress || this.pointImageLoading || !this.hasUnsavedChanges;
     }
 
     #handleMapRenameSuccess(mapId, newTitle) {

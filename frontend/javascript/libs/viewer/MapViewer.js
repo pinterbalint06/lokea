@@ -41,6 +41,8 @@ const DEFAULT_OPTIONS = {
     "zoomAnimationSpeed": 1.5
 }
 
+const ZOOM_CHANGE_EPSILON = 0.0001;
+
 export const MAP_VIEWER_ERROR_TYPES = {
     ...WASM_ERROR_TYPES,
     INVALID_INPUT: "INVALID_INPUT",
@@ -814,8 +816,10 @@ export class MapViewer extends WASMViewerBase {
             onZoom: (zoomAmount, cursorX, cursorY) => {
                 this._ensureEngineReady();
                 this.cancelPanAnimation();
-                // TODOp: check previous zoom if didn't change stop momentum
+                let prevZoomLevel = this._engine.getZoomLevel();
                 this._engine.zoomMap(zoomAmount, cursorX, cursorY);
+                let newZoomLevel = this._engine.getZoomLevel();
+                return !(Math.abs(newZoomLevel - prevZoomLevel) < ZOOM_CHANGE_EPSILON);
             },
             onClick: (cursorX, cursorY) => {
                 this.cancelPanAnimation();

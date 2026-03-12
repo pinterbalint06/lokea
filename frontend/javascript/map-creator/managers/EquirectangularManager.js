@@ -142,8 +142,8 @@ export class EquirectangularManager {
 
     async #handleEquirectangularLoad(file) {
         this.equirectangularViewer.clearImage();
-        // TODOp: emit event to so UI nows savePointBUtton should be disabled until the image is loaded
         this.appState.pendingEquirectangularFile = file;
+        this.bus.emit(EVENTS.EQUIRECTANGULAR_IMAGE_LOADING_STARTED);
 
         let imgData;
         try {
