@@ -45,13 +45,6 @@ function validateId(id, idName) {
     return num;
 };
 
-async function moveUpload(tempPath, destDir, destFilename) {
-    await fs.mkdir(destDir, { recursive: true });
-    let finalPath = path.join(destDir, destFilename);
-    await fs.rename(tempPath, finalPath);
-    return finalPath;
-}
-
 async function deleteFile(filePath) {
     if (filePath) {
         try {
@@ -180,6 +173,13 @@ router.post("/maps/:mapID/points", checkAuth, upload.single("equirectangularImag
 
         dbConnection = await database.getConnection();
         await dbConnection.beginTransaction();
+
+        let existingPoints = await database.getPointOnMapByCoordinates(dbConnection, mapID, xCoordinate, yCoordinate);
+        if (existingPoints.length > 1) {
+            const error = new Error("Ezen a térképen már létezik pont ezeken a koordinátákon!");
+            error.statusCode = 409;
+            throw error;
+        }
 
         let imageId = await database.insertImage(dbConnection, imageData.width, imageData.height, "pending");
 
@@ -575,9 +575,7 @@ router.delete("/connections/:connectionID", checkAuth, async (request, response)
 
         await dbConnection.commit();
 
-        response.status(204).json({
-            success: true
-        });
+        response.status(204).send();
 
     } catch (error) {
         await handleUploadError(response, error, null, dbConnection, null);
@@ -678,6 +676,15 @@ router.put("/points/:pointID", checkAuth, upload.single("equirectangularImage"),
             const error = new Error("A pont nem létezik");
             error.statusCode = 400;
             throw error;
+        }
+
+        if (pointInfo.point_x != xCoordinate || pointInfo.point_y != yCoordinate) {
+            let existingPoints = await database.getPointOnMapByCoordinates(dbConnection, pointInfo.map_id, xCoordinate, yCoordinate);
+            if (existingPoints.length > 0) {
+                const error = new Error("Ezen a térképen már létezik pont ezeken a koordinátákon!");
+                error.statusCode = 409;
+                throw error;
+            }
         }
 
         // only update if anything is different

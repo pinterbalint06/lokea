@@ -18,6 +18,7 @@ export class UIManager {
             hasEnoughPoints: false,
             isConnecting: false
         };
+        this.pointSaveInProgress = false;
         this.hasUnsavedChanges = false;
         this.pendingAction = null;
         this.deleteContext = null;
@@ -111,7 +112,7 @@ export class UIManager {
 
         this.elements.deleteModalBootstrapElement = new bootstrap.Modal(this.elements.deleteModal);
 
-        this.elements.savePointButton.disabled = true;
+        this.#updateSavePointButtonState();
 
         this.elements.customMapSelector = new CustomSelect(
             this.elements.mapSelectWrapped,
@@ -751,6 +752,16 @@ export class UIManager {
             this.#updateNewConnectionButtonState();
         });
 
+        this.bus.on(EVENTS.POINT_SAVE_STARTED, () => {
+            this.pointSaveInProgress = true;
+            this.#updateSavePointButtonState();
+        });
+
+        this.bus.on(EVENTS.POINT_SAVE_FINISHED, () => {
+            this.pointSaveInProgress = false;
+            this.#updateSavePointButtonState();
+        });
+
         this.bus.on(EVENTS.CONNECTION_LIST_UI_UPDATE, ({ connections, unsavedConnections }) => {
             this.#renderConnectionList(connections, unsavedConnections);
         });
@@ -804,8 +815,7 @@ export class UIManager {
 
         this.bus.on(EVENTS.POINT_DIRTY_STATE_CHANGED, ({ isDirty }) => {
             this.hasUnsavedChanges = isDirty;
-
-            this.elements.savePointButton.disabled = !isDirty;
+            this.#updateSavePointButtonState();
         });
 
         this.bus.on(EVENTS.MAP_RENAME_SUCCEEDED, ({ mapId, newTitle }) => this.#handleMapRenameSuccess(mapId, newTitle));
@@ -897,6 +907,10 @@ export class UIManager {
 
     #updateNewConnectionButtonState() {
         this.elements.newConnectionBtn.disabled = !this.connectionUiState.hasEnoughPoints || this.connectionUiState.isConnecting;
+    }
+
+    #updateSavePointButtonState() {
+        this.elements.savePointButton.disabled = this.pointSaveInProgress || !this.hasUnsavedChanges;
     }
 
     #handleMapRenameSuccess(mapId, newTitle) {

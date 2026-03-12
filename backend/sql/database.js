@@ -399,6 +399,18 @@ async function getPointInfo(pointId) {
     return rows[0];
 }
 
+async function getPointOnMapByCoordinates(connection, mapId, x, y) {
+    let query = `
+        SELECT points.point_id
+        FROM points
+        WHERE points.map_id = ?
+            AND points.point_x = ?
+            AND points.point_y = ?
+    `;
+    const [rows] = await connection.execute(query, [mapId, x, y]);
+    return rows;
+}
+
 async function getMapImageIdByMapId(mapId) {
     const query = `
         SELECT map.image_id, images.filepath
@@ -633,6 +645,7 @@ module.exports = {
     updateMapTitle,
     deleteImageById,
     getPointInfo,
+    getPointOnMapByCoordinates,
     newUser,
     newUserFromAdmin,
     getUserByUsername,

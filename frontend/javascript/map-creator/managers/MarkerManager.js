@@ -177,13 +177,17 @@ export class MarkerManager {
             this.#emitDirtyStateChange();
         });
 
-        this.bus.on(EVENTS.UI_POINT_SAVE_REQUESTED, async () => {
-            if (this.#hasMarkerChanges()) {
-                this.#savePoint();
-            } else {
-                if (!this.#hasUnsavedChanges()) {
-                    this.bus.emit(EVENTS.TOAST_SHOW, { msg: "A pont nem változott!" });
+        this.bus.on(EVENTS.UI_POINT_SAVE_REQUESTED, () => {
+            if (!this.isSaving) {
+                if (this.#hasMarkerChanges()) {
+                    this.#savePoint();
+                } else {
+                    if (!this.#hasUnsavedChanges()) {
+                        this.bus.emit(EVENTS.TOAST_SHOW, { msg: "A pont nem változott!" });
+                    }
                 }
+            } else {
+                this.bus.emit(EVENTS.TOAST_SHOW, { msg: "Pont mentése folyamatban, kérlek várj!", type: "danger" });
             }
         });
 
@@ -292,74 +296,78 @@ export class MarkerManager {
     }
 
     async #savePoint() {
-        this.isSaving = true;
-        let pointToSave = this.activePointId;
-        this.bus.emit(EVENTS.TOAST_SHOW, { msg: "Pont mentése", id: "savingPoint", closable: false, autohide: false, spinner: true });
-        try {
-            let position = this.mapViewer.getMarkerPosition(pointToSave);
-            let isNewPoint = pointToSave == CONSTANTS.TEMP_ID;
+        if (!this.isSaving) {
+            this.isSaving = true;
+            let pointToSave = this.activePointId;
+            this.bus.emit(EVENTS.TOAST_SHOW, { msg: "Pont mentése", id: "savingPoint", closable: false, autohide: false, spinner: true });
+            this.bus.emit(EVENTS.POINT_SAVE_STARTED, { pointId: pointToSave });
+            try {
+                let position = this.mapViewer.getMarkerPosition(pointToSave);
+                let isNewPoint = pointToSave == CONSTANTS.TEMP_ID;
 
-            if (this.appState.activeMapId == CONSTANTS.TEMP_ID) {
-                throw new Error("Először mentsd el a térképet!");
-            }
-            if (isNewPoint && !this.appState.pendingEquirectangularFile) {
-                throw new Error("Nincs kép kiválasztva!");
-            }
-
-            let data = await savePointApi({
-                pointId: pointToSave,
-                position: position,
-                northDirection: this.northDirection,
-                equirectangularFile: this.appState.pendingEquirectangularFile,
-                mapID: this.appState.activeMapId,
-                isNew: isNewPoint
-            });
-
-            this.bus.emit(EVENTS.TOAST_HIDE_ID, { id: "savingPoint" });
-            if (data.success) {
-                let previousPointId = pointToSave;
-                if (isNewPoint) {
-                    this.mapViewer.changeMarkerId(pointToSave, data.pointId);
-                    if (this.activePointId == CONSTANTS.TEMP_ID) {
-                        this.activePointId = data.pointId;
-                        this.mapViewer.changeMarkerType(data.pointId, "EDIT");
-                    } else {
-                        this.mapViewer.changeMarkerType(data.pointId, "READY");
-                    }
-                    pointToSave = data.pointId;
-                } else {
-                    this.mapViewer.changeMarkerType(pointToSave, "EDIT");
+                if (this.appState.activeMapId == CONSTANTS.TEMP_ID) {
+                    throw new Error("Először mentsd el a térképet!");
                 }
-                if (!this.markersCache[pointToSave]) {
-                    this.markersCache[pointToSave] = {
-                        point_id: pointToSave
-                    };
+                if (isNewPoint && !this.appState.pendingEquirectangularFile) {
+                    throw new Error("Nincs kép kiválasztva!");
                 }
-                this.markersCache[pointToSave].point_x = position.x;
-                this.markersCache[pointToSave].point_y = position.y;
-                this.markersCache[pointToSave].north_direction = this.northDirection;
-                this.appState.pendingEquirectangularFile = null;
 
-                this.bus.emit(EVENTS.POINT_SAVED, {
-                    previousPointId,
+                let data = await savePointApi({
                     pointId: pointToSave,
-                    isNewPoint,
-                    position,
-                    data: this.markersCache[pointToSave],
-                    pointCount: Object.keys(this.markersCache).length
+                    position: position,
+                    northDirection: this.northDirection,
+                    equirectangularFile: this.appState.pendingEquirectangularFile,
+                    mapID: this.appState.activeMapId,
+                    isNew: isNewPoint
                 });
 
-                this.bus.emit(EVENTS.TOAST_SHOW, { msg: "Pont sikeresen mentve!", type: "success", iconObject: ICONS.SAVE_FLOPPY });
-                this.#emitDirtyStateChange();
-            } else {
-                throw new Error(data.error || "Hiba a pont mentésekor!");
+                this.bus.emit(EVENTS.TOAST_HIDE_ID, { id: "savingPoint" });
+                if (data.success) {
+                    let previousPointId = pointToSave;
+                    if (isNewPoint) {
+                        this.mapViewer.changeMarkerId(pointToSave, data.pointId);
+                        if (this.activePointId == CONSTANTS.TEMP_ID) {
+                            this.activePointId = data.pointId;
+                            this.mapViewer.changeMarkerType(data.pointId, "EDIT");
+                        } else {
+                            this.mapViewer.changeMarkerType(data.pointId, "READY");
+                        }
+                        pointToSave = data.pointId;
+                    } else {
+                        this.mapViewer.changeMarkerType(pointToSave, "EDIT");
+                    }
+                    if (!this.markersCache[pointToSave]) {
+                        this.markersCache[pointToSave] = {
+                            point_id: pointToSave
+                        };
+                    }
+                    this.markersCache[pointToSave].point_x = position.x;
+                    this.markersCache[pointToSave].point_y = position.y;
+                    this.markersCache[pointToSave].north_direction = this.northDirection;
+                    this.appState.pendingEquirectangularFile = null;
+
+                    this.bus.emit(EVENTS.POINT_SAVED, {
+                        previousPointId,
+                        pointId: pointToSave,
+                        isNewPoint,
+                        position,
+                        data: this.markersCache[pointToSave],
+                        pointCount: Object.keys(this.markersCache).length
+                    });
+
+                    this.bus.emit(EVENTS.TOAST_SHOW, { msg: "Pont sikeresen mentve!", type: "success", iconObject: ICONS.SAVE_FLOPPY });
+                    this.#emitDirtyStateChange();
+                } else {
+                    throw new Error(data.error || "Hiba a pont mentésekor!");
+                }
+            } catch (error) {
+                this.bus.emit(EVENTS.TOAST_HIDE_ID, { id: "savingPoint" });
+                console.error(error);
+                this.bus.emit(EVENTS.TOAST_SHOW, { msg: error.message || "Hiba a pont mentésekor!", type: "danger" });
+            } finally {
+                this.isSaving = false;
+                this.bus.emit(EVENTS.POINT_SAVE_FINISHED, { pointId: pointToSave });
             }
-        } catch (error) {
-            this.bus.emit(EVENTS.TOAST_HIDE_ID, { id: "savingPoint" });
-            console.error(error);
-            this.bus.emit(EVENTS.TOAST_SHOW, { msg: error.message || "Hiba a pont mentésekor!", type: "danger" });
-        } finally {
-            this.isSaving = false;
         }
     }
 }

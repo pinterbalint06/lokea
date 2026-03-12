@@ -56,6 +56,7 @@ CREATE TABLE points (
     image_id int,
     foreign key (map_id) references map(map_id) ON DELETE CASCADE,
     foreign key (image_id) references images(image_id) ON DELETE SET NULL,
+    UNIQUE KEY unique_point_coordinates_per_map (map_id, point_x, point_y),
     CONSTRAINT check_north_direction CHECK (north_direction >= 0 AND north_direction <= 359)
 );
 
