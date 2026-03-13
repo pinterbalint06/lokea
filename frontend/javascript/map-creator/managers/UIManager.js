@@ -318,13 +318,7 @@ export class UIManager {
             this.bus.emit(EVENTS.MAP_SWITCH_REQUESTED, request);
 
             if (request.canProceed) {
-                if (this.hasUnsavedChanges) {
-                    event.preventDefault();
-                    this.pendingAction = { type: "map_switch", targetMapId: targetMapId };
-                    this.elements.changesModalBootstrapElement.show();
-                } else {
-                    this.bus.emit(EVENTS.UI_SWITCH_MAP_REQUEST, { mapId: targetMapId });
-                }
+                this.bus.emit(EVENTS.UI_SWITCH_MAP_REQUEST, { mapId: targetMapId });
             } else {
                 event.preventDefault();
                 this.bus.emit(EVENTS.TOAST_SHOW, { msg: request.reason, type: "danger" });
@@ -421,10 +415,6 @@ export class UIManager {
             this.hasUnsavedChanges = false;
             if (this.pendingAction) {
                 switch (this.pendingAction.type) {
-                    case "map_switch":
-                        this.elements.customMapSelector.setValue(this.pendingAction.targetMapId);
-                        this.bus.emit(EVENTS.UI_SWITCH_MAP_REQUEST, { mapId: this.pendingAction.targetMapId });
-                        break;
                     case "collapse_close":
                         this.elements.collapseBootstrapElement.hide();
                         break;
@@ -680,7 +670,6 @@ export class UIManager {
 
     #bindBusEvents() {
         this.bus.on(EVENTS.MAP_SWITCHED, ({ mapId }) => {
-            this.elements.collapseBootstrapElement.hide();
             this.elements.customMapSelector.setValue(mapId);
             this.connectionUiState.hasEnoughPoints = false;
             this.connectionUiState.isConnecting = false;

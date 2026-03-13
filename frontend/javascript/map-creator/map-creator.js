@@ -31,7 +31,8 @@ async function init() {
 document.addEventListener("DOMContentLoaded", init);
 
 // TODOp!: látótérhez svg renderelés
-// TODOp!!: új markernél elsőre nincs helyesen rajta a markeren a fov cone
-// TODOp!!: mapok közti kapcsolatok
-// TODOp!!: markerek fixálása pixel koordinátákra? mindig egy adott pixelen legyenek?
+// TODOp!!: mapok közti kapcsolatok szemléltetése és beállítása hogy melyik irányba legyen
+// TODOp!!!!: (ez a három ugyanaz igazábol) markerek fixálása pixel koordinátákra? mindig egy adott pixelen legyenek?
+// TODOp!!!!: (ez a három ugyanaz igazábol) legjobb lenne talán adatbázisban is UV koordinátákat tárolni és csak a usernek megjelenítéshez pixel koordinátákat mutatni
+// TODOp!!!!: (ez a három ugyanaz igazábol) új markernél elsőre nincs helyesen rajta a markeren a fov cone
 // TODOp!: UIManager kezd nagy lenni lehet szét kéne szedni több kisebbre (pl. MapListManager, MapEditManager, btn to holdos cucc, meg tobi)

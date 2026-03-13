@@ -29,7 +29,6 @@ export class ConnectionManager {
         });
 
         this.bus.on(EVENTS.MAP_SWITCHED, () => {
-            this.activePointId = null;
             this.#cancelConnectingMode();
             this.#renderConnectionsForActiveMap();
             this.#emitConnectionListUpdate();
@@ -53,12 +52,10 @@ export class ConnectionManager {
             this.activePointId = CONSTANTS.TEMP_ID;
         });
 
-        this.bus.on(EVENTS.MARKER_PLACING_STARTED, () => {
-            this.activePointId = CONSTANTS.TEMP_ID;
-        });
-
         this.bus.on(EVENTS.MARKER_PLACING_CANCELLED, () => {
-            this.activePointId = null;
+            if (this.activePointId == CONSTANTS.TEMP_ID) {
+                this.activePointId = null;
+            }
         });
 
         this.bus.on(EVENTS.MAP_CLICKED, () => {
@@ -70,14 +67,19 @@ export class ConnectionManager {
         this.bus.on(EVENTS.MARKER_CLICKED, ({ id }) => {
             if (this.isConnecting) {
                 if (this.activePointId != id) {
-                    if (!this.mapViewer.isAlreadyConnected(this.activePointId, id)) {
-                        this.mapViewer.connectMarkers(this.activePointId, id, this.temporaryId, "unsaved");
+                    if (!this.#hasConnection(this.activePointId, id)) {
                         let newConnection = {
                             connection_id: this.temporaryId,
                             start_point_id: this.activePointId,
                             end_point_id: id,
                             game_maps_id: this.appState.activeMapId
                         };
+
+                        if (this.mapViewer.doesMarkerExist(newConnection.start_point_id)
+                            && this.mapViewer.doesMarkerExist(newConnection.end_point_id)) {
+                            this.mapViewer.connectMarkers(newConnection.start_point_id, newConnection.end_point_id, newConnection.connection_id, "unsaved");
+                        }
+
                         this.unsavedConnections.push(newConnection);
                         this.temporaryId--;
 
@@ -144,15 +146,19 @@ export class ConnectionManager {
         });
 
         this.bus.on(EVENTS.UI_CONNECTION_HIGHLIGHT, ({ connectionId, type }) => {
-            this.mapViewer.changeLineType(connectionId, type);
+            if (this.mapViewer.doesLineExist(connectionId)) {
+                this.mapViewer.changeLineType(connectionId, type);
+            }
         });
 
         this.bus.on(EVENTS.UI_CONNECTION_CENTER_VIEW, ({ startPointId, endPointId }) => {
-            let pos1 = this.mapViewer.getMarkerPosition(startPointId);
-            let pos2 = this.mapViewer.getMarkerPosition(endPointId);
-            let centerX = (pos1.x + pos2.x) / 2;
-            let centerY = (pos1.y + pos2.y) / 2;
-            this.mapViewer.moveTo(centerX, centerY);
+            if (this.mapViewer.doesMarkerExist(startPointId) && this.mapViewer.doesMarkerExist(endPointId)) {
+                let pos1 = this.mapViewer.getMarkerPosition(startPointId);
+                let pos2 = this.mapViewer.getMarkerPosition(endPointId);
+                let centerX = (pos1.x + pos2.x) / 2;
+                let centerY = (pos1.y + pos2.y) / 2;
+                this.mapViewer.moveTo(centerX, centerY);
+            }
         });
 
         this.bus.on(EVENTS.UI_CONNECTION_DELETE_REQUEST, async ({ connectionId, startPointId, endPointId }) => {
@@ -197,6 +203,28 @@ export class ConnectionManager {
                 this.bus.emit(EVENTS.TOAST_SHOW, { msg: "Először válassz ki egy pontot!", type: "danger" });
             }
         }
+    }
+
+
+    #hasConnection(startPointId, endPointId) {
+        let hasConnection = false;
+        const validIds = startPointId && endPointId;
+        if (validIds) {
+            // saved connections
+            hasConnection = this.connectionsList.some(connection =>
+                (connection.start_point_id == startPointId && connection.end_point_id == endPointId) ||
+                (connection.start_point_id == endPointId && connection.end_point_id == startPointId)
+            );
+            if (!hasConnection) {
+                // unsaved connections
+                hasConnection = this.unsavedConnections.some(connection =>
+                    (connection.start_point_id == startPointId && connection.end_point_id == endPointId) ||
+                    (connection.start_point_id == endPointId && connection.end_point_id == startPointId)
+                );
+            }
+        }
+
+        return hasConnection;
     }
 
     #cancelConnectingMode() {

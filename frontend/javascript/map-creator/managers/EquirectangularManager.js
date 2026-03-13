@@ -87,6 +87,17 @@ export class EquirectangularManager {
             }
         });
 
+        this.bus.on(EVENTS.MAP_SWITCHED, () => {
+            if (this.activePointId && !this.mapViewer.doesMarkerExist(this.activePointId)) {
+                this.#stopFOVSync();
+                this.activeLoadGeneration++;
+                if (this.abortController) {
+                    this.abortController.abort();
+                    this.abortController = null;
+                }
+            }
+        });
+
         this.bus.on(EVENTS.UI_COLLAPSE_HIDE_STARTED, () => {
             this.#stopFOVSync();
             this.currentNorthDirection = 0;
@@ -174,7 +185,7 @@ export class EquirectangularManager {
     #startFOVSync() {
         this.#stopFOVSync();
 
-        if (this.appState.settings.fovEnabled) {
+        if (this.appState.settings.fovEnabled && this.activePointId && this.mapViewer.doesMarkerExist(this.activePointId)) {
             let pos = this.mapViewer.getMarkerPosition(this.activePointId);
 
             this.mapViewer.placeMarkerByImageCoordinates(
@@ -199,7 +210,7 @@ export class EquirectangularManager {
     }
 
     #syncFOV() {
-        if (this.activePointId && this.equirectangularViewer) {
+        if (this.activePointId && this.equirectangularViewer && this.mapViewer.doesMarkerExist(CONSTANTS.FOV_MARKER_ID)) {
             let viewYaw = -this.equirectangularViewer.getYaw();
 
             let finalYaw = viewYaw + this.currentNorthDirection;

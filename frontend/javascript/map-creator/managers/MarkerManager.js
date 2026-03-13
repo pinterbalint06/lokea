@@ -7,12 +7,23 @@ export class MarkerManager {
     constructor(eventBus, mapViewer, appState) {
         this.bus = eventBus;
         this.mapViewer = mapViewer;
-        this.appState = appState; // gameMapId, activeMapId, pendingEquirectangularFile
+        this.appState = appState; // { gameMapId, activeMapId, pendingEquirectangularFile }
         this.isSaving = false;
         this.markersCache = {};
         this.activePointId = null;
         this.isPlacingMarker = false;
-        this.northDirection = 0;
+        /**
+        * @typedef {Object} ActivePointSession
+        * @property {number} mapId - The map id this point belongs to.
+        * @property {number} originalX - Original X coordinate of the point.
+        * @property {number} originalY - Original Y coordinate of the point.
+        * @property {number} originalNorthDirection - Original north direction (degrees).
+        * @property {number} draftNorthDirection - Draft north direction while editing.
+        * @property {number} draftX - Draft X coordinate while editing.
+        * @property {number} draftY - Draft Y coordinate while editing.
+        */
+        /** @type {ActivePointSession} */
+        this.activePointSession = null;
         this.unsavedConnectionCount = 0;
         this.isConnectionMode = false;
 
@@ -28,6 +39,15 @@ export class MarkerManager {
         this.bus.on(EVENTS.UI_ADD_NEW_MARKER_REQUEST, () => {
             if (this.appState.activeMapId != CONSTANTS.TEMP_ID) {
                 this.activePointId = CONSTANTS.TEMP_ID;
+                this.activePointSession = {
+                    mapId: this.appState.activeMapId,
+                    originalX: null,
+                    originalY: null,
+                    originalNorthDirection: 0,
+                    draftNorthDirection: null,
+                    draftX: null,
+                    draftY: null
+                };
                 this.isPlacingMarker = true;
                 this.mapViewer.canvasInput.setDefaultCursor("crosshair");
                 this.bus.emit(EVENTS.MARKER_PLACING_STARTED);
@@ -49,42 +69,26 @@ export class MarkerManager {
             }
         });
 
-        this.bus.on(EVENTS.MAP_CLICKED, ({ x, y }) => {
-            if (this.isSaving) {
-                this.bus.emit(EVENTS.TOAST_SHOW, { msg: "Pont mentés folyamatban, kérlek várj!", type: "danger" });
-            } else {
-                if (this.isPlacingMarker && this.activePointId && !this.isConnectionMode) {
-                    if (this.mapViewer.doesMarkerExist(this.activePointId)) {
-                        this.mapViewer.moveMarker(this.activePointId, x, y);
-                    } else {
-                        this.mapViewer.placeMarker(this.activePointId, x, y, CONSTANTS.MARKER_SIZE.width, CONSTANTS.MARKER_SIZE.height, "EMPTY");
-                        this.bus.emit(EVENTS.TOAST_HIDE_ID, { id: "placeMarker" });
-                        this.bus.emit(EVENTS.NEW_MARKER_PLACED);
-                        this.#emitDirtyStateChange();
-                    }
-                    let pos = this.mapViewer.getMarkerPosition(this.activePointId);
-                    this.bus.emit(EVENTS.MARKER_MOVED, {
-                        x: pos.x,
-                        y: pos.y,
-                        screenX: x,
-                        screenY: y
-                    });
-                    this.#emitDirtyStateChange();
-                }
-            }
-        });
+        this.bus.on(EVENTS.MAP_CLICKED, ({ x, y }) => this.#handleMapClicked(x, y));
 
         this.bus.on(EVENTS.UI_COORDINATE_CHANGED, ({ x, y, event }) => {
             if (this.activePointId) {
-                let isValid = this.mapViewer.checkCoordinateValid(x, y);
-                if (isValid.correct) {
-                    event.target.dataset.previousValue = event.target.valueAsNumber;
-                    this.mapViewer.moveMarkerToImageCoordinates(this.activePointId, x, y);
-                    this.bus.emit(EVENTS.MARKER_MOVED, this.mapViewer.getMarkerPosition(this.activePointId));
-                    this.#emitDirtyStateChange();
-                } else {
+                if (!this.mapViewer.doesMarkerExist(this.activePointId)) {
                     event.target.value = event.target.dataset.previousValue;
-                    this.bus.emit(EVENTS.TOAST_SHOW, { msg: isValid.error, type: "danger" });
+                    this.bus.emit(EVENTS.TOAST_SHOW, { msg: "A pont egy másik térképen van, koordináta csak ott módosítható!", type: "danger" });
+                } else {
+                    let isValid = this.mapViewer.checkCoordinateValid(x, y);
+                    if (isValid.correct) {
+                        event.target.dataset.previousValue = event.target.valueAsNumber;
+                        this.mapViewer.moveMarkerToImageCoordinates(this.activePointId, x, y);
+                        let position = this.mapViewer.getMarkerPosition(this.activePointId);
+                        this.#updateSessionDraftPosition(this.activePointId, position.x, position.y);
+                        this.bus.emit(EVENTS.MARKER_MOVED, position);
+                        this.#emitDirtyStateChange();
+                    } else {
+                        event.target.value = event.target.dataset.previousValue;
+                        this.bus.emit(EVENTS.TOAST_SHOW, { msg: isValid.error, type: "danger" });
+                    }
                 }
             }
         });
@@ -107,8 +111,20 @@ export class MarkerManager {
         });
 
         this.bus.on(EVENTS.MAP_SWITCHED, () => {
-            this.#resetMarkerPlacingState();
-            this.unsavedConnectionCount = 0;
+            this.mapViewer.cancelPanAnimation();
+
+            if (this.activePointId == CONSTANTS.TEMP_ID) {
+                if (this.mapViewer.doesMarkerExist(CONSTANTS.TEMP_ID)) {
+                    this.mapViewer.removeMarker(CONSTANTS.TEMP_ID);
+                }
+                this.#resetMarkerPlacingState();
+                this.bus.emit(EVENTS.MARKER_DELETED, { pointId: CONSTANTS.TEMP_ID });
+            } else {
+                if (this.isPlacingMarker) {
+                    this.isPlacingMarker = false;
+                    this.mapViewer.canvasInput.setDefaultCursor("default");
+                }
+            }
             this.#emitDirtyStateChange();
         });
 
@@ -133,8 +149,8 @@ export class MarkerManager {
                     // it was temporary marker remove it
                     this.mapViewer.removeMarker(CONSTANTS.TEMP_ID);
                 } else {
-                    if (this.markersCache[this.activePointId]) {
-                        // it was discarded revert to old data
+                    // only revert if the marker is on the current map
+                    if (this.markersCache[this.activePointId] && this.mapViewer.doesMarkerExist(this.activePointId)) {
                         let originalPoint = this.markersCache[this.activePointId];
                         this.mapViewer.moveMarkerToImageCoordinates(
                             this.activePointId,
@@ -144,8 +160,9 @@ export class MarkerManager {
                         this.mapViewer.changeMarkerType(this.activePointId, "READY");
                     }
                 }
-                this.#resetMarkerPlacingState();
             }
+            this.#resetMarkerPlacingState();
+            this.#emitDirtyStateChange();
         });
 
         this.bus.on(EVENTS.MARKER_CLICKED, ({ id }) => {
@@ -161,19 +178,29 @@ export class MarkerManager {
                 }
                 this.mapViewer.moveTo(position.x, position.y, zoomLevel);
 
-                this.northDirection = this.markersCache[id].north_direction;
+                this.activePointSession = {
+                    mapId: this.appState.activeMapId,
+                    originalX: position.x,
+                    originalY: position.y,
+                    originalNorthDirection: this.markersCache[id].north_direction,
+                    draftNorthDirection: null,
+                    draftX: null,
+                    draftY: null
+                };
                 this.bus.emit(EVENTS.MARKER_SELECTED, { id, position, data: this.markersCache[id] });
                 this.#emitDirtyStateChange();
             }
         });
 
         this.bus.on(EVENTS.EQUIRECTANGULAR_IMAGE_LOADED, () => {
-            this.mapViewer.changeMarkerType(this.activePointId, "UPLOADING");
+            if (this.activePointId && this.mapViewer.doesMarkerExist(this.activePointId)) {
+                this.mapViewer.changeMarkerType(this.activePointId, "UPLOADING");
+            }
             this.#emitDirtyStateChange();
         });
 
         this.bus.on(EVENTS.UI_NORTH_DIRECTION_CHANGED, ({ northDirection }) => {
-            this.northDirection = northDirection;
+            this.#updateSessionDraftNorthDirection(northDirection);
             this.#emitDirtyStateChange();
         });
 
@@ -199,9 +226,14 @@ export class MarkerManager {
                 if (deletedPointId != CONSTANTS.TEMP_ID) {
                     try {
                         await deletePointApi(deletedPointId);
-                        this.mapViewer.removeMarker(deletedPointId);
+                        if (this.mapViewer.doesMarkerExist(deletedPointId)) {
+                            this.mapViewer.removeMarker(deletedPointId);
+                        }
                         if (this.markersCache[deletedPointId]) {
                             delete this.markersCache[deletedPointId];
+                        }
+                        if (this.activePointId == deletedPointId) {
+                            this.activePointSession = null;
                         }
                         this.#resetMarkerPlacingState();
                         this.#emitDirtyStateChange();
@@ -213,7 +245,10 @@ export class MarkerManager {
                         this.bus.emit(EVENTS.MARKER_DELETE_FAILED);
                     }
                 } else {
-                    this.mapViewer.removeMarker(deletedPointId);
+                    if (this.mapViewer.doesMarkerExist(deletedPointId)) {
+                        this.mapViewer.removeMarker(deletedPointId);
+                    }
+                    this.activePointSession = null;
                     this.#resetMarkerPlacingState();
                     this.#emitDirtyStateChange();
                     this.bus.emit(EVENTS.MARKER_DELETED);
@@ -223,8 +258,11 @@ export class MarkerManager {
     }
 
     #resetMarkerPlacingState() {
-        if (this.isPlacingMarker) {
+        const hadActiveState = this.isPlacingMarker || this.activePointId != null || this.activePointSession != null;
+
+        if (hadActiveState) {
             this.activePointId = null;
+            this.activePointSession = null;
             this.isPlacingMarker = false;
             this.mapViewer.canvasInput.setDefaultCursor("default");
             this.bus.emit(EVENTS.MARKER_PLACING_CANCELLED);
@@ -237,16 +275,12 @@ export class MarkerManager {
             if (this.activePointId == CONSTANTS.TEMP_ID) {
                 isDirty = this.appState.pendingEquirectangularFile != null;
             } else {
-                let position = this.mapViewer.getMarkerPosition(this.activePointId);
-                let cached = this.markersCache[this.activePointId];
-
-                if (!cached) {
-                    isDirty = true;
-                } else {
-                    let hasPositionChange = position.x != cached.point_x || position.y != cached.point_y;
-                    let hasNorthDirChange = this.northDirection != cached.north_direction;
+                let session = this.activePointSession;
+                let hasSession = session != null;
+                if (hasSession) {
                     let hasPendingImage = this.appState.pendingEquirectangularFile != null;
-
+                    let hasNorthDirChange = this.#getSessionNorthDirection(session) != session.originalNorthDirection;
+                    let hasPositionChange = this.#doesActivePointHavePositionChange(session);
                     isDirty = hasPositionChange || hasNorthDirChange || hasPendingImage;
                 }
             }
@@ -274,6 +308,28 @@ export class MarkerManager {
         });
     }
 
+    #syncActivePointForCurrentMap() {
+        if (this.activePointId && this.activePointId != CONSTANTS.TEMP_ID) {
+            if (this.activePointSession) {
+                if (this.activePointSession.mapId == this.appState.activeMapId) {
+                    if (this.markersCache[this.activePointId] && this.mapViewer.doesMarkerExist(this.activePointId)) {
+                        if (this.activePointSession.draftX != null && this.activePointSession.draftY != null) {
+                            this.mapViewer.moveMarkerToImageCoordinates(this.activePointId, this.activePointSession.draftX, this.activePointSession.draftY);
+                        }
+
+                        this.isPlacingMarker = true;
+                        let position = this.mapViewer.getMarkerPosition(this.activePointId);
+                        this.bus.emit(EVENTS.MARKER_SELECTED, {
+                            id: this.activePointId,
+                            position,
+                            data: { ...this.markersCache[this.activePointId], north_direction: this.#getSessionNorthDirection(this.activePointSession) }
+                        });
+                    }
+                }
+            }
+        }
+    }
+
     async #loadPoints(mapId) {
         try {
             this.bus.emit(EVENTS.TOAST_SHOW, { id: "loadingPoints", msg: "Pontok betöltése", closable: false, autohide: false, spinner: true });
@@ -282,10 +338,15 @@ export class MarkerManager {
                 this.markersCache = {};
                 points.forEach(point => {
                     this.markersCache[point.point_id] = point;
-                    this.mapViewer.placeMarkerByImageCoordinates(point.point_id, point.point_x, point.point_y, CONSTANTS.MARKER_SIZE.width, CONSTANTS.MARKER_SIZE.height, "ready");
+                    const markerType = point.point_id == this.activePointId
+                        ? "EDIT"
+                        : "READY";
+                    this.mapViewer.placeMarkerByImageCoordinates(point.point_id, point.point_x, point.point_y, CONSTANTS.MARKER_SIZE.width, CONSTANTS.MARKER_SIZE.height, markerType);
                 });
+                this.#syncActivePointForCurrentMap();
                 this.bus.emit(EVENTS.POINTS_LOADED, { points: this.markersCache });
                 this.bus.emit(EVENTS.TOAST_SHOW, { msg: "Pontok sikeresen betöltve!", type: "success" });
+                this.#emitDirtyStateChange();
             }
         } catch (e) {
             console.error("Error loading points: ", e);
@@ -302,10 +363,11 @@ export class MarkerManager {
             this.bus.emit(EVENTS.TOAST_SHOW, { msg: "Pont mentése", id: "savingPoint", closable: false, autohide: false, spinner: true });
             this.bus.emit(EVENTS.POINT_SAVE_STARTED, { pointId: pointToSave });
             try {
-                let position = this.mapViewer.getMarkerPosition(pointToSave);
+                let position = this.#getPointPosition(pointToSave);
                 let isNewPoint = pointToSave == CONSTANTS.TEMP_ID;
+                let northDirection = this.#getSessionNorthDirection(this.activePointSession);
 
-                if (this.appState.activeMapId == CONSTANTS.TEMP_ID) {
+                if (isNewPoint && this.appState.activeMapId == CONSTANTS.TEMP_ID) {
                     throw new Error("Először mentsd el a térképet!");
                 }
                 if (isNewPoint && !this.appState.pendingEquirectangularFile) {
@@ -315,9 +377,9 @@ export class MarkerManager {
                 let data = await savePointApi({
                     pointId: pointToSave,
                     position: position,
-                    northDirection: this.northDirection,
+                    northDirection,
                     equirectangularFile: this.appState.pendingEquirectangularFile,
-                    mapID: this.appState.activeMapId,
+                    mapID: this.activePointSession.mapId,
                     isNew: isNewPoint
                 });
 
@@ -334,7 +396,9 @@ export class MarkerManager {
                         }
                         pointToSave = data.pointId;
                     } else {
-                        this.mapViewer.changeMarkerType(pointToSave, "EDIT");
+                        if (this.mapViewer.doesMarkerExist(pointToSave)) {
+                            this.mapViewer.changeMarkerType(pointToSave, "EDIT");
+                        }
                     }
                     if (!this.markersCache[pointToSave]) {
                         this.markersCache[pointToSave] = {
@@ -343,7 +407,16 @@ export class MarkerManager {
                     }
                     this.markersCache[pointToSave].point_x = position.x;
                     this.markersCache[pointToSave].point_y = position.y;
-                    this.markersCache[pointToSave].north_direction = this.northDirection;
+                    this.markersCache[pointToSave].north_direction = northDirection;
+                    this.activePointSession = {
+                        mapId: this.activePointSession.mapId,
+                        originalX: position.x,
+                        originalY: position.y,
+                        originalNorthDirection: northDirection,
+                        draftNorthDirection: null,
+                        draftX: null,
+                        draftY: null
+                    };
                     this.appState.pendingEquirectangularFile = null;
 
                     this.bus.emit(EVENTS.POINT_SAVED, {
@@ -369,5 +442,102 @@ export class MarkerManager {
                 this.bus.emit(EVENTS.POINT_SAVE_FINISHED, { pointId: pointToSave });
             }
         }
+    }
+
+    #updateSessionDraftPosition(pointId, x, y) {
+        if (pointId && pointId != CONSTANTS.TEMP_ID && this.activePointId == pointId) {
+            if (this.activePointSession) {
+                this.activePointSession.draftX = x;
+                this.activePointSession.draftY = y;
+            }
+        }
+    }
+
+    #updateSessionDraftNorthDirection(northDirection) {
+        if (this.activePointSession) {
+            if (northDirection == this.activePointSession.originalNorthDirection) {
+                this.activePointSession.draftNorthDirection = null;
+            } else {
+                this.activePointSession.draftNorthDirection = northDirection;
+            }
+        }
+    }
+
+    #handleMapClicked(x, y) {
+        if (!this.isSaving) {
+            if (this.isPlacingMarker && this.activePointId && !this.isConnectionMode) {
+                const doesMarkerExist = this.mapViewer.doesMarkerExist(this.activePointId);
+                const isTemporary = this.activePointId == CONSTANTS.TEMP_ID;
+
+                if (doesMarkerExist || isTemporary) {
+                    if (doesMarkerExist) {
+                        this.mapViewer.moveMarker(this.activePointId, x, y);
+                    } else {
+                        this.mapViewer.placeMarker(this.activePointId, x, y, CONSTANTS.MARKER_SIZE.width, CONSTANTS.MARKER_SIZE.height, "EMPTY");
+                        this.bus.emit(EVENTS.TOAST_HIDE_ID, { id: "placeMarker" });
+                        this.bus.emit(EVENTS.NEW_MARKER_PLACED);
+                        this.#emitDirtyStateChange();
+                    }
+
+                    const pos = this.mapViewer.getMarkerPosition(this.activePointId);
+                    this.bus.emit(EVENTS.MARKER_MOVED, {
+                        x: pos.x,
+                        y: pos.y,
+                        screenX: x,
+                        screenY: y
+                    });
+
+                    this.#updateSessionDraftPosition(this.activePointId, pos.x, pos.y);
+                    this.#emitDirtyStateChange();
+                }
+            }
+        } else {
+            this.bus.emit(EVENTS.TOAST_SHOW, { msg: "Pont mentés folyamatban, kérlek várj!", type: "danger" });
+        }
+    }
+
+    #doesActivePointHavePositionChange(session) {
+        let hasPositionChange = false;
+        let currentPosition = this.#getPointPosition(this.activePointId);
+
+        if (currentPosition) {
+            hasPositionChange = currentPosition.x != session.originalX || currentPosition.y != session.originalY;
+        }
+
+        return hasPositionChange;
+    }
+
+    #getSessionNorthDirection(session) {
+        let northDirection = 0;
+        if (session) {
+            if (session.draftNorthDirection != null) {
+                northDirection = session.draftNorthDirection;
+            } else {
+                if (session.originalNorthDirection) {
+                    northDirection = session.originalNorthDirection;
+                }
+            }
+        }
+
+        return northDirection;
+    }
+
+    #getPointPosition(pointId) {
+        let position = null;
+
+        if (this.mapViewer.doesMarkerExist(pointId)) {
+            position = this.mapViewer.getMarkerPosition(pointId);
+        } else {
+            position = {
+                x: this.activePointSession.draftX ?? this.activePointSession.originalX,
+                y: this.activePointSession.draftY ?? this.activePointSession.originalY
+            };
+        }
+
+        if (!position) {
+            throw new Error("A pont adatai nem elérhetőek!");
+        }
+
+        return position;
     }
 }
