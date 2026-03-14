@@ -98,7 +98,7 @@ async function getUsers() {
 }
 
 async function getUser(id) {
-    const query = 'SELECT users.user_id, users.username, users.email, users.role, users.is_2fa, images.filepath FROM users LEFT JOIN images ON (images.image_id = users.pfp) WHERE users.user_id = ?';
+    const query = 'SELECT users.user_id, users.username, users.email, users.role, users.is_2fa, users.created_at, images.filepath FROM users LEFT JOIN images ON (images.image_id = users.pfp) WHERE users.user_id = ?';
     const [result] = await pool.execute(query, [id]);
     return result;
 }
@@ -160,7 +160,48 @@ async function sortedUsers(mireKeresek, mit, status, adminChecked, modChecked, u
     return rows;
 }
 
-async function updateUser(user_id, username, email, role, is_2fa) {
+async function updateUser(user_id, username, email, is_2fa, language, darkmode) {
+    let query = 'UPDATE users ';
+    let updates = [];
+    let params = [];
+
+    if (username != null) {
+        updates.push('users.username = ?');
+        params.push(username);
+    }
+    if (email != null) {
+        updates.push('users.email = ?');
+        params.push(email);
+    }
+    // if (pfp != null) {
+    //     updates.push('users.pfp = ?');
+    //     params.push(pfp);
+    // }
+    if (is_2fa != null) {
+        updates.push('users.is_2fa = ?');
+        params.push(is_2fa);
+    }
+    if (language != null) {
+        updates.push('users.language = ?');
+        params.push(language);
+    }
+    if (darkmode != null) {
+        updates.push('users.darkmode = ?');
+        params.push(darkmode);
+    }
+
+    if (updates.length === 0) {
+        throw new Error('Nincs frissítendő mező');
+    }
+    query += ' SET ' + updates.join(' , ');
+    query += ` WHERE users.user_id = ?`;
+    params.push(user_id);
+
+    const [rows] = await pool.execute(query, params);
+    return rows.affectedRows;
+}
+
+async function updateUserByAdmin(user_id, username, email, role, is_2fa) {
     let query = 'UPDATE users ';
     let updates = [];
     let params = [];
@@ -260,6 +301,7 @@ module.exports = {
     getUserNameProfile,
     sortedUsers,
     updateUser,
+    updateUserByAdmin,
     userToInactive,
     uploadProfilePic,
     deleteProfilePic

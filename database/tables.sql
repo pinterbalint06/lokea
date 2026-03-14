@@ -19,6 +19,8 @@ CREATE TABLE users (
     role VARCHAR(5) DEFAULT 'user',
     pfp INT DEFAULT NULL,
     is_2fa BOOLEAN DEFAULT 0,
+    language VARCHAR(5) DEFAULT 'hu',
+    darkmode BOOLEAN DEFAULT 0,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     deleted_at TIMESTAMP NULL,
     foreign key (pfp) references images(image_id) ON DELETE SET NULL

@@ -19,6 +19,8 @@ hibak amiket javitani kell:
 -insert -> tranzakciokezeles
 -szuresnel a moderatort nem szuri jol
 -par get keresnel nincs try catch
+-userUpdate atirva userUpdateByAdminra database.jsben
+-adminpage js 719. sor -> currentData.deleted_at == null ez csak tesztnek volt odairva
 
 kerdes:
 -compare attetele database.js-be

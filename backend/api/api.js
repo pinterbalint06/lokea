@@ -186,6 +186,37 @@ router.get('/getUserData', auth.checkAuth, async (request, response) => {
     }
 })
 
+router.post('/updateUser', auth.checkAuth,
+    [
+        body("username")
+            .optional({ values: "null" })
+            .not().isEmail().withMessage("Felhasználónév nem lehet email cim!")
+            .matches(/^[a-zA-Z0-9áéíóöőúüűÁÉÍÓÖŐÚÜŰ_-]+$/).withMessage('A felhasználónév csak betűket, számokat, - vagy _ karaktert, és ékezetes betűket tartalmazhat.')
+            .isLength({ min: 1, max: 20 }).withMessage("Felhasználónév hossza nem megfelelő!"),
+        body("email")
+            .optional({ values: "null" })
+            .isEmail().withMessage("Hibás email formátum")
+            .isLength({ min: 5, max: 250 }).withMessage("Email max 250 karakter!")
+    ], async (request, response) => {
+        try {
+            const errors = validationResult(request);
+            if (!errors.isEmpty()) {
+                response.status(400).json({
+                    success: false,
+                    error: errors.array()
+                });
+            }
+            else {
+                let { username, email, is_2fa, language, darkmode } = request.body;
+                await database.updateUser(request.session.userid, username, email, is_2fa, language, darkmode);
+                response.status(200).json({message: "Sikeres frissités!"});
+            }
+
+        } catch (error) {
+            response.status(500).json({ error: error });
+        }
+    })
+
 router.post('/updateProfilePic', auth.checkAuth, upload.single('profilePic'), async (request, response) => {
     let originalFile;
     let newFilePath;

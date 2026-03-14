@@ -334,7 +334,10 @@ async function kijelentkezes() {
 
 async function showSettingsModal() {
     let hova = document.getElementById('userData');
+    let errordiv = document.getElementById('errorLocation');
     hova.innerHTML = "";
+    errordiv.classList.add('d-none');
+
     let data = await getUserData();
 
     let container = document.createElement('div');
@@ -392,9 +395,9 @@ async function showSettingsModal() {
     div = document.createElement("div");
     div.classList.add("col-8");
 
-    console.log(data);
+    let date = new Date(data.created_at);
 
-    hova.appendChild(makeSubtitle(`Regisztrált: ${data.created_at}`));
+    hova.appendChild(makeSubtitle(`Regisztrált: ${date.toLocaleString("hu-HU")}`));
 
     hova.appendChild(makeSubtitle("Felhasználónév"));
     hova.appendChild(inputGeneral("text", "mintajancsi123", data.username, "usernameInput", ["form-control"], false));
@@ -404,9 +407,29 @@ async function showSettingsModal() {
 
     hova.appendChild(makeSubtitle("Jelszó"));
     hova.appendChild(inputGeneral("password", null, data.password, "passwordInput", ["form-control"], false)); //nem adunk vissza jelszot
+    let newPassBtn = gombGeneral("button", "Új jelszó igénylése", null, null, null);
+    newPassBtn.classList.add("btn", "btn-purple", "px-5", "rounded-pill");
+    newPassBtn.addEventListener("click", async function () {
+        //ide a uj jelszo igenyles function
+    })
+    hova.appendChild(newPassBtn);
 
     hova.appendChild(makeSubtitle("Két lépcsős azonositás"));
-    hova.appendChild(inputGeneral("checkbox", null, data.username, "is2faInput", null, false));
+    let checkbox = inputGeneral("checkbox", null, null, "is2faInput", null, false);
+    checkbox.checked = data.is_2fa;
+    hova.appendChild(checkbox);
+
+    currentSettings = {
+        username: data.username,
+        email: data.email,
+        is_2fa: data.is_2fa,
+        language: document.getElementById('languageSelect').value,
+        darkmode: document.getElementById('darkMode').checked
+    }
+
+    document.getElementById('settingsSave').onclick = async function () {
+        await checkModification();
+    }
 
     row.appendChild(div);
     container.appendChild(row);
@@ -430,5 +453,69 @@ async function getUserData() {
     }
 }
 
+async function checkModification() {
+    let valtozas = false;
+    let inInput = {
+        username: document.getElementById('usernameInput').value,
+        email: document.getElementById('emailInput').value,
+        is_2fa: document.getElementById('is2faInput').checked,
+        language: document.getElementById('languageSelect').value,
+        darkmode: document.getElementById('darkMode').checked
+    }
+    Object.keys(inInput).forEach(key => {
+        if (inInput[key] == currentSettings[key]) {
+            inInput[key] = null;
+        }
+        else {
+            valtozas = true;
+        }
+    });
+    if (valtozas) {
+        console.log('van valtozas!')
+        await saveModification(inInput.username, inInput.email, inInput.is_2fa, inInput.language, inInput.darkmode);
+    }
+    else {
+        console.log('nincs valtozas!');
+    }
+}
+
+async function saveModification(username, email, is_2fa, language, darkmode) {
+    try {
+        console.log(username, email, is_2fa, language, darkmode)
+        let response = await fetch("/api/updateUser", {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json"
+            },
+            body: JSON.stringify({
+                username, email, is_2fa, language, darkmode
+            })
+        })
+        let data = await response.json();
+        if (!response.ok) {
+            if (data.error) {
+                let errordiv = document.getElementById('errorLocation');
+                errordiv.classList.remove('d-none');
+                errordiv.innerHTML = "";
+                let ul = document.createElement('ul');
+                for (let i = 0; i < data.error.length; i++) {
+                    let li = document.createElement('li');
+                    li.innerText = `${data.error[i].path}: ${data.error[i].msg}`;
+                    ul.appendChild(li);
+                }
+                errordiv.appendChild(ul);
+            }
+        }
+        else {
+            alert("Sikeres módositás!"); //atmeneti
+            settingsModal.hide();
+        }
+    } catch (error) {
+        console.log(error);
+    }
+
+}
+
 let modalElement;
 let settingsModal;
+let currentSettings;

@@ -227,8 +227,8 @@
 
                 <div class="modal-body settings-content">
                     <div class="tab-content">
-
                         <div class="tab-pane fade show active" id="accountSettingsTab">
+                            <div id="errorLocation" class="card border-danger w-50 mx-auto text-center d-none"></div>
                             <h5 class="section-title">Fiókbeállítások</h5>
                             <div id="userData">
                                 <h3 class="text-center">Nem vagy bejelentkezve!</h3>
@@ -258,7 +258,7 @@
                     </div>
                 </div>
                 <div class="modal-footer border-0 bg-light">
-                    <button class="btn btn-purple px-5 rounded-pill" onclick="saveSettings()">Mentés</button>
+                    <button class="btn btn-purple px-5 rounded-pill" id="settingsSave">Mentés</button>
                 </div>
             </div>
         </div>
