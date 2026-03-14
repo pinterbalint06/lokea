@@ -241,8 +241,7 @@ router.post('/updateProfilePic', auth.checkAuth, upload.single('profilePic'), as
 
             let { width, height } = metadata;
             let finalUrl = `${newFileName}`;
-
-            let lastPfp = await database.uploadProfilePic(finalUrl, width, height, request.body.user_id);
+            let lastPfp = await database.uploadProfilePic(finalUrl, width, height, request.session.userid);
 
             await fs.unlink(originalFile).catch(() => { });
 
@@ -265,12 +264,13 @@ router.post('/updateProfilePic', auth.checkAuth, upload.single('profilePic'), as
 
 router.post('/deleteProfilePic', auth.checkAuth, async (request, response) => {
     try {
-        let lastPfp = await database.deleteProfilePic(request.body.user_id);
+        let lastPfp = await database.deleteProfilePic(request.session.userid);
         if (!lastPfp) {
             response.status(200).json({ success: true, message: "A profilkép már alapértelmezett volt." });
         }
         else {
-            let lastPfpPath = path.join(__dirname, '..', lastPfp);
+            let lastPfpPath = path.join(__dirname, '..', 'uploads', lastPfp);
+            console.log(lastPfpPath);
             try {
                 await fs.unlink(lastPfpPath);
             } catch (error) {

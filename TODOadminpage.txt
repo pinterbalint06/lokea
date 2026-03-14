@@ -21,6 +21,7 @@ hibak amiket javitani kell:
 -par get keresnel nincs try catch
 -userUpdate atirva userUpdateByAdminra database.jsben
 -adminpage js 719. sor -> currentData.deleted_at == null ez csak tesztnek volt odairva
+-kep frissites atirva mas api cimre
 
 kerdes:
 -compare attetele database.js-be

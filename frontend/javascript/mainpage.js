@@ -12,6 +12,13 @@ document.addEventListener("DOMContentLoaded", async function () {
     else {
         modalElement = document.getElementById('settingsModal');
         settingsModal = new bootstrap.Modal(modalElement);
+        settingsModal._element.addEventListener("hidden.bs.modal", function () {
+            tempPfp = null;
+            if (objectURL) {
+                URL.revokeObjectURL(objectURL);
+                objectURL = null;
+            }
+        });
     }
 
 })
@@ -204,10 +211,9 @@ async function getProfilePicture(route) {
     }
 }
 
-async function uploadProfilePic(picture, id) {
+async function uploadProfilePic(picture) {
     let fd = new FormData();
     fd.append("profilePic", picture);
-    fd.append("user_id", id);
     try {
         let response = await fetch("/api/updateProfilePic", {
             method: "POST",
@@ -222,18 +228,14 @@ async function uploadProfilePic(picture, id) {
     }
 }
 
-async function deleteProfilePicture(id) {
+async function deleteProfilePicture() {
     try {
         let response = await fetch("/api/deleteProfilePic", {
             method: "POST",
             headers: {
                 "Content-Type": "application/json"
-            },
-            body: JSON.stringify({
-                user_id: id
-            })
-        });
-
+            }
+        })
         if (response.ok) {
             console.log("sikerult a torles");
         }
@@ -337,6 +339,8 @@ async function showSettingsModal() {
     let errordiv = document.getElementById('errorLocation');
     hova.innerHTML = "";
     errordiv.classList.add('d-none');
+    let tempPfp = null;
+    let deleteLast = false;
 
     let data = await getUserData();
 
@@ -347,77 +351,102 @@ async function showSettingsModal() {
     row.classList.add("row");
 
     let div = document.createElement("div");
-    div.classList.add("col-4");
-    //kimasolt adminbol!
-    // let pfp = document.createElement("img");
-    // let deletePfpButton;
-    // if (data.filepath == null) {
-    //     pfp.src = "../images/default.png";
-    // }
-    // else {
-    //     objectURL = await getProfilePicture(data.filepath);
-    //     pfp.src = objectURL;
-    //     deletePfpButton = gombGeneral("button", "Profilkép törlése", "trash-2", "red", null);
-    //     deletePfpButton.addEventListener("click", async function () {
-    //         await deleteProfilePicture(user_id);
-    //     })
-    // }
-    // pfp.alt = "Profile picture";
-    // pfp.title = "Profile picture";
-    // pfp.classList.add("img-fluid", "img-thumbnail", "rounded-circle", "h-75"
-    // );
+    div.classList.add("col-5", "d-flex", "flex-column", "align-items-center");
 
-    // let newPfpInput = inputGeneral("file", null, null, "newPfpInput", ["form-control"], false);
-    // newPfpInput.setAttribute("accept", "image/*");
-    // let newPfpButton = gombGeneral("button", "Profilkép feltöltése", "upload", "green", null);
-    // newPfpButton.addEventListener("click", async function () {
-    //     let feltoltott = document.getElementById('newPfpInput');
-    //     if (feltoltott.files.length === 0) {
-    //         alert("Kérlek, válassz ki egy képet!");
-    //     }
-    //     else {
-    //         await uploadProfilePic(feltoltott.files[0]);
-    //     }
-    // })
+    let dropzone = document.createElement("div");
+    dropzone.classList.add("dropzone", "h-100");
+    dropzone.addEventListener("dragover", function (e) {
+        e.preventDefault();
+    });
 
-    // let pfpTitle = document.createElement("h6");
-    // pfpTitle.textContent = data.username;
+    dropzone.addEventListener("drop", function (e) {
+        e.preventDefault();
 
-    // div.appendChild(pfp);
-    // div.appendChild(newPfpInput);
-    // div.appendChild(newPfpButton);
-    // if (pfproute != null) {
-    //     div.appendChild(deletePfpButton);
-    // }
-    // div.appendChild(pfpTitle);
+        let file = e.dataTransfer.files[0];
+        tempPfp = file;
+
+        let reader = new FileReader();
+
+        reader.onload = function (ev) {
+            pfp.src = ev.target.result;
+        }
+
+        reader.readAsDataURL(file);
+    });
+
+    let pfp = document.createElement("img");
+    if (data.filepath == null) {
+        pfp.src = "../images/default.png";
+    }
+    else {
+        objectURL = await getProfilePicture(data.filepath);
+        pfp.src = objectURL;
+    }
+    pfp.alt = "Profile picture";
+    pfp.title = "Profile picture";
+    pfp.classList.add("img-fluid", "img-thumbnail", "rounded-circle", "w-100"
+    );
+
+    let newPfpInput = inputGeneral("file", null, null, "newPfpInput", ["form-control", "d-none"], false);
+    newPfpInput.setAttribute("accept", "image/*");
+    newPfpInput.addEventListener("change", async function () {
+        if (this.files.length != 0) {
+            let file = this.files[0];
+            tempPfp = file;
+
+            let preview = await createPreview(file);
+
+            pfp.src = preview;
+        }
+    });
+
+    let text = document.createElement('p');
+    text.innerText = "Kép feltöltéshez kattints ide, vagy húzz be egy képet!";
+    text.classList.add("subtitle", "text-center");
+
+    dropzone.appendChild(pfp);
+    dropzone.appendChild(newPfpInput);
+    dropzone.appendChild(text);
+    dropzone.addEventListener("click", function () {
+        newPfpInput.click();
+    });
+    div.appendChild(dropzone);
+    if (data.filepath != null) {
+        let deletePfpButton = gombGeneral("button", "Profilkép törlése", "trash-2", "red", null);
+        deletePfpButton.addEventListener("click", async function () {
+            pfp.src = "../images/default.png";
+            deleteLast = true;
+        })
+        div.appendChild(deletePfpButton);
+    }
     row.appendChild(div);
 
     div = document.createElement("div");
-    div.classList.add("col-8");
+    div.classList.add("col-7");
 
     let date = new Date(data.created_at);
 
-    hova.appendChild(makeSubtitle(`Regisztrált: ${date.toLocaleString("hu-HU")}`));
+    div.appendChild(makeSubtitle(`Regisztrált: ${date.toLocaleString("hu-HU")}`));
 
-    hova.appendChild(makeSubtitle("Felhasználónév"));
-    hova.appendChild(inputGeneral("text", "mintajancsi123", data.username, "usernameInput", ["form-control"], false));
+    div.appendChild(makeSubtitle("Felhasználónév"));
+    div.appendChild(inputGeneral("text", "mintajancsi123", data.username, "usernameInput", ["form-control"], false));
 
-    hova.appendChild(makeSubtitle("E-mail-cim"));
-    hova.appendChild(inputGeneral("text", "mintajan@gmail.com", data.email, "emailInput", ["form-control"], false));
+    div.appendChild(makeSubtitle("E-mail-cim"));
+    div.appendChild(inputGeneral("text", "mintajan@gmail.com", data.email, "emailInput", ["form-control"], false));
 
-    hova.appendChild(makeSubtitle("Jelszó"));
-    hova.appendChild(inputGeneral("password", null, data.password, "passwordInput", ["form-control"], false)); //nem adunk vissza jelszot
+    div.appendChild(makeSubtitle("Jelszó"));
+    div.appendChild(inputGeneral("password", null, data.password, "passwordInput", ["form-control"], false)); //nem adunk vissza jelszot
     let newPassBtn = gombGeneral("button", "Új jelszó igénylése", null, null, null);
     newPassBtn.classList.add("btn", "btn-purple", "px-5", "rounded-pill");
     newPassBtn.addEventListener("click", async function () {
         //ide a uj jelszo igenyles function
     })
-    hova.appendChild(newPassBtn);
+    div.appendChild(newPassBtn);
 
-    hova.appendChild(makeSubtitle("Két lépcsős azonositás"));
+    div.appendChild(makeSubtitle("Két lépcsős azonositás"));
     let checkbox = inputGeneral("checkbox", null, null, "is2faInput", null, false);
     checkbox.checked = data.is_2fa;
-    hova.appendChild(checkbox);
+    div.appendChild(checkbox);
 
     currentSettings = {
         username: data.username,
@@ -429,6 +458,15 @@ async function showSettingsModal() {
 
     document.getElementById('settingsSave').onclick = async function () {
         await checkModification();
+        if (tempPfp != null) {
+            await uploadProfilePic(tempPfp);
+        }
+        else {
+            if (deleteLast) {
+                await deleteProfilePicture();
+            }
+        }
+        settingsModal.hide();
     }
 
     row.appendChild(div);
@@ -516,6 +554,38 @@ async function saveModification(username, email, is_2fa, language, darkmode) {
 
 }
 
+async function createPreview(file) {
+
+    const img = new Image();
+    const url = URL.createObjectURL(file);
+
+    img.src = url;
+
+    await new Promise(res => img.onload = res);
+
+    const canvas = document.createElement("canvas");
+    const ctx = canvas.getContext("2d");
+
+    canvas.width = 400;
+    canvas.height = 400;
+
+    let size = Math.min(img.width, img.height);
+
+    let sx = (img.width - size) / 2;
+    let sy = (img.height - size) / 2;
+
+    ctx.drawImage(
+        img,
+        sx, sy,
+        size, size,
+        0, 0,
+        400, 400
+    );
+
+    return canvas.toDataURL("image/webp");
+}
+
 let modalElement;
 let settingsModal;
 let currentSettings;
+let objectURL;

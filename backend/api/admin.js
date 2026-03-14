@@ -177,4 +177,70 @@ router.post('/userToInactive', auth.checkAuth, auth.checkRole("ADMIN"),
         }
     })
 
+router.post('/updateProfilePicFromAdmin', auth.checkAuth, upload.single('profilePic'), async (request, response) => {
+    let originalFile;
+    let newFilePath;
+    try {
+        if (!request.file) {
+            response.status(400).json({ message: "Nincs kép!" });
+        }
+        else {
+            originalFile = request.file.path;
+            let newFileName = `processed-${Date.now()}.webp`;
+            newFilePath = path.join('uploads', newFileName);
+
+            //Kép tömöritése
+            sharp.cache(false);
+            const metadata = await sharp(originalFile)
+                .resize(400, 400, {
+                    fit: 'cover',
+                    position: 'center'
+                })
+                .toFormat('webp')
+                .toFile(newFilePath);
+
+            let { width, height } = metadata;
+            let finalUrl = `${newFileName}`;
+
+            let lastPfp = await database.uploadProfilePic(finalUrl, width, height, request.body.user_id);
+
+            await fs.unlink(originalFile).catch(() => { });
+
+            if (lastPfp) {
+                let lastPfpPath = path.join(__dirname, '..', lastPfp);
+                await fs.unlink(lastPfpPath).catch(() => { });
+            }
+            response.status(201).json({ success: true, message: "Profilkép frissítve!" });
+        }
+    } catch (error) {
+        if (originalFile) {
+            await fs.unlink(originalFile).catch(() => { });
+        }
+        if (newFilePath) {
+            await fs.unlink(newFilePath).catch(() => { });
+        }
+        response.status(500).json({ error: error.message, details: error.stack });
+    }
+})
+
+router.post('/deleteProfilePicFromAdmin', auth.checkAuth, async (request, response) => {
+    try {
+        let lastPfp = await database.deleteProfilePic(request.body.user_id);
+        if (!lastPfp) {
+            response.status(200).json({ success: true, message: "A profilkép már alapértelmezett volt." });
+        }
+        else {
+            let lastPfpPath = path.join(__dirname, '..', lastPfp);
+            try {
+                await fs.unlink(lastPfpPath);
+            } catch (error) {
+                console.log("a kép nincs a szerveren!" + error);
+            }
+            response.status(201).json({ success: true, message: "Profilkép törölve!" });
+        }
+    } catch (error) {
+        response.status(500).json({ error: error });
+    }
+})
+
 module.exports = router;

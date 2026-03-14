@@ -274,7 +274,8 @@ body.modal-open> :not(.modal):not(.modal-backdrop) {
 
 .nav-browser-tabs .nav-link.active {
     background-color: #943ec9 !important;
-    border-color: #dee2e6 #dee2e6 #ffffff !important; /* Az alsó vonal eltűnik */
+    border-color: #dee2e6 #dee2e6 #ffffff !important;
+    /* Az alsó vonal eltűnik */
     color: white;
     font-weight: 600;
 }
@@ -306,6 +307,18 @@ body.modal-open> :not(.modal):not(.modal-backdrop) {
 }
 
 .btn-purple:hover {
-    background-color: purple;;
+    background-color: purple;
+    ;
     color: white;
+}
+
+.buttonIcon {
+    width: 20px;
+    height: 20px;
+}
+
+.dropzone:hover {
+    border: 2px dashed #aaa;
+    border-radius: 10px;
+    cursor: copy;
 }
