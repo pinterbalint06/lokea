@@ -27,7 +27,6 @@ export class MapManager {
         this.viewer.onClickHandler = (cursorX, cursorY) => {
             let clickedMarkerId = this.viewer.getMarkerAtClick(cursorX, cursorY);
             if (clickedMarkerId != -1) {
-                // TODOp: har rányom egyre is mozogjon
                 this.bus.emit(EVENTS.MARKER_CLICKED, { id: clickedMarkerId, x: cursorX, y: cursorY });
             } else {
                 this.bus.emit(EVENTS.MAP_CLICKED, { x: cursorX, y: cursorY });
@@ -176,8 +175,7 @@ export class MapManager {
             };
 
             this.maps[CONSTANTS.TEMP_ID] = newMap;
-            // TODOp: itt??? valamit akartam
-            this.switchMap(CONSTANTS.TEMP_ID);
+            await this.switchMap(CONSTANTS.TEMP_ID);
             this.bus.emit(EVENTS.NEW_MAP_LOADED, { maps: this.maps, loadedMapId: CONSTANTS.TEMP_ID });
         } catch (error) {
             console.error(error);
@@ -230,9 +228,9 @@ export class MapManager {
                             }
                         }
                     });
-                    setTimeout(() => this.bus.emit(EVENTS.TOAST_HIDE_ID, { id: `mapSwitching${mapId}-${randomIdForToast}` }), 1000);
+                    setTimeout(() => this.bus.emit(EVENTS.TOAST_HIDE_ID, { id: `mapSwitching${mapId}-${randomIdForToast}` }));
                 } catch (error) {
-                    if (!isCancellationError(error) && this.activePointId == id && this.activeLoadGeneration == loadGeneration) {
+                    if (!isCancellationError(error) && this.appState.activeMapId == mapId && this.activeLoadGeneration == loadGeneration) {
                         console.error(error);
                         this.bus.emit(EVENTS.TOAST_SHOW, { msg: "Hiba a kép betöltésekor!", type: "danger" });
                     }

@@ -514,6 +514,11 @@ router.post("/game-maps/:gameMapID/connections", checkAuth, upload.none(), async
 
         const startPointId = validateId(request.body.startPointId, "kezdőpont ID");
         const endPointId = validateId(request.body.endPointId, "végpont ID");
+        if (startPointId == endPointId) {
+            const err = new Error("A kezdőpont és a végpont nem lehet ugyanaz!");
+            err.statusCode = 400;
+            throw err;
+        }
         const gameMapID = validateId(request.params.gameMapID, "pálya ID");
 
         await assertUserOwnsGameMap(userId, gameMapID);
@@ -830,3 +835,5 @@ router.use((error, request, response, next) => {
 });
 
 module.exports = router;
+
+// TODOp!!: tesztek írása ehhez

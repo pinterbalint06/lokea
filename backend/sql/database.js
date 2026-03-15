@@ -321,7 +321,9 @@ async function insertConnection(connection, startPointId, endPointId, gameMapId)
         INSERT INTO point_connections (start_point_id, end_point_id, game_maps_id)
         VALUES (?, ?, ?)
     `;
-    const [result] = await connection.execute(query, [startPointId, endPointId, gameMapId]);
+    const smallerId = Math.min(startPointId, endPointId);
+    const largerId = Math.max(startPointId, endPointId);
+    const [result] = await connection.execute(query, [smallerId, largerId, gameMapId]);
     return result.insertId;
 }
 

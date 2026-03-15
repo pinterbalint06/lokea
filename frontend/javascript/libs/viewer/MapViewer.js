@@ -327,14 +327,13 @@ export class MapViewer extends WASMViewerBase {
         }
 
         let valid = this.checkCoordinateValid(imageX, imageY);
-        // TODOp #2 uncomment when TODOp #2 is done
-        // if (!valid.correct) {
-        //     console.log(imageX, imageY);
-        //     console.log(this.#imageWidth, this.#imageHeight);
-        //     throw new WebassemblyError(valid.error, {
-        //         "type": MAP_VIEWER_ERROR_TYPES.INVALID_INPUT
-        //     });
-        // }
+        if (!valid.correct) {
+            console.log(imageX, imageY);
+            console.log(this.#imageWidth, this.#imageHeight);
+            throw new WebassemblyError(valid.error, {
+                "type": MAP_VIEWER_ERROR_TYPES.INVALID_INPUT
+            });
+        }
 
         let markerUrl = this.#getMarkerUrl(type);
 

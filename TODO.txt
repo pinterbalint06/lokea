@@ -1,18 +1,17 @@
-1. Perlin zaj dokumentálása
-2. Kód kommentelése (függvények, változók magyarázata (doxygen))
-3. Random szám generátor dokumentálása
-4. Shading dokumentálása, Phong reflection model
-5. Mozgás logika C++-ba
-6. 3 dimenziós perlin zaj
-7. Domborzatra gyakrabban kiszámolni a perlin zajt, így részletesebb térképet kapnánk
-8. Fizikailag helyes árnyalás és pbr textúrák
-9. Gömb generálás dokumentálása (RÖVID csak gömb koordináta -> Descartes koordináta szemléltetése és gömbkoordináták előállítása)
-10. Domborzat valósághűbb (erózió)
-11. Blinn-Phong reflection model GLSL-ben
-12. GPU Memory leakage a meshben?
-13. Strukturálás
-14. Kód átnézése nem használt függvényekre, váltózokra
-15. UBO binding slotok átdolgozása
-16. Van-e jelenlegi WebGL ctx ellenőrzések
-17. Projection mátrixok dokumentációjának frissítése
-18. Egy óránál idősebb temporary fájlok törlése
+1. Kód kommentelése (függvények, változók magyarázata (doxygen))
+2. Random szám generátor dokumentálása
+3. Shading dokumentálása, Phong reflection model
+4. Mozgás logika C++-ba
+5. 3 dimenziós perlin zaj
+6. Domborzatra gyakrabban kiszámolni a perlin zajt, így részletesebb térképet kapnánk
+7. Fizikailag helyes árnyalás és pbr textúrák
+8. Gömb generálás dokumentálása (RÖVID csak gömb koordináta -> Descartes koordináta szemléltetése és gömbkoordináták előállítása)
+9. Domborzat valósághűbb (erózió)
+10. Blinn-Phong reflection model GLSL-ben
+11. GPU Memory leakage a meshben?
+12. Strukturálás
+13. Kód átnézése nem használt függvényekre, váltózokra
+14. UBO binding slotok átdolgozása
+15. Van-e jelenlegi WebGL ctx ellenőrzések
+16. Projection mátrixok dokumentációjának frissítése
+17. Egy óránál idősebb temporary fájlok törlése

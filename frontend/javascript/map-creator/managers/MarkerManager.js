@@ -167,35 +167,39 @@ export class MarkerManager {
             this.#emitDirtyStateChange();
         });
 
-        this.bus.on(EVENTS.MARKER_CLICKED, ({ id }) => {
-            if (!this.isPlacingMarker && id && id != CONSTANTS.TEMP_ID && !this.isConnectionMode) {
-                this.activePointId = id;
-                this.mapViewer.changeMarkerType(id, "EDIT");
-                this.isPlacingMarker = true;
+        this.bus.on(EVENTS.MARKER_CLICKED, ({ id, x, y }) => {
+            if (this.activePointId == null) {
+                if (id && id != CONSTANTS.TEMP_ID && !this.isConnectionMode) {
+                    this.activePointId = id;
+                    this.mapViewer.changeMarkerType(id, "EDIT");
+                    this.isPlacingMarker = true;
 
-                let position = this.mapViewer.getMarkerPosition(id);
-                let zoomLevel;
-                if (this.mapViewer.getZoomLevel() < 4) {
-                    zoomLevel = 4;
+                    let position = this.mapViewer.getMarkerPosition(id);
+                    let zoomLevel;
+                    if (this.mapViewer.getZoomLevel() < 4) {
+                        zoomLevel = 4;
+                    }
+                    this.mapViewer.moveTo(position.x, position.y, zoomLevel);
+
+                    this.activePointSession = {
+                        mapId: this.appState.activeMapId,
+                        originalX: position.x,
+                        originalY: position.y,
+                        originalNorthDirection: this.markersCache[id].north_direction,
+                        draftNorthDirection: null,
+                        draftX: null,
+                        draftY: null
+                    };
+                    this.bus.emit(EVENTS.MARKER_SELECTED, {
+                        id,
+                        mapId: this.activePointSession.mapId,
+                        position,
+                        data: this.markersCache[id]
+                    });
+                    this.#emitDirtyStateChange();
                 }
-                this.mapViewer.moveTo(position.x, position.y, zoomLevel);
-
-                this.activePointSession = {
-                    mapId: this.appState.activeMapId,
-                    originalX: position.x,
-                    originalY: position.y,
-                    originalNorthDirection: this.markersCache[id].north_direction,
-                    draftNorthDirection: null,
-                    draftX: null,
-                    draftY: null
-                };
-                this.bus.emit(EVENTS.MARKER_SELECTED, {
-                    id,
-                    mapId: this.activePointSession.mapId,
-                    position,
-                    data: this.markersCache[id]
-                });
-                this.#emitDirtyStateChange();
+            } else {
+                this.#handleMapClicked(x, y);
             }
         });
 
