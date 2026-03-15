@@ -137,7 +137,9 @@ export async function saveConnection(gameMapID, connection) {
         connection_id: data.connectionId,
         start_point_id: connection.start_point_id,
         end_point_id: connection.end_point_id,
-        game_maps_id: connection.game_maps_id
+        game_maps_id: connection.game_maps_id,
+        start_map_id: connection.start_map_id,
+        end_map_id: connection.end_map_id
     };
 }
 

@@ -369,8 +369,15 @@ async function getPointsOnMap(mapId) {
 
 async function getConnectionsByGameMapId(gameMapId) {
     const query = `
-        SELECT point_connections.connection_id, point_connections.start_point_id, point_connections.end_point_id
+        SELECT
+            point_connections.connection_id,
+            point_connections.start_point_id,
+            point_connections.end_point_id,
+            start_point.map_id AS start_map_id,
+            end_point.map_id AS end_map_id
         FROM point_connections
+            INNER JOIN points AS start_point ON (start_point.point_id = point_connections.start_point_id)
+            INNER JOIN points AS end_point ON (end_point.point_id = point_connections.end_point_id)
         WHERE point_connections.game_maps_id = ?
     `;
     const [rows] = await pool.execute(query, [gameMapId]);

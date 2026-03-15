@@ -9,10 +9,16 @@ export class ConnectionManager {
         this.mapViewer = mapViewer;
         this.appState = appState; // gameMapId, activeMapId
 
+        this.portalIdStart = -9999;
+        this.portalMarkerIdsByConnection = {};
         this.connectionsList = [];
         this.unsavedConnections = [];
         this.isConnecting = false;
         this.activePointId = null;
+        this.activePointMapId = null;
+        this.focusedConnectionId = null;
+        this.showOffMapConnectionsWhenNotActive = true;
+        this.showAllConnectionsWhenNotActive = true;
         this.temporaryId = -1;
         this.isSaving = false;
         this.connectionToastId = "connectionMode";
@@ -34,8 +40,9 @@ export class ConnectionManager {
             this.#emitConnectionListUpdate();
         });
 
-        this.bus.on(EVENTS.MARKER_SELECTED, ({ id }) => {
+        this.bus.on(EVENTS.MARKER_SELECTED, ({ id, mapId }) => {
             this.activePointId = id;
+            this.activePointMapId = mapId ?? this.appState.activeMapId;
             this.#renderConnectionsForActiveMap();
             this.#emitConnectionListUpdate();
         });
@@ -50,11 +57,13 @@ export class ConnectionManager {
 
         this.bus.on(EVENTS.MARKER_PLACING_STARTED, () => {
             this.activePointId = CONSTANTS.TEMP_ID;
+            this.activePointMapId = this.appState.activeMapId;
         });
 
         this.bus.on(EVENTS.MARKER_PLACING_CANCELLED, () => {
             if (this.activePointId == CONSTANTS.TEMP_ID) {
                 this.activePointId = null;
+                this.activePointMapId = null;
             }
         });
 
@@ -72,16 +81,14 @@ export class ConnectionManager {
                             connection_id: this.temporaryId,
                             start_point_id: this.activePointId,
                             end_point_id: id,
-                            game_maps_id: this.appState.activeMapId
+                            game_maps_id: this.appState.activeMapId,
+                            start_map_id: this.activePointMapId ?? this.appState.activeMapId,
+                            end_map_id: this.appState.activeMapId
                         };
-
-                        if (this.mapViewer.doesMarkerExist(newConnection.start_point_id)
-                            && this.mapViewer.doesMarkerExist(newConnection.end_point_id)) {
-                            this.mapViewer.connectMarkers(newConnection.start_point_id, newConnection.end_point_id, newConnection.connection_id, "unsaved");
-                        }
 
                         this.unsavedConnections.push(newConnection);
                         this.temporaryId--;
+                        this.#renderConnectionsForActiveMap();
 
                         this.bus.emit(EVENTS.NEW_CONNECTION_ADDED, { newConnection });
 
@@ -99,6 +106,8 @@ export class ConnectionManager {
 
         this.bus.on(EVENTS.UI_COLLAPSE_HIDE_STARTED, () => {
             this.activePointId = null;
+            this.activePointMapId = null;
+            this.focusedConnectionId = null;
             this.unsavedConnections = [];
             this.#cancelConnectingMode();
             this.#renderConnectionsForActiveMap();
@@ -108,6 +117,16 @@ export class ConnectionManager {
 
         this.bus.on(EVENTS.UI_CONNECTION_CREATE_REQUEST, () => {
             this.#startConnectingMode();
+        });
+
+        this.bus.on(EVENTS.UI_SETTINGS_CONNECTION_OFF_MAP_VISIBILITY_CHANGED, ({ enabled }) => {
+            this.showOffMapConnectionsWhenNotActive = enabled;
+            this.#renderConnectionsForActiveMap();
+        });
+
+        this.bus.on(EVENTS.UI_SETTINGS_CONNECTION_ALL_VISIBILITY_CHANGED, ({ enabled }) => {
+            this.showAllConnectionsWhenNotActive = enabled;
+            this.#renderConnectionsForActiveMap();
         });
 
         this.bus.on(EVENTS.UI_POINT_SAVE_REQUESTED, () => {
@@ -146,27 +165,42 @@ export class ConnectionManager {
         });
 
         this.bus.on(EVENTS.UI_CONNECTION_HIGHLIGHT, ({ connectionId, type }) => {
+            if (type == "focused") {
+                this.focusedConnectionId = connectionId;
+            } else {
+                if (this.focusedConnectionId == connectionId) {
+                    this.focusedConnectionId = null;
+                }
+            }
+
             if (this.mapViewer.doesLineExist(connectionId)) {
                 this.mapViewer.changeLineType(connectionId, type);
             }
         });
 
-        this.bus.on(EVENTS.UI_CONNECTION_CENTER_VIEW, ({ startPointId, endPointId }) => {
-            if (this.mapViewer.doesMarkerExist(startPointId) && this.mapViewer.doesMarkerExist(endPointId)) {
-                let pos1 = this.mapViewer.getMarkerPosition(startPointId);
-                let pos2 = this.mapViewer.getMarkerPosition(endPointId);
+        this.bus.on(EVENTS.UI_CONNECTION_CENTER_VIEW, ({ connectionId }) => {
+            let visibleMarkerIds = this.#getVisibleConnectionMarkerIds(connectionId);
+
+            if (visibleMarkerIds.length == 2) {
+                let firstMarkerId = visibleMarkerIds[0];
+                let secondMarkerId = visibleMarkerIds[1];
+                let pos1 = this.mapViewer.getMarkerPosition(firstMarkerId);
+                let pos2 = this.mapViewer.getMarkerPosition(secondMarkerId);
                 let centerX = (pos1.x + pos2.x) / 2;
                 let centerY = (pos1.y + pos2.y) / 2;
                 this.mapViewer.moveTo(centerX, centerY);
             }
         });
 
-        this.bus.on(EVENTS.UI_CONNECTION_DELETE_REQUEST, async ({ connectionId, startPointId, endPointId }) => {
+        this.bus.on(EVENTS.UI_CONNECTION_DELETE_REQUEST, async ({ connectionId }) => {
             if (connectionId < 0) {
                 // unsaved connection
                 this.unsavedConnections = this.unsavedConnections.filter(connection =>
                     connection.connection_id != connectionId
                 );
+                if (this.focusedConnectionId == connectionId) {
+                    this.focusedConnectionId = null;
+                }
                 this.#renderConnectionsForActiveMap();
                 this.#emitConnectionListUpdate();
                 this.bus.emit(EVENTS.UNSAVED_CONNECTION_DELETED);
@@ -292,37 +326,112 @@ export class ConnectionManager {
         }
     }
 
-    #renderConnectionsForActiveMap() {
-        this.mapViewer.clearLines();
+    #getConnectionById(connectionId) {
+        let connection = this.connectionsList.find(connection => connection.connection_id == connectionId);
 
-        let connectionsForActiveMap = this.connectionsList.filter(connection =>
-            this.mapViewer.doesMarkerExist(connection.start_point_id) &&
-            this.mapViewer.doesMarkerExist(connection.end_point_id)
-        );
-
-        for (let i = 0; i < connectionsForActiveMap.length; i++) {
-            let type = "default";
-            if (this.activePointId == connectionsForActiveMap[i].start_point_id ||
-                this.activePointId == connectionsForActiveMap[i].end_point_id) {
-                type = "editing";
-            }
-            this.mapViewer.connectMarkers(
-                connectionsForActiveMap[i].start_point_id,
-                connectionsForActiveMap[i].end_point_id,
-                connectionsForActiveMap[i].connection_id,
-                type
-            );
+        if (!connection) {
+            connection = this.unsavedConnections.find(connection => connection.connection_id == connectionId);
         }
 
-        for (let i = 0; i < this.unsavedConnections.length; i++) {
-            if (this.mapViewer.doesMarkerExist(this.unsavedConnections[i].start_point_id) &&
-                this.mapViewer.doesMarkerExist(this.unsavedConnections[i].end_point_id)) {
-                this.mapViewer.connectMarkers(
-                    this.unsavedConnections[i].start_point_id,
-                    this.unsavedConnections[i].end_point_id,
-                    this.unsavedConnections[i].connection_id,
-                    "unsaved"
-                );
+        return connection;
+    }
+
+    #getVisibleConnectionMarkerIds(connectionId) {
+        let visibleMarkerIds = [];
+        let connection = this.#getConnectionById(connectionId);
+
+        if (connection) {
+            let startExists = this.mapViewer.doesMarkerExist(connection.start_point_id);
+            let endExists = this.mapViewer.doesMarkerExist(connection.end_point_id);
+            let portalMarkerId = this.portalMarkerIdsByConnection[connectionId];
+
+            if (startExists && endExists) {
+                visibleMarkerIds.push(connection.start_point_id);
+                visibleMarkerIds.push(connection.end_point_id);
+            } else {
+                if (startExists != endExists) {
+                    if (startExists) {
+                        visibleMarkerIds.push(connection.start_point_id);
+                    } else {
+                        visibleMarkerIds.push(connection.end_point_id);
+                    }
+
+                    if (portalMarkerId != null && this.mapViewer.doesMarkerExist(portalMarkerId)) {
+                        visibleMarkerIds.push(portalMarkerId);
+                    }
+                }
+            }
+        }
+
+        return visibleMarkerIds;
+    }
+
+    #drawOffMapConnection(connection, existingMarkerId, lineType) {
+        let positon = this.mapViewer.getMarkerPosition(existingMarkerId);
+        this.mapViewer.placeMarkerByImageCoordinates(
+            this.portalIdStart,
+            positon.x + 20,
+            positon.y + 20,
+            32,
+            32,
+            "portal"
+        );
+        this.mapViewer.setMarkerSelectable(this.portalIdStart, false);
+        this.mapViewer.connectMarkers(existingMarkerId, this.portalIdStart, connection.connection_id, lineType);
+        this.portalMarkerIdsByConnection[connection.connection_id] = this.portalIdStart;
+    }
+
+    #renderConnectionsForActiveMap() {
+        for (const portalMarkerId in this.portalMarkerIdsByConnection) {
+            if (this.mapViewer.doesMarkerExist(this.portalMarkerIdsByConnection[portalMarkerId])) {
+                this.mapViewer.removeMarker(this.portalMarkerIdsByConnection[portalMarkerId]);
+            }
+
+        }
+        this.portalMarkerIdsByConnection = {};
+        this.mapViewer.clearLines();
+
+        let portalId = this.portalIdStart;
+
+        for (const connection of this.connectionsList) {
+            let startExists = this.mapViewer.doesMarkerExist(connection.start_point_id);
+            let endExists = this.mapViewer.doesMarkerExist(connection.end_point_id);
+            let isActive = (this.activePointId == connection.start_point_id || this.activePointId == connection.end_point_id);
+
+            if (this.showAllConnectionsWhenNotActive || isActive) {
+                if (startExists && endExists) {
+                    let lineType = isActive ? "editing" : "default";
+                    this.mapViewer.connectMarkers(connection.start_point_id, connection.end_point_id, connection.connection_id, lineType);
+                } else {
+                    let shouldRenderOffMap = ((this.showAllConnectionsWhenNotActive && this.showOffMapConnectionsWhenNotActive) || isActive) && (startExists != endExists);
+                    if (shouldRenderOffMap) {
+                        let existingMarkerId = startExists ? connection.start_point_id : connection.end_point_id;
+                        let lineType = isActive ? "editing" : "default";
+                        this.#drawOffMapConnection(connection, existingMarkerId, lineType);
+                        portalId--;
+                    }
+                }
+            }
+        }
+
+        for (let unsavedConnection of this.unsavedConnections) {
+            let startExists = this.mapViewer.doesMarkerExist(unsavedConnection.start_point_id);
+            let endExists = this.mapViewer.doesMarkerExist(unsavedConnection.end_point_id);
+
+            if (startExists && endExists) {
+                this.mapViewer.connectMarkers(unsavedConnection.start_point_id, unsavedConnection.end_point_id, unsavedConnection.connection_id, "unsaved");
+            } else {
+                if (startExists != endExists) {
+                    let existingMarkerId = startExists ? unsavedConnection.start_point_id : unsavedConnection.end_point_id;
+                    this.#drawOffMapConnection(unsavedConnection, existingMarkerId, "unsaved");
+                    portalId--;
+                }
+            }
+        }
+
+        if (this.focusedConnectionId) {
+            if (this.mapViewer.doesLineExist(this.focusedConnectionId)) {
+                this.mapViewer.changeLineType(this.focusedConnectionId, "focused");
             }
         }
     }
@@ -344,6 +453,10 @@ export class ConnectionManager {
 
         try {
             await deleteConnection(connectionId);
+
+            if (this.focusedConnectionId == connectionId) {
+                this.focusedConnectionId = null;
+            }
 
             this.connectionsList = this.connectionsList.filter(connection =>
                 connection.connection_id != connectionId

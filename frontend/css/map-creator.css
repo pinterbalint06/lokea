@@ -488,6 +488,10 @@ main {
     transition: width 1s linear;
 }
 
+.pointer {
+    cursor: pointer;
+}
+
 @media (max-width: 992px) {
     #toastPlace {
         top: 4.5rem !important;

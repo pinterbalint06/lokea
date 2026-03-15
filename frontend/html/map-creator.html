@@ -130,6 +130,25 @@
                                                 type="number" id="fovHeightNumber" min="10" max="1000" value="100">
                                         </div>
                                     </div>
+
+                                    <div class="w-100 border-top border-secondary border-opacity-25 pt-3 mt-1">
+                                        <h6 class="h6 text-uppercase text-body-secondary mb-2">Kapcsolatok</h6>
+                                        <div class="form-check form-switch w-100">
+                                            <input class="form-check-input" type="checkbox" role="switch"
+                                                id="allConnectionsWhenNotActiveToggle" checked>
+                                            <label class="form-check-label ms-2"
+                                                for="allConnectionsWhenNotActiveToggle">
+                                                Összes kapcsolat kijelölés nélküli megjelenítése
+                                            </label>
+                                        </div>
+                                        <div class="form-check form-switch w-100 mb-2">
+                                            <input class="form-check-input" type="checkbox" role="switch"
+                                                id="offMapConnectionsToggle" checked>
+                                            <label class="form-check-label ms-2" for="offMapConnectionsToggle">
+                                                Térképen átívelő kapcsolatok megjelenítése
+                                            </label>
+                                        </div>
+                                    </div>
                                 </div>
                             </div>
                         </div>
@@ -375,9 +394,10 @@
     </main>
 
     <template id="connection-card-template">
-        <div class="kapcsolat-kartya uveg d-flex align-items-center justify-content-between p-2 rounded mb-2 flex-wrap">
+        <div
+            class="kapcsolat-kartya uveg d-flex align-items-center justify-content-between p-2 rounded mb-2 flex-wrap pointer">
             <div class="d-flex align-items-center gap-2 flex-grow-1 flex-wrap">
-                <span class="badge point-badge rounded-pill">
+                <span class="start-point badge point-badge rounded-pill pointer">
                     <span class="opacity-50 small me-1">ID</span>
                     <span class="start-id"></span>
                 </span>
@@ -386,7 +406,7 @@
                     <use href="/images/map-creator-icons.svg#icon-width-arrow"></use>
                 </svg>
 
-                <span class="badge point-badge rounded-pill">
+                <span class="end-point badge point-badge rounded-pill pointer">
                     <span class="opacity-50 small me-1">ID</span>
                     <span class="end-id"></span>
                 </span>

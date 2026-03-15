@@ -88,6 +88,8 @@ export class UIManager {
             fovWidthNumber: document.getElementById("fovWidthNumber"),
             fovHeightRange: document.getElementById("fovHeightRange"),
             fovHeightNumber: document.getElementById("fovHeightNumber"),
+            offMapConnectionsToggle: document.getElementById("offMapConnectionsToggle"),
+            allConnectionsWhenNotActiveToggle: document.getElementById("allConnectionsWhenNotActiveToggle"),
 
             // shared delete modal content
             deleteTitle: document.getElementById("deleteTitle"),
@@ -496,6 +498,19 @@ export class UIManager {
 
         this.elements.fovToggle.addEventListener("change", (event) => {
             this.bus.emit(EVENTS.UI_SETTINGS_FOV_TOGGLED, { enabled: event.target.checked });
+        });
+
+        this.elements.offMapConnectionsToggle.addEventListener("change", (event) => {
+            this.bus.emit(EVENTS.UI_SETTINGS_CONNECTION_OFF_MAP_VISIBILITY_CHANGED, {
+                enabled: event.target.checked
+            });
+        });
+
+        this.elements.allConnectionsWhenNotActiveToggle.addEventListener("change", (event) => {
+            this.elements.offMapConnectionsToggle.disabled = !event.target.checked;
+            this.bus.emit(EVENTS.UI_SETTINGS_CONNECTION_ALL_VISIBILITY_CHANGED, {
+                enabled: event.target.checked
+            });
         });
 
         this.#setupFinalDeleteButton();
@@ -1048,8 +1063,7 @@ export class UIManager {
 
                 card.addEventListener("click", () => {
                     this.bus.emit(EVENTS.UI_CONNECTION_CENTER_VIEW, {
-                        startPointId: connection.start_point_id,
-                        endPointId: connection.end_point_id
+                        connectionId: connection.connection_id
                     });
                 });
 
@@ -1074,6 +1088,26 @@ export class UIManager {
                         });
                     }
                 );
+
+                let startPoint = clone.querySelector(".start-point");
+
+                startPoint.addEventListener("click", (event) => {
+                    event.stopPropagation();
+                    this.bus.emit(EVENTS.UI_POINT_CENTER_VIEW, {
+                        targetPointId: connection.start_point_id,
+                        targetMapId: connection.start_map_id
+                    });
+                });
+
+                let endPoint = clone.querySelector(".end-point");
+
+                endPoint.addEventListener("click", (event) => {
+                    event.stopPropagation();
+                    this.bus.emit(EVENTS.UI_POINT_CENTER_VIEW, {
+                        targetPointId: connection.end_point_id,
+                        targetMapId: connection.end_map_id
+                    });
+                });
 
                 fragment.appendChild(clone);
             }

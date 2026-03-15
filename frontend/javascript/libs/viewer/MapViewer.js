@@ -6,7 +6,8 @@ const MARKER_URLS = {
     "edit": "/images/markers/edit-marker.webp",
     "ready": "/images/markers/ready-marker.webp",
     "uploading": "/images/markers/uploading-marker.webp",
-    "fov_cone": "/images/markers/cone.webp"
+    "fov_cone": "/images/markers/cone.webp",
+    "portal": "/images/markers/portal.webp"
 }
 
 const CONNECTION_TYPES = {
@@ -133,6 +134,7 @@ export class MapViewer extends WASMViewerBase {
      * @param {number} [options.canvasWidth=DEFAULT_OPTIONS["canvasWidth"]] - The width of the canvas.
      * @param {number} [options.canvasHeight=DEFAULT_OPTIONS["canvasHeight"]] - The height of the canvas.
      * @param {number} [options.panAnimationSpeed=DEFAULT_OPTIONS["panAnimationSpeed"]] - The speed of the pan animation
+     * @param {number} [options.zoomAnimationSpeed=DEFAULT_OPTIONS["zoomAnimationSpeed"]] - The speed of the zoom animation
      * @throws {Error} Throws an error if the canvas element with the specified ID does not exist.
      */
     constructor(canvasId, options = {}) {
@@ -151,7 +153,7 @@ export class MapViewer extends WASMViewerBase {
         this.#panAnimationSpeed = options.panAnimationSpeed ? options.panAnimationSpeed : DEFAULT_OPTIONS.panAnimationSpeed;
         this.#zoomAnimationSpeed = options.zoomAnimationSpeed ? options.zoomAnimationSpeed : DEFAULT_OPTIONS.zoomAnimationSpeed;
 
-        this.#cacheMarkers();
+        this.#cacheMarker("uploading", MARKER_URLS["uploading"]);
     }
 
     // |------------------|
@@ -659,6 +661,16 @@ export class MapViewer extends WASMViewerBase {
         }
     }
 
+    async cacheMarkers() {
+        let promises = [];
+
+        for (const type in MARKER_URLS) {
+            promises.push(this.#cacheMarker(type, MARKER_URLS[type]));
+        }
+
+        await Promise.all(promises);
+    }
+
     // |-----------------|
     // | PRIVATE METHODS |
     // |-----------------|
@@ -691,27 +703,20 @@ export class MapViewer extends WASMViewerBase {
     }
 
     async #cacheMarker(type, url) {
-        try {
-            let response = await fetch(url);
-            if (!response.ok) {
-                throw new Error("Marker failed to load: " + url);
+        let lowerType = type.toLowerCase();
+        if (!this.#markerCache[lowerType]) {
+            try {
+                let response = await fetch(url);
+                if (!response.ok) {
+                    throw new Error("Marker failed to load: " + url);
+                }
+                let blob = await response.blob();
+                let markerURL = URL.createObjectURL(blob);
+                this.#markerCache[type] = markerURL;
+            } catch (error) {
+                console.error("Marker caching failed:", error);
             }
-            let blob = await response.blob();
-            let markerURL = URL.createObjectURL(blob);
-            this.#markerCache[type] = markerURL;
-        } catch (error) {
-            console.error("Marker caching failed:", error);
         }
-    }
-
-    async #cacheMarkers() {
-        let promises = [];
-
-        for (const type in MARKER_URLS) {
-            promises.push(this.#cacheMarker(type, MARKER_URLS[type]));
-        }
-
-        await Promise.all(promises);
     }
 
     #animatePan = () => {

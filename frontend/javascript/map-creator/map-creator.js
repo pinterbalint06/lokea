@@ -14,6 +14,7 @@ async function init() {
     const mapViewer = new MapViewer(CONSTANTS.MAP_CANVAS_ID);
     const equirectangularViewer = new EquirectangularViewer(CONSTANTS.EQUIRECTANGULAR_CANVAS_ID);
 
+    let markersCached = mapViewer.cacheMarkers();
     await mapViewer.ready();
     await equirectangularViewer.ready();
 
@@ -25,13 +26,14 @@ async function init() {
 
     appState.gameMapID = getGameMapIdFromUrl();
 
+    await markersCached;
     eventBus.emit(EVENTS.APP_INIT);
 }
 
 document.addEventListener("DOMContentLoaded", init);
 
 // TODOp!: látótérhez svg renderelés
-// TODOp!!: mapok közti kapcsolatok szemléltetése és beállítása hogy melyik irányba legyen
+// TODOp!!: mapok közti kapcsolatok beállítása hogy melyik irányba legyen
 // TODOp!!!!: (ez a három ugyanaz igazábol) markerek fixálása pixel koordinátákra? mindig egy adott pixelen legyenek?
 // TODOp!!!!: (ez a három ugyanaz igazábol) legjobb lenne talán adatbázisban is UV koordinátákat tárolni és csak a usernek megjelenítéshez pixel koordinátákat mutatni
 // TODOp!!!!: (ez a három ugyanaz igazábol) új markernél elsőre nincs helyesen rajta a markeren a fov cone

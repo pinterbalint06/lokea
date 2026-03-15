@@ -12,6 +12,7 @@ export class MarkerManager {
         this.markersCache = {};
         this.activePointId = null;
         this.isPlacingMarker = false;
+        this.pendingCenterMarker = null;
         /**
         * @typedef {Object} ActivePointSession
         * @property {number} mapId - The map id this point belongs to.
@@ -33,7 +34,8 @@ export class MarkerManager {
     #bindBusEvents() {
         this.bus.on(EVENTS.MAP_LOADED, async ({ mapId }) => {
             this.bus.emit(EVENTS.TOAST_HIDE_ID, { id: "placeMarker" });
-            this.#loadPoints(mapId);
+            await this.#loadPoints(mapId);
+            this.#centerPendingMarker();
         });
 
         this.bus.on(EVENTS.UI_ADD_NEW_MARKER_REQUEST, () => {
@@ -187,7 +189,12 @@ export class MarkerManager {
                     draftX: null,
                     draftY: null
                 };
-                this.bus.emit(EVENTS.MARKER_SELECTED, { id, position, data: this.markersCache[id] });
+                this.bus.emit(EVENTS.MARKER_SELECTED, {
+                    id,
+                    mapId: this.activePointSession.mapId,
+                    position,
+                    data: this.markersCache[id]
+                });
                 this.#emitDirtyStateChange();
             }
         });
@@ -215,6 +222,26 @@ export class MarkerManager {
                 }
             } else {
                 this.bus.emit(EVENTS.TOAST_SHOW, { msg: "Pont mentése folyamatban, kérlek várj!", type: "danger" });
+            }
+        });
+
+        this.bus.on(EVENTS.UI_POINT_CENTER_VIEW, ({ targetPointId, targetMapId }) => {
+            this.pendingCenterMarker = {
+                pointId: targetPointId,
+                mapId: targetMapId
+            };
+            if (targetMapId == this.appState.activeMapId) {
+                this.#centerPendingMarker();
+            } else {
+                let switchRequest = { canProceed: true, reason: "" };
+                this.bus.emit(EVENTS.MAP_SWITCH_REQUESTED, switchRequest);
+
+                if (switchRequest.canProceed) {
+                    this.bus.emit(EVENTS.UI_SWITCH_MAP_REQUEST, { mapId: targetMapId });
+                } else {
+                    this.pendingCenterMarker = null;
+                    this.bus.emit(EVENTS.TOAST_SHOW, { msg: switchRequest.reason, type: "danger" });
+                }
             }
         });
 
@@ -321,6 +348,7 @@ export class MarkerManager {
                         let position = this.mapViewer.getMarkerPosition(this.activePointId);
                         this.bus.emit(EVENTS.MARKER_SELECTED, {
                             id: this.activePointId,
+                            mapId: this.activePointSession.mapId,
                             position,
                             data: { ...this.markersCache[this.activePointId], north_direction: this.#getSessionNorthDirection(this.activePointSession) }
                         });
@@ -539,5 +567,36 @@ export class MarkerManager {
         }
 
         return position;
+    }
+
+    #centerPendingMarker() {
+        let targetPosition = null;
+
+        if (this.pendingCenterMarker) {
+            let pointId = this.pendingCenterMarker.pointId;
+            let mapId = this.pendingCenterMarker.mapId;
+
+            if (mapId == this.appState.activeMapId) {
+                if (this.mapViewer.doesMarkerExist(pointId)) {
+                    targetPosition = this.mapViewer.getMarkerPosition(pointId);
+                } else {
+                    let targetPoint = this.markersCache[pointId];
+                    if (targetPoint) {
+                        targetPosition = {
+                            x: targetPoint.point_x,
+                            y: targetPoint.point_y
+                        };
+                    }
+                }
+
+                if (targetPosition) {
+                    this.mapViewer.moveTo(targetPosition.x, targetPosition.y);
+                } else {
+                    this.bus.emit(EVENTS.TOAST_SHOW, { msg: "A pont nem található ezen a térképen!", type: "danger" });
+                }
+
+                this.pendingCenterMarker = null;
+            }
+        }
     }
 }
