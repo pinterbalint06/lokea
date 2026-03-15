@@ -6,6 +6,7 @@ import { getGameMapIdFromUrl } from "./shared/utils.js";
 import { eventBus, EVENTS } from './events/EventBus.js';
 import { MarkerManager } from "./managers/MarkerManager.js";
 import { MapManager } from "./managers/MapManager.js";
+import { MapSelectorManager } from "./managers/MapSelectorManager.js";
 import { UIManager } from "./managers/UIManager.js";
 import { EquirectangularManager } from "./managers/EquirectangularManager.js";
 import { ConnectionManager } from "./managers/ConnectionManager.js";
@@ -19,6 +20,7 @@ async function init() {
     await equirectangularViewer.ready();
 
     new UIManager(eventBus);
+    new MapSelectorManager(eventBus);
     new MarkerManager(eventBus, mapViewer, appState);
     new MapManager(eventBus, mapViewer, appState);
     new EquirectangularManager(eventBus, equirectangularViewer, mapViewer, appState);

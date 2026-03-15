@@ -40,6 +40,18 @@ export class ConnectionManager {
             this.#emitConnectionListUpdate();
         });
 
+        this.bus.on(EVENTS.MAP_DELETED, async ({ mapId }) => {
+            this.unsavedConnections = this.unsavedConnections.filter(connection =>
+                !this.#isConnectionOnMap(connection, mapId)
+            );
+            this.connectionsList = this.connectionsList.filter(connection =>
+                !this.#isConnectionOnMap(connection, mapId)
+            );
+
+            this.#renderConnectionsForActiveMap();
+            this.#emitConnectionListUpdate();
+        });
+
         this.bus.on(EVENTS.MARKER_SELECTED, ({ id, mapId }) => {
             this.activePointId = id;
             this.activePointMapId = mapId ?? this.appState.activeMapId;
@@ -268,6 +280,10 @@ export class ConnectionManager {
             this.bus.emit(EVENTS.TOAST_HIDE_ID, { id: this.connectionToastId });
             this.bus.emit(EVENTS.CONNECTION_MODE_CHANGED, { isConnecting: false });
         }
+    }
+
+    #isConnectionOnMap(connection, mapId) {
+        return connection.start_map_id == mapId || connection.end_map_id == mapId;
     }
 
     async #saveConnections() {
