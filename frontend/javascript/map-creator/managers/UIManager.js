@@ -3,6 +3,7 @@ import { CONSTANTS } from "../shared/constants.js";
 import { createSVGIcon } from "../../libs/utils/svgUtils.js";
 import { showToast, createSpinnerIcon, savePreviousValue } from "../shared/utils.js";
 import { CustomSelect } from "../../libs/elements/CustomSelect.js";
+import { HoldToUnlockButton } from "../../libs/elements/HoldToUnlockButton.js";
 import { createElement } from "../../libs/utils/DOMUtils.js";
 import { ICONS } from "../../libs/icons/icons.js";
 
@@ -119,196 +120,7 @@ export class UIManager {
 
         this.elements.customMapSelector = new CustomSelect(
             this.elements.mapSelectWrapped,
-            (value, text) => {
-                let textSpan = document.createElement("span");
-                textSpan.innerText = text;
-                textSpan.classList.add("map-name-text");
-
-                let inputField = createElement("input", {
-                    type: "text",
-                    class: "form-control form-control-sm map-name-input d-none",
-                    value: text,
-                    maxlength: "20",
-                    "aria-label": "Térkép neve"
-                });
-
-                let textContainer = createElement("div", {
-                    class: "map-name-container"
-                }, [textSpan, inputField]);
-
-                let deleteIcon = createSVGIcon(ICONS.TRASH,
-                    {
-                        height: "1em",
-                        width: "1em",
-                        fill: "currentColor"
-                    }
-                );
-
-                let deleteButton = createElement("button",
-                    {
-                        type: "button",
-                        class: "btn-delete btn btn-outline-danger btn-sm rounded-circle d-flex align-items-center justify-content-center p-0"
-                    },
-                    [deleteIcon]
-                );
-
-                let mapId = parseInt(value);
-
-                deleteButton.addEventListener("click", (event) => {
-                    event.stopPropagation();
-
-                    this.#cancelRenameSessions();
-
-                    let request = { canProceed: true, reason: "" };
-                    this.bus.emit(EVENTS.UI_DELETE_MAP_REQUESTED, { request, mapId });
-
-                    if (request.canProceed) {
-                        this.#showDeleteModal({ type: "map", id: mapId, name: textSpan.innerText });
-                    } else {
-                        this.bus.emit(EVENTS.TOAST_SHOW, { msg: request.reason, type: "danger" });
-                    }
-                });
-
-                let renameIcon = createSVGIcon(ICONS.EDIT,
-                    {
-                        height: "1em",
-                        width: "1em",
-                        fill: "currentColor"
-                    }
-                );
-
-                let renameButton = createElement("button",
-                    {
-                        type: "button",
-                        class: "btn-delete btn uvegbutton-outline btn-sm rounded-circle d-flex align-items-center justify-content-center p-0"
-                    },
-                    [renameIcon]
-                );
-
-                renameButton.addEventListener("click", (event) => {
-                    event.stopPropagation();
-
-                    // exclue mapId so pass it
-                    this.#cancelRenameSessions(mapId);
-
-                    let currentName = textSpan.innerText;
-
-                    textSpan.classList.add("d-none");
-                    inputField.classList.remove("d-none");
-                    inputField.value = currentName;
-                    inputField.focus();
-                    inputField.select();
-
-                    deleteButton.disabled = true;
-                    renameButton.disabled = true;
-
-                    let originalValue = currentName;
-
-                    // removes event listeners with abort
-                    let editSessionController = new AbortController();
-
-                    const exitEditMode = () => {
-                        textSpan.classList.remove("d-none");
-                        inputField.classList.add("d-none");
-                        deleteButton.disabled = false;
-                        renameButton.disabled = false;
-                    };
-
-                    const renameContext = {
-                        mapId,
-                        textSpan,
-                        inputField,
-                        deleteButton,
-                        renameButton,
-                        originalValue,
-                        editSessionController,
-                        isEditing: true,
-                        isSubmitting: false,
-                        exitEditMode
-                    };
-
-                    this.renameContexts[mapId] = renameContext;
-
-                    const commitRename = () => {
-                        let newTitle = inputField.value.trim();
-                        let mapTitleRegex = /^\w{1,20}$/;
-
-                        if (newTitle != originalValue && newTitle.match(mapTitleRegex)) {
-                            renameContext.isSubmitting = true;
-                            inputField.disabled = true;
-
-                            this.bus.emit(EVENTS.UI_MAP_RENAME_REQUEST, {
-                                mapId,
-                                newTitle
-                            });
-                        } else {
-                            if (newTitle.length == 0) {
-                                this.#closeRenameContext(mapId);
-                                this.bus.emit(EVENTS.TOAST_SHOW, {
-                                    msg: "A térkép neve nem lehet üres!",
-                                    type: "danger"
-                                });
-                            } else {
-                                if (!newTitle.match(mapTitleRegex)) {
-                                    this.bus.emit(EVENTS.TOAST_SHOW, {
-                                        msg: "A térkép neve 1-20 karakter lehet, csak betű, szám és aláhúzás használható.",
-                                        type: "danger"
-                                    });
-                                    inputField.select();
-                                } else {
-                                    this.#closeRenameContext(mapId);
-                                }
-                            }
-                        }
-                    };
-
-                    inputField.addEventListener("keydown", (e) => {
-                        if (renameContext.isEditing && !renameContext.isSubmitting && !inputField.disabled) {
-                            if (e.key == "Enter") {
-                                e.preventDefault();
-                                e.stopPropagation();
-                                commitRename();
-                            } else {
-                                if (e.key == "Escape") {
-                                    e.preventDefault();
-                                    e.stopPropagation();
-                                    this.#closeRenameContext(mapId);
-                                }
-                            }
-                        }
-                    }, { signal: editSessionController.signal });
-
-                    inputField.addEventListener("blur", () => {
-                        if (renameContext.isEditing && !renameContext.isSubmitting && !inputField.disabled) {
-                            commitRename();
-                            if (renameContext.isEditing && !renameContext.isSubmitting && !inputField.disabled) {
-                                this.#closeRenameContext(mapId);
-                            }
-                        }
-                    }, { signal: editSessionController.signal });
-
-                    inputField.addEventListener("click", (e) => {
-                        e.stopPropagation();
-                    }, { signal: editSessionController.signal });
-
-                    this.elements.mapSelectWrapped.addEventListener("mousedown", (event) => {
-                        let isInsideOption = event.target.closest(".custom-option");
-                        let isOnButton = event.target.closest("button");
-                        if (isInsideOption && isOnButton) {
-                            event.preventDefault();
-                        }
-                    }, { signal: editSessionController.signal });
-                });
-
-                let buttonsDiv = createElement("div", {
-                    class: "d-flex align-items-center gap-2"
-                }, [renameButton, deleteButton]);
-
-                let wrapperDiv = createElement("div", {
-                    class: "d-flex align-items-center justify-content-between gap-2"
-                }, [textContainer, buttonsDiv]);
-                return wrapperDiv;
-            }
+            (value, text) => this.#createCustomSelectOption(value, text)
         );
     }
 
@@ -525,92 +337,204 @@ export class UIManager {
         this.#setupUploadHandler(this.elements.dropZoneEquirectangular, this.elements.uploadButtonEquirectangular, this.elements.fileInputEquirectangular, EVENTS.UI_EQUIRECTANGULAR_FILE_DROPPED);
     }
 
-    #setupHoldToUnlockButton(button, duration, onUnlockedClick) {
-        let timer = null;
-        let isUnlocked = false;
-        let unlockedDuringPress = false;
+    #createCustomSelectOption(value, text) {
+        let textSpan = document.createElement("span");
+        textSpan.innerText = text;
+        textSpan.classList.add("map-name-text");
 
-        let clickCount = 0;
-        let clickTimeout = null;
+        let inputField = createElement("input", {
+            type: "text",
+            class: "form-control form-control-sm map-name-input d-none",
+            value: text,
+            maxlength: "20",
+            "aria-label": "Térkép neve"
+        });
 
-        const reset = () => {
-            clearTimeout(timer);
-            isUnlocked = false;
-            unlockedDuringPress = false;
-            button.classList.remove("filling", "unlocked");
-            clickCount = 0;
-        };
+        let textContainer = createElement("div", {
+            class: "map-name-container"
+        }, [textSpan, inputField]);
 
-        const unlock = () => {
-            isUnlocked = true;
-            unlockedDuringPress = true;
-            button.classList.remove("filling");
-            button.classList.add("unlocked");
-            clickCount = 0;
-        };
-
-        const startHold = (event) => {
-            // not right click
-            if (!(event.pointerType == "mouse" && event.button != 0)) {
-                if (!isUnlocked) {
-                    clearTimeout(timer);
-                    button.classList.add("filling");
-                    timer = setTimeout(unlock, duration);
-                }
+        let deleteIcon = createSVGIcon(ICONS.TRASH,
+            {
+                height: "1em",
+                width: "1em",
+                fill: "currentColor"
             }
-        };
+        );
 
-        const stopHold = () => {
-            if (!isUnlocked) {
-                clearTimeout(timer);
-                button.classList.remove("filling");
-            }
-        };
+        let deleteButton = createElement("button",
+            {
+                type: "button",
+                class: "btn-delete btn btn-outline-danger btn-sm rounded-circle d-flex align-items-center justify-content-center p-0"
+            },
+            [deleteIcon]
+        );
 
-        button.addEventListener("pointerdown", startHold);
-        button.addEventListener("pointerup", stopHold);
-        button.addEventListener("pointerleave", stopHold);
-        button.addEventListener("pointercancel", stopHold);
+        let mapId = parseInt(value);
 
-        button.addEventListener("click", (event) => {
-            if (isUnlocked) {
-                if (unlockedDuringPress) {
-                    unlockedDuringPress = false;
-                } else {
-                    onUnlockedClick(event);
-                    reset();
-                }
+        deleteButton.addEventListener("click", (event) => {
+            event.stopPropagation();
+
+            this.#cancelRenameSessions();
+
+            let request = { canProceed: true, reason: "" };
+            this.bus.emit(EVENTS.UI_DELETE_MAP_REQUESTED, { request, mapId });
+
+            if (request.canProceed) {
+                this.#showDeleteModal({ type: "map", id: mapId, name: textSpan.innerText });
             } else {
-                event.preventDefault();
-                event.stopPropagation();
-
-                clickCount++;
-                clearTimeout(clickTimeout);
-
-                if (clickCount >= 2) {
-                    this.bus.emit(EVENTS.TOAST_SHOW, {
-                        msg: "A törlés feloldásához tartsa lenyomva a gombot!",
-                        duration: 3000
-                    });
-                    clickCount = 0;
-                } else {
-                    clickTimeout = setTimeout(() => {
-                        clickCount = 0;
-                    }, 2000);
-                }
+                this.bus.emit(EVENTS.TOAST_SHOW, { msg: request.reason, type: "danger" });
             }
         });
 
-        return { reset: reset };
+        let renameIcon = createSVGIcon(ICONS.EDIT,
+            {
+                height: "1em",
+                width: "1em",
+                fill: "currentColor"
+            }
+        );
+
+        let renameButton = createElement("button",
+            {
+                type: "button",
+                class: "btn-delete btn uvegbutton-outline btn-sm rounded-circle d-flex align-items-center justify-content-center p-0"
+            },
+            [renameIcon]
+        );
+
+        renameButton.addEventListener("click", (event) => {
+            event.stopPropagation();
+
+            // exclue mapId so pass it
+            this.#cancelRenameSessions(mapId);
+
+            let currentName = textSpan.innerText;
+
+            textSpan.classList.add("d-none");
+            inputField.classList.remove("d-none");
+            inputField.value = currentName;
+            inputField.focus();
+            inputField.select();
+
+            deleteButton.disabled = true;
+            renameButton.disabled = true;
+
+            let originalValue = currentName;
+
+            // removes event listeners with abort
+            let editSessionController = new AbortController();
+
+            const exitEditMode = () => {
+                textSpan.classList.remove("d-none");
+                inputField.classList.add("d-none");
+                deleteButton.disabled = false;
+                renameButton.disabled = false;
+            };
+
+            const renameContext = {
+                mapId,
+                textSpan,
+                inputField,
+                deleteButton,
+                renameButton,
+                originalValue,
+                editSessionController,
+                isEditing: true,
+                isSubmitting: false,
+                exitEditMode
+            };
+
+            this.renameContexts[mapId] = renameContext;
+
+            const commitRename = () => {
+                let newTitle = inputField.value.trim();
+                let mapTitleRegex = /^\w{1,20}$/;
+
+                if (newTitle != originalValue && newTitle.match(mapTitleRegex)) {
+                    renameContext.isSubmitting = true;
+                    inputField.disabled = true;
+
+                    this.bus.emit(EVENTS.UI_MAP_RENAME_REQUEST, {
+                        mapId,
+                        newTitle
+                    });
+                } else {
+                    if (newTitle.length == 0) {
+                        this.#closeRenameContext(mapId);
+                        this.bus.emit(EVENTS.TOAST_SHOW, {
+                            msg: "A térkép neve nem lehet üres!",
+                            type: "danger"
+                        });
+                    } else {
+                        if (!newTitle.match(mapTitleRegex)) {
+                            this.bus.emit(EVENTS.TOAST_SHOW, {
+                                msg: "A térkép neve 1-20 karakter lehet, csak betű, szám és aláhúzás használható.",
+                                type: "danger"
+                            });
+                            inputField.select();
+                        } else {
+                            this.#closeRenameContext(mapId);
+                        }
+                    }
+                }
+            };
+
+            inputField.addEventListener("keydown", (e) => {
+                if (renameContext.isEditing && !renameContext.isSubmitting && !inputField.disabled) {
+                    if (e.key == "Enter") {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        commitRename();
+                    } else {
+                        if (e.key == "Escape") {
+                            e.preventDefault();
+                            e.stopPropagation();
+                            this.#closeRenameContext(mapId);
+                        }
+                    }
+                }
+            }, { signal: editSessionController.signal });
+
+            inputField.addEventListener("blur", () => {
+                if (renameContext.isEditing && !renameContext.isSubmitting && !inputField.disabled) {
+                    commitRename();
+                    if (renameContext.isEditing && !renameContext.isSubmitting && !inputField.disabled) {
+                        this.#closeRenameContext(mapId);
+                    }
+                }
+            }, { signal: editSessionController.signal });
+
+            inputField.addEventListener("click", (e) => {
+                e.stopPropagation();
+            }, { signal: editSessionController.signal });
+
+            this.elements.mapSelectWrapped.addEventListener("mousedown", (event) => {
+                let isInsideOption = event.target.closest(".custom-option");
+                let isOnButton = event.target.closest("button");
+                if (isInsideOption && isOnButton) {
+                    event.preventDefault();
+                }
+            }, { signal: editSessionController.signal });
+        });
+
+        let buttonsDiv = createElement("div", {
+            class: "d-flex align-items-center gap-2"
+        }, [renameButton, deleteButton]);
+
+        let wrapperDiv = createElement("div", {
+            class: "d-flex align-items-center justify-content-between gap-2"
+        }, [textContainer, buttonsDiv]);
+        return wrapperDiv;
     }
 
     #setupFinalDeleteButton() {
-        const buttonControl = this.#setupHoldToUnlockButton(
-            this.elements.confirmDeleteBtn,
-            2000,
-            (event) => {
-                event.target.blur(); // valami aria warning miatt kell
-                if (this.deleteContext && this.deleteContext.type == "map") {
+        this.elements.holdToUnlockFinalDeleteBtn = new HoldToUnlockButton(this.elements.confirmDeleteBtn, 2000);
+
+        this.elements.holdToUnlockFinalDeleteBtn.addEventListener("confirm", (event) => {
+            event.detail.originalEvent.target.blur(); // valami aria warning miatt kell
+            if (this.deleteContext) {
+                if (this.deleteContext.type == "map") {
                     let request = { canProceed: true, reason: "" };
                     this.bus.emit(EVENTS.UI_DELETE_MAP_REQUESTED, { request, mapId: this.deleteContext.id });
 
@@ -621,29 +545,31 @@ export class UIManager {
                         this.bus.emit(EVENTS.TOAST_SHOW, { msg: request.reason, type: "danger" });
                     }
                 } else {
-                    let request = { canProceed: true, reason: "" };
-                    this.bus.emit(EVENTS.UI_DELETE_POINT_REQUESTED, { request });
+                    if (this.deleteContext.type == "point") {
+                        let request = { canProceed: true, reason: "" };
+                        this.bus.emit(EVENTS.UI_DELETE_POINT_REQUESTED, { request });
 
-                    if (request.canProceed) {
-                        this.elements.confirmDeleteBtn.disabled = true;
-                        this.bus.emit(EVENTS.UI_DELETE_POINT_CONFIRMED);
-                    } else {
-                        this.bus.emit(EVENTS.TOAST_SHOW, { msg: request.reason, type: "danger" });
+                        if (request.canProceed) {
+                            this.elements.confirmDeleteBtn.disabled = true;
+                            this.bus.emit(EVENTS.UI_DELETE_POINT_CONFIRMED);
+                        } else {
+                            this.bus.emit(EVENTS.TOAST_SHOW, { msg: request.reason, type: "danger" });
+                        }
                     }
                 }
             }
-        );
+        });
 
         this.elements.deleteModal.addEventListener("hidden.bs.modal", (event) => {
             if (event.target == this.elements.deleteModal) {
-                buttonControl.reset();
+                this.elements.holdToUnlockFinalDeleteBtn.reset();
                 this.deleteContext = null;
                 this.elements.confirmDeleteBtn.disabled = false;
             }
         });
         this.elements.deleteModal.addEventListener("show.bs.modal", (event) => {
             if (event.target == this.elements.deleteModal) {
-                buttonControl.reset();
+                this.elements.holdToUnlockFinalDeleteBtn.reset();
                 this.elements.confirmDeleteBtn.disabled = false;
             }
         });
@@ -658,10 +584,12 @@ export class UIManager {
             this.#setDeleteWarning("Ez a művelet nem vonható vissza. A térképhez tartozó ", "összes pont, kapcsolat és kép is törlésre kerül", ".");
             this.elements.confirmDeleteBtn.textContent = "Térkép végleges törlése";
         } else {
-            this.elements.deleteTitle.textContent = "Pont törlése";
-            this.elements.deleteDescription.textContent = "Biztosan törölni szeretnéd ezt a pontot?";
-            this.#setDeleteWarning("Ez a művelet nem vonható vissza. A ponthoz tartozó ", "összes kapcsolat és a 360°-os kép is törlésre kerül", ".");
-            this.elements.confirmDeleteBtn.textContent = "Pont végleges törlése";
+            if (context.type == "point") {
+                this.elements.deleteTitle.textContent = "Pont törlése";
+                this.elements.deleteDescription.textContent = "Biztosan törölni szeretnéd ezt a pontot?";
+                this.#setDeleteWarning("Ez a művelet nem vonható vissza. A ponthoz tartozó ", "összes kapcsolat és a 360°-os kép is törlésre kerül", ".");
+                this.elements.confirmDeleteBtn.textContent = "Pont végleges törlése";
+            }
         }
 
         this.elements.deleteModalBootstrapElement.show();
@@ -1076,18 +1004,15 @@ export class UIManager {
                 });
 
                 let deleteBtn = clone.querySelector(".btn-delete-connection");
-                this.#setupHoldToUnlockButton(
-                    deleteBtn,
-                    1000,
-                    (event) => {
-                        event.stopPropagation();
-                        this.bus.emit(EVENTS.UI_CONNECTION_DELETE_REQUEST, {
-                            connectionId: connection.connection_id,
-                            startPointId: connection.start_point_id,
-                            endPointId: connection.end_point_id
-                        });
-                    }
-                );
+                let holdToDeleteBtn = new HoldToUnlockButton(deleteBtn, 1000);
+                holdToDeleteBtn.addEventListener("confirm", (event) => {
+                    event.detail.originalEvent.stopPropagation();
+                    this.bus.emit(EVENTS.UI_CONNECTION_DELETE_REQUEST, {
+                        connectionId: connection.connection_id,
+                        startPointId: connection.start_point_id,
+                        endPointId: connection.end_point_id
+                    });
+                });
 
                 let startPoint = clone.querySelector(".start-point");
 
