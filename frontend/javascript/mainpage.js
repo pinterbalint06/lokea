@@ -1,3 +1,6 @@
+import { makeSubtitle, inputGeneral, gombGeneral, makeSvg } from "./libs/utils/DOMutils.js";
+import { validalvaBej } from "./libs/utils/validations.js";
+
 document.addEventListener("DOMContentLoaded", async function () {
     if (!await logined()) {
         document.getElementById('loginButton').addEventListener("click", async function (e) {
@@ -114,7 +117,7 @@ function dropdownLink(title, id, customClasses, svgName) {
     }
     let span = document.createElement('span');
     span.innerText = title;
-    a.appendChild(makeSvg(svgName, "dropdown-icons"));
+    a.appendChild(makeSvg(svgName, "dropdown-icons", null));
     a.appendChild(span);
 
     li.appendChild(a);
@@ -129,75 +132,6 @@ function dropdownDivider() {
     return li;
 }
 
-function inputGeneral(type, placeholder, value, id, osztalyok, disabled) {
-    let input = document.createElement('input');
-    input.type = type;
-    if (placeholder != null) {
-        input.placeholder = placeholder;
-    }
-    if (value != null) {
-        input.value = value;
-    }
-    input.id = id;
-    if (osztalyok != null) {
-        input.classList.add(...osztalyok);
-    }
-    input.disabled = disabled;
-    return input;
-}
-
-function gombGeneral(type, text, svg, color, id) {
-    let button = document.createElement('button');
-    button.type = type;
-    if (svg == null) {
-        button.innerText = text;
-    }
-    else {
-        button.appendChild(makeSvg(svg, "buttonIcon"));
-        let textNode = document.createTextNode(text);
-        button.appendChild(textNode);
-    }
-
-    if (id != null) {
-        button.id = id;
-    }
-    button.classList.add('btn');
-    switch (color) {
-        case "red":
-            button.classList.add('btn-danger');
-            break;
-        case "blue":
-            button.classList.add('btn-primary');
-            break;
-        case "lightblue":
-            button.classList.add('btn-info');
-            break;
-        case "green":
-            button.classList.add('btn-success');
-            break;
-        case "link":
-            button.classList.add('btn-link');
-            break;
-    }
-    return button;
-}
-
-function makeSvg(name, className) {
-    let svg = document.createElementNS("http://www.w3.org/2000/svg", "svg");
-    svg.classList.add(className);
-    let use = document.createElementNS("http://www.w3.org/2000/svg", "use");
-    use.setAttributeNS("http://www.w3.org/1999/xlink", "xlink:href", `../images/icons/sprite.svg#${name}`);
-
-    svg.appendChild(use);
-    return svg;
-}
-
-function makeSubtitle(text) {
-    let subtitle = document.createElement('h5');
-    subtitle.classList.add("subtitle");
-    subtitle.innerText = text;
-    return subtitle;
-}
 
 async function getProfilePicture(route) {
     try {
@@ -244,27 +178,7 @@ async function deleteProfilePicture() {
     }
 }
 
-function validalvaBej(a, b) {
-    let fail = false;
-    let username = a.value;
-    let jelszo = b.value;
-    if (username.length > 50 || username.length < 1) {
-        fail = true;
-        a.classList.add("border-danger");
-    }
-    else {
-        a.classList.remove("border-danger");
-    }
-    if (jelszo.length > 50 || jelszo.length < 8) {
-        fail = true;
-        b.classList.add("border-danger");
-    }
-    else {
-        b.classList.remove("border-danger");
-    }
-    console.log(fail);
-    return fail;
-}
+
 
 async function bejelentkezes(username, jelszo, remember) {
     try {

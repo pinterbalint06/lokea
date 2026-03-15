@@ -1,3 +1,5 @@
+import { validalvaBej, validalvaReg } from "./libs/utils/validations";
+
 document.addEventListener("DOMContentLoaded", async function () {
     document.getElementById('register').addEventListener("click", async function () {
         let username = document.getElementById('regUser');
@@ -15,51 +17,6 @@ document.addEventListener("DOMContentLoaded", async function () {
         }
     });
 });
-
-function validalvaReg(a, b, c) {
-    let fail = false;
-    let username = a.value;
-    let email = b.value;
-    let jelszo = c.value;
-    if (username.length > 50 || username.length < 1 || !isCorrectUsername(username)) {
-        fail = true;
-        a.classList.add("border-danger");
-    }
-    else {
-        a.classList.remove("border-danger");
-    }
-    if (email.length > 250 || email.length < 5 || !isEmail(email)) {
-        fail = true;
-        b.classList.add("border-danger");
-    }
-    else {
-        b.classList.remove("border-danger");
-    }
-    if (jelszo.length > 50 || jelszo.length < 8 || !isCorrectPassword(jelszo)) {
-        fail = true;
-        c.classList.add("border-danger");
-    }
-    else {
-        c.classList.remove("border-danger");
-    }
-    return fail;
-}
-
-function isCorrectUsername(username) {
-    const re = /^[a-zA-Z0-9áéíóöőúüűÁÉÍÓÖŐÚÜŰ_-]{1,20}$/;
-    return re.test(username);
-}
-
-function isEmail(email) {
-    const re = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    return re.test(email);
-}
-
-function isCorrectPassword(password) {
-    const hasUpperCase = /[A-Z]/.test(password);
-    const hasNumber = /\d/.test(password);
-    return hasUpperCase && hasNumber;
-}
 
 async function regisztracio(username, email, jelszo) {
     try {
@@ -95,27 +52,6 @@ async function regisztracio(username, email, jelszo) {
     } catch (error) {
         alert(`hálózati hiba: ${error}`);
     }
-}
-
-function validalvaBej(a, b) {
-    let fail = false;
-    let username = a.value;
-    let jelszo = b.value;
-    if (username.length > 50 || username.length < 1) {
-        fail = true;
-        a.classList.add("border-danger");
-    }
-    else {
-        a.classList.remove("border-danger");
-    }
-    if (jelszo.length > 50 || jelszo.length < 8) {
-        fail = true;
-        b.classList.add("border-danger");
-    }
-    else {
-        b.classList.remove("border-danger");
-    }
-    return fail;
 }
 
 async function bejelentkezes(username, jelszo) {

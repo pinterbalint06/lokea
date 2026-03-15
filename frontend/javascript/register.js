@@ -1,3 +1,6 @@
+import { validalvaReg } from "./libs/utils/validations.js";
+import { makeSvg } from "./libs/utils/DOMutils.js";
+
 document.addEventListener("DOMContentLoaded", function () {
     modalElement = document.getElementById('modalReg');
     modal = new bootstrap.Modal(modalElement);
@@ -6,43 +9,11 @@ document.addEventListener("DOMContentLoaded", function () {
         let email = document.getElementById('regEmail');
         let jelszo = document.getElementById('regPass');
         let is2fa = document.getElementById('twofactorCheckbox');
-        if (!validalvaReg(username.value, email.value, jelszo.value)) {
+        if (!validalvaReg(username, email, jelszo)) {
             regisztracio(username, email, jelszo, is2fa);
         }
     });
 })
-
-function validalvaReg(username, email, password) {
-    let fail = false;
-
-    if (username.length > 50 || username.length < 1 || !isCorrectUsername(username)) {
-        fail = true;
-    }
-    if (email.length > 250 || email.length < 5 || !isEmail(email)) {
-        fail = true;
-    }
-    if (password.length > 50 || password.length < 8 || !isCorrectPassword(password)) {
-        fail = true;
-    }
-    //ide meg kell valami hogy mutassa hogy megbukott a validalason
-    return fail;
-}
-
-function isCorrectUsername(username) {
-    const re = /^[a-zA-Z0-9áéíóöőúüűÁÉÍÓÖŐÚÜŰ_-]{1,20}$/;
-    return re.test(username);
-}
-
-function isEmail(email) {
-    const re = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    return re.test(email);
-}
-
-function isCorrectPassword(password) {
-    const hasUpperCase = /[A-Z]/.test(password);
-    const hasNumber = /\d/.test(password);
-    return hasUpperCase && hasNumber;
-}
 
 async function regisztracio(username, email, password, is2fa) {
     try {
@@ -118,17 +89,6 @@ function regisztralt(hibakod = null, hibauzenet = "") {
             }, 3000);
         }, 2000);
     }
-}
-
-function makeSvg(name, svgclasses, useclasses) {
-    let svg = document.createElementNS("http://www.w3.org/2000/svg", "svg");
-    svg.classList.add(svgclasses);
-    let use = document.createElementNS("http://www.w3.org/2000/svg", "use");
-    use.classList.add(useclasses);
-    use.setAttributeNS("http://www.w3.org/1999/xlink", "xlink:href", `../images/icons/sprite.svg#${name}`);
-
-    svg.appendChild(use);
-    return svg;
 }
 
 let modalElement;
