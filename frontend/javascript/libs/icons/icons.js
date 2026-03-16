@@ -18,5 +18,9 @@ export const ICONS = {
     EDIT: {
         href: "/images/map-creator-icons.svg#icon-pencil",
         viewBox: "0 0 121.48 122.88"
+    },
+    WARNING: {
+        href: "/images/map-creator-icons.svg#icon-warning",
+        viewBox: "0 0 511.999 463.377"
     }
 };

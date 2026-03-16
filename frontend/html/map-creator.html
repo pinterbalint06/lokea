@@ -340,57 +340,7 @@
                 </div>
             </div>
         </div>
-        <div class="modal fade" id="valtoztatasokModal" tabindex="-1" aria-labelledby="valtoztatasokLabel"
-            aria-hidden="true">
-            <div class="modal-dialog modal-dialog-centered">
-                <div class="modal-content uveg">
-                    <div class="modal-header">
-                        <h1 class="modal-title fs-5" id="valtoztatasokLabel">Változtatások elvetése</h1>
-                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-                    </div>
-                    <div class="modal-body">
-                        <p>Biztos vagy benne, hogy elveted a változtatásokat?</p>
-                    </div>
-                    <div class="modal-footer">
-                        <button type="button" class="btn btn-outline-secondary rounded-pill px-3"
-                            data-bs-dismiss="modal">Mégse</button>
-                        <button type="button" class="btn btn-danger rounded-pill px-3"
-                            id="valtoztatasokElveteseBtn">Elvetem a
-                            változtatásokat</button>
-                    </div>
-                </div>
-            </div>
-        </div>
-        <div class="modal fade" id="deleteModal" data-bs-backdrop="static" tabindex="-1" aria-labelledby="deleteLabel"
-            aria-hidden="true">
-            <div class="modal-dialog modal-dialog-centered">
-                <div class="modal-content uveg border-danger border-opacity-25">
-                    <div class="modal-header border-bottom border-secondary border-opacity-25">
-                        <h1 class="modal-title fs-5 text-danger d-flex align-items-center gap-2" id="deleteLabel">
-                            <svg style="height: 1.2em; fill: currentColor;" viewBox="0 0 511.999 463.377">
-                                <use href="/images/map-creator-icons.svg#icon-warning"></use>
-                            </svg>
-                            <span id="deleteTitle">Törlés</span>
-                        </h1>
-                        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"
-                            aria-label="Close"></button>
-                    </div>
-                    <div class="modal-body">
-                        <p id="deleteDescription">Biztosan törölni szeretnéd?</p>
-                        <p id="deleteWarning" class="text-muted small mb-0">
-                            Ez a művelet nem vonható vissza.
-                        </p>
-                    </div>
-                    <div class="modal-footer border-top border-secondary border-opacity-25">
-                        <button type="button" class="btn btn-outline-secondary rounded-pill px-3"
-                            data-bs-dismiss="modal">Mégse</button>
-                        <button type="button"
-                            class="btn btn-danger rounded-pill px-3 btn-hold-to-unlock btn-delete-confirm"
-                            id="confirmDeleteBtn">Végleges törlés</button>
-                    </div>
-                </div>
-            </div>
-        </div>
+        <div id="modal-wrapper"></div>
     </main>
 
     <template id="connection-card-template">
