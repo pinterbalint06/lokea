@@ -103,4 +103,9 @@ export class DragAndDropUploader extends EventTarget {
             }
         });
     }
+
+    openFileDialog() {
+        this.fileInput.value = "";
+        this.fileInput.click();
+    }
 }

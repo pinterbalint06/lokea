@@ -9,7 +9,9 @@ import { MapManager } from "./managers/MapManager.js";
 import { MapSelectorManager } from "./managers/ui/MapSelectorManager.js";
 import { ModalManager } from "./managers/ui/ModalManager.js";
 import { ConnectionListManager } from "./managers/ui/ConnectionListManager.js";
-import { UIManager } from "./managers/ui/UIManager.js";
+import { LoadingOverlayManager } from "./managers/ui/LoadingOverlayManager.js";
+import { MarkerEditorManager } from "./managers/ui/MarkerEditorManager.js";
+import { ToolbarManager } from "./managers/ui/ToolbarManager.js";
 import { ToastManager } from "./managers/ui/ToastManager.js";
 import { SettingsManager } from "./managers/ui/SettingsManager.js";
 import { EquirectangularManager } from "./managers/EquirectangularManager.js";
@@ -23,7 +25,9 @@ async function init() {
     await mapViewer.ready();
     await equirectangularViewer.ready();
 
-    new UIManager(eventBus);
+    new LoadingOverlayManager(eventBus);
+    new MarkerEditorManager(eventBus);
+    new ToolbarManager(eventBus);
     new ToastManager(eventBus);
     new SettingsManager(eventBus);
     new ModalManager(eventBus);
@@ -48,4 +52,3 @@ document.addEventListener("DOMContentLoaded", init);
 // TODOp!!!!: (ez a három ugyanaz igazábol) markerek fixálása pixel koordinátákra? mindig egy adott pixelen legyenek?
 // TODOp!!!!: (ez a három ugyanaz igazábol) legjobb lenne talán adatbázisban is UV koordinátákat tárolni és csak a usernek megjelenítéshez pixel koordinátákat mutatni
 // TODOp!!!!: (ez a három ugyanaz igazábol) új markernél elsőre nincs helyesen rajta a markeren a fov cone
-// TODOp!: UIManager kezd nagy lenni lehet szét kéne szedni több kisebbre (pl. MapListManager, MapEditManager, btn to holdos cucc, meg tobi)

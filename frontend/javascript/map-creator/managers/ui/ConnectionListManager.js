@@ -5,12 +5,15 @@ export class ConnectionListManager {
     constructor(eventBus) {
         this.bus = eventBus;
 
-        this.elements = {
-            connectionsList: document.getElementById("kapcsolatokLista"),
-            emptyConnections: document.getElementById("nincsenekKapcsolatok")
-        };
+        this.elements = {};
 
+        this.#gatherElements();
         this.#bindBusEvents();
+    }
+
+    #gatherElements() {
+        this.elements.connectionsList = document.getElementById("kapcsolatokLista");
+        this.elements.emptyConnections = document.getElementById("nincsenekKapcsolatok");
     }
 
     #bindBusEvents() {

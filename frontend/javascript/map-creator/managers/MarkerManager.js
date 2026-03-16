@@ -38,7 +38,7 @@ export class MarkerManager {
             this.#centerPendingMarker();
         });
 
-        this.bus.on(EVENTS.UI_ADD_NEW_MARKER_REQUEST, () => {
+        this.bus.on(EVENTS.UI_MARKER_PLACEMENT_REQUESTED, () => {
             if (this.appState.activeMapId != CONSTANTS.TEMP_ID) {
                 this.activePointId = CONSTANTS.TEMP_ID;
                 this.activePointSession = {

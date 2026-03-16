@@ -3,6 +3,7 @@ import { createSVGIcon } from "../../../libs/utils/svgUtils.js";
 import { CustomSelect } from "../../../libs/elements/CustomSelect.js";
 import { createElement } from "../../../libs/utils/DOMUtils.js";
 import { ICONS } from "../../../libs/icons/icons.js";
+import { DragAndDropUploader } from "../../../libs/elements/DragAndDropUploader.js";
 
 export class MapSelectorManager {
     constructor(eventBus) {
@@ -16,14 +17,40 @@ export class MapSelectorManager {
     }
 
     #gatherElements() {
+        this.elements.uploadOverlay = document.getElementById("upload-overlay");
+        this.elements.mapSelector = document.getElementById("mapSelector");
+        this.elements.addNewMapBtn = document.getElementById("addNewMapBtn");
+        this.elements.dropZoneMap = document.getElementById("drop-zone");
         this.elements.mapSelectWrapped = document.getElementById("customSelect");
         this.elements.customMapSelector = new CustomSelect(
             this.elements.mapSelectWrapped,
             (value, text) => this.#createCustomSelectOption(value, text)
         );
+
+        this.elements.mapUploader = new DragAndDropUploader(this.elements.dropZoneMap, {
+            titleText: "Húzd ide a térkép fájlt",
+            buttonText: "Kattints ide feltöltéshez",
+            accept: "image/*"
+        });
     }
 
     #bindUIEvents() {
+        this.elements.mapUploader.addEventListener("fileDropped", (event) => {
+            this.bus.emit(EVENTS.UI_MAP_FILE_DROPPED, { file: event.detail.file });
+        });
+
+        this.elements.addNewMapBtn.addEventListener("click", () => {
+            let request = { canProceed: true, reason: "" };
+
+            this.bus.emit(EVENTS.UI_ADD_NEW_MAP_REQUEST, request);
+
+            if (request.canProceed) {
+                this.elements.mapUploader.openFileDialog();
+            } else {
+                this.bus.emit(EVENTS.TOAST_SHOW, { msg: request.reason, type: "danger" });
+            }
+        });
+
         this.elements.customMapSelector.addEventListener("change", (event) => {
             let targetMapId = parseInt(event.detail.value);
 
@@ -66,6 +93,9 @@ export class MapSelectorManager {
 
         let selectedMapId = this.elements.customMapSelector.getValue();
         let mapList = Object.values(maps);
+        let hasMaps = mapList.length > 0;
+
+        this.#syncMapListVisibility(hasMaps);
 
         this.elements.customMapSelector.clearOptions();
 
@@ -76,6 +106,16 @@ export class MapSelectorManager {
         if (mapList.length > 0) {
             let exists = mapList.some(map => map.id == selectedMapId);
             this.elements.customMapSelector.setValue(exists ? selectedMapId : mapList[0].id);
+        }
+    }
+
+    #syncMapListVisibility(hasMaps) {
+        if (hasMaps) {
+            this.elements.uploadOverlay.classList.add("d-none");
+            this.elements.mapSelector.classList.remove("d-none");
+        } else {
+            this.elements.uploadOverlay.classList.remove("d-none");
+            this.elements.mapSelector.classList.add("d-none");
         }
     }
 
