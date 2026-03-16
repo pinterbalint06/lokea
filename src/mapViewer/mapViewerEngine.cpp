@@ -498,7 +498,7 @@ MapViewerEngine::MapViewerEngine(const std::string &canvasID, int width, int hei
     isMapLoaded_ = false;
     width_ = width;
     height_ = height;
-    renderer_->setDefaultColor(255.0f, 0.0f, 255.0f);
+    renderer_->setDefaultColor(168.0f, 129.0f, 202.0f);
     // set image dimension to 1:1 aspect ratio so it only covers the plane
     scene_->getCamera()->setImageDimensions(1.0f, 1.0f);
 

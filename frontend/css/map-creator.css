@@ -1,5 +1,6 @@
 @import url('./variables.css');
 @import url('./custom-select.css');
+@import url('./drag-and-drop-uploader.css');
 @import url('./hold-to-unlock-button.css');
 
 html,
@@ -144,24 +145,9 @@ main {
     backdrop-filter: blur(5px);
 }
 
-.dropzone {
-    background: var(--surface-dropzone);
-    border-color: var(--surface-glass-border);
-    color: var(--color-muted);
-    box-shadow: var(--shadow-accent-soft);
-}
-
-.dropfocus {
-    border-color: var(--accent-glow) !important;
-}
-
 #equirectangularPreview {
     display: block;
     border: solid 1px var(--surface-glass-border);
-}
-
-.border-dashed {
-    border-style: dashed !important;
 }
 
 .floating-button {

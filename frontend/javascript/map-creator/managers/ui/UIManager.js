@@ -1,6 +1,8 @@
 import { EVENTS } from "../../events/EventBus.js";
 import { CONSTANTS } from "../../shared/constants.js";
 import { savePreviousValue } from "../../shared/utils.js";
+import { DragAndDropUploader } from "../../../libs/elements/DragAndDropUploader.js";
+import { ICONS } from "../../../libs/icons/icons.js";
 
 export class UIManager {
     constructor(eventBus) {
@@ -29,9 +31,7 @@ export class UIManager {
         this.elements = {
             // buttons
             saveMapButton: document.getElementById("saveMapButton"),
-            uploadButtonMap: document.getElementById("uploadBtn"),
             addNewMarkerBtn: document.getElementById("plusBtn"),
-            uploadButtonEquirectangular: document.getElementById("uploadEquirectangularBtn"),
             savePointButton: document.getElementById("savePointButton"),
             equiFullscreenBtn: document.getElementById("equirectangularFullscreen"),
             closeCollapse: document.getElementById("closeCollapse"),
@@ -40,8 +40,6 @@ export class UIManager {
             deletePointBtn: document.getElementById("deletePointBtn"),
 
             // inputs
-            fileInputMap: document.getElementById("fileInput"),
-            fileInputEquirectangular: document.getElementById("fileInputEquirectangular"),
             coordinateXInput: document.getElementById("coordinateX"),
             coordinateYInput: document.getElementById("coordinateY"),
             northDirectionRange: document.getElementById("northDirectionRange"),
@@ -86,6 +84,26 @@ export class UIManager {
     }
 
     #bindUIEvents() {
+        this.mapUploader = new DragAndDropUploader(this.elements.dropZoneMap, {
+            titleText: "Húzd ide a térkép fájlt",
+            buttonText: "Kattints ide feltöltéshez",
+            accept: "image/*"
+        });
+
+        this.mapUploader.addEventListener("fileDropped", (event) => {
+            this.bus.emit(EVENTS.UI_MAP_FILE_DROPPED, { file: event.detail.file });
+        });
+
+        this.equirectangularUploader = new DragAndDropUploader(this.elements.dropZoneEquirectangular, {
+            titleText: "Húzd ide a 360°-os képet",
+            buttonText: "Kattints ide feltöltéshez",
+            accept: "image/*"
+        });
+
+        this.equirectangularUploader.addEventListener("fileDropped", (event) => {
+            this.bus.emit(EVENTS.UI_EQUIRECTANGULAR_FILE_DROPPED, { file: event.detail.file });
+        });
+
         this.elements.addNewMarkerBtn.addEventListener("click", () => this.bus.emit(EVENTS.UI_ADD_NEW_MARKER_REQUEST));
         this.elements.saveMapButton.addEventListener("click", () => this.bus.emit(EVENTS.UI_SAVE_MAP_CLICKED));
         this.elements.newConnectionBtn.addEventListener("click", () => this.bus.emit(EVENTS.UI_CONNECTION_CREATE_REQUEST));
@@ -227,9 +245,6 @@ export class UIManager {
             this.#updateCollapseDirection();
             this.#handleTwoCollapseResize();
         });
-
-        this.#setupUploadHandler(this.elements.dropZoneMap, this.elements.uploadButtonMap, this.elements.fileInputMap, EVENTS.UI_MAP_FILE_DROPPED);
-        this.#setupUploadHandler(this.elements.dropZoneEquirectangular, this.elements.uploadButtonEquirectangular, this.elements.fileInputEquirectangular, EVENTS.UI_EQUIRECTANGULAR_FILE_DROPPED);
     }
 
     #bindBusEvents() {
@@ -347,40 +362,6 @@ export class UIManager {
         this.bus.on(EVENTS.POINT_DIRTY_STATE_CHANGED, ({ isDirty }) => {
             this.hasUnsavedChanges = isDirty;
             this.#updateSavePointButtonState();
-        });
-    }
-
-    #setupUploadHandler(dropZone, button, input, eventToEmit) {
-        button.addEventListener("click", () => input.click());
-        input.addEventListener("change", (event) => {
-            if (event.target.files.length > 0) {
-                this.bus.emit(eventToEmit, { file: event.target.files[0] });
-            }
-            event.target.value = "";
-        });
-
-        dropZone.addEventListener("dragover", (event) => {
-            event.preventDefault();
-            let draggedFiles = event.dataTransfer.items.filter(item => item.kind == "file");
-
-            if (draggedFiles.length > 0) {
-                event.dataTransfer.dropEffect = "copy";
-                dropZone.classList.add("dropfocus");
-            } else {
-                event.dataTransfer.dropEffect = "none";
-            }
-        });
-        dropZone.addEventListener("dragleave", (event) => {
-            event.preventDefault();
-            dropZone.classList.remove("dropfocus");
-        });
-        dropZone.addEventListener("drop", (event) => {
-            event.preventDefault();
-            dropZone.classList.remove("dropfocus");
-            let files = event.dataTransfer.files;
-            if (files.length > 0) {
-                this.bus.emit(eventToEmit, { file: files[0] });
-            }
         });
     }
 

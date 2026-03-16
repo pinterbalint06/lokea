@@ -3,6 +3,10 @@ export const ICONS = {
         href: "/images/map-creator-icons.svg#icon-pointing-hand",
         viewBox: "0 0 84.91 122.88"
     },
+    UPLOAD_CLOUD: {
+        href: "/images/map-creator-icons.svg#icon-upload-cloud",
+        viewBox: "0 0 24 24"
+    },
     SAVE_FLOPPY: {
         href: "/images/map-creator-icons.svg#icon-save-floppy",
         viewBox: "0 0 512 511.52"
