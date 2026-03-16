@@ -1,8 +1,8 @@
-import { Modal } from "../../libs/elements/Modal.js";
-import { createElement } from "../../libs/utils/DOMUtils.js";
-import { ICONS } from "../../libs/icons/icons.js";
-import { createSVGIcon } from "../../libs/utils/svgUtils.js";
-import { EVENTS } from "../events/EventBus.js";
+import { Modal } from "../../../libs/elements/Modal.js";
+import { createElement } from "../../../libs/utils/DOMUtils.js";
+import { ICONS } from "../../../libs/icons/icons.js";
+import { createSVGIcon } from "../../../libs/utils/svgUtils.js";
+import { EVENTS } from "../../events/EventBus.js";
 
 export class ModalManager {
     constructor(eventBus) {

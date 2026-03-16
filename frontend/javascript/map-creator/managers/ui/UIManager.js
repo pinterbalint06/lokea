@@ -1,13 +1,11 @@
-import { EVENTS } from "../events/EventBus.js";
-import { CONSTANTS } from "../shared/constants.js";
-import { createSVGIcon } from "../../libs/utils/svgUtils.js";
-import { showToast, createSpinnerIcon, savePreviousValue } from "../shared/utils.js";
+import { EVENTS } from "../../events/EventBus.js";
+import { CONSTANTS } from "../../shared/constants.js";
+import { savePreviousValue } from "../../shared/utils.js";
 
 export class UIManager {
     constructor(eventBus) {
         this.bus = eventBus;
         this.elements = {};
-        this.toasts = {};
         this.animations = {
             isCollapsing: false
         };
@@ -60,24 +58,14 @@ export class UIManager {
             // other
             loadingOverlay: document.getElementById("loading"),
             uploadOverlay: document.getElementById("upload-overlay"),
-            toastPlace: document.getElementById("toastPlace"),
             collapseElement: document.getElementById("ujPontCollapse"),
             mapSelector: document.getElementById("mapSelector"),
             floatingButtonDiv: document.getElementById("floatingButtonDiv"),
-            connectionsList: document.getElementById("kapcsolatokLista"),
-            emptyConnections: document.getElementById("nincsenekKapcsolatok"),
 
             // settings
             settingsBtn: document.getElementById("settingsBtn"),
             beallitasokCollapseElement: document.getElementById("beallitasokCollapse"),
-            closeBeallitasok: document.getElementById("closeBeallitasok"),
-            fovToggle: document.getElementById("fovToggle"),
-            fovWidthRange: document.getElementById("fovWidthRange"),
-            fovWidthNumber: document.getElementById("fovWidthNumber"),
-            fovHeightRange: document.getElementById("fovHeightRange"),
-            fovHeightNumber: document.getElementById("fovHeightNumber"),
-            offMapConnectionsToggle: document.getElementById("offMapConnectionsToggle"),
-            allConnectionsWhenNotActiveToggle: document.getElementById("allConnectionsWhenNotActiveToggle")
+            closeBeallitasok: document.getElementById("closeBeallitasok")
         };
 
         this.elements.collapseBootstrapElement = new bootstrap.Collapse(
@@ -205,19 +193,14 @@ export class UIManager {
             }
         });
 
-        this.elements.addNewMapBtn.addEventListener("click", (event) => {
+        this.elements.addNewMapBtn.addEventListener("click", () => {
             let request = { canProceed: true, reason: "" };
 
             this.bus.emit(EVENTS.UI_ADD_NEW_MAP_REQUEST, request);
 
             if (request.canProceed) {
-                if (this.hasUnsavedChanges) {
-                    this.pendingAction = { type: "add_new_map" };
-                    this.bus.emit(EVENTS.UI_SHOW_DISCARD_MODAL);
-                } else {
-                    this.elements.fileInputMap.value = "";
-                    this.elements.fileInputMap.click();
-                }
+                this.elements.fileInputMap.value = "";
+                this.elements.fileInputMap.click();
             } else {
                 this.bus.emit(EVENTS.TOAST_SHOW, { msg: request.reason, type: "danger" });
             }
@@ -245,29 +228,6 @@ export class UIManager {
             this.#handleTwoCollapseResize();
         });
 
-        this.elements.fovToggle.addEventListener("change", (event) => {
-            this.bus.emit(EVENTS.UI_SETTINGS_FOV_TOGGLED, { enabled: event.target.checked });
-        });
-
-        this.elements.offMapConnectionsToggle.addEventListener("change", (event) => {
-            this.bus.emit(EVENTS.UI_SETTINGS_CONNECTION_OFF_MAP_VISIBILITY_CHANGED, {
-                enabled: event.target.checked
-            });
-        });
-
-        this.elements.allConnectionsWhenNotActiveToggle.addEventListener("change", (event) => {
-            this.elements.offMapConnectionsToggle.disabled = !event.target.checked;
-            this.bus.emit(EVENTS.UI_SETTINGS_CONNECTION_ALL_VISIBILITY_CHANGED, {
-                enabled: event.target.checked
-            });
-        });
-
-        this.#syncFovInputs(this.elements.fovWidthRange, this.elements.fovWidthNumber, "width");
-        this.#syncFovInputs(this.elements.fovWidthNumber, this.elements.fovWidthRange, "width");
-
-        this.#syncFovInputs(this.elements.fovHeightRange, this.elements.fovHeightNumber, "height");
-        this.#syncFovInputs(this.elements.fovHeightNumber, this.elements.fovHeightRange, "height");
-
         this.#setupUploadHandler(this.elements.dropZoneMap, this.elements.uploadButtonMap, this.elements.fileInputMap, EVENTS.UI_MAP_FILE_DROPPED);
         this.#setupUploadHandler(this.elements.dropZoneEquirectangular, this.elements.uploadButtonEquirectangular, this.elements.fileInputEquirectangular, EVENTS.UI_EQUIRECTANGULAR_FILE_DROPPED);
     }
@@ -282,27 +242,6 @@ export class UIManager {
         this.bus.on(EVENTS.MARKER_PLACING_STARTED, () => this.elements.floatingButtonDiv.classList.add("d-none"));
 
         this.bus.on(EVENTS.MARKER_PLACING_CANCELLED, () => this.elements.floatingButtonDiv.classList.remove("d-none"));
-
-        this.bus.on(EVENTS.TOAST_SHOW, ({ id, msg, type, closable = true, iconObject, duration = 3000, autohide = true, spinner = false, callback }) => {
-            let icon;
-            if (spinner) {
-                icon = createSpinnerIcon();
-            } else {
-                icon = iconObject ? createSVGIcon(iconObject, { height: "1em", fill: "currentColor" }) : null;
-            }
-            let options = { autohide, delay: duration };
-            let toast = showToast(this.elements.toastPlace, msg, type, closable, options, icon, callback);
-            if (id) {
-                this.toasts[id] = toast
-            };
-        });
-
-        this.bus.on(EVENTS.TOAST_HIDE_ID, ({ id }) => {
-            if (this.toasts[id]) {
-                this.toasts[id].hide();
-                delete this.toasts[id];
-            }
-        });
 
         this.bus.on(EVENTS.NEW_MARKER_PLACED, () => this.elements.collapseBootstrapElement.show());
 
@@ -363,10 +302,6 @@ export class UIManager {
             this.#updateSavePointButtonState();
         });
 
-        this.bus.on(EVENTS.CONNECTION_LIST_UI_UPDATE, ({ connections, unsavedConnections }) => {
-            this.#renderConnectionList(connections, unsavedConnections);
-        });
-
         this.bus.on(EVENTS.MARKER_SELECTED, ({ position, data }) => {
             this.elements.coordinateXInput.value = position.x;
             this.elements.coordinateYInput.value = position.y;
@@ -386,10 +321,6 @@ export class UIManager {
                 switch (this.pendingAction.type) {
                     case "collapse_close":
                         this.elements.collapseBootstrapElement.hide();
-                        break;
-                    case "add_new_map":
-                        this.elements.fileInputMap.value = "";
-                        this.elements.fileInputMap.click();
                         break;
                 }
                 this.pendingAction = null;
@@ -453,13 +384,6 @@ export class UIManager {
         });
     }
 
-    #syncFovInputs(source, target, propertyName) {
-        source.addEventListener("input", (event) => {
-            target.value = event.target.value;
-            this.bus.emit(EVENTS.UI_SETTINGS_FOV_SIZE_CHANGED, { [propertyName]: parseInt(event.target.value) });
-        });
-    }
-
     #updateCoordinatesInput(x, y) {
         this.elements.coordinateXInput.value = x;
         this.elements.coordinateYInput.value = y;
@@ -518,89 +442,5 @@ export class UIManager {
         }
 
         this.previousWidth = currentWidth;
-    }
-
-    #renderConnectionList(connections, unsavedConnections) {
-        this.elements.connectionsList.innerHTML = "";
-
-        let allConnections = [...connections, ...unsavedConnections];
-
-        if (allConnections.length == 0) {
-            this.elements.emptyConnections.classList.remove("d-none");
-            this.elements.connectionsList.classList.add("d-none");
-        } else {
-
-            this.elements.emptyConnections.classList.add("d-none");
-            this.elements.connectionsList.classList.remove("d-none");
-
-            let template = document.getElementById("connection-card-template");
-            let fragment = new DocumentFragment();
-
-            for (let i = 0; i < allConnections.length; i++) {
-                let connection = allConnections[i];
-                let clone = template.content.cloneNode(true);
-
-                clone.querySelector(".start-id").innerText = connection.start_point_id;
-                clone.querySelector(".end-id").innerText = connection.end_point_id;
-
-                let card = clone.querySelector(".kapcsolat-kartya");
-
-                card.addEventListener("mouseenter", () => {
-                    this.bus.emit(EVENTS.UI_CONNECTION_HIGHLIGHT, {
-                        connectionId: connection.connection_id,
-                        type: "focused"
-                    });
-                });
-
-                card.addEventListener("click", () => {
-                    this.bus.emit(EVENTS.UI_CONNECTION_CENTER_VIEW, {
-                        connectionId: connection.connection_id
-                    });
-                });
-
-                card.addEventListener("mouseleave", () => {
-                    let type = connection.connection_id < 0 ? "unsaved" : "editing";
-                    this.bus.emit(EVENTS.UI_CONNECTION_HIGHLIGHT, {
-                        connectionId: connection.connection_id,
-                        type: type
-                    });
-                });
-
-                let deleteBtn = clone.querySelector(".btn-delete-connection");
-                let holdToDeleteBtn = new HoldToUnlockButton(deleteBtn, 1000);
-                holdToDeleteBtn.addEventListener("confirm", (event) => {
-                    event.detail.originalEvent.stopPropagation();
-                    this.bus.emit(EVENTS.UI_CONNECTION_DELETE_REQUEST, {
-                        connectionId: connection.connection_id,
-                        startPointId: connection.start_point_id,
-                        endPointId: connection.end_point_id
-                    });
-                });
-
-                let startPoint = clone.querySelector(".start-point");
-
-                startPoint.addEventListener("click", (event) => {
-                    event.stopPropagation();
-                    this.bus.emit(EVENTS.UI_POINT_CENTER_VIEW, {
-                        targetPointId: connection.start_point_id,
-                        targetMapId: connection.start_map_id
-                    });
-                });
-
-                let endPoint = clone.querySelector(".end-point");
-
-                endPoint.addEventListener("click", (event) => {
-                    event.stopPropagation();
-                    this.bus.emit(EVENTS.UI_POINT_CENTER_VIEW, {
-                        targetPointId: connection.end_point_id,
-                        targetMapId: connection.end_map_id
-                    });
-                });
-
-                fragment.appendChild(clone);
-            }
-
-            this.elements.connectionsList.appendChild(fragment);
-        }
     }
 }

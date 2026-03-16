@@ -1,8 +1,8 @@
-import { EVENTS } from "../events/EventBus.js";
-import { createSVGIcon } from "../../libs/utils/svgUtils.js";
-import { CustomSelect } from "../../libs/elements/CustomSelect.js";
-import { createElement } from "../../libs/utils/DOMUtils.js";
-import { ICONS } from "../../libs/icons/icons.js";
+import { EVENTS } from "../../events/EventBus.js";
+import { createSVGIcon } from "../../../libs/utils/svgUtils.js";
+import { CustomSelect } from "../../../libs/elements/CustomSelect.js";
+import { createElement } from "../../../libs/utils/DOMUtils.js";
+import { ICONS } from "../../../libs/icons/icons.js";
 
 export class MapSelectorManager {
     constructor(eventBus) {

@@ -37,7 +37,7 @@ const upload = multer({
 
 function validateId(id, idName) {
     let num = parseInt(id);
-    if (isNaN(num) || num <= 0) {
+    if (isNaN(num) || num < 0) {
         const err = new Error("Helytelen " + idName);
         err.statusCode = 400;
         throw err;
