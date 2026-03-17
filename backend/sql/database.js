@@ -307,12 +307,12 @@ async function insertMap(connection, title, gameMapId, imageId) {
     return result.insertId;
 }
 
-async function insertPoint(connection, mapId, x, y, northDirection, imageId) {
+async function insertPoint(connection, mapId, u, v, northDirection, imageId) {
     const query = `
-        INSERT INTO points (map_id, point_x, point_y, north_direction, image_id)
+        INSERT INTO points (map_id, point_u, point_v, north_direction, image_id)
         VALUES (?, ?, ?, ?, ?)
     `;
-    const [result] = await connection.execute(query, [mapId, x, y, northDirection, imageId]);
+    const [result] = await connection.execute(query, [mapId, u, v, northDirection, imageId]);
     return result.insertId;
 }
 
@@ -360,7 +360,7 @@ async function getPointImage(pointId) {
 
 async function getPointsOnMap(mapId) {
     const query = `
-        SELECT points.point_id, points.point_x, points.point_y, points.north_direction 
+        SELECT points.point_id, points.point_u, points.point_v, points.north_direction 
         FROM map
             INNER JOIN points ON (map.map_id = points.map_id)
         WHERE map.map_id = ?
@@ -398,7 +398,7 @@ async function getConnectionsByPointId(pointId) {
 
 async function getPointInfo(pointId) {
     const query = `
-        SELECT points.point_id, points.point_x, points.point_y, points.north_direction, map.map_id, game_maps.game_maps_id
+        SELECT points.point_id, points.point_u, points.point_v, points.north_direction, map.map_id, game_maps.game_maps_id
         FROM points
             INNER JOIN map ON (map.map_id = points.map_id)
             INNER JOIN game_maps ON (game_maps.game_maps_id = map.game_maps_id)
@@ -408,15 +408,15 @@ async function getPointInfo(pointId) {
     return rows[0];
 }
 
-async function getPointOnMapByCoordinates(connection, mapId, x, y) {
+async function getPointOnMapByCoordinates(connection, mapId, u, v) {
     let query = `
         SELECT points.point_id
         FROM points
         WHERE points.map_id = ?
-            AND points.point_x = ?
-            AND points.point_y = ?
+            AND points.point_u = ?
+            AND points.point_v = ?
     `;
-    const [rows] = await connection.execute(query, [mapId, x, y]);
+    const [rows] = await connection.execute(query, [mapId, u, v]);
     return rows;
 }
 
@@ -526,14 +526,14 @@ async function checkUserOwnsConnection(userId, connectionId) {
     return rows[0].count > 0;
 }
 
-async function updatePointCoordinates(connection, pointId, x, y) {
+async function updatePointCoordinates(connection, pointId, u, v) {
     const query = `
         UPDATE points
-        SET points.point_x = ?,
-            points.point_y = ?
+        SET points.point_u = ?,
+            points.point_v = ?
         WHERE points.point_id = ?
     `;
-    const [result] = await connection.execute(query, [x, y, pointId]);
+    const [result] = await connection.execute(query, [u, v, pointId]);
     return result.affectedRows;
 }
 

@@ -242,7 +242,7 @@ export class MapViewer extends WASMViewerBase {
         };
         if (Number.isInteger(imageX) && Number.isInteger(imageY)) {
             if (imageX >= 0 && imageY >= 0) {
-                if (imageX <= this.#imageWidth && imageY <= this.#imageHeight) {
+                if (imageX < this.#imageWidth && imageY < this.#imageHeight) {
                     returnObject.correct = true;
                 } else {
                     returnObject.error = "A koordinátáknak kisebbnek kell lennie mint a kép méretei!";
@@ -338,6 +338,78 @@ export class MapViewer extends WASMViewerBase {
         let markerUrl = this.#getMarkerUrl(type);
 
         this._engine.placeMarkerByImageCoordinates(id, imageX, imageY, markerUrl, width, height);
+    }
+
+    placeMarkerByUV(id, u, v, width, height, type = "empty") {
+        this._ensureEngineReady();
+
+        if (Number.isNaN(id)) {
+            throw new WebassemblyError(
+                "Invalid ID",
+                {
+                    "type": MAP_VIEWER_ERROR_TYPES.INVALID_INPUT
+                });
+        }
+
+        if (!Number.isFinite(u) || !Number.isFinite(v) || u < 0 || u >= 1 || v < 0 || v >= 1) {
+            throw new WebassemblyError(
+                "Invalid UV coordinates",
+                {
+                    "type": MAP_VIEWER_ERROR_TYPES.INVALID_INPUT
+                });
+        }
+
+        if (Number.isNaN(width) || Number.isNaN(height) || width < 0 || height < 0) {
+            throw new WebassemblyError(
+                "Invalid marker size",
+                {
+                    "type": MAP_VIEWER_ERROR_TYPES.INVALID_INPUT
+                });
+        }
+
+        if (this.doesMarkerExist(id)) {
+            throw new WebassemblyError(
+                "Point with given ID already exists",
+                {
+                    "type": MAP_VIEWER_ERROR_TYPES.INVALID_INPUT
+                });
+        }
+
+        let markerUrl = this.#getMarkerUrl(type);
+        this._engine.addMarkerByUV(id, u, v, markerUrl, width, height);
+    }
+
+    uvToImageCoordinates(u, v) {
+        this._ensureEngineReady();
+
+        if (!Number.isFinite(u) || !Number.isFinite(v)) {
+            throw new WebassemblyError(
+                "Invalid UV coordinates",
+                {
+                    "type": MAP_VIEWER_ERROR_TYPES.INVALID_INPUT
+                });
+        }
+
+        return {
+            x: Math.floor(u * this.#imageWidth),
+            y: Math.floor(v * this.#imageHeight)
+        };
+    }
+
+    imageToUVCoordinates(imageX, imageY) {
+        this._ensureEngineReady();
+
+        let valid = this.checkCoordinateValid(imageX, imageY);
+        if (!valid.correct) {
+            throw new WebassemblyError(valid.error, {
+                "type": MAP_VIEWER_ERROR_TYPES.INVALID_INPUT
+            });
+        }
+
+        return {
+            u: imageX / this.#imageWidth,
+            v: imageY / this.#imageHeight
+        };
     }
 
     resizeMarker(id, width, height) {
@@ -469,6 +541,28 @@ export class MapViewer extends WASMViewerBase {
         }
 
         this._engine.moveMarkerToImageCoordinates(id, imageX, imageY);
+    }
+
+    moveMarkerToUV(id, u, v) {
+        this._ensureEngineReady();
+
+        if (!Number.isFinite(u) || !Number.isFinite(v) || u < 0 || u >= 1 || v < 0 || v >= 1) {
+            throw new WebassemblyError(
+                "Invalid UV coordinates",
+                {
+                    "type": MAP_VIEWER_ERROR_TYPES.INVALID_INPUT
+                });
+        }
+
+        if (!this.doesMarkerExist(id)) {
+            throw new WebassemblyError(
+                "Invalid marker ID",
+                {
+                    "type": MAP_VIEWER_ERROR_TYPES.INVALID_INPUT
+                });
+        }
+
+        this._engine.moveMarkerToUV(id, u, v);
     }
 
     removeMarker(id) {

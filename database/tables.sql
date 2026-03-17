@@ -50,13 +50,15 @@ CREATE TABLE map (
 CREATE TABLE points (
     point_id int AUTO_INCREMENT PRIMARY KEY NOT NULL,
     map_id int,
-    point_x int NOT NULL,
-    point_y int NOT NULL,
+    point_u float NOT NULL,
+    point_v float NOT NULL,
     north_direction int NOT NULL DEFAULT 0,
     image_id int,
     foreign key (map_id) references map(map_id) ON DELETE CASCADE,
     foreign key (image_id) references images(image_id) ON DELETE SET NULL,
-    UNIQUE KEY unique_point_coordinates_per_map (map_id, point_x, point_y),
+    UNIQUE KEY unique_point_coordinates_per_map (map_id, point_u, point_v),
+    CONSTRAINT check_point_u_range CHECK (point_u >= 0 AND point_u < 1),
+    CONSTRAINT check_point_v_range CHECK (point_v >= 0 AND point_v < 1),
     CONSTRAINT check_north_direction CHECK (north_direction >= 0 AND north_direction <= 359)
 );
 

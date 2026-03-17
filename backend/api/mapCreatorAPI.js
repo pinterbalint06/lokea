@@ -148,10 +148,15 @@ router.post("/maps/:mapID/points", checkAuth, upload.single("equirectangularImag
 
         const gameMapID = await database.getGameMapIdByMapId(mapID);
 
-        const xCoordinate = Number(request.body.x);
-        const yCoordinate = Number(request.body.y);
-        if (!Number.isFinite(xCoordinate) || !Number.isFinite(yCoordinate)) {
+        const uCoordinate = Number(request.body.u);
+        const vCoordinate = Number(request.body.v);
+        if (!Number.isFinite(uCoordinate) || !Number.isFinite(vCoordinate)) {
             const error = new Error("Helytelen koordináták!");
+            error.statusCode = 400;
+            throw error;
+        }
+        if (uCoordinate < 0 || uCoordinate >= 1 || vCoordinate < 0 || vCoordinate >= 1) {
+            const error = new Error("A koordinátáknak [0, 1[ intervallumban kell lenniük!");
             error.statusCode = 400;
             throw error;
         }
@@ -174,8 +179,8 @@ router.post("/maps/:mapID/points", checkAuth, upload.single("equirectangularImag
         dbConnection = await database.getConnection();
         await dbConnection.beginTransaction();
 
-        let existingPoints = await database.getPointOnMapByCoordinates(dbConnection, mapID, xCoordinate, yCoordinate);
-        if (existingPoints.length > 1) {
+        let existingPoints = await database.getPointOnMapByCoordinates(dbConnection, mapID, uCoordinate, vCoordinate);
+        if (existingPoints.length > 0) {
             const error = new Error("Ezen a térképen már létezik pont ezeken a koordinátákon!");
             error.statusCode = 409;
             throw error;
@@ -183,7 +188,7 @@ router.post("/maps/:mapID/points", checkAuth, upload.single("equirectangularImag
 
         let imageId = await database.insertImage(dbConnection, imageData.width, imageData.height, "pending");
 
-        let newPointId = await database.insertPoint(dbConnection, mapID, xCoordinate, yCoordinate, northDirection, imageId);
+        let newPointId = await database.insertPoint(dbConnection, mapID, uCoordinate, vCoordinate, northDirection, imageId);
 
         // private/userId/gameMapId/mapId/point_images/pointID/
         let relativeDestDir = path.join(
@@ -658,10 +663,15 @@ router.put("/points/:pointID", checkAuth, upload.single("equirectangularImage"),
 
         await assertUserOwnsPoint(userId, pointID);
 
-        const xCoordinate = Number(request.body.x);
-        const yCoordinate = Number(request.body.y);
-        if (!Number.isFinite(xCoordinate) || !Number.isFinite(yCoordinate)) {
+        const uCoordinate = Number(request.body.u);
+        const vCoordinate = Number(request.body.v);
+        if (!Number.isFinite(uCoordinate) || !Number.isFinite(vCoordinate)) {
             const error = new Error("Helytelen koordináták!");
+            error.statusCode = 400;
+            throw error;
+        }
+        if (uCoordinate < 0 || uCoordinate >= 1 || vCoordinate < 0 || vCoordinate >= 1) {
+            const error = new Error("A koordinátáknak [0, 1[ intervallumban kell lenniük!");
             error.statusCode = 400;
             throw error;
         }
@@ -683,8 +693,8 @@ router.put("/points/:pointID", checkAuth, upload.single("equirectangularImage"),
             throw error;
         }
 
-        if (pointInfo.point_x != xCoordinate || pointInfo.point_y != yCoordinate) {
-            let existingPoints = await database.getPointOnMapByCoordinates(dbConnection, pointInfo.map_id, xCoordinate, yCoordinate);
+        if (pointInfo.point_u != uCoordinate || pointInfo.point_v != vCoordinate) {
+            let existingPoints = await database.getPointOnMapByCoordinates(dbConnection, pointInfo.map_id, uCoordinate, vCoordinate);
             if (existingPoints.length > 0) {
                 const error = new Error("Ezen a térképen már létezik pont ezeken a koordinátákon!");
                 error.statusCode = 409;
@@ -693,8 +703,8 @@ router.put("/points/:pointID", checkAuth, upload.single("equirectangularImage"),
         }
 
         // only update if anything is different
-        if (pointInfo.point_x != xCoordinate || pointInfo.point_y != yCoordinate) {
-            let affectedRows = await database.updatePointCoordinates(dbConnection, pointID, xCoordinate, yCoordinate);
+        if (pointInfo.point_u != uCoordinate || pointInfo.point_v != vCoordinate) {
+            let affectedRows = await database.updatePointCoordinates(dbConnection, pointID, uCoordinate, vCoordinate);
             if (affectedRows > 1) {
                 console.error("Multiple rows affected at ID update");
                 let error = {

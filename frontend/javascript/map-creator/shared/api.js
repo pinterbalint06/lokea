@@ -5,7 +5,6 @@ export async function saveNewMap(mapFile, gameMapID, mapTitle) {
     formData.append("mapImage", mapFile);
     formData.append("title", mapTitle);
 
-    //?POST /api/map-creator/game-maps/:gameMapID/maps
     let response = await fetch(`/api/map-creator/game-maps/${gameMapID}/maps`, {
         method: "POST",
         body: formData
@@ -31,19 +30,17 @@ export async function savePoint({
     mapID,
     isNew
 }) {
-    let fields = {
-        x: position.x,
-        y: position.y,
-        northDirection: northDirection
-    };
-
     let url = "";
     let method = "";
 
+    if (!Number.isFinite(position.u) || !Number.isFinite(position.v)) {
+        throw new Error("Helytelen UV koordináták!");
+    }
+
     let formData = new FormData();
-    formData.append("x", fields.x);
-    formData.append("y", fields.y);
-    formData.append("northDirection", fields.northDirection);
+    formData.append("u", position.u);
+    formData.append("v", position.v);
+    formData.append("northDirection", northDirection);
 
     if (isNew) {
         if (!equirectangularFile) {

@@ -16,12 +16,12 @@ export class MarkerManager {
         /**
         * @typedef {Object} ActivePointSession
         * @property {number} mapId - The map id this point belongs to.
-        * @property {number} originalX - Original X coordinate of the point.
-        * @property {number} originalY - Original Y coordinate of the point.
+        * @property {number} originalU - Original U coordinate of the point.
+        * @property {number} originalV - Original V coordinate of the point.
         * @property {number} originalNorthDirection - Original north direction (degrees).
         * @property {number} draftNorthDirection - Draft north direction while editing.
-        * @property {number} draftX - Draft X coordinate while editing.
-        * @property {number} draftY - Draft Y coordinate while editing.
+        * @property {number} draftU - Draft U coordinate while editing.
+        * @property {number} draftV - Draft V coordinate while editing.
         */
         /** @type {ActivePointSession} */
         this.activePointSession = null;
@@ -43,12 +43,12 @@ export class MarkerManager {
                 this.activePointId = CONSTANTS.TEMP_ID;
                 this.activePointSession = {
                     mapId: this.appState.activeMapId,
-                    originalX: null,
-                    originalY: null,
+                    originalU: null,
+                    originalV: null,
                     originalNorthDirection: 0,
                     draftNorthDirection: null,
-                    draftX: null,
-                    draftY: null
+                    draftU: null,
+                    draftV: null
                 };
                 this.isPlacingMarker = true;
                 this.mapViewer.canvasInput.setDefaultCursor("crosshair");
@@ -84,7 +84,7 @@ export class MarkerManager {
                         event.target.dataset.previousValue = event.target.valueAsNumber;
                         this.mapViewer.moveMarkerToImageCoordinates(this.activePointId, x, y);
                         let position = this.mapViewer.getMarkerPosition(this.activePointId);
-                        this.#updateSessionDraftPosition(this.activePointId, position.x, position.y);
+                        this.#updateSessionDraftUV(this.activePointId, position.u, position.v);
                         this.bus.emit(EVENTS.MARKER_MOVED, position);
                         this.#emitDirtyStateChange();
                     } else {
@@ -154,11 +154,7 @@ export class MarkerManager {
                     // only revert if the marker is on the current map
                     if (this.markersCache[this.activePointId] && this.mapViewer.doesMarkerExist(this.activePointId)) {
                         let originalPoint = this.markersCache[this.activePointId];
-                        this.mapViewer.moveMarkerToImageCoordinates(
-                            this.activePointId,
-                            originalPoint.point_x,
-                            originalPoint.point_y
-                        );
+                        this.mapViewer.moveMarkerToUV(this.activePointId, originalPoint.point_u, originalPoint.point_v);
                         this.mapViewer.changeMarkerType(this.activePointId, "READY");
                     }
                 }
@@ -183,12 +179,12 @@ export class MarkerManager {
 
                     this.activePointSession = {
                         mapId: this.appState.activeMapId,
-                        originalX: position.x,
-                        originalY: position.y,
+                        originalU: position.u,
+                        originalV: position.v,
                         originalNorthDirection: this.markersCache[id].north_direction,
                         draftNorthDirection: null,
-                        draftX: null,
-                        draftY: null
+                        draftU: null,
+                        draftV: null
                     };
                     this.bus.emit(EVENTS.MARKER_SELECTED, {
                         id,
@@ -344,8 +340,8 @@ export class MarkerManager {
             if (this.activePointSession) {
                 if (this.activePointSession.mapId == this.appState.activeMapId) {
                     if (this.markersCache[this.activePointId] && this.mapViewer.doesMarkerExist(this.activePointId)) {
-                        if (this.activePointSession.draftX != null && this.activePointSession.draftY != null) {
-                            this.mapViewer.moveMarkerToImageCoordinates(this.activePointId, this.activePointSession.draftX, this.activePointSession.draftY);
+                        if (this.activePointSession.draftU != null && this.activePointSession.draftV != null) {
+                            this.mapViewer.moveMarkerToUV(this.activePointId, this.activePointSession.draftU, this.activePointSession.draftV);
                         }
 
                         this.isPlacingMarker = true;
@@ -373,7 +369,7 @@ export class MarkerManager {
                     const markerType = point.point_id == this.activePointId
                         ? "EDIT"
                         : "READY";
-                    this.mapViewer.placeMarkerByImageCoordinates(point.point_id, point.point_x, point.point_y, CONSTANTS.MARKER_SIZE.width, CONSTANTS.MARKER_SIZE.height, markerType);
+                    this.mapViewer.placeMarkerByUV(point.point_id, point.point_u, point.point_v, CONSTANTS.MARKER_SIZE.width, CONSTANTS.MARKER_SIZE.height, markerType);
                 });
                 this.#syncActivePointForCurrentMap();
                 this.bus.emit(EVENTS.POINTS_LOADED, { points: this.markersCache });
@@ -437,17 +433,17 @@ export class MarkerManager {
                             point_id: pointToSave
                         };
                     }
-                    this.markersCache[pointToSave].point_x = position.x;
-                    this.markersCache[pointToSave].point_y = position.y;
+                    this.markersCache[pointToSave].point_u = position.u;
+                    this.markersCache[pointToSave].point_v = position.v;
                     this.markersCache[pointToSave].north_direction = northDirection;
                     this.activePointSession = {
                         mapId: this.activePointSession.mapId,
-                        originalX: position.x,
-                        originalY: position.y,
+                        originalU: position.u,
+                        originalV: position.v,
                         originalNorthDirection: northDirection,
                         draftNorthDirection: null,
-                        draftX: null,
-                        draftY: null
+                        draftU: null,
+                        draftV: null
                     };
                     this.appState.pendingEquirectangularFile = null;
 
@@ -476,11 +472,11 @@ export class MarkerManager {
         }
     }
 
-    #updateSessionDraftPosition(pointId, x, y) {
+    #updateSessionDraftUV(pointId, u, v) {
         if (pointId && pointId != CONSTANTS.TEMP_ID && this.activePointId == pointId) {
             if (this.activePointSession) {
-                this.activePointSession.draftX = x;
-                this.activePointSession.draftY = y;
+                this.activePointSession.draftU = u;
+                this.activePointSession.draftV = v;
             }
         }
     }
@@ -519,7 +515,7 @@ export class MarkerManager {
                         screenY: y
                     });
 
-                    this.#updateSessionDraftPosition(this.activePointId, pos.x, pos.y);
+                    this.#updateSessionDraftUV(this.activePointId, pos.u, pos.v);
                     this.#emitDirtyStateChange();
                 }
             }
@@ -533,7 +529,7 @@ export class MarkerManager {
         let currentPosition = this.#getPointPosition(this.activePointId);
 
         if (currentPosition) {
-            hasPositionChange = currentPosition.x != session.originalX || currentPosition.y != session.originalY;
+            hasPositionChange = currentPosition.u != session.originalU || currentPosition.v != session.originalV;
         }
 
         return hasPositionChange;
@@ -561,8 +557,8 @@ export class MarkerManager {
             position = this.mapViewer.getMarkerPosition(pointId);
         } else {
             position = {
-                x: this.activePointSession.draftX ?? this.activePointSession.originalX,
-                y: this.activePointSession.draftY ?? this.activePointSession.originalY
+                u: this.activePointSession.draftU ?? this.activePointSession.originalU,
+                v: this.activePointSession.draftV ?? this.activePointSession.originalV
             };
         }
 
@@ -586,9 +582,10 @@ export class MarkerManager {
                 } else {
                     let targetPoint = this.markersCache[pointId];
                     if (targetPoint) {
+                        let targetPixelPosition = this.mapViewer.uvToImageCoordinates(targetPoint.point_u, targetPoint.point_v);
                         targetPosition = {
-                            x: targetPoint.point_x,
-                            y: targetPoint.point_y
+                            x: targetPixelPosition.x,
+                            y: targetPixelPosition.y
                         };
                     }
                 }

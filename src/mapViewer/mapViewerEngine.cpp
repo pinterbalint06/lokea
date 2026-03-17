@@ -253,15 +253,20 @@ void MapViewerEngine::addMarkerByImageCoordinates(int id, float imageX, float im
 
 void MapViewerEngine::moveMarkerToImageCoordinates(int id, int xCoordinate, int yCoordinate)
 {
+    // convert to uv
+    float newU = (float)xCoordinate / mapWidth_;
+    float newV = (float)yCoordinate / mapHeight_;
+
+    moveMarkerToUV(id, newU, newV);
+}
+
+void MapViewerEngine::moveMarkerToUV(int id, float u, float v)
+{
     int index = getMarkerIndexById(id);
     if (isMapLoaded_ && index != -1)
     {
-        // convert to uv
-        float newU = (float)xCoordinate / mapWidth_;
-        float newV = (float)yCoordinate / mapHeight_;
-
-        markers_[index]->setU(newU);
-        markers_[index]->setV(newV);
+        markers_[index]->setU(u);
+        markers_[index]->setV(v);
 
         updateSingleMarker(markers_[index].get());
         updateLinesWithMarker(id);
@@ -445,6 +450,8 @@ emscripten::val MapViewerEngine::getMarkerPosition(int id)
         int imageCoordinateY = std::floor(markerVFractional * mapHeight_);
         imageCoordinates.set("x", imageCoordinateX);
         imageCoordinates.set("y", imageCoordinateY);
+        imageCoordinates.set("u", markerUFractional);
+        imageCoordinates.set("v", markerVFractional);
     }
     else
     {

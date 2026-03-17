@@ -188,9 +188,9 @@ export class EquirectangularManager {
         if (this.appState.settings.fovEnabled && this.activePointId && this.mapViewer.doesMarkerExist(this.activePointId)) {
             let pos = this.mapViewer.getMarkerPosition(this.activePointId);
 
-            this.mapViewer.placeMarkerByImageCoordinates(
+            this.mapViewer.placeMarkerByUV(
                 CONSTANTS.FOV_MARKER_ID,
-                pos.x, pos.y,
+                pos.u, pos.v,
                 this.appState.settings.fovWidth, this.appState.settings.fovHeight,
                 "fov_cone");
             this.mapViewer.setMarkerSelectable(CONSTANTS.FOV_MARKER_ID, false);
