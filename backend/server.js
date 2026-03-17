@@ -4,6 +4,8 @@ const session = require('express-session'); //?npm install express-session
 const path = require('path');
 const cors = require('cors');
 const auth = require('./auth.js')
+const { Server } = require("socket.io");
+const http = require('http');
 
 //!Beállítások
 const app = express();
@@ -11,13 +13,17 @@ const router = express.Router();
 
 const ip = '127.0.0.1';
 const port = 3000;
+const server = http.createServer(app);
+const onlineUsers = new Map(); 
+const io = new Server(server);
 
 app.use(cors());
 app.use(express.json()); //?Middleware JSON
 app.set('trust proxy', 1); //?Middleware Proxy
 
+
 //!Session beállítása:
-app.use(session({
+const sessionMiddleware = session({
     name: 'geo.sid',
     secret: "sijufhiu78fz87843",
     resave: false,
@@ -29,7 +35,9 @@ app.use(session({
         secure: false,
         maxAge: 60 * 60 * 1000
     }
-}));
+});
+app.use(sessionMiddleware);
+io.engine.use(sessionMiddleware);
 
 //!Routing
 //?Főoldal:
@@ -70,9 +78,40 @@ const endpoints = require('./api/api.js');
 app.use('/api', endpoints);
 app.use('/', router);
 
+//Socket.io
+
+io.on("connection", (socket) => {
+    const session = socket.request.session;
+    const userId = session ? session.userid : null;
+
+    socket.emit("totalOnline", onlineUsers.size);
+
+    if (userId) {
+        if (!onlineUsers.has(userId)) {
+            onlineUsers.set(userId, new Set());
+        }
+        onlineUsers.get(userId).add(socket.id);
+        
+        io.emit("totalOnline", onlineUsers.size);
+    }
+
+    socket.on("disconnect", () => {
+        if (userId && onlineUsers.has(userId)) {
+            const userSockets = onlineUsers.get(userId);
+            userSockets.delete(socket.id);
+
+            if (userSockets.size === 0) {
+                onlineUsers.delete(userId);
+            }
+
+            io.emit("totalOnline", onlineUsers.size);
+        }
+    });
+});
+
 
 //!Szerver futtatása
-app.listen(port, ip, () => {
+server.listen(port, ip, () => {
     console.log(`Szerver elérhetősége: http://${ip}:${port}`);
 });
 

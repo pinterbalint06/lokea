@@ -1,5 +1,6 @@
 import { makeSubtitle, inputGeneral, gombGeneral, makeSvg } from "./libs/utils/DOMutils.js";
 import { validalvaBej } from "./libs/utils/validations.js";
+import { initSocket } from "./libs/utils/socketio.js";
 
 document.addEventListener("DOMContentLoaded", async function () {
     if (!await logined()) {
@@ -23,7 +24,7 @@ document.addEventListener("DOMContentLoaded", async function () {
             }
         });
     }
-
+    await initSocket();
 })
 
 async function logined() {

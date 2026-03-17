@@ -62,6 +62,13 @@ main {
     margin-top: 150px;
 }
 
+section {
+    border-color: black;
+    border-style: solid;
+    border-width: 5px 0px 5px 0px;
+    margin-bottom: 30px !important;
+}
+
 .navbar {
     color: aliceblue;
     font-family: monospace;
@@ -181,6 +188,7 @@ main {
     background-color: black;
     opacity: 0.8;
     color: white;
+    margin: 0 auto;
 }
 
 .customMapRatings {
@@ -206,7 +214,6 @@ main {
     width: 20px;
     height: 20px;
 }
-
 
 /* Konténer, ami összefogja az inputot és a labelt */
 .input-container {
