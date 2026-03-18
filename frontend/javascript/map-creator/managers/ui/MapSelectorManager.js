@@ -239,7 +239,7 @@ export class MapSelectorManager {
 
             const commitRename = () => {
                 let newTitle = inputField.value.trim();
-                let mapTitleRegex = /^\w{1,20}$/;
+                let mapTitleRegex = /^[a-zA-ZáéíóöőúüűÁÉÍÓÖŐÚÜŰ0-9 _-]{1,20}$/;
 
                 if (newTitle != originalValue && newTitle.match(mapTitleRegex)) {
                     renameContext.isSubmitting = true;

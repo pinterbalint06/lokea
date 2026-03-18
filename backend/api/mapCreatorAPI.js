@@ -36,14 +36,14 @@ const upload = multer({
 });
 
 function validateId(id, idName) {
-    let num = parseInt(id);
-    if (isNaN(num) || num < 0) {
+    let num = Number(id);
+    if (!id.match(/[0-9]/) || isNaN(num) || num <= 0 || !Number.isInteger(num) || num > 2147483647) {
         const err = new Error("Helytelen " + idName);
         err.statusCode = 400;
         throw err;
     }
     return num;
-};
+}
 
 async function deleteFile(filePath) {
     if (filePath) {
@@ -314,7 +314,6 @@ router.post("/game-maps/:gameMapID/maps", checkAuth, upload.single("mapImage"), 
         await assertUserOwnsGameMap(userId, gameMapID);
 
         const title = request.body.title;
-        // ^\w{1,20}$ atleast one character long and only characters numbers or underscores
         if (!title || typeof title != "string") {
             const error = new Error("Helytelen térképnév!");
             error.statusCode = 400;
@@ -322,7 +321,8 @@ router.post("/game-maps/:gameMapID/maps", checkAuth, upload.single("mapImage"), 
         }
 
         const trimmedTitle = title.trim();
-        if (!trimmedTitle.match(/^\w{1,20}$/)) {
+        // /^[a-zA-ZáéíóöőúüűÁÉÍÓÖŐÚÜŰ0-9 _-]{1,20}$/ atleast one character long, max 20. only hungarian letters, numbers, spaces, underscores and -
+        if (!trimmedTitle.match(/^[a-zA-ZáéíóöőúüűÁÉÍÓÖŐÚÜŰ0-9 _-]{1,20}$/)) {
             const error = new Error("Helytelen térképnév!");
             error.statusCode = 400;
             throw error;
@@ -390,7 +390,6 @@ router.put("/maps/:mapID", checkAuth, upload.none(), async (request, response) =
         await assertUserOwnsMap(userId, mapID);
 
         const title = request.body.title;
-        // ^\w{1,20}$ atleast one character long and only characters numbers or underscores
         if (!title || typeof title != "string") {
             const error = new Error("Helytelen térképnév!");
             error.statusCode = 400;
@@ -398,7 +397,8 @@ router.put("/maps/:mapID", checkAuth, upload.none(), async (request, response) =
         }
 
         const trimmedTitle = title.trim();
-        if (!trimmedTitle.match(/^\w{1,20}$/)) {
+        // /^[a-zA-ZáéíóöőúüűÁÉÍÓÖŐÚÜŰ0-9 _-]{1,20}$/ atleast one character long, max 20. only hungarian letters, numbers, spaces, underscores and -
+        if (!trimmedTitle.match(/^[a-zA-ZáéíóöőúüűÁÉÍÓÖŐÚÜŰ0-9 _-]{1,20}$/)) {
             const error = new Error("Helytelen térképnév!");
             error.statusCode = 400;
             throw error;
@@ -640,7 +640,7 @@ router.get("/game-maps/:gameMapID/maps", checkAuth, async (request, response) =>
         });
     } catch (error) {
         let statusCode = error.statusCode ? error.statusCode : 500;
-        let message = error.message || "Váratlan hiba történt!";
+        let message = error.statusCode ? error.message : "Váratlan hiba történt!";
 
         if (statusCode === 500) console.error(error);
 
