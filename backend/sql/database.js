@@ -442,11 +442,7 @@ async function getMapInfo(mapId) {
         WHERE map.map_id = ?
     `;
     const [rows] = await pool.execute(query, [mapId]);
-    let retu = null;
-    if (rows.length > 0) {
-        retu = rows[0];
-    }
-    return retu;
+    return rows.length > 0 ? rows[0] : null;
 }
 
 async function getAllImageIdsForMap(connection, mapId) {
