@@ -20,7 +20,7 @@
     <header>
         <div class="container">
             <nav class="nav navbar flex-nowrap justify-content-between align-items-center">
-                <div class="col-4 justify-content-start">
+                <div class="col-4 justify-content-start" id="onlineAndIP">
                     <p>IP: lokea.com</p>
                     <p><span class="online-dot"></span>Online játékosok: <span id="onlinePlayerCounter">1</span></p>
                 </div>
@@ -265,32 +265,44 @@
         </section>
         <div class="container">
             <div class="row">
-                <div class="col-3">
+                <div class="col-12 col-sm-3">
                     <div class="gamemode">
                         <img src="../images/gamemodes/pp-google.png" alt="">
-                        <h5>Pinpoint Google térképen</h5>
-                        <p class="description">Találd meg a pontos helyszínt a Google hivatalos utcaképének segítségével!</p>
+                        <div>
+                            <h5>Pinpoint Google térképen</h5>
+                            <p class="description">Találd meg a pontos helyszínt a Google hivatalos utcaképének
+                                segítségével!</p>
+                        </div>
                     </div>
                 </div>
-                <div class="col-3">
+                <div class="col-12 col-sm-3">
                     <div class="gamemode">
                         <img src="../images/gamemodes/pp-own.png" alt="">
-                        <h5>Pinpoint felhasználók térképein</h5>
-                        <p class="description">Találd meg a pontos helyszínt a közösség által készített egyedi térképeken!</p>
+                        <div>
+                            <h5>Pinpoint felhasználók térképein</h5>
+                            <p class="description">Találd meg a pontos helyszínt a közösség által készített egyedi
+                                térképeken!</p>
+                        </div>
                     </div>
                 </div>
-                <div class="col-3">
+                <div class="col-12 col-sm-3">
                     <div class="gamemode">
                         <img src="../images/gamemodes/gc-google.png" alt="">
-                        <h5>Guess the country a Google térképen</h5>
-                        <p class="description">Találd ki a pontos országot a Google hivatalos utcaképének segítségével!</p>
+                        <div>
+                            <h5>Guess the country a Google térképen</h5>
+                            <p class="description">Találd ki a pontos országot a Google hivatalos utcaképének
+                                segítségével!</p>
+                        </div>
                     </div>
                 </div>
-                <div class="col-3">
+                <div class="col-12 col-sm-3">
                     <div class="gamemode">
                         <img src="../images/gamemodes/gc-own.png" alt="">
-                        <h5>Guess the country a felhasználók térképein</h5>
-                        <p class="description">Találd ki a pontos országot a közösség által készített egyedi térképeken!</p>
+                        <div>
+                            <h5>Guess the country a felhasználók térképein</h5>
+                            <p class="description">Találd ki a pontos országot a közösség által készített egyedi
+                                térképeken!</p>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -300,7 +312,7 @@
                     <h3 class="text-center mb-5">Egyedi térképek, amit a felhasználók hoztak létre</h3>
                     <div class="container">
                         <div class="row">
-                            <div class="col-4">
+                            <div class="col-12 col-sm-4 customMaps">
                                 <div
                                     class="border-2 border-black rounded-5 d-flex flex-column justify-content-between overflow-hidden customMap">
                                     <p class="text-center py-2 m-0 customMapTitle">Főcim focim</p>
@@ -315,7 +327,7 @@
                                     </div>
                                 </div>
                             </div>
-                            <div class="col-4">
+                            <div class="col-12 col-sm-4 customMaps">
                                 <div
                                     class="border-2 border-black rounded-5 d-flex flex-column justify-content-between overflow-hidden customMap">
                                     <p class="text-center py-2 m-0 customMapTitle">Főcim focim</p>
@@ -330,7 +342,7 @@
                                     </div>
                                 </div>
                             </div>
-                            <div class="col-4">
+                            <div class="col-12 col-sm-4 customMaps">
                                 <div
                                     class="border-2 border-black rounded-5 d-flex flex-column justify-content-between overflow-hidden customMap">
                                     <p class="text-center py-2 m-0 customMapTitle">Főcim focim</p>
@@ -353,7 +365,7 @@
             <div class="row">
                 <div class="col-12">
                     <h3 class="text-center mb-5">Miért jobb a lokea?</h3>
-                    <table class="table table-dark table-fixed text-center">
+                    <!-- <table class="table table-dark table-fixed text-center">
                         <thead>
                             <tr>
                                 <th></th>
@@ -382,7 +394,59 @@
                                 <td><img src="../images/icons/circle-x.png" alt=""></td>
                             </tr>
                         </tbody>
-                    </table>
+                    </table> -->
+                    <div class="comparison-container text-center">
+                        <div class="comparison-header row g-0 d-none d-sm-flex">
+                            <div class="col-sm-2 header-item">Platform</div>
+                            <div class="col-sm-2 header-item">Street View</div>
+                            <div class="col-sm-2 header-item">Multiplayer</div>
+                            <div class="col-sm-2 header-item">Bajnokságok</div>
+                            <div class="col-sm-2 header-item">Saját térképek</div>
+                            <div class="col-sm-2 header-item">Ingyenes</div>
+                        </div>
+
+                        <div class="comparison-row row g-0">
+                            <div class="col-sm-2 cell platform-logo">
+                                <img src="../images/logo.png" alt="Saját">
+                            </div>
+                            <div class="col-sm-2 cell" data-label="Street View:">
+                                <img src="../images/icons/circle-checkmark.png">
+                            </div>
+                            <div class="col-sm-2 cell" data-label="Multiplayer:">
+                                <img src="../images/icons/circle-checkmark.png">
+                            </div>
+                            <div class="col-sm-2 cell" data-label="Bajnokságok:">
+                                <img src="../images/icons/circle-x.png">
+                            </div>
+                            <div class="col-sm-2 cell" data-label="Saját térképek:">
+                                <img src="../images/icons/circle-checkmark.png">
+                            </div>
+                            <div class="col-sm-2 cell" data-label="Ingyenes:">
+                                <img src="../images/icons/circle-checkmark.png">
+                            </div>
+                        </div>
+
+                        <div class="comparison-row row g-0">
+                            <div class="col-sm-2 cell platform-logo">
+                                <img src="../images/geoguessr-logo.png" alt="Geoguessr">
+                            </div>
+                            <div class="col-sm-2 cell" data-label="Street View:">
+                                <img src="../images/icons/circle-checkmark.png">
+                            </div>
+                            <div class="col-sm-2 cell" data-label="Multiplayer:">
+                                <img src="../images/icons/circle-checkmark.png">
+                            </div>
+                            <div class="col-sm-2 cell" data-label="Bajnokságok:">
+                                <img src="../images/icons/circle-checkmark.png">
+                            </div>
+                            <div class="col-sm-2 cell" data-label="Saját térképek:">
+                                <img src="../images/icons/circle-x.png">
+                            </div>
+                            <div class="col-sm-2 cell" data-label="Ingyenes:">
+                                <img src="../images/icons/circle-x.png">
+                            </div>
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>

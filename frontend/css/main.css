@@ -44,14 +44,14 @@ body {
 }
 
 header {
-    background-color: black;
-    opacity: 0.7;
+    background-color: rgba(0, 0, 0, 0.7);
     position: fixed;
     top: 0;
     left: 0;
     width: 100%;
     height: 150px;
-    color: white;
+    color: rgba(255, 255, 255, 0.622);
+    font-family: monospace;
     display: flex;
     align-items: center;
     justify-content: center;
@@ -67,11 +67,6 @@ section {
     border-style: solid;
     border-width: 5px 0px 5px 0px;
     margin-bottom: 30px !important;
-}
-
-.navbar {
-    color: aliceblue;
-    font-family: monospace;
 }
 
 .online-dot {
@@ -179,13 +174,13 @@ section {
 .gamemode {
     display: flex;
     flex-direction: column;
-    justify-content: center; 
+    justify-content: center;
     align-items: center;
     text-align: center;
     border: 1px solid black;
     border-radius: .6em;
     background-color: red;
-    height: 350px; 
+    height: 350px;
     width: 100%;
     position: relative;
     overflow: hidden;
@@ -267,6 +262,10 @@ table img {
     table-layout: fixed;
 }
 
+.dropdown-menu{
+    opacity: 1 !important;
+}
+
 .dropdown:hover .dropdown-menu {
     display: block;
 }
@@ -285,7 +284,44 @@ table img {
     height: 20px;
 }
 
-/* Konténer, ami összefogja az inputot és a labelt */
+.comparison-container {
+    width: 100%;
+    background-color: #1a1a1a;
+    border-radius: 10px;
+    overflow: hidden;
+}
+
+.comparison-header,
+.comparison-row {
+    display: flex;
+    align-items: center;
+    border-bottom: 1px solid #333;
+}
+
+.header-item,
+.cell {
+    flex: 1;
+    padding: 15px;
+    text-align: center;
+    color: white;
+}
+
+.comparison-header {
+    background-color: #000;
+    font-weight: bold;
+    font-size: 0.9rem;
+}
+
+.cell img {
+    height: 25px;
+}
+
+.platform-logo img {
+    max-width: 100%;
+    object-fit: contain;
+    flex-shrink: 0;
+}
+
 .input-container {
     position: relative;
     margin-top: 20px;
@@ -506,3 +542,118 @@ body.modal-open> :not(.modal):not(.modal-backdrop) {
     cursor: copy;
 }
 
+/* reszponzivitas  */
+
+@media screen and (max-width: 576px) {
+    .navbar {
+        flex-direction: column;
+        justify-content: center;
+    }
+
+    #onlineAndIP {
+        display: none;
+    }
+
+    #LogOrDropdown {
+        justify-content: center !important;
+    }
+
+    .flag {
+        height: 100px;
+        padding: 0;
+    }
+
+    .space-background {
+        min-height: 0;
+    }
+
+    .col-12 .gamemode {
+        flex-direction: row;
+        margin-bottom: 20px;
+        height: 250px;
+        width: 100%;
+        padding: 20px;
+    }
+
+    .col-12:nth-child(even) .gamemode {
+        flex-direction: row-reverse;
+    }
+
+    .gamemode img {
+        height: 70%;
+        object-fit: contain;
+    }
+
+    .description {
+        opacity: 1;
+        visibility: visible;
+        max-height: none;
+    }
+
+    .gamemode,
+    .gamemode * {
+        transition: none !important;
+        transform: none !important;
+        animation: none !important;
+        scale: 1 !important;
+    }
+
+    .gamemode:hover {
+        transform: none !important;
+        top: auto !important;
+    }
+
+    .gamemode:hover img {
+        margin-top: 0 !important;
+    }
+
+    .gamemode:hover h5 {
+        margin-top: 15px !important;
+    }
+
+    .gamemode:hover .description {
+        margin-top: 0 !important;
+        max-height: none !important;
+    }
+
+    .customMaps {
+        margin-bottom: 20px;
+    }
+
+    .comparison-row {
+        display: flex;
+        flex-direction: column;
+        /* Egymás alá rakja a cellákat */
+        margin-bottom: 20px;
+        border: 2px solid #333;
+        border-radius: 10px;
+    }
+
+    .cell {
+        width: 100% !important;
+        display: flex !important;
+        flex-direction: row !important;
+        justify-content: space-between !important;
+        align-items: center;
+        padding: 15px 25px;
+        border-bottom: 1px solid #222;
+    }
+
+    .cell::before {
+        content: attr(data-label);
+        display: block;
+        color: #888;
+        margin-right: 10px;
+    }
+
+    .platform-logo {
+        justify-content: center !important;
+        background-color: #111;
+    }
+
+    .platform-logo::before {
+        display: none !important;
+    }
+}
+
+@media screen and (max-width: 767px) {}
