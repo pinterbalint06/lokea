@@ -152,19 +152,10 @@ router.post("/maps/:mapID/points", checkAuth, upload.single("equirectangularImag
 
         const mapID = validateId(request.params.mapID, "térkép ID");
 
-        await assertUserOwnsMap(userId, mapID);
-
-        const gameMapID = await database.getGameMapIdByMapId(mapID);
-
         const uCoordinate = Number(request.body.u);
         const vCoordinate = Number(request.body.v);
-        if (!Number.isFinite(uCoordinate) || !Number.isFinite(vCoordinate)) {
+        if (!Number.isFinite(uCoordinate) || !Number.isFinite(vCoordinate) || uCoordinate < 0 || uCoordinate >= 1 || vCoordinate < 0 || vCoordinate >= 1) {
             const error = new Error("Helytelen koordináták!");
-            error.statusCode = 400;
-            throw error;
-        }
-        if (uCoordinate < 0 || uCoordinate >= 1 || vCoordinate < 0 || vCoordinate >= 1) {
-            const error = new Error("A koordinátáknak [0, 1[ intervallumban kell lenniük!");
             error.statusCode = 400;
             throw error;
         }
@@ -182,7 +173,24 @@ router.post("/maps/:mapID/points", checkAuth, upload.single("equirectangularImag
             throw error;
         }
 
-        let imageData = await processImageMetadata(request.file.path);
+        await assertUserOwnsMap(userId, mapID);
+
+        const gameMapID = await database.getGameMapIdByMapId(mapID);
+        if (!gameMapID) {
+            const error = new Error("Váratlan hiba történt!");
+            error.statusCode = 500;
+            throw error;
+        }
+
+        let imageData;
+        try {
+            imageData = await processImageMetadata(request.file.path);
+        } catch (err) {
+            console.error(err);
+            const error = new Error("Hiba a kép feldolgozásakor!");
+            error.statusCode = 500;
+            throw error;
+        }
 
         dbConnection = await database.getConnection();
         await dbConnection.beginTransaction();
@@ -225,7 +233,11 @@ router.post("/maps/:mapID/points", checkAuth, upload.single("equirectangularImag
         await dbConnection.commit();
 
         if (request.file && request.file.path) {
-            await deleteFile(request.file.path);
+            try {
+                await deleteFile(request.file.path);
+            } catch (error) {
+                console.error(`Failed to delete temporary file ${request.file.path}: `, error);
+            }
         }
 
         response.status(201).json({
@@ -346,7 +358,14 @@ router.post("/game-maps/:gameMapID/maps", checkAuth, upload.single("mapImage"), 
 
         await assertUserOwnsGameMap(userId, gameMapID);
 
-        let imageData = await processImageMetadata(request.file.path);
+        let imageData;
+        try {
+            imageData = await processImageMetadata(request.file.path);
+        } catch (err) {
+            const error = new Error("Hiba a kép feldolgozásakor!");
+            error.statusCode = 500;
+            throw error;
+        }
 
         dbConnection = await database.getConnection();
         await dbConnection.beginTransaction();
@@ -378,7 +397,11 @@ router.post("/game-maps/:gameMapID/maps", checkAuth, upload.single("mapImage"), 
         await dbConnection.commit();
 
         if (request.file && request.file.path) {
-            await deleteFile(request.file.path);
+            try {
+                await deleteFile(request.file.path);
+            } catch (error) {
+                console.error(`Failed to delete temporary file ${request.file.path}: `, error);
+            }
         }
 
         response.status(201).json({
@@ -741,7 +764,15 @@ router.put("/points/:pointID", checkAuth, upload.single("equirectangularImage"),
         if (request.file) {
             let oldImageInfo = await database.getPointImage(pointID);
 
-            let imageData = await processImageMetadata(request.file.path);
+            let imageData;
+            try {
+                imageData = await processImageMetadata(request.file.path);
+            } catch (err) {
+                console.error(err);
+                const error = new Error("Hiba a kép feldolgozásakor!");
+                error.statusCode = 500;
+                throw error;
+            }
             let newImageId = await database.insertImage(dbConnection, imageData.width, imageData.height, "pending");
             let gameMapID = pointInfo.game_maps_id;
             let mapID = pointInfo.map_id;

@@ -14,7 +14,6 @@ function createTestApp() {
         try {
             await fs.rm(TEMP_DIR, { recursive: true, force: true });
         } catch (err) {
-            console.error("Nem sikerült törölni a temp mappát", err);
         }
     });
     return supertest(app);

@@ -74,4 +74,27 @@ const validTitles = [
     "a-b_c-d_e-f_g-h_i-j_"
 ];
 
-module.exports = { invalidIds, invalidTitles, validTitles };
+const invalidUVs = [
+    "invalid",
+    NaN,
+    Infinity,
+    -Infinity,
+    -0.1,
+    -1,
+    1,
+    1.5,
+    100
+];
+const invalidDegrees = [
+    "invalid",
+    NaN,
+    Infinity,
+    -Infinity,
+    -0.1,
+    -10,
+    360,
+    360.1,
+    500
+];
+
+module.exports = { invalidIds, invalidTitles, validTitles, invalidUVs, invalidDegrees };
