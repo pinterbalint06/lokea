@@ -1,9 +1,12 @@
 const { invalidIds } = require("./test-data.js");
 const auth = require("../../../auth.js");
+const { mockConnection } = require("./mockDatabase.js");
 
 async function testInvalidIDs(requestCallback, expectedErrorMessage) {
     for (const id of invalidIds) {
         const response = await requestCallback(id);
+
+        expect(mockConnection.beginTransaction).not.toHaveBeenCalled();
 
         expect({ id, status: response.statusCode }).toEqual({ id, status: 400 });
         expect({ id, success: response.body.success }).toEqual({ id, success: false });

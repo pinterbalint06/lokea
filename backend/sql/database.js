@@ -454,7 +454,7 @@ async function getAllImageIdsForMap(connection, mapId) {
         WHERE map.map_id = ?
     `;
     const [rows] = await connection.execute(query, [mapId]);
-    return rows.map((row) => row.image_id);
+    return rows.length > 0 ? rows.map((row) => row.image_id) : [];
 }
 
 async function getMapsByGameMapId(gameMapId) {
@@ -569,7 +569,7 @@ async function deleteImageById(connection, imageId) {
         WHERE images.image_id = ?
     `;
     const [result] = await connection.execute(query, [imageId]);
-    return result.affectedRows;
+    return result.affectedRows != 1;
 }
 
 async function arePointsInSameGameMap(connection, pointId1, pointId2) {

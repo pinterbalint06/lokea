@@ -485,12 +485,10 @@ router.delete("/maps/:mapID", checkAuth, async (request, response) => {
         }
 
         for (const imageId of imageIdsToDelete) {
-            let deletedRows = await database.deleteImageById(dbConnection, imageId);
-            if (deletedRows > 1) {
-                console.error("Multiple rows affected at ID delete");
-                let error = {
-                    statusCode: 500
-                };
+            let successImageDeletion = await database.deleteImageById(dbConnection, imageId);
+            if (!successImageDeletion) {
+                const error = new Error("A térkép képeinek törlése nem sikerült");
+                error.statusCode = 500;
                 throw error;
             }
         }
