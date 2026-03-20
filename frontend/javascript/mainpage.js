@@ -14,6 +14,7 @@ document.addEventListener("DOMContentLoaded", async function () {
         })
     }
     else {
+        document.getElementById('comparisionLokea').innerHTML = "";
         modalElement = document.getElementById('settingsModal');
         settingsModal = new bootstrap.Modal(modalElement);
         settingsModal._element.addEventListener("hidden.bs.modal", function () {
@@ -24,12 +25,14 @@ document.addEventListener("DOMContentLoaded", async function () {
             }
         });
     }
+    document.getElementById('darkMode').addEventListener("change", function() {
+        ejszakaimod();
+    });
     await initSocket();
 })
 
 async function logined() {
     try {
-        console.log("halo")
         let response = await fetch("/api/loginRole");
         let data = await response.json();
         if (response.ok) {
@@ -39,6 +42,14 @@ async function logined() {
                 }
                 else {
                     await dropdownLetrehoz(null, data.user[0].username, data.user[0].filepath);
+                }
+                let body = document.body;
+                console.log(data)
+                if (data.user[0].darkmode == 1) {
+                    body.setAttribute('data-bs-theme', 'dark');
+                }
+                else {
+                    body.setAttribute('data-bs-theme', 'light');
                 }
             }
             else {
@@ -387,6 +398,8 @@ async function showSettingsModal() {
     row.appendChild(div);
     container.appendChild(row);
     hova.appendChild(container);
+    
+    document.getElementById('darkMode').checked = (data.darkmode == 1);
 
     settingsModal.show();
 }
@@ -403,6 +416,17 @@ async function getUserData() {
         }
     } catch (error) {
         console.error(error);
+    }
+}
+
+function ejszakaimod() {
+    let body = document.body;
+    let aktualis = body.getAttribute('data-bs-theme');
+
+    if (aktualis === 'dark') {
+        body.setAttribute('data-bs-theme', 'light');
+    } else {
+        body.setAttribute('data-bs-theme', 'dark');
     }
 }
 
@@ -504,3 +528,4 @@ let modalElement;
 let settingsModal;
 let currentSettings;
 let objectURL;
+let tempPfp;

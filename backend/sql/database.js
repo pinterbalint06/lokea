@@ -118,13 +118,13 @@ async function getUsers() {
 }
 
 async function getUser(id) {
-    const query = 'SELECT users.user_id, users.username, users.email, users.role, users.is_2fa, users.created_at, images.filepath FROM users LEFT JOIN images ON (images.image_id = users.pfp) WHERE users.user_id = ?';
+    const query = 'SELECT users.user_id, users.username, users.email, users.role, users.is_2fa, users.darkmode, users.created_at, images.filepath FROM users LEFT JOIN images ON (images.image_id = users.pfp) WHERE users.user_id = ?';
     const [result] = await pool.execute(query, [id]);
     return result;
 }
 
 async function getUserNameProfile(id) {
-    const query = 'SELECT users.username, images.filepath FROM users LEFT JOIN images ON (images.image_id = users.pfp) WHERE users.user_id = ?';
+    const query = 'SELECT users.username, users.darkmode, images.filepath FROM users LEFT JOIN images ON (images.image_id = users.pfp) WHERE users.user_id = ?';
     const [result] = await pool.execute(query, [id]);
     return result;
 }
@@ -184,6 +184,7 @@ async function updateUser(user_id, username, email, is_2fa, language, darkmode) 
     let query = 'UPDATE users ';
     let updates = [];
     let params = [];
+    let rows;
 
     if (username != null) {
         updates.push('users.username = ?');
@@ -218,7 +219,6 @@ async function updateUser(user_id, username, email, is_2fa, language, darkmode) 
         query += ` WHERE users.user_id = ?`;
         params.push(user_id);
         let connection;
-        let rows;
         try {
             connection = await pool.getConnection();
             await connection.beginTransaction();
@@ -239,6 +239,7 @@ async function updateUserByAdmin(user_id, username, email, role, is_2fa) {
     let query = 'UPDATE users ';
     let updates = [];
     let params = [];
+    let rows;
 
     if (username != null) {
         updates.push('users.username = ?');
@@ -269,7 +270,7 @@ async function updateUserByAdmin(user_id, username, email, role, is_2fa) {
         query += ` WHERE users.user_id = ?`;
         params.push(user_id);
         let connection;
-        let rows;
+        
         try {
             connection = await pool.getConnection();
             await connection.beginTransaction();

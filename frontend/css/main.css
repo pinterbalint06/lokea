@@ -1,9 +1,9 @@
-body {
+body, body[data-bs-theme="light"] {
     background: #943ec9;
     background: linear-gradient(132deg, rgba(148, 62, 201, 1) 1%, rgba(201, 66, 153, 1) 52%, rgba(148, 62, 201, 1) 100%);
 }
 
-.space-background {
+.space-background, body[data-bs-theme="dark"] {
     color: white;
     width: 100%;
     min-height: 100vh;
@@ -188,6 +188,11 @@ section {
     box-sizing: border-box;
 }
 
+[data-bs-theme="dark"] .gamemode {
+    background-color: rgba(128, 128, 128, 0.2) !important;
+    border-color: rgba(255, 255, 255, 0.1);
+}
+
 .gamemode img {
     width: 80%;
     height: auto;
@@ -262,7 +267,7 @@ table img {
     table-layout: fixed;
 }
 
-.dropdown-menu{
+.dropdown-menu {
     opacity: 1 !important;
 }
 
@@ -304,6 +309,7 @@ table img {
     padding: 15px;
     text-align: center;
     color: white;
+    font-size: smaller;
 }
 
 .comparison-header {
@@ -472,7 +478,6 @@ body.modal-open> :not(.modal):not(.modal-backdrop) {
 }
 
 .custom-modal-header {
-    background-color: #f8f9fa;
     padding-bottom: 0;
     border-bottom: none;
 }
@@ -494,7 +499,6 @@ body.modal-open> :not(.modal):not(.modal-backdrop) {
 .nav-browser-tabs .nav-link.active {
     background-color: #943ec9 !important;
     border-color: #dee2e6 #dee2e6 #ffffff !important;
-    /* Az alsó vonal eltűnik */
     color: white;
     font-weight: 600;
 }
@@ -507,7 +511,6 @@ body.modal-open> :not(.modal):not(.modal-backdrop) {
 .section-title {
     font-weight: 700;
     margin-bottom: 1.5rem;
-    color: #343a40;
 }
 
 .subtitle {
@@ -527,7 +530,6 @@ body.modal-open> :not(.modal):not(.modal-backdrop) {
 
 .btn-purple:hover {
     background-color: purple;
-    ;
     color: white;
 }
 
@@ -567,6 +569,55 @@ body.modal-open> :not(.modal):not(.modal-backdrop) {
         min-height: 0;
     }
 
+    .col-12:nth-child(even) .gamemode {
+        flex-direction: row-reverse;
+    }
+
+    .gamemode img {
+        height: 70%;
+        object-fit: contain;
+    }
+
+    .customMaps {
+        margin-bottom: 20px;
+    }
+
+    .comparison-row {
+        display: flex;
+        flex-direction: column;
+        margin-bottom: 20px;
+        border: 2px solid #333;
+        border-radius: 10px;
+    }
+
+    .cell {
+        width: 100% !important;
+        display: flex !important;
+        flex-direction: row !important;
+        justify-content: space-between !important;
+        align-items: center;
+        padding: 15px 25px;
+        border-bottom: 1px solid #222;
+    }
+
+    .cell::before {
+        content: attr(data-label);
+        display: block;
+        color: #888;
+        margin-right: 10px;
+    }
+
+    .platform-logo {
+        justify-content: center !important;
+        background-color: #111;
+    }
+
+    .platform-logo::before {
+        display: none !important;
+    }
+}
+
+@media screen and (max-width: 767px) {
     .col-12 .gamemode {
         flex-direction: row;
         margin-bottom: 20px;
@@ -575,12 +626,8 @@ body.modal-open> :not(.modal):not(.modal-backdrop) {
         padding: 20px;
     }
 
-    .col-12:nth-child(even) .gamemode {
-        flex-direction: row-reverse;
-    }
-
     .gamemode img {
-        height: 70%;
+        width: 70%;
         object-fit: contain;
     }
 
@@ -615,45 +662,26 @@ body.modal-open> :not(.modal):not(.modal-backdrop) {
         margin-top: 0 !important;
         max-height: none !important;
     }
-
-    .customMaps {
-        margin-bottom: 20px;
-    }
-
-    .comparison-row {
-        display: flex;
-        flex-direction: column;
-        /* Egymás alá rakja a cellákat */
-        margin-bottom: 20px;
-        border: 2px solid #333;
-        border-radius: 10px;
-    }
-
-    .cell {
-        width: 100% !important;
-        display: flex !important;
-        flex-direction: row !important;
-        justify-content: space-between !important;
-        align-items: center;
-        padding: 15px 25px;
-        border-bottom: 1px solid #222;
-    }
-
-    .cell::before {
-        content: attr(data-label);
-        display: block;
-        color: #888;
-        margin-right: 10px;
-    }
-
-    .platform-logo {
-        justify-content: center !important;
-        background-color: #111;
-    }
-
-    .platform-logo::before {
-        display: none !important;
-    }
 }
 
-@media screen and (max-width: 767px) {}
+/* @media screen and (min-width: 577px) and (max-width: 767px) {
+    
+} */
+
+@media screen and (min-width: 577px) and (max-width: 767px) {
+    .col-12 .gamemode {
+        height: 300px;
+    }
+
+    .gamemode {
+        padding: 20px 30px !important; 
+    }
+
+    .gamemode-text {
+        padding-right: 15px;
+    }
+
+    .gamemode h5 {
+        margin-top: 0;
+    }
+}
