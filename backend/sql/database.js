@@ -20,25 +20,35 @@ const pool = mysql.createPool({
 async function newUser(username, email, password) {
     let success = false;
     let error;
-    const queryUserExistsCheck = 'SELECT email, username FROM users WHERE username LIKE ? OR email LIKE ?';
+    const queryUserExistsCheck = 'SELECT email, username FROM users WHERE username = ? OR email = ?';
     let [result] = await pool.execute(queryUserExistsCheck, [username, email]);
     if (result.length == 0) {
+        let connection;
         try {
+            connection = await pool.getConnection();
+            await connection.beginTransaction();
             const queryInsertNewUser = 'INSERT INTO users (username, email, password) VALUES (?, ?, ?)';
-            [result] = await pool.execute(queryInsertNewUser, [username, email, password]);
+            [result] = await connection.execute(queryInsertNewUser, [username, password]);
             if (result.affectedRows == 1) {
                 success = true;
+                await connection.commit();
             }
             else {
-                error = "Failed insert";
+                throw new Error("Insert failed");
             }
-        } catch (fault) {
+        }
+        catch (fault) {
+            await connection.rollback();
+            console.error(fault);
             if (fault.code == 'ER_DUP_ENTRY') {
                 error = "User exists";
             }
             else {
                 error = "Failed insert";
             }
+        }
+        finally {
+            if (connection) connection.release();
         }
     }
     else {
@@ -51,25 +61,35 @@ async function newUser(username, email, password) {
 async function newUserFromAdmin(username, email, password, role, is_2fa) {
     let success = false;
     let error;
-    const queryUserExistsCheck = 'SELECT email, username FROM users WHERE username LIKE ? OR email LIKE ?';
+    const queryUserExistsCheck = 'SELECT email, username FROM users WHERE username = ? OR email = ?';
     let [result] = await pool.execute(queryUserExistsCheck, [username, email]);
     if (result.length == 0) {
+        let connection;
         try {
+            connection = await pool.getConnection();
+            await connection.beginTransaction();
             const queryInsertNewUser = 'INSERT INTO users (username, email, password, role, is_2fa) VALUES (?, ?, ?, ?, ?)';
-            [result] = await pool.execute(queryInsertNewUser, [username, email, password, role, is_2fa]);
+            [result] = await connection.execute(queryInsertNewUser, [username, email, password, role, is_2fa]);
             if (result.affectedRows == 1) {
                 success = true;
+                await connection.commit();
             }
             else {
-                error = "Failed insert";
+                throw new Error("Insert failed");
             }
-        } catch (fault) {
+        }
+        catch (fault) {
+            await connection.rollback();
+            console.error(fault);
             if (fault.code == 'ER_DUP_ENTRY') {
                 error = "User exists";
             }
             else {
                 error = "Failed insert";
             }
+        }
+        finally {
+            if (connection) connection.release();
         }
     }
     else {
@@ -193,11 +213,25 @@ async function updateUser(user_id, username, email, is_2fa, language, darkmode) 
     if (updates.length === 0) {
         throw new Error('Nincs frissítendő mező');
     }
-    query += ' SET ' + updates.join(' , ');
-    query += ` WHERE users.user_id = ?`;
-    params.push(user_id);
-
-    const [rows] = await pool.execute(query, params);
+    else {
+        query += ' SET ' + updates.join(' , ');
+        query += ` WHERE users.user_id = ?`;
+        params.push(user_id);
+        let connection;
+        let rows;
+        try {
+            connection = await pool.getConnection();
+            await connection.beginTransaction();
+            [rows] = await connection.execute(query, params);
+            await connection.commit();
+        } catch (error) {
+            await connection.rollback();
+            console.error(error);
+        }
+        finally {
+            if (connection) connection.release();
+        }
+    }
     return rows.affectedRows;
 }
 
@@ -230,17 +264,44 @@ async function updateUserByAdmin(user_id, username, email, role, is_2fa) {
     if (updates.length === 0) {
         throw new Error('Nincs frissítendő mező');
     }
-    query += ' SET ' + updates.join(' , ');
-    query += ` WHERE users.user_id = ?`;
-    params.push(user_id);
-
-    const [rows] = await pool.execute(query, params);
+    else {
+        query += ' SET ' + updates.join(' , ');
+        query += ` WHERE users.user_id = ?`;
+        params.push(user_id);
+        let connection;
+        let rows;
+        try {
+            connection = await pool.getConnection();
+            await connection.beginTransaction();
+            [rows] = await connection.execute(query, params);
+            await connection.commit();
+        } catch (error) {
+            await connection.rollback();
+            console.error(error);
+        }
+        finally {
+            if (connection) connection.release();
+        }
+    }
     return rows.affectedRows;
 }
 
 async function userToInactive(userId) {
-    const query = 'UPDATE users SET deleted_at = CURRENT_TIMESTAMP WHERE user_id = ? AND deleted_at IS NULL';
-    const [result] = await pool.execute(query, [userId]);
+    let connection;
+    let result;
+    try {
+        connection = await pool.getConnection();
+        await connection.beginTransaction();
+        const query = 'UPDATE users SET deleted_at = CURRENT_TIMESTAMP WHERE user_id = ? AND deleted_at IS NULL';
+        [result] = await connection.execute(query, [userId]);
+        await connection.commit();
+    } catch (error) {
+        await connection.rollback();
+        console.error(error);
+    }
+    finally {
+        if (connection) connection.release();
+    }
     return result.affectedRows;
 }
 
@@ -252,19 +313,27 @@ async function uploadProfilePic(filepath, width, height, user_id) {
 
     let oldFilePath = oldImageData[0] ? oldImageData[0].filepath : null;
     let oldImageId = oldImageData[0] ? oldImageData[0].image_id : null;
-
-    //Új profilkép adatainak feltöltése + users táblában az pfp frissitése
-    const queryInsertNewPic = 'INSERT INTO images (filepath, width, height) VALUES (?, ?, ?)';
-    let [id] = await pool.execute(queryInsertNewPic, [filepath, width, height]);
-    const queryUpdatePfpId = 'UPDATE users SET pfp = ? WHERE user_id = ?';
-    await pool.execute(queryUpdatePfpId, [id.insertId, user_id]);
-
-    //Ha volt előtte egy másik profilkép, törli
-    if (oldImageId != null) {
-        const queryDeleteOldPic = 'DELETE FROM images WHERE image_id = ?';
-        await pool.execute(queryDeleteOldPic, [oldImageId]);
+    let connection;
+    let result;
+    try {
+        connection = await pool.getConnection();
+        await connection.beginTransaction();
+        const queryInsertNewPic = 'INSERT INTO images (filepath, width, height) VALUES (?, ?, ?)';
+        [result] = await connection.execute(queryInsertNewPic, [filepath, width, height]);
+        const queryUpdatePfpId = 'UPDATE users SET pfp = ? WHERE user_id = ?';
+        [result] = await connection.execute(queryUpdatePfpId, [result.insertId, user_id])
+        if (oldImageId != null) {
+            const queryDeleteOldPic = 'DELETE FROM images WHERE image_id = ?';
+            await connection.execute(queryDeleteOldPic, [oldImageId]);
+        }
+        await connection.commit();
+    } catch (error) {
+        await connection.rollback();
+        console.error(error);
     }
-
+    finally {
+        if (connection) connection.release();
+    }
     //Visszaadja a régi kép elérési útvonalát, hogy törlésre kerülhessen. Amennyiben nem volt, null értéket ad vissza.
     return oldFilePath;
 }
@@ -277,15 +346,22 @@ async function deleteProfilePic(user_id) {
 
     let oldFilePath = oldImageData[0] ? oldImageData[0].filepath : null;
     let oldImageId = oldImageData[0] ? oldImageData[0].image_id : null;
-
-    //Users táblában az adott felhasználónak a pfp-t NULL-ra állitja
-    const queryUpdatePfpId = 'UPDATE users SET pfp = NULL WHERE user_id = ?';
-    await pool.execute(queryUpdatePfpId, [user_id]);
-
-    //Törlés az images táblából
-    const queryDeleteOldPic = 'DELETE FROM images WHERE image_id = ?';
-    await pool.execute(queryDeleteOldPic, [oldImageId]);
-
+    let connection;
+    try {
+        connection = await pool.getConnection();
+        await connection.beginTransaction();
+        const queryUpdatePfpId = 'UPDATE users SET pfp = NULL WHERE user_id = ?';
+        await connection.execute(queryUpdatePfpId, [user_id]);
+        const queryDeleteOldPic = 'DELETE FROM images WHERE image_id = ?';
+        await connection.execute(queryDeleteOldPic, [oldImageId]);
+        await connection.commit();
+    } catch (error) {
+        await connection.rollback();
+        console.error(error);
+    }
+    finally {
+        if (connection) connection.release();
+    }
     //Visszaadja a régi kép elérési útvonalát a törléshez.
     return oldFilePath;
 }
