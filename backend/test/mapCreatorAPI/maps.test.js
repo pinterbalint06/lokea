@@ -1,55 +1,55 @@
+require("./helpers/setup-mocks.js");
+
 const { createTestApp } = require("./helpers/setup-test.js");
-const { testInvalidIDs, testRequiresAuth } = require("./helpers/helpers.js");
-const { invalidTitles, validTitles } = require("./helpers/test-data.js");
-
-jest.mock("../../auth.js", () => ({
-    checkAuth: jest.fn((request, response, next) => {
-        request.session = { userid: 1 };
-        next();
-    })
-}));
-
-jest.mock("../../sql/database.js", () => require("./helpers/mockDatabase.js").mockDatabase);
-
+const { testInvalidIDs, testRequiresAuth, expectSuccessfulTransaction, expectRollback, expectErrorResponse, randomId, buildRequest, suppressConsoleErrors } = require("./helpers/helpers.js");
+const { invalidTitles, validTitles, mockImageMetadata, imageStatusForPath } = require("./helpers/test-data.js");
 const database = require("../../sql/database.js");
-const { mockConnection } = require("./helpers/mockDatabase.js");
-
-jest.mock("../../utils/imageProcessor.js", () => ({
-    processImageMetadata: jest.fn().mockResolvedValue({ width: 800, height: 600, extension: ".jpg" }),
-    createWebpAndLowRes: jest.fn().mockResolvedValue({ targetFileName: "mock.webp", lowResFileName: "mock_low_res.webp", mainPath: "/path/to/mock.webp", lowResPath: "/path/to/mock_low_res.webp" }),
-    deleteImageAndLowResByMainPath: jest.fn().mockResolvedValue()
-}));
-
+const { mockConnection } = require("./helpers/mock-database.js");
 const { processImageMetadata, createWebpAndLowRes } = require("../../utils/imageProcessor.js");
-
-jest.mock("../../utils/fileUtils.js", () => ({
-    deleteFile: jest.fn().mockResolvedValue()
-}));
-
 const { deleteFile } = require("../../utils/fileUtils.js");
 const fs = require("fs/promises");
 const path = require("path");
+
 
 const requestWithSupertest = createTestApp();
 
 describe("Map Creator API - Map Endpoints - /api/map-creator/", () => {
     describe("GET /game-maps/:gameMapID/maps", () => {
+        const mockMaps = [
+            { id: 101, title: "Test Map Title" },
+            { id: 102, title: "Another Map Title" }
+        ];
+
+        const defaults = {
+            id: randomId()
+        };
+
+        const makeGetRequest = (overrides = {}) => buildRequest(
+            (id) => requestWithSupertest.get(`/api/map-creator/game-maps/${encodeURIComponent(id)}/maps`),
+            overrides,
+            defaults
+        );
+
         beforeEach(() => {
             jest.clearAllMocks();
         });
 
-        testRequiresAuth(() => requestWithSupertest.get("/api/map-creator/game-maps/1/maps"));
+        testRequiresAuth(() => makeGetRequest());
+
+        it("Should respond with 400 if the game map id is incorrect", async () => {
+            await testInvalidIDs(
+                (id) => makeGetRequest({ id }),
+                "Helytelen pálya ID"
+            );
+        });
 
         it("Should return all maps for a game map", async () => {
             database.checkUserOwnsGameMap.mockResolvedValue(true);
-            database.getMapsByGameMapId.mockResolvedValue([
-                { id: 101, title: "Test Map Title" },
-                { id: 102, title: "Another Map Title" }
-            ]);
+            database.getMapsByGameMapId.mockResolvedValue(mockMaps);
 
-            const response = await requestWithSupertest.get("/api/map-creator/game-maps/1/maps");
+            const response = await makeGetRequest();
 
-            expect(response.statusCode).toEqual(200);
+            expect(response.statusCode).toBe(200);
             expect(response.type).toEqual(expect.stringContaining("json"));
             expect(response.body).toHaveProperty("success", true);
             expect(response.body).toHaveProperty("maps");
@@ -62,9 +62,9 @@ describe("Map Creator API - Map Endpoints - /api/map-creator/", () => {
             database.checkUserOwnsGameMap.mockResolvedValue(true);
             database.getMapsByGameMapId.mockResolvedValue([]);
 
-            const response = await requestWithSupertest.get("/api/map-creator/game-maps/1/maps");
+            const response = await makeGetRequest();
 
-            expect(response.statusCode).toEqual(200);
+            expect(response.statusCode).toBe(200);
             expect(response.body).toHaveProperty("success", true);
             expect(response.body).toHaveProperty("maps");
             expect(response.body.maps).toEqual([]);
@@ -72,67 +72,62 @@ describe("Map Creator API - Map Endpoints - /api/map-creator/", () => {
 
         it("Should respond with 403 if it's not the user's game map", async () => {
             database.checkUserOwnsGameMap.mockResolvedValue(false);
-            database.getMapsByGameMapId.mockResolvedValue([
-                { id: 101, title: "Test Map Title" },
-                { id: 102, title: "Another Map Title" }
-            ]);
+            database.getMapsByGameMapId.mockResolvedValue(mockMaps);
 
-            const response = await requestWithSupertest.get("/api/map-creator/game-maps/1/maps");
+            const response = await makeGetRequest();
 
-            expect(response.statusCode).toEqual(403);
+            expect(response.statusCode).toBe(403);
             expect(response.type).toEqual(expect.stringContaining("json"));
             expect(response.body).toHaveProperty("success", false);
             expect(response.body).toHaveProperty("error", "Nincs hozzáférése ehhez a pályához");
         });
 
-        it("Should respond with 400 if the game map id is incorrect", async () => {
-            await testInvalidIDs(
-                (id) => requestWithSupertest.get(`/api/map-creator/game-maps/${encodeURIComponent(id)}/maps`),
-                "Helytelen pálya ID"
-            );
-        });
+        describe("Server Errors", () => {
+            suppressConsoleErrors();
 
-        it("Should respond with 500 if an unexpected database error occurs", async () => {
-            jest.spyOn(console, 'error').mockImplementation(() => { });
+            it("Should respond with 500 if an unexpected database error occurs", async () => {
+                database.checkUserOwnsGameMap.mockResolvedValue(true);
+                database.getMapsByGameMapId.mockRejectedValueOnce(new Error("Database connection refused"));
 
-            database.checkUserOwnsGameMap.mockResolvedValue(true);
-            database.getMapsByGameMapId.mockRejectedValueOnce(new Error("Database connection refused"));
+                const response = await makeGetRequest();
 
-            const response = await requestWithSupertest.get("/api/map-creator/game-maps/1/maps");
-
-            expect(response.statusCode).toEqual(500);
-            expect(response.body).toHaveProperty("success", false);
-            expect(response.body).toHaveProperty("error", "Váratlan hiba történt!");
-
-            console.error.mockRestore();
+                expectErrorResponse(response);
+            });
         });
     });
 
     describe("PUT /maps/:mapID", () => {
+        const defaults = {
+            id: randomId(),
+            title: "new title",
+        };
+
+        const makePutRequest = (overrides = {}) => buildRequest(
+            (id) => requestWithSupertest.put(`/api/map-creator/maps/${encodeURIComponent(id)}`),
+            overrides,
+            defaults
+        );
+
         beforeEach(() => {
             jest.clearAllMocks();
+            database.checkUserOwnsMap.mockResolvedValue(true);
+            database.getMapInfo.mockResolvedValue({ title: "Test Map Title", game_maps_id: 1 });
+            database.updateMapTitle.mockResolvedValue(1);
         });
 
-        testRequiresAuth(() => requestWithSupertest.put("/api/map-creator/maps/1"));
+        testRequiresAuth(() => makePutRequest());
 
         it("Should respond with 400 if the map id is incorrect", async () => {
             await testInvalidIDs(
-                (id) => requestWithSupertest
-                    .put(`/api/map-creator/maps/${encodeURIComponent(id)}`)
-                    .send({
-                        title: "new title"
-                    }),
+                (id) => makePutRequest({ id }),
                 "Helytelen térkép ID"
             );
         });
 
         it("Should respond with 403 if it's not the user's map", async () => {
-            database.checkUserOwnsMap.mockResolvedValue(false);
-            const response = await requestWithSupertest
-                .put(`/api/map-creator/maps/1`)
-                .send({
-                    title: "new title"
-                });
+            database.checkUserOwnsMap.mockResolvedValueOnce(false);
+
+            const response = await makePutRequest();
 
             expect(response.statusCode).toBe(403);
             expect(response.body.success).toBe(false);
@@ -140,13 +135,7 @@ describe("Map Creator API - Map Endpoints - /api/map-creator/", () => {
         });
 
         it.each(invalidTitles)("Should respond with 400 if the new title is incorrect: '%s'", async (invalidTitle) => {
-            database.checkUserOwnsMap.mockResolvedValue(true);
-
-            const response = await requestWithSupertest
-                .put(`/api/map-creator/maps/1`)
-                .send({
-                    title: invalidTitle
-                });
+            const response = await makePutRequest({ title: invalidTitle });
 
             expect(response.statusCode).toBe(400);
             expect(response.body.success).toBe(false);
@@ -154,11 +143,7 @@ describe("Map Creator API - Map Endpoints - /api/map-creator/", () => {
         });
 
         it("Should respond with 400 if the new title is not given in the body", async () => {
-            database.checkUserOwnsMap.mockResolvedValue(true);
-
-            const response = await requestWithSupertest
-                .put(`/api/map-creator/maps/1`)
-                .send({});
+            const response = await makePutRequest({ title: "" });
 
             expect(response.statusCode).toBe(400);
             expect(response.body.success).toBe(false);
@@ -166,147 +151,109 @@ describe("Map Creator API - Map Endpoints - /api/map-creator/", () => {
         });
 
         it("Should respond with 400 if a body is not provided", async () => {
-            database.checkUserOwnsMap.mockResolvedValue(true);
-
-            const response = await requestWithSupertest
-                .put(`/api/map-creator/maps/1`);
+            const response = await makePutRequest({ title: null });
 
             expect(response.statusCode).toBe(400);
             expect(response.body.success).toBe(false);
             expect(response.body.error).toBe("Hiányzó adatok!");
         });
 
-        it("Should respond with 500 if an unexpected database error occurs", async () => {
-            jest.spyOn(console, 'error').mockImplementation(() => { });
-
-            database.checkUserOwnsMap.mockResolvedValue(true);
-            database.getMapInfo.mockResolvedValue({ title: "Test Map Title", game_maps_id: 1 });
-            database.updateMapTitle.mockRejectedValueOnce(new Error("Database connection refused"));
-
-            const response = await requestWithSupertest
-                .put("/api/map-creator/maps/1")
-                .send({
-                    title: "new title"
-                });
-
-            expect(response.statusCode).toEqual(500);
-            expect(response.body).toHaveProperty("success", false);
-            expect(response.body).toHaveProperty("error", "Váratlan hiba történt!");
-
-            console.error.mockRestore();
-        });
-
         it("Should respond with 404 if the map doesn't exist somehow", async () => {
-            database.checkUserOwnsMap.mockResolvedValue(true);
-            database.getMapInfo.mockResolvedValue(null);
+            database.getMapInfo.mockResolvedValueOnce(null);
 
-            const response = await requestWithSupertest
-                .put("/api/map-creator/maps/1")
-                .send({
-                    title: "Új térképnév"
-                });
+            const response = await makePutRequest();
 
-            expect(response.statusCode).toEqual(404);
+            expect(response.statusCode).toBe(404);
             expect(response.body).toHaveProperty("success", false);
             expect(response.body).toHaveProperty("error", "A térkép nem létezik");
         });
 
         it("Should respond with 200, the mapID and the saved title on successful save", async () => {
-            database.checkUserOwnsMap.mockResolvedValue(true);
-            database.getMapInfo.mockResolvedValue({ title: "Test Map Title", game_maps_id: 1 });
-            database.updateMapTitle.mockResolvedValue(1);
-
-            const mapId = 1;
-
             for (const newTitle of validTitles) {
-                const response = await requestWithSupertest
-                    .put(`/api/map-creator/maps/${mapId}`)
-                    .send({
-                        title: newTitle
-                    });
+                const response = await makePutRequest({ title: newTitle });
 
-                expect(response.statusCode).toEqual(200);
+                expect(response.statusCode).toBe(200);
                 expect(response.body).toHaveProperty("success", true);
-                expect(response.body).toHaveProperty("mapId", mapId);
+                expect(response.body).toHaveProperty("mapId", defaults.id);
                 expect(response.body).toHaveProperty("title", newTitle.trim());
                 expect(database.getConnection).toHaveBeenCalled();
-                expect(mockConnection.beginTransaction).toHaveBeenCalled();
-                expect(database.updateMapTitle).toHaveBeenCalledWith(mockConnection, mapId, newTitle.trim());
-                expect(mockConnection.commit).toHaveBeenCalled();
-                expect(mockConnection.release).toHaveBeenCalled();
+                expect(database.updateMapTitle).toHaveBeenCalledWith(mockConnection, defaults.id, newTitle.trim());
+                expectSuccessfulTransaction(mockConnection);
             }
         });
 
-        it.each([0, 2, 3])("Should respond with 500 if the update failed. Invalid affectedRow %s", async (affectedRows) => {
-            database.checkUserOwnsMap.mockResolvedValue(true);
-            database.getMapInfo.mockResolvedValue({ title: "Test Map Title", game_maps_id: 1 });
-            database.updateMapTitle.mockResolvedValue(affectedRows);
+        describe("Server Errors", () => {
+            suppressConsoleErrors();
 
-            const mapId = 1;
-            const newTitle = "Új térképnév";
-            const response = await requestWithSupertest
-                .put(`/api/map-creator/maps/${mapId}`)
-                .send({
-                    title: newTitle
-                });
+            it("Should respond with 500 if an unexpected database error occurs", async () => {
+                database.updateMapTitle.mockRejectedValueOnce(new Error("Database connection refused"));
 
-            expect(response.statusCode).toEqual(500);
-            expect(response.body).toHaveProperty("success", false);
-            expect(response.body).toHaveProperty("error", "A térkép átnevezése nem sikerült");
-            expect(database.getConnection).toHaveBeenCalled();
-            expect(mockConnection.beginTransaction).toHaveBeenCalled();
-            expect(database.updateMapTitle).toHaveBeenCalledWith(mockConnection, mapId, newTitle);
-            expect(mockConnection.rollback).toHaveBeenCalled();
-            expect(mockConnection.release).toHaveBeenCalled();
+                const response = await makePutRequest();
+
+                expectErrorResponse(response);
+            });
+
+            it.each([0, 2, 3])("Should respond with 500 if the update failed. Invalid affectedRow %s", async (affectedRows) => {
+                database.updateMapTitle.mockResolvedValueOnce(affectedRows);
+
+                const response = await makePutRequest();
+
+                expectErrorResponse(response, 500, "A térkép átnevezése nem sikerült");
+                expect(database.getConnection).toHaveBeenCalled();
+                expect(database.updateMapTitle).toHaveBeenCalledWith(mockConnection, defaults.id, defaults.title.trim());
+                expectRollback(mockConnection);
+            });
         });
     });
 
     describe("POST /game-maps/:gameMapID/maps", () => {
-        const validData = {
+        const defaults = {
+            id: randomId(),
             title: "new title",
-            file: Buffer.from("mapimage")
+            file: Buffer.from("mapimage"),
+            filename: "map.jpg",
+            fileFieldName: "mapImage"
         };
+
+        const makePostRequest = (overrides = {}) => buildRequest(
+            (id) => requestWithSupertest.post(`/api/map-creator/game-maps/${encodeURIComponent(id)}/maps`),
+            overrides,
+            defaults
+        );
+
+        const imageId = randomId();
+        const mapId = randomId();
 
         beforeEach(() => {
             jest.clearAllMocks();
+            database.checkUserOwnsGameMap.mockResolvedValue(true);
+            database.insertImage.mockResolvedValue(imageId);
+            database.insertMap.mockResolvedValue(mapId);
         });
 
-        testRequiresAuth(() => requestWithSupertest
-            .post("/api/map-creator/game-maps/1/maps")
-            .field("title", validData.title)
-            .attach("file", validData.file, "testmap.png")
-        );
+        testRequiresAuth(() => makePostRequest());
+
+        it("Should respond with 400 if the game map id is incorrect", async () => {
+            await testInvalidIDs(
+                (id) => makePostRequest({ id }),
+                "Helytelen pálya ID"
+            );
+        });
 
         it("Should respond with 400 if a body is not provided", async () => {
-            database.checkUserOwnsMap.mockResolvedValue(true);
-
-            const response = await requestWithSupertest
-                .post("/api/map-creator/game-maps/1/maps");
+            const response = await makePostRequest({ file: undefined, title: undefined });
 
             expect(response.statusCode).toBe(400);
             expect(response.body.success).toBe(false);
             expect(response.body.error).toBe("Hiányzó adatok!");
         });
 
-        it("Should respond with 400 if the game map id is incorrect", async () => {
-            await testInvalidIDs(
-                (id) => requestWithSupertest
-                    .post(`/api/map-creator/game-maps/${encodeURIComponent(id)}/maps`)
-                    .field("title", validData.title)
-                    .attach("mapImage", validData.file, "testmap.png"),
-                "Helytelen pálya ID"
-            );
-        });
-
         it("Should respond with 403 if it's not the user's game map", async () => {
-            database.checkUserOwnsGameMap.mockResolvedValue(false);
+            database.checkUserOwnsGameMap.mockResolvedValueOnce(false);
 
-            const response = await requestWithSupertest
-                .post("/api/map-creator/game-maps/1/maps")
-                .field("title", validData.title)
-                .attach("mapImage", validData.file, "testmap.png");
+            const response = await makePostRequest();
 
-            expect(response.statusCode).toEqual(403);
+            expect(response.statusCode).toBe(403);
             expect(response.type).toEqual(expect.stringContaining("json"));
             expect(response.body).toHaveProperty("success", false);
             expect(response.body).toHaveProperty("error", "Nincs hozzáférése ehhez a pályához");
@@ -314,12 +261,7 @@ describe("Map Creator API - Map Endpoints - /api/map-creator/", () => {
         });
 
         it.each(invalidTitles)("Should respond with 400 if the title is incorrect: '%s'", async (invalidTitle) => {
-            database.checkUserOwnsGameMap.mockResolvedValue(true);
-
-            const response = await requestWithSupertest
-                .post("/api/map-creator/game-maps/1/maps")
-                .attach("mapImage", validData.file, "testmap.png")
-                .field("title", invalidTitle);
+            const response = await makePostRequest({ title: invalidTitle });
 
             expect(response.statusCode).toBe(400);
             expect(response.body.success).toBe(false);
@@ -328,11 +270,7 @@ describe("Map Creator API - Map Endpoints - /api/map-creator/", () => {
         });
 
         it("Should respond with 400 if the title is not given", async () => {
-            database.checkUserOwnsMap.mockResolvedValue(true);
-
-            const response = await requestWithSupertest
-                .post("/api/map-creator/game-maps/1/maps")
-                .field("random", "random data");
+            const response = await makePostRequest({ title: undefined });
 
             expect(response.statusCode).toBe(400);
             expect(response.body.success).toBe(false);
@@ -340,102 +278,17 @@ describe("Map Creator API - Map Endpoints - /api/map-creator/", () => {
         });
 
         it("Should respond with 400 if the map image is not given", async () => {
-            database.checkUserOwnsMap.mockResolvedValue(true);
-
-            const response = await requestWithSupertest
-                .post("/api/map-creator/game-maps/1/maps")
-                .field("title", validData.title);
+            const response = await makePostRequest({ file: undefined });
 
             expect(response.statusCode).toBe(400);
             expect(response.body.success).toBe(false);
             expect(response.body.error).toBe("Nem adott meg képet!");
         });
 
-        it("Should respond with 500 if the database refused connection", async () => {
-            jest.spyOn(console, 'error').mockImplementation(() => { });
-            database.checkUserOwnsMap.mockResolvedValue(true);
-            database.getConnection.mockRejectedValueOnce(new Error("Database connection refused"));
-
-            const response = await requestWithSupertest
-                .post("/api/map-creator/game-maps/1/maps")
-                .attach("mapImage", validData.file, "testmap.png")
-                .field("title", validData.title);
-
-            expect(response.statusCode).toBe(500);
-            expect(response.body.success).toBe(false);
-            expect(response.body.error).toBe("Váratlan hiba történt!");
-            console.error.mockRestore();
-        });
-
-        it("Should respond with 500 if the insertMap failed and delete requestFile", async () => {
-            jest.spyOn(console, 'error').mockImplementation(() => { });
-
-            database.checkUserOwnsMap.mockResolvedValue(true);
-            const imageId = 106;
-            database.insertImage.mockResolvedValue(imageId);
-            database.insertMap.mockRejectedValueOnce(new Error("Insertion failed"));
-
-            const response = await requestWithSupertest
-                .post("/api/map-creator/game-maps/1/maps")
-                .attach("mapImage", validData.file, "testmap.png")
-                .field("title", validData.title);
-
-            expect(database.getConnection).toHaveBeenCalled();
-            expect(mockConnection.beginTransaction).toHaveBeenCalled();
-            expect(database.insertImage).toHaveBeenCalledWith(mockConnection, 800, 600, "pending");
-            expect(database.insertMap).toHaveBeenCalledWith(mockConnection, validData.title.trim(), 1, imageId);
-            expect(mockConnection.rollback).toHaveBeenCalled();
-            expect(deleteFile).toHaveBeenCalledWith(expect.any(String));
-            expect(mockConnection.release).toHaveBeenCalled();
-
-            expect(response.statusCode).toBe(500);
-            expect(response.body.success).toBe(false);
-            expect(response.body.error).toBe("Váratlan hiba történt!");
-
-            console.error.mockRestore();
-        });
-
-        it("Should respond with 500 if the database commit failed and delete all files", async () => {
-            jest.spyOn(console, 'error').mockImplementation(() => { });
-
-            database.checkUserOwnsMap.mockResolvedValue(true);
-            const imageId = 106;
-            database.insertImage.mockResolvedValue(imageId);
-            const mapId = 201;
-            database.insertMap.mockResolvedValue(mapId);
-            mockConnection.commit.mockRejectedValueOnce(new Error("Commit failed"));
-
-            const gameMapID = 1;
-            const response = await requestWithSupertest
-                .post(`/api/map-creator/game-maps/${gameMapID}/maps`)
-                .attach("mapImage", validData.file, "testmap.png")
-                .field("title", validData.title);
-
-            expect(database.getConnection).toHaveBeenCalled();
-            expect(mockConnection.beginTransaction).toHaveBeenCalled();
-            expect(database.insertImage).toHaveBeenCalledWith(mockConnection, 800, 600, "pending");
-            expect(database.insertMap).toHaveBeenCalledWith(mockConnection, validData.title.trim(), gameMapID, imageId);
-            expect(database.updateImagePath).toHaveBeenCalledWith(mockConnection, imageId, expect.any(String));
-            expect(mockConnection.commit).toHaveBeenCalled();
-            expect(deleteFile).toHaveBeenCalledTimes(3); // main image, low res image, temporary uploaded file
-            expect(mockConnection.rollback).toHaveBeenCalled();
-            expect(mockConnection.release).toHaveBeenCalled();
-
-            expect(response.statusCode).toBe(500);
-            expect(response.body.success).toBe(false);
-            expect(response.body).toHaveProperty("error", "Váratlan hiba történt!");
-
-            console.error.mockRestore();
-        });
-
         it("Should respond with 413 for images too large", async () => {
             const tooBigFile = Buffer.alloc(11 * 1024 * 1024);
 
-            const gameMapID = 1;
-            const response = await requestWithSupertest
-                .post(`/api/map-creator/game-maps/${gameMapID}/maps`)
-                .attach("mapImage", tooBigFile, "testmap.png")
-                .field("title", validData.title);
+            const response = await makePostRequest({ file: tooBigFile });
 
             expect(response.statusCode).toBe(413);
             expect(response.body.success).toBe(false);
@@ -443,11 +296,7 @@ describe("Map Creator API - Map Endpoints - /api/map-creator/", () => {
         });
 
         it("Should respond with 400 for unexpected multer errors", async () => {
-            const gameMapID = 1;
-            const response = await requestWithSupertest
-                .post(`/api/map-creator/game-maps/${gameMapID}/maps`)
-                .attach("wrongimageFieldName", validData.file, "testmap.png")
-                .field("title", validData.title);
+            const response = await makePostRequest({ fileFieldName: "wrongimageFieldName" });
 
             expect(response.statusCode).toBe(400);
             expect(response.body.success).toBe(false);
@@ -455,27 +304,15 @@ describe("Map Creator API - Map Endpoints - /api/map-creator/", () => {
         });
 
         it("Should respond with 201 if all the data is correct and it saved everything well", async () => {
-            database.checkUserOwnsMap.mockResolvedValue(true);
-            const imageId = 106;
-            database.insertImage.mockResolvedValue(imageId);
-            const mapId = 201;
-            database.insertMap.mockResolvedValue(mapId);
-
-            const gameMapID = 1;
             for (const validTitle of validTitles) {
-                const response = await requestWithSupertest
-                    .post(`/api/map-creator/game-maps/${gameMapID}/maps`)
-                    .attach("mapImage", validData.file, "testmap.png")
-                    .field("title", validTitle);
+                const response = await makePostRequest({ title: validTitle });
 
                 expect(database.getConnection).toHaveBeenCalled();
-                expect(mockConnection.beginTransaction).toHaveBeenCalled();
-                expect(database.insertImage).toHaveBeenCalledWith(mockConnection, 800, 600, "pending");
-                expect(database.insertMap).toHaveBeenCalledWith(mockConnection, validTitle.trim(), gameMapID, imageId);
+                expect(database.insertImage).toHaveBeenCalledWith(mockConnection, mockImageMetadata.width, mockImageMetadata.height, imageStatusForPath);
+                expect(database.insertMap).toHaveBeenCalledWith(mockConnection, validTitle.trim(), defaults.id, imageId);
                 expect(database.updateImagePath).toHaveBeenCalledWith(mockConnection, imageId, expect.any(String));
-                expect(mockConnection.commit).toHaveBeenCalled();
                 expect(deleteFile).toHaveBeenCalledWith(expect.any(String));
-                expect(mockConnection.release).toHaveBeenCalled();
+                expectSuccessfulTransaction(mockConnection);
 
                 expect(response.statusCode).toBe(201);
                 expect(response.body.success).toBe(true);
@@ -484,146 +321,128 @@ describe("Map Creator API - Map Endpoints - /api/map-creator/", () => {
             }
         });
 
-        it("Should respond with 500 if the image processing failed", async () => {
-            jest.spyOn(console, 'error').mockImplementation(() => { });
-
-            database.checkUserOwnsMap.mockResolvedValue(true);
-            processImageMetadata.mockRejectedValueOnce(new Error("Image processing failed"));
-
-            const gameMapID = 1;
-            const response = await requestWithSupertest
-                .post(`/api/map-creator/game-maps/${gameMapID}/maps`)
-                .attach("mapImage", validData.file, "testmap.png")
-                .field("title", validData.title);
-
-
-            expect(mockConnection.beginTransaction).not.toHaveBeenCalled();
-            expect(deleteFile).toHaveBeenCalledWith(expect.any(String));
-
-            expect(response.statusCode).toBe(500);
-            expect(response.body.success).toBe(false);
-            expect(response.body).toHaveProperty("error", "Hiba a kép feldolgozásakor!");
-
-            console.error.mockRestore();
-        });
-
         it("Should accept a valid title surrounded by spaces and trim it", async () => {
-            database.checkUserOwnsGameMap.mockResolvedValue(true);
-            const imageId = 106;
-            database.insertImage.mockResolvedValue(imageId);
-            const mapId = 201;
-            database.insertMap.mockResolvedValue(mapId);
-
             const title = "   Valid Title   ";
             const expectedTrimmedTitle = "Valid Title";
 
-            const response = await requestWithSupertest
-                .post(`/api/map-creator/game-maps/1/maps`)
-                .attach("mapImage", validData.file, "testmap.png")
-                .field("title", title);
+            const response = await makePostRequest({ title });
 
             expect(response.statusCode).toBe(201);
             expect(database.insertMap).toHaveBeenCalledWith(
                 mockConnection,
                 expectedTrimmedTitle,
-                1,
+                defaults.id,
                 imageId
             );
         });
 
-        it("Should respond with 500, rollback DB, and delete temp file if image conversion fails", async () => {
-            jest.spyOn(console, 'error').mockImplementation(() => { });
+        describe("Server Error Handling", () => {
+            suppressConsoleErrors();
 
-            database.checkUserOwnsGameMap.mockResolvedValue(true);
-            database.insertImage.mockResolvedValue(106);
-            database.insertMap.mockResolvedValue(201);
+            it("Should respond with 500 if the database refused connection", async () => {
+                database.getConnection.mockRejectedValueOnce(new Error("Database connection refused"));
 
-            createWebpAndLowRes.mockRejectedValueOnce(new Error("Image processing failed"));
+                const response = await makePostRequest();
 
-            const response = await requestWithSupertest
-                .post("/api/map-creator/game-maps/1/maps")
-                .attach("mapImage", validData.file, "testmap.png")
-                .field("title", validData.title);
+                expectErrorResponse(response);
+            });
 
-            expect(response.statusCode).toBe(500);
-            expect(mockConnection.rollback).toHaveBeenCalled();
-            expect(deleteFile).toHaveBeenCalledTimes(1);
+            it("Should respond with 500 if the insertMap failed and delete requestFile", async () => {
+                database.insertMap.mockRejectedValueOnce(new Error("Insertion failed"));
 
-            console.error.mockRestore();
-        });
+                const response = await makePostRequest();
 
-        it("Should respond with 500 even if rollback itself fails during error handling", async () => {
-            jest.spyOn(console, 'error').mockImplementation(() => { });
+                expectRollback(mockConnection);
+                expect(deleteFile).toHaveBeenCalled();
+                expectErrorResponse(response);
+            });
 
-            database.checkUserOwnsGameMap.mockResolvedValue(true);
-            database.insertImage.mockResolvedValue(106);
-            database.insertMap.mockResolvedValue(201);
+            it("Should respond with 500 if the database commit failed and delete all files", async () => {
+                mockConnection.commit.mockRejectedValueOnce(new Error("Commit failed"));
 
-            createWebpAndLowRes.mockRejectedValueOnce(new Error("Image processing failed"));
-            mockConnection.rollback.mockRejectedValueOnce(new Error("Rollback failed"));
+                const response = await makePostRequest();
 
-            const response = await requestWithSupertest
-                .post("/api/map-creator/game-maps/1/maps")
-                .attach("mapImage", validData.file, "testmap.png")
-                .field("title", validData.title);
+                expect(mockConnection.rollback).toHaveBeenCalled();
+                expect(mockConnection.release).toHaveBeenCalled();
+                expect(deleteFile).toHaveBeenCalled();
+                expectErrorResponse(response);
+            });
 
-            expect(response.statusCode).toBe(500);
-            expect(response.body).toHaveProperty("error", "Váratlan hiba történt!");
-            expect(mockConnection.rollback).toHaveBeenCalled();
-            expect(deleteFile).toHaveBeenCalled();
+            it("Should respond with 500 if the image processing failed", async () => {
+                processImageMetadata.mockRejectedValueOnce(new Error("Image processing failed"));
 
-            console.error.mockRestore();
-        });
+                const response = await makePostRequest();
 
-        it("Should respond with 500 even if deleteFile fails during error handling", async () => {
-            jest.spyOn(console, 'error').mockImplementation(() => { });
+                expect(mockConnection.beginTransaction).not.toHaveBeenCalled();
+                expect(deleteFile).toHaveBeenCalledWith(expect.any(String));
 
-            database.checkUserOwnsGameMap.mockResolvedValue(true);
-            database.insertImage.mockResolvedValue(106);
-            database.insertMap.mockResolvedValue(201);
+                expectErrorResponse(response, 500, "Hiba a kép feldolgozásakor!");
+            });
 
-            createWebpAndLowRes.mockRejectedValueOnce(new Error("Image processing failed"));
-            deleteFile.mockRejectedValueOnce(new Error("Delete failed"));
+            it("Should respond with 500, rollback DB, and delete temp file if image conversion fails", async () => {
+                createWebpAndLowRes.mockRejectedValueOnce(new Error("Image processing failed"));
 
-            const response = await requestWithSupertest
-                .post("/api/map-creator/game-maps/1/maps")
-                .attach("mapImage", validData.file, "testmap.png")
-                .field("title", validData.title);
+                const response = await makePostRequest();
 
-            expect(response.statusCode).toBe(500);
-            expect(response.body).toHaveProperty("error", "Váratlan hiba történt!");
-            expect(deleteFile).toHaveBeenCalled();
+                expectRollback(mockConnection);
+                expect(deleteFile).toHaveBeenCalled();
+                expectErrorResponse(response, 500);
+            });
 
-            console.error.mockRestore();
-        });
+            it("Should respond with 500 even if rollback itself fails during error handling", async () => {
+                createWebpAndLowRes.mockRejectedValueOnce(new Error("Image processing failed"));
+                mockConnection.rollback.mockRejectedValueOnce(new Error("Rollback failed"));
 
-        it("Should respond with 500, rollback DB, and delete ALL files if updateImagePath fails", async () => {
-            jest.spyOn(console, 'error').mockImplementation(() => { });
-            database.checkUserOwnsGameMap.mockResolvedValue(true);
-            database.insertImage.mockResolvedValue(106);
-            database.insertMap.mockResolvedValue(201);
+                const response = await makePostRequest();
 
-            database.updateImagePath.mockRejectedValueOnce(new Error("Update failed"));
+                expect(mockConnection.rollback).toHaveBeenCalled();
+                expect(deleteFile).toHaveBeenCalled();
+                expectErrorResponse(response, 500);
+            });
 
-            const response = await requestWithSupertest
-                .post("/api/map-creator/game-maps/1/maps")
-                .attach("mapImage", validData.file, "testmap.png")
-                .field("title", validData.title);
+            it("Should respond with 500 even if deleteFile fails during error handling", async () => {
+                createWebpAndLowRes.mockRejectedValueOnce(new Error("Image processing failed"));
+                deleteFile.mockRejectedValueOnce(new Error("Delete failed"));
 
-            expect(response.statusCode).toBe(500);
-            expect(mockConnection.rollback).toHaveBeenCalled();
-            expect(deleteFile).toHaveBeenCalledTimes(3); // 3 because mainPath, lowResPath, temp uploaded file
+                const response = await makePostRequest();
 
-            console.error.mockRestore();
+                expect(deleteFile).toHaveBeenCalled();
+                expectErrorResponse(response, 500);
+            });
+
+            it("Should respond with 500, rollback DB, and delete ALL files if updateImagePath fails", async () => {
+                database.updateImagePath.mockRejectedValueOnce(new Error("Update failed"));
+
+                const response = await makePostRequest();
+
+                expect(mockConnection.rollback).toHaveBeenCalled();
+                expect(mockConnection.release).toHaveBeenCalled();
+                expect(deleteFile).toHaveBeenCalledTimes(3); // 3 because mainPath, lowResPath, temp uploaded file
+                expectErrorResponse(response, 500);
+            });
         });
     });
 
     describe("DELETE /maps/:mapID", () => {
         let rmSpy;
+        const defaults = {
+            id: randomId()
+        };
+
+        const makeDeleteRequest = (overrides = {}) => buildRequest(
+            (id) => requestWithSupertest.delete(`/api/map-creator/maps/${encodeURIComponent(id)}`),
+            overrides,
+            defaults
+        );
 
         beforeEach(() => {
             jest.clearAllMocks();
             rmSpy = jest.spyOn(fs, "rm").mockResolvedValue(undefined);
+            database.checkUserOwnsMap.mockResolvedValue(true);
+            database.getMapInfo.mockResolvedValue({ title: "Test Map Title", game_maps_id: 100 });
+            database.deleteMapById.mockResolvedValue(true);
+            database.getAllImageIdsForMap.mockResolvedValue([101, 102, 124, 412]);
+            database.deleteImageById.mockResolvedValue(true);
         });
 
         afterEach(() => {
@@ -634,213 +453,120 @@ describe("Map Creator API - Map Endpoints - /api/map-creator/", () => {
 
         it("Should respond with 400 if the map id is incorrect", async () => {
             await testInvalidIDs(
-                (id) => requestWithSupertest
-                    .delete(`/api/map-creator/maps/${encodeURIComponent(id)}`),
+                (id) => makeDeleteRequest({ id }),
                 "Helytelen térkép ID"
             );
         });
 
         it("Should respond with 403 if it's not the user's map", async () => {
-            database.checkUserOwnsMap.mockResolvedValue(false);
-            const response = await requestWithSupertest
-                .delete(`/api/map-creator/maps/1`);
+            database.checkUserOwnsMap.mockResolvedValueOnce(false);
+
+            const response = await makeDeleteRequest();
 
             expect(mockConnection.beginTransaction).not.toHaveBeenCalled();
-
             expect(response.statusCode).toBe(403);
             expect(response.body.success).toBe(false);
             expect(response.body.error).toBe("Nincs hozzáférése ehhez a térképhez");
         });
 
         it("Should respond with 404 if the map doesn't exist somehow", async () => {
-            database.checkUserOwnsMap.mockResolvedValue(true);
-            database.getMapInfo.mockResolvedValue(null);
+            database.getMapInfo.mockResolvedValueOnce(null);
 
-            const response = await requestWithSupertest
-                .delete("/api/map-creator/maps/1");
+            const response = await makeDeleteRequest();
 
             expect(mockConnection.beginTransaction).not.toHaveBeenCalled();
-
-            expect(response.statusCode).toEqual(404);
+            expect(response.statusCode).toBe(404);
             expect(response.body).toHaveProperty("success", false);
             expect(response.body).toHaveProperty("error", "A térkép nem létezik");
         });
 
-        it("Should respond with 500 if the database refused connection", async () => {
-            jest.spyOn(console, 'error').mockImplementation(() => { });
-            database.checkUserOwnsMap.mockResolvedValue(true);
-            database.getMapInfo.mockResolvedValue({ title: "Test Map Title", game_maps_id: 1 });
-            database.getConnection.mockRejectedValueOnce(new Error("Database connection refused"));
-
-            const response = await requestWithSupertest
-                .delete("/api/map-creator/maps/1");
-
-            expect(mockConnection.beginTransaction).not.toHaveBeenCalled();
-
-            expect(response.statusCode).toBe(500);
-            expect(response.body.success).toBe(false);
-            expect(response.body.error).toBe("Váratlan hiba történt!");
-            console.error.mockRestore();
-        });
-
-        it("Should respond with 500 if the database map deletion failed", async () => {
-            database.checkUserOwnsMap.mockResolvedValue(true);
-            database.getMapInfo.mockResolvedValue({ title: "Test Map Title", game_maps_id: 1 });
-            database.deleteMapById.mockResolvedValue(false);
-
-            const mapId = 1;
-            const response = await requestWithSupertest
-                .delete(`/api/map-creator/maps/${mapId}`);
-
-            expect(database.getConnection).toHaveBeenCalled();
-            expect(mockConnection.beginTransaction).toHaveBeenCalled();
-            expect(database.deleteMapById).toHaveBeenCalledWith(mockConnection, mapId);
-            expect(database.deleteImageById).not.toHaveBeenCalled();
-            expect(mockConnection.rollback).toHaveBeenCalled();
-            expect(mockConnection.release).toHaveBeenCalled();
-
-            expect(response.statusCode).toBe(500);
-            expect(response.body.success).toBe(false);
-            expect(response.body.error).toBe("A térkép törlése nem sikerült");
-        });
-
-
-        it("Should respond with 500 if the database commit failed", async () => {
-            jest.spyOn(console, 'error').mockImplementation(() => { });
-            database.checkUserOwnsMap.mockResolvedValue(true);
-            const gameMapId = 100;
-            database.getMapInfo.mockResolvedValue({ title: "Test Map Title", game_maps_id: gameMapId });
-            database.deleteMapById.mockResolvedValue(true);
-            const imageIds = [101, 102, 124, 412];
-            database.getAllImageIdsForMap.mockResolvedValue(imageIds);
-            database.deleteImageById.mockResolvedValue(true);
-            mockConnection.commit.mockRejectedValueOnce(new Error("Commit failed"));
-
-            const mapId = 1;
-            const response = await requestWithSupertest
-                .delete(`/api/map-creator/maps/${mapId}`);
-
-            expect(database.getConnection).toHaveBeenCalled();
-            expect(mockConnection.beginTransaction).toHaveBeenCalled();
-            expect(database.deleteMapById).toHaveBeenCalledWith(mockConnection, mapId);
-            expect(database.deleteImageById).toHaveBeenCalledTimes(imageIds.length);
-            for (const imageId of imageIds) {
-                expect(database.deleteImageById).toHaveBeenCalledWith(mockConnection, imageId);
-            }
-
-            expect(mockConnection.commit).toHaveBeenCalled();
-            expect(fs.rm).not.toHaveBeenCalled();
-            expect(mockConnection.rollback).toHaveBeenCalled();
-            expect(mockConnection.release).toHaveBeenCalled();
-            expect(response.statusCode).toBe(500);
-            expect(response.body.success).toBe(false);
-            expect(response.body.error).toBe("Váratlan hiba történt!");
-
-            console.error.mockRestore();
-        });
-
-        it("Should respond with 500 if the database images deletion failed", async () => {
-            database.checkUserOwnsMap.mockResolvedValue(true);
-            database.getMapInfo.mockResolvedValue({ title: "Test Map Title", game_maps_id: 1 });
-            database.deleteMapById.mockResolvedValue(true);
-            const imageId = 103;
-            database.getAllImageIdsForMap.mockResolvedValue([imageId]);
-            database.deleteImageById.mockResolvedValue(false);
-
-            const mapId = 1;
-            const response = await requestWithSupertest
-                .delete(`/api/map-creator/maps/${mapId}`);
-
-            expect(database.getConnection).toHaveBeenCalled();
-            expect(mockConnection.beginTransaction).toHaveBeenCalled();
-            expect(database.deleteMapById).toHaveBeenCalledWith(mockConnection, mapId);
-            expect(database.deleteImageById).toHaveBeenCalledWith(mockConnection, imageId);
-            expect(mockConnection.commit).not.toHaveBeenCalled();
-            expect(mockConnection.rollback).toHaveBeenCalled();
-            expect(mockConnection.release).toHaveBeenCalled();
-
-            expect(response.statusCode).toBe(500);
-            expect(response.body.success).toBe(false);
-            expect(response.body.error).toBe("A térkép képeinek törlése nem sikerült");
-        });
-
         it.each([[[]], [[101, 102, 124, 412]]])("Should respond with 204 if everything was successful %s", async (imageIds) => {
-            database.checkUserOwnsMap.mockResolvedValue(true);
             const gameMapId = 100;
-            database.getMapInfo.mockResolvedValue({ title: "Test Map Title", game_maps_id: gameMapId });
-            database.deleteMapById.mockResolvedValue(true);
-            database.getAllImageIdsForMap.mockResolvedValue(imageIds);
-            database.deleteImageById.mockResolvedValue(true);
+            database.getMapInfo.mockResolvedValueOnce({ title: "Test Map Title", game_maps_id: gameMapId });
+            database.getAllImageIdsForMap.mockResolvedValueOnce(imageIds);
 
-            const mapId = 1;
-            const response = await requestWithSupertest
-                .delete(`/api/map-creator/maps/${mapId}`);
+            const response = await makeDeleteRequest();
 
             expect(database.getConnection).toHaveBeenCalled();
-            expect(mockConnection.beginTransaction).toHaveBeenCalled();
-            expect(database.deleteMapById).toHaveBeenCalledWith(mockConnection, mapId);
+            expect(database.deleteMapById).toHaveBeenCalledWith(mockConnection, defaults.id);
             expect(database.deleteImageById).toHaveBeenCalledTimes(imageIds.length);
             for (const imageId of imageIds) {
                 expect(database.deleteImageById).toHaveBeenCalledWith(mockConnection, imageId);
             }
             expect(fs.rm).toHaveBeenCalledWith(
-                expect.stringContaining(
-                    path.join(
-                        gameMapId.toString(),
-                        mapId.toString()
-                    )
-                ),
+                expect.stringContaining(path.join(gameMapId.toString(), defaults.id.toString())),
                 { recursive: true, force: true }
             );
-            expect(mockConnection.commit).toHaveBeenCalled();
-            expect(mockConnection.rollback).not.toHaveBeenCalled();
-            expect(mockConnection.release).toHaveBeenCalled();
-
+            expectSuccessfulTransaction(mockConnection);
             expect(response.statusCode).toBe(204);
         });
 
-        it("Should respond with 204 even if directory deletion failed but should console.error it", async () => {
-            jest.spyOn(console, 'error').mockImplementation(() => { });
-            database.checkUserOwnsMap.mockResolvedValue(true);
-            const gameMapId = 100;
-            database.getMapInfo.mockResolvedValue({ title: "Test Map Title", game_maps_id: gameMapId });
-            database.deleteMapById.mockResolvedValue(true);
-            const imageIds = [101, 102, 124, 412];
-            database.getAllImageIdsForMap.mockResolvedValue(imageIds);
-            database.deleteImageById.mockResolvedValue(true);
+        describe("Server Errors", () => {
+            suppressConsoleErrors();
 
-            const errorMessage = "fs remove fail";
-            rmSpy.mockRejectedValueOnce(new Error(errorMessage));
+            it("Should respond with 204 even if directory deletion failed but should console.error it", async () => {
+                const gameMapId = 100;
+                database.getMapInfo.mockResolvedValueOnce({ title: "Test Map Title", game_maps_id: gameMapId });
+                const imageIds = [101, 102, 124, 412];
+                database.getAllImageIdsForMap.mockResolvedValueOnce(imageIds);
 
-            const mapId = 1;
-            const response = await requestWithSupertest
-                .delete(`/api/map-creator/maps/${mapId}`);
+                const errorMessage = "fs remove fail";
+                rmSpy.mockRejectedValueOnce(new Error(errorMessage));
 
-            expect(database.getConnection).toHaveBeenCalled();
-            expect(mockConnection.beginTransaction).toHaveBeenCalled();
-            expect(database.deleteMapById).toHaveBeenCalledWith(mockConnection, mapId);
-            expect(database.deleteImageById).toHaveBeenCalledTimes(imageIds.length);
-            for (const imageId of imageIds) {
-                expect(database.deleteImageById).toHaveBeenCalledWith(mockConnection, imageId);
-            }
+                const response = await makeDeleteRequest();
 
-            const expectedPath = path.join(gameMapId.toString(), mapId.toString())
-            expect(fs.rm).toHaveBeenCalledWith(
-                expect.stringContaining(expectedPath),
-                { recursive: true, force: true }
-            );
-            expect(console.error).toHaveBeenCalledWith(
-                expect.stringContaining(expectedPath)
-            );
-            expect(console.error).toHaveBeenCalledWith(
-                expect.stringContaining(errorMessage)
-            );
-            expect(mockConnection.commit).toHaveBeenCalled();
-            expect(mockConnection.rollback).not.toHaveBeenCalled();
-            expect(mockConnection.release).toHaveBeenCalled();
-            expect(response.statusCode).toBe(204);
+                const expectedPath = path.join(gameMapId.toString(), defaults.id.toString());
+                expect(fs.rm).toHaveBeenCalledWith(
+                    expect.stringContaining(expectedPath),
+                    { recursive: true, force: true }
+                );
+                expect(console.error).toHaveBeenCalledWith(expect.stringContaining(expectedPath));
+                expect(console.error).toHaveBeenCalledWith(expect.stringContaining(errorMessage));
+                expectSuccessfulTransaction(mockConnection);
+                expect(response.statusCode).toBe(204);
+            });
 
-            console.error.mockRestore();
+            it("Should respond with 500 if the database refused connection", async () => {
+                database.getConnection.mockRejectedValueOnce(new Error("Database connection refused"));
+                const response = await makeDeleteRequest();
+
+                expect(mockConnection.beginTransaction).not.toHaveBeenCalled();
+                expectErrorResponse(response);
+            });
+
+            it("Should respond with 500 if the database map deletion failed", async () => {
+                database.deleteMapById.mockResolvedValueOnce(false);
+                const response = await makeDeleteRequest();
+
+                expectRollback(mockConnection);
+                expectErrorResponse(response, 500, "A térkép törlése nem sikerült");
+            });
+
+            it("Should respond with 500 if the database commit failed", async () => {
+                const gameMapId = 100;
+                database.getMapInfo.mockResolvedValueOnce({ title: "Test Map Title", game_maps_id: gameMapId });
+                const imageIds = [101, 102, 124, 412];
+                database.getAllImageIdsForMap.mockResolvedValueOnce(imageIds);
+                mockConnection.commit.mockRejectedValueOnce(new Error("Commit failed"));
+
+                const response = await makeDeleteRequest();
+
+                expect(fs.rm).not.toHaveBeenCalled();
+                expect(mockConnection.rollback).toHaveBeenCalled();
+                expect(mockConnection.release).toHaveBeenCalled();
+                expectErrorResponse(response);
+            });
+
+            it("Should respond with 500 if the database images deletion failed", async () => {
+                const imageId = 103;
+                database.getAllImageIdsForMap.mockResolvedValueOnce([imageId]);
+                database.deleteImageById.mockResolvedValueOnce(false);
+
+                const response = await makeDeleteRequest();
+
+                expectRollback(mockConnection);
+                expectErrorResponse(response, 500, "A térkép képeinek törlése nem sikerült");
+            });
         });
     });
 });

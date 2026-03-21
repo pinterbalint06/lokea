@@ -97,4 +97,20 @@ const invalidDegrees = [
     500
 ];
 
-module.exports = { invalidIds, invalidTitles, validTitles, invalidUVs, invalidDegrees };
+const mockImageMetadata = {
+    width: 800,
+    height: 600,
+    extension: ".jpg"
+};
+
+const imageStatusForPath = "pending";
+
+module.exports = {
+    invalidIds,
+    invalidTitles,
+    validTitles,
+    invalidUVs,
+    invalidDegrees,
+    mockImageMetadata,
+    imageStatusForPath
+};

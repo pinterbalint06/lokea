@@ -712,7 +712,7 @@ router.put("/points/:pointID", checkAuth, upload.single("equirectangularImage"),
         }
 
         const northDirection = Number(request.body.northDirection);
-        if (!Number.isFinite(northDirection) || northDirection > 359 || northDirection < 0) {
+        if (!Number.isFinite(northDirection) || northDirection >= 360 || northDirection < 0) {
             const error = new Error("Helytelen északirány!");
             error.statusCode = 400;
             throw error;
