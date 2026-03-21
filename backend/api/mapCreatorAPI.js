@@ -615,7 +615,7 @@ router.delete("/connections/:connectionID", checkAuth, async (request, response)
         let successConnectionDeletion = await database.deleteConnectionById(dbConnection, connectionID);
 
         if (!successConnectionDeletion) {
-            const err = new Error("A kapcsolat nem található vagy már törölve lett!");
+            const err = new Error("A kapcsolat nem létezik vagy már törölve lett!");
             err.statusCode = 404;
             throw err;
         }
@@ -623,7 +623,6 @@ router.delete("/connections/:connectionID", checkAuth, async (request, response)
         await dbConnection.commit();
 
         response.status(204).send();
-
     } catch (error) {
         await handleError(response, error, null, dbConnection, null);
     } finally {
@@ -860,7 +859,7 @@ router.get("/game-maps/:gameMapID/connections", checkAuth, async (request, respo
         });
     } catch (error) {
         let statusCode = error.statusCode ? error.statusCode : 500;
-        let message = error.statusCode || "Váratlan hiba történt!";
+        let message = error.statusCode ? error.message : "Váratlan hiba történt!";
 
         if (statusCode === 500) {
             console.error(error);

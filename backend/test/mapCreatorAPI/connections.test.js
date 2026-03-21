@@ -97,4 +97,97 @@ describe("Map Creator API - Connection Endpoints - /api/map-creator/", () => {
             });
         });
     });
+
+    describe("DELETE /connections/:connectionID", () => {
+        const defaults = {
+            id: randomId()
+        };
+
+        const makeDeleteRequest = (overrides = {}) => buildRequest(
+            (id) => requestWithSupertest.delete(`/api/map-creator/connections/${encodeURIComponent(id)}`),
+            overrides,
+            defaults
+        );
+
+        beforeEach(() => {
+            jest.clearAllMocks();
+            database.checkUserOwnsConnection.mockResolvedValue(true);
+            database.deleteConnectionById.mockResolvedValue(true);
+        });
+
+        testRequiresAuth(() => makeDeleteRequest());
+
+        it("Should respond with 400 if the connection id is incorrect", async () => {
+            await testInvalidIDs(
+                (id) => makeDeleteRequest({ id }),
+                "Helytelen kapcsolat ID"
+            );
+        });
+
+        it("Should respond with 403 if it's not the user's connection", async () => {
+            database.checkUserOwnsConnection.mockResolvedValueOnce(false);
+
+            const response = await makeDeleteRequest();
+
+            expect(mockConnection.beginTransaction).not.toHaveBeenCalled();
+            expect(response.statusCode).toBe(403);
+            expect(response.body.success).toBe(false);
+            expect(response.body.error).toBe("Nincs hozzáférése ehhez a kapcsolathoz");
+        });
+
+        it("Should respond with 204 if the connection is successfully deleted", async () => {
+            const response = await makeDeleteRequest();
+
+            expect(database.deleteConnectionById).toHaveBeenCalledWith(mockConnection, defaults.id);
+
+            expectSuccessfulTransaction(mockConnection);
+            expect(response.statusCode).toBe(204);
+        });
+
+        it("Should respond with 404 if the connection deletion failed (probably it did not exist)", async () => {
+            database.deleteConnectionById.mockResolvedValueOnce(false);
+
+            const response = await makeDeleteRequest();
+
+            expect(database.deleteConnectionById).toHaveBeenCalledWith(mockConnection, defaults.id);
+
+            expectRollback(mockConnection);
+            expectErrorResponse(response, 404, "A kapcsolat nem létezik vagy már törölve lett!");
+        });
+
+        describe("Server Errors", () => {
+            suppressConsoleErrors();
+
+            it("Should respond with 500 if the database refused connection", async () => {
+                database.getConnection.mockRejectedValueOnce(new Error("Database connection refused"));
+
+                const response = await makeDeleteRequest();
+
+                expect(mockConnection.beginTransaction).not.toHaveBeenCalled();
+
+                expectErrorResponse(response);
+            });
+
+            it("Should respond with 500 and rollback if deleteConnectionById throws error", async () => {
+                database.deleteConnectionById.mockRejectedValueOnce(new Error("Database error on delete"));
+
+                const response = await makeDeleteRequest();
+
+                expectRollback(mockConnection);
+                expectErrorResponse(response);
+            });
+
+            it("Should respond with 500 and rollback if database commit fails", async () => {
+                mockConnection.commit.mockRejectedValueOnce(new Error("Database error on commit"));
+
+                const response = await makeDeleteRequest();
+
+                expect(mockConnection.beginTransaction).toHaveBeenCalled();
+                expect(mockConnection.commit).toHaveBeenCalled();
+                expect(mockConnection.rollback).toHaveBeenCalled();
+                expect(mockConnection.release).toHaveBeenCalled();
+                expectErrorResponse(response);
+            });
+        });
+    });
 });

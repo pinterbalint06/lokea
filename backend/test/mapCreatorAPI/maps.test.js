@@ -445,7 +445,7 @@ describe("Map Creator API - Map Endpoints - /api/map-creator/", () => {
             rmSpy.mockRestore();
         });
 
-        testRequiresAuth(() => requestWithSupertest.delete("/api/map-creator/maps/1"));
+        testRequiresAuth(() => makeDeleteRequest());
 
         it("Should respond with 400 if the map id is incorrect", async () => {
             await testInvalidIDs(
