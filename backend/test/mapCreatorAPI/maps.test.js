@@ -32,6 +32,8 @@ describe("Map Creator API - Map Endpoints - /api/map-creator/", () => {
 
         beforeEach(() => {
             jest.clearAllMocks();
+            database.checkUserOwnsGameMap.mockResolvedValue(true);
+            database.getMapsByGameMapId.mockResolvedValue(mockMaps);
         });
 
         testRequiresAuth(() => makeGetRequest());
@@ -44,9 +46,6 @@ describe("Map Creator API - Map Endpoints - /api/map-creator/", () => {
         });
 
         it("Should return all maps for a game map", async () => {
-            database.checkUserOwnsGameMap.mockResolvedValue(true);
-            database.getMapsByGameMapId.mockResolvedValue(mockMaps);
-
             const response = await makeGetRequest();
 
             expect(response.statusCode).toBe(200);
@@ -54,12 +53,11 @@ describe("Map Creator API - Map Endpoints - /api/map-creator/", () => {
             expect(response.body).toHaveProperty("success", true);
             expect(response.body).toHaveProperty("maps");
             expect(response.body.maps.length).toBe(2);
-            expect(response.body.maps[0].id).toBe(101);
-            expect(response.body.maps[0].title).toBe("Test Map Title");
+            expect(response.body.maps[0].id).toBe(mockMaps[0].id);
+            expect(response.body.maps[0].title).toBe(mockMaps[0].title);
         });
 
         it("Should return an empty array if the game map has no maps", async () => {
-            database.checkUserOwnsGameMap.mockResolvedValue(true);
             database.getMapsByGameMapId.mockResolvedValue([]);
 
             const response = await makeGetRequest();
@@ -72,7 +70,6 @@ describe("Map Creator API - Map Endpoints - /api/map-creator/", () => {
 
         it("Should respond with 403 if it's not the user's game map", async () => {
             database.checkUserOwnsGameMap.mockResolvedValue(false);
-            database.getMapsByGameMapId.mockResolvedValue(mockMaps);
 
             const response = await makeGetRequest();
 
@@ -86,7 +83,6 @@ describe("Map Creator API - Map Endpoints - /api/map-creator/", () => {
             suppressConsoleErrors();
 
             it("Should respond with 500 if an unexpected database error occurs", async () => {
-                database.checkUserOwnsGameMap.mockResolvedValue(true);
                 database.getMapsByGameMapId.mockRejectedValueOnce(new Error("Database connection refused"));
 
                 const response = await makeGetRequest();

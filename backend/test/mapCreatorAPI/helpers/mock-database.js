@@ -28,7 +28,8 @@ const mockDatabase = {
     deletePointById: jest.fn(),
     updatePointCoordinates: jest.fn(),
     updatePointNorthDirection: jest.fn(),
-    updatePointImage: jest.fn()
+    updatePointImage: jest.fn(),
+    getConnectionsByGameMapId: jest.fn()
 };
 
 module.exports = { mockConnection, mockDatabase };

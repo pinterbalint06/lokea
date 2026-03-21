@@ -860,9 +860,11 @@ router.get("/game-maps/:gameMapID/connections", checkAuth, async (request, respo
         });
     } catch (error) {
         let statusCode = error.statusCode ? error.statusCode : 500;
-        let message = error.message || "Váratlan hiba történt!";
+        let message = error.statusCode || "Váratlan hiba történt!";
 
-        if (statusCode === 500) console.error(error);
+        if (statusCode === 500) {
+            console.error(error);
+        }
 
         response.status(statusCode).json({
             success: false,
