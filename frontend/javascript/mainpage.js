@@ -25,9 +25,6 @@ document.addEventListener("DOMContentLoaded", async function () {
             }
         });
     }
-    document.getElementById('darkMode').addEventListener("change", function() {
-        ejszakaimod();
-    });
     await initSocket();
 })
 
@@ -277,10 +274,10 @@ async function showSettingsModal() {
     row.classList.add("row");
 
     let div = document.createElement("div");
-    div.classList.add("col-5", "d-flex", "flex-column", "align-items-center");
+    div.classList.add("col-12", "col-sm-5", "d-flex", "flex-column", "align-items-center");
 
     let dropzone = document.createElement("div");
-    dropzone.classList.add("dropzone", "h-100");
+    dropzone.classList.add("dropzone");
     dropzone.addEventListener("dragover", function (e) {
         e.preventDefault();
     });
@@ -310,8 +307,7 @@ async function showSettingsModal() {
     }
     pfp.alt = "Profile picture";
     pfp.title = "Profile picture";
-    pfp.classList.add("img-fluid", "img-thumbnail", "rounded-circle", "w-100"
-    );
+    pfp.classList.add("img-fluid", "img-thumbnail", "settingsPfp");
 
     let newPfpInput = inputGeneral("file", null, null, "newPfpInput", ["form-control", "d-none"], false);
     newPfpInput.setAttribute("accept", "image/*");
@@ -348,7 +344,8 @@ async function showSettingsModal() {
     row.appendChild(div);
 
     div = document.createElement("div");
-    div.classList.add("col-7");
+    div.classList.add("col-12", "col-sm-7");
+    div.id = "userTextData";
 
     let date = new Date(data.created_at);
 
@@ -360,19 +357,21 @@ async function showSettingsModal() {
     div.appendChild(makeSubtitle("E-mail-cim"));
     div.appendChild(inputGeneral("text", "mintajan@gmail.com", data.email, "emailInput", ["form-control"], false));
 
-    div.appendChild(makeSubtitle("Jelszó"));
-    div.appendChild(inputGeneral("password", null, data.password, "passwordInput", ["form-control"], false)); //nem adunk vissza jelszot
-    let newPassBtn = gombGeneral("button", "Új jelszó igénylése", null, null, null);
-    newPassBtn.classList.add("btn", "btn-purple", "px-5", "rounded-pill");
-    newPassBtn.addEventListener("click", async function () {
-        //ide a uj jelszo igenyles function
-    })
-    div.appendChild(newPassBtn);
+    // div.appendChild(makeSubtitle("Jelszó"));
+    // div.appendChild(inputGeneral("password", null, data.password, "passwordInput", ["form-control"], false)); //nem adunk vissza jelszot
+    // let newPassBtn = gombGeneral("button", "Új jelszó igénylése", null, null, null);
+    // newPassBtn.classList.add("btn", "btn-purple", "px-5", "rounded-pill");
+    // newPassBtn.addEventListener("click", async function () {
+    //     //ide a uj jelszo igenyles function
+    // })
+    // div.appendChild(newPassBtn);
 
     div.appendChild(makeSubtitle("Két lépcsős azonositás"));
     let checkbox = inputGeneral("checkbox", null, null, "is2faInput", null, false);
     checkbox.checked = data.is_2fa;
     div.appendChild(checkbox);
+
+    document.getElementById('darkMode').checked = (data.darkmode == 1);
 
     currentSettings = {
         username: data.username,
@@ -398,9 +397,6 @@ async function showSettingsModal() {
     row.appendChild(div);
     container.appendChild(row);
     hova.appendChild(container);
-    
-    document.getElementById('darkMode').checked = (data.darkmode == 1);
-
     settingsModal.show();
 }
 
@@ -450,6 +446,10 @@ async function checkModification() {
     if (valtozas) {
         console.log('van valtozas!')
         await saveModification(inInput.username, inInput.email, inInput.is_2fa, inInput.language, inInput.darkmode);
+        console.log(inInput.darkmode, currentSettings.darkmode);
+        if (inInput.darkmode != currentSettings.darkmode) {
+            ejszakaimod();
+        }
     }
     else {
         console.log('nincs valtozas!');
