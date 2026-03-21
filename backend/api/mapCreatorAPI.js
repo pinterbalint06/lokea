@@ -263,9 +263,6 @@ router.delete("/points/:pointID", checkAuth, async (request, response) => {
 
         await assertUserOwnsPoint(userId, pointID);
 
-        dbConnection = await database.getConnection();
-        await dbConnection.beginTransaction();
-
         let pointInfo = await database.getPointInfo(pointID);
         if (!pointInfo) {
             const error = new Error("A pont nem létezik");
@@ -274,6 +271,9 @@ router.delete("/points/:pointID", checkAuth, async (request, response) => {
         }
 
         let oldImageInfo = await database.getPointImage(pointID);
+
+        dbConnection = await database.getConnection();
+        await dbConnection.beginTransaction();
 
         if (oldImageInfo && oldImageInfo.image_id) {
             let successImageDeletion = await database.deleteImageById(dbConnection, oldImageInfo.image_id);

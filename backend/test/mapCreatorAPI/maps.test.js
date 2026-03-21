@@ -480,7 +480,12 @@ describe("Map Creator API - Map Endpoints - /api/map-creator/", () => {
             expect(response.body).toHaveProperty("error", "A térkép nem létezik");
         });
 
-        it.each([[[]], [[101, 102, 124, 412]]])("Should respond with 204 if everything was successful %s", async (imageIds) => {
+        it.each(
+            [
+                [[]],
+                [[101, 102, 124, 412]]
+            ]
+        )("Should respond with 204 if everything was successful %s", async (imageIds) => {
             const gameMapId = 100;
             database.getMapInfo.mockResolvedValueOnce({ title: "Test Map Title", game_maps_id: gameMapId });
             database.getAllImageIdsForMap.mockResolvedValueOnce(imageIds);

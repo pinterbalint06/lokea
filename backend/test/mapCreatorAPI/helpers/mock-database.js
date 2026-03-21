@@ -21,7 +21,11 @@ const mockDatabase = {
     getPointsOnMap: jest.fn(),
     getGameMapIdByMapId: jest.fn(),
     getPointOnMapByCoordinates: jest.fn(),
-    insertPoint: jest.fn()
+    insertPoint: jest.fn(),
+    checkUserOwnsPoint: jest.fn(),
+    getPointInfo: jest.fn(),
+    getPointImage: jest.fn(),
+    deletePointById: jest.fn()
 };
 
 module.exports = { mockConnection, mockDatabase };

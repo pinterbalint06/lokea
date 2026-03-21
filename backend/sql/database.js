@@ -569,7 +569,7 @@ async function deleteImageById(connection, imageId) {
         WHERE images.image_id = ?
     `;
     const [result] = await connection.execute(query, [imageId]);
-    return result.affectedRows != 1;
+    return result.affectedRows == 1;
 }
 
 async function arePointsInSameGameMap(connection, pointId1, pointId2) {
