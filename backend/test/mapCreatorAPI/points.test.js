@@ -941,7 +941,7 @@ describe("Map Creator API - Point Endpoints - /api/map-creator/", () => {
                 expect(deleteImageAndLowResByMainPath).toHaveBeenCalled();
                 expect(console.error).toHaveBeenCalledWith(expect.stringContaining("unsuccessful deletion"));
                 expect(console.error).toHaveBeenCalledWith(expect.stringContaining(path.join(dbImageFilePath)));
-                expect(deleteFile).toHaveBeenCalled(); // because temp uploaded file, new processed image and low res
+                expect(deleteFile).toHaveBeenCalled(); // temp uploaded file
 
                 expectSuccessfulTransaction(mockConnection);
 
@@ -951,7 +951,7 @@ describe("Map Creator API - Point Endpoints - /api/map-creator/", () => {
             });
 
             it("Should still respond with 200 if deleting temporary file failed but should console.error it", async () => {
-                deleteFile.mockRejectedValueOnce(new Error("Image processing failed"));
+                deleteFile.mockRejectedValueOnce(new Error("Image deletion failed"));
 
                 const response = await makePutRequest();
 
@@ -960,7 +960,7 @@ describe("Map Creator API - Point Endpoints - /api/map-creator/", () => {
                     expect.stringContaining("Failed to delete temporary file"),
                     expect.any(Error)
                 );
-                expect(deleteFile).toHaveBeenCalled(); // because temp uploaded file, new processed image and low res
+                expect(deleteFile).toHaveBeenCalled(); // temp uploaded file
 
                 expectSuccessfulTransaction(mockConnection);
 

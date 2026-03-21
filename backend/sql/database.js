@@ -572,18 +572,18 @@ async function deleteImageById(connection, imageId) {
     return result.affectedRows == 1;
 }
 
-async function arePointsInSameGameMap(connection, pointId1, pointId2) {
+async function arePointsInSameGameMap(connection, pointId1, pointId2, gameMapId) {
     const query = `
-            SELECT COUNT(*) as count 
-            FROM points points1
-                INNER JOIN map map1 ON (points1.map_id = map1.map_id)
-                INNER JOIN points points2 ON (points2.point_id = ?)
-                INNER JOIN map map2 ON (points2.map_id = map2.map_id)
-            WHERE points1.point_id = ?
-                AND map1.game_maps_id = map2.game_maps_id;
+        SELECT COUNT(DISTINCT points.point_id) AS count
+        FROM points
+            INNER JOIN map ON (points.map_id = map.map_id)
+        WHERE points.point_id IN (?, ?) 
+          AND map.game_maps_id = ?;
     `;
-    const [rows] = await connection.execute(query, [pointId1, pointId2]);
-    return rows[0].count == 1;
+
+    const [rows] = await connection.execute(query, [pointId1, pointId2, gameMapId]);
+
+    return rows[0].count == 2;
 }
 
 async function doesConnectionAlreadyExist(connection, pointId1, pointId2) {

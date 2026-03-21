@@ -335,6 +335,27 @@ describe("Map Creator API - Map Endpoints - /api/map-creator/", () => {
         describe("Server Error Handling", () => {
             suppressConsoleErrors();
 
+            it("Should still respond with 200 even if deleting temporary file failed but should console.error it", async () => {
+                deleteFile.mockRejectedValueOnce(new Error("Image deletion failed"));
+
+                const response = await makePostRequest();
+
+                expect(mockConnection.commit).toHaveBeenCalled();
+                expect(deleteFile).toHaveBeenCalled();
+                expect(console.error).toHaveBeenCalledWith(
+                    expect.stringContaining("Failed to delete temporary file"),
+                    expect.any(Error)
+                );
+                expect(deleteFile).toHaveBeenCalled(); // temp uploaded file
+
+                expectSuccessfulTransaction(mockConnection);
+
+                expect(response.statusCode).toBe(201);
+                expect(response.body.success).toBe(true);
+                expect(response.body).toHaveProperty("mapId", mapId);
+                expect(response.body).toHaveProperty("message", "Térkép sikeresen mentve!");
+            });
+
             it("Should respond with 500 if the database refused connection", async () => {
                 database.getConnection.mockRejectedValueOnce(new Error("Database connection refused"));
 

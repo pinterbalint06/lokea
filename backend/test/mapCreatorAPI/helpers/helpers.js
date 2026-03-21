@@ -1,9 +1,10 @@
-const { invalidIds } = require("./test-data.js");
+const { invalidIds, invalidIdsWithoutNulls } = require("./test-data.js");
 const auth = require("../../../auth.js");
 const { mockConnection } = require("./mock-database.js");
 
-async function testInvalidIDs(requestCallback, expectedErrorMessage) {
-    for (const id of invalidIds) {
+async function testInvalidIDs(requestCallback, expectedErrorMessage, withNulls = true) {
+    const idsToTest = withNulls ? invalidIds : invalidIdsWithoutNulls;
+    for (const id of idsToTest) {
         const response = await requestCallback(id);
 
         expect(mockConnection.beginTransaction).not.toHaveBeenCalled();

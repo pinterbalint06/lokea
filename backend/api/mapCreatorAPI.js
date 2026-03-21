@@ -37,8 +37,14 @@ const upload = multer({
 });
 
 function validateId(id, idName) {
-    let num = Number(id);
-    if (!id.match(/[0-9]/) || isNaN(num) || num <= 0 || !Number.isInteger(num) || num > 2147483647) {
+    if (id == undefined || id == null) {
+        const err = new Error("Helytelen " + idName);
+        err.statusCode = 400;
+        throw err;
+    }
+    const str = String(id);
+    const num = Number(id);
+    if (!str.match(/^[0-9]+$/) || isNaN(num) || num <= 0 || !Number.isInteger(num) || num > 2147483647) {
         const err = new Error("Helytelen " + idName);
         err.statusCode = 400;
         throw err;
@@ -568,7 +574,7 @@ router.post("/game-maps/:gameMapID/connections", checkAuth, upload.none(), requi
         dbConnection = await database.getConnection();
         await dbConnection.beginTransaction();
 
-        if (!await database.arePointsInSameGameMap(dbConnection, startPointId, endPointId)) {
+        if (!await database.arePointsInSameGameMap(dbConnection, startPointId, endPointId, gameMapID)) {
             const err = new Error("A megadott pontok nem ugyanahhoz a pályához tartoznak!");
             err.statusCode = 400;
             throw err;
@@ -875,7 +881,11 @@ router.get("/game-maps/:gameMapID/connections", checkAuth, async (request, respo
 router.use(async (error, request, response, next) => {
     if (error instanceof multer.MulterError) {
         if (request.file && request.file.path) {
-            await deleteFile(request.file.path);
+            try {
+                await deleteFile(file.path);
+            } catch (deleteErr) {
+                console.error("Error deleting temporary uploaded file:", deleteErr);
+            }
         }
         if (error.code == "LIMIT_FILE_SIZE") {
             return response.status(413).json({
@@ -892,5 +902,3 @@ router.use(async (error, request, response, next) => {
 });
 
 module.exports = router;
-
-// TODOp!!: tesztek írása ehhez
