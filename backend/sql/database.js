@@ -1,4 +1,5 @@
 const mysql = require('mysql2/promise');
+const bcrypt = require('bcrypt');
 
 const pool = mysql.createPool({
     host: '127.0.0.1',
@@ -270,7 +271,7 @@ async function updateUserByAdmin(user_id, username, email, role, is_2fa) {
         query += ` WHERE users.user_id = ?`;
         params.push(user_id);
         let connection;
-        
+
         try {
             connection = await pool.getConnection();
             await connection.beginTransaction();
@@ -285,6 +286,38 @@ async function updateUserByAdmin(user_id, username, email, role, is_2fa) {
         }
     }
     return rows.affectedRows;
+}
+
+async function updatePassword(userid, oldPass, newPass) {
+    try {
+        const query = 'SELECT users.password FROM users WHERE users.user_id = ?';
+        const [result] = await pool.execute(query, [userid]);
+        let egyezes = await bcrypt.compare(oldPass, result[0].password);
+        if (egyezes) {
+            let connection;
+            try {
+                const hashedPassword = await bcrypt.hash(newPass, 10);
+                connection = await pool.getConnection();
+                await connection.beginTransaction();
+                const query = 'UPDATE users SET password = ? WHERE user_id = ?';
+                await connection.execute(query, [hashedPassword, userid]);
+                await connection.commit();
+            } catch (error) {
+                await connection.rollback();
+                console.error(error);
+                throw new Error('Hiba az adatbázissal való kommunikálás során!');
+            }
+            finally {
+                if (connection) connection.release();
+            }
+        }
+        else {
+            throw new Error('Nem ez a régi jelszavad!');
+        }
+    } catch (error) {
+        console.error(error);
+        throw error;
+    }
 }
 
 async function userToInactive(userId) {
@@ -379,6 +412,7 @@ module.exports = {
     sortedUsers,
     updateUser,
     updateUserByAdmin,
+    updatePassword,
     userToInactive,
     uploadProfilePic,
     deleteProfilePic

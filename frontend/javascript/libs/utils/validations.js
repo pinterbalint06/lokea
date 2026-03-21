@@ -39,6 +39,17 @@ export function validalvaBej(user, pass) {
     return fail;
 }
 
+export function validalvaJelszo(pass) {
+    let fail = false;
+    let password = pass.value;
+    if (password.length > 50 || password.length < 8 || !isCorrectPassword(password)) {
+        fail = true;
+        pass.classList.add("border-danger");
+        removeBorderDanger(pass);
+    }
+    return fail;
+}
+
 function isCorrectUsername(username) {
     const re = /^[a-zA-Z0-9áéíóöőúüűÁÉÍÓÖŐÚÜŰ_-]{1,20}$/;
     return re.test(username);

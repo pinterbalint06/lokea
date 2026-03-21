@@ -217,6 +217,35 @@ router.post('/updateUser', auth.checkAuth,
         }
     })
 
+router.post("/updatePassword",
+    [
+        body("oldPass")
+            .isLength({ min: 8, max: 50 }).withMessage("A régi jelszó hossza nem 8-50 karakter!"),
+        body("newPass")
+            .isLength({ min: 8, max: 50 }).withMessage("Az új jelszó hossza nem 8-50 karakter!")
+            .matches(/\d/).withMessage("A jelszóba kell minimum 1 szám!")
+            .matches(/[A-Z]/).withMessage("A jelszóba kell minimum 1 nagybetű!")
+    ],
+    async (request, response) => {
+        try {
+            const errors = validationResult(request);
+            if (!errors.isEmpty()) {
+                response.status(400).json({
+                    success: false,
+                    error: errors.array()
+                });
+            }
+            else {
+                let { oldPass, newPass } = request.body;
+                await database.updatePassword(request.session.userid, oldPass, newPass);
+                response.status(200).json({message: "Sikeres frissités!"});
+            }
+
+        } catch (error) {
+            response.status(500).json({ error: error });
+        }
+    })
+
 router.post('/updateProfilePic', auth.checkAuth, upload.single('profilePic'), async (request, response) => {
     let originalFile;
     let newFilePath;

@@ -1,5 +1,5 @@
-import { makeSubtitle, inputGeneral, gombGeneral, makeSvg } from "./libs/utils/DOMutils.js";
-import { validalvaBej } from "./libs/utils/validations.js";
+import { makeSubtitle, inputGeneral, labelGeneral, gombGeneral, makeSvg } from "./libs/utils/DOMutils.js";
+import { validalvaBej, validalvaJelszo } from "./libs/utils/validations.js";
 import { initSocket } from "./libs/utils/socketio.js";
 
 document.addEventListener("DOMContentLoaded", async function () {
@@ -357,14 +357,46 @@ async function showSettingsModal() {
     div.appendChild(makeSubtitle("E-mail-cim"));
     div.appendChild(inputGeneral("text", "mintajan@gmail.com", data.email, "emailInput", ["form-control"], false));
 
-    // div.appendChild(makeSubtitle("Jelszó"));
-    // div.appendChild(inputGeneral("password", null, data.password, "passwordInput", ["form-control"], false)); //nem adunk vissza jelszot
-    // let newPassBtn = gombGeneral("button", "Új jelszó igénylése", null, null, null);
-    // newPassBtn.classList.add("btn", "btn-purple", "px-5", "rounded-pill");
-    // newPassBtn.addEventListener("click", async function () {
-    //     //ide a uj jelszo igenyles function
-    // })
-    // div.appendChild(newPassBtn);
+    let changePassBtn = gombGeneral("button", "Új jelszó igénylése", null, null, null);
+    changePassBtn.classList.add("btn", "btn-purple", "px-5", "rounded-pill", "d-block", "mx-auto");
+    changePassBtn.setAttribute('data-bs-toggle', 'collapse');
+    changePassBtn.setAttribute('data-bs-target', '#passwordCollapse');
+
+    let alertPlaceholder = document.createElement('div');
+    alertPlaceholder.id = 'passwordAlert';
+
+    let collapseDiv = document.createElement('div');
+    collapseDiv.className = 'collapse';
+    collapseDiv.id = 'passwordCollapse';
+
+    let innerCard = document.createElement('div');
+    innerCard.classList.add("d-flex", "flex-column", "border", "rounded", "mt-3", "p-3")
+
+    let passGroup = document.createElement('div');
+    passGroup.classList.add('d-flex');
+    passGroup.appendChild(labelGeneral('oldPassword', 'Régi jelszó:', ['text-nowrap', 'me-3']));
+    passGroup.appendChild(inputGeneral('password', null, null, 'oldPassword', ["form-control"], false));
+    innerCard.appendChild(passGroup);
+
+    passGroup = document.createElement('div');
+    passGroup.classList.add('d-flex');
+    passGroup.appendChild(labelGeneral('newPassword', 'Új jelszó:', ['text-nowrap', 'me-3']));
+    passGroup.appendChild(inputGeneral('password', null, null, 'newPassword', ["form-control"], false));
+    innerCard.appendChild(passGroup);
+
+    let saveBtn = document.createElement('button');
+    saveBtn.type = 'button';
+    saveBtn.className = 'btn btn-success btn-sm w-100';
+    saveBtn.innerText = 'Mentés';
+    saveBtn.onclick = jelszoValtoztat;
+
+    innerCard.appendChild(saveBtn);
+    collapseDiv.appendChild(innerCard);
+
+    div.appendChild(alertPlaceholder);
+    div.appendChild(changePassBtn);
+    div.appendChild(collapseDiv);
+
 
     div.appendChild(makeSubtitle("Két lépcsős azonositás"));
     let checkbox = inputGeneral("checkbox", null, null, "is2faInput", null, false);
@@ -398,6 +430,78 @@ async function showSettingsModal() {
     container.appendChild(row);
     hova.appendChild(container);
     settingsModal.show();
+}
+
+async function jelszoValtoztat() {
+    let alertPlaceholder = document.getElementById('passwordAlert');
+    let passwordCollapse = document.getElementById('passwordCollapse');
+    let oldPass = document.getElementById('oldPassword');
+    let newPass = document.getElementById('newPassword');
+    let newAlert = null;
+    if (!validalvaJelszo(newPass)) {
+        try {
+            let response = await fetch("/api/updatePassword", {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json"
+                },
+                body: JSON.stringify({
+                    oldPass: oldPass.value,
+                    newPass: newPass.value
+                })
+            })
+            let data = await response.json();
+            if (response.ok) {
+                newAlert = createAlert('Sikeres jelszómódosítás!', 'success');
+                let bsCollapse = bootstrap.Collapse.getInstance(passwordCollapse) || new bootstrap.Collapse(passwordCollapse);
+                bsCollapse.hide();
+                oldPass.value = '';
+                newPass.value = '';
+            }
+            else {
+                let hibaUzenet = '';
+
+                if (data.error && Array.isArray(data.error)) {
+                    hibaUzenet = data.error.map(err => err.msg).join('<br>');
+                    newAlert = createAlert(`Hiba! Az alábbi követelmények nem teljesülnek!<br>${hibaUzenet}`, 'danger');
+                } else {
+                    hibaUzenet = data.message || 'Ismeretlen hiba történt!';
+                    newAlert = createAlert(`Hiba! ${hibaUzenet}`, 'danger');
+                }
+            }
+        } catch (error) {
+            newAlert = createAlert('Nem sikerült elérni a szervert!', 'danger');
+        }
+    }
+    else {
+        newAlert = createAlert('Az új jelszónak tartalmaznia kell egy nagybetűt, egy számot, minimum 8 és maximum 50 karakter hosszú lehet!', 'danger');
+    }
+    if (newAlert) {
+        alertPlaceholder.replaceChildren(newAlert);
+    }
+}
+
+function createAlert(message, type) {
+    let alertDiv = document.createElement('div');
+    alertDiv.classList.add("alert", "alert-dismissible", "fade", "show");
+    if (type) {
+        alertDiv.classList.add(`alert-${type}`)
+    }
+    alertDiv.role = 'alert';
+
+    let textNode = document.createElement('span');
+    textNode.innerHTML = message;
+    alertDiv.appendChild(textNode);
+
+    let closeBtn = document.createElement('button');
+    closeBtn.type = 'button';
+    closeBtn.className = 'btn-close';
+    closeBtn.setAttribute('data-bs-dismiss', 'alert');
+    closeBtn.setAttribute('aria-label', 'Close');
+
+    alertDiv.appendChild(closeBtn);
+
+    return alertDiv;
 }
 
 async function getUserData() {
@@ -435,6 +539,9 @@ async function checkModification() {
         language: document.getElementById('languageSelect').value,
         darkmode: document.getElementById('darkMode').checked
     }
+    if (inInput.darkmode != currentSettings.darkmode) {
+        ejszakaimod();
+    }
     Object.keys(inInput).forEach(key => {
         if (inInput[key] == currentSettings[key]) {
             inInput[key] = null;
@@ -446,10 +553,6 @@ async function checkModification() {
     if (valtozas) {
         console.log('van valtozas!')
         await saveModification(inInput.username, inInput.email, inInput.is_2fa, inInput.language, inInput.darkmode);
-        console.log(inInput.darkmode, currentSettings.darkmode);
-        if (inInput.darkmode != currentSettings.darkmode) {
-            ejszakaimod();
-        }
     }
     else {
         console.log('nincs valtozas!');

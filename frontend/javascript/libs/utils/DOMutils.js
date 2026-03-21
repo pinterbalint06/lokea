@@ -22,6 +22,16 @@ export function inputGeneral(type, placeholder, value, id, osztalyok, disabled) 
     return input;
 }
 
+export function labelGeneral(id, text, classes) {
+    let label = document.createElement('label');
+    label.setAttribute('for', id);
+    label.innerText = text;
+    if (classes != null) {
+        label.classList.add(...classes);
+    }
+    return label;
+}
+
 export function gombGeneral(type, text, svg, color, id) {
     let button = document.createElement('button');
     button.type = type;
