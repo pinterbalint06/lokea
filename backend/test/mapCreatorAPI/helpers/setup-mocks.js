@@ -1,4 +1,4 @@
-const { mockImageMetadata } = require("./test-data.js");
+const { mockImageMetadata, mockImageProccessed } = require("./test-data.js");
 
 jest.mock("../../../auth.js", () => ({
     checkAuth: jest.fn((request, response, next) => {
@@ -13,11 +13,12 @@ jest.mock("../../../utils/imageProcessor.js", () => ({
     processImageMetadata: jest.fn().mockResolvedValue(mockImageMetadata),
     createWebpAndLowRes: jest.fn().mockResolvedValue(
         {
-            targetFileName: "mock.webp",
-            lowResFileName: "mock_low_res.webp",
-            mainPath: "/path/to/mock.webp",
-            lowResPath: "/path/to/mock_low_res.webp"
-        })
+            targetFileName: mockImageProccessed.targetFileName,
+            lowResFileName: mockImageProccessed.lowResFileName,
+            mainPath: mockImageProccessed.mainPath,
+            lowResPath: mockImageProccessed.lowResPath
+        }),
+    deleteImageAndLowResByMainPath: jest.fn().mockResolvedValue()
 }));
 
 jest.mock("../../../utils/fileUtils.js", () => ({

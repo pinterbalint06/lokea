@@ -530,7 +530,7 @@ async function updatePointCoordinates(connection, pointId, u, v) {
         WHERE points.point_id = ?
     `;
     const [result] = await connection.execute(query, [u, v, pointId]);
-    return result.affectedRows;
+    return result.affectedRows == 1;
 }
 
 async function updatePointNorthDirection(connection, pointId, northDirection) {
@@ -540,7 +540,7 @@ async function updatePointNorthDirection(connection, pointId, northDirection) {
         WHERE points.point_id = ?
     `;
     const [result] = await connection.execute(query, [northDirection, pointId]);
-    return result.affectedRows;
+    return result.affectedRows == 1;
 }
 
 async function updatePointImage(connection, pointId, imageId) {
@@ -550,7 +550,7 @@ async function updatePointImage(connection, pointId, imageId) {
         WHERE points.point_id = ?
     `;
     const [result] = await connection.execute(query, [imageId, pointId]);
-    return result.affectedRows;
+    return result.affectedRows == 1;
 }
 
 async function updateMapTitle(connection, mapId, title) {

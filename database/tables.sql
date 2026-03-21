@@ -52,7 +52,7 @@ CREATE TABLE points (
     map_id int,
     point_u float NOT NULL,
     point_v float NOT NULL,
-    north_direction int NOT NULL DEFAULT 0,
+    north_direction float NOT NULL DEFAULT 0,
     image_id int,
     foreign key (map_id) references map(map_id) ON DELETE CASCADE,
     foreign key (image_id) references images(image_id) ON DELETE SET NULL,

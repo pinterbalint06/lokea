@@ -103,6 +103,13 @@ const mockImageMetadata = {
     extension: ".jpg"
 };
 
+const mockImageProccessed = {
+    targetFileName: "mock.webp",
+    lowResFileName: "mock_low_res.webp",
+    mainPath: "/path/to/mock.webp",
+    lowResPath: "/path/to/mock_low_res.webp"
+};
+
 const imageStatusForPath = "pending";
 
 module.exports = {
@@ -112,5 +119,6 @@ module.exports = {
     invalidUVs,
     invalidDegrees,
     mockImageMetadata,
-    imageStatusForPath
+    imageStatusForPath,
+    mockImageProccessed
 };

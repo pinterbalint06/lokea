@@ -25,7 +25,10 @@ const mockDatabase = {
     checkUserOwnsPoint: jest.fn(),
     getPointInfo: jest.fn(),
     getPointImage: jest.fn(),
-    deletePointById: jest.fn()
+    deletePointById: jest.fn(),
+    updatePointCoordinates: jest.fn(),
+    updatePointNorthDirection: jest.fn(),
+    updatePointImage: jest.fn()
 };
 
 module.exports = { mockConnection, mockDatabase };

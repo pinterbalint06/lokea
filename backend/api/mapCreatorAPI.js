@@ -700,13 +700,8 @@ router.put("/points/:pointID", checkAuth, upload.single("equirectangularImage"),
 
         const uCoordinate = Number(request.body.u);
         const vCoordinate = Number(request.body.v);
-        if (!Number.isFinite(uCoordinate) || !Number.isFinite(vCoordinate)) {
+        if (!Number.isFinite(uCoordinate) || !Number.isFinite(vCoordinate) || uCoordinate < 0 || uCoordinate >= 1 || vCoordinate < 0 || vCoordinate >= 1) {
             const error = new Error("Helytelen koordináták!");
-            error.statusCode = 400;
-            throw error;
-        }
-        if (uCoordinate < 0 || uCoordinate >= 1 || vCoordinate < 0 || vCoordinate >= 1) {
-            const error = new Error("A koordinátáknak [0, 1[ intervallumban kell lenniük!");
             error.statusCode = 400;
             throw error;
         }
@@ -726,10 +721,11 @@ router.put("/points/:pointID", checkAuth, upload.single("equirectangularImage"),
         let pointInfo = await database.getPointInfo(pointID);
         if (!pointInfo) {
             const error = new Error("A pont nem létezik");
-            error.statusCode = 400;
+            error.statusCode = 404;
             throw error;
         }
 
+        // only update if anything is different
         if (pointInfo.point_u != uCoordinate || pointInfo.point_v != vCoordinate) {
             let existingPoints = await database.getPointOnMapByCoordinates(dbConnection, pointInfo.map_id, uCoordinate, vCoordinate);
             if (existingPoints.length > 0) {
@@ -737,26 +733,21 @@ router.put("/points/:pointID", checkAuth, upload.single("equirectangularImage"),
                 error.statusCode = 409;
                 throw error;
             }
-        }
 
-        // only update if anything is different
-        if (pointInfo.point_u != uCoordinate || pointInfo.point_v != vCoordinate) {
-            let affectedRows = await database.updatePointCoordinates(dbConnection, pointID, uCoordinate, vCoordinate);
-            if (affectedRows > 1) {
-                console.error("Multiple rows affected at ID update");
-                let error = {
-                    statusCode: 500
-                };
+            let updateSuccess = await database.updatePointCoordinates(dbConnection, pointID, uCoordinate, vCoordinate);
+            if (!updateSuccess) {
+                let error = new Error("A pont koordinátáinak frissítése nem sikerült");
+                error.statusCode = 500;
                 throw error;
             }
         }
+
+        // only update if anything is different
         if (pointInfo.north_direction != northDirection) {
-            let affectedRows = await database.updatePointNorthDirection(dbConnection, pointID, northDirection);
-            if (affectedRows > 1) {
-                console.error("Multiple rows affected at ID update");
-                let error = {
-                    statusCode: 500
-                };
+            let updateSuccess = await database.updatePointNorthDirection(dbConnection, pointID, northDirection);
+            if (!updateSuccess) {
+                let error = new Error("A pont északirányának frissítése nem sikerült");
+                error.statusCode = 500;
                 throw error;
             }
         }
@@ -800,26 +791,24 @@ router.put("/points/:pointID", checkAuth, upload.single("equirectangularImage"),
             await database.updateImagePath(dbConnection, newImageId, dbPath);
 
             // update point's image to the new id
-            let imageUpdateRows = await database.updatePointImage(dbConnection, pointID, newImageId);
-            if (imageUpdateRows > 1) {
-                console.error("Multiple rows affected at ID update");
-                let error = {
-                    statusCode: 500
-                };
+            let updateImageSuccess = await database.updatePointImage(dbConnection, pointID, newImageId);
+            if (!updateImageSuccess) {
+                let error = new Error("A kép útvonalának frissítése nem sikerült");
+                error.statusCode = 500;
                 throw error;
             }
 
             if (oldImageInfo) {
                 // delete old image from db
-                let deletedRows = await database.deleteImageById(dbConnection, oldImageInfo.image_id);
-                if (deletedRows > 1) {
-                    console.error("Multiple rows affected at ID delete");
-                    let error = {
-                        statusCode: 500
-                    };
+                let deleteSuccess = await database.deleteImageById(dbConnection, oldImageInfo.image_id);
+                if (!deleteSuccess) {
+                    let error = new Error("A régi kép törlése nem sikerült");
+                    error.statusCode = 500;
                     throw error;
                 }
             }
+
+            await dbConnection.commit();
 
             if (oldImageInfo && oldImageInfo.filepath) {
                 let absoluteOldPath = path.join(UPLOAD_ROOT, oldImageInfo.filepath);
@@ -830,11 +819,16 @@ router.put("/points/:pointID", checkAuth, upload.single("equirectangularImage"),
             }
 
             if (request.file.path) {
-                await deleteFile(request.file.path);
+                try {
+                    await deleteFile(request.file.path);
+                } catch (error) {
+                    console.error(`Failed to delete temporary file ${request.file.path}: `, error);
+                }
             }
+        } else {
+            await dbConnection.commit();
         }
 
-        await dbConnection.commit();
 
         response.status(200).json({
             success: true,
