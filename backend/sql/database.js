@@ -399,6 +399,48 @@ async function deleteProfilePic(user_id) {
     //Visszaadja a régi kép elérési útvonalát a törléshez.
     return oldFilePath;
 }
+
+
+//Játékhoz szükséges ab adatok lekérése
+async function getGameMaps(sort = 'plays', user_id = null, offset = 0) {
+    const safeSort = String(sort).toLowerCase();
+    const baseSelect = 'SELECT game_maps.game_maps_id, game_maps.creator_id, game_maps.title, game_maps.cover_image_id, game_maps.rating, game_maps.plays, game_maps.game_created, game_maps.game_description FROM game_maps';
+    let query;
+    let params = [offset];
+    switch (safeSort) {
+        case 'created':
+            query = `${baseSelect} ORDER BY game_maps.game_created DESC`;
+            break;
+        case 'rating':
+            query = `${baseSelect} ORDER BY game_maps.rating DESC`;
+            break;
+        case 'plays':
+            query = `${baseSelect} ORDER BY game_maps.plays DESC`;
+            break;
+        case 'favorites':
+            query = `${baseSelect} INNER JOIN favorites ON game_maps.game_maps_id = favorites.game_maps_id WHERE favorites.user_id = ? ORDER BY game_maps.game_created DESC`;
+            params.unshift(user_id);
+            break;
+        default:
+            throw new Error('INVALID_SORT');
+    }
+    query = `${query} LIMIT 20 OFFSET ${offset}`;
+    const [result] = await pool.execute(query, params);
+    return result;
+}
+
+async function getImagePath(image_id) {
+    const query = 'SELECT images.filepath FROM images WHERE images.image_id = ?';
+    const [result] = await pool.execute(query, [image_id]);
+    let re;
+    if (result.length === 0) {
+        re = null;
+    }
+    else {
+        re = result[0].filepath;
+    }
+    return re;
+}
 //!Export
 module.exports = {
     // selectall,
@@ -415,5 +457,7 @@ module.exports = {
     updatePassword,
     userToInactive,
     uploadProfilePic,
-    deleteProfilePic
+    deleteProfilePic,
+    getGameMaps,
+    getImagePath
 };
