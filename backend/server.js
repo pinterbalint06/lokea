@@ -85,6 +85,9 @@ router.get('/admin', auth.checkRole("ADMIN"), (request, response) => {
 router.get('/choose_game', (request, response) => {
     response.sendFile(path.join(__dirname, '../frontend/html/game-choosing.html'));
 });
+router.get('/game', (request, response) => {
+    response.sendFile(path.join(__dirname, '../frontend/html/game-page.html'));
+});
 router.use((request, response) => {
     response.status(404).sendFile(path.join(__dirname, '../frontend/html/notfound.html'));
 });

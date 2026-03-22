@@ -297,4 +297,16 @@ router.get('/get_cover_image/:cover_image_id', async (request, response) => {
         });
     }
 });
+
+router.post('/post_game_id', (request, response) => {
+    const gameMapId = Number(request.body.gameMapId);
+
+    if (!Number.isInteger(gameMapId) || gameMapId < 0) {
+        return response.status(400).json({ success: false, message: 'Invalid gameMapId' });
+    }
+
+    request.session.gameMapId = gameMapId;
+    response.status(200).json({ success: true, message: 'Game map ID saved in session' });
+});
+
 module.exports = router;
