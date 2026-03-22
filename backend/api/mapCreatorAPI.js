@@ -567,6 +567,13 @@ router.post("/game-maps/:gameMapID/connections", checkAuth, upload.none(), requi
             err.statusCode = 400;
             throw err;
         }
+
+        if (startPointId > endPointId) {
+            const err = new Error("A kisebbik id-val rendelkező pontnak kell a kezdőpontnak lennie!");
+            err.statusCode = 400;
+            throw err;
+        }
+
         const gameMapID = validateId(request.params.gameMapID, "pálya ID");
 
         await assertUserOwnsGameMap(userId, gameMapID);
@@ -586,7 +593,26 @@ router.post("/game-maps/:gameMapID/connections", checkAuth, upload.none(), requi
             throw err;
         }
 
-        let connectionId = await database.insertConnection(dbConnection, startPointId, endPointId, gameMapID);
+        let dirStartToEnd = null;
+        let dirEndToStart = null;
+
+        const isInSameMap = await database.arePointsInSameMap(dbConnection, startPointId, endPointId);
+        if (!isInSameMap) {
+            dirStartToEnd = Number(request.body.directionStartToEnd);
+            if (!Number.isFinite(dirStartToEnd) || dirStartToEnd >= 360 || dirStartToEnd < 0) {
+                const err = new Error("Helytelen kezdőpontból végpontba irány!");
+                err.statusCode = 400;
+                throw err;
+            }
+            dirEndToStart = Number(request.body.directionEndToStart);
+            if (!Number.isFinite(dirEndToStart) || dirEndToStart >= 360 || dirEndToStart < 0) {
+                const err = new Error("Helytelen végpontból kezdőpontba irány!");
+                err.statusCode = 400;
+                throw err;
+            }
+        }
+
+        let connectionId = await database.insertConnection(dbConnection, startPointId, endPointId, gameMapID, dirStartToEnd, dirEndToStart);
 
         await dbConnection.commit();
 

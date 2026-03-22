@@ -2,6 +2,7 @@ import { EVENTS } from "../../events/EventBus.js";
 import { CONSTANTS } from "../../shared/constants.js";
 import { savePreviousValue } from "../../shared/utils.js";
 import { DragAndDropUploader } from "../../../libs/elements/DragAndDropUploader.js";
+import { DegreeInput } from "../../../libs/elements/DegreeInput.js";
 
 export class MarkerEditorManager {
     constructor(eventBus) {
@@ -36,8 +37,7 @@ export class MarkerEditorManager {
             equiFullscreenBtn: document.getElementById("equirectangularFullscreen"),
             coordinateXInput: document.getElementById("coordinateX"),
             coordinateYInput: document.getElementById("coordinateY"),
-            northDirectionRange: document.getElementById("northDirectionRange"),
-            northDirection: document.getElementById("northDirection"),
+            northDirectionWrapper: document.getElementById("northDirectionWrapper"),
             equirectangularPreview: document.getElementById(CONSTANTS.EQUIRECTANGULAR_CANVAS_ID),
             dropZoneEquirectangular: document.getElementById("drop-zone-equirectangular")
         };
@@ -54,6 +54,8 @@ export class MarkerEditorManager {
             buttonText: "Kattints ide feltöltéshez",
             accept: "image/*"
         });
+
+        this.elements.northDirectionInput = new DegreeInput(this.elements.northDirectionWrapper);
 
         this.#updateSavePointButtonState();
     }
@@ -77,22 +79,12 @@ export class MarkerEditorManager {
             });
         });
 
-        this.elements.northDirection.addEventListener("focus", savePreviousValue);
-        this.elements.northDirection.addEventListener("change", (event) => {
-            let degree = event.target.valueAsNumber;
-            if (0 <= degree && degree <= 359) {
-                event.target.dataset.previousValue = event.target.valueAsNumber;
-                this.elements.northDirectionRange.value = degree;
-                this.bus.emit(EVENTS.UI_NORTH_DIRECTION_CHANGED, { northDirection: this.elements.northDirection.valueAsNumber });
-            } else {
-                event.target.value = event.target.dataset.previousValue;
-                this.bus.emit(EVENTS.TOAST_SHOW, { msg: "A szögnek 0 és 359 között kell lennie!", type: "danger" });
-            }
+        this.elements.northDirectionInput.addEventListener("input", (event) => {
+            this.bus.emit(EVENTS.UI_NORTH_DIRECTION_CHANGED, { northDirection: event.detail.value });
         });
 
-        this.elements.northDirectionRange.addEventListener("input", (event) => {
-            this.elements.northDirection.value = event.target.value;
-            this.bus.emit(EVENTS.UI_NORTH_DIRECTION_CHANGED, { northDirection: this.elements.northDirection.valueAsNumber });
+        this.elements.northDirectionInput.addEventListener("error", (event) => {
+            this.bus.emit(EVENTS.TOAST_SHOW, { msg: event.detail.message, type: "danger" });
         });
 
         this.elements.collapseElement.addEventListener("show.bs.collapse", (event) => {
@@ -138,8 +130,7 @@ export class MarkerEditorManager {
         this.elements.collapseElement.addEventListener("hidden.bs.collapse", (event) => {
             if (event.target == this.elements.collapseElement) {
                 this.animations.isCollapsing = false;
-                this.elements.northDirection.value = 0;
-                this.elements.northDirectionRange.value = 0;
+                this.elements.northDirectionInput.setValue(0);
                 this.elements.savePointButton.disabled = true;
                 this.bus.emit(EVENTS.UI_MARKER_EDITOR_CLOSED);
                 this.bus.emit(EVENTS.UI_COLLAPSE_HIDDEN);
@@ -231,8 +222,7 @@ export class MarkerEditorManager {
         this.bus.on(EVENTS.MARKER_SELECTED, ({ position, data }) => {
             this.elements.coordinateXInput.value = position.x;
             this.elements.coordinateYInput.value = position.y;
-            this.elements.northDirection.value = data ? data.north_direction : 0;
-            this.elements.northDirectionRange.value = data ? data.north_direction : 0;
+            this.elements.northDirectionInput.setValue(data ? data.north_direction : 0);
             this.#showCollapse();
         });
 

@@ -29,7 +29,9 @@ describe("Map Creator API - Connection Endpoints - /api/map-creator/", () => {
                 start_point_id: randomId(),
                 end_point_id: randomId(),
                 start_map_id: randomId(),
-                end_map_id: randomId()
+                end_map_id: randomId(),
+                start_to_end_direction: Math.floor(Math.random() * 360),
+                end_to_start_direction: Math.floor(Math.random() * 360)
             }];
             for (let i = 1; i < 4; i++) {
                 mockConnections.push({
@@ -37,7 +39,19 @@ describe("Map Creator API - Connection Endpoints - /api/map-creator/", () => {
                     start_point_id: mockConnections[i - 1].start_point_id + randomId(),
                     end_point_id: mockConnections[i - 1].end_point_id + randomId(),
                     start_map_id: mockConnections[i - 1].start_map_id + randomId(),
-                    end_map_id: mockConnections[i - 1].end_map_id + randomId()
+                    end_map_id: mockConnections[i - 1].end_map_id + randomId(),
+                    direction_start_to_end: Math.floor(Math.random() * 360),
+                    direction_end_to_start: Math.floor(Math.random() * 360)
+                });
+            }
+            for (let i = 1; i < 4; i++) {
+                let mapId = mockConnections[i - 1].start_map_id + randomId();
+                mockConnections.push({
+                    connection_id: mockConnections[i - 1].connection_id + randomId(),
+                    start_point_id: mockConnections[i - 1].start_point_id + randomId(),
+                    end_point_id: mockConnections[i - 1].end_point_id + randomId(),
+                    start_map_id: mapId,
+                    end_map_id: mapId
                 });
             }
             database.getConnectionsByGameMapId.mockResolvedValue(mockConnections);
@@ -210,6 +224,7 @@ describe("Map Creator API - Connection Endpoints - /api/map-creator/", () => {
             jest.clearAllMocks();
             database.checkUserOwnsGameMap.mockResolvedValue(true);
             database.arePointsInSameGameMap.mockResolvedValue(true);
+            database.arePointsInSameMap.mockResolvedValue(true);
             database.doesConnectionAlreadyExist.mockResolvedValue(false);
             newConnectionId = randomId();
             database.insertConnection.mockResolvedValue(newConnectionId);
@@ -312,7 +327,7 @@ describe("Map Creator API - Connection Endpoints - /api/map-creator/", () => {
         it("Should respond with 201 if connection was created successfully", async () => {
             const response = await makePostRequest();
 
-            expect(database.insertConnection).toHaveBeenCalledWith(mockConnection, defaults.startPointId, defaults.endPointId, defaults.id);
+            expect(database.insertConnection).toHaveBeenCalledWith(mockConnection, defaults.startPointId, defaults.endPointId, defaults.id, null, null);
             expectSuccessfulTransaction(mockConnection);
 
             expect(response.statusCode).toBe(201);
@@ -375,3 +390,5 @@ describe("Map Creator API - Connection Endpoints - /api/map-creator/", () => {
         });
     });
 });
+
+// TODOp: ha kész a PUT endpoint, akkor annak is teszt és a régi tesztek frissítése, hogy az új dolgok is bekerüljenek a tesztelésbe

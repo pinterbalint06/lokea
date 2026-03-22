@@ -38,7 +38,7 @@ export class MapManager {
         this.bus.on(EVENTS.APP_INIT, async () => {
             this.maps = await this.#loadMaps();
             this.bus.emit(EVENTS.MAPS_LOADED, { maps: this.maps });
-            let mapIds = Object.keys(this.maps);
+            let mapIds = Object.keys(this.maps).map(id => parseInt(id));
             let hasMaps = mapIds.length > 0;
             if (hasMaps) {
                 await this.viewer.ready();

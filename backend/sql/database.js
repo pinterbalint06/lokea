@@ -316,14 +316,14 @@ async function insertPoint(connection, mapId, u, v, northDirection, imageId) {
     return result.insertId;
 }
 
-async function insertConnection(connection, startPointId, endPointId, gameMapId) {
+async function insertConnection(connection, startPointId, endPointId, gameMapId, startToEndDirection, endToStartDirection) {
     const query = `
-        INSERT INTO point_connections (start_point_id, end_point_id, game_maps_id)
-        VALUES (?, ?, ?)
+        INSERT INTO point_connections (start_point_id, end_point_id, game_maps_id, direction_start_to_end, direction_end_to_start)
+        VALUES (?, ?, ?, ?, ?)
     `;
     const smallerId = Math.min(startPointId, endPointId);
     const largerId = Math.max(startPointId, endPointId);
-    const [result] = await connection.execute(query, [smallerId, largerId, gameMapId]);
+    const [result] = await connection.execute(query, [smallerId, largerId, gameMapId, startToEndDirection, endToStartDirection]);
     return result.insertId;
 }
 
@@ -376,7 +376,9 @@ async function getConnectionsByGameMapId(gameMapId) {
             point_connections.start_point_id,
             point_connections.end_point_id,
             start_point.map_id AS start_map_id,
-            end_point.map_id AS end_map_id
+            end_point.map_id AS end_map_id,
+            point_connections.direction_start_to_end,
+            point_connections.direction_end_to_start
         FROM point_connections
             INNER JOIN points AS start_point ON (start_point.point_id = point_connections.start_point_id)
             INNER JOIN points AS end_point ON (end_point.point_id = point_connections.end_point_id)
@@ -586,6 +588,18 @@ async function arePointsInSameGameMap(connection, pointId1, pointId2, gameMapId)
     return rows[0].count == 2;
 }
 
+async function arePointsInSameMap(connection, pointId1, pointId2) {
+    const query = `
+        SELECT COUNT(DISTINCT map_id) AS map_count
+        FROM points
+        WHERE point_id IN (?, ?);
+    `;
+
+    const [rows] = await connection.execute(query, [pointId1, pointId2]);
+
+    return rows[0].map_count == 1;
+}
+
 async function doesConnectionAlreadyExist(connection, pointId1, pointId2) {
     const query = `
         SELECT COUNT(*) as count 
@@ -671,5 +685,6 @@ module.exports = {
     getImagePath,
     getMapImageIdByMapId,
     getMapInfo,
-    getAllImageIdsForMap
+    getAllImageIdsForMap,
+    arePointsInSameMap
 };

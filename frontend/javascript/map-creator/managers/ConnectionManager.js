@@ -2,6 +2,7 @@ import { fetchConnections, saveUnsavedConnections, deleteConnection } from "../s
 import { ICONS } from "../../libs/icons/icons.js";
 import { CONSTANTS } from "../shared/constants.js";
 import { EVENTS } from "../events/EventBus.js";
+import { degreeToRadian } from "../../libs/math/mathUtils.js";
 
 export class ConnectionManager {
     constructor(eventBus, mapViewer, appState) {
@@ -23,6 +24,23 @@ export class ConnectionManager {
         this.isSaving = false;
         this.connectionToastId = "connectionMode";
         this.#bindBusEvents();
+    }
+
+    #checkIdOrder(connection) {
+        if (connection.start_point_id > connection.end_point_id) {
+            let tempPoint = connection.start_point_id;
+            connection.start_point_id = connection.end_point_id;
+            connection.end_point_id = tempPoint;
+
+            let tempMap = connection.start_map_id;
+            connection.start_map_id = connection.end_map_id;
+            connection.end_map_id = tempMap;
+
+            let tempDir = connection.direction_start_to_end;
+            connection.direction_start_to_end = connection.direction_end_to_start;
+            connection.direction_end_to_start = tempDir;
+        }
+        return connection;
     }
 
     #bindBusEvents() {
@@ -93,10 +111,17 @@ export class ConnectionManager {
                             connection_id: this.temporaryId,
                             start_point_id: this.activePointId,
                             end_point_id: id,
-                            game_maps_id: this.appState.activeMapId,
+                            game_maps_id: this.appState.gameMapID,
                             start_map_id: this.activePointMapId ?? this.appState.activeMapId,
                             end_map_id: this.appState.activeMapId
                         };
+
+                        if (newConnection.start_map_id != newConnection.end_map_id) {
+                            newConnection.direction_start_to_end = 0;
+                            newConnection.direction_end_to_start = 0;
+                        }
+
+                        this.#checkIdOrder(newConnection);
 
                         this.unsavedConnections.push(newConnection);
                         this.temporaryId--;
@@ -129,6 +154,14 @@ export class ConnectionManager {
 
         this.bus.on(EVENTS.UI_CONNECTION_CREATE_REQUEST, () => {
             this.#startConnectingMode();
+        });
+
+        this.bus.on(EVENTS.UI_CONNECTION_DIRECTION_UPDATE, ({ connectionId, direction, value }) => {
+            let connection = this.#getConnectionById(connectionId);
+            if (connection) {
+                connection[direction] = value;
+                this.#renderConnectionsForActiveMap();
+            }
         });
 
         this.bus.on(EVENTS.UI_SETTINGS_CONNECTION_OFF_MAP_VISIBILITY_CHANGED, ({ enabled }) => {
@@ -177,16 +210,18 @@ export class ConnectionManager {
         });
 
         this.bus.on(EVENTS.UI_CONNECTION_HIGHLIGHT, ({ connectionId, type }) => {
-            if (type == "focused") {
-                this.focusedConnectionId = connectionId;
-            } else {
-                if (this.focusedConnectionId == connectionId) {
-                    this.focusedConnectionId = null;
+            if (this.activePointId) {
+                if (type == "focused") {
+                    this.focusedConnectionId = connectionId;
+                } else {
+                    if (this.focusedConnectionId == connectionId) {
+                        this.focusedConnectionId = null;
+                    }
                 }
-            }
 
-            if (this.mapViewer.doesLineExist(connectionId)) {
-                this.mapViewer.changeLineType(connectionId, type);
+                if (this.mapViewer.doesLineExist(connectionId)) {
+                    this.mapViewer.changeLineType(connectionId, type);
+                }
             }
         });
 
@@ -298,6 +333,8 @@ export class ConnectionManager {
                 let failedCount = result.failed.length;
 
                 if (successCount > 0) {
+                    result.saved.forEach(conn => this.#checkIdOrder(conn));
+
                     this.bus.emit(EVENTS.TOAST_SHOW, { msg: `${successCount} kapcsolat sikeresen mentve!`, type: "success", iconObject: ICONS.SAVE_FLOPPY });
                     this.connectionsList.push(...result.saved);
 
@@ -313,6 +350,9 @@ export class ConnectionManager {
 
                 if (failedCount > 0) {
                     this.bus.emit(EVENTS.TOAST_SHOW, { msg: `${failedCount} kapcsolat mentése sikertelen!`, type: "danger" });
+                    for (let fail of result.failed) {
+                        this.bus.emit(EVENTS.TOAST_SHOW, { msg: fail.message, type: "danger" });
+                    }
                 }
 
                 this.#renderConnectionsForActiveMap();
@@ -332,6 +372,8 @@ export class ConnectionManager {
         try {
             const gameMapID = this.appState.gameMapID;
             let connections = await fetchConnections(gameMapID);
+
+            connections.forEach(conn => this.#checkIdOrder(conn));
 
             this.connectionsList = connections;
             this.bus.emit(EVENTS.CONNECTIONS_LOADED, { connections: this.connectionsList });
@@ -384,30 +426,45 @@ export class ConnectionManager {
 
     #drawOffMapConnection(connection, existingMarkerId, lineType) {
         let positon = this.mapViewer.getMarkerPosition(existingMarkerId);
-        this.mapViewer.placeMarkerByImageCoordinates(
-            this.portalIdStart,
-            positon.x + 20,
-            positon.y + 20,
-            32,
-            32,
-            "portal"
-        );
-        this.mapViewer.setMarkerSelectable(this.portalIdStart, false);
-        this.mapViewer.connectMarkers(existingMarkerId, this.portalIdStart, connection.connection_id, lineType);
-        this.portalMarkerIdsByConnection[connection.connection_id] = this.portalIdStart;
+
+        let angle = 0;
+        if (existingMarkerId == connection.start_point_id) {
+            angle = connection.direction_start_to_end ?? 0;
+        } else {
+            angle = connection.direction_end_to_start ?? 0;
+        }
+
+        let distance = 40;
+        let angleRad = degreeToRadian(angle);
+        let targetX = Math.round(positon.x + (distance * Math.sin(angleRad)));
+        let targetY = Math.round(positon.y + (-distance * Math.cos(angleRad)));
+
+        let portalMarkerId = this.portalMarkerIdsByConnection[connection.connection_id];
+
+        if (portalMarkerId != null && this.mapViewer.doesMarkerExist(portalMarkerId)) {
+            this.mapViewer.moveMarkerToImageCoordinates(portalMarkerId, targetX, targetY);
+        } else {
+            portalMarkerId = this.portalIdStart--;
+
+            this.mapViewer.placeMarkerByImageCoordinates(
+                portalMarkerId,
+                targetX,
+                targetY,
+                CONSTANTS.PORTAL_MARKER_SIZE.width,
+                CONSTANTS.PORTAL_MARKER_SIZE.height,
+                "portal"
+            );
+            this.mapViewer.setMarkerSelectable(portalMarkerId, false);
+            this.portalMarkerIdsByConnection[connection.connection_id] = portalMarkerId;
+        }
+
+        this.mapViewer.connectMarkers(existingMarkerId, portalMarkerId, connection.connection_id, lineType);
     }
 
     #renderConnectionsForActiveMap() {
-        for (const portalMarkerId in this.portalMarkerIdsByConnection) {
-            if (this.mapViewer.doesMarkerExist(this.portalMarkerIdsByConnection[portalMarkerId])) {
-                this.mapViewer.removeMarker(this.portalMarkerIdsByConnection[portalMarkerId]);
-            }
+        let activePortalConnections = [];
 
-        }
-        this.portalMarkerIdsByConnection = {};
         this.mapViewer.clearLines();
-
-        let portalId = this.portalIdStart;
 
         for (const connection of this.connectionsList) {
             let startExists = this.mapViewer.doesMarkerExist(connection.start_point_id);
@@ -424,7 +481,9 @@ export class ConnectionManager {
                         let existingMarkerId = startExists ? connection.start_point_id : connection.end_point_id;
                         let lineType = isActive ? "editing" : "default";
                         this.#drawOffMapConnection(connection, existingMarkerId, lineType);
-                        portalId--;
+                        if (!activePortalConnections.includes(connection.connection_id)) {
+                            activePortalConnections.push(connection.connection_id);
+                        }
                     }
                 }
             }
@@ -440,8 +499,20 @@ export class ConnectionManager {
                 if (startExists != endExists) {
                     let existingMarkerId = startExists ? unsavedConnection.start_point_id : unsavedConnection.end_point_id;
                     this.#drawOffMapConnection(unsavedConnection, existingMarkerId, "unsaved");
-                    portalId--;
+                    if (!activePortalConnections.includes(unsavedConnection.connection_id)) {
+                        activePortalConnections.push(unsavedConnection.connection_id);
+                    }
                 }
+            }
+        }
+
+        for (const connectionId in this.portalMarkerIdsByConnection) {
+            if (!activePortalConnections.includes(parseInt(connectionId))) {
+                let portalMarkerId = this.portalMarkerIdsByConnection[connectionId];
+                if (this.mapViewer.doesMarkerExist(portalMarkerId)) {
+                    this.mapViewer.removeMarker(portalMarkerId);
+                }
+                delete this.portalMarkerIdsByConnection[connectionId];
             }
         }
 
@@ -460,7 +531,8 @@ export class ConnectionManager {
 
         this.bus.emit(EVENTS.CONNECTION_LIST_UI_UPDATE, {
             connections: currentMarkerConnections,
-            unsavedConnections: this.unsavedConnections
+            unsavedConnections: this.unsavedConnections,
+            activePointId: this.activePointId
         });
     }
 

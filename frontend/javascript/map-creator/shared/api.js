@@ -117,6 +117,12 @@ export async function saveConnection(gameMapID, connection) {
     let formData = new FormData();
     formData.append("startPointId", connection.start_point_id);
     formData.append("endPointId", connection.end_point_id);
+    if (connection.direction_start_to_end != undefined) {
+        formData.append("directionStartToEnd", connection.direction_start_to_end);
+    }
+    if (connection.direction_end_to_start != undefined) {
+        formData.append("directionEndToStart", connection.direction_end_to_start);
+    }
 
     let response = await fetch(`/api/map-creator/game-maps/${gameMapID}/connections`, {
         method: "POST",
@@ -136,7 +142,9 @@ export async function saveConnection(gameMapID, connection) {
         end_point_id: connection.end_point_id,
         game_maps_id: connection.game_maps_id,
         start_map_id: connection.start_map_id,
-        end_map_id: connection.end_map_id
+        end_map_id: connection.end_map_id,
+        direction_start_to_end: connection.direction_start_to_end,
+        direction_end_to_start: connection.direction_end_to_start
     };
 }
 

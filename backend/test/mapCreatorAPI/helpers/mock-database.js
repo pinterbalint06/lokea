@@ -34,7 +34,8 @@ const mockDatabase = {
     deleteConnectionById: jest.fn(),
     arePointsInSameGameMap: jest.fn(),
     doesConnectionAlreadyExist: jest.fn(),
-    insertConnection: jest.fn()
+    insertConnection: jest.fn(),
+    arePointsInSameMap: jest.fn()
 };
 
 module.exports = { mockConnection, mockDatabase };

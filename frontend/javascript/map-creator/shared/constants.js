@@ -7,5 +7,9 @@ export const CONSTANTS = {
     MARKER_SIZE: {
         width: 24.0,
         height: 32.0
+    },
+    PORTAL_MARKER_SIZE: {
+        width: 32.0,
+        height: 32.0
     }
 };

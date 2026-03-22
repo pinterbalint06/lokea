@@ -1,5 +1,6 @@
 import { EVENTS } from "../../events/EventBus.js";
 import { HoldToUnlockButton } from "../../../libs/elements/HoldToUnlockButton.js";
+import { DegreeInput } from "../../../libs/elements/DegreeInput.js";
 
 export class ConnectionListManager {
     constructor(eventBus) {
@@ -17,12 +18,32 @@ export class ConnectionListManager {
     }
 
     #bindBusEvents() {
-        this.bus.on(EVENTS.CONNECTION_LIST_UI_UPDATE, ({ connections, unsavedConnections }) => {
-            this.#renderConnectionList(connections, unsavedConnections);
+        this.bus.on(EVENTS.CONNECTION_LIST_UI_UPDATE, ({ connections, unsavedConnections, activePointId }) => {
+            this.#renderConnectionList(connections, unsavedConnections, activePointId);
         });
     }
 
-    #renderConnectionList(connections, unsavedConnections) {
+    #bindDegreeInput(connection, wrapper, directionField) {
+        if (wrapper) {
+            let initialValue = connection[directionField] ?? 0;
+
+            let degreeInput = new DegreeInput(wrapper, { value: initialValue });
+
+            degreeInput.addEventListener("input", (event) => {
+                this.bus.emit(EVENTS.UI_CONNECTION_DIRECTION_UPDATE, {
+                    connectionId: connection.connection_id,
+                    direction: directionField,
+                    value: event.detail.value
+                });
+            });
+
+            degreeInput.addEventListener("error", (event) => {
+                this.bus.emit(EVENTS.TOAST_SHOW, { msg: event.detail.message, type: "danger" });
+            });
+        };
+    }
+
+    #renderConnectionList(connections, unsavedConnections, activePointId) {
         this.elements.connectionsList.innerHTML = "";
 
         let allConnections = [...connections, ...unsavedConnections];
@@ -45,6 +66,29 @@ export class ConnectionListManager {
                 clone.querySelector(".end-id").innerText = connection.end_point_id;
 
                 let card = clone.querySelector(".kapcsolat-kartya");
+
+                let isCrossMap = connection.start_map_id != connection.end_map_id;
+                let directionWrapper = clone.querySelector(".connection-direction-wrapper");
+
+                if (isCrossMap) {
+                    directionWrapper.classList.remove("d-none");
+
+                    let currentWrapper = clone.querySelector(".direction-toward-current-wrapper");
+                    let otherWrapper = clone.querySelector(".direction-toward-other-wrapper");
+
+                    currentWrapper.addEventListener("click", (e) => e.stopPropagation());
+                    otherWrapper.addEventListener("click", (e) => e.stopPropagation());
+
+                    let currentPointField = (activePointId == connection.start_point_id) ? "direction_end_to_start" : "direction_start_to_end";
+                    let otherMapField = (activePointId == connection.start_point_id) ? "direction_start_to_end" : "direction_end_to_start";
+
+                    this.#bindDegreeInput(connection, currentWrapper, currentPointField);
+                    this.#bindDegreeInput(connection, otherWrapper, otherMapField);
+                } else {
+                    if (directionWrapper) {
+                        directionWrapper.remove();
+                    }
+                }
 
                 card.addEventListener("mouseenter", () => {
                     this.bus.emit(EVENTS.UI_CONNECTION_HIGHLIGHT, {

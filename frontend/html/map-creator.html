@@ -186,24 +186,12 @@
                                             </div>
                                         </div>
                                     </div>
-                                    <div class="rounded uveg d-inline-flex align-items-center p-2 flex-grow-0">
+                                    <div class="rounded uveg d-inline-flex align-items-center p-2 flex-grow-0 gap-2">
                                         <svg style="height: 2em;" class="text-body" fill="currentColor"
                                             viewBox="0 0 122.88 122.88">
                                             <use href="/images/map-creator-icons.svg#icon-compass"></use>
                                         </svg>
-                                        <div class="d-inline-flex flex-column flex-grow-1 ms-2">
-                                            <h6 class="h6 text-uppercase text-body-secondary m-0">Északirány</h6>
-                                            <div class="d-flex align-items-center gap-2 flex-grow-1">
-                                                <input type="range" class="form-range glass-range" min="0" max="359"
-                                                    step="1" id="northDirectionRange" value="0">
-                                                <div class="degreeWrapper">
-                                                    <input class="form-control uvegform p-1 hide-arrows"
-                                                        style="width: 4em;" type="number" id="northDirection" min="0"
-                                                        max="359" value="0">
-                                                </div>
-                                            </div>
-                                            <small class="text-muted">Az északi irány a kezdő irány.</small>
-                                        </div>
+                                        <div id="northDirectionWrapper"></div>
                                     </div>
                                 </div>
                             </div>
@@ -343,6 +331,24 @@
                     <use href="/images/map-creator-icons.svg#icon-trash"></use>
                 </svg>
             </button>
+            <div class="connection-direction-wrapper w-100 mt-2 d-none">
+                <div class="w-100 border-top border-secondary border-opacity-25 pt-2 mt-1">
+                    <h6 class="h6 text-uppercase small text-body-secondary mb-2 mt-3">Irány (Másik térkép felé)</h6>
+                    <div class="d-flex align-items-center gap-2">
+                        <svg style="height: 1.5em;" class="text-body" fill="currentColor" viewBox="0 0 122.88 122.88">
+                            <use href="/images/map-creator-icons.svg#icon-compass"></use>
+                        </svg>
+                        <div class="direction-toward-other-wrapper"></div>
+                    </div>
+                    <h6 class="h6 text-uppercase small text-body-secondary mb-2">Irány (Jelenlegi pont felé)</h6>
+                    <div class="d-flex align-items-center gap-2">
+                        <svg style="height: 1.5em;" class="text-body" fill="currentColor" viewBox="0 0 122.88 122.88">
+                            <use href="/images/map-creator-icons.svg#icon-compass"></use>
+                        </svg>
+                        <div class="direction-toward-current-wrapper"></div>
+                    </div>
+                </div>
+            </div>
         </div>
     </template>
     <script src="/bootstrap/js/bootstrap.min.js"></script>

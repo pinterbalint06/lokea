@@ -88,16 +88,23 @@ CREATE TABLE log (
     foreign key (user_id) references users(user_id) ON DELETE CASCADE
 );
 
--- TODOp: plusz egy column hogy térképeken keresztül milyen irányban lehet eljutni egyik pontból a másikba
 CREATE TABLE point_connections (
     connection_id int AUTO_INCREMENT PRIMARY KEY NOT NULL,
     start_point_id int NOT NULL,
     end_point_id int NOT NULL,
     game_maps_id int NOT NULL,
+
+    direction_start_to_end float DEFAULT NULL,
+    direction_end_to_start float DEFAULT NULL,
+
     FOREIGN KEY (start_point_id) REFERENCES points(point_id) ON DELETE CASCADE,
     FOREIGN KEY (end_point_id) REFERENCES points(point_id) ON DELETE CASCADE,
     FOREIGN KEY (game_maps_id) REFERENCES game_maps(game_maps_id) ON DELETE CASCADE,
+
     CONSTRAINT check_different_points CHECK (start_point_id != end_point_id),
     CONSTRAINT unique_connection UNIQUE (game_maps_id, start_point_id, end_point_id),
-    CONSTRAINT check_point_order CHECK (start_point_id < end_point_id)
+    CONSTRAINT check_point_order CHECK (start_point_id < end_point_id),
+
+    CONSTRAINT check_direction_s2e CHECK (direction_start_to_end >= 0 AND direction_start_to_end < 360),
+    CONSTRAINT check_direction_e2s CHECK (direction_end_to_start >= 0 AND direction_end_to_start < 360)
 );
