@@ -208,30 +208,62 @@ async function bejelentkezes(username, jelszo, remember) {
             bejelentkezett(data.username);
         }
         else {
-            alert(data.message);
+            bejelentkezett(data.username, data.error_code, data.message);
         }
     } catch (error) {
         console.log(`hálózati hiba: ${error}`);
     }
 }
 
-function bejelentkezett(username) {
+function bejelentkezett(username, hibakod = null, hibauzenet = "") {
     let form = document.getElementById('loginForm');
     let container = document.getElementById('loginContainer');
     let title = document.getElementById('loginTitle');
+    let modalText = document.getElementById('logText');
+    title.innerHTML = "";
+    modalText.innerHTML = "";
 
-    container.classList.add('spinning');
-    container.classList.add('success-draw');
-    title.innerText = `Üdvözöljük, ${username}!`;
-    title.classList.replace("h5", "h2");
-    form.classList.add('collapse-out');
-    setTimeout(() => {
-        container.classList.remove('spinning');
-        form.innerHTML = "";
+    if (hibakod == null) {
+        container.querySelectorAll('svg').forEach(svg => svg.remove());
+        container.appendChild(makeSvg("circle-border", "progress-svg", "progress-circle"));
+        container.appendChild(makeSvg("checkmark", "check-svg", "mark"));
+
+        container.classList.add('spinning');
+
         setTimeout(() => {
-            location.reload();
-        }, 3000);
-    }, 500);
+            container.classList.add('success-draw');
+            container.classList.remove('spinning');
+            title.innerText = `Sikeres bejelentkezés!`;
+            title.classList.replace("h5", "h2");
+            form.classList.add('collapse-out');
+            modalText.innerText = `Üdv, ${username}!`;
+
+            setTimeout(() => {
+                location.reload();
+            }, 3000);
+        }, 1000);
+    }
+    else {
+        container.querySelectorAll('svg').forEach(svg => svg.remove());
+        container.appendChild(makeSvg("circle-border", "progress-svg", "progress-circle"));
+        container.appendChild(makeSvg("icon-x", "check-svg", "mark"));
+
+        container.classList.add('spinning');
+        setTimeout(() => {
+            container.classList.add('error-draw');
+            container.classList.remove('spinning');
+            title.innerText = `Bejelentkezés sikertelen! (Error ${hibakod})`;
+            form.classList.add('collapse-out');
+            modalText.innerText = hibauzenet;
+            setTimeout(() => {
+                form.classList.remove('collapse-out');
+                form.classList.add('collapse-in');
+                container.classList.remove('error-draw');
+                title.innerText = `Bejelentkezés`;
+                modalText.innerText = "";
+            }, 2000);
+        }, 1000);
+    }
 }
 
 async function kijelentkezes() {
@@ -357,13 +389,16 @@ async function showSettingsModal() {
     div.appendChild(makeSubtitle("E-mail-cim"));
     div.appendChild(inputGeneral("text", "mintajan@gmail.com", data.email, "emailInput", ["form-control"], false));
 
+    let alertPlaceholder = document.createElement('div');
+    alertPlaceholder.id = 'passwordAlert';
+
+    let buttonsDiv = document.createElement('div');
+    buttonsDiv.classList.add("d-flex", "justify-content-center", "my-3");
+
     let changePassBtn = gombGeneral("button", "Új jelszó igénylése", null, null, null);
     changePassBtn.classList.add("btn", "btn-purple", "px-5", "rounded-pill", "d-block", "mx-auto");
     changePassBtn.setAttribute('data-bs-toggle', 'collapse');
     changePassBtn.setAttribute('data-bs-target', '#passwordCollapse');
-
-    let alertPlaceholder = document.createElement('div');
-    alertPlaceholder.id = 'passwordAlert';
 
     let collapseDiv = document.createElement('div');
     collapseDiv.className = 'collapse';
@@ -393,8 +428,15 @@ async function showSettingsModal() {
     innerCard.appendChild(saveBtn);
     collapseDiv.appendChild(innerCard);
 
+    let deleteProfileBtn = gombGeneral("button", "Fiók törlése", null, "red", null);
+    deleteProfileBtn.addEventListener("click", function () {
+        deleteProfile();
+    });
+
     div.appendChild(alertPlaceholder);
-    div.appendChild(changePassBtn);
+    buttonsDiv.appendChild(changePassBtn);
+    buttonsDiv.appendChild(deleteProfileBtn);
+    div.appendChild(buttonsDiv);
     div.appendChild(collapseDiv);
 
 
@@ -478,6 +520,29 @@ async function jelszoValtoztat() {
     }
     if (newAlert) {
         alertPlaceholder.replaceChildren(newAlert);
+    }
+}
+
+async function deleteProfile() {
+    try {
+        let response = await fetch("/api/inactiveUser", {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json"
+            }
+        });
+        let data = await response.json();
+        if (data.success) {
+            setTimeout(() => {
+                location.reload();
+            }, 1000);
+        }
+        else {
+            console.error("baj a törlésben, baj: " + data.error);
+        }
+
+    } catch (error) {
+        console.error(`hálózati hiba: ${error}`);
     }
 }
 

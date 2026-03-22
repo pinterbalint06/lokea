@@ -97,7 +97,8 @@ router.post("/login",
             if (!errors.isEmpty()) {
                 response.status(400).json({
                     success: false,
-                    error: errors.array()
+                    message: errors.array().map(err => err.msg).join('<br>'),
+                    error_code: 400
                 });
             }
             else {
@@ -110,13 +111,13 @@ router.post("/login",
                     rows = await database.getUserByUsername(username);
                 }
                 if (rows.length === 0 || rows[0].deleted_at != null) {
-                    response.status(401).json({ message: "Hibás email vagy jelszó" });
+                    response.status(401).json({ message: "Hibás email vagy jelszó", error_code: 401 });
                 }
                 else {
                     let sPass = rows[0].password;
                     let egyezes = await bcrypt.compare(password, sPass);
                     if (!egyezes) {
-                        response.status(401).json({ message: "Hibás email vagy jelszó" });
+                        response.status(401).json({ message: "Hibás email vagy jelszó", error_code: 401});
                     }
                     else {
                         let sesRole = rows[0].role;
@@ -209,7 +210,7 @@ router.post('/updateUser', auth.checkAuth,
             else {
                 let { username, email, is_2fa, language, darkmode } = request.body;
                 await database.updateUser(request.session.userid, username, email, is_2fa, language, darkmode);
-                response.status(200).json({message: "Sikeres frissités!"});
+                response.status(200).json({ message: "Sikeres frissités!" });
             }
 
         } catch (error) {
@@ -238,13 +239,31 @@ router.post("/updatePassword",
             else {
                 let { oldPass, newPass } = request.body;
                 await database.updatePassword(request.session.userid, oldPass, newPass);
-                response.status(200).json({message: "Sikeres frissités!"});
+                response.status(200).json({ message: "Sikeres frissités!" });
             }
 
         } catch (error) {
             response.status(500).json({ error: error });
         }
     })
+
+router.post("/inactiveUser", async (request, response) => {
+    try {
+        await database.userToInactive(request.session.userid);
+        request.session.destroy(error => {
+            if (error) {
+                response.status(500).json({ success: false, error: error });
+            }
+            else {
+                response.clearCookie('geo.sid');
+                response.status(200).json({ success: true, message: "Sikeres frissités!" });
+            }
+        });
+
+    } catch (error) {
+        response.status(500).json({ error: error });
+    }
+})
 
 router.post('/updateProfilePic', auth.checkAuth, upload.single('profilePic'), async (request, response) => {
     let originalFile;

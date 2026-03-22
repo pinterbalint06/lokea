@@ -1,3 +1,5 @@
+/* register */
+
 body {
     background: #943ec9;
     background: linear-gradient(132deg, rgba(148, 62, 201, 1) 1%, rgba(201, 66, 153, 1) 52%, rgba(148, 62, 201, 1) 100%);
@@ -18,6 +20,46 @@ body {
     transition: opacity 0.4s;
 }
 
+@keyframes rotateFull {
+    100% {
+        transform: rotate(360deg);
+    }
+}
+
+#regModalTitle, #loginTitle {
+    transition: transform 0.5s ease, color 0.5s ease;
+}
+
+/* login */
+
+#loginForm {
+    transition: max-height 0.6s cubic-bezier(0, 1, 0, 1), opacity 0.4s ease;
+    max-height: 500px;
+    opacity: 1;
+    overflow: hidden;
+}
+
+.collapse-out {
+    max-height: 0 !important;
+    opacity: 0 !important;
+    margin-top: 0 !important;
+    margin-bottom: 0 !important;
+    padding-top: 0 !important;
+    padding-bottom: 0 !important;
+    pointer-events: none;
+}
+
+.collapse-in {
+    max-height: 1000px !important; /* Egy elég nagy érték, ami biztosan befogadja a tartalmat */
+    opacity: 1 !important;
+    margin-top: inherit !important;
+    margin-bottom: inherit !important;
+    padding-top: inherit !important;
+    padding-bottom: inherit !important;
+    pointer-events: all;
+}
+
+/* all */
 
 .input-container {
     position: relative;
@@ -80,13 +122,19 @@ body {
     margin-bottom: 10px;
 }
 
-.reg-container {
+.reg-container, .login-container {
     position: relative;
     width: 150px;
     height: 150px;
     display: flex;
     align-items: center;
     justify-content: center;
+}
+
+.loge {
+    width: 95%;
+    z-index: 1;
+    transition: opacity 0.4s;
 }
 
 .progress-svg,
@@ -135,7 +183,7 @@ body {
     stroke: #c71a1a;
 }
 
-.mark {
+.mark, .check-mark {
     color: #ffffff;
     stroke-width: 8;
     stroke-linecap: round;
@@ -145,22 +193,11 @@ body {
     transition: stroke-dashoffset 0.4s ease 1s;
 }
 
-.success-draw .mark, .error-draw .mark{
+.success-draw .mark, .error-draw .mark, .success-draw .check-mark{
     stroke-dashoffset: 0;
 }
-
-.success-draw .logo, .error-draw .logo {
+.success-draw .logo, .error-draw .logo, .success-draw .loge {
     opacity: 0;
     transform: scale(0.5);
     transition: opacity 0.3s ease-in-out 0.3s, transform 0.3s ease-in-out 0.3s;
-}
-
-@keyframes rotateFull {
-    100% {
-        transform: rotate(360deg);
-    }
-}
-
-#regModalTitle {
-    transition: transform 0.5s ease, color 0.5s ease;
 }
