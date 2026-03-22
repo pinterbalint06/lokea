@@ -4,10 +4,30 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link rel="stylesheet" href="../css/game-page.css">
-    <script src="../js/game-page.js"></script>
+    <script type="module" src="../javascript/game/game_page.js"></script>
    <title>Játék</title>  <!--A cím megváltoztatása a játék nevére -->
 </head>
 <body>
-    
+    <!--Beállítások a játékhoz: körök száma(jelölni a különböző pályák számát a, de ne korlátozni), idő adott körre, esetleg nehézség megcsinálása -->
+    <div id="settings">
+        <h1>Játék neve</h1>
+        <p id="gametitle">Nem található leírás</p>
+        <label for="rounds">Körök száma:</label>
+        <input type="number" id="rounds" min="1" max="100" value="5">
+        <label for="times">Egy kör időtartama:</label>
+        <select name="" id="times">
+            <option value="1">00:01</option>
+            <option value="5">00:05</option>
+            <option value="10">00:10</option>
+            <option value="30">00:30</option>
+            <option value="60">01:00</option>
+            <option value="90">01:30</option>
+            <option value="120">02:00</option>
+            <option value="150">02:30</option>
+            <option value="180">03:00</option>
+            <option value="240">04:00</option>
+            <option value="300">05:00</option>
+        </select>
+    </div>
 </body>
 </html>
