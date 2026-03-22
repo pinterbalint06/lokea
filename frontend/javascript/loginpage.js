@@ -5,14 +5,14 @@ document.addEventListener("DOMContentLoaded", async function () {
         let username = document.getElementById('regUser');
         let email = document.getElementById('regEmail');
         let jelszo = document.getElementById('regPass');
-        if (!validalvaReg(username, email, jelszo)) {
+        if (validalvaReg(username, email, jelszo)) {
             regisztracio(username, email, jelszo);
         }
     });
     document.getElementById('login').addEventListener("click", async function () {
         let username = document.getElementById('logUser');
         let jelszo = document.getElementById('logPass');
-        if (!validalvaBej(username, jelszo)) {
+        if (validalvaBej(username, jelszo)) {
             bejelentkezes(username, jelszo);
         }
     });

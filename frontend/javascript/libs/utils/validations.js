@@ -4,22 +4,19 @@ export function validalvaReg(user, mail, pass) {
     let email = mail.value;
     let password = pass.value;
 
-    if (username.length > 50 || username.length < 1 || !isCorrectUsername(username)) {
+    if (!validalvaUsername(username)) {
         fail = true;
-        user.classList.add("border-danger");
-        removeBorderDanger(user);
+        wrongInput(user);
     }
-    if (email.length > 250 || email.length < 5 || !isEmail(email)) {
+    if (!validalvaEmail(email)) {
         fail = true;
-        mail.classList.add("border-danger");
-        removeBorderDanger(mail);
+        wrongInput(mail);
     }
-    if (password.length > 50 || password.length < 8 || !isCorrectPassword(password)) {
+    if (!validalvaJelszo(password)) {
         fail = true;
-        pass.classList.add("border-danger");
-        removeBorderDanger(pass);
+        wrongInput(pass);
     }
-    return fail;
+    return !fail;
 }
 
 export function validalvaBej(user, pass) {
@@ -27,27 +24,25 @@ export function validalvaBej(user, pass) {
     let username = user.value;
     let password = pass.value;
     if (username.length > 50 || username.length < 1) {
-        fail = true;
-        user.classList.add("border-danger");
-        removeBorderDanger(user);
+        wrongInput(user);
     }
     if (password.length > 50 || password.length < 8) {
         fail = true;
-        pass.classList.add("border-danger");
-        removeBorderDanger(pass);
+        wrongInput(pass);
     }
-    return fail;
+    return !fail;
 }
 
-export function validalvaJelszo(pass) {
-    let fail = false;
-    let password = pass.value;
-    if (password.length > 50 || password.length < 8 || !isCorrectPassword(password)) {
-        fail = true;
-        pass.classList.add("border-danger");
-        removeBorderDanger(pass);
-    }
-    return fail;
+export function validalvaUsername(username) {
+    return username.length < 50 && username.length > 1 && isCorrectUsername(username);
+}
+
+export function validalvaEmail(email) {
+    return email.length < 250 && email.length > 5 && isEmail(email);
+}
+
+export function validalvaJelszo(password) {
+    return password.length < 50 && password.length > 8 && isCorrectPassword(password);
 }
 
 function isCorrectUsername(username) {
@@ -66,7 +61,8 @@ function isCorrectPassword(password) {
     return hasUpperCase && hasNumber;
 }
 
-function removeBorderDanger(input) {
+export function wrongInput(input) {
+    input.classList.add("border-danger")
     input.addEventListener(
         "input",
         () => input.classList.remove("border-danger"),

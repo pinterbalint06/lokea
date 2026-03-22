@@ -9,7 +9,7 @@ document.addEventListener("DOMContentLoaded", function () {
         let email = document.getElementById('regEmail');
         let jelszo = document.getElementById('regPass');
         let is2fa = document.getElementById('twofactorCheckbox');
-        if (!validalvaReg(username, email, jelszo)) {
+        if (validalvaReg(username, email, jelszo)) {
             regisztracio(username, email, jelszo, is2fa);
         }
     });
