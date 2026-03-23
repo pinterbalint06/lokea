@@ -14,6 +14,7 @@ export class ConnectionManager {
         this.portalMarkerIdsByConnection = {};
         this.connectionsList = [];
         this.unsavedConnections = [];
+        this.draftConnectionDirections = {};
         this.isConnecting = false;
         this.activePointId = null;
         this.activePointMapId = null;
@@ -146,6 +147,8 @@ export class ConnectionManager {
             this.activePointMapId = null;
             this.focusedConnectionId = null;
             this.unsavedConnections = [];
+            this.draftConnectionDirections = {};
+            this.bus.emit(EVENTS.UNSAVED_CONNECTION_DIRECTION_CHANGED, { areThereUnsaved: false });
             this.#cancelConnectingMode();
             this.#renderConnectionsForActiveMap();
         });
@@ -159,7 +162,29 @@ export class ConnectionManager {
         this.bus.on(EVENTS.UI_CONNECTION_DIRECTION_UPDATE, ({ connectionId, direction, value }) => {
             let connection = this.#getConnectionById(connectionId);
             if (connection) {
-                connection[direction] = value;
+                let isUnsaved = connectionId < 0;
+                if (isUnsaved) {
+                    connection[direction] = value;
+                } else {
+                    let hadUnsaved = Object.keys(this.draftConnectionDirections).length > 0;
+                    if (!this.draftConnectionDirections[connectionId]) {
+                        this.draftConnectionDirections[connectionId] = {};
+                    }
+                    if (this.#getConnectionById(connectionId)?.[direction] != value) {
+                        this.draftConnectionDirections[connectionId][direction] = value;
+                    } else {
+                        delete this.draftConnectionDirections[connectionId][direction];
+                        if (Object.keys(this.draftConnectionDirections[connectionId]).length == 0) {
+                            delete this.draftConnectionDirections[connectionId];
+                        }
+                    }
+
+                    let hasUnsaved = Object.keys(this.draftConnectionDirections).length > 0;
+                    if (hasUnsaved != hadUnsaved) {
+                        this.bus.emit(EVENTS.UNSAVED_CONNECTION_DIRECTION_CHANGED, { areThereUnsaved: hasUnsaved });
+                    }
+                }
+
                 this.#renderConnectionsForActiveMap();
             }
         });
@@ -424,15 +449,21 @@ export class ConnectionManager {
         return visibleMarkerIds;
     }
 
+    #getDirection(connection, fromPointId) {
+        let direction = (fromPointId == connection.start_point_id)
+            ? "direction_start_to_end"
+            : "direction_end_to_start";
+
+        let draftAngle = this.draftConnectionDirections[connection.connection_id]?.[direction];
+        let angle = draftAngle ?? connection[direction];
+
+        return angle;
+    }
+
     #drawOffMapConnection(connection, existingMarkerId, lineType) {
         let positon = this.mapViewer.getMarkerPosition(existingMarkerId);
 
-        let angle = 0;
-        if (existingMarkerId == connection.start_point_id) {
-            angle = connection.direction_start_to_end ?? 0;
-        } else {
-            angle = connection.direction_end_to_start ?? 0;
-        }
+        let angle = this.#getDirection(connection, existingMarkerId) ?? 0;
 
         let distance = 40;
         let angleRad = degreeToRadian(angle);
@@ -546,6 +577,10 @@ export class ConnectionManager {
                 this.focusedConnectionId = null;
             }
 
+            if (this.draftConnectionDirections[connectionId]) {
+                delete this.draftConnectionDirections[connectionId];
+                this.bus.emit(EVENTS.UNSAVED_CONNECTION_DIRECTION_CHANGED, { areThereUnsaved: Object.keys(this.draftConnectionDirections).length > 0 });
+            }
             this.connectionsList = this.connectionsList.filter(connection =>
                 connection.connection_id != connectionId
             );
@@ -562,3 +597,5 @@ export class ConnectionManager {
         }
     }
 }
+
+// TODOp: this.draftConnectionDirections mentése backendre új PUT endpointtal

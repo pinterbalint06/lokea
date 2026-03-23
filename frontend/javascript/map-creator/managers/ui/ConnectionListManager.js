@@ -37,6 +37,14 @@ export class ConnectionListManager {
                 });
             });
 
+            degreeInput.addEventListener("change", (event) => {
+                this.bus.emit(EVENTS.UI_CONNECTION_DIRECTION_UPDATE, {
+                    connectionId: connection.connection_id,
+                    direction: directionField,
+                    value: event.detail.value
+                });
+            });
+
             degreeInput.addEventListener("error", (event) => {
                 this.bus.emit(EVENTS.TOAST_SHOW, { msg: event.detail.message, type: "danger" });
             });

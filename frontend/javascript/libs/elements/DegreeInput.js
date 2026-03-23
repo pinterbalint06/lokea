@@ -81,7 +81,7 @@ export class DegreeInput extends EventTarget {
         this.numberInput.addEventListener("change", (e) => {
             const newValue = parseInt(e.target.value);
 
-            if (!isNaN(newValue) && newValue <= this.#min && newValue >= this.#max) {
+            if (!isNaN(newValue) && newValue <= this.#max && newValue >= this.#min) {
                 this.rangeInput.value = newValue;
                 this.#value = newValue;
                 this.#prevValue = newValue;

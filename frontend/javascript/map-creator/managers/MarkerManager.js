@@ -26,6 +26,7 @@ export class MarkerManager {
         /** @type {ActivePointSession} */
         this.activePointSession = null;
         this.unsavedConnectionCount = 0;
+        this.hasDraftConnectionDirectionChanges = false;
         this.isConnectionMode = false;
 
         this.#bindBusEvents();
@@ -142,6 +143,11 @@ export class MarkerManager {
 
         this.bus.on(EVENTS.UNSAVED_CONNECTION_DELETED, () => {
             this.unsavedConnectionCount = Math.max(0, this.unsavedConnectionCount - 1);
+            this.#emitDirtyStateChange();
+        });
+
+        this.bus.on(EVENTS.UNSAVED_CONNECTION_DIRECTION_CHANGED, ({ areThereUnsaved }) => {
+            this.hasDraftConnectionDirectionChanges = areThereUnsaved;
             this.#emitDirtyStateChange();
         });
 
@@ -321,7 +327,7 @@ export class MarkerManager {
 
         if (this.activePointId && this.activePointId != CONSTANTS.TEMP_ID) {
             let hasUnsavedConnections = this.unsavedConnectionCount > 0;
-            isDirty = isDirty || hasUnsavedConnections;
+            isDirty = isDirty || hasUnsavedConnections || this.hasDraftConnectionDirectionChanges;
         }
 
         return isDirty;
