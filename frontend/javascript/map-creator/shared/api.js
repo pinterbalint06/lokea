@@ -174,6 +174,60 @@ export async function saveUnsavedConnections(gameMapID, unsavedConnections) {
     };
 }
 
+export async function updateConnectionDirections(connectionId, directions) {
+    let formData = new FormData();
+
+    if (directions.direction_start_to_end != undefined) {
+        formData.append("directionStartToEnd", directions.direction_start_to_end);
+    }
+    if (directions.direction_end_to_start != undefined) {
+        formData.append("directionEndToStart", directions.direction_end_to_start);
+    }
+
+    let response = await fetch(`/api/map-creator/connections/${connectionId}`, {
+        method: "PUT",
+        body: formData
+    });
+
+    if (!response.ok) {
+        await handleResponseError(response);
+    }
+
+    let data = await response.json();
+    validateJsonResponse(data, "Sikertelen frissítés!");
+
+    return {
+        connection_id: connectionId,
+        ...directions
+    };
+}
+
+export async function saveDraftConnectionDirections(draftDirections) {
+    let saved = [];
+    let failed = [];
+
+    let savePromises = [];
+    for (const connectionId in draftDirections) {
+        savePromises.push(updateConnectionDirections(parseInt(connectionId), draftDirections[connectionId]));
+    }
+
+    let results = await Promise.allSettled(savePromises);
+
+    for (let i = 0; i < results.length; i++) {
+        let result = results[i];
+        if (result.status == "fulfilled") {
+            saved.push(result.value);
+        } else {
+            failed.push(result.reason);
+        }
+    }
+
+    return {
+        saved: saved,
+        failed: failed
+    };
+}
+
 export async function fetchPoints(mapID) {
     return fetchAndValidate(`/api/map-creator/maps/${mapID}/points`, "points");
 }

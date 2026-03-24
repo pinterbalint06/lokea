@@ -48,4 +48,3 @@ async function init() {
 document.addEventListener("DOMContentLoaded", init);
 
 // TODOp!: látótérhez svg renderelés
-// TODOp!!: mapok közti kapcsolatok beállítása hogy melyik irányba legyen

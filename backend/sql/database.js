@@ -638,6 +638,17 @@ async function deleteConnectionById(connection, connectionId) {
     return result.affectedRows == 1;
 }
 
+async function updateConnectionDirections(connection, connectionId, dirStartToEnd, dirEndToStart) {
+    const query = `
+        UPDATE point_connections
+        SET direction_start_to_end = COALESCE(?, direction_start_to_end),
+            direction_end_to_start = COALESCE(?, direction_end_to_start)
+        WHERE connection_id = ?
+    `;
+    const [result] = await connection.execute(query, [dirStartToEnd, dirEndToStart, connectionId]);
+    return result.affectedRows == 1;
+}
+
 //!Export
 module.exports = {
     // selectall,
@@ -686,5 +697,6 @@ module.exports = {
     getMapImageIdByMapId,
     getMapInfo,
     getAllImageIdsForMap,
-    arePointsInSameMap
+    arePointsInSameMap,
+    updateConnectionDirections
 };

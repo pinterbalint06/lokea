@@ -1,4 +1,4 @@
-import { fetchConnections, saveUnsavedConnections, deleteConnection } from "../shared/api.js";
+import { fetchConnections, saveUnsavedConnections, deleteConnection, saveDraftConnectionDirections } from "../shared/api.js";
 import { ICONS } from "../../libs/icons/icons.js";
 import { CONSTANTS } from "../shared/constants.js";
 import { EVENTS } from "../events/EventBus.js";
@@ -201,7 +201,7 @@ export class ConnectionManager {
 
         this.bus.on(EVENTS.UI_POINT_SAVE_REQUESTED, () => {
             if (!this.isSaving) {
-                if (this.activePointId != CONSTANTS.TEMP_ID && this.unsavedConnections.length > 0) {
+                if (this.activePointId != CONSTANTS.TEMP_ID && (this.unsavedConnections.length > 0 || Object.keys(this.draftConnectionDirections).length > 0)) {
                     this.#saveConnections();
                 }
             }
@@ -352,31 +352,72 @@ export class ConnectionManager {
             this.bus.emit(EVENTS.TOAST_SHOW, { msg: "Kapcsolatok mentése", id: "savingConnections", closable: false, autohide: false, spinner: true });
 
             try {
-                let result = await saveUnsavedConnections(this.appState.gameMapID, this.unsavedConnections);
+                if (this.unsavedConnections.length > 0) {
+                    let saveNewResult = await saveUnsavedConnections(this.appState.gameMapID, this.unsavedConnections);
 
-                let successCount = result.saved.length;
-                let failedCount = result.failed.length;
+                    let newSaveSuccess = saveNewResult.saved.length;
+                    let newSaveFailed = saveNewResult.failed.length;
 
-                if (successCount > 0) {
-                    result.saved.forEach(conn => this.#checkIdOrder(conn));
+                    if (newSaveSuccess > 0) {
+                        saveNewResult.saved.forEach(connection => this.#checkIdOrder(connection));
+                        this.connectionsList.push(...saveNewResult.saved);
 
-                    this.bus.emit(EVENTS.TOAST_SHOW, { msg: `${successCount} kapcsolat sikeresen mentve!`, type: "success", iconObject: ICONS.SAVE_FLOPPY });
-                    this.connectionsList.push(...result.saved);
+                        this.unsavedConnections = this.unsavedConnections.filter(connection =>
+                            !saveNewResult.saved.some(savedConn =>
+                                savedConn.start_point_id == connection.start_point_id &&
+                                savedConn.end_point_id == connection.end_point_id
+                            )
+                        );
+                    }
 
-                    this.unsavedConnections = this.unsavedConnections.filter(connection =>
-                        !result.saved.some(savedConn =>
-                            savedConn.start_point_id == connection.start_point_id &&
-                            savedConn.end_point_id == connection.end_point_id
-                        )
-                    );
+                    for (let fail of saveNewResult.failed) {
+                        this.bus.emit(EVENTS.TOAST_SHOW, { msg: `Új kapcsolat mentése sikertelen: ${fail.message}`, type: "danger" });
+                    }
 
-                    this.bus.emit(EVENTS.CONNECTIONS_SAVED, { successCount });
+                    if (newSaveSuccess > 0) {
+                        this.bus.emit(EVENTS.TOAST_SHOW, { msg: `${newSaveSuccess} új kapcsolat sikeresen mentve!`, type: "success", iconObject: ICONS.SAVE_FLOPPY });
+                        this.bus.emit(EVENTS.CONNECTIONS_SAVED, { successCount: newSaveSuccess });
+                    }
+                    if (newSaveFailed > 0) {
+                        this.bus.emit(EVENTS.TOAST_SHOW, { msg: `${newSaveFailed} új kapcsolat mentése sikertelen!`, type: "danger" });
+                    }
                 }
 
-                if (failedCount > 0) {
-                    this.bus.emit(EVENTS.TOAST_SHOW, { msg: `${failedCount} kapcsolat mentése sikertelen!`, type: "danger" });
-                    for (let fail of result.failed) {
-                        this.bus.emit(EVENTS.TOAST_SHOW, { msg: fail.message, type: "danger" });
+                let draftIds = Object.keys(this.draftConnectionDirections);
+                if (draftIds.length > 0) {
+                    let draftResult = await saveDraftConnectionDirections(this.draftConnectionDirections);
+
+                    let directionSaveSuccess = draftResult.saved.length;
+                    let directionSaveFailed = draftResult.failed.length;
+
+                    if (directionSaveSuccess > 0) {
+                        draftResult.saved.forEach(savedDraft => {
+                            let connection = this.connectionsList.find(connection => connection.connection_id == savedDraft.connection_id);
+                            if (connection) {
+                                if (savedDraft.direction_start_to_end != undefined) {
+                                    connection.direction_start_to_end = savedDraft.direction_start_to_end;
+                                }
+                                if (savedDraft.direction_end_to_start != undefined) {
+                                    connection.direction_end_to_start = savedDraft.direction_end_to_start;
+                                }
+                            }
+                            delete this.draftConnectionDirections[savedDraft.connection_id];
+                        });
+
+                        this.bus.emit(EVENTS.UNSAVED_CONNECTION_DIRECTION_CHANGED, {
+                            areThereUnsaved: Object.keys(this.draftConnectionDirections).length > 0
+                        });
+                    }
+
+                    for (let fail of draftResult.failed) {
+                        this.bus.emit(EVENTS.TOAST_SHOW, { msg: `Új kapcsolat irány mentése sikertelen: ${fail.message}`, type: "danger" });
+                    }
+
+                    if (directionSaveSuccess > 0) {
+                        this.bus.emit(EVENTS.TOAST_SHOW, { msg: `${directionSaveSuccess} kapcsolat új irányainak mentése sikeres!`, type: "success", iconObject: ICONS.SAVE_FLOPPY });
+                    }
+                    if (directionSaveFailed > 0) {
+                        this.bus.emit(EVENTS.TOAST_SHOW, { msg: `${directionSaveFailed} kapcsolat új irányainak mentése sikertelen!`, type: "danger" });
                     }
                 }
 
@@ -597,5 +638,3 @@ export class ConnectionManager {
         }
     }
 }
-
-// TODOp: this.draftConnectionDirections mentése backendre új PUT endpointtal
