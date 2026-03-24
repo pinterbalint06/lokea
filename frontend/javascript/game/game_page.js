@@ -1,5 +1,9 @@
 document.addEventListener("DOMContentLoaded", function () {
     initRoundTimeRange();
+    document.getElementById("settingsForm").addEventListener("submit", function (e) {
+        e.preventDefault();
+        startGame();
+    });
 });
 function initRoundTimeRange() {
     let timeRange = document.getElementById("times");
