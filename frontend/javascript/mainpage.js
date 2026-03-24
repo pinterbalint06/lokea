@@ -9,7 +9,7 @@ document.addEventListener("DOMContentLoaded", async function () {
             let username = document.getElementById('loginUser');
             let password = document.getElementById('loginPass');
             if (validalvaBej(username, password)) {
-                await bejelentkezes(username, password, document.getElementById('rememberMe').checked);
+                await bejelentkezesAnimacio(username, password, document.getElementById('rememberMe').checked);
             }
         })
     }
@@ -49,11 +49,6 @@ async function isLogined() {
                     body.setAttribute('data-bs-theme', 'light');
                 }
             }
-            else {
-                if (data.error) {
-                    console.log(error);
-                }
-            }
         }
 
         return data.login;
@@ -75,67 +70,72 @@ async function bejelentkezes(username, jelszo, remember) {
                 remember: remember
             })
         });
-        let data = await response.json();
-        console.log(data)
-        if (response.ok) {
-            bejelentkezett(data.username);
-        }
-        else {
-            bejelentkezett(data.username, data.error_code, data.message);
-        }
+        return response;
     } catch (error) {
         console.log(`hálózati hiba: ${error}`);
     }
 }
 
-function bejelentkezett(username, hibakod = null, hibauzenet = "") {
+async function bejelentkezesAnimacio(username, jelszo, remember) {
     let form = document.getElementById('loginForm');
     let container = document.getElementById('loginContainer');
     let title = document.getElementById('loginTitle');
     let modalText = document.getElementById('logText');
-    title.innerHTML = "";
-    modalText.innerHTML = "";
 
-    if (hibakod == null) {
-        container.querySelectorAll('svg').forEach(svg => svg.remove());
-        container.appendChild(makeSvg("circle-border", "progress-svg", "progress-circle"));
-        container.appendChild(makeSvg("checkmark", "check-svg", "mark"));
+    container.querySelectorAll('svg').forEach(svg => svg.remove());
+    container.classList.remove('success-draw', 'error-draw');
+    container.appendChild(makeSvg("circle-border", "progress-svg", "progress-circle"));
+    container.classList.add('spinning');
 
-        container.classList.add('spinning');
-
+    try {
+        let response = await bejelentkezes(username, jelszo, remember);
+        let data = await response.json();
         setTimeout(() => {
-            container.classList.add('success-draw');
             container.classList.remove('spinning');
-            title.innerText = `Sikeres bejelentkezés!`;
-            title.classList.replace("h5", "h2");
-            form.classList.add('collapse-out');
-            modalText.innerText = `Üdv, ${username}!`;
+            title.innerHTML = "";
+            modalText.innerHTML = "";
 
-            setTimeout(() => {
-                location.reload();
-            }, 3000);
-        }, 1000);
-    }
-    else {
-        container.querySelectorAll('svg').forEach(svg => svg.remove());
-        container.appendChild(makeSvg("circle-border", "progress-svg", "progress-circle"));
-        container.appendChild(makeSvg("icon-x", "check-svg", "mark"));
+            if (response.ok) {
+                container.appendChild(makeSvg("checkmark", "check-svg", "mark"));
+                container.classList.add('success-draw');
 
-        container.classList.add('spinning');
-        setTimeout(() => {
-            container.classList.add('error-draw');
-            container.classList.remove('spinning');
-            title.innerText = `Bejelentkezés sikertelen! (Error ${hibakod})`;
-            form.classList.add('collapse-out');
-            modalText.innerText = hibauzenet;
-            setTimeout(() => {
-                form.classList.remove('collapse-out');
-                form.classList.add('collapse-in');
-                container.classList.remove('error-draw');
-                title.innerText = `Bejelentkezés`;
-                modalText.innerText = "";
-            }, 2000);
-        }, 1000);
+                title.innerText = `Sikeres bejelentkezés!`;
+                title.classList.replace("h5", "h2");
+                form.classList.add('collapse-out');
+                modalText.innerText = `Üdv, ${data.username}!`;
+
+                setTimeout(() => {
+                    location.reload();
+                }, 2500);
+            } else {
+                container.appendChild(makeSvg("icon-x", "check-svg", "mark"));
+                container.classList.add('error-draw');
+
+                title.innerText = "Bejelentkezés sikertelen!";
+                form.classList.add('collapse-out');
+                modalText.innerText = data.message;
+
+                // levette collapse-in es nem mutat x es a spinning tobbszor nem mukodik csak 1x
+                setTimeout(() => {
+                    container.classList.remove('error-draw');
+                    container.querySelectorAll('svg').forEach(svg => svg.remove());
+                    form.classList.remove('collapse-out');
+                    form.classList.add('collapse-in');
+                    title.innerText = `Bejelentkezés`;
+                    modalText.innerText = "";
+                    setTimeout(() => {
+                        form.classList.remove('collapse-in');
+                    }, 600);
+                }, 2500);
+
+            }
+        }, 2000);
+
+    } catch (error) {
+        container.classList.remove('spinning');
+        title.innerText = "Hiba történt!";
+        modalText.innerText = "Nem sikerült elérni a szervert.";
+        console.error(error);
     }
 }
 
@@ -412,16 +412,22 @@ async function showSettingsModal() {
     }
 
     document.getElementById('settingsSave').onclick = async function () {
-        await checkModification();
-        if (tempPfp != null) {
-            await uploadProfilePic(tempPfp);
-        }
-        else {
-            if (deleteLast) {
-                await deleteProfilePicture();
+        try {
+            await checkModification();
+            if (tempPfp != null) {
+                await uploadProfilePic(tempPfp);
             }
+            else {
+                if (deleteLast) {
+                    await deleteProfilePicture();
+                }
+            }
+            settingsModal.hide();
+        } catch (error) {
+            let errordiv = document.getElementById('errorLocation');
+            errordiv.innerText = error.message;
+            errordiv.className = "d-block";
         }
-        settingsModal.hide();
     }
 
     row.appendChild(div);
@@ -496,7 +502,7 @@ async function saveModification(username, email, is_2fa, language, darkmode) {
     try {
         console.log(username, email, is_2fa, language, darkmode)
         let response = await fetch("/api/updateUser", {
-            method: "POST",
+            method: "PUT",
             headers: {
                 "Content-Type": "application/json"
             },
@@ -564,7 +570,7 @@ async function jelszoValtoztat() {
         if (validalvaJelszo(newPass.value)) {
             try {
                 let response = await fetch("/api/updatePassword", {
-                    method: "POST",
+                    method: "PUT",
                     headers: {
                         "Content-Type": "application/json"
                     },
@@ -662,7 +668,7 @@ async function uploadProfilePic(picture) {
 async function deleteProfilePicture() {
     try {
         let response = await fetch("/api/deleteProfilePic", {
-            method: "POST",
+            method: "DELETE",
             headers: {
                 "Content-Type": "application/json"
             }
@@ -681,6 +687,7 @@ async function createPreview(file) {
     const url = URL.createObjectURL(file);
 
     img.src = url;
+    URL.revokeObjectURL(url);
 
     await new Promise(res => img.onload = res);
 

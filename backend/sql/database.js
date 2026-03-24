@@ -29,7 +29,7 @@ async function newUser(username, email, password) {
             connection = await pool.getConnection();
             await connection.beginTransaction();
             const queryInsertNewUser = 'INSERT INTO users (username, email, password) VALUES (?, ?, ?)';
-            [result] = await connection.execute(queryInsertNewUser, [username, password]);
+            [result] = await connection.execute(queryInsertNewUser, [username, email, password]);
             if (result.affectedRows == 1) {
                 success = true;
                 await connection.commit();
@@ -39,8 +39,9 @@ async function newUser(username, email, password) {
             }
         }
         catch (fault) {
-            await connection.rollback();
-            console.error(fault);
+            if (connection) {
+                await connection.rollback();
+            }
             if (fault.code == 'ER_DUP_ENTRY') {
                 error = "User exists";
             }
@@ -80,8 +81,9 @@ async function newUserFromAdmin(username, email, password, role, is_2fa) {
             }
         }
         catch (fault) {
-            await connection.rollback();
-            console.error(fault);
+            if (connection) {
+                await connection.rollback();
+            }
             if (fault.code == 'ER_DUP_ENTRY') {
                 error = "User exists";
             }
@@ -226,8 +228,9 @@ async function updateUser(user_id, username, email, is_2fa, language, darkmode) 
             [rows] = await connection.execute(query, params);
             await connection.commit();
         } catch (error) {
-            await connection.rollback();
-            console.error(error);
+            if (connection) {
+                await connection.rollback();
+            }
         }
         finally {
             if (connection) connection.release();
@@ -278,8 +281,9 @@ async function updateUserByAdmin(user_id, username, email, role, is_2fa) {
             [rows] = await connection.execute(query, params);
             await connection.commit();
         } catch (error) {
-            await connection.rollback();
-            console.error(error);
+            if (connection) {
+                await connection.rollback();
+            }
         }
         finally {
             if (connection) connection.release();
@@ -303,8 +307,9 @@ async function updatePassword(userid, oldPass, newPass) {
                 await connection.execute(query, [hashedPassword, userid]);
                 await connection.commit();
             } catch (error) {
-                await connection.rollback();
-                console.error(error);
+                if (connection) {
+                    await connection.rollback();
+                }
                 throw new Error('Hiba az adatbázissal való kommunikálás során!');
             }
             finally {
@@ -330,8 +335,9 @@ async function userToInactive(userId) {
         [result] = await connection.execute(query, [userId]);
         await connection.commit();
     } catch (error) {
-        await connection.rollback();
-        console.error(error);
+        if (connection) {
+            await connection.rollback();
+        }
     }
     finally {
         if (connection) connection.release();
@@ -362,7 +368,9 @@ async function uploadProfilePic(filepath, width, height, user_id) {
         }
         await connection.commit();
     } catch (error) {
-        await connection.rollback();
+        if (connection) {
+            await connection.rollback();
+        }
         console.error(error);
     }
     finally {
@@ -390,8 +398,9 @@ async function deleteProfilePic(user_id) {
         await connection.execute(queryDeleteOldPic, [oldImageId]);
         await connection.commit();
     } catch (error) {
-        await connection.rollback();
-        console.error(error);
+        if (connection) {
+            await connection.rollback();
+        }
     }
     finally {
         if (connection) connection.release();

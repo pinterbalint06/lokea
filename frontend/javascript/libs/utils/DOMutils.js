@@ -76,7 +76,7 @@ export function makeSvg(name, svgclasses, useclasses) {
         use.classList.add(useclasses);
     }
     
-    use.setAttributeNS("http://www.w3.org/1999/xlink", "xlink:href", `../images/icons/sprite.svg#${name}`);
+    use.setAttribute("href", `../images/icons/sprite.svg#${name}`);
 
     svg.appendChild(use);
     return svg;

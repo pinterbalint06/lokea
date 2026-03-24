@@ -50,13 +50,14 @@ body {
 }
 
 .collapse-in {
-    max-height: 1000px !important; /* Egy elég nagy érték, ami biztosan befogadja a tartalmat */
+    max-height: 1000px !important; 
     opacity: 1 !important;
-    margin-top: inherit !important;
-    margin-bottom: inherit !important;
-    padding-top: inherit !important;
-    padding-bottom: inherit !important;
+    margin-top: 20px !important; 
+    margin-bottom: 20px !important;
+    padding-top: 10px !important;
+    padding-bottom: 10px !important;
     pointer-events: all;
+    transition: all 0.6s ease-in-out !important;
 }
 
 /* all */
@@ -196,7 +197,7 @@ body {
 .success-draw .mark, .error-draw .mark, .success-draw .check-mark{
     stroke-dashoffset: 0;
 }
-.success-draw .logo, .error-draw .logo, .success-draw .loge {
+.success-draw .logo, .error-draw .logo, .error-draw .loge, .success-draw .loge {
     opacity: 0;
     transform: scale(0.5);
     transition: opacity 0.3s ease-in-out 0.3s, transform 0.3s ease-in-out 0.3s;

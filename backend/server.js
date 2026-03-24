@@ -41,10 +41,13 @@ io.engine.use(sessionMiddleware);
 
 //!Routing
 //?Főoldal:
+router.get('/', (request, response) => {
+    response.sendFile(path.join(__dirname, '../frontend/html/main.html'));
+});
 router.get('/main', (request, response) => {
     response.sendFile(path.join(__dirname, '../frontend/html/main.html'));
 });
-router.get('/register', (request, response) => {
+router.get('/register_page', (request, response) => {
     response.sendFile(path.join(__dirname, '../frontend/html/register.html'));
 });
 router.get('/terrain', (request, response) => {
@@ -91,10 +94,12 @@ io.on("connection", (socket) => {
     if (userId) {
         if (!onlineUsers.has(userId)) {
             onlineUsers.set(userId, new Set());
+            onlineUsers.get(userId).add(socket.id);
+            
+            io.emit("totalOnline", onlineUsers.size);
+        } else {
+            onlineUsers.get(userId).add(socket.id);
         }
-        onlineUsers.get(userId).add(socket.id);
-        
-        io.emit("totalOnline", onlineUsers.size);
     }
 
     socket.on("disconnect", () => {

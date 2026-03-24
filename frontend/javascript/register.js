@@ -38,14 +38,14 @@ async function regisztracio(username, email, password, is2fa) {
             regisztralt();
         }
         else {
-            regisztralt(data.error_code, data.message);
+            regisztralt(data.message);
         }
     } catch (error) {
         regisztralt(500, error.message);
     }
 }
 
-function regisztralt(hibakod = null, hibauzenet = "") {
+function regisztralt(hibauzenet = "") {
     let container = document.getElementById('regModalContainer');
     let title = document.getElementById('regModalTitle');
     let modalText = document.getElementById('regModalText');

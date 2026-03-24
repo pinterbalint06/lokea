@@ -73,13 +73,12 @@ router.post("/signup",
                 else {
                     response.status(500).json({
                         success: false,
-                        message: insert.error,
-                        error_code: 500
+                        message: insert.error
                     })
                 }
             }
         } catch (error) {
-            response.status(500).json({ error: error, error_code: 500 });
+            response.status(500).json({ error: error.message});
         }
     }
 );
@@ -97,8 +96,7 @@ router.post("/login",
             if (!errors.isEmpty()) {
                 response.status(400).json({
                     success: false,
-                    message: errors.array().map(err => err.msg).join('<br>'),
-                    error_code: 400
+                    message: errors.array().map(err => err.msg).join('<br>')
                 });
             }
             else {
@@ -111,13 +109,13 @@ router.post("/login",
                     rows = await database.getUserByUsername(username);
                 }
                 if (rows.length === 0 || rows[0].deleted_at != null) {
-                    response.status(401).json({ message: "Hibás email vagy jelszó", error_code: 401 });
+                    response.status(401).json({ message: "Hibás email vagy jelszó"});
                 }
                 else {
                     let sPass = rows[0].password;
                     let egyezes = await bcrypt.compare(password, sPass);
                     if (!egyezes) {
-                        response.status(401).json({ message: "Hibás email vagy jelszó", error_code: 401});
+                        response.status(401).json({ message: "Hibás email vagy jelszó"});
                     }
                     else {
                         let sesRole = rows[0].role;
@@ -187,7 +185,7 @@ router.get('/getUserData', auth.checkAuth, async (request, response) => {
     }
 })
 
-router.post('/updateUser', auth.checkAuth,
+router.put('/updateUser', auth.checkAuth,
     [
         body("username")
             .optional({ values: "null" })
@@ -218,7 +216,7 @@ router.post('/updateUser', auth.checkAuth,
         }
     })
 
-router.post("/updatePassword",
+router.put("/updatePassword", auth.checkAuth,
     [
         body("oldPass")
             .isLength({ min: 8, max: 50 }).withMessage("A régi jelszó hossza nem 8-50 karakter!"),
@@ -247,7 +245,7 @@ router.post("/updatePassword",
         }
     })
 
-router.post("/inactiveUser", async (request, response) => {
+router.post("/inactiveUser", auth.checkAuth, async (request, response) => {
     try {
         await database.userToInactive(request.session.userid);
         request.session.destroy(error => {
@@ -306,11 +304,11 @@ router.post('/updateProfilePic', auth.checkAuth, upload.single('profilePic'), as
         if (newFilePath) {
             await fs.unlink(newFilePath).catch(() => { });
         }
-        response.status(500).json({ error: error.message, details: error.stack });
+        response.status(500).json({ error: error.message });
     }
 })
 
-router.post('/deleteProfilePic', auth.checkAuth, async (request, response) => {
+router.delete('/deleteProfilePic', auth.checkAuth, async (request, response) => {
     try {
         let lastPfp = await database.deleteProfilePic(request.session.userid);
         if (!lastPfp) {
