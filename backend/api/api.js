@@ -137,7 +137,7 @@ router.post("/login",
                 }
             }
         } catch (error) {
-            response.status(500).json({ message: error })
+            response.status(500).json({ message: "Hiba a bejelentkezés során!" });
         }
     });
 

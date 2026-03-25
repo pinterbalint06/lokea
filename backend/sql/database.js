@@ -392,8 +392,6 @@ async function deleteProfilePic(user_id) {
     try {
         connection = await pool.getConnection();
         await connection.beginTransaction();
-        const queryUpdatePfpId = 'UPDATE users SET pfp = NULL WHERE user_id = ?';
-        await connection.execute(queryUpdatePfpId, [user_id]);
         const queryDeleteOldPic = 'DELETE FROM images WHERE image_id = ?';
         await connection.execute(queryDeleteOldPic, [oldImageId]);
         await connection.commit();

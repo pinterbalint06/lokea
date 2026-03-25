@@ -41,7 +41,7 @@ async function regisztracio(username, email, password, is2fa) {
             regisztralt(data.message);
         }
     } catch (error) {
-        regisztralt(500, error.message);
+        regisztralt(error.message);
     }
 }
 
@@ -54,7 +54,7 @@ function regisztralt(hibauzenet = "") {
     
     modal.show();
     
-    if (hibakod == null) {
+    if (hibauzenet == "") {
         container.querySelectorAll('svg').forEach(svg => svg.remove());
         container.appendChild(makeSvg("circle-border", "progress-svg", "progress-circle"));
         container.appendChild(makeSvg("checkmark", "check-svg", "mark"));
