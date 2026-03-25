@@ -1,12 +1,11 @@
 const database = require("../../sql/database.js");
 const { deleteFile } = require("../../utils/fileUtils.js");
+const AppError = require("../../utils/AppError.js");
 
 function validateNumber(value, name) {
     let num = Number(value);
     if (value == undefined || value == null || value.toString().trim() == "" || isNaN(num) || !Number.isFinite(num)) {
-        const err = new Error("Helytelen " + name + "!");
-        err.statusCode = 400;
-        throw err;
+        throw new AppError(`Helytelen ${name}!`, 400);
     }
     return num;
 }
@@ -14,9 +13,7 @@ function validateNumber(value, name) {
 function validateDegree(value, name) {
     let num = validateNumber(value, name);
     if (num < 0 || num >= 360) {
-        const err = new Error("Helytelen " + name + "!");
-        err.statusCode = 400;
-        throw err;
+        throw new AppError(`Helytelen ${name}!`, 400);
     }
     return num;
 }
@@ -25,14 +22,12 @@ function validateId(id, idName) {
     const str = String(id);
     const num = validateNumber(id, idName);
     if (!str.match(/^[0-9]+$/) || num <= 0 || !Number.isInteger(num) || num > 2147483647) {
-        const err = new Error("Helytelen " + idName + "!");
-        err.statusCode = 400;
-        throw err;
+        throw new AppError(`Helytelen ${idName}!`, 400);
     }
     return num;
 }
 
-async function handleError(response, error, file, dbConnection, processedImagePaths) {
+async function cleanupAfterError(dbConnection, file, processedImagePaths) {
     if (dbConnection) {
         try {
             await dbConnection.rollback();
@@ -56,7 +51,6 @@ async function handleError(response, error, file, dbConnection, processedImagePa
         }
     }
 
-
     if (file && file.path) {
         try {
             await deleteFile(file.path);
@@ -64,51 +58,29 @@ async function handleError(response, error, file, dbConnection, processedImagePa
             console.error("Error deleting temporary uploaded file:", deleteErr);
         }
     }
-    let statusCode = error.statusCode ? error.statusCode : 500;
-    let message = error.statusCode ? error.message : "Váratlan hiba történt!";
-
-    if (!error.statusCode) {
-        // unexpected errors are logged
-        console.error(error);
-    }
-
-    if (!response.headersSent) {
-        response.status(statusCode).json({
-            success: false,
-            error: message
-        });
-    }
 }
 
 async function assertUserOwnsGameMap(userId, gameMapID) {
     if (!await database.checkUserOwnsGameMap(userId, gameMapID)) {
-        const error = new Error("Nincs hozzáférése ehhez a pályához");
-        error.statusCode = 403;
-        throw error;
+        throw new AppError("Nincs hozzáférése ehhez a pályához", 403);
     }
 }
 
 async function assertUserOwnsMap(userId, mapID) {
     if (!await database.checkUserOwnsMap(userId, mapID)) {
-        const error = new Error("Nincs hozzáférése ehhez a térképhez");
-        error.statusCode = 403;
-        throw error;
+        throw new AppError("Nincs hozzáférése ehhez a térképhez", 403);
     }
 }
 
 async function assertUserOwnsPoint(userId, pointID) {
     if (!await database.checkUserOwnsPoint(userId, pointID)) {
-        const error = new Error("Nincs hozzáférése ehhez a ponthoz");
-        error.statusCode = 403;
-        throw error;
+        throw new AppError("Nincs hozzáférése ehhez a ponthoz", 403);
     }
 }
 
 async function assertUserOwnsConnection(userId, connectionID) {
     if (!await database.checkUserOwnsConnection(userId, connectionID)) {
-        const error = new Error("Nincs hozzáférése ehhez a kapcsolathoz");
-        error.statusCode = 403;
-        throw error;
+        throw new AppError("Nincs hozzáférése ehhez a kapcsolathoz", 403);
     }
 }
 
@@ -129,7 +101,7 @@ const requireBody = async (request, response, next) => {
 
 module.exports = {
     validateId,
-    handleError,
+    cleanupAfterError,
     assertUserOwnsGameMap,
     assertUserOwnsMap,
     assertUserOwnsPoint,

@@ -2,13 +2,14 @@ const express = require("express");
 const router = express.Router();
 const database = require("../../sql/database.js");
 const { checkAuth } = require("../../auth.js");
+const AppError = require("../../utils/AppError.js");
 
-const { validateId, validateNumber, validateDegree, handleError, assertUserOwnsGameMap, assertUserOwnsConnection, requireBody } = require("./utils.js");
+const { validateId, validateDegree, cleanupAfterError, assertUserOwnsGameMap, assertUserOwnsConnection, requireBody } = require("./utils.js");
 const upload = require("./uploadConfig.js");
 
 //!Endpoints:
 //?GET /api/map-creator/game-maps/:gameMapID/connections
-router.get("/game-maps/:gameMapID/connections", checkAuth, async (request, response) => {
+router.get("/game-maps/:gameMapID/connections", checkAuth, async (request, response, next) => {
     try {
         const userId = request.session.userid;
         const gameMapID = validateId(request.params.gameMapID, "pálya ID");
@@ -22,22 +23,12 @@ router.get("/game-maps/:gameMapID/connections", checkAuth, async (request, respo
             connections: connectionList
         });
     } catch (error) {
-        let statusCode = error.statusCode ? error.statusCode : 500;
-        let message = error.statusCode ? error.message : "Váratlan hiba történt!";
-
-        if (statusCode === 500) {
-            console.error(error);
-        }
-
-        response.status(statusCode).json({
-            success: false,
-            error: message
-        });
+        next(error);
     }
 });
 
 //?PUT /api/map-creator/connections/:connectionID
-router.put("/connections/:connectionID", checkAuth, upload.none(), requireBody, async (request, response) => {
+router.put("/connections/:connectionID", checkAuth, upload.none(), requireBody, async (request, response, next) => {
     let dbConnection;
     try {
         const userId = request.session.userid;
@@ -52,9 +43,7 @@ router.put("/connections/:connectionID", checkAuth, upload.none(), requireBody, 
             : null;
 
         if (dirStartToEnd == null && dirEndToStart == null) {
-            const err = new Error("Nem adott meg módosítandó irányt!");
-            err.statusCode = 400;
-            throw err;
+            throw new AppError("Nem adott meg módosítandó irányt!", 400);
         }
 
         if (dirStartToEnd != null) {
@@ -72,16 +61,12 @@ router.put("/connections/:connectionID", checkAuth, upload.none(), requireBody, 
 
         const isCrossMapConnection = await database.isConnectionCrossMap(dbConnection, connectionID);
         if (!isCrossMapConnection) {
-            const err = new Error("Csak térképek közötti kapcsolatok irányát lehet módosítani!");
-            err.statusCode = 400;
-            throw err;
+            throw new AppError("Csak térképek közötti kapcsolatok irányát lehet módosítani!", 400);
         }
 
         let updateSuccess = await database.updateConnectionDirections(dbConnection, connectionID, dirStartToEnd, dirEndToStart);
         if (!updateSuccess) {
-            const err = new Error("A kapcsolat frissítése nem sikerült!");
-            err.statusCode = 500;
-            throw err;
+            throw new AppError("A kapcsolat frissítése nem sikerült!", 500);
         }
 
         await dbConnection.commit();
@@ -92,7 +77,8 @@ router.put("/connections/:connectionID", checkAuth, upload.none(), requireBody, 
         });
 
     } catch (error) {
-        await handleError(response, error, null, dbConnection, null);
+        await cleanupAfterError(dbConnection);
+        next(error);
     } finally {
         if (dbConnection) {
             dbConnection.release();
@@ -101,7 +87,7 @@ router.put("/connections/:connectionID", checkAuth, upload.none(), requireBody, 
 });
 
 //?POST /api/map-creator/game-maps/:gameMapID/connections
-router.post("/game-maps/:gameMapID/connections", checkAuth, upload.none(), requireBody, async (request, response) => {
+router.post("/game-maps/:gameMapID/connections", checkAuth, upload.none(), requireBody, async (request, response, next) => {
     let dbConnection;
     try {
         const userId = request.session.userid;
@@ -109,15 +95,11 @@ router.post("/game-maps/:gameMapID/connections", checkAuth, upload.none(), requi
         const startPointId = validateId(request.body.startPointId, "kezdőpont ID");
         const endPointId = validateId(request.body.endPointId, "végpont ID");
         if (startPointId == endPointId) {
-            const err = new Error("A kezdőpont és a végpont nem lehet ugyanaz!");
-            err.statusCode = 400;
-            throw err;
+            throw new AppError("A kezdőpont és a végpont nem lehet ugyanaz!", 400);
         }
 
         if (startPointId > endPointId) {
-            const err = new Error("A kisebbik id-val rendelkező pontnak kell a kezdőpontnak lennie!");
-            err.statusCode = 400;
-            throw err;
+            throw new AppError("A kisebbik id-val rendelkező pontnak kell a kezdőpontnak lennie!", 400);
         }
 
         const gameMapID = validateId(request.params.gameMapID, "pálya ID");
@@ -128,15 +110,11 @@ router.post("/game-maps/:gameMapID/connections", checkAuth, upload.none(), requi
         await dbConnection.beginTransaction();
 
         if (!await database.arePointsInSameGameMap(dbConnection, startPointId, endPointId, gameMapID)) {
-            const err = new Error("A megadott pontok nem ugyanahhoz a pályához tartoznak!");
-            err.statusCode = 400;
-            throw err;
+            throw new AppError("A megadott pontok nem ugyanahhoz a pályához tartoznak!", 400);
         }
 
         if (await database.doesConnectionAlreadyExist(dbConnection, startPointId, endPointId)) {
-            const err = new Error("A megadott pontok már össze vannak kapcsolva!");
-            err.statusCode = 400;
-            throw err;
+            throw new AppError("A megadott pontok már össze vannak kapcsolva!", 400);
         }
 
         let dirStartToEnd = null;
@@ -159,7 +137,8 @@ router.post("/game-maps/:gameMapID/connections", checkAuth, upload.none(), requi
         });
 
     } catch (error) {
-        await handleError(response, error, null, dbConnection, null);
+        await cleanupAfterError(dbConnection);
+        next(error);
     } finally {
         if (dbConnection) {
             dbConnection.release();
@@ -168,7 +147,7 @@ router.post("/game-maps/:gameMapID/connections", checkAuth, upload.none(), requi
 });
 
 //?DELETE /api/map-creator/connections/:connectionID
-router.delete("/connections/:connectionID", checkAuth, async (request, response) => {
+router.delete("/connections/:connectionID", checkAuth, async (request, response, next) => {
     let dbConnection;
     try {
         const userId = request.session.userid;
@@ -183,16 +162,15 @@ router.delete("/connections/:connectionID", checkAuth, async (request, response)
         let successConnectionDeletion = await database.deleteConnectionById(dbConnection, connectionID);
 
         if (!successConnectionDeletion) {
-            const err = new Error("A kapcsolat nem létezik vagy már törölve lett!");
-            err.statusCode = 404;
-            throw err;
+            throw new AppError("A kapcsolat nem létezik vagy már törölve lett!", 404);
         }
 
         await dbConnection.commit();
 
         response.status(204).send();
     } catch (error) {
-        await handleError(response, error, null, dbConnection, null);
+        await cleanupAfterError(dbConnection);
+        next(error);
     } finally {
         if (dbConnection) {
             dbConnection.release();

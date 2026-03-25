@@ -8,8 +8,9 @@ const { checkAuth } = require("../../auth.js");
 const { UPLOAD_ROOT } = require("../../config/mapStorage.js");
 const { processImageMetadata, createWebpAndLowRes, deleteImageAndLowResByMainPath } = require("../../utils/imageProcessor.js");
 const { deleteFile } = require("../../utils/fileUtils.js");
+const AppError = require("../../utils/AppError.js");
 
-const { validateId, validateNumber, validateDegree, handleError, assertUserOwnsMap, assertUserOwnsPoint, requireBody } = require("./utils.js");
+const { validateId, validateNumber, validateDegree, cleanupAfterError, assertUserOwnsMap, assertUserOwnsPoint, requireBody } = require("./utils.js");
 const upload = require("./uploadConfig.js");
 
 //!Endpoints:
@@ -42,7 +43,7 @@ router.get("/maps/:mapID/points", checkAuth, async (request, response) => {
 });
 
 //?PUT /api/map-creator/points/:pointID
-router.put("/points/:pointID", checkAuth, upload.single("equirectangularImage"), requireBody, async (request, response) => {
+router.put("/points/:pointID", checkAuth, upload.single("equirectangularImage"), requireBody, async (request, response, next) => {
     let dbConnection;
     let processedImagePaths = null;
 
@@ -54,9 +55,7 @@ router.put("/points/:pointID", checkAuth, upload.single("equirectangularImage"),
         const uCoordinate = validateNumber(request.body.u, "koordináták");
         const vCoordinate = validateNumber(request.body.v, "koordináták");
         if (uCoordinate < 0 || uCoordinate >= 1 || vCoordinate < 0 || vCoordinate >= 1) {
-            const error = new Error("Helytelen koordináták!");
-            error.statusCode = 400;
-            throw error;
+            throw new AppError("Helytelen koordináták!", 400);
         }
 
         const northDirection = validateDegree(request.body.northDirection, "északirány");
@@ -68,25 +67,19 @@ router.put("/points/:pointID", checkAuth, upload.single("equirectangularImage"),
 
         let pointInfo = await database.getPointInfo(pointID);
         if (!pointInfo) {
-            const error = new Error("A pont nem létezik");
-            error.statusCode = 404;
-            throw error;
+            throw new AppError("A pont nem létezik", 404);
         }
 
         // only update if anything is different
         if (pointInfo.point_u != uCoordinate || pointInfo.point_v != vCoordinate) {
             let existingPoints = await database.getPointOnMapByCoordinates(dbConnection, pointInfo.map_id, uCoordinate, vCoordinate);
             if (existingPoints.length > 0) {
-                const error = new Error("Ezen a térképen már létezik pont ezeken a koordinátákon!");
-                error.statusCode = 409;
-                throw error;
+                throw new AppError("Ezen a térképen már létezik pont ezeken a koordinátákon!", 409);
             }
 
             let updateSuccess = await database.updatePointCoordinates(dbConnection, pointID, uCoordinate, vCoordinate);
             if (!updateSuccess) {
-                let error = new Error("A pont koordinátáinak frissítése nem sikerült");
-                error.statusCode = 500;
-                throw error;
+                throw new AppError("A pont koordinátáinak frissítése nem sikerült", 500);
             }
         }
 
@@ -94,9 +87,7 @@ router.put("/points/:pointID", checkAuth, upload.single("equirectangularImage"),
         if (pointInfo.north_direction != northDirection) {
             let updateSuccess = await database.updatePointNorthDirection(dbConnection, pointID, northDirection);
             if (!updateSuccess) {
-                let error = new Error("A pont északirányának frissítése nem sikerült");
-                error.statusCode = 500;
-                throw error;
+                throw new AppError("A pont északirányának frissítése nem sikerült", 500);
             }
         }
 
@@ -108,9 +99,7 @@ router.put("/points/:pointID", checkAuth, upload.single("equirectangularImage"),
                 imageData = await processImageMetadata(request.file.path);
             } catch (err) {
                 console.error(err);
-                const error = new Error("Hiba a kép feldolgozásakor!");
-                error.statusCode = 500;
-                throw error;
+                throw new AppError("Hiba a kép feldolgozásakor!", 500);
             }
             let newImageId = await database.insertImage(dbConnection, imageData.width, imageData.height, "pending");
             let gameMapID = pointInfo.game_maps_id;
@@ -141,18 +130,14 @@ router.put("/points/:pointID", checkAuth, upload.single("equirectangularImage"),
             // update point's image to the new id
             let updateImageSuccess = await database.updatePointImage(dbConnection, pointID, newImageId);
             if (!updateImageSuccess) {
-                let error = new Error("A kép útvonalának frissítése nem sikerült");
-                error.statusCode = 500;
-                throw error;
+                throw new AppError("A kép útvonalának frissítése nem sikerült", 500);
             }
 
             if (oldImageInfo) {
                 // delete old image from db
                 let deleteSuccess = await database.deleteImageById(dbConnection, oldImageInfo.image_id);
                 if (!deleteSuccess) {
-                    let error = new Error("A régi kép törlése nem sikerült");
-                    error.statusCode = 500;
-                    throw error;
+                    throw new AppError("A régi kép törlése nem sikerült", 500);
                 }
             }
 
@@ -184,7 +169,8 @@ router.put("/points/:pointID", checkAuth, upload.single("equirectangularImage"),
         });
 
     } catch (error) {
-        await handleError(response, error, request.file, dbConnection, processedImagePaths);
+        await cleanupAfterError(dbConnection, request.file, processedImagePaths);
+        next(error);
     } finally {
         if (dbConnection) {
             dbConnection.release();
@@ -193,7 +179,7 @@ router.put("/points/:pointID", checkAuth, upload.single("equirectangularImage"),
 });
 
 //?POST /api/map-creator/maps/:mapID/points
-router.post("/maps/:mapID/points", checkAuth, upload.single("equirectangularImage"), requireBody, async (request, response) => {
+router.post("/maps/:mapID/points", checkAuth, upload.single("equirectangularImage"), requireBody, async (request, response, next) => {
     let dbConnection;
     let processedImagePaths = null;
     try {
@@ -204,26 +190,20 @@ router.post("/maps/:mapID/points", checkAuth, upload.single("equirectangularImag
         const uCoordinate = validateNumber(request.body.u, "koordináták");
         const vCoordinate = validateNumber(request.body.v, "koordináták");
         if (uCoordinate < 0 || uCoordinate >= 1 || vCoordinate < 0 || vCoordinate >= 1) {
-            const error = new Error("Helytelen koordináták!");
-            error.statusCode = 400;
-            throw error;
+            throw new AppError("Helytelen koordináták!", 400);
         }
 
         const northDirection = validateDegree(request.body.northDirection, "északirány");
 
         if (!request.file) {
-            const error = new Error("Nem adott meg képet!");
-            error.statusCode = 400;
-            throw error;
+            throw new AppError("Nem adott meg képet!", 400);
         }
 
         await assertUserOwnsMap(userId, mapID);
 
         const gameMapID = await database.getGameMapIdByMapId(mapID);
         if (!gameMapID) {
-            const error = new Error("Váratlan hiba történt!");
-            error.statusCode = 500;
-            throw error;
+            throw new AppError("Váratlan hiba történt!", 500);
         }
 
         let imageData;
@@ -231,9 +211,7 @@ router.post("/maps/:mapID/points", checkAuth, upload.single("equirectangularImag
             imageData = await processImageMetadata(request.file.path);
         } catch (err) {
             console.error(err);
-            const error = new Error("Hiba a kép feldolgozásakor!");
-            error.statusCode = 500;
-            throw error;
+            throw new AppError("Hiba a kép feldolgozásakor!", 500);
         }
 
         dbConnection = await database.getConnection();
@@ -241,9 +219,7 @@ router.post("/maps/:mapID/points", checkAuth, upload.single("equirectangularImag
 
         let existingPoints = await database.getPointOnMapByCoordinates(dbConnection, mapID, uCoordinate, vCoordinate);
         if (existingPoints.length > 0) {
-            const error = new Error("Ezen a térképen már létezik pont ezeken a koordinátákon!");
-            error.statusCode = 409;
-            throw error;
+            throw new AppError("Ezen a térképen már létezik pont ezeken a koordinátákon!", 409);
         }
 
         let imageId = await database.insertImage(dbConnection, imageData.width, imageData.height, "pending");
@@ -289,7 +265,8 @@ router.post("/maps/:mapID/points", checkAuth, upload.single("equirectangularImag
             pointId: newPointId
         });
     } catch (error) {
-        await handleError(response, error, request.file, dbConnection, processedImagePaths);
+        await cleanupAfterError(dbConnection, request.file, processedImagePaths);
+        next(error);
     } finally {
         if (dbConnection) {
             dbConnection.release();
@@ -298,7 +275,7 @@ router.post("/maps/:mapID/points", checkAuth, upload.single("equirectangularImag
 });
 
 //?DELETE /api/map-creator/points/:pointID
-router.delete("/points/:pointID", checkAuth, async (request, response) => {
+router.delete("/points/:pointID", checkAuth, async (request, response, next) => {
     let dbConnection;
     try {
         const userId = request.session.userid;
@@ -309,9 +286,7 @@ router.delete("/points/:pointID", checkAuth, async (request, response) => {
 
         let pointInfo = await database.getPointInfo(pointID);
         if (!pointInfo) {
-            const error = new Error("A pont nem létezik");
-            error.statusCode = 404;
-            throw error;
+            throw new AppError("A pont nem létezik", 404);
         }
 
         let oldImageInfo = await database.getPointImage(pointID);
@@ -322,17 +297,13 @@ router.delete("/points/:pointID", checkAuth, async (request, response) => {
         if (oldImageInfo && oldImageInfo.image_id) {
             let successImageDeletion = await database.deleteImageById(dbConnection, oldImageInfo.image_id);
             if (!successImageDeletion) {
-                const error = new Error("A kép törlése nem sikerült");
-                error.statusCode = 500;
-                throw error;
+                throw new AppError("A kép törlése nem sikerült", 500);
             }
         }
 
         let successPointDeletion = await database.deletePointById(dbConnection, pointID);
         if (!successPointDeletion) {
-            const error = new Error("A pont törlése nem sikerült");
-            error.statusCode = 500;
-            throw error;
+            throw new AppError("A pont törlése nem sikerült", 500);
         }
 
         await dbConnection.commit();
@@ -362,7 +333,8 @@ router.delete("/points/:pointID", checkAuth, async (request, response) => {
 
         response.status(204).send();
     } catch (error) {
-        await handleError(response, error, null, dbConnection, null);
+        await cleanupAfterError(dbConnection);
+        next(error);
     } finally {
         if (dbConnection) {
             dbConnection.release();

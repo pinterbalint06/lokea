@@ -8,13 +8,14 @@ const { checkAuth } = require("../../auth.js");
 const { UPLOAD_ROOT } = require("../../config/mapStorage.js");
 const { processImageMetadata, createWebpAndLowRes } = require("../../utils/imageProcessor.js");
 const { deleteFile } = require("../../utils/fileUtils.js");
+const AppError = require("../../utils/AppError.js");
 
-const { validateId, handleError, assertUserOwnsGameMap, assertUserOwnsMap, requireBody } = require("./utils.js");
+const { validateId, cleanupAfterError, assertUserOwnsGameMap, assertUserOwnsMap, requireBody } = require("./utils.js");
 const upload = require("./uploadConfig.js");
 
 //!Endpoints:
 //?GET /api/map-creator/game-maps/:gameMapID/maps
-router.get("/game-maps/:gameMapID/maps", checkAuth, async (request, response) => {
+router.get("/game-maps/:gameMapID/maps", checkAuth, async (request, response, next) => {
     try {
         const userId = request.session.userid;
         const gameMapID = validateId(request.params.gameMapID, "pálya ID");
@@ -28,20 +29,12 @@ router.get("/game-maps/:gameMapID/maps", checkAuth, async (request, response) =>
             maps: mapList
         });
     } catch (error) {
-        let statusCode = error.statusCode ? error.statusCode : 500;
-        let message = error.statusCode ? error.message : "Váratlan hiba történt!";
-
-        if (statusCode === 500) console.error(error);
-
-        response.status(statusCode).json({
-            success: false,
-            error: message
-        });
+        next(error);
     }
 });
 
 //?PUT /api/map-creator/maps/:mapID
-router.put("/maps/:mapID", checkAuth, upload.none(), requireBody, async (request, response) => {
+router.put("/maps/:mapID", checkAuth, upload.none(), requireBody, async (request, response, next) => {
     let dbConnection;
     try {
         const userId = request.session.userid;
@@ -49,17 +42,13 @@ router.put("/maps/:mapID", checkAuth, upload.none(), requireBody, async (request
 
         const title = request.body.title;
         if (!title || typeof title != "string") {
-            const error = new Error("Helytelen térképnév!");
-            error.statusCode = 400;
-            throw error;
+            throw new AppError("Helytelen térképnév!", 400);
         }
 
         const trimmedTitle = title.trim();
         // /^[a-zA-ZáéíóöőúüűÁÉÍÓÖŐÚÜŰ0-9 _-]{1,20}$/ atleast one character long, max 20. only hungarian letters, numbers, spaces, underscores and -
         if (!trimmedTitle.match(/^[a-zA-ZáéíóöőúüűÁÉÍÓÖŐÚÜŰ0-9 _-]{1,20}$/)) {
-            const error = new Error("Helytelen térképnév!");
-            error.statusCode = 400;
-            throw error;
+            throw new AppError("Helytelen térképnév!", 400);
         }
 
         await assertUserOwnsMap(userId, mapID);
@@ -67,9 +56,7 @@ router.put("/maps/:mapID", checkAuth, upload.none(), requireBody, async (request
         // Check if map exists
         let mapInfo = await database.getMapInfo(mapID);
         if (!mapInfo) {
-            let error = new Error("A térkép nem létezik");
-            error.statusCode = 404;
-            throw error;
+            throw new AppError("A térkép nem létezik", 404);
         }
 
         dbConnection = await database.getConnection();
@@ -78,9 +65,7 @@ router.put("/maps/:mapID", checkAuth, upload.none(), requireBody, async (request
         let affectedRows = await database.updateMapTitle(dbConnection, mapID, trimmedTitle);
 
         if (affectedRows != 1) {
-            let error = new Error("A térkép átnevezése nem sikerült");
-            error.statusCode = 500;
-            throw error;
+            throw new AppError("A térkép átnevezése nem sikerült", 500);
         }
 
         await dbConnection.commit();
@@ -91,7 +76,8 @@ router.put("/maps/:mapID", checkAuth, upload.none(), requireBody, async (request
             title: trimmedTitle
         });
     } catch (error) {
-        await handleError(response, error, null, dbConnection, null);
+        await cleanupAfterError(dbConnection);
+        next(error);
     } finally {
         if (dbConnection) {
             dbConnection.release();
@@ -100,7 +86,7 @@ router.put("/maps/:mapID", checkAuth, upload.none(), requireBody, async (request
 });
 
 //?POST /api/map-creator/game-maps/:gameMapID/maps
-router.post("/game-maps/:gameMapID/maps", checkAuth, upload.single("mapImage"), requireBody, async (request, response) => {
+router.post("/game-maps/:gameMapID/maps", checkAuth, upload.single("mapImage"), requireBody, async (request, response, next) => {
     let dbConnection;
     let processedImagePaths = null;
     try {
@@ -110,23 +96,17 @@ router.post("/game-maps/:gameMapID/maps", checkAuth, upload.single("mapImage"), 
 
         const title = request.body.title;
         if (!title || typeof title != "string") {
-            const error = new Error("Helytelen térképnév!");
-            error.statusCode = 400;
-            throw error;
+            throw new AppError("Helytelen térképnév!", 400);
         }
 
         const trimmedTitle = title.trim();
         // /^[a-zA-ZáéíóöőúüűÁÉÍÓÖŐÚÜŰ0-9 _-]{1,20}$/ atleast one character long, max 20. only hungarian letters, numbers, spaces, underscores and -
         if (!trimmedTitle.match(/^[a-zA-ZáéíóöőúüűÁÉÍÓÖŐÚÜŰ0-9 _-]{1,20}$/)) {
-            const error = new Error("Helytelen térképnév!");
-            error.statusCode = 400;
-            throw error;
+            throw new AppError("Helytelen térképnév!", 400);
         }
 
         if (!request.file) {
-            const error = new Error("Nem adott meg képet!");
-            error.statusCode = 400;
-            throw error;
+            throw new AppError("Nem adott meg képet!", 400);
         }
 
         await assertUserOwnsGameMap(userId, gameMapID);
@@ -135,9 +115,7 @@ router.post("/game-maps/:gameMapID/maps", checkAuth, upload.single("mapImage"), 
         try {
             imageData = await processImageMetadata(request.file.path);
         } catch (err) {
-            const error = new Error("Hiba a kép feldolgozásakor!");
-            error.statusCode = 500;
-            throw error;
+            throw new AppError("Hiba a kép feldolgozásakor!", 500);
         }
 
         dbConnection = await database.getConnection();
@@ -184,7 +162,8 @@ router.post("/game-maps/:gameMapID/maps", checkAuth, upload.single("mapImage"), 
         });
 
     } catch (error) {
-        await handleError(response, error, request.file, dbConnection, processedImagePaths);
+        await cleanupAfterError(dbConnection, request.file, processedImagePaths);
+        next(error);
     } finally {
         if (dbConnection) {
             dbConnection.release();
@@ -193,7 +172,7 @@ router.post("/game-maps/:gameMapID/maps", checkAuth, upload.single("mapImage"), 
 });
 
 //?DELETE /api/map-creator/maps/:mapID
-router.delete("/maps/:mapID", checkAuth, async (request, response) => {
+router.delete("/maps/:mapID", checkAuth, async (request, response, next) => {
     let dbConnection;
     try {
         const userId = request.session.userid;
@@ -204,9 +183,7 @@ router.delete("/maps/:mapID", checkAuth, async (request, response) => {
 
         let mapInfo = await database.getMapInfo(mapID);
         if (!mapInfo) {
-            const error = new Error("A térkép nem létezik");
-            error.statusCode = 404;
-            throw error;
+            throw new AppError("A térkép nem létezik", 404);
         }
 
         dbConnection = await database.getConnection();
@@ -216,17 +193,13 @@ router.delete("/maps/:mapID", checkAuth, async (request, response) => {
 
         let successMapDeletion = await database.deleteMapById(dbConnection, mapID);
         if (!successMapDeletion) {
-            const error = new Error("A térkép törlése nem sikerült");
-            error.statusCode = 500;
-            throw error;
+            throw new AppError("A térkép törlése nem sikerült", 500);
         }
 
         for (const imageId of imageIdsToDelete) {
             let successImageDeletion = await database.deleteImageById(dbConnection, imageId);
             if (!successImageDeletion) {
-                const error = new Error("A térkép képeinek törlése nem sikerült");
-                error.statusCode = 500;
-                throw error;
+                throw new AppError("A térkép képeinek törlése nem sikerült", 500);
             }
         }
 
@@ -254,7 +227,8 @@ router.delete("/maps/:mapID", checkAuth, async (request, response) => {
 
         response.status(204).send();
     } catch (error) {
-        await handleError(response, error, null, dbConnection, null);
+        await cleanupAfterError(dbConnection);
+        next(error);
     } finally {
         if (dbConnection) {
             dbConnection.release();
