@@ -16,6 +16,8 @@ const invalidIds = [
     "🆔", // emoji
     "90071992547409911", // very large number
     "900719925474099234345345234242311", // even larger number
+    true, // boolean value
+    false, // boolean value
     null, // null value
     undefined // undefined value
 ];
@@ -95,7 +97,10 @@ const validTitles = [
 ];
 
 const invalidUVs = [
+    "",
     "invalid",
+    true,
+    false,
     NaN,
     Infinity,
     -Infinity,
@@ -105,8 +110,12 @@ const invalidUVs = [
     1.5,
     100
 ];
+
 const invalidDegrees = [
+    "",
     "invalid",
+    true,
+    false,
     NaN,
     Infinity,
     -Infinity,

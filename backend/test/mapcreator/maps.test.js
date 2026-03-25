@@ -41,7 +41,7 @@ describe("Map Creator API - Map Endpoints - /api/map-creator/", () => {
         it("Should respond with 400 if the game map id is incorrect", async () => {
             await testInvalidIDs(
                 (id) => makeGetRequest({ id }),
-                "Helytelen pálya ID"
+                "Helytelen pálya ID!"
             );
         });
 
@@ -116,7 +116,7 @@ describe("Map Creator API - Map Endpoints - /api/map-creator/", () => {
         it("Should respond with 400 if the map id is incorrect", async () => {
             await testInvalidIDs(
                 (id) => makePutRequest({ id }),
-                "Helytelen térkép ID"
+                "Helytelen térkép ID!"
             );
         });
 
@@ -147,7 +147,7 @@ describe("Map Creator API - Map Endpoints - /api/map-creator/", () => {
         });
 
         it("Should respond with 400 if a body is not provided", async () => {
-            const response = await makePutRequest({ title: null });
+            const response = await makePutRequest({ title: undefined });
 
             expect(response.statusCode).toBe(400);
             expect(response.body.success).toBe(false);
@@ -232,7 +232,7 @@ describe("Map Creator API - Map Endpoints - /api/map-creator/", () => {
         it("Should respond with 400 if the game map id is incorrect", async () => {
             await testInvalidIDs(
                 (id) => makePostRequest({ id }),
-                "Helytelen pálya ID"
+                "Helytelen pálya ID!"
             );
         });
 
@@ -471,7 +471,7 @@ describe("Map Creator API - Map Endpoints - /api/map-creator/", () => {
         it("Should respond with 400 if the map id is incorrect", async () => {
             await testInvalidIDs(
                 (id) => makeDeleteRequest({ id }),
-                "Helytelen térkép ID"
+                "Helytelen térkép ID!"
             );
         });
 

@@ -9,7 +9,7 @@ const { UPLOAD_ROOT } = require("../../config/mapStorage.js");
 const { processImageMetadata, createWebpAndLowRes, deleteImageAndLowResByMainPath } = require("../../utils/imageProcessor.js");
 const { deleteFile } = require("../../utils/fileUtils.js");
 
-const { validateId, handleError, assertUserOwnsMap, assertUserOwnsPoint, requireBody } = require("./utils.js");
+const { validateId, validateNumber, validateDegree, handleError, assertUserOwnsMap, assertUserOwnsPoint, requireBody } = require("./utils.js");
 const upload = require("./uploadConfig.js");
 
 //!Endpoints:
@@ -51,20 +51,15 @@ router.put("/points/:pointID", checkAuth, upload.single("equirectangularImage"),
 
         const pointID = validateId(request.params.pointID, "pont ID");
 
-        const uCoordinate = Number(request.body.u);
-        const vCoordinate = Number(request.body.v);
-        if (!Number.isFinite(uCoordinate) || !Number.isFinite(vCoordinate) || uCoordinate < 0 || uCoordinate >= 1 || vCoordinate < 0 || vCoordinate >= 1) {
+        const uCoordinate = validateNumber(request.body.u, "koordináták");
+        const vCoordinate = validateNumber(request.body.v, "koordináták");
+        if (uCoordinate < 0 || uCoordinate >= 1 || vCoordinate < 0 || vCoordinate >= 1) {
             const error = new Error("Helytelen koordináták!");
             error.statusCode = 400;
             throw error;
         }
 
-        const northDirection = Number(request.body.northDirection);
-        if (!Number.isFinite(northDirection) || northDirection >= 360 || northDirection < 0) {
-            const error = new Error("Helytelen északirány!");
-            error.statusCode = 400;
-            throw error;
-        }
+        const northDirection = validateDegree(request.body.northDirection, "északirány");
 
         await assertUserOwnsPoint(userId, pointID);
 
@@ -206,20 +201,15 @@ router.post("/maps/:mapID/points", checkAuth, upload.single("equirectangularImag
 
         const mapID = validateId(request.params.mapID, "térkép ID");
 
-        const uCoordinate = Number(request.body.u);
-        const vCoordinate = Number(request.body.v);
-        if (!Number.isFinite(uCoordinate) || !Number.isFinite(vCoordinate) || uCoordinate < 0 || uCoordinate >= 1 || vCoordinate < 0 || vCoordinate >= 1) {
+        const uCoordinate = validateNumber(request.body.u, "koordináták");
+        const vCoordinate = validateNumber(request.body.v, "koordináták");
+        if (uCoordinate < 0 || uCoordinate >= 1 || vCoordinate < 0 || vCoordinate >= 1) {
             const error = new Error("Helytelen koordináták!");
             error.statusCode = 400;
             throw error;
         }
 
-        const northDirection = Number(request.body.northDirection);
-        if (!Number.isFinite(northDirection) || northDirection > 359 || northDirection < 0) {
-            const error = new Error("Helytelen északirány!");
-            error.statusCode = 400;
-            throw error;
-        }
+        const northDirection = validateDegree(request.body.northDirection, "északirány");
 
         if (!request.file) {
             const error = new Error("Nem adott meg képet!");

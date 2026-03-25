@@ -649,6 +649,20 @@ async function updateConnectionDirections(connection, connectionId, dirStartToEn
     return result.affectedRows == 1;
 }
 
+async function isConnectionCrossMap(connection, connectionId) {
+    const query = `
+        SELECT 
+            start_point.map_id AS start_map_id,
+            end_point.map_id AS end_map_id
+        FROM point_connections
+            INNER JOIN points start_point ON (start_point.point_id = point_connections.start_point_id)
+            INNER JOIN points end_point ON (end_point.point_id = point_connections.end_point_id)
+        WHERE point_connections.connection_id = ?
+    `;
+    const [rows] = await connection.execute(query, [connectionId]);
+    return rows[0].start_map_id != rows[0].end_map_id;
+}
+
 //!Export
 module.exports = {
     // selectall,
@@ -698,5 +712,6 @@ module.exports = {
     getMapInfo,
     getAllImageIdsForMap,
     arePointsInSameMap,
-    updateConnectionDirections
+    updateConnectionDirections,
+    isConnectionCrossMap
 };

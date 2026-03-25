@@ -1,16 +1,31 @@
 const database = require("../../sql/database.js");
 const { deleteFile } = require("../../utils/fileUtils.js");
 
-function validateId(id, idName) {
-    if (id == undefined || id == null) {
-        const err = new Error("Helytelen " + idName);
+function validateNumber(value, name) {
+    let num = Number(value);
+    if (value == undefined || value == null || value.toString().trim() == "" || isNaN(num) || !Number.isFinite(num)) {
+        const err = new Error("Helytelen " + name + "!");
         err.statusCode = 400;
         throw err;
     }
+    return num;
+}
+
+function validateDegree(value, name) {
+    let num = validateNumber(value, name);
+    if (num < 0 || num >= 360) {
+        const err = new Error("Helytelen " + name + "!");
+        err.statusCode = 400;
+        throw err;
+    }
+    return num;
+}
+
+function validateId(id, idName) {
     const str = String(id);
-    const num = Number(id);
-    if (!str.match(/^[0-9]+$/) || isNaN(num) || num <= 0 || !Number.isInteger(num) || num > 2147483647) {
-        const err = new Error("Helytelen " + idName);
+    const num = validateNumber(id, idName);
+    if (!str.match(/^[0-9]+$/) || num <= 0 || !Number.isInteger(num) || num > 2147483647) {
+        const err = new Error("Helytelen " + idName + "!");
         err.statusCode = 400;
         throw err;
     }
@@ -119,5 +134,7 @@ module.exports = {
     assertUserOwnsMap,
     assertUserOwnsPoint,
     assertUserOwnsConnection,
-    requireBody
+    requireBody,
+    validateNumber,
+    validateDegree
 };

@@ -3,7 +3,7 @@ const router = express.Router();
 const database = require("../../sql/database.js");
 const { checkAuth } = require("../../auth.js");
 
-const { validateId, handleError, assertUserOwnsGameMap, assertUserOwnsConnection, requireBody } = require("./utils.js");
+const { validateId, validateNumber, validateDegree, handleError, assertUserOwnsGameMap, assertUserOwnsConnection, requireBody } = require("./utils.js");
 const upload = require("./uploadConfig.js");
 
 //!Endpoints:
@@ -43,12 +43,12 @@ router.put("/connections/:connectionID", checkAuth, upload.none(), requireBody, 
         const userId = request.session.userid;
         const connectionID = validateId(request.params.connectionID, "kapcsolat ID");
 
-        let dirStartToEnd = request.body.directionStartToEnd != undefined && request.body.directionStartToEnd.trim() != ""
-            ? Number(request.body.directionStartToEnd)
+        let dirStartToEnd = request.body.directionStartToEnd != undefined
+            ? request.body.directionStartToEnd
             : null;
 
-        let dirEndToStart = request.body.directionEndToStart != undefined && request.body.directionEndToStart.trim() != ""
-            ? Number(request.body.directionEndToStart)
+        let dirEndToStart = request.body.directionEndToStart != undefined
+            ? request.body.directionEndToStart
             : null;
 
         if (dirStartToEnd == null && dirEndToStart == null) {
@@ -57,22 +57,25 @@ router.put("/connections/:connectionID", checkAuth, upload.none(), requireBody, 
             throw err;
         }
 
-        if (dirStartToEnd != null && (!Number.isFinite(dirStartToEnd) || dirStartToEnd >= 360 || dirStartToEnd < 0)) {
-            const err = new Error("Helytelen kezdőpontból végpontba irány!");
-            err.statusCode = 400;
-            throw err;
+        if (dirStartToEnd != null) {
+            dirStartToEnd = validateDegree(dirStartToEnd, "kezdőpontból végpontba irány");
         }
 
-        if (dirEndToStart != null && (!Number.isFinite(dirEndToStart) || dirEndToStart >= 360 || dirEndToStart < 0)) {
-            const err = new Error("Helytelen végpontból kezdőpontba irány!");
-            err.statusCode = 400;
-            throw err;
+        if (dirEndToStart != null) {
+            dirEndToStart = validateDegree(dirEndToStart, "végpontból kezdőpontba irány");
         }
 
         await assertUserOwnsConnection(userId, connectionID);
 
         dbConnection = await database.getConnection();
         await dbConnection.beginTransaction();
+
+        const isCrossMapConnection = await database.isConnectionCrossMap(dbConnection, connectionID);
+        if (!isCrossMapConnection) {
+            const err = new Error("Csak térképek közötti kapcsolatok irányát lehet módosítani!");
+            err.statusCode = 400;
+            throw err;
+        }
 
         let updateSuccess = await database.updateConnectionDirections(dbConnection, connectionID, dirStartToEnd, dirEndToStart);
         if (!updateSuccess) {
@@ -141,18 +144,8 @@ router.post("/game-maps/:gameMapID/connections", checkAuth, upload.none(), requi
 
         const isInSameMap = await database.arePointsInSameMap(dbConnection, startPointId, endPointId);
         if (!isInSameMap) {
-            dirStartToEnd = Number(request.body.directionStartToEnd);
-            if (!Number.isFinite(dirStartToEnd) || dirStartToEnd >= 360 || dirStartToEnd < 0) {
-                const err = new Error("Helytelen kezdőpontból végpontba irány!");
-                err.statusCode = 400;
-                throw err;
-            }
-            dirEndToStart = Number(request.body.directionEndToStart);
-            if (!Number.isFinite(dirEndToStart) || dirEndToStart >= 360 || dirEndToStart < 0) {
-                const err = new Error("Helytelen végpontból kezdőpontba irány!");
-                err.statusCode = 400;
-                throw err;
-            }
+            dirStartToEnd = validateDegree(request.body.directionStartToEnd, "kezdőpontból végpontba irány");
+            dirEndToStart = validateDegree(request.body.directionEndToStart, "végpontból kezdőpontba irány");
         }
 
         let connectionId = await database.insertConnection(dbConnection, startPointId, endPointId, gameMapID, dirStartToEnd, dirEndToStart);
