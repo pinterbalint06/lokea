@@ -400,6 +400,50 @@ body.modal-open> :not(.modal):not(.modal-backdrop) {
     pointer-events: none;
 }
 
+#errorLocation {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    background-color: #fde8e8;
+    color: red;
+    border: 1px solid #f8b4b4;
+    padding: 12px 16px;
+    margin-bottom: 10px;
+    border-radius: 8px;
+    font-family: sans-serif;
+    position: relative;
+}
+
+.close-btn {
+    background: transparent;
+    border: none;
+    font-size: 20px;
+    font-weight: bold;
+    color: #c81e1e;
+    cursor: pointer;
+    padding: 0 5px;
+    line-height: 1;
+    border-radius: 4px;
+    transition: all 0.2s ease;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.close-btn svg {
+    height: 20px;
+    width: 20px;
+}
+
+.close-btn:hover {
+    background-color: rgba(200, 30, 30, 0.1);
+    transform: scale(1.1);
+}
+
+.close-btn:active {
+    transform: scale(0.95);
+}
+
 /* animaciok */
 
 /* csillagok hatterhez */
@@ -532,7 +576,7 @@ body.modal-open> :not(.modal):not(.modal-backdrop) {
     .settingsPfp {
         width: 50% !important;
     }
-    
+
     .dropzone {
         border: 2px dashed #aaa;
         border-radius: 10px;

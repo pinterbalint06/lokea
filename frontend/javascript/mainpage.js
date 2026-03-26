@@ -247,10 +247,13 @@ async function kijelentkezes() {
 //settings
 
 async function showSettingsModal() {
-    let hova = document.getElementById('userData');
     let errordiv = document.getElementById('errorLocation');
-    hova.innerHTML = "";
     errordiv.classList.add('d-none');
+    errordiv.innerHTML = "";
+    
+    let hova = document.getElementById('userData');
+    hova.innerHTML = "";
+    
     let tempPfp = null;
     let deleteLast = false;
 
@@ -412,7 +415,7 @@ async function showSettingsModal() {
         darkmode: document.getElementById('darkMode').checked
     }
 
-    document.getElementById('settingsSave').onclick = async function () {
+    document.getElementById('settingsSave').addEventListener("click", async function () {
         try {
             await checkModification();
             if (tempPfp != null) {
@@ -425,12 +428,21 @@ async function showSettingsModal() {
             }
             settingsModal.hide();
         } catch (error) {
-            let errordiv = document.getElementById('errorLocation');
-            errordiv.innerText = error.message;
-            errordiv.className = "d-block";
+            let errorText = document.createElement('p');
+            errorText.innerText = error.message;
+            let errorBtn = document.createElement('button');
+            errorBtn.classList.add('close-btn');
+            errorBtn.addEventListener("click", function () {
+                let errordiv = document.getElementById('errorLocation');
+                errordiv.className = 'd-none';
+                errordiv.innerHTML = "";
+            })
+            errorBtn.appendChild(makeSvg("icon-x", null, null));
+            errordiv.appendChild(errorText);
+            errordiv.appendChild(errorBtn);
+            errordiv.className = "d-flex";
         }
-    }
-
+    })
     row.appendChild(div);
     container.appendChild(row);
     hova.appendChild(container);
@@ -518,12 +530,15 @@ async function saveModification(username, email, is_2fa, language, darkmode) {
                 errordiv.classList.remove('d-none');
                 errordiv.innerHTML = "";
                 let ul = document.createElement('ul');
+                let hiba;
                 for (let i = 0; i < data.error.length; i++) {
                     let li = document.createElement('li');
-                    li.innerText = `${data.error[i].path}: ${data.error[i].msg}`;
+                    hiba = data.error[i].msg;
+                    li.innerText = `${data.error[i].path}: ${hiba}`;
                     ul.appendChild(li);
                 }
                 errordiv.appendChild(ul);
+                throw new Error(hiba);
             }
         }
         else {
@@ -531,7 +546,7 @@ async function saveModification(username, email, is_2fa, language, darkmode) {
             settingsModal.hide();
         }
     } catch (error) {
-        console.log(error);
+        throw error;
     }
 }
 
@@ -657,12 +672,16 @@ async function uploadProfilePic(picture) {
             method: "POST",
             body: fd
         });
-
+        let data = await response.json();
         if (response.ok) {
-            console.log("sikerult a feltoltes");
+            console.log(data.message);
+        }
+        else {
+            throw new Error(data.message);
         }
     } catch (error) {
         console.log(`hálózati hiba: ${error}`);
+        throw error;
     }
 }
 
@@ -674,11 +693,16 @@ async function deleteProfilePicture() {
                 "Content-Type": "application/json"
             }
         })
+        let data = await response.json();
         if (response.ok) {
-            console.log("sikerult a torles");
+            console.log(data.message);
+        }
+        else {
+            throw new Error(data.message);
         }
     } catch (error) {
         console.log(`hálózati hiba: ${error}`);
+        throw error;
     }
 }
 

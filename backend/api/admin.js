@@ -177,7 +177,7 @@ router.post('/userToInactive', auth.checkAuth, auth.checkRole("ADMIN"),
         }
     })
 
-router.post('/updateProfilePicFromAdmin', auth.checkAuth, upload.single('profilePic'), async (request, response) => {
+router.post('/updateProfilePicFromAdmin', auth.checkAuth,auth.checkRole("ADMIN"), upload.single('profilePic'), async (request, response) => {
     let originalFile;
     let newFilePath;
     try {
@@ -219,11 +219,11 @@ router.post('/updateProfilePicFromAdmin', auth.checkAuth, upload.single('profile
         if (newFilePath) {
             await fs.unlink(newFilePath).catch(() => { });
         }
-        response.status(500).json({ error: error.message, details: error.stack });
+        response.status(500).json({ error: error.message });
     }
 })
 
-router.post('/deleteProfilePicFromAdmin', auth.checkAuth, async (request, response) => {
+router.post('/deleteProfilePicFromAdmin', auth.checkAuth, auth.checkRole("ADMIN"), async (request, response) => {
     try {
         let lastPfp = await database.deleteProfilePic(request.body.user_id);
         if (!lastPfp) {
