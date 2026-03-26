@@ -1,12 +1,22 @@
-require("./helpers/setup-mocks.js");
-
-const { createTestApp } = require("./helpers/setup-test.js");
+const { createTestApp } = require("@helpers/setup-test.js");
 const { testInvalidIDs, testRequiresAuth, expectSuccessfulTransaction, expectRollback, expectErrorResponse, randomId, buildRequest, suppressConsoleErrors } = require("./helpers/helpers.js");
-const { invalidUVs, invalidDegrees, mockImageMetadata, imageStatusForPath, mockImageProccessed } = require("./helpers/test-data.js");
-const database = require("../../sql/database.js");
-const { mockConnection } = require("./helpers/mock-database.js");
-const { processImageMetadata, createWebpAndLowRes, deleteImageAndLowResByMainPath } = require("../../utils/imageProcessor.js");
-const { deleteFile } = require("../../utils/fileUtils.js");
+const { invalidUVs, invalidDegrees, imageStatusForPath } = require("@helpers/test-data.js");
+
+const database = require("@sql/database.js");
+const { mockConnection } = database;
+
+const {
+    processImageMetadata,
+    createWebpAndLowRes,
+    deleteImageAndLowResByMainPath,
+    mockImageMetadata,
+    mockImageProcessed
+} = require("@utils/imageProcessor.js");
+
+const {
+    deleteFile
+} = require("@utils/fileUtils.js");
+
 const fs = require("fs/promises");
 const path = require("path");
 
@@ -33,7 +43,6 @@ describe("Map Creator API - Point Endpoints - /api/map-creator/", () => {
         );
 
         beforeEach(() => {
-            jest.clearAllMocks();
             database.checkUserOwnsMap.mockResolvedValue(true);
         });
 
@@ -124,7 +133,6 @@ describe("Map Creator API - Point Endpoints - /api/map-creator/", () => {
         let newImageIdDB;
 
         beforeEach(() => {
-            jest.clearAllMocks();
             rmSpy = jest.spyOn(fs, "rm").mockResolvedValue(undefined);
 
             mapId = randomId();
@@ -351,7 +359,7 @@ describe("Map Creator API - Point Endpoints - /api/map-creator/", () => {
                 baseName: expect.stringContaining(`${defaults.id}_`)
             });
 
-            expect(database.updateImagePath).toHaveBeenCalledWith(mockConnection, newImageIdDB, expect.stringContaining(mockImageProccessed.targetFileName));
+            expect(database.updateImagePath).toHaveBeenCalledWith(mockConnection, newImageIdDB, expect.stringContaining(mockImageProcessed.targetFileName));
             expect(database.updatePointImage).toHaveBeenCalledWith(mockConnection, defaults.id, newImageIdDB);
             expect(database.deleteImageById).toHaveBeenCalledWith(mockConnection, imageIdDB);
             let expectedPath = path.join(dbImageFilePath);
@@ -539,7 +547,6 @@ describe("Map Creator API - Point Endpoints - /api/map-creator/", () => {
         const pointId = randomId();
 
         beforeEach(() => {
-            jest.clearAllMocks();
             database.checkUserOwnsMap.mockResolvedValue(true);
             database.getGameMapIdByMapId.mockResolvedValue(randomId());
             database.getPointOnMapByCoordinates.mockResolvedValue([]);
@@ -821,7 +828,6 @@ describe("Map Creator API - Point Endpoints - /api/map-creator/", () => {
         let imageId;
 
         beforeEach(() => {
-            jest.clearAllMocks();
             rmSpy = jest.spyOn(fs, "rm").mockResolvedValue(undefined);
             database.checkUserOwnsPoint.mockResolvedValue(true);
             database.deleteImageById.mockResolvedValue(true);

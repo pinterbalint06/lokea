@@ -1,6 +1,8 @@
 const { invalidIds, invalidIdsWithoutNulls } = require("./test-data.js");
-const auth = require("../../../auth.js");
-const { mockConnection } = require("./mock-database.js");
+const { checkAuth } = require("@root/auth.js");
+
+const database = require("@sql/database.js");
+const { mockConnection } = database;
 
 async function testInvalidIDs(requestCallback, expectedErrorMessage, withNulls = true) {
     const idsToTest = withNulls ? invalidIds : invalidIdsWithoutNulls;
@@ -17,7 +19,7 @@ async function testInvalidIDs(requestCallback, expectedErrorMessage, withNulls =
 
 function testRequiresAuth(requestCallback) {
     it("Should respond with 401 if the user is not authenticated", async () => {
-        auth.checkAuth.mockImplementationOnce((request, response, next) => {
+        checkAuth.mockImplementationOnce((request, response, next) => {
             response.status(401).json({ message: "Bejelentkezés szükséges!" });
         });
 

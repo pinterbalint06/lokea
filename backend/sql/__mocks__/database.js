@@ -6,9 +6,13 @@ const mockConnection = {
 };
 
 const mockDatabase = {
-    getConnection: jest.fn().mockImplementation(() => Promise.resolve(mockConnection)),
+    getConnection: jest.fn().mockResolvedValue(mockConnection),
+    
     checkUserOwnsGameMap: jest.fn(),
     checkUserOwnsMap: jest.fn(),
+    checkUserOwnsPoint: jest.fn(),
+    checkUserOwnsConnection: jest.fn(),
+
     updateMapTitle: jest.fn(),
     getMapsByGameMapId: jest.fn(),
     getMapInfo: jest.fn(),
@@ -22,7 +26,6 @@ const mockDatabase = {
     getGameMapIdByMapId: jest.fn(),
     getPointOnMapByCoordinates: jest.fn(),
     insertPoint: jest.fn(),
-    checkUserOwnsPoint: jest.fn(),
     getPointInfo: jest.fn(),
     getPointImage: jest.fn(),
     deletePointById: jest.fn(),
@@ -30,7 +33,6 @@ const mockDatabase = {
     updatePointNorthDirection: jest.fn(),
     updatePointImage: jest.fn(),
     getConnectionsByGameMapId: jest.fn(),
-    checkUserOwnsConnection: jest.fn(),
     deleteConnectionById: jest.fn(),
     arePointsInSameGameMap: jest.fn(),
     doesConnectionAlreadyExist: jest.fn(),
@@ -40,4 +42,5 @@ const mockDatabase = {
     updateConnectionDirections: jest.fn()
 };
 
-module.exports = { mockConnection, mockDatabase };
+module.exports = mockDatabase;
+module.exports.mockConnection = mockConnection;

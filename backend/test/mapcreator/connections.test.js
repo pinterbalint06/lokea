@@ -1,17 +1,16 @@
-require("./helpers/setup-mocks.js");
-
-const { createTestApp } = require("./helpers/setup-test.js");
+const { createTestApp } = require("@helpers/setup-test.js");
 const { testInvalidIDs, testRequiresAuth, expectSuccessfulTransaction, expectRollback, expectErrorResponse, randomId, buildRequest, suppressConsoleErrors } = require("./helpers/helpers.js");
-const { invalidDegrees } = require("./helpers/test-data.js");
-const database = require("../../sql/database.js");
-const { mockConnection } = require("./helpers/mock-database.js");
+const { invalidDegrees } = require("@helpers/test-data.js");
+
+const database = require("@sql/database.js");
+const { mockConnection } = database;
 
 
 const requestWithSupertest = createTestApp();
 
 describe("Map Creator API - Connection Endpoints - /api/map-creator/", () => {
     describe("GET /game-maps/:gameMapID/connections", () => {
-        let mockConnections = [];
+        let mockConnectionsData = [];
         const defaults = {
             id: randomId()
         };
@@ -23,9 +22,8 @@ describe("Map Creator API - Connection Endpoints - /api/map-creator/", () => {
         );
 
         beforeEach(() => {
-            jest.clearAllMocks();
             database.checkUserOwnsGameMap.mockResolvedValue(true);
-            mockConnections = [{
+            mockConnectionsData = [{
                 connection_id: randomId(),
                 start_point_id: randomId(),
                 end_point_id: randomId(),
@@ -35,27 +33,27 @@ describe("Map Creator API - Connection Endpoints - /api/map-creator/", () => {
                 end_to_start_direction: Math.floor(Math.random() * 360)
             }];
             for (let i = 1; i < 4; i++) {
-                mockConnections.push({
-                    connection_id: mockConnections[i - 1].connection_id + randomId(),
-                    start_point_id: mockConnections[i - 1].start_point_id + randomId(),
-                    end_point_id: mockConnections[i - 1].end_point_id + randomId(),
-                    start_map_id: mockConnections[i - 1].start_map_id + randomId(),
-                    end_map_id: mockConnections[i - 1].end_map_id + randomId(),
+                mockConnectionsData.push({
+                    connection_id: mockConnectionsData[i - 1].connection_id + randomId(),
+                    start_point_id: mockConnectionsData[i - 1].start_point_id + randomId(),
+                    end_point_id: mockConnectionsData[i - 1].end_point_id + randomId(),
+                    start_map_id: mockConnectionsData[i - 1].start_map_id + randomId(),
+                    end_map_id: mockConnectionsData[i - 1].end_map_id + randomId(),
                     direction_start_to_end: Math.floor(Math.random() * 360),
                     direction_end_to_start: Math.floor(Math.random() * 360)
                 });
             }
             for (let i = 1; i < 4; i++) {
-                let mapId = mockConnections[i - 1].start_map_id + randomId();
-                mockConnections.push({
-                    connection_id: mockConnections[i - 1].connection_id + randomId(),
-                    start_point_id: mockConnections[i - 1].start_point_id + randomId(),
-                    end_point_id: mockConnections[i - 1].end_point_id + randomId(),
+                let mapId = mockConnectionsData[i - 1].start_map_id + randomId();
+                mockConnectionsData.push({
+                    connection_id: mockConnectionsData[i - 1].connection_id + randomId(),
+                    start_point_id: mockConnectionsData[i - 1].start_point_id + randomId(),
+                    end_point_id: mockConnectionsData[i - 1].end_point_id + randomId(),
                     start_map_id: mapId,
                     end_map_id: mapId
                 });
             }
-            database.getConnectionsByGameMapId.mockResolvedValue(mockConnections);
+            database.getConnectionsByGameMapId.mockResolvedValue(mockConnectionsData);
         });
 
         testRequiresAuth(() => makeGetRequest());
@@ -85,8 +83,8 @@ describe("Map Creator API - Connection Endpoints - /api/map-creator/", () => {
             expect(response.type).toEqual(expect.stringContaining("json"));
             expect(response.body).toHaveProperty("success", true);
             expect(response.body).toHaveProperty("connections");
-            expect(response.body.connections).toEqual(mockConnections);
-            expect(response.body.connections.length).toBe(mockConnections.length);
+            expect(response.body.connections).toEqual(mockConnectionsData);
+            expect(response.body.connections.length).toBe(mockConnectionsData.length);
         });
 
         it("Should return an empty array if the game map has no connections", async () => {
@@ -127,7 +125,6 @@ describe("Map Creator API - Connection Endpoints - /api/map-creator/", () => {
         );
 
         beforeEach(() => {
-            jest.clearAllMocks();
             database.checkUserOwnsConnection.mockResolvedValue(true);
             database.isConnectionCrossMap.mockResolvedValue(true);
             database.updateConnectionDirections.mockResolvedValue(true);
@@ -308,7 +305,6 @@ describe("Map Creator API - Connection Endpoints - /api/map-creator/", () => {
         let newConnectionId;
 
         beforeEach(() => {
-            jest.clearAllMocks();
             database.checkUserOwnsGameMap.mockResolvedValue(true);
             database.arePointsInSameGameMap.mockResolvedValue(true);
             database.arePointsInSameMap.mockResolvedValue(true);
@@ -539,7 +535,6 @@ describe("Map Creator API - Connection Endpoints - /api/map-creator/", () => {
         );
 
         beforeEach(() => {
-            jest.clearAllMocks();
             database.checkUserOwnsConnection.mockResolvedValue(true);
             database.deleteConnectionById.mockResolvedValue(true);
         });

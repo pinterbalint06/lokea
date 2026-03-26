@@ -1,12 +1,20 @@
-require("./helpers/setup-mocks.js");
-
-const { createTestApp } = require("./helpers/setup-test.js");
+const { createTestApp } = require("@helpers/setup-test.js");
 const { testInvalidIDs, testRequiresAuth, expectSuccessfulTransaction, expectRollback, expectErrorResponse, randomId, buildRequest, suppressConsoleErrors } = require("./helpers/helpers.js");
-const { invalidTitles, validTitles, mockImageMetadata, imageStatusForPath } = require("./helpers/test-data.js");
-const database = require("../../sql/database.js");
-const { mockConnection } = require("./helpers/mock-database.js");
-const { processImageMetadata, createWebpAndLowRes } = require("../../utils/imageProcessor.js");
-const { deleteFile } = require("../../utils/fileUtils.js");
+const { invalidTitles, validTitles, imageStatusForPath } = require("@helpers/test-data.js");
+
+const database = require("@sql/database.js");
+const { mockConnection } = database;
+
+const {
+    processImageMetadata,
+    createWebpAndLowRes,
+    mockImageMetadata
+} = require("@utils/imageProcessor.js");
+
+const {
+    deleteFile
+} = require("@utils/fileUtils.js");
+
 const fs = require("fs/promises");
 const path = require("path");
 
@@ -31,7 +39,6 @@ describe("Map Creator API - Map Endpoints - /api/map-creator/", () => {
         );
 
         beforeEach(() => {
-            jest.clearAllMocks();
             database.checkUserOwnsGameMap.mockResolvedValue(true);
             database.getMapsByGameMapId.mockResolvedValue(mockMaps);
         });
@@ -105,7 +112,6 @@ describe("Map Creator API - Map Endpoints - /api/map-creator/", () => {
         );
 
         beforeEach(() => {
-            jest.clearAllMocks();
             database.checkUserOwnsMap.mockResolvedValue(true);
             database.getMapInfo.mockResolvedValue({ title: "Test Map Title", game_maps_id: 1 });
             database.updateMapTitle.mockResolvedValue(1);
@@ -221,7 +227,6 @@ describe("Map Creator API - Map Endpoints - /api/map-creator/", () => {
         const mapId = randomId();
 
         beforeEach(() => {
-            jest.clearAllMocks();
             database.checkUserOwnsGameMap.mockResolvedValue(true);
             database.insertImage.mockResolvedValue(imageId);
             database.insertMap.mockResolvedValue(mapId);
@@ -453,7 +458,6 @@ describe("Map Creator API - Map Endpoints - /api/map-creator/", () => {
         );
 
         beforeEach(() => {
-            jest.clearAllMocks();
             rmSpy = jest.spyOn(fs, "rm").mockResolvedValue(undefined);
             database.checkUserOwnsMap.mockResolvedValue(true);
             database.getMapInfo.mockResolvedValue({ title: "Test Map Title", game_maps_id: 100 });
