@@ -97,3 +97,29 @@ CREATE TABLE point_connections (
     CONSTRAINT check_different_points CHECK (start_point_id != end_point_id),
     CONSTRAINT unique_connection UNIQUE (game_maps_id, start_point_id, end_point_id)
 );
+
+CREATE TABLE game_sessions (
+    session_id INT AUTO_INCREMENT PRIMARY KEY,
+    user_id INT,
+    game_maps_id INT NOT NULL,
+    started_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    finished_at TIMESTAMP NULL,
+    total_score INT DEFAULT 0,
+    current_cycle INT NOT NULL DEFAULT 1,
+    FOREIGN KEY (user_id) REFERENCES users(user_id) ON DELETE SET NULL,
+    FOREIGN KEY (game_maps_id) REFERENCES game_maps(game_maps_id) ON DELETE CASCADE
+);
+
+CREATE TABLE session_guesses (
+    guess_id INT AUTO_INCREMENT PRIMARY KEY,
+    session_id INT NOT NULL,
+    point_id INT,
+    guessed_x INT NOT NULL,
+    guessed_y INT NOT NULL,
+    distance_error FLOAT NOT NULL,
+    points_awarded INT NOT NULL,
+    guessed_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    cycle INT NOT NULL DEFAULT 1,
+    FOREIGN KEY (session_id) REFERENCES game_sessions(session_id) ON DELETE CASCADE,
+    FOREIGN KEY (point_id) REFERENCES points(point_id) ON DELETE SET NULL
+);

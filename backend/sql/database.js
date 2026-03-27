@@ -285,6 +285,13 @@ async function getImagePath(image_id) {
     return re;
 }
 
+async function insertGameSession(userId, gameMapId) {
+    const query = 'INSERT INTO game_sessions (user_id, game_maps_id) VALUES (?, ?)';
+    await pool.execute(query, [userId, gameMapId]);
+}
+
+
+//!Game map szerkesztéshez szükséges adatok lekérése
 async function getConnection() {
     return await pool.getConnection();
 }
@@ -520,5 +527,6 @@ module.exports = {
     uploadProfilePic,
     deleteProfilePic,
     getGameMaps,
-    getImagePath
+    getImagePath,
+    insertGameSession
 };
