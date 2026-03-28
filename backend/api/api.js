@@ -170,7 +170,7 @@ router.get('/loginRole', async (request, response) => {
             }
         }
     } catch (error) {
-        response.status(500).json({ login, error: error });
+        response.status(500).json({ error: error });
     }
 })
 

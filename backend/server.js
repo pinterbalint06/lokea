@@ -66,7 +66,7 @@ router.get('/login_page', (request, response) => {
     response.sendFile(path.join(__dirname, '../frontend/html/login.html'));
 });
 router.get('/admin', auth.checkRole("ADMIN"), (request, response) => {
-    response.sendFile(path.join(__dirname, '../frontend/html/admin.html'));
+    response.sendFile(path.join(__dirname, '../private/frontend/html/admin.html'));
 });
 router.get('/choose_game', (request, response) => {
     response.sendFile(path.join(__dirname, '../frontend/html/game-choosing.html'));
@@ -77,7 +77,8 @@ router.use((request, response) => {
 
 //!API endpoints
 app.use(express.static(path.join(__dirname, '../frontend')));
-const adminEndpoints = require('./api/admin.js');
+app.use(express.static(path.join(__dirname, '../private/frontend')));
+const adminEndpoints = require('../private/backend/api/admin.js');
 app.use('/api/admin', adminEndpoints);
 const endpoints = require('./api/api.js');
 app.use('/api', endpoints);
