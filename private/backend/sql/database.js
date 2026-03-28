@@ -1,5 +1,6 @@
 const mysql = require('mysql2/promise');
 const bcrypt = require('bcrypt');
+const { add } = require('lodash');
 
 const pool = mysql.createPool({
     host: '127.0.0.1',
@@ -56,21 +57,36 @@ async function newUserFromAdmin(username, email, password, role, is_2fa) {
 }
 
 async function getUsers() {
-    const query = 'SELECT users.deleted_at, users.user_id, users.username, users.email, users.role FROM users';
-    const [rows] = await pool.execute(query);
-    return rows;
+    try {
+        const query = 'SELECT users.deleted_at, users.user_id, users.username, users.email, users.role FROM users';
+        const [rows] = await pool.execute(query);
+        return rows;
+    } catch (error) {
+        console.error('DB hiba getUsers:', error);
+        throw error;
+    }
 }
 
 async function getUser(id) {
-    const query = 'SELECT users.user_id, users.username, users.email, users.role, users.is_2fa, users.darkmode, users.created_at, images.filepath FROM users LEFT JOIN images ON (images.image_id = users.pfp) WHERE users.user_id = ?';
-    const [result] = await pool.execute(query, [id]);
-    return result;
+    try {
+        const query = 'SELECT users.user_id, users.username, users.email, users.role, users.is_2fa, users.darkmode, users.created_at, images.filepath FROM users LEFT JOIN images ON (images.image_id = users.pfp) WHERE users.user_id = ?';
+        const [result] = await pool.execute(query, [id]);
+        return result;
+    } catch (error) {
+        console.error('DB hiba getUser:', error);
+        throw error;
+    }
 }
 
 async function getUserNameProfile(id) {
-    const query = 'SELECT users.username, users.darkmode, images.filepath FROM users LEFT JOIN images ON (images.image_id = users.pfp) WHERE users.user_id = ?';
-    const [result] = await pool.execute(query, [id]);
-    return result;
+    try {
+        const query = 'SELECT users.username, users.darkmode, images.filepath FROM users LEFT JOIN images ON (images.image_id = users.pfp) WHERE users.user_id = ?';
+        const [result] = await pool.execute(query, [id]);
+        return result;
+    } catch (error) {
+        console.error('DB hiba getUser:', error);
+        throw error;
+    }
 }
 
 async function sortedUsers(mireKeresek, mit, status, adminChecked, modChecked, userChecked) {
@@ -198,16 +214,13 @@ async function userToInactive(userId) {
 }
 
 async function uploadProfilePic(filepath, width, height, user_id) {
-    //Régi profilkép elérési útvonala + id lekérése későbbi törlésre
-
-    const queryGetLastImage = 'SELECT images.image_id, images.filepath FROM users LEFT JOIN images ON users.pfp = images.image_id WHERE users.user_id = ?'
-    const [oldImageData] = await pool.execute(queryGetLastImage, [user_id]);
-
-    let oldFilePath = oldImageData[0] ? oldImageData[0].filepath : null;
-    let oldImageId = oldImageData[0] ? oldImageData[0].image_id : null;
     let connection;
     let result;
     try {
+        let oldImageData = await getOldPicturePath(user_id);
+        let oldFilePath = oldImageData ? oldImageData.filepath : null;
+        let oldImageId = oldImageData ? oldImageData.image_id : null;
+
         connection = await pool.getConnection();
         await connection.beginTransaction();
         const queryInsertNewPic = 'INSERT INTO images (filepath, width, height) VALUES (?, ?, ?)';
@@ -219,33 +232,70 @@ async function uploadProfilePic(filepath, width, height, user_id) {
             await connection.execute(queryDeleteOldPic, [oldImageId]);
         }
         await connection.commit();
+
+        return oldFilePath;
     } catch (error) {
         if (connection) {
             await connection.rollback();
         }
-        console.error(error);
+        console.error('DB hiba uploadProfilePic:', error);
+        throw error;
     }
     finally {
         if (connection) connection.release();
     }
-    //Visszaadja a régi kép elérési útvonalát, hogy törlésre kerülhessen. Amennyiben nem volt, null értéket ad vissza.
-    return oldFilePath;
 }
 
 async function deleteProfilePic(user_id) {
-    //Régi profilkép elérési útvonala + id lekérése a törlésre
-
-    const queryGetLastImage = 'SELECT images.image_id, images.filepath FROM users LEFT JOIN images ON users.pfp = images.image_id WHERE users.user_id = ?'
-    const [oldImageData] = await pool.execute(queryGetLastImage, [user_id]);
-
-    let oldFilePath = oldImageData[0] ? oldImageData[0].filepath : null;
-    let oldImageId = oldImageData[0] ? oldImageData[0].image_id : null;
     let connection;
     try {
+        let oldImageData = await getOldPicturePath(user_id);
+        let oldFilePath = oldImageData ? oldImageData.filepath : null;
+        let oldImageId = oldImageData ? oldImageData.image_id : null;
+
         connection = await pool.getConnection();
         await connection.beginTransaction();
         const queryDeleteOldPic = 'DELETE FROM images WHERE image_id = ?';
         await connection.execute(queryDeleteOldPic, [oldImageId]);
+        await connection.commit();
+
+        return oldFilePath;
+    } catch (error) {
+        if (connection) {
+            await connection.rollback();
+        }
+        console.error('DB hiba deleteProfilePic:', error);
+        throw error;
+    }
+    finally {
+        if (connection) connection.release();
+    }
+}
+
+async function getOldPicturePath(user_id) {
+    try {
+        const queryGetLastImage = 'SELECT images.image_id, images.filepath FROM users LEFT JOIN images ON users.pfp = images.image_id WHERE users.user_id = ?'
+        const [oldImageData] = await pool.execute(queryGetLastImage, [user_id]);
+        return oldImageData[0];
+    } catch (error) {
+        console.error('DB hiba getLogs:', error);
+        throw error;
+    }
+}
+
+async function addLog(userid, victimid = null, activity) {
+    let connection;
+    try {
+        connection = await pool.getConnection();
+        await connection.beginTransaction();
+        if (victimid == null) {
+            const query = 'INSERT INTO logs (user_id, activity) VALUES (?, ?)';
+            await connection.execute(query, [userid, activity]);
+        }
+        else {
+            const query = 'INSERT INTO logs (user_id, victim_id, activity) VALUES (?, ?, ?)';
+            await connection.execute(query, [userid, victimid, activity]);
+        }
         await connection.commit();
     } catch (error) {
         if (connection) {
@@ -255,8 +305,17 @@ async function deleteProfilePic(user_id) {
     finally {
         if (connection) connection.release();
     }
-    //Visszaadja a régi kép elérési útvonalát a törléshez.
-    return oldFilePath;
+}
+
+async function getLogs() {
+    try {
+        const query = 'SELECT who.username, victim.username, logs.activity, logs.happened_at FROM logs INNER JOIN users who ON logs.user_id = who.user_id LEFT JOIN users victim ON logs.user_id = victim.user_id';
+        const [rows] = await pool.execute(query);
+        return rows;
+    } catch (error) {
+        console.error('DB hiba getLogs:', error);
+        throw error;
+    }
 }
 //!Export
 module.exports = {
@@ -269,4 +328,6 @@ module.exports = {
     userToInactive,
     uploadProfilePic,
     deleteProfilePic,
+    addLog,
+    getLogs
 };

@@ -16,12 +16,7 @@ hibak amiket javitani kell:
 
 -stack trace
 -oldal nyelvet egysegesiteni kell
--insert -> tranzakciokezeles
 -szuresnel a moderatort nem szuri jol
--par get keresnel nincs try catch
--userUpdate atirva userUpdateByAdminra database.jsben
--adminpage js 719. sor -> currentData.deleted_at == null ez csak tesztnek volt odairva
--kep frissites atirva mas api cimre
 
 kerdes:
 -compare attetele database.js-be

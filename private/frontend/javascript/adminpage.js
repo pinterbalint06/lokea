@@ -8,7 +8,10 @@ document.addEventListener("DOMContentLoaded", function () {
     });
     modal = new bootstrap.Modal(modalElement);
     document.getElementById('signoutBtn').addEventListener("click", async function () {
-        kijelentkezes();
+        await kijelentkezes();
+    });
+    document.getElementById('leaveAdminBtn').addEventListener("click", function () {
+        window.location.href = "/main";
     });
     document.getElementById('toggleSidebar').addEventListener('click', function () {
         sidebarvaltoztat();
@@ -123,7 +126,7 @@ async function newUser(username, email, password, role, is_2fa) {
 
 async function userUpdate(user_id, username, email, role, is_2fa, deleted) {
     try {
-        let response = await fetch("/api/admin/updateUser", {
+        let response = await fetch("/api/admin/updateUserFromAdmin", {
             method: "POST",
             headers: {
                 "Content-Type": "application/json"
@@ -133,8 +136,7 @@ async function userUpdate(user_id, username, email, role, is_2fa, deleted) {
                 username,
                 email,
                 role,
-                is_2fa,
-                deleted
+                is_2fa
             })
         });
         return response.ok;
@@ -176,7 +178,7 @@ async function uploadProfilePic(picture, id) {
     fd.append("profilePic", picture);
     fd.append("user_id", id);
     try {
-        let response = await fetch("/api/updateProfilePic", {
+        let response = await fetch("/api/admin/updateProfilePicFromAdmin", {
             method: "POST",
             body: fd
         });
@@ -191,7 +193,7 @@ async function uploadProfilePic(picture, id) {
 
 async function deleteProfilePicture(id) {
     try {
-        let response = await fetch("/api/deleteProfilePic", {
+        let response = await fetch("/api/admin/deleteProfilePicFromAdmin", {
             method: "POST",
             headers: {
                 "Content-Type": "application/json"
@@ -715,8 +717,7 @@ function modalView(title, type, content) {
                     }
                 });
                 if (valtozas) {
-                    console.log(currentData);
-                    let siker = await userUpdate(currentData.user_id, inInput.username, inInput.email, inInput.role, inInput.is_2fa, currentData.deleted_at == null);
+                    let siker = await userUpdate(currentData.user_id, inInput.username, inInput.email, inInput.role, inInput.is_2fa);
                     if (siker) {
                         tablazatGeneral(await sortedUser());
                     }

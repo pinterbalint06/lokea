@@ -58,6 +58,8 @@ router.post("/signupFromAdmin", auth.checkAuth, auth.checkRole("ADMIN"),
                 const hashedPassword = await bcrypt.hash(password, 10);
                 let insert = await database.newUserFromAdmin(username, email, hashedPassword, role, is_2fa);
                 if (insert.success) {
+                    let userid = insert.insertId;
+                    await database.addLog(userid, 'Sign up (A)');
                     response.status(201).json({
                         success: true,
                         message: "Sikeres regisztráció!"
@@ -105,7 +107,7 @@ router.post('/sortedUsers', auth.checkAuth, auth.checkRole("ADMIN"), async (requ
     }
 })
 
-router.post('/updateUser', auth.checkAuth, auth.checkRole("ADMIN"),
+router.post('/updateUserFromAdmin', auth.checkAuth, auth.checkRole("ADMIN"),
     [
         body("username")
             .not().isEmail().withMessage("Felhasználónév nem lehet email cim!")
@@ -132,8 +134,9 @@ router.post('/updateUser', auth.checkAuth, auth.checkRole("ADMIN"),
                     response.status(403).json({ message: "Nincs jogosultságod ehhez!" });
                 }
                 else {
-                    let success = await database.updateUser(user_id, username, email, role, is_2fa);
+                    let success = await database.updateUserByAdmin(user_id, username, email, role, is_2fa);
                     if (success == 1) {
+                        await database.addLog(request.session.user_id, user_id, 'User update (A)');
                         response.status(204).json({ message: "Sikeres felhasználófrissités!" });
                     }
                     else {
@@ -169,6 +172,7 @@ router.post('/userToInactive', auth.checkAuth, auth.checkRole("ADMIN"),
                     response.status(200).json({ message: "A felhasználó már inaktiv volt!" })
                 }
                 else {
+                    await database.addLog(request.session.user_id, userId, 'User delete (A)');
                     response.status(204).end();
                 }
             }
@@ -177,7 +181,7 @@ router.post('/userToInactive', auth.checkAuth, auth.checkRole("ADMIN"),
         }
     })
 
-router.post('/updateProfilePicFromAdmin', auth.checkAuth,auth.checkRole("ADMIN"), upload.single('profilePic'), async (request, response) => {
+router.post('/updateProfilePicFromAdmin', auth.checkAuth, auth.checkRole("ADMIN"), upload.single('profilePic'), async (request, response) => {
     let originalFile;
     let newFilePath;
     try {
@@ -210,6 +214,7 @@ router.post('/updateProfilePicFromAdmin', auth.checkAuth,auth.checkRole("ADMIN")
                 let lastPfpPath = path.join(__dirname, '..', lastPfp);
                 await fs.unlink(lastPfpPath).catch(() => { });
             }
+            await database.addLog(request.session.user_id, user_id, 'Profile picture update (A)');
             response.status(201).json({ success: true, message: "Profilkép frissítve!" });
         }
     } catch (error) {
@@ -219,7 +224,7 @@ router.post('/updateProfilePicFromAdmin', auth.checkAuth,auth.checkRole("ADMIN")
         if (newFilePath) {
             await fs.unlink(newFilePath).catch(() => { });
         }
-        response.status(500).json({ error: error.message });
+        response.status(500).json({ error: error.message, details: error.stack });
     }
 })
 
@@ -237,10 +242,32 @@ router.post('/deleteProfilePicFromAdmin', auth.checkAuth, auth.checkRole("ADMIN"
                 console.log("a kép nincs a szerveren!" + error);
             }
             response.status(201).json({ success: true, message: "Profilkép törölve!" });
+            await database.addLog(request.session.user_id, user_id, 'Profile picture delete (A)');
         }
     } catch (error) {
         response.status(500).json({ error: error });
     }
 })
+
+router.get('/getLogs', auth.checkAuth, auth.checkRole("ADMIN"), async (request, response) => {
+    try {
+        let logs = await database.getLogs();
+        response.status(200).json({ message: "Sikeres lekérés", logs: logs });
+    } catch (error) {
+        response.status(500).json({ error: error });
+    }
+})
+
+router.post('/addLog', auth.checkAuth, async (request, response) => {
+    try {
+        let {victimid, activity} = request.body;
+        await database.addLog(request.session.user_id, victimid, activity);
+        response.status(200).send();
+    } catch (error) {
+        response.status(500).json({ error: error });
+    }
+})
+
+
 
 module.exports = router;

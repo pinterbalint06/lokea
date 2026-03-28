@@ -78,9 +78,10 @@ CREATE TABLE favorites (
 
 CREATE TABLE log (
     log_id INT AUTO_INCREMENT PRIMARY KEY NOT NULL,
-    user_id int,
-    activity varchar(50),
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    user_id INT,
+    victim_id INT DEFAULT NULL,
+    activity VARCHAR(50),
+    happened_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     foreign key (user_id) references users(user_id) ON DELETE CASCADE
 );
 

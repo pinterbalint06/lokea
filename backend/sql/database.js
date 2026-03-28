@@ -255,6 +255,30 @@ async function deleteProfilePic(user_id) {
     return oldFilePath;
 }
 
+async function addLog(userid, victimid = null, activity) {
+    let connection;
+    try {
+        connection = await pool.getConnection();
+        await connection.beginTransaction();
+        if (victimid == null) {
+            const query = 'INSERT INTO logs (user_id, activity) VALUES (?, ?)';
+            await connection.execute(query, [userid, activity]);
+        }
+        else {
+            const query = 'INSERT INTO logs (user_id, victim_id, activity) VALUES (?, ?, ?)';
+            await connection.execute(query, [userid, victimid, activity]);
+        }
+        await connection.commit();
+    } catch (error) {
+        if (connection) {
+            await connection.rollback();
+        }
+    }
+    finally {
+        if (connection) connection.release();
+    }
+}
+
 
 //Játékhoz szükséges ab adatok lekérése
 async function getGameMaps(sort = 'plays', user_id = null, offset = 0) {
@@ -310,5 +334,6 @@ module.exports = {
     uploadProfilePic,
     deleteProfilePic,
     getGameMaps,
-    getImagePath
+    getImagePath,
+    addLog
 };

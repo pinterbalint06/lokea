@@ -65,6 +65,8 @@ router.post("/signup",
                 const hashedPassword = await bcrypt.hash(password, 10);
                 let insert = await database.newUser(username, email, hashedPassword);
                 if (insert.success) {
+                    let userid = insert.insertId;
+                    await database.addLog(userid, 'Sign up');
                     response.status(201).json({
                         success: true,
                         message: "Sikeres regisztráció!"
@@ -132,6 +134,7 @@ router.post("/login",
                         }
                         request.session.userid = rows[0].user_id;
                         request.session.role = sesRole;
+                        await database.addLog(rows[0].user_id, 'Login');
                         response.status(200).json({ message: "Sikeres bejelentkezés", role: sesRole, username: rows[0].username });
                     }
                 }
@@ -170,7 +173,7 @@ router.get('/loginRole', async (request, response) => {
             }
         }
     } catch (error) {
-        response.status(500).json({ error: error });
+        response.status(500).json({ login, error: error });
     }
 })
 
@@ -208,6 +211,7 @@ router.put('/updateUser', auth.checkAuth,
             else {
                 let { username, email, is_2fa, language, darkmode } = request.body;
                 await database.updateUser(request.session.userid, username, email, is_2fa, language, darkmode);
+                await database.addLog(request.session.userid, 'User update');
                 response.status(200).json({ message: "Sikeres frissités!" });
             }
 
@@ -237,6 +241,7 @@ router.put("/updatePassword", auth.checkAuth,
             else {
                 let { oldPass, newPass } = request.body;
                 await database.updatePassword(request.session.userid, oldPass, newPass);
+                await database.addLog(request.session.userid, 'Password update');
                 response.status(200).json({ message: "Sikeres frissités!" });
             }
 
@@ -248,13 +253,14 @@ router.put("/updatePassword", auth.checkAuth,
 router.post("/inactiveUser", auth.checkAuth, async (request, response) => {
     try {
         await database.userToInactive(request.session.userid);
-        request.session.destroy(error => {
+        request.session.destroy(error => async function () {
             if (error) {
                 response.status(500).json({ success: false, error: error });
             }
             else {
+                await database.addLog(request.session.userid, 'User delete');
                 response.clearCookie('geo.sid');
-                response.status(200).json({ success: true, message: "Sikeres frissités!" });
+                response.status(200).json({ success: true, message: "Sikeres törlés!" });
             }
         });
 
@@ -295,6 +301,7 @@ router.post('/updateProfilePic', auth.checkAuth, upload.single('profilePic'), as
                 let lastPfpPath = path.join(__dirname, '..', lastPfp);
                 await fs.unlink(lastPfpPath).catch(() => { });
             }
+            await database.addLog(request.session.userid, 'Profile picture update');
             response.status(201).json({ success: true, message: "Profilkép frissítve!" });
         }
     } catch (error) {
@@ -322,6 +329,7 @@ router.delete('/deleteProfilePic', auth.checkAuth, async (request, response) => 
             } catch (error) {
                 console.log("a kép nincs a szerveren!" + error);
             }
+            await database.addLog(request.session.userid, 'Profile picture delete');
             response.status(201).json({ success: true, message: "Profilkép törölve!" });
         }
     } catch (error) {
