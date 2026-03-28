@@ -179,7 +179,9 @@ async function dropdownLetrehoz(link, nev, kep) {
     ul.appendChild(dropdownDivider());
     if (link) {
         li = dropdownLink("Belépés az admin oldalra", 'enterAdmin', null, "shield")
-        li.href = link;
+        li.addEventListener("click", function () {
+            window.location.href = link;
+        })
         ul.appendChild(li);
         ul.appendChild(dropdownDivider());
     }
