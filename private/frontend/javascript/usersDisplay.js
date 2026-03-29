@@ -1,4 +1,4 @@
-import { osszesUser, getUser, sortedUser, getProfilePicture, kijelentkezes, newUser, userUpdate, userToInactive, uploadProfilePic, deleteProfilePicture } from "./fetchs.js";
+import { osszesUser, getUser, sortedUser, getProfilePicture, newUser, userUpdate, userToInactive, uploadProfilePic, deleteProfilePicture } from "./fetchs.js";
 import { gombGeneral, inputGeneral} from "./utils/domUtils.js";
 
 export async function usersDisplayre(variables) {
@@ -599,6 +599,9 @@ function tablazatGeneral(data, variables) {
             torloGomb = gombGeneral("button", "Törlés", "trash-2", "red", null);
             torloGomb.addEventListener("click", async function () {
                 alert(await userToInactive(adatok[i].user_id, adatok[i].role, adatok[i].deleted_at == null));
+                let tablePlace = document.getElementById('usersTable');
+                tablePlace.innerHTML = "";
+                tablePlace.appendChild(tablazatGeneral(await sortedUser(), variables));
             });
 
         }
@@ -663,6 +666,7 @@ function modalView(title, type, content, variables) {
                 });
                 if (!ures) {
                     await newUser(inInput.username, inInput.email, inInput.password, inInput.role, inInput.is_2fa);
+                    tablePlace.innerHTML = "";
                     tablePlace.appendChild(tablazatGeneral(await sortedUser(), variables));
                 }
                 variables.modal.hide();
@@ -705,6 +709,7 @@ function modalView(title, type, content, variables) {
                 if (valtozas) {
                     let siker = await userUpdate(currentData.user_id, inInput.username, inInput.email, inInput.role, inInput.is_2fa);
                     if (siker) {
+                        tablePlace.innerHTML = "";
                         tablePlace.appendChild(tablazatGeneral(await sortedUser(), variables));
                     }
                 }

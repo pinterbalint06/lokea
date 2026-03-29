@@ -61,3 +61,18 @@ export function svggeneral(name, className) {
     svg.appendChild(use);
     return svg;
 }
+
+export function formatDate(date) {
+    let rawDate = new Date(date);
+
+    let formattedDate = rawDate.toLocaleString('hu-HU', {
+        year: 'numeric',
+        month: '2-digit',
+        day: '2-digit',
+        hour: '2-digit',
+        minute: '2-digit',
+        second: '2-digit'
+    }).replace(/\.\s/g, '. ').replace(/,+/g, '');
+
+    return formattedDate;
+}

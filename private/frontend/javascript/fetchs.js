@@ -49,6 +49,16 @@ export async function getProfilePicture(route) {
     }
 }
 
+export async function getLogs() {
+    try {
+        let response = await fetch("/api/admin/getLogs");
+        let data = await response.json();
+        return data;
+    } catch (error) {
+        console.error(error.message);
+    }
+}
+
 //POST fetchings
 
 export async function kijelentkezes() {
@@ -133,7 +143,6 @@ export async function userToInactive(id, role, deleted) {
         });
         if (response.status == 204) {
             mitadokvissza = "Sikerült a törlés";
-            tablazatGeneral(await sortedUser()); //TODO - atiras
         }
         else {
             mitadokvissza = (await response.json()).message;

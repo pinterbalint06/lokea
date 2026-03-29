@@ -1,4 +1,6 @@
 import { usersDisplayre } from "./usersDisplay.js";
+import { logsDisplayre } from "./logsDisplay.js";
+import { kijelentkezes } from "./fetchs.js";
 
 document.addEventListener("DOMContentLoaded", function () {
     modalElement = document.getElementById('modalView');
@@ -84,7 +86,7 @@ async function melyikValaszt(melyik) {
             display.appendChild(await transactionsDisplayre());
             break;
         case "logs":
-            display.appendChild(await logsDisplayre());
+            await logsDisplayre();
             break;
         case "settings":
             display.appendChild(await settingsDisplayre());
@@ -119,13 +121,6 @@ async function transactionsDisplayre() {
     let h1 = document.createElement('h1');
     h1.classList.add("h2", "m-5", "text-center");
     h1.innerText = "404 Egyenlőre nincs itt semmi... de itt lenne a tranzakciok";
-    return h1;
-}
-
-async function logsDisplayre() {
-    let h1 = document.createElement('h1');
-    h1.classList.add("h2", "m-5", "text-center");
-    h1.innerText = "404 Egyenlőre nincs itt semmi... de itt lenne a logs";
     return h1;
 }
 

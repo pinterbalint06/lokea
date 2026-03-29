@@ -141,56 +141,60 @@ async function sortedUsers(mireKeresek, mit, status, adminChecked, modChecked, u
 }
 
 async function updateUserByAdmin(user_id, username, email, role, is_2fa) {
-    let query = 'UPDATE users ';
-    let updates = [];
-    let params = [];
-    let rows;
+    let connection;
+    let affectedRows = 0;
+    try {
+        const [userCheck] = await pool.execute(
+            'SELECT deleted_at FROM users WHERE user_id = ?',
+            [user_id]
+        );
 
-    if (username != null) {
-        updates.push('users.username = ?');
-        params.push(username);
-    }
-    if (email != null) {
-        updates.push('users.email = ?');
-        params.push(email);
-    }
-    if (role != null) {
-        updates.push('users.role = ?');
-        params.push(role);
-    }
-    // if (pfp != null) {
-    //     updates.push('users.pfp = ?');
-    //     params.push(pfp);
-    // }
-    if (is_2fa != null) {
-        updates.push('users.is_2fa = ?');
-        params.push(is_2fa);
-    }
+        if (userCheck.length > 0 && userCheck[0].deleted_at === null) {
+            let updates = [];
+            let params = [];
+            let result;
 
-    if (updates.length === 0) {
-        throw new Error('Nincs frissítendő mező');
-    }
-    else {
-        query += ' SET ' + updates.join(' , ');
-        query += ` WHERE users.user_id = ?`;
-        params.push(user_id);
-        let connection;
+            if (username != null) {
+                updates.push('username = ?');
+                params.push(username);
+            }
+            if (email != null) {
+                updates.push('email = ?');
+                params.push(email);
+            }
+            if (role != null) {
+                updates.push('role = ?');
+                params.push(role);
+            }
+            if (is_2fa != null) {
+                updates.push('is_2fa = ?');
+                params.push(is_2fa);
+            }
 
-        try {
+            if (updates.length === 0) {
+                throw new Error('Nincs frissítendő mező');
+            }
+
+            const query = `UPDATE users SET ${updates.join(', ')} WHERE user_id = ?`;
+            params.push(user_id);
+
             connection = await pool.getConnection();
             await connection.beginTransaction();
-            [rows] = await connection.execute(query, params);
+            [result] = await connection.execute(query, params);
+            affectedRows = result.affectedRows;
             await connection.commit();
-        } catch (error) {
-            if (connection) {
-                await connection.rollback();
-            }
         }
-        finally {
-            if (connection) connection.release();
+        return affectedRows;
+
+    } catch (error) {
+        if (connection) {
+            await connection.rollback();
         }
+        throw error;
     }
-    return rows.affectedRows;
+    finally {
+        if (connection) connection.release();
+    }
 }
 
 async function userToInactive(userId) {
@@ -283,17 +287,17 @@ async function getOldPicturePath(user_id) {
     }
 }
 
-async function addLog(userid, victimid = null, activity) {
+async function addLog(userid, activity, victimid = null) {
     let connection;
     try {
         connection = await pool.getConnection();
         await connection.beginTransaction();
         if (victimid == null) {
-            const query = 'INSERT INTO logs (user_id, activity) VALUES (?, ?)';
+            const query = 'INSERT INTO log (user_id, activity) VALUES (?, ?)';
             await connection.execute(query, [userid, activity]);
         }
         else {
-            const query = 'INSERT INTO logs (user_id, victim_id, activity) VALUES (?, ?, ?)';
+            const query = 'INSERT INTO log (user_id, victim_id, activity) VALUES (?, ?, ?)';
             await connection.execute(query, [userid, victimid, activity]);
         }
         await connection.commit();
@@ -301,6 +305,7 @@ async function addLog(userid, victimid = null, activity) {
         if (connection) {
             await connection.rollback();
         }
+        throw error;
     }
     finally {
         if (connection) connection.release();
@@ -309,7 +314,7 @@ async function addLog(userid, victimid = null, activity) {
 
 async function getLogs() {
     try {
-        const query = 'SELECT who.username, victim.username, logs.activity, logs.happened_at FROM logs INNER JOIN users who ON logs.user_id = who.user_id LEFT JOIN users victim ON logs.user_id = victim.user_id';
+        const query = 'SELECT who.username, victim.username AS victim, log.activity, log.happened_at FROM log INNER JOIN users who ON log.user_id = who.user_id LEFT JOIN users victim ON log.victim_id = victim.user_id';
         const [rows] = await pool.execute(query);
         return rows;
     } catch (error) {

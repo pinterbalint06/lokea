@@ -115,9 +115,7 @@ router.post('/updateUserFromAdmin', auth.checkAuth, auth.checkRole("ADMIN"),
             .isLength({ min: 1, max: 20 }).withMessage("Felhasználónév hossza nem megfelelő!"),
         body("email")
             .isEmail().withMessage("Hibás email formátum")
-            .isLength({ min: 5, max: 250 }).withMessage("Email max 250 karakter!"),
-        body("deleted")
-            .custom(value => value === true).withMessage("Inaktiv felhasználót nem frissithetsz!")
+            .isLength({ min: 5, max: 250 }).withMessage("Email max 250 karakter!")
     ],
     async (request, response) => {
         try {
@@ -136,11 +134,11 @@ router.post('/updateUserFromAdmin', auth.checkAuth, auth.checkRole("ADMIN"),
                 else {
                     let success = await database.updateUserByAdmin(user_id, username, email, role, is_2fa);
                     if (success == 1) {
-                        await database.addLog(request.session.user_id, user_id, 'User update (A)');
+                        await database.addLog(request.session.userid, 'User update (A)' , user_id);
                         response.status(204).json({ message: "Sikeres felhasználófrissités!" });
                     }
                     else {
-                        response.status(404).json({ message: "Nincs ilyen felhasználó!" });
+                        response.status(404).json({ message: "Nincs ilyen felhasználó, vagy a felhasználó inaktiv már!" });
                     }
                 }
             }
@@ -172,7 +170,7 @@ router.post('/userToInactive', auth.checkAuth, auth.checkRole("ADMIN"),
                     response.status(200).json({ message: "A felhasználó már inaktiv volt!" })
                 }
                 else {
-                    await database.addLog(request.session.user_id, userId, 'User delete (A)');
+                    await database.addLog(request.session.userid, 'User delete (A)', userId);
                     response.status(204).end();
                 }
             }
@@ -214,7 +212,7 @@ router.post('/updateProfilePicFromAdmin', auth.checkAuth, auth.checkRole("ADMIN"
                 let lastPfpPath = path.join(__dirname, '..', lastPfp);
                 await fs.unlink(lastPfpPath).catch(() => { });
             }
-            await database.addLog(request.session.user_id, user_id, 'Profile picture update (A)');
+            await database.addLog(request.session.userid, 'Profile picture update (A)', user_id);
             response.status(201).json({ success: true, message: "Profilkép frissítve!" });
         }
     } catch (error) {
@@ -242,7 +240,7 @@ router.post('/deleteProfilePicFromAdmin', auth.checkAuth, auth.checkRole("ADMIN"
                 console.log("a kép nincs a szerveren!" + error);
             }
             response.status(201).json({ success: true, message: "Profilkép törölve!" });
-            await database.addLog(request.session.user_id, user_id, 'Profile picture delete (A)');
+            await database.addLog(request.session.userid, 'Profile picture delete (A)', user_id);
         }
     } catch (error) {
         response.status(500).json({ error: error });
@@ -261,7 +259,7 @@ router.get('/getLogs', auth.checkAuth, auth.checkRole("ADMIN"), async (request, 
 router.post('/addLog', auth.checkAuth, async (request, response) => {
     try {
         let {victimid, activity} = request.body;
-        await database.addLog(request.session.user_id, victimid, activity);
+        await database.addLog(request.session.userid, activity, victimid);
         response.status(200).send();
     } catch (error) {
         response.status(500).json({ error: error });
