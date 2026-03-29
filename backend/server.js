@@ -97,7 +97,7 @@ app.use('/api', endpoints);
 const mapCreationEndpoints = require('./api/mapcreator/mapcreator.js');
 app.use('/api/map-creator', mapCreationEndpoints);
 //!game maps API endpoints
-const gameMapsEndpoints = require('./api/gameMaps.js');
+const gameMapsEndpoints = require('./api/gamemaps/gamemaps.routes.js');
 app.use('/api/game-maps', gameMapsEndpoints);
 app.use('/', router);
 

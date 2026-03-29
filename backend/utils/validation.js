@@ -1,5 +1,5 @@
-const AppError = require("../../../../utils/AppError.js");
-const { deleteFile } = require("../../../../utils/fileUtils.js");
+const AppError = require("./AppError.js");
+const { deleteFile } = require("./fileUtils.js");
 
 const validateRequest = (schema) => async (request, response, next) => {
     try {
@@ -16,6 +16,16 @@ const validateRequest = (schema) => async (request, response, next) => {
         if (schema.params) {
             request.params = await schema.params.validateAsync(
                 request.params,
+                {
+                    abortEarly: true,
+                    stripUnknown: true,
+                    convert: true
+                }
+            );
+        }
+        if (schema.query) {
+            request.query = await schema.query.validateAsync(
+                request.query,
                 {
                     abortEarly: true,
                     stripUnknown: true,

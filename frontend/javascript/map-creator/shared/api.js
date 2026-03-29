@@ -65,7 +65,7 @@ export async function savePoint({
         await handleResponseError(response);
     }
 
-    let data = await response.json();
+    let data = isNew ? await response.json() : {};
 
     return data;
 }
@@ -187,8 +187,6 @@ export async function updateConnectionDirections(connectionId, directions) {
     if (!response.ok) {
         await handleResponseError(response);
     }
-
-    let data = await response.json();
 
     return {
         connection_id: connectionId,

@@ -2,15 +2,13 @@ const express = require("express");
 const router = express.Router();
 const pointsController = require("./points.controller.js");
 const schemas = require("./points.schemas.js");
-const { checkAuth } = require("../../../auth.js");
-const { validateRequest } = require("../shared/middlewares/validation.js");
+const { validateRequest } = require('../../../utils/validation.js');
 const upload = require("../shared/middlewares/uploadConfig.js");
 
 // !Endpoints:
 // ?GET /api/map-creator/maps/:mapID/points
 router.get(
     "/maps/:mapID/points",
-    checkAuth,
     validateRequest(schemas.getPointsSchema),
     pointsController.getPoints
 );
@@ -18,7 +16,6 @@ router.get(
 //?PUT /api/map-creator/points/:pointID
 router.put(
     "/points/:pointID",
-    checkAuth,
     upload.single("equirectangularImage"),
     validateRequest(schemas.updatePointSchema),
     pointsController.updatePoint
@@ -27,7 +24,6 @@ router.put(
 // ?POST /api/map-creator/maps/:mapID/points
 router.post(
     "/maps/:mapID/points",
-    checkAuth,
     upload.single("equirectangularImage"),
     validateRequest(schemas.createPointSchema),
     pointsController.createPoint
@@ -36,7 +32,6 @@ router.post(
 //?DELETE /api/map-creator/points/:pointID
 router.delete(
     "/points/:pointID",
-    checkAuth,
     validateRequest(schemas.deletePointSchema),
     pointsController.deletePoint
 );

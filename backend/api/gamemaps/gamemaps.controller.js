@@ -1,0 +1,62 @@
+const gamemapsService = require("./gamemaps.service.js");
+const { UPLOAD_ROOT } = require("../../config/mapStorage.js");
+
+async function getPointImage(request, response, next) {
+    try {
+        const { pointID } = request.params;
+        const { resolution } = request.query;
+
+        const { imagePath, width, height } = await gamemapsService.getPointImageDetails(pointID, resolution);
+
+        response.set("Access-Control-Expose-Headers", "imageWidth, imageHeight");
+        response.set("imageWidth", width);
+        response.set("imageHeight", height);
+
+        response.sendFile(imagePath, { root: UPLOAD_ROOT }, function (err) {
+            if (err && !response.headersSent) {
+                return response.status(404).json({ error: "A fájl nem létezik vagy helytelen" });
+            }
+        });
+    } catch (error) {
+        next(error);
+    }
+}
+
+async function getMapImage(request, response, next) {
+    try {
+        const { mapID } = request.params;
+        const { resolution } = request.query;
+
+        const { imagePath, width, height } = await gamemapsService.getMapImageDetails(mapID, resolution);
+
+        response.set("Access-Control-Expose-Headers", "imageWidth, imageHeight");
+        response.set("imageWidth", width);
+        response.set("imageHeight", height);
+
+        response.sendFile(imagePath, { root: UPLOAD_ROOT }, function (err) {
+            if (err && !response.headersSent) {
+                return response.status(404).json({ error: "A fájl nem létezik vagy helytelen" });
+            }
+        });
+    } catch (error) {
+        next(error);
+    }
+}
+
+async function getPointConnections(request, response, next) {
+    try {
+        const { pointID } = request.params;
+
+        const connections = await gamemapsService.getPointConnections(pointID);
+
+        response.status(200).json({ connections });
+    } catch (error) {
+        next(error);
+    }
+}
+
+module.exports = {
+    getPointImage,
+    getMapImage,
+    getPointConnections
+};

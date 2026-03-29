@@ -3,14 +3,15 @@ const router = express.Router();
 const multer = require("multer");
 const { deleteFile } = require("../../utils/fileUtils.js");
 const AppError = require("../../utils/AppError.js");
+const { checkAuth } = require("../../auth.js");
 
 const mapsEndpoints = require("./maps/maps.routes.js");
 const pointsEndpoints = require("./points/points.routes.js");
 const connectionsEndpoints = require("./connections/connections.route.js");
 
-router.use("/", mapsEndpoints);
-router.use("/", pointsEndpoints);
-router.use("/", connectionsEndpoints);
+router.use("/", checkAuth, mapsEndpoints);
+router.use("/", checkAuth, pointsEndpoints);
+router.use("/", checkAuth, connectionsEndpoints);
 
 router.use(async (error, request, response, next) => {
     let statusCode = 500;
