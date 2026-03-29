@@ -134,7 +134,7 @@ router.post('/updateUserFromAdmin', auth.checkAuth, auth.checkRole("ADMIN"),
                 else {
                     let success = await database.updateUserByAdmin(user_id, username, email, role, is_2fa);
                     if (success == 1) {
-                        await database.addLog(request.session.userid, 'User update (A)' , user_id);
+                        await database.addLog(request.session.userid, 'User update (A)', user_id);
                         response.status(204).json({ message: "Sikeres felhasználófrissités!" });
                     }
                     else {
@@ -258,7 +258,7 @@ router.get('/getLogs', auth.checkAuth, auth.checkRole("ADMIN"), async (request, 
 
 router.post('/addLog', auth.checkAuth, async (request, response) => {
     try {
-        let {victimid, activity} = request.body;
+        let { victimid, activity } = request.body;
         await database.addLog(request.session.userid, activity, victimid);
         response.status(200).send();
     } catch (error) {
@@ -266,6 +266,14 @@ router.post('/addLog', auth.checkAuth, async (request, response) => {
     }
 })
 
-
+router.post('/sortedLogs', auth.checkAuth, auth.checkRole("ADMIN"), async (request, response) => {
+    try {
+        let { username, periodFrom, periodTo, roles, activities } = request.body;
+        let logs = await database.sortedLogs(username, periodFrom, periodTo, roles, activities);
+        response.status(200).json({sortedLogs: logs});
+    } catch (error) {
+        response.status(500).json({ error: error });
+    }
+})
 
 module.exports = router;

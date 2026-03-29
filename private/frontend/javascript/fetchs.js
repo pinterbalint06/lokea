@@ -37,6 +37,8 @@ export async function sortedUser() {
     return data;
 }
 
+//TODO - atirni usersDisplay.jsbe
+
 export async function getProfilePicture(route) {
     try {
         let response = await fetch(`/api/getProfilePic?route=${route}`);
@@ -189,5 +191,28 @@ export async function deleteProfilePicture(id) {
         }
     } catch (error) {
         console.log(`hálózati hiba: ${error}`);
+    }
+}
+
+export async function sortedLogs(variables) {
+    let { username, periodFrom, periodTo, roles, activities } = variables;
+    try {
+        let response = await fetch("/api/admin/sortedLogs", {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json"
+            },
+            body: JSON.stringify({
+                username,
+                periodFrom,
+                periodTo,
+                roles,
+                activities
+            })
+        });
+        let data = await response.json();
+        return data.sortedLogs;
+    } catch (error) {
+        console.error(error.message);
     }
 }

@@ -322,6 +322,56 @@ async function getLogs() {
         throw error;
     }
 }
+
+async function sortedLogs(username, periodFrom, periodTo, roles, activities) {
+    try {
+        let query = `SELECT who.username, victim.username AS victim, log.activity, log.happened_at FROM log LEFT JOIN users AS who ON log.user_id = who.user_id LEFT JOIN users AS victim ON log.victim_id = victim.user_id WHERE 1=1`;
+
+        const params = [];
+
+        if (username && username.trim() !== "") {
+            query += ` AND (who.username LIKE ? OR victim.username LIKE ?)`;
+            const searchStr = `%${username}%`;
+            params.push(searchStr, searchStr);
+        }
+
+        if (periodFrom) {
+            query += ` AND log.happened_at >= ?`;
+            params.push(periodFrom);
+        }
+        if (periodTo) {
+            query += ` AND log.happened_at <= ?`;
+            params.push(periodTo);
+        }
+
+        if (roles && roles.length > 0) {
+            const placeholders = roles.map(() => '?').join(',');
+            query += ` AND who.role IN (${placeholders})`;
+            params.push(...roles);
+        }
+
+        if (activities && activities.length > 0) {
+            let likeStrings = [];
+            for (let i = 0; i < activities.length; i++) {
+                likeStrings.push("log.activity LIKE ?");
+            }
+            query += " AND (" + likeStrings.join(" OR ") + ")";
+            for (let i = 0; i < activities.length; i++) {
+                params.push("%" + activities[i] + "%");
+            }
+        }
+
+        query += ` ORDER BY log.happened_at DESC`;
+        console.log(query, params);
+
+        const [rows] = await pool.execute(query, params);
+        return rows;
+
+    } catch (error) {
+        console.error("Database error:", error);
+        throw error;
+    }
+}
 //!Export
 module.exports = {
     newUserFromAdmin,
@@ -334,5 +384,6 @@ module.exports = {
     uploadProfilePic,
     deleteProfilePic,
     addLog,
-    getLogs
+    getLogs,
+    sortedLogs
 };
