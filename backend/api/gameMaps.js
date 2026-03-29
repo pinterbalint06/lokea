@@ -75,7 +75,6 @@ router.get("/points/:pointID/image", async (request, response) => {
             if (err) {
                 if (!response.headersSent) {
                     return response.status(404).json({
-                        success: false,
                         error: "A fájl nem létezik vagy helytelen"
                     });
                 }
@@ -92,7 +91,6 @@ router.get("/points/:pointID/image", async (request, response) => {
             statusCode = 500;
         }
         response.status(statusCode).json({
-            success: false,
             error: message
         });
     }
@@ -143,7 +141,6 @@ router.get("/maps/:mapID/image", async (request, response) => {
             if (err) {
                 if (!response.headersSent) {
                     return response.status(404).json({
-                        success: false,
                         error: "A fájl nem létezik vagy helytelen"
                     });
                 }
@@ -160,7 +157,6 @@ router.get("/maps/:mapID/image", async (request, response) => {
             statusCode = 500;
         }
         response.status(statusCode).json({
-            success: false,
             error: message
         });
     }
@@ -181,7 +177,6 @@ router.get("/points/:pointID/connections", async (request, response) => {
 
 
         response.status(200).json({
-            success: true,
             connections: connectionList
         });
     } catch (error) {
@@ -195,7 +190,6 @@ router.get("/points/:pointID/connections", async (request, response) => {
             statusCode = 500;
         }
         response.status(statusCode).json({
-            success: false,
             error: message
         });
     }

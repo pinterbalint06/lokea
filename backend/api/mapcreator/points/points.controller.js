@@ -8,7 +8,6 @@ async function getPoints(request, response, next) {
         const points = await pointsService.fetchPoints(userId, mapID);
 
         response.status(200).json({
-            success: true,
             points
         });
     } catch (error) {
@@ -25,10 +24,7 @@ async function updatePoint(request, response, next) {
 
         await pointsService.updatePoint(userId, pointID, pointData, file);
 
-        response.status(200).json({
-            success: true,
-            message: "Pont sikeresen frissítve!"
-        });
+        response.status(204).send();
     } catch (error) {
         next(error);
     }
@@ -44,7 +40,6 @@ async function createPoint(request, response, next) {
         const newPointId = await pointsService.createPoint(userId, mapID, pointData, file);
 
         response.status(201).json({
-            success: true,
             pointId: newPointId
         });
     } catch (error) {

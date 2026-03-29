@@ -12,7 +12,6 @@ async function testInvalidIDs(requestCallback, expectedErrorMessage, withNulls =
         expect(mockConnection.beginTransaction).not.toHaveBeenCalled();
 
         expect({ id, status: response.statusCode }).toEqual({ id, status: 400 });
-        expect({ id, success: response.body.success }).toEqual({ id, success: false });
         expect({ id, error: response.body.error }).toEqual({ id, error: expectedErrorMessage });
     }
 }
@@ -76,7 +75,6 @@ function suppressConsoleErrors() {
 
 function expectErrorResponse(response, statusCode = 500, errorMessage = "Váratlan hiba történt!") {
     expect(response.statusCode).toBe(statusCode);
-    expect(response.body.success).toBe(false);
     expect(response.body.error).toBe(errorMessage);
 }
 

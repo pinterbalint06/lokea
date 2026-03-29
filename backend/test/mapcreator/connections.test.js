@@ -72,7 +72,6 @@ describe("Map Creator API - Connection Endpoints - /api/map-creator/", () => {
 
             expect(response.statusCode).toBe(403);
             expect(response.type).toEqual(expect.stringContaining("json"));
-            expect(response.body).toHaveProperty("success", false);
             expect(response.body).toHaveProperty("error", "Nincs hozzáférése ehhez a pályához");
         });
 
@@ -81,7 +80,6 @@ describe("Map Creator API - Connection Endpoints - /api/map-creator/", () => {
 
             expect(response.statusCode).toBe(200);
             expect(response.type).toEqual(expect.stringContaining("json"));
-            expect(response.body).toHaveProperty("success", true);
             expect(response.body).toHaveProperty("connections");
             expect(response.body.connections).toEqual(mockConnectionsData);
             expect(response.body.connections.length).toBe(mockConnectionsData.length);
@@ -93,7 +91,6 @@ describe("Map Creator API - Connection Endpoints - /api/map-creator/", () => {
             const response = await makeGetRequest();
 
             expect(response.statusCode).toBe(200);
-            expect(response.body).toHaveProperty("success", true);
             expect(response.body).toHaveProperty("connections");
             expect(response.body.connections).toEqual([]);
         });
@@ -143,7 +140,6 @@ describe("Map Creator API - Connection Endpoints - /api/map-creator/", () => {
             const response = await makePutRequest({ directionStartToEnd: undefined, directionEndToStart: undefined });
 
             expect(response.statusCode).toBe(400);
-            expect(response.body.success).toBe(false);
             expect(response.body.error).toBe("Hiányzó adatok!");
         });
 
@@ -154,7 +150,6 @@ describe("Map Creator API - Connection Endpoints - /api/map-creator/", () => {
 
             expect(mockConnection.beginTransaction).not.toHaveBeenCalled();
             expect(response.statusCode).toBe(403);
-            expect(response.body.success).toBe(false);
             expect(response.body.error).toBe("Nincs hozzáférése ehhez a kapcsolathoz");
         });
 
@@ -162,7 +157,6 @@ describe("Map Creator API - Connection Endpoints - /api/map-creator/", () => {
             const response = await makePutRequest({ directionStartToEnd: undefined, directionEndToStart: undefined, randomField: "randomValue" });
 
             expect(response.statusCode).toBe(400);
-            expect(response.body.success).toBe(false);
             expect(response.body.error).toBe("Nem adott meg módosítandó irányt!");
         });
 
@@ -187,7 +181,6 @@ describe("Map Creator API - Connection Endpoints - /api/map-creator/", () => {
             const response = await makePutRequest();
 
             expect(response.statusCode).toBe(400);
-            expect(response.body.success).toBe(false);
             expect(response.body.error).toBe("Csak térképek közötti kapcsolatok irányát lehet módosítani!");
         });
 
@@ -198,9 +191,7 @@ describe("Map Creator API - Connection Endpoints - /api/map-creator/", () => {
             expect(database.isConnectionCrossMap).toHaveBeenCalledWith(mockConnection, defaults.id);
             expect(database.updateConnectionDirections).toHaveBeenCalledWith(mockConnection, defaults.id, defaults.directionStartToEnd, null);
 
-            expect(response.statusCode).toBe(200);
-            expect(response.body.success).toBe(true);
-            expect(response.body.message).toBe("Kapcsolat sikeresen frissítve!");
+            expect(response.statusCode).toBe(204);
         });
 
         it("Should respond with 200 if only directionEndToStart was updated", async () => {
@@ -210,9 +201,7 @@ describe("Map Creator API - Connection Endpoints - /api/map-creator/", () => {
             expect(database.isConnectionCrossMap).toHaveBeenCalledWith(mockConnection, defaults.id);
             expect(database.updateConnectionDirections).toHaveBeenCalledWith(mockConnection, defaults.id, null, defaults.directionEndToStart);
 
-            expect(response.statusCode).toBe(200);
-            expect(response.body.success).toBe(true);
-            expect(response.body.message).toBe("Kapcsolat sikeresen frissítve!");
+            expect(response.statusCode).toBe(204);
         });
 
         it("Should respond with 200 if both directions were updated", async () => {
@@ -222,9 +211,7 @@ describe("Map Creator API - Connection Endpoints - /api/map-creator/", () => {
             expect(database.isConnectionCrossMap).toHaveBeenCalledWith(mockConnection, defaults.id);
             expect(database.updateConnectionDirections).toHaveBeenCalledWith(mockConnection, defaults.id, defaults.directionStartToEnd, defaults.directionEndToStart);
 
-            expect(response.statusCode).toBe(200);
-            expect(response.body.success).toBe(true);
-            expect(response.body.message).toBe("Kapcsolat sikeresen frissítve!");
+            expect(response.statusCode).toBe(204);
         });
 
         describe("Server Errors", () => {
@@ -342,7 +329,6 @@ describe("Map Creator API - Connection Endpoints - /api/map-creator/", () => {
             const response = await makePostRequest({ startPointId: undefined, endPointId: undefined, directionStartToEnd: undefined, directionEndToStart: undefined });
 
             expect(response.statusCode).toBe(400);
-            expect(response.body.success).toBe(false);
             expect(response.body.error).toBe("Hiányzó adatok!");
         });
 
@@ -350,7 +336,6 @@ describe("Map Creator API - Connection Endpoints - /api/map-creator/", () => {
             const response = await makePostRequest({ startPointId: defaults.endPointId, endPointId: defaults.startPointId });
 
             expect(response.statusCode).toBe(400);
-            expect(response.body.success).toBe(false);
             expect(response.body.error).toBe("A kisebbik id-val rendelkező pontnak kell a kezdőpontnak lennie!");
         });
 
@@ -385,7 +370,6 @@ describe("Map Creator API - Connection Endpoints - /api/map-creator/", () => {
 
             expect(mockConnection.beginTransaction).not.toHaveBeenCalled();
             expect(response.statusCode).toBe(403);
-            expect(response.body.success).toBe(false);
             expect(response.body.error).toBe("Nincs hozzáférése ehhez a pályához");
         });
 
@@ -399,7 +383,6 @@ describe("Map Creator API - Connection Endpoints - /api/map-creator/", () => {
                 const response = await makePostRequest(overrides);
 
                 expect(response.statusCode).toBe(400);
-                expect(response.body.success).toBe(false);
                 expect(response.body.error).toBe(errorMsg);
             });
         });
@@ -409,7 +392,6 @@ describe("Map Creator API - Connection Endpoints - /api/map-creator/", () => {
 
             expect(mockConnection.beginTransaction).not.toHaveBeenCalled();
             expect(response.statusCode).toBe(400);
-            expect(response.body.success).toBe(false);
             expect(response.body.error).toBe("A kezdőpont és a végpont nem lehet ugyanaz!");
         });
 
@@ -422,7 +404,6 @@ describe("Map Creator API - Connection Endpoints - /api/map-creator/", () => {
             expectRollback(mockConnection);
 
             expect(response.statusCode).toBe(400);
-            expect(response.body.success).toBe(false);
             expect(response.body.error).toBe("A megadott pontok nem ugyanahhoz a pályához tartoznak!");
         });
 
@@ -435,7 +416,6 @@ describe("Map Creator API - Connection Endpoints - /api/map-creator/", () => {
             expectRollback(mockConnection);
 
             expect(response.statusCode).toBe(400);
-            expect(response.body.success).toBe(false);
             expect(response.body.error).toBe("A megadott pontok már össze vannak kapcsolva!");
         });
 
@@ -446,9 +426,7 @@ describe("Map Creator API - Connection Endpoints - /api/map-creator/", () => {
             expectSuccessfulTransaction(mockConnection);
 
             expect(response.statusCode).toBe(201);
-            expect(response.body.success).toBe(true);
             expect(response.body).toHaveProperty("connectionId", newConnectionId);
-            expect(response.body.message).toBe("Kapcsolat sikeresen mentve!");
         });
 
         it("Should respond with 201 if connection was created successfully offmap connection", async () => {
@@ -460,9 +438,7 @@ describe("Map Creator API - Connection Endpoints - /api/map-creator/", () => {
             expectSuccessfulTransaction(mockConnection);
 
             expect(response.statusCode).toBe(201);
-            expect(response.body.success).toBe(true);
             expect(response.body).toHaveProperty("connectionId", newConnectionId);
-            expect(response.body.message).toBe("Kapcsolat sikeresen mentve!");
         });
 
         describe("Server Errors", () => {
@@ -551,7 +527,6 @@ describe("Map Creator API - Connection Endpoints - /api/map-creator/", () => {
 
             expect(mockConnection.beginTransaction).not.toHaveBeenCalled();
             expect(response.statusCode).toBe(403);
-            expect(response.body.success).toBe(false);
             expect(response.body.error).toBe("Nincs hozzáférése ehhez a kapcsolathoz");
         });
 

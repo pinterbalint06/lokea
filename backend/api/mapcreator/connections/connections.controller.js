@@ -8,7 +8,6 @@ async function getConnections(request, response, next) {
         const connections = await connectionsService.fetchConnections(userId, gameMapID);
 
         response.status(200).json({
-            success: true,
             connections
         });
     } catch (error) {
@@ -24,10 +23,7 @@ async function updateConnection(request, response, next) {
 
         await connectionsService.updateConnection(userId, connectionID, directionStartToEnd, directionEndToStart);
 
-        response.status(200).json({
-            success: true,
-            message: "Kapcsolat sikeresen frissítve!"
-        });
+        response.status(204).send();
     } catch (error) {
         next(error);
     }
@@ -42,9 +38,7 @@ async function createConnection(request, response, next) {
         const newConnectionId = await connectionsService.createConnection(userId, gameMapID, startPointId, endPointId, directionStartToEnd, directionEndToStart);
 
         response.status(201).json({
-            success: true,
-            connectionId: newConnectionId,
-            message: "Kapcsolat sikeresen mentve!"
+            connectionId: newConnectionId
         });
     } catch (error) {
         next(error);

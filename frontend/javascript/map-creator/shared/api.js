@@ -1,4 +1,4 @@
-import { fetchAndValidate, handleResponseError, validateJsonResponse } from "../../libs/network/fetch.js";
+import { fetchAndValidate, handleResponseError } from "../../libs/network/fetch.js";
 
 export async function saveNewMap(mapFile, gameMapID, mapTitle) {
     let formData = new FormData();
@@ -15,7 +15,6 @@ export async function saveNewMap(mapFile, gameMapID, mapTitle) {
     }
 
     let data = await response.json();
-    validateJsonResponse(data);
 
     return {
         mapId: data.mapId
@@ -67,7 +66,6 @@ export async function savePoint({
     }
 
     let data = await response.json();
-    validateJsonResponse(data, "Sikertelen mentés!");
 
     return data;
 }
@@ -105,7 +103,6 @@ export async function renameMap(mapId, title) {
     }
 
     let data = await response.json();
-    validateJsonResponse(data, "Sikertelen átnevezés!");
 
     return {
         title: data.title
@@ -133,7 +130,6 @@ export async function saveConnection(gameMapID, connection) {
     }
 
     let data = await response.json();
-    validateJsonResponse(data, "Sikertelen mentés!");
 
     return {
         connection_id: data.connectionId,
@@ -193,7 +189,6 @@ export async function updateConnectionDirections(connectionId, directions) {
     }
 
     let data = await response.json();
-    validateJsonResponse(data, "Sikertelen frissítés!");
 
     return {
         connection_id: connectionId,

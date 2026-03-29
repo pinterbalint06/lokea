@@ -42,11 +42,8 @@ router.use(async (error, request, response, next) => {
     }
 
     response.status(statusCode).json({
-        success: false,
         error: errorMessage
     });
 });
-
-// TODOp: success true falseok eltávolítása a státuszkód alapján lehet tudni
 
 module.exports = router;

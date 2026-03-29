@@ -8,7 +8,6 @@ async function getMaps(request, response, next) {
         const maps = await mapsService.fetchMaps(userId, gameMapID);
 
         response.status(200).json({
-            success: true,
             maps
         });
     } catch (error) {
@@ -25,7 +24,6 @@ async function updateMap(request, response, next) {
         const newTitle = await mapsService.updateMap(userId, mapID, title);
 
         response.status(200).json({
-            success: true,
             title: newTitle
         });
     } catch (error) {
@@ -43,11 +41,8 @@ async function createMap(request, response, next) {
         const newMapId = await mapsService.createMap(userId, gameMapID, title, file);
 
         response.status(201).json({
-            success: true,
-            mapId: newMapId,
-            message: "Térkép sikeresen mentve!"
+            mapId: newMapId
         });
-        // TODOp: itt a message fölösleges frontend döntse el mit ír ki
     } catch (error) {
         next(error);
     }

@@ -62,7 +62,6 @@ describe("Map Creator API - Point Endpoints - /api/map-creator/", () => {
 
             expect(response.statusCode).toBe(200);
             expect(response.type).toEqual(expect.stringContaining("json"));
-            expect(response.body).toHaveProperty("success", true);
             expect(response.body).toHaveProperty("points");
             for (const point of mockPoints) {
                 expect(response.body.points).toContainEqual(point);
@@ -76,7 +75,6 @@ describe("Map Creator API - Point Endpoints - /api/map-creator/", () => {
 
             expect(response.statusCode).toBe(200);
             expect(response.type).toEqual(expect.stringContaining("json"));
-            expect(response.body).toHaveProperty("success", true);
             expect(response.body).toHaveProperty("points", []);
         });
 
@@ -88,7 +86,6 @@ describe("Map Creator API - Point Endpoints - /api/map-creator/", () => {
 
             expect(response.statusCode).toBe(403);
             expect(response.type).toEqual(expect.stringContaining("json"));
-            expect(response.body).toHaveProperty("success", false);
             expect(response.body).toHaveProperty("error", "Nincs hozzáférése ehhez a térképhez");
         });
 
@@ -178,7 +175,6 @@ describe("Map Creator API - Point Endpoints - /api/map-creator/", () => {
 
             expect(response.statusCode).toBe(403);
             expect(response.type).toEqual(expect.stringContaining("json"));
-            expect(response.body).toHaveProperty("success", false);
             expect(response.body).toHaveProperty("error", "Nincs hozzáférése ehhez a ponthoz");
         });
 
@@ -188,7 +184,6 @@ describe("Map Creator API - Point Endpoints - /api/map-creator/", () => {
             const response = await makePutRequest();
 
             expect(response.statusCode).toBe(404);
-            expect(response.body).toHaveProperty("success", false);
             expect(response.body).toHaveProperty("error", "A pont nem létezik");
         });
 
@@ -196,7 +191,6 @@ describe("Map Creator API - Point Endpoints - /api/map-creator/", () => {
             const response = await makePutRequest({ u: undefined, v: undefined, northDirection: undefined, file: undefined });
 
             expect(response.statusCode).toBe(400);
-            expect(response.body.success).toBe(false);
             expect(response.body.error).toBe("Hiányzó adatok!");
         });
 
@@ -211,7 +205,6 @@ describe("Map Creator API - Point Endpoints - /api/map-creator/", () => {
                 const response = await makePutRequest(overrides);
 
                 expect(response.statusCode).toBe(400);
-                expect(response.body.success).toBe(false);
                 expect(response.body.error).toBe(errorMsg);
             });
         });
@@ -221,7 +214,6 @@ describe("Map Creator API - Point Endpoints - /api/map-creator/", () => {
                 const response = await makePutRequest({ [UorV]: invalidUV });
 
                 expect(response.statusCode).toBe(400);
-                expect(response.body.success).toBe(false);
                 expect(response.body.error).toBe("Helytelen koordináták!");
             }
         });
@@ -230,7 +222,6 @@ describe("Map Creator API - Point Endpoints - /api/map-creator/", () => {
             const response = await makePutRequest({ northDirection: invalidDirection });
 
             expect(response.statusCode).toBe(400);
-            expect(response.body.success).toBe(false);
             expect(response.body.error).toBe("Helytelen északirány!");
         });
 
@@ -243,7 +234,6 @@ describe("Map Creator API - Point Endpoints - /api/map-creator/", () => {
             expect(database.getPointOnMapByCoordinates).toHaveBeenCalledWith(mockConnection, mapId, defaults.u, defaults.v);
 
             expect(response.statusCode).toBe(409);
-            expect(response.body.success).toBe(false);
             expect(response.body.error).toBe("Ezen a térképen már létezik pont ezeken a koordinátákon!");
         });
 
@@ -257,9 +247,7 @@ describe("Map Creator API - Point Endpoints - /api/map-creator/", () => {
 
             expect(database.getPointImage).not.toHaveBeenCalled();
 
-            expect(response.statusCode).toBe(200);
-            expect(response.body.success).toBe(true);
-            expect(response.body.message).toBe("Pont sikeresen frissítve!");
+            expect(response.statusCode).toBe(204);
         });
 
         it("Should respond with 200 and only change coordinates if that is different", async () => {
@@ -272,9 +260,7 @@ describe("Map Creator API - Point Endpoints - /api/map-creator/", () => {
 
             expect(database.getPointImage).not.toHaveBeenCalled();
 
-            expect(response.statusCode).toBe(200);
-            expect(response.body.success).toBe(true);
-            expect(response.body.message).toBe("Pont sikeresen frissítve!");
+            expect(response.statusCode).toBe(204);
         });
 
         it("Should respond with 200 and only change north direction if that is different", async () => {
@@ -287,9 +273,7 @@ describe("Map Creator API - Point Endpoints - /api/map-creator/", () => {
 
             expect(database.getPointImage).not.toHaveBeenCalled();
 
-            expect(response.statusCode).toBe(200);
-            expect(response.body.success).toBe(true);
-            expect(response.body.message).toBe("Pont sikeresen frissítve!");
+            expect(response.statusCode).toBe(204);
         });
 
         it("Should respond with 200 and still update coordinates even if only u is different", async () => {
@@ -302,9 +286,7 @@ describe("Map Creator API - Point Endpoints - /api/map-creator/", () => {
 
             expect(database.getPointImage).not.toHaveBeenCalled();
 
-            expect(response.statusCode).toBe(200);
-            expect(response.body.success).toBe(true);
-            expect(response.body.message).toBe("Pont sikeresen frissítve!");
+            expect(response.statusCode).toBe(204);
         });
 
         it("Should respond with 200 and still update coordinates even if only v is different", async () => {
@@ -317,9 +299,7 @@ describe("Map Creator API - Point Endpoints - /api/map-creator/", () => {
 
             expect(database.getPointImage).not.toHaveBeenCalled();
 
-            expect(response.statusCode).toBe(200);
-            expect(response.body.success).toBe(true);
-            expect(response.body.message).toBe("Pont sikeresen frissítve!");
+            expect(response.statusCode).toBe(204);
         });
 
         it("Should respond with 200 even if everything matched db and no updates were done", async () => {
@@ -332,9 +312,7 @@ describe("Map Creator API - Point Endpoints - /api/map-creator/", () => {
 
             expect(database.getPointImage).not.toHaveBeenCalled();
 
-            expect(response.statusCode).toBe(200);
-            expect(response.body.success).toBe(true);
-            expect(response.body.message).toBe("Pont sikeresen frissítve!");
+            expect(response.statusCode).toBe(204);
         });
 
         it("Should respond with 200 and handle everything correctly with correct given data", async () => {
@@ -368,9 +346,7 @@ describe("Map Creator API - Point Endpoints - /api/map-creator/", () => {
 
             expectSuccessfulTransaction(mockConnection);
 
-            expect(response.statusCode).toBe(200);
-            expect(response.body.success).toBe(true);
-            expect(response.body.message).toBe("Pont sikeresen frissítve!");
+            expect(response.statusCode).toBe(204);
         });
 
         describe("Server Error Handling", () => {
@@ -482,9 +458,7 @@ describe("Map Creator API - Point Endpoints - /api/map-creator/", () => {
 
                 expectSuccessfulTransaction(mockConnection);
 
-                expect(response.statusCode).toBe(200);
-                expect(response.body.success).toBe(true);
-                expect(response.body.message).toBe("Pont sikeresen frissítve!");
+                expect(response.statusCode).toBe(204);
             });
 
             it("Should still respond with 200 if deleting temporary file failed but should console.error it", async () => {
@@ -501,9 +475,7 @@ describe("Map Creator API - Point Endpoints - /api/map-creator/", () => {
 
                 expectSuccessfulTransaction(mockConnection);
 
-                expect(response.statusCode).toBe(200);
-                expect(response.body.success).toBe(true);
-                expect(response.body.message).toBe("Pont sikeresen frissítve!");
+                expect(response.statusCode).toBe(204);
             });
 
             it("Should respond with 413 for images too large", async () => {
@@ -512,7 +484,6 @@ describe("Map Creator API - Point Endpoints - /api/map-creator/", () => {
                 const response = await makePutRequest({ file: tooBigFile });
 
                 expect(response.statusCode).toBe(413);
-                expect(response.body.success).toBe(false);
                 expect(response.body).toHaveProperty("error", "Túl nagy fájlméret! (Max 10MB)");
             });
 
@@ -520,7 +491,6 @@ describe("Map Creator API - Point Endpoints - /api/map-creator/", () => {
                 const response = await makePutRequest({ fileFieldName: "wrongFieldName" });
 
                 expect(response.statusCode).toBe(400);
-                expect(response.body.success).toBe(false);
                 expect(response.body).toHaveProperty("error", "Fájlfeltöltési hiba történt!");
             });
         });
@@ -570,7 +540,6 @@ describe("Map Creator API - Point Endpoints - /api/map-creator/", () => {
 
             expect(response.statusCode).toBe(403);
             expect(response.type).toEqual(expect.stringContaining("json"));
-            expect(response.body).toHaveProperty("success", false);
             expect(response.body).toHaveProperty("error", "Nincs hozzáférése ehhez a térképhez");
         });
 
@@ -578,7 +547,6 @@ describe("Map Creator API - Point Endpoints - /api/map-creator/", () => {
             const response = await makePostRequest({ u: undefined, v: undefined, northDirection: undefined, file: undefined });
 
             expect(response.statusCode).toBe(400);
-            expect(response.body.success).toBe(false);
             expect(response.body.error).toBe("Hiányzó adatok!");
         });
 
@@ -593,7 +561,6 @@ describe("Map Creator API - Point Endpoints - /api/map-creator/", () => {
                 const response = await makePostRequest(overrides);
 
                 expect(response.statusCode).toBe(400);
-                expect(response.body.success).toBe(false);
                 expect(response.body.error).toBe(errorMsg);
                 expect(deleteFile).toHaveBeenCalledWith(expect.any(String));
             });
@@ -604,7 +571,6 @@ describe("Map Creator API - Point Endpoints - /api/map-creator/", () => {
                 const response = await makePostRequest({ [UorV]: invalidUV });
 
                 expect(response.statusCode).toBe(400);
-                expect(response.body.success).toBe(false);
                 expect(response.body.error).toBe("Helytelen koordináták!");
                 expect(deleteFile).toHaveBeenCalledWith(expect.any(String));
             }
@@ -614,7 +580,6 @@ describe("Map Creator API - Point Endpoints - /api/map-creator/", () => {
             const response = await makePostRequest({ northDirection: invalidDirection });
 
             expect(response.statusCode).toBe(400);
-            expect(response.body.success).toBe(false);
             expect(response.body.error).toBe("Helytelen északirány!");
             expect(deleteFile).toHaveBeenCalledWith(expect.any(String));
         });
@@ -623,7 +588,6 @@ describe("Map Creator API - Point Endpoints - /api/map-creator/", () => {
             const response = await makePostRequest({ file: undefined });
 
             expect(response.statusCode).toBe(400);
-            expect(response.body.success).toBe(false);
             expect(response.body.error).toBe("Nem adott meg képet!");
             expect(deleteFile).not.toHaveBeenCalled();
         });
@@ -637,7 +601,6 @@ describe("Map Creator API - Point Endpoints - /api/map-creator/", () => {
             expect(database.getPointOnMapByCoordinates).toHaveBeenCalledWith(mockConnection, defaults.id, defaults.u, defaults.v);
 
             expect(response.statusCode).toBe(409);
-            expect(response.body.success).toBe(false);
             expect(response.body.error).toBe("Ezen a térképen már létezik pont ezeken a koordinátákon!");
             expect(deleteFile).toHaveBeenCalled();
         });
@@ -653,7 +616,6 @@ describe("Map Creator API - Point Endpoints - /api/map-creator/", () => {
             expectSuccessfulTransaction(mockConnection);
 
             expect(response.statusCode).toBe(201);
-            expect(response.body.success).toBe(true);
             expect(response.body).toHaveProperty("pointId", pointId);
             expect(deleteFile).toHaveBeenCalled();
         });
@@ -664,7 +626,6 @@ describe("Map Creator API - Point Endpoints - /api/map-creator/", () => {
             const response = await makePostRequest({ file: tooBigFile });
 
             expect(response.statusCode).toBe(413);
-            expect(response.body.success).toBe(false);
             expect(response.body).toHaveProperty("error", "Túl nagy fájlméret! (Max 10MB)");
         });
 
@@ -672,7 +633,6 @@ describe("Map Creator API - Point Endpoints - /api/map-creator/", () => {
             const response = await makePostRequest({ fileFieldName: "wrongFieldName" });
 
             expect(response.statusCode).toBe(400);
-            expect(response.body.success).toBe(false);
             expect(response.body).toHaveProperty("error", "Fájlfeltöltési hiba történt!");
         });
 
@@ -797,7 +757,6 @@ describe("Map Creator API - Point Endpoints - /api/map-creator/", () => {
                 expect(mockConnection.release).toHaveBeenCalled();
 
                 expect(response.statusCode).toBe(201);
-                expect(response.body.success).toBe(true);
                 expect(response.body).toHaveProperty("pointId", pointId);
                 expect(deleteFile).toHaveBeenCalled();
                 expect(console.error).toHaveBeenCalledWith(
@@ -862,7 +821,6 @@ describe("Map Creator API - Point Endpoints - /api/map-creator/", () => {
 
             expect(response.statusCode).toBe(403);
             expect(response.type).toEqual(expect.stringContaining("json"));
-            expect(response.body).toHaveProperty("success", false);
             expect(response.body).toHaveProperty("error", "Nincs hozzáférése ehhez a ponthoz");
         });
 
@@ -872,7 +830,6 @@ describe("Map Creator API - Point Endpoints - /api/map-creator/", () => {
             const response = await makeDeleteRequest();
 
             expect(response.statusCode).toBe(404);
-            expect(response.body).toHaveProperty("success", false);
             expect(response.body).toHaveProperty("error", "A pont nem létezik");
         });
 

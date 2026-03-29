@@ -57,7 +57,6 @@ describe("Map Creator API - Map Endpoints - /api/map-creator/", () => {
 
             expect(response.statusCode).toBe(200);
             expect(response.type).toEqual(expect.stringContaining("json"));
-            expect(response.body).toHaveProperty("success", true);
             expect(response.body).toHaveProperty("maps");
             expect(response.body.maps.length).toBe(2);
             expect(response.body.maps[0].id).toBe(mockMaps[0].id);
@@ -70,7 +69,6 @@ describe("Map Creator API - Map Endpoints - /api/map-creator/", () => {
             const response = await makeGetRequest();
 
             expect(response.statusCode).toBe(200);
-            expect(response.body).toHaveProperty("success", true);
             expect(response.body).toHaveProperty("maps");
             expect(response.body.maps).toEqual([]);
         });
@@ -82,7 +80,6 @@ describe("Map Creator API - Map Endpoints - /api/map-creator/", () => {
 
             expect(response.statusCode).toBe(403);
             expect(response.type).toEqual(expect.stringContaining("json"));
-            expect(response.body).toHaveProperty("success", false);
             expect(response.body).toHaveProperty("error", "Nincs hozzáférése ehhez a pályához");
         });
 
@@ -132,7 +129,6 @@ describe("Map Creator API - Map Endpoints - /api/map-creator/", () => {
             const response = await makePutRequest();
 
             expect(response.statusCode).toBe(403);
-            expect(response.body.success).toBe(false);
             expect(response.body.error).toBe("Nincs hozzáférése ehhez a térképhez");
         });
 
@@ -140,7 +136,6 @@ describe("Map Creator API - Map Endpoints - /api/map-creator/", () => {
             const response = await makePutRequest({ title: invalidTitle });
 
             expect(response.statusCode).toBe(400);
-            expect(response.body.success).toBe(false);
             expect(response.body.error).toBe("Helytelen térképnév!");
         });
 
@@ -148,7 +143,6 @@ describe("Map Creator API - Map Endpoints - /api/map-creator/", () => {
             const response = await makePutRequest({ title: "" });
 
             expect(response.statusCode).toBe(400);
-            expect(response.body.success).toBe(false);
             expect(response.body.error).toBe("Helytelen térképnév!");
         });
 
@@ -156,7 +150,6 @@ describe("Map Creator API - Map Endpoints - /api/map-creator/", () => {
             const response = await makePutRequest({ title: undefined });
 
             expect(response.statusCode).toBe(400);
-            expect(response.body.success).toBe(false);
             expect(response.body.error).toBe("Hiányzó adatok!");
         });
 
@@ -166,7 +159,6 @@ describe("Map Creator API - Map Endpoints - /api/map-creator/", () => {
             const response = await makePutRequest();
 
             expect(response.statusCode).toBe(404);
-            expect(response.body).toHaveProperty("success", false);
             expect(response.body).toHaveProperty("error", "A térkép nem létezik");
         });
 
@@ -175,7 +167,6 @@ describe("Map Creator API - Map Endpoints - /api/map-creator/", () => {
                 const response = await makePutRequest({ title: newTitle });
 
                 expect(response.statusCode).toBe(200);
-                expect(response.body).toHaveProperty("success", true);
                 expect(response.body).toHaveProperty("title", newTitle.trim());
                 expect(database.getConnection).toHaveBeenCalled();
                 expect(database.updateMapTitle).toHaveBeenCalledWith(mockConnection, defaults.id, newTitle.trim());
@@ -245,7 +236,6 @@ describe("Map Creator API - Map Endpoints - /api/map-creator/", () => {
             const response = await makePostRequest({ file: undefined, title: undefined });
 
             expect(response.statusCode).toBe(400);
-            expect(response.body.success).toBe(false);
             expect(response.body.error).toBe("Hiányzó adatok!");
         });
 
@@ -256,7 +246,6 @@ describe("Map Creator API - Map Endpoints - /api/map-creator/", () => {
 
             expect(response.statusCode).toBe(403);
             expect(response.type).toEqual(expect.stringContaining("json"));
-            expect(response.body).toHaveProperty("success", false);
             expect(response.body).toHaveProperty("error", "Nincs hozzáférése ehhez a pályához");
             expect(deleteFile).toHaveBeenCalledWith(expect.any(String));
         });
@@ -265,7 +254,6 @@ describe("Map Creator API - Map Endpoints - /api/map-creator/", () => {
             const response = await makePostRequest({ title: invalidTitle });
 
             expect(response.statusCode).toBe(400);
-            expect(response.body.success).toBe(false);
             expect(response.body.error).toBe("Helytelen térképnév!");
             expect(deleteFile).toHaveBeenCalledWith(expect.any(String));
         });
@@ -274,7 +262,6 @@ describe("Map Creator API - Map Endpoints - /api/map-creator/", () => {
             const response = await makePostRequest({ title: undefined, randomField: "randomValue" });
 
             expect(response.statusCode).toBe(400);
-            expect(response.body.success).toBe(false);
             expect(response.body.error).toBe("Helytelen térképnév!");
         });
 
@@ -282,7 +269,6 @@ describe("Map Creator API - Map Endpoints - /api/map-creator/", () => {
             const response = await makePostRequest({ file: undefined });
 
             expect(response.statusCode).toBe(400);
-            expect(response.body.success).toBe(false);
             expect(response.body.error).toBe("Nem adott meg képet!");
         });
 
@@ -292,7 +278,6 @@ describe("Map Creator API - Map Endpoints - /api/map-creator/", () => {
             const response = await makePostRequest({ file: tooBigFile });
 
             expect(response.statusCode).toBe(413);
-            expect(response.body.success).toBe(false);
             expect(response.body).toHaveProperty("error", "Túl nagy fájlméret! (Max 10MB)");
         });
 
@@ -300,7 +285,6 @@ describe("Map Creator API - Map Endpoints - /api/map-creator/", () => {
             const response = await makePostRequest({ fileFieldName: "wrongimageFieldName" });
 
             expect(response.statusCode).toBe(400);
-            expect(response.body.success).toBe(false);
             expect(response.body).toHaveProperty("error", "Fájlfeltöltési hiba történt!");
         });
 
@@ -316,9 +300,7 @@ describe("Map Creator API - Map Endpoints - /api/map-creator/", () => {
                 expectSuccessfulTransaction(mockConnection);
 
                 expect(response.statusCode).toBe(201);
-                expect(response.body.success).toBe(true);
                 expect(response.body).toHaveProperty("mapId", mapId);
-                expect(response.body).toHaveProperty("message", "Térkép sikeresen mentve!");
             }
         });
 
@@ -356,9 +338,7 @@ describe("Map Creator API - Map Endpoints - /api/map-creator/", () => {
                 expectSuccessfulTransaction(mockConnection);
 
                 expect(response.statusCode).toBe(201);
-                expect(response.body.success).toBe(true);
                 expect(response.body).toHaveProperty("mapId", mapId);
-                expect(response.body).toHaveProperty("message", "Térkép sikeresen mentve!");
             });
 
             it("Should respond with 500 if the database refused connection", async () => {
@@ -497,7 +477,6 @@ describe("Map Creator API - Map Endpoints - /api/map-creator/", () => {
 
             expect(mockConnection.beginTransaction).not.toHaveBeenCalled();
             expect(response.statusCode).toBe(403);
-            expect(response.body.success).toBe(false);
             expect(response.body.error).toBe("Nincs hozzáférése ehhez a térképhez");
         });
 
@@ -508,7 +487,6 @@ describe("Map Creator API - Map Endpoints - /api/map-creator/", () => {
 
             expect(mockConnection.beginTransaction).not.toHaveBeenCalled();
             expect(response.statusCode).toBe(404);
-            expect(response.body).toHaveProperty("success", false);
             expect(response.body).toHaveProperty("error", "A térkép nem létezik");
         });
 

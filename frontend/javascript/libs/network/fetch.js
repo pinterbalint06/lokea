@@ -8,13 +8,6 @@ export async function handleResponseError(response) {
     throw new Error(errorMessage || "Szerver hiba: " + response.status);
 }
 
-export function validateJsonResponse(data, defaultErrorMsg = "Sikertelen művelet!") {
-    if (!data.success) {
-        throw new Error(data.error || data.message || defaultErrorMsg);
-    }
-    return data;
-}
-
 export async function fetchAndValidate(url, returnKey) {
     let response = await fetch(
         url,
@@ -28,7 +21,6 @@ export async function fetchAndValidate(url, returnKey) {
     }
 
     let data = await response.json();
-    validateJsonResponse(data);
 
     return data[returnKey];
 }
