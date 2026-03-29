@@ -1,5 +1,5 @@
 const { createTestApp } = require("@helpers/setup-test.js");
-const { testInvalidIDs, testRequiresAuth, expectSuccessfulTransaction, expectRollback, expectErrorResponse, randomId, buildRequest, suppressConsoleErrors } = require("./helpers/helpers.js");
+const { testInvalidIDs, testRequiresAuth, expectSuccessfulTransaction, expectRollback, expectErrorResponse, randomId, buildRequest, suppressConsoleErrors } = require("@helpers/helpers.js");
 const { invalidUVs, invalidDegrees, imageStatusForPath } = require("@helpers/test-data.js");
 
 const database = require("@sql/database.js");

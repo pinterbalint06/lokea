@@ -1,12 +1,12 @@
 const express = require("express");
 const router = express.Router();
 const multer = require("multer");
-const { deleteFile } = require("../utils/fileUtils.js");
-const AppError = require("../utils/AppError.js");
+const { deleteFile } = require("../../utils/fileUtils.js");
+const AppError = require("../../utils/AppError.js");
 
-const mapsEndpoints = require("./mapcreator/maps");
-const pointsEndpoints = require("./mapcreator/points");
-const connectionsEndpoints = require("./mapcreator/connections");
+const mapsEndpoints = require("./maps/maps.routes.js");
+const pointsEndpoints = require("./points/points.routes.js");
+const connectionsEndpoints = require("./connections/connections.route.js");
 
 router.use("/", mapsEndpoints);
 router.use("/", pointsEndpoints);
@@ -15,7 +15,6 @@ router.use("/", connectionsEndpoints);
 router.use(async (error, request, response, next) => {
     let statusCode = 500;
     let errorMessage = "Váratlan hiba történt!";
-
 
     if (error instanceof multer.MulterError) {
         if (request.file && request.file.path) {
@@ -47,5 +46,7 @@ router.use(async (error, request, response, next) => {
         error: errorMessage
     });
 });
+
+// TODOp: success true falseok eltávolítása a státuszkód alapján lehet tudni
 
 module.exports = router;

@@ -1,5 +1,5 @@
 const { createTestApp } = require("@helpers/setup-test.js");
-const { testInvalidIDs, testRequiresAuth, expectSuccessfulTransaction, expectRollback, expectErrorResponse, randomId, buildRequest, suppressConsoleErrors } = require("./helpers/helpers.js");
+const { testInvalidIDs, testRequiresAuth, expectSuccessfulTransaction, expectRollback, expectErrorResponse, randomId, buildRequest, suppressConsoleErrors } = require("@helpers/helpers.js");
 const { invalidTitles, validTitles, imageStatusForPath } = require("@helpers/test-data.js");
 
 const database = require("@sql/database.js");
@@ -114,7 +114,7 @@ describe("Map Creator API - Map Endpoints - /api/map-creator/", () => {
         beforeEach(() => {
             database.checkUserOwnsMap.mockResolvedValue(true);
             database.getMapInfo.mockResolvedValue({ title: "Test Map Title", game_maps_id: 1 });
-            database.updateMapTitle.mockResolvedValue(1);
+            database.updateMapTitle.mockResolvedValue(true);
         });
 
         testRequiresAuth(() => makePutRequest());
@@ -176,7 +176,6 @@ describe("Map Creator API - Map Endpoints - /api/map-creator/", () => {
 
                 expect(response.statusCode).toBe(200);
                 expect(response.body).toHaveProperty("success", true);
-                expect(response.body).toHaveProperty("mapId", defaults.id);
                 expect(response.body).toHaveProperty("title", newTitle.trim());
                 expect(database.getConnection).toHaveBeenCalled();
                 expect(database.updateMapTitle).toHaveBeenCalledWith(mockConnection, defaults.id, newTitle.trim());
@@ -195,8 +194,8 @@ describe("Map Creator API - Map Endpoints - /api/map-creator/", () => {
                 expectErrorResponse(response);
             });
 
-            it.each([0, 2, 3])("Should respond with 500 if the update failed. Invalid affectedRow %s", async (affectedRows) => {
-                database.updateMapTitle.mockResolvedValueOnce(affectedRows);
+            it("Should respond with 500 if the update failed", async () => {
+                database.updateMapTitle.mockResolvedValueOnce(false);
 
                 const response = await makePutRequest();
 
@@ -230,6 +229,7 @@ describe("Map Creator API - Map Endpoints - /api/map-creator/", () => {
             database.checkUserOwnsGameMap.mockResolvedValue(true);
             database.insertImage.mockResolvedValue(imageId);
             database.insertMap.mockResolvedValue(mapId);
+            database.updateImagePath.mockResolvedValue(true);
         });
 
         testRequiresAuth(() => makePostRequest());
@@ -271,7 +271,7 @@ describe("Map Creator API - Map Endpoints - /api/map-creator/", () => {
         });
 
         it("Should respond with 400 if the title is not given", async () => {
-            const response = await makePostRequest({ title: undefined });
+            const response = await makePostRequest({ title: undefined, randomField: "randomValue" });
 
             expect(response.statusCode).toBe(400);
             expect(response.body.success).toBe(false);
@@ -441,6 +441,17 @@ describe("Map Creator API - Map Endpoints - /api/map-creator/", () => {
                 expect(mockConnection.release).toHaveBeenCalled();
                 expect(deleteFile).toHaveBeenCalledTimes(3); // 3 because mainPath, lowResPath, temp uploaded file
                 expectErrorResponse(response, 500);
+            });
+
+            it("Should respond with 500, rollback DB, and delete ALL files if updateImagePath fails with false", async () => {
+                database.updateImagePath.mockResolvedValue(false);
+
+                const response = await makePostRequest();
+
+                expect(mockConnection.rollback).toHaveBeenCalled();
+                expect(mockConnection.release).toHaveBeenCalled();
+                expect(deleteFile).toHaveBeenCalledTimes(3); // 3 because mainPath, lowResPath, temp uploaded file
+                expectErrorResponse(response, 500, "A térkép mentése nem sikerült!");
             });
         });
     });

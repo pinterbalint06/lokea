@@ -333,7 +333,8 @@ async function updateImagePath(connection, imageId, filepath) {
         SET filepath = ?
         WHERE image_id = ?
     `;
-    await connection.execute(query, [filepath, imageId]);
+    const [result] = await connection.execute(query, [filepath, imageId]);
+    return result.affectedRows == 1;
 }
 
 async function getMapImage(mapId) {
@@ -562,7 +563,7 @@ async function updateMapTitle(connection, mapId, title) {
         WHERE map.map_id = ?
     `;
     const [result] = await connection.execute(query, [title, mapId]);
-    return result.affectedRows;
+    return result.affectedRows == 1;
 }
 
 async function deleteImageById(connection, imageId) {

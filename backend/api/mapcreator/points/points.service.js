@@ -1,64 +1,24 @@
-const express = require("express");
-const router = express.Router();
-const database = require("../../sql/database.js");
+const database = require("../../../sql/database.js");
+const AppError = require("../../../utils/AppError.js");
 const fs = require("fs/promises");
 const path = require("path");
 const crypto = require("crypto");
-const { checkAuth } = require("../../auth.js");
-const { UPLOAD_ROOT } = require("../../config/mapStorage.js");
-const { processImageMetadata, createWebpAndLowRes, deleteImageAndLowResByMainPath } = require("../../utils/imageProcessor.js");
-const { deleteFile } = require("../../utils/fileUtils.js");
-const AppError = require("../../utils/AppError.js");
+const { UPLOAD_ROOT } = require("../../../config/mapStorage.js");
+const { processImageMetadata, createWebpAndLowRes, deleteImageAndLowResByMainPath } = require("../../../utils/imageProcessor.js");
+const { deleteFile } = require("../../../utils/fileUtils.js");
+const { assertUserOwnsMap, assertUserOwnsPoint, cleanupAfterError } = require("../shared/utils/mapcreator.utils.js");
 
-const { validateId, validateNumber, validateDegree, cleanupAfterError, assertUserOwnsMap, assertUserOwnsPoint, requireBody } = require("./utils.js");
-const upload = require("./uploadConfig.js");
+async function fetchPoints(userId, mapID) {
+    await assertUserOwnsMap(userId, mapID);
+    return await database.getPointsOnMap(mapID);
+};
 
-//!Endpoints:
-//?GET /api/map-creator/maps/:mapID/points
-router.get("/maps/:mapID/points", checkAuth, async (request, response) => {
-    try {
-        const userId = request.session.userid;
-        const mapID = validateId(request.params.mapID, "térkép ID");
-
-        await assertUserOwnsMap(userId, mapID);
-
-        let point_data = await database.getPointsOnMap(mapID);
-
-        response.status(200).json({
-            success: true,
-            points: point_data
-        });
-    } catch (error) {
-        let statusCode = error.statusCode ? error.statusCode : 500;
-        let message = error.statusCode ? error.message : "Váratlan hiba történt!";
-        if (statusCode == 500) {
-            console.error(error);
-        }
-
-        response.status(statusCode).json({
-            success: false,
-            error: message
-        });
-    }
-});
-
-//?PUT /api/map-creator/points/:pointID
-router.put("/points/:pointID", checkAuth, upload.single("equirectangularImage"), requireBody, async (request, response, next) => {
+async function updatePoint(userId, pointID, pointData, file) {
     let dbConnection;
     let processedImagePaths = null;
 
     try {
-        const userId = request.session.userid;
-
-        const pointID = validateId(request.params.pointID, "pont ID");
-
-        const uCoordinate = validateNumber(request.body.u, "koordináták");
-        const vCoordinate = validateNumber(request.body.v, "koordináták");
-        if (uCoordinate < 0 || uCoordinate >= 1 || vCoordinate < 0 || vCoordinate >= 1) {
-            throw new AppError("Helytelen koordináták!", 400);
-        }
-
-        const northDirection = validateDegree(request.body.northDirection, "északirány");
+        const { u: uCoordinate, v: vCoordinate, northDirection } = pointData;
 
         await assertUserOwnsPoint(userId, pointID);
 
@@ -70,7 +30,6 @@ router.put("/points/:pointID", checkAuth, upload.single("equirectangularImage"),
             throw new AppError("A pont nem létezik", 404);
         }
 
-        // only update if anything is different
         if (pointInfo.point_u != uCoordinate || pointInfo.point_v != vCoordinate) {
             let existingPoints = await database.getPointOnMapByCoordinates(dbConnection, pointInfo.map_id, uCoordinate, vCoordinate);
             if (existingPoints.length > 0) {
@@ -83,7 +42,6 @@ router.put("/points/:pointID", checkAuth, upload.single("equirectangularImage"),
             }
         }
 
-        // only update if anything is different
         if (pointInfo.north_direction != northDirection) {
             let updateSuccess = await database.updatePointNorthDirection(dbConnection, pointID, northDirection);
             if (!updateSuccess) {
@@ -91,12 +49,12 @@ router.put("/points/:pointID", checkAuth, upload.single("equirectangularImage"),
             }
         }
 
-        if (request.file) {
+        if (file) {
             let oldImageInfo = await database.getPointImage(pointID);
 
             let imageData;
             try {
-                imageData = await processImageMetadata(request.file.path);
+                imageData = await processImageMetadata(file.path);
             } catch (err) {
                 console.error(err);
                 throw new AppError("Hiba a kép feldolgozásakor!", 500);
@@ -118,7 +76,7 @@ router.put("/points/:pointID", checkAuth, upload.single("equirectangularImage"),
             );
             let baseName = pointID.toString() + "_" + crypto.randomBytes(4).toString("hex");
             processedImagePaths = await createWebpAndLowRes({
-                inputFilePath: request.file.path,
+                inputFilePath: file.path,
                 outputDirPath: targetPath,
                 baseName: baseName
             });
@@ -127,14 +85,12 @@ router.put("/points/:pointID", checkAuth, upload.single("equirectangularImage"),
 
             await database.updateImagePath(dbConnection, newImageId, dbPath);
 
-            // update point's image to the new id
             let updateImageSuccess = await database.updatePointImage(dbConnection, pointID, newImageId);
             if (!updateImageSuccess) {
                 throw new AppError("A kép útvonalának frissítése nem sikerült", 500);
             }
 
             if (oldImageInfo) {
-                // delete old image from db
                 let deleteSuccess = await database.deleteImageById(dbConnection, oldImageInfo.image_id);
                 if (!deleteSuccess) {
                     throw new AppError("A régi kép törlése nem sikerült", 500);
@@ -151,51 +107,34 @@ router.put("/points/:pointID", checkAuth, upload.single("equirectangularImage"),
                     });
             }
 
-            if (request.file.path) {
+            if (file.path) {
                 try {
-                    await deleteFile(request.file.path);
+                    await deleteFile(file.path);
                 } catch (error) {
-                    console.error(`Failed to delete temporary file ${request.file.path}: `, error);
+                    console.error(`Failed to delete temporary file ${file.path}: `, error);
                 }
             }
         } else {
             await dbConnection.commit();
         }
 
-
-        response.status(200).json({
-            success: true,
-            message: "Pont sikeresen frissítve!"
-        });
-
     } catch (error) {
-        await cleanupAfterError(dbConnection, request.file, processedImagePaths);
-        next(error);
+        await cleanupAfterError(dbConnection, file, processedImagePaths);
+        throw error;
     } finally {
         if (dbConnection) {
             dbConnection.release();
         }
     }
-});
+};
 
-//?POST /api/map-creator/maps/:mapID/points
-router.post("/maps/:mapID/points", checkAuth, upload.single("equirectangularImage"), requireBody, async (request, response, next) => {
+async function createPoint(userId, mapID, pointData, file) {
     let dbConnection;
     let processedImagePaths = null;
     try {
-        const userId = request.session.userid;
+        const { u: uCoordinate, v: vCoordinate, northDirection } = pointData;
 
-        const mapID = validateId(request.params.mapID, "térkép ID");
-
-        const uCoordinate = validateNumber(request.body.u, "koordináták");
-        const vCoordinate = validateNumber(request.body.v, "koordináták");
-        if (uCoordinate < 0 || uCoordinate >= 1 || vCoordinate < 0 || vCoordinate >= 1) {
-            throw new AppError("Helytelen koordináták!", 400);
-        }
-
-        const northDirection = validateDegree(request.body.northDirection, "északirány");
-
-        if (!request.file) {
+        if (!file) {
             throw new AppError("Nem adott meg képet!", 400);
         }
 
@@ -208,7 +147,7 @@ router.post("/maps/:mapID/points", checkAuth, upload.single("equirectangularImag
 
         let imageData;
         try {
-            imageData = await processImageMetadata(request.file.path);
+            imageData = await processImageMetadata(file.path);
         } catch (err) {
             console.error(err);
             throw new AppError("Hiba a kép feldolgozásakor!", 500);
@@ -241,7 +180,7 @@ router.post("/maps/:mapID/points", checkAuth, upload.single("equirectangularImag
         let baseName = newPointId.toString() + "_" + crypto.randomBytes(4).toString("hex");
 
         processedImagePaths = await createWebpAndLowRes({
-            inputFilePath: request.file.path,
+            inputFilePath: file.path,
             outputDirPath: targetPath,
             baseName: baseName
         });
@@ -252,36 +191,28 @@ router.post("/maps/:mapID/points", checkAuth, upload.single("equirectangularImag
 
         await dbConnection.commit();
 
-        if (request.file && request.file.path) {
+        if (file && file.path) {
             try {
-                await deleteFile(request.file.path);
+                await deleteFile(file.path);
             } catch (error) {
-                console.error(`Failed to delete temporary file ${request.file.path}: `, error);
+                console.error(`Failed to delete temporary file ${file.path}: `, error);
             }
         }
 
-        response.status(201).json({
-            success: true,
-            pointId: newPointId
-        });
+        return newPointId;
     } catch (error) {
-        await cleanupAfterError(dbConnection, request.file, processedImagePaths);
-        next(error);
+        await cleanupAfterError(dbConnection, file, processedImagePaths);
+        throw error;
     } finally {
         if (dbConnection) {
             dbConnection.release();
         }
     }
-});
+};
 
-//?DELETE /api/map-creator/points/:pointID
-router.delete("/points/:pointID", checkAuth, async (request, response, next) => {
+async function deletePoint(userId, pointID) {
     let dbConnection;
     try {
-        const userId = request.session.userid;
-
-        const pointID = validateId(request.params.pointID, "pont ID");
-
         await assertUserOwnsPoint(userId, pointID);
 
         let pointInfo = await database.getPointInfo(pointID);
@@ -331,15 +262,19 @@ router.delete("/points/:pointID", checkAuth, async (request, response, next) => 
             console.error(`Error deleting directory ${targetPath}: ${err.message}`);
         }
 
-        response.status(204).send();
     } catch (error) {
         await cleanupAfterError(dbConnection);
-        next(error);
+        throw error;
     } finally {
         if (dbConnection) {
             dbConnection.release();
         }
     }
-});
+};
 
-module.exports = router;
+module.exports = {
+    fetchPoints,
+    updatePoint,
+    createPoint,
+    deletePoint
+};

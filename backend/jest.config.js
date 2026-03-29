@@ -13,7 +13,8 @@ module.exports = {
         "^@helpers/(.*)$": "<rootDir>/test/mapcreator/helpers/$1",
         "^@root/(.*)$": "<rootDir>/$1",
         "^@config/(.*)$": "<rootDir>/config/$1",
-        "^@api/(.*)$": "<rootDir>/api/$1"
+        "^@api/(.*)$": "<rootDir>/api/$1",
+        "^@mapcreator/(.*)$": "<rootDir>/api/mapcreator/$1"
     },
 
     // coverage

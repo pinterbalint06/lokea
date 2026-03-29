@@ -1,6 +1,6 @@
 const express = require("express");
 const supertest = require("supertest");
-const mapCreationEndpoints = require('@api/mapCreator.js');
+const mapCreationEndpoints = require('@mapcreator/mapcreator.js');
 const fs = require("fs/promises");
 const path = require("path");
 const { TEMP_DIR } = require("@config/mapStorage.js");

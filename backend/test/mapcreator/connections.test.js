@@ -1,5 +1,5 @@
 const { createTestApp } = require("@helpers/setup-test.js");
-const { testInvalidIDs, testRequiresAuth, expectSuccessfulTransaction, expectRollback, expectErrorResponse, randomId, buildRequest, suppressConsoleErrors } = require("./helpers/helpers.js");
+const { testInvalidIDs, testRequiresAuth, expectSuccessfulTransaction, expectRollback, expectErrorResponse, randomId, buildRequest, suppressConsoleErrors } = require("@helpers/helpers.js");
 const { invalidDegrees } = require("@helpers/test-data.js");
 
 const database = require("@sql/database.js");
@@ -374,11 +374,7 @@ describe("Map Creator API - Connection Endpoints - /api/map-creator/", () => {
                 const response = await makePostRequest({ [directionField]: undefined });
 
                 expect(response.statusCode).toBe(400);
-                expect(response.body.error).toBe(
-                    directionField == "directionStartToEnd"
-                        ? "Helytelen kezdőpontból végpontba irány!"
-                        : "Helytelen végpontból kezdőpontba irány!"
-                );
+                expect(response.body.error).toBe("Térképek közötti kapcsolat létrehozásához meg kell adni mindkét irányt!");
             });
         });
 
@@ -446,7 +442,7 @@ describe("Map Creator API - Connection Endpoints - /api/map-creator/", () => {
         it("Should respond with 201 if connection was created successfully", async () => {
             const response = await makePostRequest();
 
-            expect(database.insertConnection).toHaveBeenCalledWith(mockConnection, defaults.startPointId, defaults.endPointId, defaults.id, null, null);
+            expect(database.insertConnection).toHaveBeenCalledWith(mockConnection, defaults.startPointId, defaults.endPointId, defaults.id, defaults.directionStartToEnd, defaults.directionEndToStart);
             expectSuccessfulTransaction(mockConnection);
 
             expect(response.statusCode).toBe(201);
@@ -615,5 +611,3 @@ describe("Map Creator API - Connection Endpoints - /api/map-creator/", () => {
         });
     });
 });
-
-// TODOp: ha kész a PUT endpoint, akkor annak is teszt és a régi tesztek frissítése, hogy az új dolgok is bekerüljenek a tesztelésbe

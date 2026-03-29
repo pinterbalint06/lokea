@@ -108,7 +108,6 @@ export async function renameMap(mapId, title) {
     validateJsonResponse(data, "Sikertelen átnevezés!");
 
     return {
-        mapId: data.mapId,
         title: data.title
     };
 }

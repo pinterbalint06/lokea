@@ -2,7 +2,7 @@ const multer = require("multer");
 const path = require("path");
 const fs = require("fs/promises");
 const crypto = require("crypto");
-const { TEMP_DIR, MAX_FILE_SIZE } = require("../../config/mapStorage.js");
+const { TEMP_DIR, MAX_FILE_SIZE } = require("../../../../config/mapStorage.js");
 
 const storage = multer.diskStorage({
     destination: async (request, file, callback) => {
