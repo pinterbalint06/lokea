@@ -1,45 +1,40 @@
-const joi = require('../../../utils/joi.js');
-const { idSchema, titleSchema } = require('../shared/schemas/mapcreator.schemas.js');
+const joi = require("#utils/joi.js");
+const ERRORS = require("#utils/errorMessages.js");
+const { idSchema, titleSchema } = require("../shared/schemas/mapcreator.schemas.js");
 
 const getMapsSchema = {
     params:
         joi.object({
-            gameMapID: idSchema
-                .label("pálya ID")
+            gameMapID: idSchema(ERRORS.GAMEMAP.INVALID_ID)
         })
 };
 
 const updateMapSchema = {
     params:
         joi.object({
-            mapID: idSchema
-                .label("térkép ID")
+            mapID: idSchema(ERRORS.MAP.INVALID_ID)
         }),
     body:
         joi.object({
             title: titleSchema
-                .label("térképnév")
         }).requiredBody()
 };
 
 const createMapSchema = {
     params:
         joi.object({
-            gameMapID: idSchema
-                .label("pálya ID")
+            gameMapID: idSchema(ERRORS.GAMEMAP.INVALID_ID)
         }),
     body:
         joi.object({
             title: titleSchema
-                .label("térképnév")
         }).requiredBody()
 };
 
 const deleteMapSchema = {
     params:
         joi.object({
-            mapID: idSchema
-                .label("térkép ID")
+            mapID: idSchema(ERRORS.MAP.INVALID_ID)
         })
 };
 

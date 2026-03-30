@@ -8,6 +8,10 @@
         "start": "node server.js",
         "dev": "nodemon"
     },
+    "imports": {
+        "#utils/*": "./utils/*",
+        "#sql/*": "./sql/*"
+    },
     "author": "Kardos Krisztián",
     "license": "ISC",
     "devDependencies": {

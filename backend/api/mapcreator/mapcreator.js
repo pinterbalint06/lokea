@@ -1,8 +1,8 @@
 const express = require("express");
 const router = express.Router();
 const multer = require("multer");
-const { deleteFile } = require("../../utils/fileUtils.js");
-const AppError = require("../../utils/AppError.js");
+const { deleteFile } = require("#utils/fileUtils.js");
+const AppError = require("#utils/AppError.js");
 const { checkAuth } = require("../../auth.js");
 
 const mapsEndpoints = require("./maps/maps.routes.js");

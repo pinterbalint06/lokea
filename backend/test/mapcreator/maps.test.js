@@ -1,6 +1,7 @@
 const { createTestApp } = require("@helpers/setup-test.js");
 const { testInvalidIDs, testRequiresAuth, expectSuccessfulTransaction, expectRollback, expectErrorResponse, randomId, buildRequest, suppressConsoleErrors } = require("@helpers/helpers.js");
-const { invalidTitles, validTitles, imageStatusForPath } = require("@helpers/test-data.js");
+const { emptyTitles, tooLongTitles, invalidCharTitles, validTitles, imageStatusForPath } = require("@helpers/test-data.js");
+const ERRORS = require("@utils/errorMessages.js");
 
 const database = require("@sql/database.js");
 const { mockConnection } = database;
@@ -48,7 +49,7 @@ describe("Map Creator API - Map Endpoints - /api/map-creator/", () => {
         it("Should respond with 400 if the game map id is incorrect", async () => {
             await testInvalidIDs(
                 (id) => makeGetRequest({ id }),
-                "Helytelen pálya ID!"
+                ERRORS.GAMEMAP.INVALID_ID
             );
         });
 
@@ -80,7 +81,7 @@ describe("Map Creator API - Map Endpoints - /api/map-creator/", () => {
 
             expect(response.statusCode).toBe(403);
             expect(response.type).toEqual(expect.stringContaining("json"));
-            expect(response.body).toHaveProperty("error", "Nincs hozzáférése ehhez a pályához");
+            expect(response.body.error).toBe(ERRORS.GAMEMAP.NO_ACCESS);
         });
 
         describe("Server Errors", () => {
@@ -119,7 +120,7 @@ describe("Map Creator API - Map Endpoints - /api/map-creator/", () => {
         it("Should respond with 400 if the map id is incorrect", async () => {
             await testInvalidIDs(
                 (id) => makePutRequest({ id }),
-                "Helytelen térkép ID!"
+                ERRORS.MAP.INVALID_ID
             );
         });
 
@@ -129,28 +130,42 @@ describe("Map Creator API - Map Endpoints - /api/map-creator/", () => {
             const response = await makePutRequest();
 
             expect(response.statusCode).toBe(403);
-            expect(response.body.error).toBe("Nincs hozzáférése ehhez a térképhez");
+            expect(response.body.error).toBe(ERRORS.MAP.NO_ACCESS);
         });
 
-        it.each(invalidTitles)("Should respond with 400 if the new title is incorrect: '%s'", async (invalidTitle) => {
+        it.each(invalidCharTitles)("Should respond with 400 if the title has invalid characters: '%s'", async (invalidTitle) => {
             const response = await makePutRequest({ title: invalidTitle });
 
             expect(response.statusCode).toBe(400);
-            expect(response.body.error).toBe("Helytelen térképnév!");
+            expect(response.body.error).toBe(ERRORS.MAP.TITLE_INVALID_CHARS);
         });
 
-        it("Should respond with 400 if the new title is not given in the body", async () => {
-            const response = await makePutRequest({ title: "" });
+        it.each(tooLongTitles)("Should respond with 400 if the title is too long: '%s'", async (invalidTitle) => {
+            const response = await makePutRequest({ title: invalidTitle });
 
             expect(response.statusCode).toBe(400);
-            expect(response.body.error).toBe("Helytelen térképnév!");
+            expect(response.body.error).toBe(ERRORS.MAP.TITLE_TOO_LONG);
+        });
+
+        it.each(emptyTitles)("Should respond with 400 if the title is empty: '%s'", async (invalidTitle) => {
+            const response = await makePutRequest({ title: invalidTitle });
+
+            expect(response.statusCode).toBe(400);
+            expect(response.body.error).toBe(ERRORS.MAP.TITLE_EMPTY);
+        });
+
+        it("Should respond with 400 if the title is missing", async () => {
+            const response = await makePutRequest({ title: undefined, randomField: "randomValue" });
+
+            expect(response.statusCode).toBe(400);
+            expect(response.body.error).toBe(ERRORS.MAP.TITLE_EMPTY);
         });
 
         it("Should respond with 400 if a body is not provided", async () => {
             const response = await makePutRequest({ title: undefined });
 
             expect(response.statusCode).toBe(400);
-            expect(response.body.error).toBe("Hiányzó adatok!");
+            expect(response.body.error).toBe(ERRORS.COMMON.MISSING_DATA);
         });
 
         it("Should respond with 404 if the map doesn't exist somehow", async () => {
@@ -228,7 +243,7 @@ describe("Map Creator API - Map Endpoints - /api/map-creator/", () => {
         it("Should respond with 400 if the game map id is incorrect", async () => {
             await testInvalidIDs(
                 (id) => makePostRequest({ id }),
-                "Helytelen pálya ID!"
+                ERRORS.GAMEMAP.INVALID_ID
             );
         });
 
@@ -236,7 +251,7 @@ describe("Map Creator API - Map Endpoints - /api/map-creator/", () => {
             const response = await makePostRequest({ file: undefined, title: undefined });
 
             expect(response.statusCode).toBe(400);
-            expect(response.body.error).toBe("Hiányzó adatok!");
+            expect(response.body.error).toBe(ERRORS.COMMON.MISSING_DATA);
         });
 
         it("Should respond with 403 if it's not the user's game map", async () => {
@@ -246,23 +261,37 @@ describe("Map Creator API - Map Endpoints - /api/map-creator/", () => {
 
             expect(response.statusCode).toBe(403);
             expect(response.type).toEqual(expect.stringContaining("json"));
-            expect(response.body).toHaveProperty("error", "Nincs hozzáférése ehhez a pályához");
+            expect(response.body.error).toBe(ERRORS.GAMEMAP.NO_ACCESS);
             expect(deleteFile).toHaveBeenCalledWith(expect.any(String));
         });
 
-        it.each(invalidTitles)("Should respond with 400 if the title is incorrect: '%s'", async (invalidTitle) => {
+        it.each(invalidCharTitles)("Should respond with 400 if the title has invalid characters: '%s'", async (invalidTitle) => {
             const response = await makePostRequest({ title: invalidTitle });
 
             expect(response.statusCode).toBe(400);
-            expect(response.body.error).toBe("Helytelen térképnév!");
-            expect(deleteFile).toHaveBeenCalledWith(expect.any(String));
+            expect(response.body.error).toBe(ERRORS.MAP.TITLE_INVALID_CHARS);
         });
 
-        it("Should respond with 400 if the title is not given", async () => {
+        it.each(tooLongTitles)("Should respond with 400 if the title is too long: '%s'", async (invalidTitle) => {
+            const response = await makePostRequest({ title: invalidTitle });
+
+            expect(response.statusCode).toBe(400);
+            expect(response.body.error).toBe(ERRORS.MAP.TITLE_TOO_LONG);
+        });
+
+        it.each(emptyTitles)("Should respond with 400 if the title is empty: '%s'", async (invalidTitle) => {
+            const response = await makePostRequest({ title: invalidTitle });
+
+            expect(response.statusCode).toBe(400);
+            expect(response.body.error).toBe(ERRORS.MAP.TITLE_EMPTY);
+        });
+
+        it("Should respond with 400 if the title is missing", async () => {
             const response = await makePostRequest({ title: undefined, randomField: "randomValue" });
 
             expect(response.statusCode).toBe(400);
-            expect(response.body.error).toBe("Helytelen térképnév!");
+            expect(response.body.error).toBe(ERRORS.MAP.TITLE_EMPTY);
+            expect(deleteFile).toHaveBeenCalledWith(expect.any(String));
         });
 
         it("Should respond with 400 if the map image is not given", async () => {
@@ -466,7 +495,7 @@ describe("Map Creator API - Map Endpoints - /api/map-creator/", () => {
         it("Should respond with 400 if the map id is incorrect", async () => {
             await testInvalidIDs(
                 (id) => makeDeleteRequest({ id }),
-                "Helytelen térkép ID!"
+                ERRORS.MAP.INVALID_ID
             );
         });
 
@@ -477,7 +506,7 @@ describe("Map Creator API - Map Endpoints - /api/map-creator/", () => {
 
             expect(mockConnection.beginTransaction).not.toHaveBeenCalled();
             expect(response.statusCode).toBe(403);
-            expect(response.body.error).toBe("Nincs hozzáférése ehhez a térképhez");
+            expect(response.body.error).toBe(ERRORS.MAP.NO_ACCESS);
         });
 
         it("Should respond with 404 if the map doesn't exist somehow", async () => {

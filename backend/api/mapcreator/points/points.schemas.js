@@ -1,55 +1,55 @@
-const joi = require('../../../utils/joi.js');
+const joi = require('#utils/joi.js');
+const ERRORS = require("#utils/errorMessages.js");
 const { idSchema, degreeSchema, uvCoordinateSchema } = require('../shared/schemas/mapcreator.schemas.js');
+
+const northDirectionMessages = {
+    "number.base": ERRORS.POINT.NORTH_DIRECTION_TYPE,
+    "number.min": ERRORS.POINT.NORTH_DIRECTION_MIN,
+    "number.less": ERRORS.POINT.NORTH_DIRECTION_MAX,
+    "any.required": ERRORS.POINT.NORTH_DIRECTION_REQUIRED
+};
 
 const getPointsSchema = {
     params:
         joi.object({
-            mapID: idSchema
-                .label("térkép ID")
+            mapID: idSchema(ERRORS.MAP.INVALID_ID)
         })
 };
 
 const updatePointSchema = {
     params:
         joi.object({
-            pointID: idSchema
-                .label("pont ID")
+            pointID: idSchema(ERRORS.POINT.INVALID_ID)
         }),
     body:
         joi.object({
-            u: uvCoordinateSchema
-                .label("koordináták"),
-            v: uvCoordinateSchema
-                .label("koordináták"),
+            u: uvCoordinateSchema,
+            v: uvCoordinateSchema,
             northDirection: degreeSchema
                 .required()
-                .label("északirány"),
+                .messages(northDirectionMessages),
         }).requiredBody()
 };
 
 const createPointSchema = {
     params:
         joi.object({
-            mapID: idSchema
-                .label("térkép ID")
+            mapID: idSchema(ERRORS.MAP.INVALID_ID)
         }),
     body:
         joi.object({
-            u: uvCoordinateSchema
-                .label("koordináták"),
-            v: uvCoordinateSchema
-                .label("koordináták"),
+            u: uvCoordinateSchema,
+            v: uvCoordinateSchema,
             northDirection: degreeSchema
                 .required()
-                .label("északirány"),
+                .messages(northDirectionMessages),
         }).requiredBody()
 };
 
 const deletePointSchema = {
     params:
         joi.object({
-            pointID: idSchema
-                .label("pont ID")
+            pointID: idSchema(ERRORS.POINT.INVALID_ID)
         })
 };
 

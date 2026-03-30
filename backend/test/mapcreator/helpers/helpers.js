@@ -1,11 +1,11 @@
-const { invalidIds, invalidIdsWithoutNulls } = require("./test-data.js");
+const { invalidIds, invalidIdsWithNulls } = require("./test-data.js");
 const { checkAuth } = require("@root/auth.js");
 
-const database = require("@sql/database.js");
+const database = require("#sql/database.js");
 const { mockConnection } = database;
 
 async function testInvalidIDs(requestCallback, expectedErrorMessage, withNulls = true) {
-    const idsToTest = withNulls ? invalidIds : invalidIdsWithoutNulls;
+    const idsToTest = withNulls ? invalidIdsWithNulls : invalidIds;
     for (const id of idsToTest) {
         const response = await requestCallback(id);
 

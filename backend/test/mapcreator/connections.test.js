@@ -1,8 +1,9 @@
 const { createTestApp } = require("@helpers/setup-test.js");
 const { testInvalidIDs, testRequiresAuth, expectSuccessfulTransaction, expectRollback, expectErrorResponse, randomId, buildRequest, suppressConsoleErrors } = require("@helpers/helpers.js");
-const { invalidDegrees } = require("@helpers/test-data.js");
+const { invalidTypeDegrees, tooSmallDegrees, tooBigDegrees, } = require("@helpers/test-data.js");
 
 const database = require("@sql/database.js");
+const ERRORS = require("#utils/errorMessages.js");
 const { mockConnection } = database;
 
 
@@ -150,7 +151,7 @@ describe("Map Creator API - Connection Endpoints - /api/map-creator/", () => {
 
             expect(mockConnection.beginTransaction).not.toHaveBeenCalled();
             expect(response.statusCode).toBe(403);
-            expect(response.body.error).toBe("Nincs hozzáférése ehhez a kapcsolathoz");
+            expect(response.body.error).toBe(ERRORS.CONNECTION.NO_ACCESS);
         });
 
         it("Should respond with 400 if no direction changes were given", async () => {
@@ -161,7 +162,7 @@ describe("Map Creator API - Connection Endpoints - /api/map-creator/", () => {
         });
 
         ["directionStartToEnd", "directionEndToStart"].forEach((directionField) => {
-            it.each(invalidDegrees)(`Should respond with 400 if ${directionField} is invalid: '%s'`, async (invalidValue) => {
+            it.each(invalidTypeDegrees)(`Should respond with 400 if ${directionField} is invalid: '%s'`, async (invalidValue) => {
                 database.arePointsInSameMap.mockResolvedValue(false);
 
                 const response = await makePutRequest({ [directionField]: invalidValue });
@@ -169,8 +170,34 @@ describe("Map Creator API - Connection Endpoints - /api/map-creator/", () => {
                 expect(response.statusCode).toBe(400);
                 expect(response.body.error).toBe(
                     directionField == "directionStartToEnd"
-                        ? "Helytelen kezdőpontból végpontba irány!"
-                        : "Helytelen végpontból kezdőpontba irány!"
+                        ? ERRORS.CONNECTION.START_TO_END_TYPE
+                        : ERRORS.CONNECTION.END_TO_START_TYPE
+                );
+            });
+
+            it.each(tooSmallDegrees)(`Should respond with 400 if ${directionField} is invalid: '%s'`, async (invalidValue) => {
+                database.arePointsInSameMap.mockResolvedValue(false);
+
+                const response = await makePutRequest({ [directionField]: invalidValue });
+
+                expect(response.statusCode).toBe(400);
+                expect(response.body.error).toBe(
+                    directionField == "directionStartToEnd"
+                        ? ERRORS.CONNECTION.START_TO_END_MIN
+                        : ERRORS.CONNECTION.END_TO_START_MIN
+                );
+            });
+
+            it.each(tooBigDegrees)(`Should respond with 400 if ${directionField} is invalid: '%s'`, async (invalidValue) => {
+                database.arePointsInSameMap.mockResolvedValue(false);
+
+                const response = await makePutRequest({ [directionField]: invalidValue });
+
+                expect(response.statusCode).toBe(400);
+                expect(response.body.error).toBe(
+                    directionField == "directionStartToEnd"
+                        ? ERRORS.CONNECTION.START_TO_END_MAX
+                        : ERRORS.CONNECTION.END_TO_START_MAX
                 );
             });
         });
@@ -305,7 +332,7 @@ describe("Map Creator API - Connection Endpoints - /api/map-creator/", () => {
         it("Should respond with 400 if the game map id is incorrect", async () => {
             await testInvalidIDs(
                 (id) => makePostRequest({ id }),
-                "Helytelen pálya ID!"
+                ERRORS.GAMEMAP.INVALID_ID
             );
         });
 
@@ -336,11 +363,11 @@ describe("Map Creator API - Connection Endpoints - /api/map-creator/", () => {
             const response = await makePostRequest({ startPointId: defaults.endPointId, endPointId: defaults.startPointId });
 
             expect(response.statusCode).toBe(400);
-            expect(response.body.error).toBe("A kisebbik id-val rendelkező pontnak kell a kezdőpontnak lennie!");
+            expect(response.body.error).toBe(ERRORS.CONNECTION.END_MUST_BE_GREATER);
         });
 
         ["directionStartToEnd", "directionEndToStart"].forEach((directionField) => {
-            it.each(invalidDegrees)(`Should respond with 400 if ${directionField} is invalid: %s`, async (invalidValue) => {
+            it.each(invalidTypeDegrees)(`Should respond with 400 if ${directionField} is invalid: %s`, async (invalidValue) => {
                 database.arePointsInSameMap.mockResolvedValue(false);
 
                 const response = await makePostRequest({ [directionField]: invalidValue });
@@ -348,8 +375,8 @@ describe("Map Creator API - Connection Endpoints - /api/map-creator/", () => {
                 expect(response.statusCode).toBe(400);
                 expect(response.body.error).toBe(
                     directionField == "directionStartToEnd"
-                        ? "Helytelen kezdőpontból végpontba irány!"
-                        : "Helytelen végpontból kezdőpontba irány!"
+                        ? ERRORS.CONNECTION.START_TO_END_TYPE
+                        : ERRORS.CONNECTION.END_TO_START_TYPE
                 );
             });
 
@@ -527,7 +554,7 @@ describe("Map Creator API - Connection Endpoints - /api/map-creator/", () => {
 
             expect(mockConnection.beginTransaction).not.toHaveBeenCalled();
             expect(response.statusCode).toBe(403);
-            expect(response.body.error).toBe("Nincs hozzáférése ehhez a kapcsolathoz");
+            expect(response.body.error).toBe(ERRORS.CONNECTION.NO_ACCESS);
         });
 
         it("Should respond with 204 if the connection is successfully deleted", async () => {

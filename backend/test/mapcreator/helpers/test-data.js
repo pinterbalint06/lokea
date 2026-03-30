@@ -16,36 +16,30 @@ const invalidIds = [
     "🆔", // emoji
     "90071992547409911", // very large number
     "900719925474099234345345234242311", // even larger number
+];
+
+const invalidIdsWithNulls = [
+    ...invalidIds,
     true, // boolean value
     false, // boolean value
     null, // null value
     undefined // undefined value
 ];
 
-const invalidIdsWithoutNulls = [
-    "gre", // only letters
-    "12abc", // numbers mixed with letters
-    "|", // single symbol
-    "12|34", // numbers with symbols inside
-    "!@#$%", // multiple special characters
-    "\n", // special character
-    "-5", // negative number
-    "3.14", // decimal number
-    "   ", // whitespace
-    "0", // zero
-    "\r\n", // newline characters
-    "1e10", // scientific notation
-    "١٢٣", // arabic numerals
-    "Infinity", // infinity
-    "🆔", // emoji
-    "90071992547409911", // very large number
-    "900719925474099234345345234242311" // even larger number
+const emptyTitles = [
+    "",
+    "   ",
+    "\t",
+    "\n"
 ];
 
-const invalidTitles = [
-    "",
+const tooLongTitles = [
     "This is exactly 21 ch",
     "Very long title exceeding limits",
+    "Egy_Nagyon_Hosszu_Terkepnev_Ami_Tul_Hosszu"
+];
+
+const invalidCharTitles = [
     "Hello World!",
     "Q&A Session",
     "Email@Address",
@@ -86,7 +80,6 @@ const validTitles = [
     "ű",
     "Ű",
     "0",
-
     "-a_B ",
     "     1234567890     ",
     "ABCDEFGHIJKLMNOPQRST",
@@ -126,14 +119,45 @@ const invalidDegrees = [
     500
 ];
 
+const invalidTypeDegrees = [
+    "",
+    "invalid",
+    true,
+    false,
+    NaN,
+    Infinity,
+    -Infinity,
+    12312313438576238462384823746284
+];
+
+const tooSmallDegrees = [
+    -0.0021,
+    -100,
+    -1231231231231231
+];
+
+const tooBigDegrees = [
+    360.1,
+    361,
+    720,
+    1080,
+    1000
+];
+
+
 const imageStatusForPath = "pending";
 
 module.exports = {
     invalidIds,
-    invalidIdsWithoutNulls,
-    invalidTitles,
+    invalidIdsWithNulls,
+    emptyTitles,
+    tooLongTitles,
+    invalidCharTitles,
     validTitles,
     invalidUVs,
     invalidDegrees,
+    invalidTypeDegrees,
+    tooSmallDegrees,
+    tooBigDegrees,
     imageStatusForPath,
 };

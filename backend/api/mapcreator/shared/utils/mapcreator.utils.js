@@ -1,6 +1,7 @@
-const database = require("../../../../sql/database.js");
-const { deleteFile } = require("../../../../utils/fileUtils.js");
-const AppError = require("../../../../utils/AppError.js");
+const database = require("#sql/database.js");
+const { deleteFile } = require("#utils/fileUtils.js");
+const AppError = require("#utils/AppError.js");
+const ERRORS = require('#utils/errorMessages.js');
 
 async function cleanupAfterError(dbConnection, file, processedImagePaths) {
     if (dbConnection) {
@@ -37,25 +38,25 @@ async function cleanupAfterError(dbConnection, file, processedImagePaths) {
 
 async function assertUserOwnsGameMap(userId, gameMapID) {
     if (!await database.checkUserOwnsGameMap(userId, gameMapID)) {
-        throw new AppError("Nincs hozzáférése ehhez a pályához", 403);
+        throw new AppError(ERRORS.GAMEMAP.NO_ACCESS, 403);
     }
 }
 
 async function assertUserOwnsMap(userId, mapID) {
     if (!await database.checkUserOwnsMap(userId, mapID)) {
-        throw new AppError("Nincs hozzáférése ehhez a térképhez", 403);
+        throw new AppError(ERRORS.MAP.NO_ACCESS, 403);
     }
 }
 
 async function assertUserOwnsPoint(userId, pointID) {
     if (!await database.checkUserOwnsPoint(userId, pointID)) {
-        throw new AppError("Nincs hozzáférése ehhez a ponthoz", 403);
+        throw new AppError(ERRORS.POINT.NO_ACCESS, 403);
     }
 }
 
 async function assertUserOwnsConnection(userId, connectionID) {
     if (!await database.checkUserOwnsConnection(userId, connectionID)) {
-        throw new AppError("Nincs hozzáférése ehhez a kapcsolathoz", 403);
+        throw new AppError(ERRORS.CONNECTION.NO_ACCESS, 403);
     }
 }
 
