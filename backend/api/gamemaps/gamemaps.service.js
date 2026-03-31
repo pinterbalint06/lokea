@@ -1,4 +1,4 @@
-const database = require("../../sql/database.js");
+const database = require("#sql/database.js");
 const path = require("path");
 
 function resolveImagePath(filePath, resolution) {

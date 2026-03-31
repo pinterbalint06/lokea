@@ -1,7 +1,8 @@
-const { invalidIds, invalidIdsWithNulls } = require("./test-data.js");
-const { checkAuth } = require("@root/auth.js");
+const { invalidIds, invalidIdsWithNulls } = require("#mapcreatortest/helpers/test-data.js");
+const { checkAuth } = require("#root/auth.js");
 
 const database = require("#sql/database.js");
+const ERRORS = require("#utils/errorMessages.js");
 const { mockConnection } = database;
 
 async function testInvalidIDs(requestCallback, expectedErrorMessage, withNulls = true) {
@@ -73,8 +74,9 @@ function suppressConsoleErrors() {
     });
 };
 
-function expectErrorResponse(response, statusCode = 500, errorMessage = "Váratlan hiba történt!") {
+function expectErrorResponse(response, statusCode = 500, errorMessage = ERRORS.COMMON.UNEXPECTED_ERROR) {
     expect(response.statusCode).toBe(statusCode);
+    expect(response.type).toEqual(expect.stringContaining("json"));
     expect(response.body.error).toBe(errorMessage);
 }
 

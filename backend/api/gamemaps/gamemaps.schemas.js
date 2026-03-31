@@ -1,5 +1,5 @@
-const joi = require('../../utils/joi.js');
-const { idSchema } = require('../../utils/schemas.js');
+const joi = require('#utils/joi.js');
+const { idSchema } = require('#utils/schemas.js');
 
 const resolution = joi.string()
     .trim()

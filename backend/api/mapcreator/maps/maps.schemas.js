@@ -1,6 +1,6 @@
 const joi = require("#utils/joi.js");
 const ERRORS = require("#utils/errorMessages.js");
-const { idSchema, titleSchema } = require("../shared/schemas/mapcreator.schemas.js");
+const { idSchema, titleSchema } = require("#mapcreator/shared/schemas/mapcreator.schemas.js");
 
 const getMapsSchema = {
     params:

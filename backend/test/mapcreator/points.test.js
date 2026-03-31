@@ -1,8 +1,8 @@
-const { createTestApp } = require("@helpers/setup-test.js");
-const { testInvalidIDs, testRequiresAuth, expectSuccessfulTransaction, expectRollback, expectErrorResponse, randomId, buildRequest, suppressConsoleErrors } = require("@helpers/helpers.js");
-const { invalidUVs, invalidDegrees, imageStatusForPath } = require("@helpers/test-data.js");
+const { createTestApp } = require("#mapcreatortest/helpers/setup-test.js");
+const { testInvalidIDs, testRequiresAuth, expectSuccessfulTransaction, expectRollback, expectErrorResponse, randomId, buildRequest, suppressConsoleErrors } = require("#mapcreatortest/helpers/helpers.js");
+const { invalidTypeNumbers, negativeNumbers, tooBigUV, tooBigDegrees, imageStatusForPath } = require("#mapcreatortest/helpers/test-data.js");
 
-const database = require("@sql/database.js");
+const database = require("#sql/database.js");
 const { mockConnection } = database;
 
 const {
@@ -11,14 +11,15 @@ const {
     deleteImageAndLowResByMainPath,
     mockImageMetadata,
     mockImageProcessed
-} = require("@utils/imageProcessor.js");
+} = require("#utils/imageProcessor.js");
 
 const {
     deleteFile
-} = require("@utils/fileUtils.js");
+} = require("#utils/fileUtils.js");
 
 const fs = require("fs/promises");
 const path = require("path");
+const ERRORS = require("#utils/errorMessages.js");
 
 
 const requestWithSupertest = createTestApp();
@@ -51,7 +52,7 @@ describe("Map Creator API - Point Endpoints - /api/map-creator/", () => {
         it("Should respond with 400 if the map id is incorrect", async () => {
             await testInvalidIDs(
                 (id) => makeGetRequest({ id }),
-                "Helytelen térkép ID!"
+                ERRORS.MAP.INVALID_ID
             );
         });
 
@@ -84,9 +85,7 @@ describe("Map Creator API - Point Endpoints - /api/map-creator/", () => {
 
             const response = await makeGetRequest();
 
-            expect(response.statusCode).toBe(403);
-            expect(response.type).toEqual(expect.stringContaining("json"));
-            expect(response.body).toHaveProperty("error", "Nincs hozzáférése ehhez a térképhez");
+            expectErrorResponse(response, 403, ERRORS.MAP.NO_ACCESS);
         });
 
         describe("Server Errors", () => {
@@ -164,7 +163,7 @@ describe("Map Creator API - Point Endpoints - /api/map-creator/", () => {
         it("Should respond with 400 if the point id is incorrect", async () => {
             await testInvalidIDs(
                 (id) => makePutRequest({ id }),
-                "Helytelen pont ID!"
+                ERRORS.POINT.INVALID_ID
             );
         });
 
@@ -173,9 +172,7 @@ describe("Map Creator API - Point Endpoints - /api/map-creator/", () => {
 
             const response = await makePutRequest();
 
-            expect(response.statusCode).toBe(403);
-            expect(response.type).toEqual(expect.stringContaining("json"));
-            expect(response.body).toHaveProperty("error", "Nincs hozzáférése ehhez a ponthoz");
+            expectErrorResponse(response, 403, ERRORS.POINT.NO_ACCESS);
         });
 
         it("Should respond with 404 if the point doesn't exist somehow", async () => {
@@ -183,46 +180,65 @@ describe("Map Creator API - Point Endpoints - /api/map-creator/", () => {
 
             const response = await makePutRequest();
 
-            expect(response.statusCode).toBe(404);
-            expect(response.body).toHaveProperty("error", "A pont nem létezik");
+            expectErrorResponse(response, 404, ERRORS.POINT.NOT_FOUND);
         });
 
         it("Should respond with 400 if a body is not provided", async () => {
             const response = await makePutRequest({ u: undefined, v: undefined, northDirection: undefined, file: undefined });
 
-            expect(response.statusCode).toBe(400);
-            expect(response.body.error).toBe("Hiányzó adatok!");
+            expectErrorResponse(response, 400, ERRORS.COMMON.MISSING_DATA);
         });
 
         describe("Test missing fields", () => {
             const missingFields = [
-                { field: "u", overrides: { u: undefined }, errorMsg: "Helytelen koordináták!" },
-                { field: "v", overrides: { v: undefined }, errorMsg: "Helytelen koordináták!" },
-                { field: "northDirection", overrides: { northDirection: undefined }, errorMsg: "Helytelen északirány!" }
+                { field: "u", overrides: { u: undefined }, errorMsg: ERRORS.POINT.UV_REQUIRED },
+                { field: "v", overrides: { v: undefined }, errorMsg: ERRORS.POINT.UV_REQUIRED },
+                { field: "northDirection", overrides: { northDirection: undefined }, errorMsg: ERRORS.POINT.NORTH_DIRECTION_REQUIRED }
             ];
 
             it.each(missingFields)("Should respond with 400 if $field is missing", async ({ overrides, errorMsg }) => {
                 const response = await makePutRequest(overrides);
 
-                expect(response.statusCode).toBe(400);
-                expect(response.body.error).toBe(errorMsg);
+                expectErrorResponse(response, 400, errorMsg);
             });
         });
 
-        it.each(["u", "v"])("Should respond with 400 if %s coordinate is invalid", async (UorV) => {
-            for (const invalidUV of invalidUVs) {
+        ["u", "v"].forEach((UorV) => {
+            it.each(invalidTypeNumbers)("Should respond with 400 if %s coordinate is invalid type", async (invalidUV) => {
                 const response = await makePutRequest({ [UorV]: invalidUV });
 
-                expect(response.statusCode).toBe(400);
-                expect(response.body.error).toBe("Helytelen koordináták!");
-            }
+                expectErrorResponse(response, 400, ERRORS.POINT.UV_INVALID_TYPE);
+            });
+
+            it.each(negativeNumbers)("Should respond with 400 if %s coordinate is negative", async (invalidUV) => {
+                const response = await makePutRequest({ [UorV]: invalidUV });
+
+                expectErrorResponse(response, 400, ERRORS.POINT.UV_MIN_ERROR);
+            });
+
+            it.each(tooBigUV)("Should respond with 400 if %s coordinate is too big", async (invalidUV) => {
+                const response = await makePutRequest({ [UorV]: invalidUV });
+
+                expectErrorResponse(response, 400, ERRORS.POINT.UV_MAX_ERROR);
+            });
         });
 
-        it.each(invalidDegrees)("Should respond with 400 if northDirection is invalid: '%s'", async (invalidDirection) => {
-            const response = await makePutRequest({ northDirection: invalidDirection });
+        it.each(invalidTypeNumbers)(`Should respond with 400 if northDirection is invalid type: '%s'`, async (invalidValue) => {
+            const response = await makePutRequest({ northDirection: invalidValue });
 
-            expect(response.statusCode).toBe(400);
-            expect(response.body.error).toBe("Helytelen északirány!");
+            expectErrorResponse(response, 400, ERRORS.POINT.NORTH_DIRECTION_TYPE);
+        });
+
+        it.each(negativeNumbers)(`Should respond with 400 if northDirection is too small: '%s'`, async (invalidValue) => {
+            const response = await makePutRequest({ northDirection: invalidValue });
+
+            expectErrorResponse(response, 400, ERRORS.POINT.NORTH_DIRECTION_MIN);
+        });
+
+        it.each(tooBigDegrees)(`Should respond with 400 if northDirection is too big: '%s'`, async (invalidValue) => {
+            const response = await makePutRequest({ northDirection: invalidValue });
+
+            expectErrorResponse(response, 400, ERRORS.POINT.NORTH_DIRECTION_MAX);
         });
 
         it("Should respond with 409 if the point already exists", async () => {
@@ -233,8 +249,7 @@ describe("Map Creator API - Point Endpoints - /api/map-creator/", () => {
             expect(mockConnection.beginTransaction).toHaveBeenCalled();
             expect(database.getPointOnMapByCoordinates).toHaveBeenCalledWith(mockConnection, mapId, defaults.u, defaults.v);
 
-            expect(response.statusCode).toBe(409);
-            expect(response.body.error).toBe("Ezen a térképen már létezik pont ezeken a koordinátákon!");
+            expectErrorResponse(response, 409, ERRORS.POINT.ALREADY_EXISTS);
         });
 
         it("Should respond with 200 and only change coordinates and north direction if those were provided", async () => {
@@ -362,7 +377,7 @@ describe("Map Creator API - Point Endpoints - /api/map-creator/", () => {
 
                 expect(deleteFile).toHaveBeenCalledWith(expect.any(String));
                 expectRollback(mockConnection);
-                expectErrorResponse(response, 500, "A pont koordinátáinak frissítése nem sikerült");
+                expectErrorResponse(response, 500, ERRORS.POINT.COORDINATES_UPDATE_FAILED);
             });
 
             it("Should respond with 500, rollback and delete temp file if updatePointNorthDirection fails", async () => {
@@ -375,7 +390,7 @@ describe("Map Creator API - Point Endpoints - /api/map-creator/", () => {
 
                 expect(deleteFile).toHaveBeenCalledWith(expect.any(String));
                 expectRollback(mockConnection);
-                expectErrorResponse(response, 500, "A pont északirányának frissítése nem sikerült");
+                expectErrorResponse(response, 500, ERRORS.POINT.NORTH_DIRECTION_UPDATE_FAILED);
             });
 
             it("Should respond with 500, rollback and delete files if updatePointImage fails", async () => {
@@ -388,7 +403,7 @@ describe("Map Creator API - Point Endpoints - /api/map-creator/", () => {
 
                 expect(deleteFile).toHaveBeenCalledTimes(3); // because temp uploaded file, new processed image and low res
                 expectRollback(mockConnection);
-                expectErrorResponse(response, 500, "A kép útvonalának frissítése nem sikerült");
+                expectErrorResponse(response, 500, ERRORS.POINT.IMAGE_PATH_UPDATE_FAILED);
             });
 
             it("Should respond with 500, rollback and delete files if deleteImageById fails", async () => {
@@ -402,7 +417,7 @@ describe("Map Creator API - Point Endpoints - /api/map-creator/", () => {
 
                 expect(deleteFile).toHaveBeenCalledTimes(3); // because temp uploaded file, new processed image and low res
                 expectRollback(mockConnection);
-                expectErrorResponse(response, 500, "A régi kép törlése nem sikerült");
+                expectErrorResponse(response, 500, ERRORS.POINT.OLD_IMAGE_DELETION_FAILED);
             });
 
             it("Should respond with 500, rollback and delete temp file if processImageMetadata fails", async () => {
@@ -416,7 +431,7 @@ describe("Map Creator API - Point Endpoints - /api/map-creator/", () => {
 
                 expect(deleteFile).toHaveBeenCalled(); // temp uploaded file
                 expectRollback(mockConnection);
-                expectErrorResponse(response, 500, "Hiba a kép feldolgozásakor!");
+                expectErrorResponse(response, 500, ERRORS.COMMON.IMAGE_PROCESSING_ERROR);
             });
 
             it("Should respond with 500, rollback and all files if database commit fails", async () => {
@@ -483,15 +498,13 @@ describe("Map Creator API - Point Endpoints - /api/map-creator/", () => {
 
                 const response = await makePutRequest({ file: tooBigFile });
 
-                expect(response.statusCode).toBe(413);
-                expect(response.body).toHaveProperty("error", "Túl nagy fájlméret! (Max 10MB)");
+                expectErrorResponse(response, 413, ERRORS.COMMON.FILE_TOO_LARGE);
             });
 
             it("Should respond with 400 for unexpected multer errors", async () => {
                 const response = await makePutRequest({ fileFieldName: "wrongFieldName" });
 
-                expect(response.statusCode).toBe(400);
-                expect(response.body).toHaveProperty("error", "Fájlfeltöltési hiba történt!");
+                expectErrorResponse(response, 400, ERRORS.COMMON.FILE_UPLOAD_ERROR);
             });
         });
     });
@@ -529,7 +542,7 @@ describe("Map Creator API - Point Endpoints - /api/map-creator/", () => {
         it("Should respond with 400 if the map id is incorrect", async () => {
             await testInvalidIDs(
                 (id) => makePostRequest({ id }),
-                "Helytelen térkép ID!"
+                ERRORS.MAP.INVALID_ID
             );
         });
 
@@ -538,57 +551,72 @@ describe("Map Creator API - Point Endpoints - /api/map-creator/", () => {
 
             const response = await makePostRequest();
 
-            expect(response.statusCode).toBe(403);
-            expect(response.type).toEqual(expect.stringContaining("json"));
-            expect(response.body).toHaveProperty("error", "Nincs hozzáférése ehhez a térképhez");
+            expectErrorResponse(response, 403, ERRORS.MAP.NO_ACCESS);
         });
 
         it("Should respond with 400 if a body is not provided", async () => {
             const response = await makePostRequest({ u: undefined, v: undefined, northDirection: undefined, file: undefined });
 
-            expect(response.statusCode).toBe(400);
-            expect(response.body.error).toBe("Hiányzó adatok!");
+            expectErrorResponse(response, 400, ERRORS.COMMON.MISSING_DATA);
         });
 
         describe("Test missing fields", () => {
             const missingFields = [
-                { field: "u", overrides: { u: undefined }, errorMsg: "Helytelen koordináták!" },
-                { field: "v", overrides: { v: undefined }, errorMsg: "Helytelen koordináták!" },
-                { field: "northDirection", overrides: { northDirection: undefined }, errorMsg: "Helytelen északirány!" }
+                { field: "u", overrides: { u: undefined }, errorMsg: ERRORS.POINT.UV_REQUIRED },
+                { field: "v", overrides: { v: undefined }, errorMsg: ERRORS.POINT.UV_REQUIRED },
+                { field: "northDirection", overrides: { northDirection: undefined }, errorMsg: ERRORS.POINT.NORTH_DIRECTION_REQUIRED }
             ];
 
             it.each(missingFields)("Should respond with 400 if $field is missing", async ({ overrides, errorMsg }) => {
                 const response = await makePostRequest(overrides);
 
-                expect(response.statusCode).toBe(400);
-                expect(response.body.error).toBe(errorMsg);
+                expectErrorResponse(response, 400, errorMsg);
                 expect(deleteFile).toHaveBeenCalledWith(expect.any(String));
             });
         });
 
-        it.each(["u", "v"])("Should respond with 400 if %s coordinate is invalid", async (UorV) => {
-            for (const invalidUV of invalidUVs) {
+        ["u", "v"].forEach((UorV) => {
+            it.each(invalidTypeNumbers)("Should respond with 400 if %s coordinate is invalid type", async (invalidUV) => {
                 const response = await makePostRequest({ [UorV]: invalidUV });
 
-                expect(response.statusCode).toBe(400);
-                expect(response.body.error).toBe("Helytelen koordináták!");
-                expect(deleteFile).toHaveBeenCalledWith(expect.any(String));
-            }
+                expectErrorResponse(response, 400, ERRORS.POINT.UV_INVALID_TYPE);
+            });
+
+            it.each(negativeNumbers)("Should respond with 400 if %s coordinate is negative", async (invalidUV) => {
+                const response = await makePostRequest({ [UorV]: invalidUV });
+
+                expectErrorResponse(response, 400, ERRORS.POINT.UV_MIN_ERROR);
+            });
+
+            it.each(tooBigUV)("Should respond with 400 if %s coordinate is too big", async (invalidUV) => {
+                const response = await makePostRequest({ [UorV]: invalidUV });
+
+                expectErrorResponse(response, 400, ERRORS.POINT.UV_MAX_ERROR);
+            });
         });
 
-        it.each(invalidDegrees)("Should respond with 400 if northDirection is invalid: '%s'", async (invalidDirection) => {
-            const response = await makePostRequest({ northDirection: invalidDirection });
+        it.each(invalidTypeNumbers)(`Should respond with 400 if northDirection is invalid type: '%s'`, async (invalidValue) => {
+            const response = await makePostRequest({ northDirection: invalidValue });
 
-            expect(response.statusCode).toBe(400);
-            expect(response.body.error).toBe("Helytelen északirány!");
-            expect(deleteFile).toHaveBeenCalledWith(expect.any(String));
+            expectErrorResponse(response, 400, ERRORS.POINT.NORTH_DIRECTION_TYPE);
+        });
+
+        it.each(negativeNumbers)(`Should respond with 400 if northDirection is too small: '%s'`, async (invalidValue) => {
+            const response = await makePostRequest({ northDirection: invalidValue });
+
+            expectErrorResponse(response, 400, ERRORS.POINT.NORTH_DIRECTION_MIN);
+        });
+
+        it.each(tooBigDegrees)(`Should respond with 400 if northDirection is too big: '%s'`, async (invalidValue) => {
+            const response = await makePostRequest({ northDirection: invalidValue });
+
+            expectErrorResponse(response, 400, ERRORS.POINT.NORTH_DIRECTION_MAX);
         });
 
         it("Should respond with 400 if no image was provided", async () => {
             const response = await makePostRequest({ file: undefined });
 
-            expect(response.statusCode).toBe(400);
-            expect(response.body.error).toBe("Nem adott meg képet!");
+            expectErrorResponse(response, 400, ERRORS.COMMON.MISSING_IMAGE);
             expect(deleteFile).not.toHaveBeenCalled();
         });
 
@@ -600,8 +628,7 @@ describe("Map Creator API - Point Endpoints - /api/map-creator/", () => {
             expect(mockConnection.beginTransaction).toHaveBeenCalled();
             expect(database.getPointOnMapByCoordinates).toHaveBeenCalledWith(mockConnection, defaults.id, defaults.u, defaults.v);
 
-            expect(response.statusCode).toBe(409);
-            expect(response.body.error).toBe("Ezen a térképen már létezik pont ezeken a koordinátákon!");
+            expectErrorResponse(response, 409, ERRORS.POINT.ALREADY_EXISTS);
             expect(deleteFile).toHaveBeenCalled();
         });
 
@@ -625,15 +652,13 @@ describe("Map Creator API - Point Endpoints - /api/map-creator/", () => {
 
             const response = await makePostRequest({ file: tooBigFile });
 
-            expect(response.statusCode).toBe(413);
-            expect(response.body).toHaveProperty("error", "Túl nagy fájlméret! (Max 10MB)");
+            expectErrorResponse(response, 413, ERRORS.COMMON.FILE_TOO_LARGE);
         });
 
         it("Should respond with 400 for unexpected multer errors", async () => {
             const response = await makePostRequest({ fileFieldName: "wrongFieldName" });
 
-            expect(response.statusCode).toBe(400);
-            expect(response.body).toHaveProperty("error", "Fájlfeltöltési hiba történt!");
+            expectErrorResponse(response, 400, ERRORS.COMMON.FILE_UPLOAD_ERROR);
         });
 
         describe("Server Errors", () => {
@@ -730,7 +755,7 @@ describe("Map Creator API - Point Endpoints - /api/map-creator/", () => {
                 expect(mockConnection.beginTransaction).not.toHaveBeenCalled();
                 expect(deleteFile).toHaveBeenCalledWith(expect.any(String));
 
-                expectErrorResponse(response, 500, "Hiba a kép feldolgozásakor!");
+                expectErrorResponse(response, 500, ERRORS.COMMON.IMAGE_PROCESSING_ERROR);
             });
 
             it("Should respond with 500 if image conversion failed", async () => {
@@ -810,7 +835,7 @@ describe("Map Creator API - Point Endpoints - /api/map-creator/", () => {
         it("Should respond with 400 if the point id is incorrect", async () => {
             await testInvalidIDs(
                 (id) => makeDeleteRequest({ id }),
-                "Helytelen pont ID!"
+                ERRORS.POINT.INVALID_ID
             );
         });
 
@@ -819,9 +844,7 @@ describe("Map Creator API - Point Endpoints - /api/map-creator/", () => {
 
             const response = await makeDeleteRequest();
 
-            expect(response.statusCode).toBe(403);
-            expect(response.type).toEqual(expect.stringContaining("json"));
-            expect(response.body).toHaveProperty("error", "Nincs hozzáférése ehhez a ponthoz");
+            expectErrorResponse(response, 403, ERRORS.POINT.NO_ACCESS);
         });
 
         it("Should respond with 404 if the point doesn't exist somehow", async () => {
@@ -829,8 +852,7 @@ describe("Map Creator API - Point Endpoints - /api/map-creator/", () => {
 
             const response = await makeDeleteRequest();
 
-            expect(response.statusCode).toBe(404);
-            expect(response.body).toHaveProperty("error", "A pont nem létezik");
+            expectErrorResponse(response, 404, ERRORS.POINT.NOT_FOUND);
         });
 
         it("Should respond with 204 if everything was successful", async () => {
@@ -930,7 +952,7 @@ describe("Map Creator API - Point Endpoints - /api/map-creator/", () => {
                 const response = await makeDeleteRequest();
 
                 expectRollback(mockConnection);
-                expectErrorResponse(response, 500, "A kép törlése nem sikerült");
+                expectErrorResponse(response, 500, ERRORS.POINT.IMAGE_DELETETION_FAILED);
             });
 
             it("Should respond with 500 and rollback if deletePointById failed", async () => {
@@ -938,7 +960,7 @@ describe("Map Creator API - Point Endpoints - /api/map-creator/", () => {
                 const response = await makeDeleteRequest();
 
                 expectRollback(mockConnection);
-                expectErrorResponse(response, 500, "A pont törlése nem sikerült");
+                expectErrorResponse(response, 500, ERRORS.POINT.DELETE_FAILED);
             });
 
             it("Should respond with 500 and rollback if database commit failed", async () => {

@@ -1,6 +1,7 @@
-const database = require("../../../sql/database.js");
-const AppError = require("../../../utils/AppError.js");
-const { cleanupAfterError, assertUserOwnsGameMap, assertUserOwnsConnection } = require("../shared/utils/mapcreator.utils.js");
+const ERRORS = require("#utils/errorMessages.js");
+const database = require("#sql/database.js");
+const AppError = require("#utils/AppError.js");
+const { cleanupAfterError, assertUserOwnsGameMap, assertUserOwnsConnection } = require("#mapcreator/shared/utils/mapcreator.utils.js");
 
 async function fetchConnections(userId, gameMapID) {
     await assertUserOwnsGameMap(userId, gameMapID);
@@ -24,12 +25,12 @@ async function updateConnection(userId, connectionID, directionStartToEnd, direc
 
         const isCrossMapConnection = await database.isConnectionCrossMap(dbConnection, connectionID);
         if (!isCrossMapConnection) {
-            throw new AppError("Csak térképek közötti kapcsolatok irányát lehet módosítani!", 400);
+            throw new AppError(ERRORS.CONNECTION.NOT_CROSSMAP, 400);
         }
 
         const updateSuccess = await database.updateConnectionDirections(dbConnection, connectionID, dirStartToEnd, dirEndToStart);
         if (!updateSuccess) {
-            throw new AppError("A kapcsolat frissítése nem sikerült!", 500);
+            throw new AppError(ERRORS.CONNECTION.UPDATE_FAILED, 500);
         }
 
         await dbConnection.commit();
@@ -51,11 +52,11 @@ async function createConnection(userId, gameMapID, startPointId, endPointId, dir
         await dbConnection.beginTransaction();
 
         if (!await database.arePointsInSameGameMap(dbConnection, startPointId, endPointId, gameMapID)) {
-            throw new AppError("A megadott pontok nem ugyanahhoz a pályához tartoznak!", 400);
+            throw new AppError(ERRORS.CONNECTION.NOT_ON_SAME_GAME_MAP, 400);
         }
 
         if (await database.doesConnectionAlreadyExist(dbConnection, startPointId, endPointId)) {
-            throw new AppError("A megadott pontok már össze vannak kapcsolva!", 400);
+            throw new AppError(ERRORS.CONNECTION.ALREADY_EXISTS, 400);
         }
 
         const dirStartToEnd = directionStartToEnd != undefined
@@ -67,7 +68,7 @@ async function createConnection(userId, gameMapID, startPointId, endPointId, dir
 
         const isInSameMap = await database.arePointsInSameMap(dbConnection, startPointId, endPointId);
         if (!isInSameMap && (dirStartToEnd == null || dirEndToStart == null)) {
-            throw new AppError("Térképek közötti kapcsolat létrehozásához meg kell adni mindkét irányt!", 400);
+            throw new AppError(ERRORS.CONNECTION.DIRECTION_NOT_GIVEN_FOR_CROSSMAP, 400);
         }
 
         const connectionId = await database.insertConnection(dbConnection, startPointId, endPointId, gameMapID, dirStartToEnd, dirEndToStart);
@@ -95,7 +96,7 @@ async function deleteConnection(userId, connectionID) {
 
         const successConnectionDeletion = await database.deleteConnectionById(dbConnection, connectionID);
         if (!successConnectionDeletion) {
-            throw new AppError("A kapcsolat nem létezik vagy már törölve lett!", 404);
+            throw new AppError(ERRORS.CONNECTION.DELETE_FAILED, 500);
         }
 
         await dbConnection.commit();

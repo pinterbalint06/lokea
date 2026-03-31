@@ -89,37 +89,7 @@ const validTitles = [
     "a-b_c-d_e-f_g-h_i-j_"
 ];
 
-const invalidUVs = [
-    "",
-    "invalid",
-    true,
-    false,
-    NaN,
-    Infinity,
-    -Infinity,
-    -0.1,
-    -1,
-    1,
-    1.5,
-    100
-];
-
-const invalidDegrees = [
-    "",
-    "invalid",
-    true,
-    false,
-    NaN,
-    Infinity,
-    -Infinity,
-    -0.1,
-    -10,
-    360,
-    360.1,
-    500
-];
-
-const invalidTypeDegrees = [
+const invalidTypeNumbers = [
     "",
     "invalid",
     true,
@@ -130,10 +100,17 @@ const invalidTypeDegrees = [
     12312313438576238462384823746284
 ];
 
-const tooSmallDegrees = [
+const negativeNumbers = [
     -0.0021,
     -100,
-    -1231231231231231
+    -1231231231231231,
+    -12312
+];
+const tooBigUV = [
+    1.0,
+    123,
+    143,
+    353453
 ];
 
 const tooBigDegrees = [
@@ -144,7 +121,6 @@ const tooBigDegrees = [
     1000
 ];
 
-
 const imageStatusForPath = "pending";
 
 module.exports = {
@@ -154,10 +130,9 @@ module.exports = {
     tooLongTitles,
     invalidCharTitles,
     validTitles,
-    invalidUVs,
-    invalidDegrees,
-    invalidTypeDegrees,
-    tooSmallDegrees,
+    tooBigUV,
+    invalidTypeNumbers,
+    negativeNumbers,
     tooBigDegrees,
     imageStatusForPath,
 };

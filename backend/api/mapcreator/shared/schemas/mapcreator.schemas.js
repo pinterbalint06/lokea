@@ -32,7 +32,8 @@ const uvCoordinateSchema = joi
         "number.base": ERRORS.POINT.UV_INVALID_TYPE,
         "number.min": ERRORS.POINT.UV_MIN_ERROR,
         "number.less": ERRORS.POINT.UV_MAX_ERROR,
-        "any.required": ERRORS.POINT.UV_REQUIRED
+        "any.required": ERRORS.POINT.UV_REQUIRED,
+        "number.unsafe": ERRORS.POINT.UV_INVALID_TYPE
     });
 
 module.exports = {

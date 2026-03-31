@@ -10,7 +10,12 @@
     },
     "imports": {
         "#utils/*": "./utils/*",
-        "#sql/*": "./sql/*"
+        "#sql/*": "./sql/*",
+        "#config/*": "./config/*",
+        "#mapcreatortest/*": "./test/mapcreator/*",
+        "#root/*": "./*",
+        "#mapcreator/*": "./api/mapcreator/*",
+        "#gamemaps/*": "./api/gamemaps/*"
     },
     "author": "Kardos Krisztián",
     "license": "ISC",

@@ -1,4 +1,4 @@
-const pointsService = require("./points.service.js");
+const pointsService = require("#mapcreator/points/points.service.js");
 
 async function getPoints(request, response, next) {
     try {

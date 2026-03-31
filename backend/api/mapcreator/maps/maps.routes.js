@@ -1,9 +1,9 @@
 const express = require("express");
 const router = express.Router();
-const mapsController = require("./maps.controller.js");
-const schemas = require("./maps.schemas.js");
-const { validateRequest } = require('../../../utils/validation.js');
-const upload = require("../shared/middlewares/uploadConfig.js");
+const mapsController = require("#mapcreator/maps/maps.controller.js");
+const schemas = require("#mapcreator/maps/maps.schemas.js");
+const { validateRequest } = require('#utils/validation.js');
+const upload = require("#mapcreator/shared/middlewares/uploadConfig.js");
 
 
 // !Endpoints:

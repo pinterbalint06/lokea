@@ -1,9 +1,10 @@
 const joi = require('#utils/joi.js');
 const ERRORS = require("#utils/errorMessages.js");
-const { idSchema, degreeSchema, uvCoordinateSchema } = require('../shared/schemas/mapcreator.schemas.js');
+const { idSchema, degreeSchema, uvCoordinateSchema } = require('#mapcreator/shared/schemas/mapcreator.schemas.js');
 
 const northDirectionMessages = {
     "number.base": ERRORS.POINT.NORTH_DIRECTION_TYPE,
+    "number.unsafe": ERRORS.POINT.NORTH_DIRECTION_TYPE,
     "number.min": ERRORS.POINT.NORTH_DIRECTION_MIN,
     "number.less": ERRORS.POINT.NORTH_DIRECTION_MAX,
     "any.required": ERRORS.POINT.NORTH_DIRECTION_REQUIRED

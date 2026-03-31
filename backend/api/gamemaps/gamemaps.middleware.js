@@ -1,4 +1,5 @@
-const AppError = require("../../utils/AppError.js")
+const ERRORS = require("#utils/errorMessages.js");
+const AppError = require("#utils/AppError.js")
 
 async function isAllowedToGetMapImage(request, response, next) {
     try {
@@ -21,7 +22,7 @@ async function isAllowedToAccessPoint(request, response, next) {
         const isAllowed = true;
 
         if (!isAllowed) {
-            throw new AppError("Nincs hozzáférése ehhez a ponthoz", 403);
+            throw new AppError(ERRORS.POINT.NO_ACCESS, 403);
         }
 
         next();

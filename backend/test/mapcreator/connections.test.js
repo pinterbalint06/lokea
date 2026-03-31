@@ -1,8 +1,8 @@
-const { createTestApp } = require("@helpers/setup-test.js");
-const { testInvalidIDs, testRequiresAuth, expectSuccessfulTransaction, expectRollback, expectErrorResponse, randomId, buildRequest, suppressConsoleErrors } = require("@helpers/helpers.js");
-const { invalidTypeDegrees, tooSmallDegrees, tooBigDegrees, } = require("@helpers/test-data.js");
+const { createTestApp } = require("#mapcreatortest/helpers/setup-test.js");
+const { testInvalidIDs, testRequiresAuth, expectSuccessfulTransaction, expectRollback, expectErrorResponse, randomId, buildRequest, suppressConsoleErrors } = require("#mapcreatortest/helpers/helpers.js");
+const { invalidTypeNumbers, negativeNumbers, tooBigDegrees, } = require("#mapcreatortest/helpers/test-data.js");
 
-const database = require("@sql/database.js");
+const database = require("#sql/database.js");
 const ERRORS = require("#utils/errorMessages.js");
 const { mockConnection } = database;
 
@@ -62,7 +62,7 @@ describe("Map Creator API - Connection Endpoints - /api/map-creator/", () => {
         it("Should respond with 400 if the game map id is incorrect", async () => {
             await testInvalidIDs(
                 (id) => makeGetRequest({ id }),
-                "Helytelen pálya ID!"
+                ERRORS.GAMEMAP.INVALID_ID
             );
         });
 
@@ -71,9 +71,7 @@ describe("Map Creator API - Connection Endpoints - /api/map-creator/", () => {
 
             const response = await makeGetRequest();
 
-            expect(response.statusCode).toBe(403);
-            expect(response.type).toEqual(expect.stringContaining("json"));
-            expect(response.body).toHaveProperty("error", "Nincs hozzáférése ehhez a pályához");
+            expectErrorResponse(response, 403, ERRORS.GAMEMAP.NO_ACCESS);
         });
 
         it("Should return all connections for a game map", async () => {
@@ -133,15 +131,14 @@ describe("Map Creator API - Connection Endpoints - /api/map-creator/", () => {
         it("Should respond with 400 if the connection id is incorrect", async () => {
             await testInvalidIDs(
                 (id) => makePutRequest({ id }),
-                "Helytelen kapcsolat ID!"
+                ERRORS.CONNECTION.INVALID_ID
             );
         });
 
         it("Should respond with 400 if a body is not provided", async () => {
             const response = await makePutRequest({ directionStartToEnd: undefined, directionEndToStart: undefined });
 
-            expect(response.statusCode).toBe(400);
-            expect(response.body.error).toBe("Hiányzó adatok!");
+            expectErrorResponse(response, 400, ERRORS.COMMON.MISSING_DATA);
         });
 
         it("Should respond with 403 if it's not the user's connection", async () => {
@@ -150,38 +147,38 @@ describe("Map Creator API - Connection Endpoints - /api/map-creator/", () => {
             const response = await makePutRequest();
 
             expect(mockConnection.beginTransaction).not.toHaveBeenCalled();
-            expect(response.statusCode).toBe(403);
-            expect(response.body.error).toBe(ERRORS.CONNECTION.NO_ACCESS);
+            expectErrorResponse(response, 403, ERRORS.CONNECTION.NO_ACCESS);
         });
 
         it("Should respond with 400 if no direction changes were given", async () => {
             const response = await makePutRequest({ directionStartToEnd: undefined, directionEndToStart: undefined, randomField: "randomValue" });
 
-            expect(response.statusCode).toBe(400);
-            expect(response.body.error).toBe("Nem adott meg módosítandó irányt!");
+            expectErrorResponse(response, 400, ERRORS.CONNECTION.ATLEAST_ONE_DIRECTION);
         });
 
         ["directionStartToEnd", "directionEndToStart"].forEach((directionField) => {
-            it.each(invalidTypeDegrees)(`Should respond with 400 if ${directionField} is invalid: '%s'`, async (invalidValue) => {
+            it.each(invalidTypeNumbers)(`Should respond with 400 if ${directionField} is invalid: '%s'`, async (invalidValue) => {
                 database.arePointsInSameMap.mockResolvedValue(false);
 
                 const response = await makePutRequest({ [directionField]: invalidValue });
 
-                expect(response.statusCode).toBe(400);
-                expect(response.body.error).toBe(
+                expectErrorResponse(
+                    response,
+                    400,
                     directionField == "directionStartToEnd"
                         ? ERRORS.CONNECTION.START_TO_END_TYPE
                         : ERRORS.CONNECTION.END_TO_START_TYPE
                 );
             });
 
-            it.each(tooSmallDegrees)(`Should respond with 400 if ${directionField} is invalid: '%s'`, async (invalidValue) => {
+            it.each(negativeNumbers)(`Should respond with 400 if ${directionField} is invalid: '%s'`, async (invalidValue) => {
                 database.arePointsInSameMap.mockResolvedValue(false);
 
                 const response = await makePutRequest({ [directionField]: invalidValue });
 
-                expect(response.statusCode).toBe(400);
-                expect(response.body.error).toBe(
+                expectErrorResponse(
+                    response,
+                    400,
                     directionField == "directionStartToEnd"
                         ? ERRORS.CONNECTION.START_TO_END_MIN
                         : ERRORS.CONNECTION.END_TO_START_MIN
@@ -193,8 +190,9 @@ describe("Map Creator API - Connection Endpoints - /api/map-creator/", () => {
 
                 const response = await makePutRequest({ [directionField]: invalidValue });
 
-                expect(response.statusCode).toBe(400);
-                expect(response.body.error).toBe(
+                expectErrorResponse(
+                    response,
+                    400,
                     directionField == "directionStartToEnd"
                         ? ERRORS.CONNECTION.START_TO_END_MAX
                         : ERRORS.CONNECTION.END_TO_START_MAX
@@ -207,8 +205,7 @@ describe("Map Creator API - Connection Endpoints - /api/map-creator/", () => {
 
             const response = await makePutRequest();
 
-            expect(response.statusCode).toBe(400);
-            expect(response.body.error).toBe("Csak térképek közötti kapcsolatok irányát lehet módosítani!");
+            expectErrorResponse(response, 400, ERRORS.CONNECTION.NOT_CROSSMAP);
         });
 
         it("Should respond with 200 if only directionStartToEnd was updated", async () => {
@@ -284,7 +281,7 @@ describe("Map Creator API - Connection Endpoints - /api/map-creator/", () => {
                 expect(database.updateConnectionDirections).toHaveBeenCalledWith(mockConnection, defaults.id, defaults.directionStartToEnd, defaults.directionEndToStart);
 
                 expectRollback(mockConnection);
-                expectErrorResponse(response, 500, "A kapcsolat frissítése nem sikerült!");
+                expectErrorResponse(response, 500, ERRORS.CONNECTION.UPDATE_FAILED);
             });
 
             it("Should respond with 500 and rollback if database commit fails", async () => {
@@ -339,7 +336,7 @@ describe("Map Creator API - Connection Endpoints - /api/map-creator/", () => {
         it("Should respond with 400 if the starting point id is incorrect", async () => {
             await testInvalidIDs(
                 (startid) => makePostRequest({ startPointId: startid }),
-                "Helytelen kezdőpont ID!",
+                ERRORS.CONNECTION.INVALID_START_ID,
                 false
             );
         });
@@ -347,7 +344,7 @@ describe("Map Creator API - Connection Endpoints - /api/map-creator/", () => {
         it("Should respond with 400 if the ending point id is incorrect", async () => {
             await testInvalidIDs(
                 (endid) => makePostRequest({ endPointId: endid }),
-                "Helytelen végpont ID!",
+                ERRORS.CONNECTION.INVALID_END_ID,
                 false
             );
         });
@@ -355,25 +352,24 @@ describe("Map Creator API - Connection Endpoints - /api/map-creator/", () => {
         it("Should respond with 400 if a body is not provided", async () => {
             const response = await makePostRequest({ startPointId: undefined, endPointId: undefined, directionStartToEnd: undefined, directionEndToStart: undefined });
 
-            expect(response.statusCode).toBe(400);
-            expect(response.body.error).toBe("Hiányzó adatok!");
+            expectErrorResponse(response, 400, ERRORS.COMMON.MISSING_DATA);
         });
 
         it("Should respond with 400 if the starting id is bigger than the end id", async () => {
             const response = await makePostRequest({ startPointId: defaults.endPointId, endPointId: defaults.startPointId });
 
-            expect(response.statusCode).toBe(400);
-            expect(response.body.error).toBe(ERRORS.CONNECTION.END_MUST_BE_GREATER);
+            expectErrorResponse(response, 400, ERRORS.CONNECTION.END_MUST_BE_GREATER);
         });
 
         ["directionStartToEnd", "directionEndToStart"].forEach((directionField) => {
-            it.each(invalidTypeDegrees)(`Should respond with 400 if ${directionField} is invalid: %s`, async (invalidValue) => {
+            it.each(invalidTypeNumbers)(`Should respond with 400 if ${directionField} is invalid: %s`, async (invalidValue) => {
                 database.arePointsInSameMap.mockResolvedValue(false);
 
                 const response = await makePostRequest({ [directionField]: invalidValue });
 
-                expect(response.statusCode).toBe(400);
-                expect(response.body.error).toBe(
+                expectErrorResponse(
+                    response,
+                    400,
                     directionField == "directionStartToEnd"
                         ? ERRORS.CONNECTION.START_TO_END_TYPE
                         : ERRORS.CONNECTION.END_TO_START_TYPE
@@ -385,8 +381,7 @@ describe("Map Creator API - Connection Endpoints - /api/map-creator/", () => {
 
                 const response = await makePostRequest({ [directionField]: undefined });
 
-                expect(response.statusCode).toBe(400);
-                expect(response.body.error).toBe("Térképek közötti kapcsolat létrehozásához meg kell adni mindkét irányt!");
+                expectErrorResponse(response, 400, ERRORS.CONNECTION.DIRECTION_NOT_GIVEN_FOR_CROSSMAP);
             });
         });
 
@@ -396,21 +391,19 @@ describe("Map Creator API - Connection Endpoints - /api/map-creator/", () => {
             const response = await makePostRequest();
 
             expect(mockConnection.beginTransaction).not.toHaveBeenCalled();
-            expect(response.statusCode).toBe(403);
-            expect(response.body.error).toBe("Nincs hozzáférése ehhez a pályához");
+            expectErrorResponse(response, 403, ERRORS.GAMEMAP.NO_ACCESS);
         });
 
         describe("Test missing fields", () => {
             const missingFields = [
-                { field: "startPointId", overrides: { startPointId: undefined }, errorMsg: "Helytelen kezdőpont ID!" },
-                { field: "endPointId", overrides: { endPointId: undefined }, errorMsg: "Helytelen végpont ID!" }
+                { field: "startPointId", overrides: { startPointId: undefined }, errorMsg: ERRORS.CONNECTION.INVALID_START_ID },
+                { field: "endPointId", overrides: { endPointId: undefined }, errorMsg: ERRORS.CONNECTION.INVALID_END_ID }
             ];
 
             it.each(missingFields)("Should respond with 400 if $field is missing", async ({ overrides, errorMsg }) => {
                 const response = await makePostRequest(overrides);
 
-                expect(response.statusCode).toBe(400);
-                expect(response.body.error).toBe(errorMsg);
+                expectErrorResponse(response, 400, errorMsg);
             });
         });
 
@@ -418,8 +411,7 @@ describe("Map Creator API - Connection Endpoints - /api/map-creator/", () => {
             const response = await makePostRequest({ endPointId: defaults.startPointId });
 
             expect(mockConnection.beginTransaction).not.toHaveBeenCalled();
-            expect(response.statusCode).toBe(400);
-            expect(response.body.error).toBe("A kezdőpont és a végpont nem lehet ugyanaz!");
+            expectErrorResponse(response, 400, ERRORS.CONNECTION.SAME_START_END);
         });
 
         it("Should respond with 400 if starting and ending points are not in the same game map and the ids are not in the given game map", async () => {
@@ -430,8 +422,7 @@ describe("Map Creator API - Connection Endpoints - /api/map-creator/", () => {
             expect(database.arePointsInSameGameMap).toHaveBeenCalledWith(mockConnection, defaults.startPointId, defaults.endPointId, defaults.id);
             expectRollback(mockConnection);
 
-            expect(response.statusCode).toBe(400);
-            expect(response.body.error).toBe("A megadott pontok nem ugyanahhoz a pályához tartoznak!");
+            expectErrorResponse(response, 400, ERRORS.CONNECTION.NOT_ON_SAME_GAME_MAP);
         });
 
         it("Should respond with 400 if connection between starting and ending points already exists", async () => {
@@ -442,8 +433,7 @@ describe("Map Creator API - Connection Endpoints - /api/map-creator/", () => {
             expect(database.doesConnectionAlreadyExist).toHaveBeenCalledWith(mockConnection, defaults.startPointId, defaults.endPointId);
             expectRollback(mockConnection);
 
-            expect(response.statusCode).toBe(400);
-            expect(response.body.error).toBe("A megadott pontok már össze vannak kapcsolva!");
+            expectErrorResponse(response, 400, ERRORS.CONNECTION.ALREADY_EXISTS);
         });
 
         it("Should respond with 201 if connection was created successfully", async () => {
@@ -543,7 +533,7 @@ describe("Map Creator API - Connection Endpoints - /api/map-creator/", () => {
         it("Should respond with 400 if the connection id is incorrect", async () => {
             await testInvalidIDs(
                 (id) => makeDeleteRequest({ id }),
-                "Helytelen kapcsolat ID!"
+                ERRORS.CONNECTION.INVALID_ID
             );
         });
 
@@ -553,8 +543,7 @@ describe("Map Creator API - Connection Endpoints - /api/map-creator/", () => {
             const response = await makeDeleteRequest();
 
             expect(mockConnection.beginTransaction).not.toHaveBeenCalled();
-            expect(response.statusCode).toBe(403);
-            expect(response.body.error).toBe(ERRORS.CONNECTION.NO_ACCESS);
+            expectErrorResponse(response, 403, ERRORS.CONNECTION.NO_ACCESS);
         });
 
         it("Should respond with 204 if the connection is successfully deleted", async () => {
@@ -566,7 +555,7 @@ describe("Map Creator API - Connection Endpoints - /api/map-creator/", () => {
             expect(response.statusCode).toBe(204);
         });
 
-        it("Should respond with 404 if the connection deletion failed (probably it did not exist)", async () => {
+        it("Should respond with 500 if the connection deletion failed", async () => {
             database.deleteConnectionById.mockResolvedValueOnce(false);
 
             const response = await makeDeleteRequest();
@@ -574,7 +563,7 @@ describe("Map Creator API - Connection Endpoints - /api/map-creator/", () => {
             expect(database.deleteConnectionById).toHaveBeenCalledWith(mockConnection, defaults.id);
 
             expectRollback(mockConnection);
-            expectErrorResponse(response, 404, "A kapcsolat nem létezik vagy már törölve lett!");
+            expectErrorResponse(response, 500, ERRORS.CONNECTION.DELETE_FAILED);
         });
 
         describe("Server Errors", () => {

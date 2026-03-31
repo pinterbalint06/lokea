@@ -1,9 +1,9 @@
 const express = require("express");
 const router = express.Router();
-const connectionsController = require("./connections.controller.js");
-const schemas = require("./connections.schemas.js");
-const { validateRequest } = require('../../../utils/validation.js');
-const upload = require("../shared/middlewares/uploadConfig.js");
+const connectionsController = require("#mapcreator/connections/connections.controller.js");
+const schemas = require("#mapcreator/connections/connections.schemas.js");
+const { validateRequest } = require('#utils/validation.js');
+const upload = require("#mapcreator/shared/middlewares/uploadConfig.js");
 
 //!Endpoints:
 //?GET /api/map-creator/game-maps/:gameMapID/connections

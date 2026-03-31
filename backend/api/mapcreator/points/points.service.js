@@ -1,12 +1,13 @@
-const database = require("../../../sql/database.js");
-const AppError = require("../../../utils/AppError.js");
+const database = require("#sql/database.js");
+const AppError = require("#utils/AppError.js");
 const fs = require("fs/promises");
 const path = require("path");
 const crypto = require("crypto");
-const { UPLOAD_ROOT } = require("../../../config/mapStorage.js");
-const { processImageMetadata, createWebpAndLowRes, deleteImageAndLowResByMainPath } = require("../../../utils/imageProcessor.js");
-const { deleteFile } = require("../../../utils/fileUtils.js");
-const { assertUserOwnsMap, assertUserOwnsPoint, cleanupAfterError } = require("../shared/utils/mapcreator.utils.js");
+const { UPLOAD_ROOT } = require("#config/mapStorage.js");
+const { processImageMetadata, createWebpAndLowRes, deleteImageAndLowResByMainPath } = require("#utils/imageProcessor.js");
+const { deleteFile } = require("#utils/fileUtils.js");
+const { assertUserOwnsMap, assertUserOwnsPoint, cleanupAfterError } = require("#mapcreator/shared/utils/mapcreator.utils.js");
+const ERRORS = require("#utils/errorMessages.js");
 
 async function fetchPoints(userId, mapID) {
     await assertUserOwnsMap(userId, mapID);
@@ -27,25 +28,25 @@ async function updatePoint(userId, pointID, pointData, file) {
 
         let pointInfo = await database.getPointInfo(pointID);
         if (!pointInfo) {
-            throw new AppError("A pont nem létezik", 404);
+            throw new AppError(ERRORS.POINT.NOT_FOUND, 404);
         }
 
         if (pointInfo.point_u != uCoordinate || pointInfo.point_v != vCoordinate) {
             let existingPoints = await database.getPointOnMapByCoordinates(dbConnection, pointInfo.map_id, uCoordinate, vCoordinate);
             if (existingPoints.length > 0) {
-                throw new AppError("Ezen a térképen már létezik pont ezeken a koordinátákon!", 409);
+                throw new AppError(ERRORS.POINT.ALREADY_EXISTS, 409);
             }
 
             let updateSuccess = await database.updatePointCoordinates(dbConnection, pointID, uCoordinate, vCoordinate);
             if (!updateSuccess) {
-                throw new AppError("A pont koordinátáinak frissítése nem sikerült", 500);
+                throw new AppError(ERRORS.POINT.COORDINATES_UPDATE_FAILED, 500);
             }
         }
 
         if (pointInfo.north_direction != northDirection) {
             let updateSuccess = await database.updatePointNorthDirection(dbConnection, pointID, northDirection);
             if (!updateSuccess) {
-                throw new AppError("A pont északirányának frissítése nem sikerült", 500);
+                throw new AppError(ERRORS.POINT.NORTH_DIRECTION_UPDATE_FAILED, 500);
             }
         }
 
@@ -57,7 +58,7 @@ async function updatePoint(userId, pointID, pointData, file) {
                 imageData = await processImageMetadata(file.path);
             } catch (err) {
                 console.error(err);
-                throw new AppError("Hiba a kép feldolgozásakor!", 500);
+                throw new AppError(ERRORS.COMMON.IMAGE_PROCESSING_ERROR, 500);
             }
             let newImageId = await database.insertImage(dbConnection, imageData.width, imageData.height, "pending");
             let gameMapID = pointInfo.game_maps_id;
@@ -87,13 +88,13 @@ async function updatePoint(userId, pointID, pointData, file) {
 
             let updateImageSuccess = await database.updatePointImage(dbConnection, pointID, newImageId);
             if (!updateImageSuccess) {
-                throw new AppError("A kép útvonalának frissítése nem sikerült", 500);
+                throw new AppError(ERRORS.POINT.IMAGE_PATH_UPDATE_FAILED, 500);
             }
 
             if (oldImageInfo) {
                 let deleteSuccess = await database.deleteImageById(dbConnection, oldImageInfo.image_id);
                 if (!deleteSuccess) {
-                    throw new AppError("A régi kép törlése nem sikerült", 500);
+                    throw new AppError(ERRORS.POINT.OLD_IMAGE_DELETION_FAILED, 500);
                 }
             }
 
@@ -135,14 +136,14 @@ async function createPoint(userId, mapID, pointData, file) {
         const { u: uCoordinate, v: vCoordinate, northDirection } = pointData;
 
         if (!file) {
-            throw new AppError("Nem adott meg képet!", 400);
+            throw new AppError(ERRORS.COMMON.MISSING_IMAGE, 400);
         }
 
         await assertUserOwnsMap(userId, mapID);
 
         const gameMapID = await database.getGameMapIdByMapId(mapID);
         if (!gameMapID) {
-            throw new AppError("Váratlan hiba történt!", 500);
+            throw new AppError(ERRORS.COMMON.UNEXPECTED_ERROR, 500);
         }
 
         let imageData;
@@ -150,7 +151,7 @@ async function createPoint(userId, mapID, pointData, file) {
             imageData = await processImageMetadata(file.path);
         } catch (err) {
             console.error(err);
-            throw new AppError("Hiba a kép feldolgozásakor!", 500);
+            throw new AppError(ERRORS.COMMON.IMAGE_PROCESSING_ERROR, 500);
         }
 
         dbConnection = await database.getConnection();
@@ -158,7 +159,7 @@ async function createPoint(userId, mapID, pointData, file) {
 
         let existingPoints = await database.getPointOnMapByCoordinates(dbConnection, mapID, uCoordinate, vCoordinate);
         if (existingPoints.length > 0) {
-            throw new AppError("Ezen a térképen már létezik pont ezeken a koordinátákon!", 409);
+            throw new AppError(ERRORS.POINT.ALREADY_EXISTS, 409);
         }
 
         let imageId = await database.insertImage(dbConnection, imageData.width, imageData.height, "pending");
@@ -217,7 +218,7 @@ async function deletePoint(userId, pointID) {
 
         let pointInfo = await database.getPointInfo(pointID);
         if (!pointInfo) {
-            throw new AppError("A pont nem létezik", 404);
+            throw new AppError(ERRORS.POINT.NOT_FOUND, 404);
         }
 
         let oldImageInfo = await database.getPointImage(pointID);
@@ -228,13 +229,13 @@ async function deletePoint(userId, pointID) {
         if (oldImageInfo && oldImageInfo.image_id) {
             let successImageDeletion = await database.deleteImageById(dbConnection, oldImageInfo.image_id);
             if (!successImageDeletion) {
-                throw new AppError("A kép törlése nem sikerült", 500);
+                throw new AppError(ERRORS.POINT.IMAGE_DELETETION_FAILED, 500);
             }
         }
 
         let successPointDeletion = await database.deletePointById(dbConnection, pointID);
         if (!successPointDeletion) {
-            throw new AppError("A pont törlése nem sikerült", 500);
+            throw new AppError(ERRORS.POINT.DELETE_FAILED, 500);
         }
 
         await dbConnection.commit();

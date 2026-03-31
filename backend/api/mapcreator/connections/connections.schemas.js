@@ -1,6 +1,6 @@
 const joi = require("#utils/joi.js");
 const ERRORS = require("#utils/errorMessages.js");
-const { idSchema, degreeSchema } = require("../shared/schemas/mapcreator.schemas.js");
+const { idSchema, degreeSchema } = require("#mapcreator/shared/schemas/mapcreator.schemas.js");
 
 const startToEndMessages = {
     "number.base": ERRORS.CONNECTION.START_TO_END_TYPE,

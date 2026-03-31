@@ -3,11 +3,12 @@ const router = express.Router();
 const multer = require("multer");
 const { deleteFile } = require("#utils/fileUtils.js");
 const AppError = require("#utils/AppError.js");
-const { checkAuth } = require("../../auth.js");
+const { checkAuth } = require("#root/auth.js");
+const ERRORS = require("#utils/errorMessages.js");
 
-const mapsEndpoints = require("./maps/maps.routes.js");
-const pointsEndpoints = require("./points/points.routes.js");
-const connectionsEndpoints = require("./connections/connections.route.js");
+const mapsEndpoints = require("#mapcreator/maps/maps.routes.js");
+const pointsEndpoints = require("#mapcreator/points/points.routes.js");
+const connectionsEndpoints = require("#mapcreator/connections/connections.route.js");
 
 router.use("/", checkAuth, mapsEndpoints);
 router.use("/", checkAuth, pointsEndpoints);
@@ -15,7 +16,7 @@ router.use("/", checkAuth, connectionsEndpoints);
 
 router.use(async (error, request, response, next) => {
     let statusCode = 500;
-    let errorMessage = "Váratlan hiba történt!";
+    let errorMessage = ERRORS.COMMON.UNEXPECTED_ERROR;
 
     if (error instanceof multer.MulterError) {
         if (request.file && request.file.path) {
@@ -28,10 +29,10 @@ router.use(async (error, request, response, next) => {
 
         if (error.code == "LIMIT_FILE_SIZE") {
             statusCode = 413;
-            errorMessage = "Túl nagy fájlméret! (Max 10MB)";
+            errorMessage = ERRORS.COMMON.FILE_TOO_LARGE;
         } else {
             statusCode = 400;
-            errorMessage = "Fájlfeltöltési hiba történt!";
+            errorMessage = ERRORS.COMMON.FILE_UPLOAD_ERROR;
         }
     } else {
         if (error instanceof AppError) {

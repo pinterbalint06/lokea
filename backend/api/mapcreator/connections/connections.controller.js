@@ -1,4 +1,4 @@
-const connectionsService = require("./connections.service.js");
+const connectionsService = require("#mapcreator/connections/connections.service.js");
 
 async function getConnections(request, response, next) {
     try {

@@ -1,4 +1,4 @@
-const joi = require("./joi.js");
+const joi = require("#utils/joi.js");
 
 const idSchema = (customErrorMessage) => {
     return joi

@@ -6,17 +6,6 @@ module.exports = {
     roots: ["<rootDir>"],
     testPathIgnorePatterns: ["/node_modules/"],
 
-    // path aliases
-    moduleNameMapper: {
-        "^@sql/(.*)$": "<rootDir>/sql/$1",
-        "^@utils/(.*)$": "<rootDir>/utils/$1",
-        "^@helpers/(.*)$": "<rootDir>/test/mapcreator/helpers/$1",
-        "^@root/(.*)$": "<rootDir>/$1",
-        "^@config/(.*)$": "<rootDir>/config/$1",
-        "^@api/(.*)$": "<rootDir>/api/$1",
-        "^@mapcreator/(.*)$": "<rootDir>/api/mapcreator/$1"
-    },
-
     // coverage
     collectCoverage: true,
     coverageDirectory: "coverage",

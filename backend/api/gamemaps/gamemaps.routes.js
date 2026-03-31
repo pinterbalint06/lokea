@@ -1,11 +1,11 @@
 const express = require("express");
 const router = express.Router();
-const { validateRequest } = require('../../utils/validation.js');
-const { checkAuth } = require("../../auth.js");
-const AppError = require("../../utils/AppError.js");
-const schemas = require("./gamemaps.schemas.js");
-const controller = require("./gamemaps.controller.js");
-const { isAllowedToGetMapImage, isAllowedToAccessPoint } = require("./gamemaps.middleware.js");
+const { validateRequest } = require('#utils/validation.js');
+const { checkAuth } = require("#root/auth.js");
+const AppError = require("#utils/AppError.js");
+const schemas = require("#gamemaps.schemas.js");
+const controller = require("#gamemaps.controller.js");
+const { isAllowedToGetMapImage, isAllowedToAccessPoint } = require("#gamemaps.middleware.js");
 
 router.use(checkAuth);
 
@@ -34,7 +34,7 @@ router.get(
 
 router.use(async (error, request, response, next) => {
     let statusCode = 500;
-    let errorMessage = "Váratlan hiba történt!";
+    let errorMessage = ERRORS.COMMON.UNEXPECTED_ERROR;
 
     if (error instanceof AppError) {
         statusCode = error.statusCode;

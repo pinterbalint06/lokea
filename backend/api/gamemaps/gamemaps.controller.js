@@ -1,5 +1,5 @@
-const gamemapsService = require("./gamemaps.service.js");
-const { UPLOAD_ROOT } = require("../../config/mapStorage.js");
+const gamemapsService = require("#gamemaps.service.js");
+const { UPLOAD_ROOT } = require("#config/mapStorage.js");
 
 async function getPointImage(request, response, next) {
     try {

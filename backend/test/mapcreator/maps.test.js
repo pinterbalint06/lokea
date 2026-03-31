@@ -1,23 +1,23 @@
-const { createTestApp } = require("@helpers/setup-test.js");
-const { testInvalidIDs, testRequiresAuth, expectSuccessfulTransaction, expectRollback, expectErrorResponse, randomId, buildRequest, suppressConsoleErrors } = require("@helpers/helpers.js");
-const { emptyTitles, tooLongTitles, invalidCharTitles, validTitles, imageStatusForPath } = require("@helpers/test-data.js");
-const ERRORS = require("@utils/errorMessages.js");
+const { createTestApp } = require("#mapcreatortest/helpers/setup-test.js");
+const { testInvalidIDs, testRequiresAuth, expectSuccessfulTransaction, expectRollback, expectErrorResponse, randomId, buildRequest, suppressConsoleErrors } = require("#mapcreatortest/helpers/helpers.js");
+const { emptyTitles, tooLongTitles, invalidCharTitles, validTitles, imageStatusForPath } = require("#mapcreatortest/helpers/test-data.js");
 
-const database = require("@sql/database.js");
+const database = require("#sql/database.js");
 const { mockConnection } = database;
 
 const {
     processImageMetadata,
     createWebpAndLowRes,
     mockImageMetadata
-} = require("@utils/imageProcessor.js");
+} = require("#utils/imageProcessor.js");
 
 const {
     deleteFile
-} = require("@utils/fileUtils.js");
+} = require("#utils/fileUtils.js");
 
 const fs = require("fs/promises");
 const path = require("path");
+const ERRORS = require("#utils/errorMessages.js");
 
 
 const requestWithSupertest = createTestApp();
@@ -79,9 +79,7 @@ describe("Map Creator API - Map Endpoints - /api/map-creator/", () => {
 
             const response = await makeGetRequest();
 
-            expect(response.statusCode).toBe(403);
-            expect(response.type).toEqual(expect.stringContaining("json"));
-            expect(response.body.error).toBe(ERRORS.GAMEMAP.NO_ACCESS);
+            expectErrorResponse(response, 403, ERRORS.GAMEMAP.NO_ACCESS);
         });
 
         describe("Server Errors", () => {
@@ -129,43 +127,37 @@ describe("Map Creator API - Map Endpoints - /api/map-creator/", () => {
 
             const response = await makePutRequest();
 
-            expect(response.statusCode).toBe(403);
-            expect(response.body.error).toBe(ERRORS.MAP.NO_ACCESS);
+            expectErrorResponse(response, 403, ERRORS.MAP.NO_ACCESS);
         });
 
         it.each(invalidCharTitles)("Should respond with 400 if the title has invalid characters: '%s'", async (invalidTitle) => {
             const response = await makePutRequest({ title: invalidTitle });
 
-            expect(response.statusCode).toBe(400);
-            expect(response.body.error).toBe(ERRORS.MAP.TITLE_INVALID_CHARS);
+            expectErrorResponse(response, 400, ERRORS.MAP.TITLE_INVALID_CHARS);
         });
 
         it.each(tooLongTitles)("Should respond with 400 if the title is too long: '%s'", async (invalidTitle) => {
             const response = await makePutRequest({ title: invalidTitle });
 
-            expect(response.statusCode).toBe(400);
-            expect(response.body.error).toBe(ERRORS.MAP.TITLE_TOO_LONG);
+            expectErrorResponse(response, 400, ERRORS.MAP.TITLE_TOO_LONG);
         });
 
         it.each(emptyTitles)("Should respond with 400 if the title is empty: '%s'", async (invalidTitle) => {
             const response = await makePutRequest({ title: invalidTitle });
 
-            expect(response.statusCode).toBe(400);
-            expect(response.body.error).toBe(ERRORS.MAP.TITLE_EMPTY);
+            expectErrorResponse(response, 400, ERRORS.MAP.TITLE_EMPTY);
         });
 
         it("Should respond with 400 if the title is missing", async () => {
             const response = await makePutRequest({ title: undefined, randomField: "randomValue" });
 
-            expect(response.statusCode).toBe(400);
-            expect(response.body.error).toBe(ERRORS.MAP.TITLE_EMPTY);
+            expectErrorResponse(response, 400, ERRORS.MAP.TITLE_EMPTY);
         });
 
         it("Should respond with 400 if a body is not provided", async () => {
             const response = await makePutRequest({ title: undefined });
 
-            expect(response.statusCode).toBe(400);
-            expect(response.body.error).toBe(ERRORS.COMMON.MISSING_DATA);
+            expectErrorResponse(response, 400, ERRORS.COMMON.MISSING_DATA);
         });
 
         it("Should respond with 404 if the map doesn't exist somehow", async () => {
@@ -173,8 +165,7 @@ describe("Map Creator API - Map Endpoints - /api/map-creator/", () => {
 
             const response = await makePutRequest();
 
-            expect(response.statusCode).toBe(404);
-            expect(response.body).toHaveProperty("error", "A térkép nem létezik");
+            expectErrorResponse(response, 404, ERRORS.MAP.NOT_FOUND);
         });
 
         it("Should respond with 200, the mapID and the saved title on successful save", async () => {
@@ -205,7 +196,7 @@ describe("Map Creator API - Map Endpoints - /api/map-creator/", () => {
 
                 const response = await makePutRequest();
 
-                expectErrorResponse(response, 500, "A térkép átnevezése nem sikerült");
+                expectErrorResponse(response, 500, ERRORS.MAP.RENAME_FAILED);
                 expect(database.getConnection).toHaveBeenCalled();
                 expect(database.updateMapTitle).toHaveBeenCalledWith(mockConnection, defaults.id, defaults.title.trim());
                 expectRollback(mockConnection);
@@ -250,8 +241,7 @@ describe("Map Creator API - Map Endpoints - /api/map-creator/", () => {
         it("Should respond with 400 if a body is not provided", async () => {
             const response = await makePostRequest({ file: undefined, title: undefined });
 
-            expect(response.statusCode).toBe(400);
-            expect(response.body.error).toBe(ERRORS.COMMON.MISSING_DATA);
+            expectErrorResponse(response, 400, ERRORS.COMMON.MISSING_DATA);
         });
 
         it("Should respond with 403 if it's not the user's game map", async () => {
@@ -259,46 +249,39 @@ describe("Map Creator API - Map Endpoints - /api/map-creator/", () => {
 
             const response = await makePostRequest();
 
-            expect(response.statusCode).toBe(403);
-            expect(response.type).toEqual(expect.stringContaining("json"));
-            expect(response.body.error).toBe(ERRORS.GAMEMAP.NO_ACCESS);
+            expectErrorResponse(response, 403, ERRORS.GAMEMAP.NO_ACCESS);
             expect(deleteFile).toHaveBeenCalledWith(expect.any(String));
         });
 
         it.each(invalidCharTitles)("Should respond with 400 if the title has invalid characters: '%s'", async (invalidTitle) => {
             const response = await makePostRequest({ title: invalidTitle });
 
-            expect(response.statusCode).toBe(400);
-            expect(response.body.error).toBe(ERRORS.MAP.TITLE_INVALID_CHARS);
+            expectErrorResponse(response, 400, ERRORS.MAP.TITLE_INVALID_CHARS);
         });
 
         it.each(tooLongTitles)("Should respond with 400 if the title is too long: '%s'", async (invalidTitle) => {
             const response = await makePostRequest({ title: invalidTitle });
 
-            expect(response.statusCode).toBe(400);
-            expect(response.body.error).toBe(ERRORS.MAP.TITLE_TOO_LONG);
+            expectErrorResponse(response, 400, ERRORS.MAP.TITLE_TOO_LONG);
         });
 
         it.each(emptyTitles)("Should respond with 400 if the title is empty: '%s'", async (invalidTitle) => {
             const response = await makePostRequest({ title: invalidTitle });
 
-            expect(response.statusCode).toBe(400);
-            expect(response.body.error).toBe(ERRORS.MAP.TITLE_EMPTY);
+            expectErrorResponse(response, 400, ERRORS.MAP.TITLE_EMPTY);
         });
 
         it("Should respond with 400 if the title is missing", async () => {
             const response = await makePostRequest({ title: undefined, randomField: "randomValue" });
 
-            expect(response.statusCode).toBe(400);
-            expect(response.body.error).toBe(ERRORS.MAP.TITLE_EMPTY);
+            expectErrorResponse(response, 400, ERRORS.MAP.TITLE_EMPTY);
             expect(deleteFile).toHaveBeenCalledWith(expect.any(String));
         });
 
         it("Should respond with 400 if the map image is not given", async () => {
             const response = await makePostRequest({ file: undefined });
 
-            expect(response.statusCode).toBe(400);
-            expect(response.body.error).toBe("Nem adott meg képet!");
+            expectErrorResponse(response, 400, ERRORS.COMMON.MISSING_IMAGE);
         });
 
         it("Should respond with 413 for images too large", async () => {
@@ -306,15 +289,13 @@ describe("Map Creator API - Map Endpoints - /api/map-creator/", () => {
 
             const response = await makePostRequest({ file: tooBigFile });
 
-            expect(response.statusCode).toBe(413);
-            expect(response.body).toHaveProperty("error", "Túl nagy fájlméret! (Max 10MB)");
+            expectErrorResponse(response, 413, ERRORS.COMMON.FILE_TOO_LARGE);
         });
 
         it("Should respond with 400 for unexpected multer errors", async () => {
             const response = await makePostRequest({ fileFieldName: "wrongimageFieldName" });
 
-            expect(response.statusCode).toBe(400);
-            expect(response.body).toHaveProperty("error", "Fájlfeltöltési hiba történt!");
+            expectErrorResponse(response, 400, ERRORS.COMMON.FILE_UPLOAD_ERROR);
         });
 
         it("Should respond with 201 if all the data is correct and it saved everything well", async () => {
@@ -407,7 +388,7 @@ describe("Map Creator API - Map Endpoints - /api/map-creator/", () => {
                 expect(mockConnection.beginTransaction).not.toHaveBeenCalled();
                 expect(deleteFile).toHaveBeenCalledWith(expect.any(String));
 
-                expectErrorResponse(response, 500, "Hiba a kép feldolgozásakor!");
+                expectErrorResponse(response, 500, ERRORS.COMMON.IMAGE_PROCESSING_ERROR);
             });
 
             it("Should respond with 500, rollback DB, and delete temp file if image conversion fails", async () => {
@@ -460,7 +441,7 @@ describe("Map Creator API - Map Endpoints - /api/map-creator/", () => {
                 expect(mockConnection.rollback).toHaveBeenCalled();
                 expect(mockConnection.release).toHaveBeenCalled();
                 expect(deleteFile).toHaveBeenCalledTimes(3); // 3 because mainPath, lowResPath, temp uploaded file
-                expectErrorResponse(response, 500, "A térkép mentése nem sikerült!");
+                expectErrorResponse(response, 500, ERRORS.MAP.SAVE_FAILED);
             });
         });
     });
@@ -505,8 +486,7 @@ describe("Map Creator API - Map Endpoints - /api/map-creator/", () => {
             const response = await makeDeleteRequest();
 
             expect(mockConnection.beginTransaction).not.toHaveBeenCalled();
-            expect(response.statusCode).toBe(403);
-            expect(response.body.error).toBe(ERRORS.MAP.NO_ACCESS);
+            expectErrorResponse(response, 403, ERRORS.MAP.NO_ACCESS);
         });
 
         it("Should respond with 404 if the map doesn't exist somehow", async () => {
@@ -515,8 +495,7 @@ describe("Map Creator API - Map Endpoints - /api/map-creator/", () => {
             const response = await makeDeleteRequest();
 
             expect(mockConnection.beginTransaction).not.toHaveBeenCalled();
-            expect(response.statusCode).toBe(404);
-            expect(response.body).toHaveProperty("error", "A térkép nem létezik");
+            expectErrorResponse(response, 404, ERRORS.MAP.NOT_FOUND);
         });
 
         it.each(
@@ -583,7 +562,7 @@ describe("Map Creator API - Map Endpoints - /api/map-creator/", () => {
                 const response = await makeDeleteRequest();
 
                 expectRollback(mockConnection);
-                expectErrorResponse(response, 500, "A térkép törlése nem sikerült");
+                expectErrorResponse(response, 500, ERRORS.MAP.DELETE_FAILED);
             });
 
             it("Should respond with 500 if the database commit failed", async () => {
@@ -609,7 +588,7 @@ describe("Map Creator API - Map Endpoints - /api/map-creator/", () => {
                 const response = await makeDeleteRequest();
 
                 expectRollback(mockConnection);
-                expectErrorResponse(response, 500, "A térkép képeinek törlése nem sikerült");
+                expectErrorResponse(response, 500, ERRORS.MAP.IMAGE_DELETIONS_FAILED);
             });
         });
     });
