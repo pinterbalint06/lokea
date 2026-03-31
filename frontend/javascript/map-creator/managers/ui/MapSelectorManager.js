@@ -42,7 +42,7 @@ export class MapSelectorManager {
         this.elements.addNewMapBtn.addEventListener("click", () => {
             let request = { canProceed: true, reason: "" };
 
-            this.bus.emit(EVENTS.UI_ADD_NEW_MAP_REQUEST, request);
+            this.bus.emit(EVENTS.UI_ADD_NEW_MAP_REQUEST, { request });
 
             if (request.canProceed) {
                 this.elements.mapUploader.openFileDialog();
@@ -55,7 +55,7 @@ export class MapSelectorManager {
             let targetMapId = parseInt(event.detail.value);
 
             let request = { canProceed: true, reason: "" };
-            this.bus.emit(EVENTS.MAP_SWITCH_REQUESTED, request);
+            this.bus.emit(EVENTS.MAP_SWITCH_REQUESTED, { request });
 
             if (request.canProceed) {
                 this.bus.emit(EVENTS.UI_SWITCH_MAP_REQUEST, { mapId: targetMapId });

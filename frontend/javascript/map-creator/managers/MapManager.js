@@ -109,48 +109,52 @@ export class MapManager {
     }
 
     async #saveMap() {
-        this.isSaving = true;
-        let oldId = this.appState.activeMapId;
-        this.bus.emit(EVENTS.TOAST_SHOW, { id: `savingMap${oldId}`, msg: "Térkép mentése folyamatban", closable: false, autohide: false, spinner: true });
-        try {
-            let currentMap = this.maps[oldId];
+        if (!this.isSaving) {
+            this.isSaving = true;
+            let oldId = this.appState.activeMapId;
+            this.bus.emit(EVENTS.TOAST_SHOW, { id: `savingMap${oldId}`, msg: "Térkép mentése folyamatban", closable: false, autohide: false, spinner: true });
+            try {
+                let currentMap = this.maps[oldId];
 
-            if (!this.pendingMapFile || !currentMap) {
-                throw new Error("A térkép kép még nincs kiválasztva!");
+                if (!this.pendingMapFile || !currentMap) {
+                    throw new Error("A térkép kép még nincs kiválasztva!");
+                }
+
+                this.bus.emit(EVENTS.MAP_SAVE_STARTED);
+                let result = await saveNewMap(this.pendingMapFile, this.appState.gameMapID, currentMap.name);
+                let newId = result.mapId;
+
+                currentMap.id = newId;
+                this.maps[newId] = currentMap;
+
+                if (currentMap.temporaryURL) {
+                    URL.revokeObjectURL(currentMap.temporaryURL);
+                    delete currentMap.temporaryURL;
+                }
+
+                delete this.maps[oldId];
+
+                if (this.appState.activeMapId == oldId) {
+                    this.appState.activeMapId = newId;
+                }
+
+                this.pendingMapFile = null;
+                this.pendingMapFileMapId = null;
+                this.bus.emit(EVENTS.TOAST_HIDE_ID, { id: `savingMap${oldId}` });
+                this.bus.emit(EVENTS.TOAST_SHOW, { msg: "Térkép sikeresen mentve!", type: "success", iconObject: ICONS.SAVE_FLOPPY });
+                this.bus.emit(EVENTS.MAP_SAVE_SUCCEEDED, { oldMapId: oldId, newMapId: newId, maps: this.maps });
+            } catch (error) {
+                this.bus.emit(EVENTS.TOAST_HIDE_ID, { id: `savingMap${oldId}` });
+                this.bus.emit(EVENTS.TOAST_SHOW, { msg: error.message, type: "danger" });
+                this.bus.emit(EVENTS.MAP_SAVE_FAILED, { error });
+            } finally {
+                // if save successful it this will emit not saveable because pendingMapFile is set to null
+                // if failed it will emit saveable because pendingMapFile is still set
+                this.#emitSaveAvailabilityChanged();
+                this.isSaving = false;
             }
-
-            this.bus.emit(EVENTS.MAP_SAVE_STARTED);
-            let result = await saveNewMap(this.pendingMapFile, this.appState.gameMapID, currentMap.name);
-            let newId = result.mapId;
-
-            currentMap.id = newId;
-            this.maps[newId] = currentMap;
-
-            if (currentMap.temporaryURL) {
-                URL.revokeObjectURL(currentMap.temporaryURL);
-                delete currentMap.temporaryURL;
-            }
-
-            delete this.maps[oldId];
-
-            if (this.appState.activeMapId == oldId) {
-                this.appState.activeMapId = newId;
-            }
-
-            this.pendingMapFile = null;
-            this.pendingMapFileMapId = null;
-            this.bus.emit(EVENTS.TOAST_HIDE_ID, { id: `savingMap${oldId}` });
-            this.bus.emit(EVENTS.TOAST_SHOW, { msg: "Térkép sikeresen mentve!", type: "success", iconObject: ICONS.SAVE_FLOPPY });
-            this.bus.emit(EVENTS.MAP_SAVE_SUCCEEDED, { oldMapId: oldId, newMapId: newId, maps: this.maps });
-        } catch (error) {
-            this.bus.emit(EVENTS.TOAST_HIDE_ID, { id: `savingMap${oldId}` });
-            this.bus.emit(EVENTS.TOAST_SHOW, { msg: error.message, type: "danger" });
-            this.bus.emit(EVENTS.MAP_SAVE_FAILED, { error });
-        } finally {
-            // if save successful it this will emit not saveable because pendingMapFile is set to null
-            // if failed it will emit saveable because pendingMapFile is still set
-            this.#emitSaveAvailabilityChanged();
-            this.isSaving = false;
+        } else {
+            this.bus.emit(EVENTS.TOAST_SHOW, { msg: "Térkép mentése folyamatban, kérlek várj!", type: "danger" });
         }
     }
 
@@ -196,19 +200,19 @@ export class MapManager {
             let randomIdForToast = Math.floor(Math.random() * 100000);
             this.bus.emit(EVENTS.TOAST_SHOW, { id: `mapSwitching${mapId}-${randomIdForToast}`, msg: "Váltás: " + mapData.name, closable: false, autohide: false });
 
+            this.activeLoadGeneration++
+            const loadGeneration = this.activeLoadGeneration;
+
+            if (this.abortController) {
+                this.abortController.abort();
+                this.abortController = null;
+            }
             if (mapId == CONSTANTS.TEMP_ID) {
                 this.viewer.clearMarkersAndLines();
                 await this.viewer.loadMap(mapData.temporaryURL, mapData.imgWidth, mapData.imgHeight);
                 // show change toast for 1 sec after the map was loaded then hide it
                 setTimeout(() => this.bus.emit(EVENTS.TOAST_HIDE_ID, { id: `mapSwitching${mapId}-${randomIdForToast}` }), 1000);
             } else {
-                this.activeLoadGeneration++
-                const loadGeneration = this.activeLoadGeneration;
-
-                if (this.abortController) {
-                    this.abortController.abort();
-                    this.abortController = null;
-                }
                 try {
                     this.abortController = new AbortController();
                     let signal = this.abortController.signal;
@@ -288,6 +292,7 @@ export class MapManager {
     }
 
     async #deleteMap(mapId) {
+        // TODO: itt race condition többszöri törlés?????
         let map = this.maps[mapId];
         this.bus.emit(EVENTS.TOAST_SHOW, { id: `deletingMap${mapId}`, msg: "Térkép törlése folyamatban", closable: false, autohide: false, spinner: true });
 

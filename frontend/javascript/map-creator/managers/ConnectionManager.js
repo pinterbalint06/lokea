@@ -22,7 +22,7 @@ export class ConnectionManager {
         this.showOffMapConnectionsWhenNotActive = true;
         this.showAllConnectionsWhenNotActive = true;
         this.temporaryId = -1;
-        this.isSaving = false;
+        this.isLocked = false;
         this.connectionToastId = "connectionMode";
         this.#bindBusEvents();
     }
@@ -200,7 +200,7 @@ export class ConnectionManager {
         });
 
         this.bus.on(EVENTS.UI_POINT_SAVE_REQUESTED, () => {
-            if (!this.isSaving) {
+            if (!this.isLocked) { // updated to use isLocked
                 if (this.activePointId != CONSTANTS.TEMP_ID && (this.unsavedConnections.length > 0 || Object.keys(this.draftConnectionDirections).length > 0)) {
                     this.#saveConnections();
                 }
@@ -226,10 +226,10 @@ export class ConnectionManager {
         ];
 
         eventsToBlock.forEach(event => {
-            this.bus.on(event, (request) => {
-                if (this.isSaving) {
+            this.bus.on(event, ({ request }) => {
+                if (this.isLocked) {
                     request.canProceed = false;
-                    request.reason = "Kapcsolatok mentése folyamatban, kérlek várj!";
+                    request.reason = "Kapcsolatok mentése/törlése folyamatban, kérlek várj!";
                 }
             });
         });
@@ -265,20 +265,24 @@ export class ConnectionManager {
         });
 
         this.bus.on(EVENTS.UI_CONNECTION_DELETE_REQUEST, async ({ connectionId }) => {
-            if (connectionId < 0) {
-                // unsaved connection
-                this.unsavedConnections = this.unsavedConnections.filter(connection =>
-                    connection.connection_id != connectionId
-                );
-                if (this.focusedConnectionId == connectionId) {
-                    this.focusedConnectionId = null;
+            if (!this.isLocked) {
+                if (connectionId < 0) {
+                    // unsaved connection
+                    this.unsavedConnections = this.unsavedConnections.filter(connection =>
+                        connection.connection_id != connectionId
+                    );
+                    if (this.focusedConnectionId == connectionId) {
+                        this.focusedConnectionId = null;
+                    }
+                    this.#renderConnectionsForActiveMap();
+                    this.#emitConnectionListUpdate();
+                    this.bus.emit(EVENTS.UNSAVED_CONNECTION_DELETED);
+                    this.bus.emit(EVENTS.TOAST_SHOW, { msg: "Kapcsolat sikeresen törölve!", type: "success" });
+                } else {
+                    await this.#deleteConnection(connectionId);
                 }
-                this.#renderConnectionsForActiveMap();
-                this.#emitConnectionListUpdate();
-                this.bus.emit(EVENTS.UNSAVED_CONNECTION_DELETED);
-                this.bus.emit(EVENTS.TOAST_SHOW, { msg: "Kapcsolat sikeresen törölve!", type: "success" });
             } else {
-                await this.#deleteConnection(connectionId);
+                this.bus.emit(EVENTS.TOAST_SHOW, { msg: "Kérlek várj, művelet folyamatban!", type: "danger" });
             }
         });
     }
@@ -347,8 +351,8 @@ export class ConnectionManager {
     }
 
     async #saveConnections() {
-        if (!this.isSaving) {
-            this.isSaving = true;
+        if (!this.isLocked) {
+            this.isLocked = true;
             this.bus.emit(EVENTS.TOAST_SHOW, { msg: "Kapcsolatok mentése", id: "savingConnections", closable: false, autohide: false, spinner: true });
 
             try {
@@ -429,7 +433,7 @@ export class ConnectionManager {
                 this.bus.emit(EVENTS.TOAST_SHOW, { msg: "Hiba a kapcsolatok mentésekor!", type: "danger" });
             } finally {
                 this.bus.emit(EVENTS.TOAST_HIDE_ID, { id: "savingConnections" });
-                this.isSaving = false;
+                this.isLocked = false;
             }
         }
     }
@@ -609,6 +613,7 @@ export class ConnectionManager {
     }
 
     async #deleteConnection(connectionId) {
+        this.isLocked = true;
         this.bus.emit(EVENTS.TOAST_SHOW, { msg: "Kapcsolat törlése", id: "deletingConnection", closable: false, autohide: false, spinner: true });
 
         try {
@@ -635,6 +640,7 @@ export class ConnectionManager {
             this.bus.emit(EVENTS.TOAST_SHOW, { msg: "Hiba a kapcsolat törlésekor!", type: "danger" });
         } finally {
             this.bus.emit(EVENTS.TOAST_HIDE_ID, { id: "deletingConnection" });
+            this.isLocked = false;
         }
     }
 }

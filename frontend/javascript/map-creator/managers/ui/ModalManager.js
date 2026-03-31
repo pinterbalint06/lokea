@@ -29,7 +29,7 @@ export class ModalManager {
                         let request = { canProceed: true, reason: "" };
                         let mapId = context.id;
 
-                        this.bus.emit(EVENTS.UI_DELETE_MAP_REQUESTED, { request: request, mapId: mapId });
+                        this.bus.emit(EVENTS.UI_DELETE_MAP_REQUESTED, { request, mapId });
 
                         if (request.canProceed) {
                             this.modal.disableConfirm();
@@ -42,7 +42,7 @@ export class ModalManager {
                     }
                     case "delete_point": {
                         let request = { canProceed: true, reason: "" };
-                        this.bus.emit(EVENTS.UI_DELETE_POINT_REQUESTED, { request: request });
+                        this.bus.emit(EVENTS.UI_DELETE_POINT_REQUESTED, { request });
 
                         if (request.canProceed) {
                             this.modal.disableConfirm();

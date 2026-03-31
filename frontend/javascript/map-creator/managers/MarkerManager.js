@@ -40,35 +40,39 @@ export class MarkerManager {
         });
 
         this.bus.on(EVENTS.UI_MARKER_PLACEMENT_REQUESTED, () => {
-            if (this.appState.activeMapId != CONSTANTS.TEMP_ID) {
-                this.activePointId = CONSTANTS.TEMP_ID;
-                this.activePointSession = {
-                    mapId: this.appState.activeMapId,
-                    originalU: null,
-                    originalV: null,
-                    originalNorthDirection: 0,
-                    draftNorthDirection: null,
-                    draftU: null,
-                    draftV: null
-                };
-                this.isPlacingMarker = true;
-                this.mapViewer.canvasInput.setDefaultCursor("crosshair");
-                this.bus.emit(EVENTS.MARKER_PLACING_STARTED);
+            if (!this.isSaving) {
+                if (this.appState.activeMapId != CONSTANTS.TEMP_ID) {
+                    this.activePointId = CONSTANTS.TEMP_ID;
+                    this.activePointSession = {
+                        mapId: this.appState.activeMapId,
+                        originalU: null,
+                        originalV: null,
+                        originalNorthDirection: 0,
+                        draftNorthDirection: null,
+                        draftU: null,
+                        draftV: null
+                    };
+                    this.isPlacingMarker = true;
+                    this.mapViewer.canvasInput.setDefaultCursor("crosshair");
+                    this.bus.emit(EVENTS.MARKER_PLACING_STARTED);
 
-                this.bus.emit(EVENTS.TOAST_SHOW, {
-                    id: "placeMarker",
-                    msg: "Kattints a térképre a jelölő elhelyezéséhez!",
-                    iconObject: ICONS.POINTING_HAND,
-                    autohide: false,
-                    callback: () => {
-                        // if temporary marker was not placed then it was cancelled => reset state
-                        if (!this.mapViewer.doesMarkerExist(CONSTANTS.TEMP_ID)) {
-                            this.#resetMarkerPlacingState();
+                    this.bus.emit(EVENTS.TOAST_SHOW, {
+                        id: "placeMarker",
+                        msg: "Kattints a térképre a jelölő elhelyezéséhez!",
+                        iconObject: ICONS.POINTING_HAND,
+                        autohide: false,
+                        callback: () => {
+                            // if temporary marker was not placed then it was cancelled => reset state
+                            if (!this.mapViewer.doesMarkerExist(CONSTANTS.TEMP_ID)) {
+                                this.#resetMarkerPlacingState();
+                            }
                         }
-                    }
-                });
+                    });
+                } else {
+                    this.bus.emit(EVENTS.TOAST_SHOW, { msg: "Először mentsd el a térképet!", type: "danger" });
+                }
             } else {
-                this.bus.emit(EVENTS.TOAST_SHOW, { msg: "Először mentsd el a térképet!", type: "danger" });
+                this.bus.emit(EVENTS.TOAST_SHOW, { msg: "Pont mentése folyamatban, kérlek várj!", type: "danger" });
             }
         });
 
@@ -240,7 +244,7 @@ export class MarkerManager {
                 this.#centerPendingMarker();
             } else {
                 let switchRequest = { canProceed: true, reason: "" };
-                this.bus.emit(EVENTS.MAP_SWITCH_REQUESTED, switchRequest);
+                this.bus.emit(EVENTS.MAP_SWITCH_REQUESTED, { switchRequest });
 
                 if (switchRequest.canProceed) {
                     this.bus.emit(EVENTS.UI_SWITCH_MAP_REQUEST, { mapId: targetMapId });
@@ -401,10 +405,11 @@ export class MarkerManager {
                 let isNewPoint = pointToSave == CONSTANTS.TEMP_ID;
                 let northDirection = this.#getSessionNorthDirection(this.activePointSession);
 
+                let fileBeingSaved = this.appState.pendingEquirectangularFile;
                 if (isNewPoint && this.appState.activeMapId == CONSTANTS.TEMP_ID) {
                     throw new Error("Először mentsd el a térképet!");
                 }
-                if (isNewPoint && !this.appState.pendingEquirectangularFile) {
+                if (isNewPoint && !fileBeingSaved) {
                     throw new Error("Nincs kép kiválasztva!");
                 }
 
@@ -412,7 +417,7 @@ export class MarkerManager {
                     pointId: pointToSave,
                     position: position,
                     northDirection,
-                    equirectangularFile: this.appState.pendingEquirectangularFile,
+                    equirectangularFile: fileBeingSaved,
                     mapID: this.activePointSession.mapId,
                     isNew: isNewPoint
                 });
@@ -441,16 +446,21 @@ export class MarkerManager {
                 this.markersCache[pointToSave].point_u = position.u;
                 this.markersCache[pointToSave].point_v = position.v;
                 this.markersCache[pointToSave].north_direction = northDirection;
+                let currentPosition = this.#getPointPosition(pointToSave);
+                let userMovedMarkerDuringSave = (position.u != currentPosition.u || position.v != currentPosition.v);
+
                 this.activePointSession = {
                     mapId: this.activePointSession.mapId,
                     originalU: position.u,
                     originalV: position.v,
                     originalNorthDirection: northDirection,
                     draftNorthDirection: null,
-                    draftU: null,
-                    draftV: null
+                    draftU: userMovedMarkerDuringSave ? currentPosition.u : null,
+                    draftV: userMovedMarkerDuringSave ? currentPosition.v : null
                 };
-                this.appState.pendingEquirectangularFile = null;
+                if (fileBeingSaved == this.appState.pendingEquirectangularFile) {
+                    this.appState.pendingEquirectangularFile = null;
+                }
 
                 this.bus.emit(EVENTS.POINT_SAVED, {
                     previousPointId,
@@ -462,7 +472,6 @@ export class MarkerManager {
                 });
 
                 this.bus.emit(EVENTS.TOAST_SHOW, { msg: "Pont sikeresen mentve!", type: "success", iconObject: ICONS.SAVE_FLOPPY });
-                this.#emitDirtyStateChange();
             } catch (error) {
                 this.bus.emit(EVENTS.TOAST_HIDE_ID, { id: "savingPoint" });
                 console.error(error);
@@ -470,6 +479,7 @@ export class MarkerManager {
             } finally {
                 this.isSaving = false;
                 this.bus.emit(EVENTS.POINT_SAVE_FINISHED, { pointId: pointToSave });
+                this.#emitDirtyStateChange();
             }
         }
     }

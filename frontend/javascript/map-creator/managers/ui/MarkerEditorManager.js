@@ -108,7 +108,8 @@ export class MarkerEditorManager {
             if (event.target == this.elements.collapseElement) {
                 let request = { canProceed: true, reason: "" };
 
-                this.bus.emit(EVENTS.UI_COLLAPSE_CLOSE_REQUESTED, request);
+                // TODO: kapcsolat létrehozható-e javítása
+                this.bus.emit(EVENTS.UI_COLLAPSE_CLOSE_REQUESTED, { request });
 
                 if (request.canProceed) {
                     if (this.hasUnsavedChanges) {

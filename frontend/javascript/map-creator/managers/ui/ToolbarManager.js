@@ -98,6 +98,15 @@ export class ToolbarManager {
         this.bus.on(EVENTS.MAP_SAVE_AVAILABILITY_CHANGED, ({ canSave }) => {
             this.elements.saveMapButton.disabled = !canSave;
         });
+
+        this.bus.on(EVENTS.POINT_SAVE_STARTED, () => {
+            this.elements.addNewMarkerButton.disabled = true;
+            this.elements.settingsButton.disabled = true;
+        });
+        this.bus.on(EVENTS.POINT_SAVE_FINISHED, () => {
+            this.elements.addNewMarkerButton.disabled = false;
+            this.elements.settingsButton.disabled = false;
+        });
     }
 
     #updateVisibility() {
