@@ -1,21 +1,21 @@
-const joi = require('#utils/joi.js');
-const { idSchema } = require('#utils/schemas.js');
+const joi = require("#utils/joi.js");
+const { idSchema } = require("#utils/schemas.js");
+const ERRORS = require("#utils/errorMessages.js");
 
 const resolution = joi.string()
     .trim()
     .lowercase()
-    .valid('low', 'high')
-    .default('high')
+    .valid("low", "high")
+    .default("high")
     .messages({
-        'string.base': 'Helytelen felbontás',
-        'any.only': 'Helytelen felbontás'
+        "string.base": ERRORS.COMMON.INVALID_RESOLUTION,
+        "any.only": ERRORS.COMMON.INVALID_RESOLUTION
     });
 
 const getPointImageSchema = {
     params:
         joi.object({
-            pointID: idSchema
-                .label("pont ID")
+            pointID: idSchema(ERRORS.POINT.INVALID_ID)
         }),
     query:
         joi.object({
@@ -26,8 +26,7 @@ const getPointImageSchema = {
 const getMapImageSchema = {
     params:
         joi.object({
-            mapID: idSchema
-                .label("térkép ID")
+            mapID: idSchema(ERRORS.MAP.INVALID_ID)
         }),
     query:
         joi.object({
@@ -39,8 +38,7 @@ const getMapImageSchema = {
 const getPointConnectionsSchema = {
     params:
         joi.object({
-            pointID: idSchema
-                .label("pont ID")
+            pointID: idSchema(ERRORS.POINT.INVALID_ID)
         })
 };
 

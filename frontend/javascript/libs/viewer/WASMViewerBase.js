@@ -263,24 +263,24 @@ export class WASMViewerBase {
         return true;
     }
 
-    // Children class should overwrite this
-    // Returns the options which will be given to CanvasInput
+    // children class should overwrite this
+    // returns the options which will be given to CanvasInput
     _getInputCallbacks() {
         return {};
     }
 
-    // Children class should overwrite this
-    // Custom function derived class can override. This is called before rendering.
+    // children class should overwrite this
+    // custom function derived class can override. This is called before rendering.
     _beforeRender() {
     }
 
-    // Children class should overwrite this
+    // children class should overwrite this
     // function that creates the engine object
     _createEngine(module) {
         return null;
     }
 
-    // Children class can implement this
+    // children class can implement this
     // function that is called after initialization but before starting the rendering loop
     _postInitialize() {
 

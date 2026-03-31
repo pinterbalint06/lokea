@@ -1,11 +1,11 @@
 const express = require("express");
 const router = express.Router();
-const { validateRequest } = require('#utils/validation.js');
+const { validateRequest } = require("#utils/validation.js");
 const { checkAuth } = require("#root/auth.js");
 const AppError = require("#utils/AppError.js");
-const schemas = require("#gamemaps.schemas.js");
-const controller = require("#gamemaps.controller.js");
-const { isAllowedToGetMapImage, isAllowedToAccessPoint } = require("#gamemaps.middleware.js");
+const schemas = require("#gamemaps/gamemaps.schemas.js");
+const controller = require("#gamemaps/gamemaps.controller.js");
+const { isAllowedToGetMapImage, isAllowedToAccessPoint } = require("#gamemaps/gamemaps.middleware.js");
 
 router.use(checkAuth);
 

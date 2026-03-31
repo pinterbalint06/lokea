@@ -1,5 +1,6 @@
-const gamemapsService = require("#gamemaps.service.js");
+const gamemapsService = require("#gamemaps/gamemaps.service.js");
 const { UPLOAD_ROOT } = require("#config/mapStorage.js");
+const ERRORS = require("#utils/errorMessages.js");
 
 async function getPointImage(request, response, next) {
     try {
@@ -14,7 +15,7 @@ async function getPointImage(request, response, next) {
 
         response.sendFile(imagePath, { root: UPLOAD_ROOT }, function (err) {
             if (err && !response.headersSent) {
-                return response.status(404).json({ error: "A fájl nem létezik vagy helytelen" });
+                return response.status(404).json({ error: ERRORS.COMMON.FILE_NOT_FOUND });
             }
         });
     } catch (error) {
@@ -35,7 +36,7 @@ async function getMapImage(request, response, next) {
 
         response.sendFile(imagePath, { root: UPLOAD_ROOT }, function (err) {
             if (err && !response.headersSent) {
-                return response.status(404).json({ error: "A fájl nem létezik vagy helytelen" });
+                return response.status(404).json({ error: ERRORS.COMMON.FILE_NOT_FOUND });
             }
         });
     } catch (error) {

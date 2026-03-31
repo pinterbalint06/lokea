@@ -57,8 +57,7 @@ async function updatePoint(userId, pointID, pointData, file) {
             try {
                 imageData = await processImageMetadata(file.path);
             } catch (err) {
-                console.error(err);
-                throw new AppError(ERRORS.COMMON.IMAGE_PROCESSING_ERROR, 500);
+                throw new AppError(ERRORS.COMMON.IMAGE_PROCESSING_ERROR, 422);
             }
             let newImageId = await database.insertImage(dbConnection, imageData.width, imageData.height, "pending");
             let gameMapID = pointInfo.game_maps_id;
@@ -150,8 +149,7 @@ async function createPoint(userId, mapID, pointData, file) {
         try {
             imageData = await processImageMetadata(file.path);
         } catch (err) {
-            console.error(err);
-            throw new AppError(ERRORS.COMMON.IMAGE_PROCESSING_ERROR, 500);
+            throw new AppError(ERRORS.COMMON.IMAGE_PROCESSING_ERROR, 422);
         }
 
         dbConnection = await database.getConnection();

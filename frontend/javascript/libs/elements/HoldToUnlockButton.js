@@ -14,7 +14,7 @@ export class HoldToUnlockButton extends EventTarget {
         this.duration = duration;
 
         this.#button.classList.add("btn-hold-to-unlock");
-        this.#button.style.setProperty('--hold-duration', `${this.duration}ms`);
+        this.#button.style.setProperty("--hold-duration", `${this.duration}ms`);
 
         this.#timer = null;
         this.#isUnlocked = false;

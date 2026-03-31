@@ -5,7 +5,9 @@ const ERRORS = {
         FILE_TOO_LARGE: "Túl nagy fájlméret! (Max 10MB)",
         FILE_UPLOAD_ERROR: "Fájlfeltöltési hiba történt!",
         IMAGE_PROCESSING_ERROR: "Hiba a kép feldolgozásakor!",
-        UNEXPECTED_ERROR: "Váratlan hiba történt!"
+        UNEXPECTED_ERROR: "Váratlan hiba történt!",
+        INVALID_RESOLUTION: "Helytelen felbontás!",
+        FILE_NOT_FOUND: "A fájl nem létezik vagy helytelen!"
     },
 
     GAMEMAP: {

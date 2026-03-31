@@ -3,7 +3,7 @@ import { EquirectangularViewer } from "../libs/viewer/EquirectangularViewer.js";
 import { CONSTANTS } from "./shared/constants.js";
 import { appState } from "./shared/state.js";
 import { getGameMapIdFromUrl } from "./shared/utils.js";
-import { eventBus, EVENTS } from './events/EventBus.js';
+import { eventBus, EVENTS } from "./events/EventBus.js";
 import { MarkerManager } from "./managers/MarkerManager.js";
 import { MapManager } from "./managers/MapManager.js";
 import { MapSelectorManager } from "./managers/ui/MapSelectorManager.js";

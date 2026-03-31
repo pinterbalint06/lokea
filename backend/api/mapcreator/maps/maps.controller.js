@@ -1,4 +1,4 @@
-const mapsService = require("#mapcreator/connections/maps.service.js");
+const mapsService = require("#mapcreator/maps/maps.service.js");
 
 async function getMaps(request, response, next) {
     try {

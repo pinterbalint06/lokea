@@ -56,7 +56,7 @@ async function createConnection(userId, gameMapID, startPointId, endPointId, dir
         }
 
         if (await database.doesConnectionAlreadyExist(dbConnection, startPointId, endPointId)) {
-            throw new AppError(ERRORS.CONNECTION.ALREADY_EXISTS, 400);
+            throw new AppError(ERRORS.CONNECTION.ALREADY_EXISTS, 409);
         }
 
         const dirStartToEnd = directionStartToEnd != undefined

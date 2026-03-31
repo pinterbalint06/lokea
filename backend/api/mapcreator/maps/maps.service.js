@@ -60,7 +60,7 @@ async function createMap(userId, gameMapID, title, file) {
         try {
             imageData = await processImageMetadata(file.path);
         } catch (err) {
-            throw new AppError(ERRORS.COMMON.IMAGE_PROCESSING_ERROR, 500);
+            throw new AppError(ERRORS.COMMON.IMAGE_PROCESSING_ERROR, 422);
         }
 
         dbConnection = await database.getConnection();

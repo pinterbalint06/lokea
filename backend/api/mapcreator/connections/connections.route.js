@@ -2,7 +2,7 @@ const express = require("express");
 const router = express.Router();
 const connectionsController = require("#mapcreator/connections/connections.controller.js");
 const schemas = require("#mapcreator/connections/connections.schemas.js");
-const { validateRequest } = require('#utils/validation.js');
+const { validateRequest } = require("#utils/validation.js");
 const upload = require("#mapcreator/shared/middlewares/uploadConfig.js");
 
 //!Endpoints:

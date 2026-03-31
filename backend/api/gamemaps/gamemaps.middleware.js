@@ -7,7 +7,7 @@ async function isAllowedToGetMapImage(request, response, next) {
         const isAllowed = true;
 
         if (!isAllowed) {
-            throw new AppError("Nincs hozzáférése ehhez a térképhez", 403);
+            throw new AppError(ERRORS.MAP.NO_ACCESS, 403);
         }
 
         next();

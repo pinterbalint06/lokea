@@ -1,7 +1,7 @@
 const database = require("#sql/database.js");
 const { deleteFile } = require("#utils/fileUtils.js");
 const AppError = require("#utils/AppError.js");
-const ERRORS = require('#utils/errorMessages.js');
+const ERRORS = require("#utils/errorMessages.js");
 
 async function cleanupAfterError(dbConnection, file, processedImagePaths) {
     if (dbConnection) {

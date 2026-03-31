@@ -2,7 +2,7 @@ const express = require("express");
 const router = express.Router();
 const pointsController = require("#mapcreator/points/points.controller.js");
 const schemas = require("#mapcreator/points/points.schemas.js");
-const { validateRequest } = require('#utils/validation.js');
+const { validateRequest } = require("#utils/validation.js");
 const upload = require("#mapcreator/shared/middlewares/uploadConfig.js");
 
 // !Endpoints:

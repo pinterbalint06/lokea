@@ -7,20 +7,20 @@ const mockConnection = {
 
 const mockDatabase = {
     getConnection: jest.fn().mockResolvedValue(mockConnection),
-    
-    checkUserOwnsGameMap: jest.fn(),
-    checkUserOwnsMap: jest.fn(),
-    checkUserOwnsPoint: jest.fn(),
-    checkUserOwnsConnection: jest.fn(),
 
-    updateMapTitle: jest.fn(),
+    checkUserOwnsGameMap: jest.fn().mockResolvedValue(true),
+    checkUserOwnsMap: jest.fn().mockResolvedValue(true),
+    checkUserOwnsPoint: jest.fn().mockResolvedValue(true),
+    checkUserOwnsConnection: jest.fn().mockResolvedValue(true),
+
+    updateMapTitle: jest.fn().mockResolvedValue(true),
     getMapsByGameMapId: jest.fn(),
     getMapInfo: jest.fn(),
     insertMap: jest.fn(),
     insertImage: jest.fn(),
-    updateImagePath: jest.fn(),
-    deleteMapById: jest.fn(),
-    deleteImageById: jest.fn(),
+    updateImagePath: jest.fn().mockResolvedValue(true),
+    deleteMapById: jest.fn().mockResolvedValue(true),
+    deleteImageById: jest.fn().mockResolvedValue(true),
     getAllImageIdsForMap: jest.fn(),
     getPointsOnMap: jest.fn(),
     getGameMapIdByMapId: jest.fn(),
@@ -28,18 +28,18 @@ const mockDatabase = {
     insertPoint: jest.fn(),
     getPointInfo: jest.fn(),
     getPointImage: jest.fn(),
-    deletePointById: jest.fn(),
-    updatePointCoordinates: jest.fn(),
-    updatePointNorthDirection: jest.fn(),
-    updatePointImage: jest.fn(),
+    deletePointById: jest.fn().mockResolvedValue(true),
+    updatePointCoordinates: jest.fn().mockResolvedValue(true),
+    updatePointNorthDirection: jest.fn().mockResolvedValue(true),
+    updatePointImage: jest.fn().mockResolvedValue(true),
     getConnectionsByGameMapId: jest.fn(),
-    deleteConnectionById: jest.fn(),
-    arePointsInSameGameMap: jest.fn(),
-    doesConnectionAlreadyExist: jest.fn(),
+    deleteConnectionById: jest.fn().mockResolvedValue(true),
+    arePointsInSameGameMap: jest.fn().mockResolvedValue(true),
+    doesConnectionAlreadyExist: jest.fn().mockResolvedValue(false),
     insertConnection: jest.fn(),
-    arePointsInSameMap: jest.fn(),
-    isConnectionCrossMap: jest.fn(),
-    updateConnectionDirections: jest.fn()
+    arePointsInSameMap: jest.fn().mockResolvedValue(true),
+    isConnectionCrossMap: jest.fn().mockResolvedValue(true),
+    updateConnectionDirections: jest.fn().mockResolvedValue(true)
 };
 
 module.exports = mockDatabase;

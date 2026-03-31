@@ -54,8 +54,8 @@ const invalidCharTitles = [
     "Line\nBreak",
     "Térkép\u200Búj",
     "Térkép\u00A02",
-    "Тérkép", // The 'Т' is actually a Cyrillic letter (\u0422)
-    "Terkеp", // The 'е' is actually a Cyrillic letter (\u0435)
+    "Тérkép", // The "Т" is actually a Cyrillic letter (\u0422)
+    "Terkеp", // The "е" is actually a Cyrillic letter (\u0435)
     "Title\b",
     "Title\v2",
     "[Draft] Térkép",

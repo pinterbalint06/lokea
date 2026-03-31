@@ -825,7 +825,7 @@ export class MapViewer extends WASMViewerBase {
             remainingZoom = (this.#panTargetZoomLevel - this._engine.getZoomLevel()) / 0.01;
         }
 
-        // Verify if we're hitting a map boundary (Engine's limitVCoordinates blocks Y movement)
+        // check if we are blocked by boundaires
         let blockedX = false;
         let blockedY = false;
         if (this.#lastRemainingX != undefined && this.#lastRemainingY != undefined) {
@@ -891,7 +891,7 @@ export class MapViewer extends WASMViewerBase {
         }
     }
 
-    // Functions that have to be implemented
+    // functions that children classes have to implement
     _createEngine(module) {
         return new module.MapViewerEngine(
             this._canvasId,
