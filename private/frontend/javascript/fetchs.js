@@ -55,7 +55,7 @@ export async function getLogs() {
     try {
         let response = await fetch("/api/admin/getLogs");
         let data = await response.json();
-        return data;
+        return data.logs;
     } catch (error) {
         console.error(error.message);
     }
@@ -195,7 +195,7 @@ export async function deleteProfilePicture(id) {
 }
 
 export async function sortedLogs(variables) {
-    let { username, periodFrom, periodTo, roles, activities } = variables;
+    let { username, periodFrom, periodTo, roles, activities, page } = variables;
     try {
         let response = await fetch("/api/admin/sortedLogs", {
             method: "POST",
@@ -207,12 +207,19 @@ export async function sortedLogs(variables) {
                 periodFrom,
                 periodTo,
                 roles,
-                activities
+                activities,
+                page: page || 1
             })
         });
+
+        if (!response.ok) {
+            throw new Error(`Server error: ${response.status}`);
+        }
+
         let data = await response.json();
-        return data.sortedLogs;
+        return data.sortedLogs || [];
     } catch (error) {
-        console.error(error.message);
+        console.error("Fetch error:", error.message);
+        return [];
     }
 }

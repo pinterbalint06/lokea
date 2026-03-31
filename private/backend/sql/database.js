@@ -314,7 +314,7 @@ async function addLog(userid, activity, victimid = null) {
 
 async function getLogs() {
     try {
-        const query = 'SELECT who.username, victim.username AS victim, log.activity, log.happened_at FROM log INNER JOIN users who ON log.user_id = who.user_id LEFT JOIN users victim ON log.victim_id = victim.user_id';
+        const query = 'SELECT who.username, victim.username AS victim, log.activity, log.happened_at FROM log INNER JOIN users who ON log.user_id = who.user_id LEFT JOIN users victim ON log.victim_id = victim.user_id ORDER BY log.happened_at DESC LIMIT 15';
         const [rows] = await pool.execute(query);
         return rows;
     } catch (error) {
@@ -323,10 +323,12 @@ async function getLogs() {
     }
 }
 
-async function sortedLogs(username, periodFrom, periodTo, roles, activities) {
+async function sortedLogs(username, periodFrom, periodTo, roles, activities, page = 1) {
+    const limit = 15;
+    const offset = (page - 1) * limit;
+
     try {
         let query = `SELECT who.username, victim.username AS victim, log.activity, log.happened_at FROM log LEFT JOIN users AS who ON log.user_id = who.user_id LEFT JOIN users AS victim ON log.victim_id = victim.user_id WHERE 1=1`;
-
         const params = [];
 
         if (username && username.trim() !== "") {
@@ -361,8 +363,8 @@ async function sortedLogs(username, periodFrom, periodTo, roles, activities) {
             }
         }
 
-        query += ` ORDER BY log.happened_at DESC`;
-        console.log(query, params);
+        query += ` ORDER BY log.happened_at DESC LIMIT ? OFFSET ?`;
+        params.push(limit, offset);
 
         const [rows] = await pool.execute(query, params);
         return rows;

@@ -268,12 +268,12 @@ router.post('/addLog', auth.checkAuth, async (request, response) => {
 
 router.post('/sortedLogs', auth.checkAuth, auth.checkRole("ADMIN"), async (request, response) => {
     try {
-        let { username, periodFrom, periodTo, roles, activities } = request.body;
-        let logs = await database.sortedLogs(username, periodFrom, periodTo, roles, activities);
-        response.status(200).json({sortedLogs: logs});
+        let { username, periodFrom, periodTo, roles, activities, page } = request.body;
+        let logs = await database.sortedLogs(username, periodFrom, periodTo, roles, activities, page || 1);
+        response.status(200).json({ sortedLogs: logs });
     } catch (error) {
-        response.status(500).json({ error: error });
+        response.status(500).json({ error: error.message });
     }
-})
+});
 
 module.exports = router;

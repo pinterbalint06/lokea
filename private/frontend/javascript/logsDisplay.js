@@ -23,7 +23,6 @@ export async function logsDisplayre() {
     //tablazat
     let tablazat = document.createElement('div');
     tablazat.id = "logsDiv";
-    tablazat.appendChild(tablazatGeneral((await getLogs()).logs));
     col9div.appendChild(tablazat);
 
     //szures
@@ -45,6 +44,8 @@ export async function logsDisplayre() {
     row.appendChild(col3div);
 
     display.appendChild(row);
+
+    frissitLogTablazat(await getLogs());
 }
 
 function tablazatGeneral(adatok) {
@@ -96,7 +97,9 @@ function tablazatGeneral(adatok) {
 function frissitLogTablazat(data) {
     let tablePlace = document.getElementById('logsDiv');
     tablePlace.innerHTML = "";
+    //todo - alert ha nincs log
     tablePlace.appendChild(tablazatGeneral(data));
+    tablePlace.appendChild(lapozasGeneral());
 }
 
 function szuresek() {
@@ -173,45 +176,74 @@ function szuresek() {
     //dates
 
     let datesDiv = document.createElement('div');
-    let datesDivCim = document.createElement('h6');
-    datesDivCim.classList.add("h6", "mt-3");
-    datesDivCim.innerText = "Dates";
-    datesDiv.appendChild(datesDivCim);
+    let datesHeader = document.createElement('div');
+    datesHeader.classList.add("d-flex", "justify-content-between", "align-items-center", "mt-3", "mb-2");
 
-    datesDiv.appendChild(createDatePicker("From:", "from"));
-    datesDiv.appendChild(createDatePicker("To:", "to"));
+    let datesDivCim = document.createElement('h6');
+    datesDivCim.classList.add("h6", "m-0");
+    datesDivCim.innerText = "Dates";
+
+    let switchDiv = document.createElement('div');
+    switchDiv.classList.add("form-check", "form-switch");
+    let dateSwitch = document.createElement('input');
+    dateSwitch.type = "checkbox";
+    dateSwitch.classList.add("form-check-input");
+    dateSwitch.id = "dateSwitch";
+
+    switchDiv.appendChild(dateSwitch);
+    datesHeader.appendChild(datesDivCim);
+    datesHeader.appendChild(switchDiv);
+    datesDiv.appendChild(datesHeader); 4
+
+    let datePicker = document.createElement('div');
+    datePicker.id = "datePickersWrapper";
+    datePicker.style.opacity = "0.5";
+
+    datePicker.appendChild(createDatePicker("From:", "from"));
+    datePicker.appendChild(createDatePicker("To:", "to"));
+    datesDiv.appendChild(datePicker);
+
+    dateSwitch.addEventListener("change", function () {
+        datePickers.style.opacity = this.checked ? "1" : "0.5";
+        let inputs = datePicker.querySelectorAll('input');
+        inputs.forEach(i => i.disabled = !this.checked);
+    });
+
     szuresDiv.appendChild(datesDiv);
 
-    //todo - reset gomb
+    //reset gomb
 
-    //gomb
+    let resetBtn = gombGeneral("button", "Reset", null, "red", null);
+    resetBtn.addEventListener("click", async function () {
+        document.getElementById("keresoInput").value = "";
+        document.querySelectorAll('input[name="sort1"], input[name="sort2"]').forEach(cb => cb.checked = false);
+        document.getElementById("dateSwitch").checked = false;
+
+        const today = new Date().toISOString().split('T')[0];
+        document.getElementById("fromDateDate").value = today;
+        document.getElementById("toDateDate").value = today;
+
+        document.querySelectorAll('#datePickersWrapper input[type="range"]').forEach((slider, idx) => {
+            slider.value = idx === 0 ? "32" : "96";
+            slider.parentElement.querySelector(".time-display").innerText = idx === 0 ? "08:00" : "23:59";
+        });
+        
+        let datePickers = document.getElementById("datePickersWrapper");
+        datePickers.style.opacity = "0.5";
+        datePickers.querySelectorAll('input').forEach(i => i.disabled = true);
+
+        currentPage = 1;
+        frissitLogTablazat(await getLogs());
+    });
+    szuresDiv.appendChild(resetBtn);
+
+    //szures gomb
 
     let sortBtn = gombGeneral("button", "Sort", null, "green", null);
-    sortBtn.classList.add("text-center");
+    sortBtn.classList.add("text-center", "mt-2");
     sortBtn.addEventListener("click", async function () {
-        let username = document.getElementById("keresoInput").value;
-        let activities = Array.from(document.querySelectorAll('input[name="sort1"]:checked'))
-            .map(cb => cb.value);
-        let roles = Array.from(document.querySelectorAll('input[name="sort2"]:checked'))
-            .map(cb => cb.nextElementSibling.innerText);
-
-        let fromDateVal = document.getElementById("fromDate").value;
-        let fromSliderVal = document.querySelector("#fromDate + input[type='range']").value;
-        let periodFrom = fromDateVal ? `${fromDateVal} ${getTimeFromSlider(fromSliderVal)}` : null;
-
-        let toDateVal = document.getElementById("toDate").value;
-        let toSliderVal = document.querySelector("#toDate + input[type='range']").value;
-        let periodTo = toDateVal ? `${toDateVal} ${getTimeFromSlider(toSliderVal)}` : null;
-
-        const variables = {
-            username,
-            periodFrom,
-            periodTo,
-            roles,
-            activities
-        };
-
-        frissitLogTablazat(await sortedLogs(variables));
+        currentPage = 1;
+        frissitLogTablazat(await sortedLogs(getFilterValues()));
     })
     szuresDiv.appendChild(sortBtn);
 
@@ -252,16 +284,18 @@ function createDatePicker(labelStr, idPrefix) {
     dateInp.id = `${idPrefix}Date`;
     dateInp.classList.add("form-control", "form-control-sm", "mb-2");
     dateInp.value = new Date().toISOString().split('T')[0];
+    dateInp.disabled = true;
 
     let slider = document.createElement('input');
     slider.type = "range";
     slider.min = "0";
     slider.max = "96";
-    slider.value = idPrefix === "from" ? "32" : "68";
+    slider.value = idPrefix === "from" ? "32" : "96";
     slider.classList.add("form-range");
+    slider.disabled = true;
 
     let timeDisplay = document.createElement('div');
-    timeDisplay.classList.add("text-center", "badge", "bg-primary", "d-block");
+    timeDisplay.classList.add("text-center", "badge", "bg-primary", "d-block", "time-display");
     timeDisplay.style.fontSize = "0.9rem";
     timeDisplay.innerText = formatTime(slider.value);
 
@@ -275,3 +309,60 @@ function createDatePicker(labelStr, idPrefix) {
     container.appendChild(timeDisplay);
     return container;
 }
+
+
+
+function lapozasGeneral() {
+    let paginationDiv = document.createElement('div');
+    paginationDiv.classList.add("d-flex", "justify-content-center", "gap-3", "mt-3", "mb-5");
+
+    let prevBtn = gombGeneral("button", "Previous", null, "secondary", null);
+    let nextBtn = gombGeneral("button", "Next", null, "secondary", null);
+    let pageInfo = document.createElement('span');
+    pageInfo.classList.add("align-self-center", "fw-bold");
+    pageInfo.innerText = `Page: ${currentPage}`;
+
+    prevBtn.addEventListener("click", async () => {
+        if (currentPage > 1) {
+            currentPage--;
+            frissitLogTablazat(await sortedLogs(getFilterValues()));
+        }
+    });
+
+    nextBtn.addEventListener("click", async () => {
+        currentPage++;
+        frissitLogTablazat(await sortedLogs(getFilterValues()));
+    });
+
+    paginationDiv.appendChild(prevBtn);
+    paginationDiv.appendChild(pageInfo);
+    paginationDiv.appendChild(nextBtn);
+    return paginationDiv;
+}
+
+function getFilterValues() {
+    let isDateEnabled = document.getElementById("dateSwitch").checked;
+    let periodFrom = null;
+    let periodTo = null;
+
+    if (isDateEnabled) {
+        let fromDateValue = document.getElementById("fromDate").value;
+        let fromSliderValue = document.querySelector("#fromDateDate + input[type='range']").value;
+        periodFrom = fromDateValue ? `${fromDateValue} ${getTimeFromSlider(fromSliderValue)}` : null;
+
+        let toDateValue = document.getElementById("toDate").value;
+        let toSliderValue = document.querySelector("#toDateDate + input[type='range']").value;
+        periodTo = toDateValue ? `${toDateValue} ${getTimeFromSlider(toSliderValue)}` : null;
+    }
+
+    return {
+        username: document.getElementById("keresoInput").value,
+        periodFrom,
+        periodTo,
+        roles: Array.from(document.querySelectorAll('input[name="sort2"]:checked')).map(cb => cb.value),
+        activities: Array.from(document.querySelectorAll('input[name="sort1"]:checked')).map(cb => cb.value),
+        page: currentPage
+    };
+}
+
+let currentPage = 1;
