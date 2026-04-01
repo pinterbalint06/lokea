@@ -116,7 +116,6 @@ async function bejelentkezesAnimacio(username, jelszo, remember) {
                 form.classList.add('collapse-out');
                 modalText.innerText = data.message;
 
-                // levette collapse-in es nem mutat x es a spinning tobbszor nem mukodik csak 1x
                 setTimeout(() => {
                     container.classList.remove('error-draw');
                     container.querySelectorAll('svg').forEach(svg => svg.remove());
@@ -250,11 +249,11 @@ async function showSettingsModal() {
     let errordiv = document.getElementById('errorLocation');
     errordiv.classList.add('d-none');
     errordiv.innerHTML = "";
-    
+
     let hova = document.getElementById('userData');
     hova.innerHTML = "";
-    
-    let tempPfp = null;
+
+    tempPfp = null;
     let deleteLast = false;
 
     let data = await getUserData();
@@ -415,34 +414,40 @@ async function showSettingsModal() {
         darkmode: document.getElementById('darkMode').checked
     }
 
-    document.getElementById('settingsSave').addEventListener("click", async function () {
+    document.getElementById('settingsSave').onclick = async function () {
         try {
             await checkModification();
             if (tempPfp != null) {
                 await uploadProfilePic(tempPfp);
-            }
-            else {
+            } else {
                 if (deleteLast) {
                     await deleteProfilePicture();
                 }
             }
             settingsModal.hide();
         } catch (error) {
-            let errorText = document.createElement('p');
-            errorText.innerText = error.message;
+            errordiv.innerHTML = "";
+            let errorMessages = document.createElement('div');
+            error.message.split("\n").forEach(msg => {
+                let errorText = document.createElement('p');
+                errorText.innerText = msg;
+                errorText.style.margin = "0";
+                errorMessages.appendChild(errorText);
+            });
+
             let errorBtn = document.createElement('button');
             errorBtn.classList.add('close-btn');
             errorBtn.addEventListener("click", function () {
-                let errordiv = document.getElementById('errorLocation');
                 errordiv.className = 'd-none';
                 errordiv.innerHTML = "";
-            })
+            });
+
             errorBtn.appendChild(makeSvg("icon-x", null, null));
-            errordiv.appendChild(errorText);
+            errordiv.appendChild(errorMessages);
             errordiv.appendChild(errorBtn);
             errordiv.className = "d-flex";
         }
-    })
+    }
     row.appendChild(div);
     container.appendChild(row);
     hova.appendChild(container);
@@ -496,18 +501,20 @@ async function checkModification() {
         }
     });
     if (valtozas) {
-        let siker = true;
+        let errors = [];
         if (inInput.username != null && !validalvaUsername(inInput.username)) {
             wrongInput(document.getElementById('usernameInput'));
-            siker = false;
+            errors.push("A felhasználónév nem megfelelő!");
         }
         if (inInput.email != null && !validalvaEmail(inInput.email)) {
             wrongInput(document.getElementById('emailInput'));
-            siker = false;
+            errors.push("Az email-cím nem megfelelő!");
         }
-        if (siker) {
-            await saveModification(inInput.username, inInput.email, inInput.is_2fa, inInput.language, inInput.darkmode);
+        if (errors.length > 0) {
+            throw new Error(errors.join("\n"));
         }
+
+        await saveModification(inInput.username, inInput.email, inInput.is_2fa, inInput.language, inInput.darkmode);
     }
 }
 

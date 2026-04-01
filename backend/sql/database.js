@@ -231,6 +231,7 @@ async function updateUser(user_id, username, email, is_2fa, language, darkmode) 
             if (connection) {
                 await connection.rollback();
             }
+            throw error;
         }
         finally {
             if (connection) connection.release();

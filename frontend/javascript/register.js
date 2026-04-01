@@ -51,17 +51,15 @@ function regisztralt(hibauzenet = "") {
     let modalText = document.getElementById('regModalText');
     title.innerHTML = "";
     modalText.innerHTML = "";
-    
+
+    container.querySelectorAll('svg').forEach(svg => svg.remove());
+    container.classList.remove('success-draw', 'error-draw');
+    container.appendChild(makeSvg("circle-border", "progress-svg", "progress-circle"));
+    container.classList.add('spinning');
     modal.show();
     
     if (hibauzenet == "") {
-        container.querySelectorAll('svg').forEach(svg => svg.remove());
-        container.appendChild(makeSvg("circle-border", "progress-svg", "progress-circle"));
         container.appendChild(makeSvg("checkmark", "check-svg", "mark"));
-
-        container.classList.add('spinning');
-        
-        
         setTimeout(() => {
             container.classList.add('success-draw');
             container.classList.remove('spinning');
@@ -73,15 +71,11 @@ function regisztralt(hibauzenet = "") {
         }, 2000);
     }
     else {
-        container.querySelectorAll('svg').forEach(svg => svg.remove());
-        container.appendChild(makeSvg("circle-border", "progress-svg", "progress-circle"));
         container.appendChild(makeSvg("icon-x", "check-svg", "mark"));
-
-        container.classList.add('spinning');
         setTimeout(() => {
             container.classList.add('error-draw');
             container.classList.remove('spinning');
-            title.innerText = `Regisztálás sikertelen! (Error ${hibakod})`;
+            title.innerText = `Regisztálás sikertelen!`;
             modalText.innerText = hibauzenet;
             setTimeout(() => {
                 modal.hide();

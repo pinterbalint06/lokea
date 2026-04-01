@@ -42,7 +42,7 @@ export function validalvaEmail(email) {
 }
 
 export function validalvaJelszo(password) {
-    return password.length < 50 && password.length > 8 && isCorrectPassword(password);
+    return password.length < 50 && password.length > 7 && isCorrectPassword(password);
 }
 
 function isCorrectUsername(username) {
