@@ -67,10 +67,10 @@ async function getUsers() {
     }
 }
 
-async function getUser(id) {
+async function getUser(user_id) {
     try {
         const query = 'SELECT users.user_id, users.username, users.email, users.role, users.is_2fa, users.darkmode, users.created_at, images.filepath FROM users LEFT JOIN images ON (images.image_id = users.pfp) WHERE users.user_id = ?';
-        const [result] = await pool.execute(query, [id]);
+        const [result] = await pool.execute(query, [user_id]);
         return result;
     } catch (error) {
         console.error('DB hiba getUser:', error);
@@ -78,7 +78,7 @@ async function getUser(id) {
     }
 }
 
-async function getUserNameProfile(id) {
+async function getUserNameProfile(user_id) {
     try {
         const query = 'SELECT users.username, users.darkmode, images.filepath FROM users LEFT JOIN images ON (images.image_id = users.pfp) WHERE users.user_id = ?';
         const [result] = await pool.execute(query, [id]);
@@ -93,13 +93,9 @@ async function sortedUsers(mireKeresek, mit, status, adminChecked, modChecked, u
     let query = 'SELECT deleted_at, user_id, username, email, role FROM users';
     let conditions = [];
     let params = [];
+    console.log(mireKeresek, mit, status, adminChecked, modChecked, userChecked);
 
-    // 1. Keresés (ID, Username vagy Email alapján)
-    // Csak akkor szűrünk, ha a 'mit' nem üres string
     if (mit && mit.trim() !== '') {
-        // A 'mireKeresek' változó tartalmazza az oszlopnevet (id, username, email)
-        // A biztonság kedvéért itt ellenőrizni kell az oszlopnevet, 
-        // mert az oszlopnevek nem lehetnek paraméterek (?)
         const validColumns = ['user_id', 'username', 'email'];
         const targetColumn = validColumns.includes(mireKeresek) ? mireKeresek : 'username';
 
@@ -107,32 +103,25 @@ async function sortedUsers(mireKeresek, mit, status, adminChecked, modChecked, u
         params.push(`%${mit}%`);
     }
 
-    // 2. Státusz szűrés
-    // Ha üres string, akkor nem szűrünk (vagyis az összes jön)
     if (status && status !== '') {
         if (status === 'statusActive') {
             conditions.push('deleted_at IS NULL');
-        } else {
-            if (status === 'statusDeleted') {
-                conditions.push('deleted_at IS NOT NULL');
-            }
+        } else if (status === 'statusDeleted') {
+            conditions.push('deleted_at IS NOT NULL');
         }
     }
 
-    // 3. Role szűrés (Checkboxok halmaza)
     let roles = [];
     if (adminChecked) roles.push('ADMIN');
     if (modChecked) roles.push('MOD');
     if (userChecked) roles.push('USER');
 
     if (roles.length > 0) {
-        // IN ('ADMIN', 'USER') formátum létrehozása
         const placeHolders = roles.map(() => '?').join(',');
         conditions.push(`role IN (${placeHolders})`);
         params.push(...roles);
     }
 
-    // WHERE feltételek összefűzése, ha vannak
     if (conditions.length > 0) {
         query += ' WHERE ' + conditions.join(' AND ');
     }
@@ -197,14 +186,14 @@ async function updateUserByAdmin(user_id, username, email, role, is_2fa) {
     }
 }
 
-async function userToInactive(userId) {
+async function userToInactive(user_id) {
     let connection;
     let result;
     try {
         connection = await pool.getConnection();
         await connection.beginTransaction();
         const query = 'UPDATE users SET deleted_at = CURRENT_TIMESTAMP WHERE user_id = ? AND deleted_at IS NULL';
-        [result] = await connection.execute(query, [userId]);
+        [result] = await connection.execute(query, [user_id]);
         await connection.commit();
     } catch (error) {
         if (connection) {
@@ -287,18 +276,18 @@ async function getOldPicturePath(user_id) {
     }
 }
 
-async function addLog(userid, activity, victimid = null) {
+async function addLog(user_id, activity, victimid = null) {
     let connection;
     try {
         connection = await pool.getConnection();
         await connection.beginTransaction();
         if (victimid == null) {
             const query = 'INSERT INTO log (user_id, activity) VALUES (?, ?)';
-            await connection.execute(query, [userid, activity]);
+            await connection.execute(query, [user_id, activity]);
         }
         else {
             const query = 'INSERT INTO log (user_id, victim_id, activity) VALUES (?, ?, ?)';
-            await connection.execute(query, [userid, victimid, activity]);
+            await connection.execute(query, [user_id, victimid, activity]);
         }
         await connection.commit();
     } catch (error) {

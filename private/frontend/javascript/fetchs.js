@@ -30,12 +30,12 @@ export async function sortedUser(params) {
                 "Content-Type": "application/json"
             },
             body: JSON.stringify({
-                mireKeresek: params.selectOption,
-                mit: params.kereso,
-                status: params.selectedStatus,
-                adminChecked: roles.includes("roleAdmin"),
-                modChecked: roles.includes("roleModerator"),
-                userChecked: roles.includes("roleUser")
+                mireKeresek: params.mireKeresek,
+                mit: params.mit,
+                status: params.status,
+                adminChecked: params.adminChecked,
+                modChecked: params.modChecked,
+                userChecked: params.userChecked
             })
         });
         let data = await response.json();

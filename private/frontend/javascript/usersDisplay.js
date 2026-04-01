@@ -34,7 +34,7 @@ export async function usersDisplayre(variables) {
     keresoInput.addEventListener("input", async function () {
         let tablePlace = document.getElementById('usersTableDiv');
         tablePlace.innerHTML = "";
-        tablePlace.appendChild(tablazatGeneral(await sortedUser(getFilterValues), variables));
+        tablePlace.appendChild(tablazatGeneral(await sortedUser(getFilterValues()), variables));
     })
 
     let keresoSelect = document.createElement('select');
@@ -43,7 +43,7 @@ export async function usersDisplayre(variables) {
     keresoSelect.addEventListener("change", async function () {
         let tablePlace = document.getElementById('usersTableDiv');
         tablePlace.innerHTML = "";
-        tablePlace.appendChild(tablazatGeneral(await sortedUser(getFilterValues), variables));
+        tablePlace.appendChild(tablazatGeneral(await sortedUser(getFilterValues()), variables));
     })
 
     let option = document.createElement('option');
@@ -101,7 +101,7 @@ export async function usersDisplayre(variables) {
         radioButton.addEventListener("change", async function () {
             let tablePlace = document.getElementById('usersTableDiv');
             tablePlace.innerHTML = "";
-            tablePlace.appendChild(tablazatGeneral(await sortedUser(getFilterValues), variables));
+            tablePlace.appendChild(tablazatGeneral(await sortedUser(getFilterValues()), variables));
         })
         let label = document.createElement('label');
         label.setAttribute("for", `status${statuszok[i]}`);
@@ -130,7 +130,7 @@ export async function usersDisplayre(variables) {
         checkbox.addEventListener("change", async function () {
             let tablePlace = document.getElementById('usersTableDiv');
             tablePlace.innerHTML = "";
-            tablePlace.appendChild(tablazatGeneral(await sortedUser(getFilterValues), variables));
+            tablePlace.appendChild(tablazatGeneral(await sortedUser(getFilterValues()), variables));
         })
         let label = document.createElement('label');
         label.setAttribute("for", `role${roleok[i]}`);
@@ -601,7 +601,7 @@ function tablazatGeneral(data, variables) {
                 alert(await userToInactive(adatok[i].user_id, adatok[i].role, adatok[i].deleted_at == null));
                 let tablePlace = document.getElementById('usersTable');
                 tablePlace.innerHTML = "";
-                tablePlace.appendChild(tablazatGeneral(await sortedUser(getFilterValues), variables));
+                tablePlace.appendChild(tablazatGeneral(await sortedUser(getFilterValues()), variables));
             });
 
         }
@@ -667,7 +667,7 @@ function modalView(title, type, content, variables) {
                 if (!ures) {
                     await newUser(inInput.username, inInput.email, inInput.password, inInput.role, inInput.is_2fa);
                     tablePlace.innerHTML = "";
-                    tablePlace.appendChild(tablazatGeneral(await sortedUser(getFilterValues), variables));
+                    tablePlace.appendChild(tablazatGeneral(await sortedUser(getFilterValues()), variables));
                 }
                 variables.modal.hide();
             })
@@ -710,7 +710,7 @@ function modalView(title, type, content, variables) {
                     let siker = await userUpdate(currentData.user_id, inInput.username, inInput.email, inInput.role, inInput.is_2fa);
                     if (siker) {
                         tablePlace.innerHTML = "";
-                        tablePlace.appendChild(tablazatGeneral(await sortedUser(getFilterValues), variables));
+                        tablePlace.appendChild(tablazatGeneral(await sortedUser(getFilterValues()), variables));
                     }
                 }
                 variables.modal.hide();
@@ -751,16 +751,18 @@ function getFilterValues() {
     let kereso = document.getElementById('keresoInput').value;
     let selectOption = document.getElementById('keresoSelect').value;
     let selectedStatus = document.querySelector('input[name="sort1"]:checked').id;
-    let selectedRoles = Array.from(
-        document.querySelectorAll('input[name="sort2"]:checked')
-    ).map(cb => cb.id);
+    let adminChecked = document.getElementById('roleAdmin').checked;
+    let modChecked = document.getElementById('roleModerator').checked;
+    let userChecked = document.getElementById('roleUser').checked;
 
     return {
-        kereso,
-        selectOption,
-        selectedStatus,
-        selectedRoles
-    }
+        mireKeresek: selectOption,
+        mit: kereso,
+        status: selectedStatus,
+        adminChecked,
+        modChecked,
+        userChecked
+    };
 }
 
 let currentData = {};

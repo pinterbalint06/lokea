@@ -12,83 +12,88 @@ const pool = mysql.createPool({
 });
 
 //!SQL Queries
-// async function selectall() {
-//     const query = 'SELECT * FROM exampletable;';
-//     const [rows] = await pool.execute(query);
-//     return rows;
-// }
 
 async function newUser(username, email, password) {
-    let success = false;
-    let error;
-    const queryUserExistsCheck = 'SELECT email, username FROM users WHERE username = ? OR email = ?';
-    let [result] = await pool.execute(queryUserExistsCheck, [username, email]);
-    if (result.length == 0) {
-        let connection;
-        try {
-            connection = await pool.getConnection();
-            await connection.beginTransaction();
-            const queryInsertNewUser = 'INSERT INTO users (username, email, password) VALUES (?, ?, ?)';
-            [result] = await connection.execute(queryInsertNewUser, [username, email, password]);
-            if (result.affectedRows == 1) {
-                success = true;
-                await connection.commit();
-            }
-            else {
-                throw new Error("Insert failed");
-            }
-        }
-        catch (fault) {
-            if (connection) {
-                await connection.rollback();
-            }
-            if (fault.code == 'ER_DUP_ENTRY') {
-                error = "User exists";
-            }
-            else {
-                error = "Failed insert";
-            }
-        }
-        finally {
-            if (connection) connection.release();
-        }
-    }
-    else {
-        error = "User exists";
-    }
+    let connection;
+    try {
+        connection = await pool.getConnection();
+        await connection.beginTransaction();
 
-    return success ? { success } : { success, error };
+        const queryInsertNewUser = 'INSERT INTO users (username, email, password) VALUES (?, ?, ?)';
+        const [result] = await connection.execute(queryInsertNewUser, [username, email, password]);
+
+        if (result.affectedRows === 0) {
+            throw new Error("Beszúrás sikertelen, nulla érintett sor.");
+        }
+        await connection.commit();
+        return { success: true };
+    } catch (error) {
+        if (connection) {
+            await connection.rollback();
+        }
+        if (error.code === 'ER_DUP_ENTRY') {
+            return { success: false, error: "A felhasználónév vagy az e-mail cím már foglalt!" };
+        }
+        console.error('DB hiba a newUser során: ', error);
+        return { success: false, error: "Hiba történt a regisztráció során!" };
+    } finally {
+        if (connection) {
+            connection.release();
+        }
+    }
 }
 
 async function getUserByUsername(username) {
-    const query = 'SELECT users.username, users.password, users.user_id, users.role, users.deleted_at FROM users WHERE users.username = ?';
-    const [result] = await pool.execute(query, [username]);
-    return result;
+    try {
+        const query = 'SELECT users.username, users.password, users.user_id, users.role, users.deleted_at FROM users WHERE users.username = ?';
+        const [result] = await pool.execute(query, [username]);
+        return result;
+    } catch (error) {
+        console.error('DB hiba getUserByUsername: ', error);
+        throw error;
+    }
 }
 
 async function getUserByEmail(email) {
-    const query = 'SELECT users.username, users.password, users.user_id, users.role, users.deleted_at FROM users WHERE users.email = ?';
-    const [result] = await pool.execute(query, [email]);
-    return result;
+    try {
+        const query = 'SELECT users.username, users.password, users.user_id, users.role, users.deleted_at FROM users WHERE users.email = ?';
+        const [result] = await pool.execute(query, [email]);
+        return result;
+    } catch (error) {
+        console.error('DB hiba getUserByEmail: ', error);
+        throw error;
+    }
+
 }
 
-async function getUser(id) {
-    const query = 'SELECT users.user_id, users.username, users.email, users.role, users.is_2fa, users.darkmode, users.created_at, images.filepath FROM users LEFT JOIN images ON (images.image_id = users.pfp) WHERE users.user_id = ?';
-    const [result] = await pool.execute(query, [id]);
-    return result;
+async function getUser(user_id) {
+    try {
+        const query = 'SELECT users.user_id, users.username, users.email, users.role, users.is_2fa, users.darkmode, users.created_at, images.filepath FROM users LEFT JOIN images ON (images.image_id = users.pfp) WHERE users.user_id = ?';
+        const [result] = await pool.execute(query, [user_id]);
+        return result;
+    } catch (error) {
+        console.error('DB hiba getUser: ', error);
+        throw error;
+    }
 }
 
-async function getUserNameProfile(id) {
-    const query = 'SELECT users.username, users.darkmode, images.filepath FROM users LEFT JOIN images ON (images.image_id = users.pfp) WHERE users.user_id = ?';
-    const [result] = await pool.execute(query, [id]);
-    return result;
+async function getUserNameProfile(user_id) {
+    try {
+        const query = 'SELECT users.username, users.darkmode, images.filepath FROM users LEFT JOIN images ON (images.image_id = users.pfp) WHERE users.user_id = ?';
+        const [result] = await pool.execute(query, [user_id]);
+        return result;
+    } catch (error) {
+        console.error('DB hiba getUserNameProfile: ', error);
+        throw error;
+    }
+
 }
 
 async function updateUser(user_id, username, email, is_2fa, language, darkmode) {
     let query = 'UPDATE users ';
     let updates = [];
     let params = [];
-    let rows;
+    let updatedCount = 0;
 
     if (username != null) {
         updates.push('users.username = ?');
@@ -98,10 +103,6 @@ async function updateUser(user_id, username, email, is_2fa, language, darkmode) 
         updates.push('users.email = ?');
         params.push(email);
     }
-    // if (pfp != null) {
-    //     updates.push('users.pfp = ?');
-    //     params.push(pfp);
-    // }
     if (is_2fa != null) {
         updates.push('users.is_2fa = ?');
         params.push(is_2fa);
@@ -115,10 +116,7 @@ async function updateUser(user_id, username, email, is_2fa, language, darkmode) 
         params.push(darkmode);
     }
 
-    if (updates.length === 0) {
-        throw new Error('Nincs frissítendő mező');
-    }
-    else {
+    if (updates.length !== 0) {
         query += ' SET ' + updates.join(' , ');
         query += ` WHERE users.user_id = ?`;
         params.push(user_id);
@@ -126,66 +124,69 @@ async function updateUser(user_id, username, email, is_2fa, language, darkmode) 
         try {
             connection = await pool.getConnection();
             await connection.beginTransaction();
-            [rows] = await connection.execute(query, params);
+            const [rows] = await connection.execute(query, params);
             await connection.commit();
+            updatedCount = rows.affectedRows;
         } catch (error) {
             if (connection) {
                 await connection.rollback();
             }
+            console.error('DB hiba updateUser: ', error);
+            throw error;
         }
         finally {
             if (connection) connection.release();
         }
     }
-    return rows.affectedRows;
+    return updatedCount;
 }
 
-async function updatePassword(userid, oldPass, newPass) {
+async function updatePassword(user_id, oldPass, newPass) {
+    let connection;
     try {
-        const query = 'SELECT users.password FROM users WHERE users.user_id = ?';
-        const [result] = await pool.execute(query, [userid]);
-        let egyezes = await bcrypt.compare(oldPass, result[0].password);
-        if (egyezes) {
-            let connection;
-            try {
-                const hashedPassword = await bcrypt.hash(newPass, 10);
-                connection = await pool.getConnection();
-                await connection.beginTransaction();
-                const query = 'UPDATE users SET password = ? WHERE user_id = ?';
-                await connection.execute(query, [hashedPassword, userid]);
-                await connection.commit();
-            } catch (error) {
-                if (connection) {
-                    await connection.rollback();
-                }
-                throw new Error('Hiba az adatbázissal való kommunikálás során!');
-            }
-            finally {
-                if (connection) connection.release();
-            }
+        const getPasswordQuery = 'SELECT users.password FROM users WHERE users.user_id = ?';
+        const [result] = await pool.execute(getPasswordQuery, [user_id]);
+
+        if (result.length == 0) {
+            throw new Error('Felhasználó nem található!');
         }
-        else {
+        let egyezes = await bcrypt.compare(oldPass, result[0].password);
+        if (!egyezes) {
             throw new Error('Nem ez a régi jelszavad!');
         }
+        const hashedPassword = await bcrypt.hash(newPass, 10);
+        connection = await pool.getConnection();
+        await connection.beginTransaction();
+        const passwordUpdateQuery = 'UPDATE users SET password = ? WHERE user_id = ?';
+        await connection.execute(passwordUpdateQuery, [hashedPassword, user_id]);
+        await connection.commit();
     } catch (error) {
-        console.error(error);
+        if (connection) {
+            await connection.rollback();
+        }
+        console.error('Hiba az updatePassword során:', error);
         throw error;
+    }
+    finally {
+        if (connection) connection.release();
     }
 }
 
-async function userToInactive(userId) {
+async function userToInactive(user_id) {
     let connection;
     let result;
     try {
         connection = await pool.getConnection();
         await connection.beginTransaction();
         const query = 'UPDATE users SET deleted_at = CURRENT_TIMESTAMP WHERE user_id = ? AND deleted_at IS NULL';
-        [result] = await connection.execute(query, [userId]);
+        [result] = await connection.execute(query, [user_id]);
         await connection.commit();
     } catch (error) {
         if (connection) {
             await connection.rollback();
         }
+        console.error('Hiba az userToInactive során:', error);
+        throw error;
     }
     finally {
         if (connection) connection.release();
@@ -194,85 +195,93 @@ async function userToInactive(userId) {
 }
 
 async function uploadProfilePic(filepath, width, height, user_id) {
-    //Régi profilkép elérési útvonala + id lekérése későbbi törlésre
-
-    const queryGetLastImage = 'SELECT images.image_id, images.filepath FROM users LEFT JOIN images ON users.pfp = images.image_id WHERE users.user_id = ?'
-    const [oldImageData] = await pool.execute(queryGetLastImage, [user_id]);
-
-    let oldFilePath = oldImageData[0] ? oldImageData[0].filepath : null;
-    let oldImageId = oldImageData[0] ? oldImageData[0].image_id : null;
     let connection;
-    let result;
     try {
+        const queryGetLastImage = 'SELECT images.image_id, images.filepath FROM users LEFT JOIN images ON users.pfp = images.image_id WHERE users.user_id = ?'
+        const [oldImageData] = await pool.execute(queryGetLastImage, [user_id]);
+
+        if (oldImageData.length === 0) {
+            throw new Error('Felhasználó nem található!');
+        }
+
+        let oldFilePath = oldImageData[0] ? oldImageData[0].filepath : null;
+        let oldImageId = oldImageData[0] ? oldImageData[0].image_id : null;
+
         connection = await pool.getConnection();
         await connection.beginTransaction();
         const queryInsertNewPic = 'INSERT INTO images (filepath, width, height) VALUES (?, ?, ?)';
-        [result] = await connection.execute(queryInsertNewPic, [filepath, width, height]);
+        const [pictureInsertResult] = await connection.execute(queryInsertNewPic, [filepath, width, height]);
         const queryUpdatePfpId = 'UPDATE users SET pfp = ? WHERE user_id = ?';
-        [result] = await connection.execute(queryUpdatePfpId, [result.insertId, user_id])
+        await connection.execute(queryUpdatePfpId, [pictureInsertResult.insertId, user_id])
         if (oldImageId != null) {
             const queryDeleteOldPic = 'DELETE FROM images WHERE image_id = ?';
             await connection.execute(queryDeleteOldPic, [oldImageId]);
         }
         await connection.commit();
+        return oldFilePath;
     } catch (error) {
         if (connection) {
             await connection.rollback();
         }
-        console.error(error);
+        console.error('DB hiba uploadProfilePic: ', error);
+        throw error;
     }
     finally {
         if (connection) connection.release();
     }
-    //Visszaadja a régi kép elérési útvonalát, hogy törlésre kerülhessen. Amennyiben nem volt, null értéket ad vissza.
-    return oldFilePath;
 }
 
 async function deleteProfilePic(user_id) {
-    //Régi profilkép elérési útvonala + id lekérése a törlésre
-
-    const queryGetLastImage = 'SELECT images.image_id, images.filepath FROM users LEFT JOIN images ON users.pfp = images.image_id WHERE users.user_id = ?'
-    const [oldImageData] = await pool.execute(queryGetLastImage, [user_id]);
-
-    let oldFilePath = oldImageData[0] ? oldImageData[0].filepath : null;
-    let oldImageId = oldImageData[0] ? oldImageData[0].image_id : null;
     let connection;
     try {
+        const queryGetLastImage = 'SELECT images.image_id, images.filepath FROM users LEFT JOIN images ON users.pfp = images.image_id WHERE users.user_id = ?'
+        const [oldImageData] = await pool.execute(queryGetLastImage, [user_id]);
+
+        if (oldImageData.length === 0) {
+            throw new Error('Felhasználó nem található!');
+        }
+
+        let oldFilePath = oldImageData[0] ? oldImageData[0].filepath : null;
+        let oldImageId = oldImageData[0] ? oldImageData[0].image_id : null;
+
         connection = await pool.getConnection();
         await connection.beginTransaction();
         const queryDeleteOldPic = 'DELETE FROM images WHERE image_id = ?';
         await connection.execute(queryDeleteOldPic, [oldImageId]);
         await connection.commit();
+        return oldFilePath;
     } catch (error) {
         if (connection) {
             await connection.rollback();
         }
+        console.error('DB hiba deleteProfilePic: ', error);
+        throw error;
     }
     finally {
         if (connection) connection.release();
     }
-    //Visszaadja a régi kép elérési útvonalát a törléshez.
-    return oldFilePath;
 }
 
-async function addLog(userid, activity, victimid = null) {
+async function addLog(user_id, activity, victimid = null) {
     let connection;
     try {
         connection = await pool.getConnection();
         await connection.beginTransaction();
         if (victimid == null) {
             const query = 'INSERT INTO log (user_id, activity) VALUES (?, ?)';
-            await connection.execute(query, [userid, activity]);
+            await connection.execute(query, [user_id, activity]);
         }
         else {
             const query = 'INSERT INTO log (user_id, victim_id, activity) VALUES (?, ?, ?)';
-            await connection.execute(query, [userid, victimid, activity]);
+            await connection.execute(query, [user_id, victimid, activity]);
         }
         await connection.commit();
     } catch (error) {
         if (connection) {
             await connection.rollback();
         }
+        console.error('DB hiba addLog: ', error);
+        throw error;
     }
     finally {
         if (connection) connection.release();

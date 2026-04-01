@@ -80,7 +80,7 @@ router.post("/signup",
                 }
             }
         } catch (error) {
-            response.status(500).json({ error: error.message});
+            response.status(500).json({ error: error.message });
         }
     }
 );
@@ -111,13 +111,13 @@ router.post("/login",
                     rows = await database.getUserByUsername(username);
                 }
                 if (rows.length === 0 || rows[0].deleted_at != null) {
-                    response.status(401).json({ message: "Hibás email vagy jelszó"});
+                    response.status(401).json({ message: "Hibás email vagy jelszó" });
                 }
                 else {
                     let sPass = rows[0].password;
                     let egyezes = await bcrypt.compare(password, sPass);
                     if (!egyezes) {
-                        response.status(401).json({ message: "Hibás email vagy jelszó"});
+                        response.status(401).json({ message: "Hibás email vagy jelszó" });
                     }
                     else {
                         let sesRole = rows[0].role;
@@ -173,7 +173,7 @@ router.get('/loginRole', async (request, response) => {
             }
         }
     } catch (error) {
-        response.status(500).json({ login, error: error });
+        response.status(500).json({ login, error: error.message });
     }
 })
 
@@ -184,7 +184,7 @@ router.get('/getUserData', auth.checkAuth, async (request, response) => {
         let users = await database.getUser(request.session.userid);
         response.status(200).json({ users: users[0] });
     } catch (error) {
-        response.status(500).json({ error: error });
+        response.status(500).json({ error: error.message });
     }
 })
 
@@ -198,7 +198,19 @@ router.put('/updateUser', auth.checkAuth,
         body("email")
             .optional({ values: "null" })
             .isEmail().withMessage("Hibás email formátum")
-            .isLength({ min: 5, max: 250 }).withMessage("Email max 250 karakter!")
+            .isLength({ min: 5, max: 250 }).withMessage("Email max 250 karakter!"),
+        body("is_2fa")
+            .optional({ values: "null" })
+            .isBoolean().withMessage("A 2FA értéke csak logikai (true/false) lehet!"),
+
+        body("language")
+            .optional({ values: "null" })
+            .isString().withMessage("A nyelv formátuma érvénytelen!")
+            .isLength({ min: 2, max: 5 }).withMessage("A nyelv kódja 2-5 karakter lehet!"),
+
+        body("darkmode")
+            .optional({ values: "null" })
+            .isBoolean().withMessage("A sötét mód értéke csak logikai lehet!")
     ], async (request, response) => {
         try {
             const errors = validationResult(request);
@@ -210,13 +222,18 @@ router.put('/updateUser', auth.checkAuth,
             }
             else {
                 let { username, email, is_2fa, language, darkmode } = request.body;
-                await database.updateUser(request.session.userid, username, email, is_2fa, language, darkmode);
-                await database.addLog(request.session.userid, 'User update');
-                response.status(200).json({ message: "Sikeres frissités!" });
+                let result = await database.updateUser(request.session.userid, username, email, is_2fa, language, darkmode);
+                if (result == 1) {
+                    await database.addLog(request.session.userid, 'User update');
+                    response.status(200).json({ message: "Sikeres frissités!" });
+                }
+                else {
+                    response.status(200).json({ message: "Nem történt módositás!" });
+                }
             }
 
         } catch (error) {
-            response.status(500).json({ error: error });
+            response.status(500).json({ error: error.message });
         }
     })
 
@@ -246,7 +263,7 @@ router.put("/updatePassword", auth.checkAuth,
             }
 
         } catch (error) {
-            response.status(500).json({ error: error });
+            response.status(500).json({ error: error.message });
         }
     })
 
@@ -265,7 +282,7 @@ router.post("/inactiveUser", auth.checkAuth, async (request, response) => {
         });
 
     } catch (error) {
-        response.status(500).json({ error: error });
+        response.status(500).json({ error: error.message });
     }
 })
 
@@ -333,7 +350,7 @@ router.delete('/deleteProfilePic', auth.checkAuth, async (request, response) => 
             response.status(201).json({ success: true, message: "Profilkép törölve!" });
         }
     } catch (error) {
-        response.status(500).json({ error: error });
+        response.status(500).json({ error: error.message });
     }
 })
 
@@ -362,7 +379,7 @@ router.get('/getProfilePic', auth.checkAuth,
                 });
             }
         } catch (error) {
-            response.status(500).json({ message: error })
+            response.status(500).json({ message: error.message })
         }
     })
 
