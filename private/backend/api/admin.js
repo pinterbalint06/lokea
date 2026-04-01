@@ -250,7 +250,7 @@ router.post('/deleteProfilePicFromAdmin', auth.checkAuth, auth.checkRole("ADMIN"
 router.get('/getLogs', auth.checkAuth, auth.checkRole("ADMIN"), async (request, response) => {
     try {
         let logs = await database.getLogs();
-        response.status(200).json({ message: "Sikeres lekérés", logs: logs });
+        response.status(200).json({ message: "Sikeres lekérés", logs: logs.rows, total: logs.total });
     } catch (error) {
         response.status(500).json({ error: error });
     }
@@ -270,7 +270,7 @@ router.post('/sortedLogs', auth.checkAuth, auth.checkRole("ADMIN"), async (reque
     try {
         let { username, periodFrom, periodTo, roles, activities, page } = request.body;
         let logs = await database.sortedLogs(username, periodFrom, periodTo, roles, activities, page || 1);
-        response.status(200).json({ sortedLogs: logs });
+        response.status(200).json({ logs: logs.rows, total: logs.total });
     } catch (error) {
         response.status(500).json({ error: error.message });
     }

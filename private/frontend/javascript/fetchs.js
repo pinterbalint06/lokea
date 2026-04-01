@@ -1,40 +1,48 @@
 //GET fetchings
 
 export async function osszesUser() {
-    let response = await fetch("/api/admin/users");
-    let data = await response.json();
-    return data;
+    try {
+        let response = await fetch("/api/admin/users");
+        let data = await response.json();
+        return data;
+    } catch (error) {
+        throw error;
+    }
+
 }
 
 export async function getUser(id) {
-    let response = await fetch(`/api/admin/user?id=${id}`);
-    let data = await response.json();
-    return data.users[0];
+    try {
+        let response = await fetch(`/api/admin/user?id=${id}`);
+        let data = await response.json();
+        return data.users[0];
+    } catch (error) {
+        throw error;
+    }
 }
 
-export async function sortedUser() {
-    let kereso = document.getElementById('keresoInput').value;
-    let selectOption = document.getElementById('keresoSelect').value;
-    let selectedStatus = document.querySelector('input[name="sort1"]:checked').id;
-    let selectedRoles = Array.from(
-        document.querySelectorAll('input[name="sort2"]:checked')
-    ).map(cb => cb.id);
-    let response = await fetch("/api/admin/sortedUsers", {
-        method: "POST",
-        headers: {
-            "Content-Type": "application/json"
-        },
-        body: JSON.stringify({
-            mireKeresek: selectOption,
-            mit: kereso,
-            status: selectedStatus,
-            adminChecked: selectedRoles.includes("roleAdmin"),
-            modChecked: selectedRoles.includes("roleModerator"),
-            userChecked: selectedRoles.includes("roleUser")
-        })
-    });
-    let data = await response.json();
-    return data;
+export async function sortedUser(params) {
+    let roles = params.selectedRoles || [];
+    try {
+        let response = await fetch("/api/admin/sortedUsers", {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json"
+            },
+            body: JSON.stringify({
+                mireKeresek: params.selectOption,
+                mit: params.kereso,
+                status: params.selectedStatus,
+                adminChecked: roles.includes("roleAdmin"),
+                modChecked: roles.includes("roleModerator"),
+                userChecked: roles.includes("roleUser")
+            })
+        });
+        let data = await response.json();
+        return data;
+    } catch (error) {
+        throw error;
+    }
 }
 
 //TODO - atirni usersDisplay.jsbe
@@ -55,7 +63,7 @@ export async function getLogs() {
     try {
         let response = await fetch("/api/admin/getLogs");
         let data = await response.json();
-        return data.logs;
+        return { logs: data.logs, total: data.total };
     } catch (error) {
         console.error(error.message);
     }
@@ -217,7 +225,7 @@ export async function sortedLogs(variables) {
         }
 
         let data = await response.json();
-        return data.sortedLogs || [];
+        return { logs: data.logs, total: data.total } || [];
     } catch (error) {
         console.error("Fetch error:", error.message);
         return [];

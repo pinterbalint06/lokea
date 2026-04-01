@@ -122,7 +122,7 @@ async function sortedUsers(mireKeresek, mit, status, adminChecked, modChecked, u
     // 3. Role szűrés (Checkboxok halmaza)
     let roles = [];
     if (adminChecked) roles.push('ADMIN');
-    if (modChecked) roles.push('MODERATOR');
+    if (modChecked) roles.push('MOD');
     if (userChecked) roles.push('USER');
 
     if (roles.length > 0) {
@@ -314,9 +314,12 @@ async function addLog(userid, activity, victimid = null) {
 
 async function getLogs() {
     try {
+        const countQuery = `SELECT COUNT(*) as total FROM log LEFT JOIN users AS who ON log.user_id = who.user_id LEFT JOIN users AS victim ON log.victim_id = victim.user_id`;
+        const [[{ total }]] = await pool.execute(countQuery);
+
         const query = 'SELECT who.username, victim.username AS victim, log.activity, log.happened_at FROM log INNER JOIN users who ON log.user_id = who.user_id LEFT JOIN users victim ON log.victim_id = victim.user_id ORDER BY log.happened_at DESC LIMIT 15';
         const [rows] = await pool.execute(query);
-        return rows;
+        return { rows, total };
     } catch (error) {
         console.error('DB hiba getLogs:', error);
         throw error;
@@ -326,9 +329,13 @@ async function getLogs() {
 async function sortedLogs(username, periodFrom, periodTo, roles, activities, page = 1) {
     const limit = 15;
     const offset = (page - 1) * limit;
+    let whereClause = " WHERE 1=1";
 
     try {
-        let query = `SELECT who.username, victim.username AS victim, log.activity, log.happened_at FROM log LEFT JOIN users AS who ON log.user_id = who.user_id LEFT JOIN users AS victim ON log.victim_id = victim.user_id WHERE 1=1`;
+        const countQuery = `SELECT COUNT(*) as total FROM log LEFT JOIN users AS who ON log.user_id = who.user_id LEFT JOIN users AS victim ON log.victim_id = victim.user_id ${whereClause}`;
+        const [[{ total }]] = await pool.execute(countQuery);
+
+        let query = `SELECT who.username, victim.username AS victim, log.activity, log.happened_at FROM log LEFT JOIN users AS who ON log.user_id = who.user_id LEFT JOIN users AS victim ON log.victim_id = victim.user_id ${whereClause}`;
         const params = [];
 
         if (username && username.trim() !== "") {
@@ -363,11 +370,10 @@ async function sortedLogs(username, periodFrom, periodTo, roles, activities, pag
             }
         }
 
-        query += ` ORDER BY log.happened_at DESC LIMIT ? OFFSET ?`;
+        query += " ORDER BY log.happened_at DESC LIMIT ? OFFSET ?";
         params.push(limit, offset);
-
         const [rows] = await pool.execute(query, params);
-        return rows;
+        return { rows, total };
 
     } catch (error) {
         console.error("Database error:", error);

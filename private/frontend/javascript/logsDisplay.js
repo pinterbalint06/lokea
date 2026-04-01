@@ -2,6 +2,7 @@ import { inputGeneral, formatDate, gombGeneral } from "./utils/domUtils.js";
 import { getLogs, sortedLogs } from "./fetchs.js";
 
 export async function logsDisplayre() {
+    currentPage = 1;
     let display = document.getElementById('content');
     let row = document.createElement('div');
     row.classList.add("row", "p-3");
@@ -45,14 +46,15 @@ export async function logsDisplayre() {
 
     display.appendChild(row);
 
-    frissitLogTablazat(await getLogs());
+    let data = await getLogs();
+    frissitLogTablazat(data.logs, data.total);
 }
 
 function tablazatGeneral(adatok) {
     //todo - ha ures a data, ird ki hogy nincs talalat
     let tablazat = document.createElement('table');
     tablazat.id = 'logsTable';
-    tablazat.classList.add("table", "table-striped", "table-hover");
+    tablazat.classList.add("table", "table-striped", "table-hover", "mt-3");
 
     let thead = document.createElement('thead');
     let tr = document.createElement('tr');
@@ -94,12 +96,13 @@ function tablazatGeneral(adatok) {
     return tablazat;
 }
 
-function frissitLogTablazat(data) {
+function frissitLogTablazat(data, logCount) {
     let tablePlace = document.getElementById('logsDiv');
     tablePlace.innerHTML = "";
+    console.log(logCount)
     //todo - alert ha nincs log
+    tablePlace.appendChild(lapozasGeneral(logCount));
     tablePlace.appendChild(tablazatGeneral(data));
-    tablePlace.appendChild(lapozasGeneral());
 }
 
 function szuresek() {
@@ -153,19 +156,21 @@ function szuresek() {
     let roleDivCim = document.createElement('h6');
     roleDivCim.classList.add("h6", "mt-3");
     roleDivCim.innerText = "Role";
-    let roleok = ["Admin", "Moderator", "User"];
-    for (let i = 0; i < roleok.length; i++) {
+    let roles = ["Admin", "Moderator", "User"];
+    let roleValues = ["Admin", "Mod", "User"];
+    for (let i = 0; i < roles.length; i++) {
         let formcheck = document.createElement('div');
         formcheck.classList.add("form-check");
         let checkbox = document.createElement('input');
         checkbox.type = "checkbox";
         checkbox.classList.add("form-check-input");
-        checkbox.id = `role${roleok[i]}`;
+        checkbox.id = `role${roles[i]}`;
         checkbox.name = "sort2";
+        checkbox.value = roleValues[i];
         let label = document.createElement('label');
-        label.setAttribute("for", `role${roleok[i]}`);
+        label.setAttribute("for", `role${roles[i]}`);
         label.classList.add("form-check-label");
-        label.innerText = roleok[i];
+        label.innerText = roles[i];
         formcheck.appendChild(checkbox);
         formcheck.appendChild(label);
         roleDiv.appendChild(formcheck);
@@ -204,7 +209,7 @@ function szuresek() {
     datesDiv.appendChild(datePicker);
 
     dateSwitch.addEventListener("change", function () {
-        datePickers.style.opacity = this.checked ? "1" : "0.5";
+        datePicker.style.opacity = this.checked ? "1" : "0.5";
         let inputs = datePicker.querySelectorAll('input');
         inputs.forEach(i => i.disabled = !this.checked);
     });
@@ -220,20 +225,21 @@ function szuresek() {
         document.getElementById("dateSwitch").checked = false;
 
         const today = new Date().toISOString().split('T')[0];
-        document.getElementById("fromDateDate").value = today;
-        document.getElementById("toDateDate").value = today;
+        document.getElementById("fromDate").value = today;
+        document.getElementById("toDate").value = today;
 
         document.querySelectorAll('#datePickersWrapper input[type="range"]').forEach((slider, idx) => {
             slider.value = idx === 0 ? "32" : "96";
             slider.parentElement.querySelector(".time-display").innerText = idx === 0 ? "08:00" : "23:59";
         });
-        
+
         let datePickers = document.getElementById("datePickersWrapper");
         datePickers.style.opacity = "0.5";
         datePickers.querySelectorAll('input').forEach(i => i.disabled = true);
 
         currentPage = 1;
-        frissitLogTablazat(await getLogs());
+        let data = await getLogs();
+        frissitLogTablazat(data.logs, data.total);
     });
     szuresDiv.appendChild(resetBtn);
 
@@ -243,7 +249,8 @@ function szuresek() {
     sortBtn.classList.add("text-center", "mt-2");
     sortBtn.addEventListener("click", async function () {
         currentPage = 1;
-        frissitLogTablazat(await sortedLogs(getFilterValues()));
+        let data = await sortedLogs(getFilterValues());
+        frissitLogTablazat(data.logs, data.total);
     })
     szuresDiv.appendChild(sortBtn);
 
@@ -310,28 +317,38 @@ function createDatePicker(labelStr, idPrefix) {
     return container;
 }
 
+function lapozasGeneral(totalRecords) {
+    const limit = 15;
+    let maxPage = Math.ceil(totalRecords / limit);
 
-
-function lapozasGeneral() {
     let paginationDiv = document.createElement('div');
-    paginationDiv.classList.add("d-flex", "justify-content-center", "gap-3", "mt-3", "mb-5");
+    paginationDiv.classList.add("d-flex", "justify-content-center", "align-items-center", "gap-3", "border", "rounded", "mt-3", "mb-5", "mx-auto", "p-2");
+    paginationDiv.style.width = "fit-content";
 
-    let prevBtn = gombGeneral("button", "Previous", null, "secondary", null);
-    let nextBtn = gombGeneral("button", "Next", null, "secondary", null);
+    let prevBtn = gombGeneral("button", "Previous", null, "green", null);
+    let nextBtn = gombGeneral("button", "Next", null, "green", null);
+
+    prevBtn.disabled = (currentPage === 1);
+    nextBtn.disabled = (currentPage >= maxPage || maxPage === 0);
+
     let pageInfo = document.createElement('span');
     pageInfo.classList.add("align-self-center", "fw-bold");
-    pageInfo.innerText = `Page: ${currentPage}`;
+    pageInfo.innerText = `${currentPage} / ${maxPage}`;
 
     prevBtn.addEventListener("click", async () => {
         if (currentPage > 1) {
             currentPage--;
-            frissitLogTablazat(await sortedLogs(getFilterValues()));
+            let data = await sortedLogs(getFilterValues());
+            frissitLogTablazat(data.logs, data.total);
         }
     });
 
     nextBtn.addEventListener("click", async () => {
-        currentPage++;
-        frissitLogTablazat(await sortedLogs(getFilterValues()));
+        if (currentPage < maxPage) {
+            currentPage++;
+            let data = await sortedLogs(getFilterValues());
+            frissitLogTablazat(data.logs, data.total);
+        }
     });
 
     paginationDiv.appendChild(prevBtn);
@@ -347,11 +364,11 @@ function getFilterValues() {
 
     if (isDateEnabled) {
         let fromDateValue = document.getElementById("fromDate").value;
-        let fromSliderValue = document.querySelector("#fromDateDate + input[type='range']").value;
+        let fromSliderValue = document.querySelector("#fromDate + input[type='range']").value;
         periodFrom = fromDateValue ? `${fromDateValue} ${getTimeFromSlider(fromSliderValue)}` : null;
 
         let toDateValue = document.getElementById("toDate").value;
-        let toSliderValue = document.querySelector("#toDateDate + input[type='range']").value;
+        let toSliderValue = document.querySelector("#toDate + input[type='range']").value;
         periodTo = toDateValue ? `${toDateValue} ${getTimeFromSlider(toSliderValue)}` : null;
     }
 

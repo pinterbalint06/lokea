@@ -16,7 +16,6 @@ hibak amiket javitani kell:
 
 -stack trace
 -oldal nyelvet egysegesiteni kell
--szuresnel a moderatort nem szuri jol
 
 kerdes:
 -compare attetele database.js-be
