@@ -10,7 +10,7 @@ export class MapManager {
         this.bus = eventBus;
         this.viewer = mapViewer;
         this.appState = appState; // gameMapId, activeMapId
-        this.isSaving = false;
+        this.isLocked = false;
         this.isConnectionMode = false;
 
         this.maps = {};
@@ -54,9 +54,9 @@ export class MapManager {
 
         eventsToBlock.forEach(event => {
             this.bus.on(event, (request) => {
-                if (this.isSaving) {
+                if (this.isLocked) {
                     request.canProceed = false;
-                    request.reason = "Térkép mentése folyamatban, kérlek várj!";
+                    request.reason = "Térkép művelet folyamatban, kérlek várj!";
                 }
             });
         });
@@ -66,9 +66,9 @@ export class MapManager {
         this.bus.on(EVENTS.UI_SAVE_MAP_CLICKED, () => this.#saveMap());
 
         this.bus.on(EVENTS.UI_DELETE_MAP_REQUESTED, ({ request, mapId }) => {
-            if (this.isSaving) {
+            if (this.isLocked) {
                 request.canProceed = false;
-                request.reason = "Térkép mentése folyamatban, kérlek várj!";
+                request.reason = "Térkép művelet folyamatban, kérlek várj!";
             } else {
                 if (!this.maps[mapId]) {
                     request.canProceed = false;
@@ -109,8 +109,8 @@ export class MapManager {
     }
 
     async #saveMap() {
-        if (!this.isSaving) {
-            this.isSaving = true;
+        if (!this.isLocked) {
+            this.isLocked = true;
             let oldId = this.appState.activeMapId;
             this.bus.emit(EVENTS.TOAST_SHOW, { id: `savingMap${oldId}`, msg: "Térkép mentése folyamatban", closable: false, autohide: false, spinner: true });
             try {
@@ -151,10 +151,10 @@ export class MapManager {
                 // if save successful it this will emit not saveable because pendingMapFile is set to null
                 // if failed it will emit saveable because pendingMapFile is still set
                 this.#emitSaveAvailabilityChanged();
-                this.isSaving = false;
+                this.isLocked = false;
             }
         } else {
-            this.bus.emit(EVENTS.TOAST_SHOW, { msg: "Térkép mentése folyamatban, kérlek várj!", type: "danger" });
+            this.bus.emit(EVENTS.TOAST_SHOW, { msg: "Térkép művelet folyamatban, kérlek várj!", type: "danger" });
         }
     }
 
@@ -292,49 +292,52 @@ export class MapManager {
     }
 
     async #deleteMap(mapId) {
-        // TODO: itt race condition többszöri törlés?????
-        let map = this.maps[mapId];
-        this.bus.emit(EVENTS.TOAST_SHOW, { id: `deletingMap${mapId}`, msg: "Térkép törlése folyamatban", closable: false, autohide: false, spinner: true });
+        if (!this.isLocked) {
+            this.isLocked = true;
+            let map = this.maps[mapId];
+            this.bus.emit(EVENTS.TOAST_SHOW, { id: `deletingMap${mapId}`, msg: "Térkép törlése folyamatban", closable: false, autohide: false, spinner: true });
 
-        if (map) {
-            try {
-                if (mapId != CONSTANTS.TEMP_ID) {
-                    if (mapId) {
-                        await deleteMapApi(mapId);
-                    }
-                } else {
-                    await this.#deleteTemporaryMap(map);
-                }
-
-                if (this.maps[mapId]) {
-                    delete this.maps[mapId];
-                }
-
-                this.bus.emit(EVENTS.MAPS_LOADED, { maps: this.maps });
-
-                if (this.appState.activeMapId == mapId) {
-                    let availableMaps = Object.keys(this.maps);
-                    if (availableMaps.length > 0) {
-                        await this.switchMap(availableMaps[0]);
+            if (map) {
+                try {
+                    if (mapId != CONSTANTS.TEMP_ID) {
+                        if (mapId) {
+                            await deleteMapApi(mapId);
+                        }
                     } else {
-                        this.appState.activeMapId = null;
-                        this.viewer.clearMarkersAndLines();
-                        this.#emitSaveAvailabilityChanged();
+                        await this.#deleteTemporaryMap(map);
                     }
-                }
 
-                this.bus.emit(EVENTS.MAP_DELETED, { mapId });
-                this.bus.emit(EVENTS.TOAST_SHOW, { msg: "Térkép sikeresen törölve!", type: "success" });
-            } catch (error) {
-                console.error(error);
-                this.bus.emit(EVENTS.TOAST_SHOW, { msg: "Térkép törlése sikertelen!", type: "danger" });
+                    if (this.maps[mapId]) {
+                        delete this.maps[mapId];
+                    }
+
+                    this.bus.emit(EVENTS.MAPS_LOADED, { maps: this.maps });
+
+                    if (this.appState.activeMapId == mapId) {
+                        let availableMaps = Object.keys(this.maps);
+                        if (availableMaps.length > 0) {
+                            await this.switchMap(availableMaps[0]);
+                        } else {
+                            this.appState.activeMapId = null;
+                            this.viewer.clearMarkersAndLines();
+                            this.#emitSaveAvailabilityChanged();
+                        }
+                    }
+
+                    this.bus.emit(EVENTS.MAP_DELETED, { mapId });
+                    this.bus.emit(EVENTS.TOAST_SHOW, { msg: "Térkép sikeresen törölve!", type: "success" });
+                } catch (error) {
+                    console.error(error);
+                    this.bus.emit(EVENTS.TOAST_SHOW, { msg: "Térkép törlése sikertelen!", type: "danger" });
+                    this.bus.emit(EVENTS.MAP_DELETE_FAILED);
+                }
+            } else {
+                this.bus.emit(EVENTS.TOAST_SHOW, { msg: "A térkép nem található!", type: "danger" });
                 this.bus.emit(EVENTS.MAP_DELETE_FAILED);
             }
-        } else {
-            this.bus.emit(EVENTS.TOAST_SHOW, { msg: "A térkép nem található!", type: "danger" });
-            this.bus.emit(EVENTS.MAP_DELETE_FAILED);
+            this.bus.emit(EVENTS.TOAST_HIDE_ID, { id: `deletingMap${mapId}` });
+            this.isLocked = false;
         }
-        this.bus.emit(EVENTS.TOAST_HIDE_ID, { id: `deletingMap${mapId}` });
     }
 
     async #deleteTemporaryMap(map) {

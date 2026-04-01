@@ -54,7 +54,6 @@ export class ConnectionManager {
         });
 
         this.bus.on(EVENTS.MAP_SWITCHED, () => {
-            this.#cancelConnectingMode();
             this.#renderConnectionsForActiveMap();
             this.#emitConnectionListUpdate();
         });

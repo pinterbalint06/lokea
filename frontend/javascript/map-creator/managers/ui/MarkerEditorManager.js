@@ -20,6 +20,10 @@ export class MarkerEditorManager {
         this.hasUnsavedChanges = false;
         this.pendingAction = null;
         this.previousWidth = window.innerWidth;
+        this.currentMapId = null;
+        this.activePointId = null;
+        this.activePointMapId = null;
+        this.currentPointCount = 0;
 
         this.#gatherElements();
         this.#updateCollapseDirection();
@@ -108,7 +112,6 @@ export class MarkerEditorManager {
             if (event.target == this.elements.collapseElement) {
                 let request = { canProceed: true, reason: "" };
 
-                // TODO: kapcsolat létrehozható-e javítása
                 this.bus.emit(EVENTS.UI_COLLAPSE_CLOSE_REQUESTED, { request });
 
                 if (request.canProceed) {
@@ -175,10 +178,9 @@ export class MarkerEditorManager {
     }
 
     #bindBusEvents() {
-        this.bus.on(EVENTS.MAP_SWITCHED, () => {
-            this.connectionUiState.hasEnoughPoints = false;
-            this.connectionUiState.isConnecting = false;
-            this.#updateNewConnectionButtonState();
+        this.bus.on(EVENTS.MAP_SWITCHED, ({ mapId }) => {
+            this.currentMapId = mapId;
+            this.#calculateHasEnoughPoints();
         });
 
         this.bus.on(EVENTS.NEW_MARKER_PLACED, () => this.elements.collapseBootstrapElement.show());
@@ -186,8 +188,8 @@ export class MarkerEditorManager {
         this.bus.on(EVENTS.MARKER_MOVED, ({ x, y }) => this.#updateCoordinatesInput(x, y));
 
         this.bus.on(EVENTS.POINTS_LOADED, ({ points }) => {
-            this.connectionUiState.hasEnoughPoints = Object.keys(points).length >= 2;
-            this.#updateNewConnectionButtonState();
+            this.currentPointCount = Object.keys(points).length;
+            this.#calculateHasEnoughPoints();
         });
 
         this.bus.on(EVENTS.CONNECTION_MODE_CHANGED, ({ isConnecting }) => {
@@ -196,8 +198,8 @@ export class MarkerEditorManager {
         });
 
         this.bus.on(EVENTS.POINT_SAVED, ({ pointCount }) => {
-            this.connectionUiState.hasEnoughPoints = pointCount >= 2;
-            this.#updateNewConnectionButtonState();
+            this.currentPointCount = pointCount;
+            this.#calculateHasEnoughPoints();
         });
 
         this.bus.on(EVENTS.POINT_SAVE_STARTED, () => {
@@ -220,10 +222,13 @@ export class MarkerEditorManager {
             this.#updateSavePointButtonState();
         });
 
-        this.bus.on(EVENTS.MARKER_SELECTED, ({ position, data }) => {
+        this.bus.on(EVENTS.MARKER_SELECTED, ({ id, mapId, position, data }) => {
+            this.activePointId = id;
+            this.activePointMapId = mapId;
             this.elements.coordinateXInput.value = position.x;
             this.elements.coordinateYInput.value = position.y;
             this.elements.northDirectionInput.setValue(data ? data.north_direction : 0);
+            this.#calculateHasEnoughPoints();
             this.#showCollapse();
         });
 
@@ -259,6 +264,12 @@ export class MarkerEditorManager {
             this.hasUnsavedChanges = isDirty;
             this.#updateSavePointButtonState();
         });
+
+        this.bus.on(EVENTS.UI_MARKER_EDITOR_CLOSED, () => {
+            this.activePointId = null;
+            this.activePointMapId = null;
+            this.#calculateHasEnoughPoints();
+        });
     }
 
     #updateCoordinatesInput(x, y) {
@@ -280,6 +291,17 @@ export class MarkerEditorManager {
         } else {
             this.elements.collapseElement.classList.add("collapse-horizontal");
         }
+    }
+
+    #calculateHasEnoughPoints() {
+        let totalHasEnough = this.currentPointCount >= 2;
+        
+        if (this.currentPointCount >= 1 && this.activePointId && this.activePointId != CONSTANTS.TEMP_ID && this.activePointMapId && this.activePointMapId != this.currentMapId) {
+            totalHasEnough = true;
+        }
+        
+        this.connectionUiState.hasEnoughPoints = totalHasEnough;
+        this.#updateNewConnectionButtonState();
     }
 
     #updateNewConnectionButtonState() {
