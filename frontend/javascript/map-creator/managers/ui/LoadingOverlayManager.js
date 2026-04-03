@@ -1,4 +1,4 @@
-import { EVENTS } from "../../events/EventBus.js";
+import { EVENTS } from "../../shared/EventBus.js";
 
 export class LoadingOverlayManager {
     constructor(eventBus) {

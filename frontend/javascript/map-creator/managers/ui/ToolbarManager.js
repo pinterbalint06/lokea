@@ -1,16 +1,12 @@
-import { EVENTS } from "../../events/EventBus.js";
+import { EVENTS } from "../../shared/EventBus.js";
 
 export class ToolbarManager {
-    constructor(eventBus) {
+    constructor(eventBus, appStore) {
         this.bus = eventBus;
+        this.store = appStore;
         this.elements = {};
 
-        this.state = {
-            isMobile: window.innerWidth <= 992,
-            isMarkerPlacing: false,
-            isMarkerEditorCollapseOpen: false,
-            isSettingsCollapseOpen: false
-        };
+        this.isMobile = window.innerWidth <= 992;
 
         this.#gatherElements();
         this.#bindUIEvents();
@@ -42,42 +38,12 @@ export class ToolbarManager {
         });
 
         window.addEventListener("resize", () => {
-            this.state.isMobile = window.innerWidth <= 992;
+            this.isMobile = window.innerWidth <= 992;
             this.#updateVisibility();
         });
     }
 
     #bindBusEvents() {
-        this.bus.on(EVENTS.MARKER_PLACING_STARTED, () => {
-            this.state.isMarkerPlacing = true;
-            this.#updateVisibility();
-        });
-
-        this.bus.on(EVENTS.MARKER_PLACING_CANCELLED, () => {
-            this.state.isMarkerPlacing = false;
-            this.#updateVisibility();
-        });
-
-        this.bus.on(EVENTS.UI_MARKER_EDITOR_OPENED, () => {
-            this.state.isMarkerEditorCollapseOpen = true;
-            this.#updateVisibility();
-        });
-
-        this.bus.on(EVENTS.UI_MARKER_EDITOR_CLOSED, () => {
-            this.state.isMarkerEditorCollapseOpen = false;
-            this.#updateVisibility();
-        });
-
-        this.bus.on(EVENTS.UI_SETTINGS_OPENED, () => {
-            this.state.isSettingsCollapseOpen = true;
-            this.#updateVisibility();
-        });
-
-        this.bus.on(EVENTS.UI_SETTINGS_CLOSED, () => {
-            this.state.isSettingsCollapseOpen = false;
-            this.#updateVisibility();
-        });
-
         this.bus.on(EVENTS.MAP_DELETED, () => {
             this.state.isMarkerEditorCollapseOpen = false;
             this.state.isSettingsCollapseOpen = false;
@@ -91,34 +57,29 @@ export class ToolbarManager {
             }
         });
 
-        this.bus.on(EVENTS.MAP_SAVE_STARTED, () => {
-            this.elements.saveMapButton.disabled = true;
-        });
-
-        this.bus.on(EVENTS.MAP_SAVE_AVAILABILITY_CHANGED, ({ canSave }) => {
-            this.elements.saveMapButton.disabled = !canSave;
-        });
-
-        this.bus.on(EVENTS.POINT_SAVE_STARTED, () => {
-            this.elements.addNewMarkerButton.disabled = true;
-            this.elements.settingsButton.disabled = true;
-        });
-        this.bus.on(EVENTS.POINT_SAVE_FINISHED, () => {
-            this.elements.addNewMarkerButton.disabled = false;
-            this.elements.settingsButton.disabled = false;
+        this.bus.on(EVENTS.STATE_UPDATED, () => {
+            this.#updateVisibility();
         });
     }
 
     #updateVisibility() {
-        let shouldHideInMobileView = this.state.isMobile
-            && (this.state.isMarkerPlacing || this.state.isMarkerEditorCollapseOpen || this.state.isSettingsCollapseOpen);
-        let shouldHideInDesktopView = !this.state.isMobile
-            && (this.state.isMarkerPlacing || this.state.isMarkerEditorCollapseOpen);
+        const state = this.store.getState();
+        const shouldHideInMobileView = this.isMobile
+            && (state.isPlacingMarker || state.isOpen.markerEditor || state.isOpen.settings);
+        const shouldHideInDesktopView = !this.isMobile
+            && (state.isPlacingMarker || state.isOpen.markerEditor);
 
         if (shouldHideInMobileView || shouldHideInDesktopView) {
             this.elements.floatingButtonDiv.classList.add("d-none");
         } else {
             this.elements.floatingButtonDiv.classList.remove("d-none");
         }
+
+
+        const hasMaps = state.activeMapId != null;
+        this.elements.saveMapButton.disabled = !state.canSaveMap || state.isBusy.map || !hasMaps;
+
+        this.elements.addNewMarkerButton.disabled = state.isBusy.point;
+        this.elements.settingsButton.disabled = state.isBusy.point;
     }
 }

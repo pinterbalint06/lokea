@@ -69,7 +69,7 @@ export class HoldToUnlockButton extends EventTarget {
                 clearTimeout(this.#clickTimeout);
 
                 if (this.#clickCount >= 2) {
-                    let earlyClickEvent = new Event("earlyClick");
+                    let earlyClickEvent = new CustomEvent("earlyClick");
                     this.dispatchEvent(earlyClickEvent);
                     this.#clickCount = 0;
                 } else {

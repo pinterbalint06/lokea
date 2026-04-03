@@ -1,4 +1,4 @@
-import { EVENTS } from "../../events/EventBus.js";
+import { EVENTS } from "../../shared/EventBus.js";
 import { createSVGIcon } from "../../../libs/utils/svgUtils.js";
 import { showToast, createSpinnerIcon } from "../../shared/utils.js";
 

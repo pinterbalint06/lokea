@@ -776,7 +776,7 @@ export class MapViewer extends WASMViewerBase {
         }
         let lowerType = type.toLowerCase();
 
-        // Check Cache first
+        // check cache first
         if (this.#markerCache[lowerType]) {
             markerURL = this.#markerCache[lowerType];
         } else {

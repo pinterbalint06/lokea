@@ -1,9 +1,11 @@
-import { EVENTS } from "../../events/EventBus.js";
+import { EVENTS } from "../../shared/EventBus.js";
 
 export class SettingsManager {
-    constructor(eventBus) {
+    constructor(eventBus, appStore) {
         this.bus = eventBus;
+        this.store = appStore;
         this.elements = {};
+        
         this.#gatherElements();
         this.#bindUIEvents();
         this.#bindBusEvents();
@@ -52,7 +54,7 @@ export class SettingsManager {
 
         this.elements.beallitasokCollapseElement.addEventListener("show.bs.collapse", (event) => {
             if (event.target == this.elements.beallitasokCollapseElement) {
-                this.bus.emit(EVENTS.UI_SETTINGS_OPENED);
+                this.store.setState({ isOpen: { settings: true } });
                 if (window.innerWidth <= 992) {
                     this.bus.emit(EVENTS.UI_MARKER_EDITOR_CLOSE_REQUESTED);
                 }
@@ -61,7 +63,7 @@ export class SettingsManager {
 
         this.elements.beallitasokCollapseElement.addEventListener("hidden.bs.collapse", (event) => {
             if (event.target == this.elements.beallitasokCollapseElement) {
-                this.bus.emit(EVENTS.UI_SETTINGS_CLOSED);
+                this.store.setState({ isOpen: { settings: false } });
             }
         });
 

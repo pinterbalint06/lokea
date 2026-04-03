@@ -1,29 +1,19 @@
-import { EVENTS } from "../../events/EventBus.js";
+import { EVENTS } from "../../shared/EventBus.js";
 import { CONSTANTS } from "../../shared/constants.js";
 import { savePreviousValue } from "../../shared/utils.js";
 import { DragAndDropUploader } from "../../../libs/elements/DragAndDropUploader.js";
 import { DegreeInput } from "../../../libs/elements/DegreeInput.js";
 
 export class MarkerEditorManager {
-    constructor(eventBus) {
+    constructor(eventBus, appStore) {
         this.bus = eventBus;
+        this.store = appStore;
         this.elements = {};
         this.animations = {
             isCollapsing: false
         };
-        this.connectionUiState = {
-            hasEnoughPoints: false,
-            isConnecting: false
-        };
-        this.pointSaveInProgress = false;
-        this.pointImageLoading = false;
-        this.hasUnsavedChanges = false;
-        this.pendingAction = null;
+        this.forceClose = false;
         this.previousWidth = window.innerWidth;
-        this.currentMapId = null;
-        this.activePointId = null;
-        this.activePointMapId = null;
-        this.currentPointCount = 0;
 
         this.#gatherElements();
         this.#updateCollapseDirection();
@@ -94,7 +84,7 @@ export class MarkerEditorManager {
         this.elements.collapseElement.addEventListener("show.bs.collapse", (event) => {
             if (event.target == this.elements.collapseElement) {
                 this.animations.isCollapsing = true;
-                this.bus.emit(EVENTS.UI_MARKER_EDITOR_OPENED);
+                this.store.setState({ isOpen: { markerEditor: true } });
                 this.bus.emit(EVENTS.UI_COLLAPSE_SHOW_STARTED);
                 if (window.innerWidth <= 992) {
                     this.bus.emit(EVENTS.UI_SETTINGS_CLOSE_REQUESTED);
@@ -110,23 +100,23 @@ export class MarkerEditorManager {
 
         this.elements.collapseElement.addEventListener("hide.bs.collapse", (event) => {
             if (event.target == this.elements.collapseElement) {
-                let request = { canProceed: true, reason: "" };
-
-                this.bus.emit(EVENTS.UI_COLLAPSE_CLOSE_REQUESTED, { request });
-
-                if (request.canProceed) {
-                    if (this.hasUnsavedChanges) {
+                const lockReason = this.store.isAppLocked();
+                if (!lockReason) {
+                    if (this.store.doesActivePointHaveUnsavedChanges() && !this.forceClose) {
                         event.preventDefault();
-                        this.pendingAction = { type: "collapse_close" };
+                        this.forceClose = true;
                         this.bus.emit(EVENTS.UI_SHOW_DISCARD_MODAL);
                     } else {
+                        this.forceClose = false;
+
                         this.animations.isCollapsing = true;
                         this.elements.savePointButton.disabled = true;
                         this.bus.emit(EVENTS.UI_COLLAPSE_HIDE_STARTED);
                     }
                 } else {
                     event.preventDefault();
-                    this.bus.emit(EVENTS.TOAST_SHOW, { msg: request.reason, type: "danger" });
+                    this.forceClose = false;
+                    this.bus.emit(EVENTS.TOAST_SHOW, { msg: lockReason, type: "danger" });
                 }
             }
         });
@@ -134,6 +124,7 @@ export class MarkerEditorManager {
         this.elements.collapseElement.addEventListener("hidden.bs.collapse", (event) => {
             if (event.target == this.elements.collapseElement) {
                 this.animations.isCollapsing = false;
+                this.store.setState({ isOpen: { markerEditor: false } });
                 this.elements.northDirectionInput.setValue(0);
                 this.elements.savePointButton.disabled = true;
                 this.bus.emit(EVENTS.UI_MARKER_EDITOR_CLOSED);
@@ -142,20 +133,26 @@ export class MarkerEditorManager {
         });
 
         this.elements.deletePointBtn.addEventListener("click", (event) => {
-            let request = { canProceed: true, reason: "" };
-
-            this.bus.emit(EVENTS.UI_DELETE_POINT_REQUESTED, { request });
-
-            if (request.canProceed) {
+            const lockReason = this.store.getState().isBusy.point;
+            if (!lockReason) {
                 this.bus.emit(EVENTS.UI_SHOW_POINT_DELETE_MODAL);
             } else {
                 event.preventDefault();
-                this.bus.emit(EVENTS.TOAST_SHOW, { msg: request.reason, type: "danger" });
+                this.bus.emit(EVENTS.TOAST_SHOW, { msg: lockReason, type: "danger" });
             }
         });
 
         this.elements.savePointButton.addEventListener("click", () => {
-            this.bus.emit(EVENTS.UI_POINT_SAVE_REQUESTED);
+            const lockReason = this.store.getState().isBusy.point;
+            if (!lockReason) {
+                if (this.store.doesActivePointHaveUnsavedChanges()) {
+                    this.bus.emit(EVENTS.UI_POINT_SAVE_REQUESTED);
+                } else {
+                    this.bus.emit(EVENTS.TOAST_SHOW, { msg: "A pont nem változott!" });
+                }
+            } else {
+                this.bus.emit(EVENTS.TOAST_SHOW, { msg: lockReason, type: "danger" });
+            }
         });
 
         this.elements.equiFullscreenBtn.addEventListener("click", () => this.bus.emit(EVENTS.UI_EQUIRECTANGULAR_FULLSCREEN_REQUEST));
@@ -165,12 +162,6 @@ export class MarkerEditorManager {
             this.elements.collapseBootstrapElement.hide();
         });
 
-        window.addEventListener("keyup", (event) => {
-            if (event.key == "Escape" && this.elements.collapseBootstrapElement) {
-                this.elements.collapseBootstrapElement.hide();
-            }
-        });
-
         window.addEventListener("resize", () => {
             this.#updateCollapseDirection();
             this.#emitSettingsCloseOnMobileBreakpoint();
@@ -178,74 +169,33 @@ export class MarkerEditorManager {
     }
 
     #bindBusEvents() {
-        this.bus.on(EVENTS.MAP_SWITCHED, ({ mapId }) => {
-            this.currentMapId = mapId;
-            this.#calculateHasEnoughPoints();
-        });
+        this.bus.on(EVENTS.MAP_SWITCHED, () => this.#updateNewConnectionButtonState());
 
         this.bus.on(EVENTS.NEW_MARKER_PLACED, () => this.elements.collapseBootstrapElement.show());
 
         this.bus.on(EVENTS.MARKER_MOVED, ({ x, y }) => this.#updateCoordinatesInput(x, y));
 
-        this.bus.on(EVENTS.POINTS_LOADED, ({ points }) => {
-            this.currentPointCount = Object.keys(points).length;
-            this.#calculateHasEnoughPoints();
-        });
-
-        this.bus.on(EVENTS.CONNECTION_MODE_CHANGED, ({ isConnecting }) => {
-            this.connectionUiState.isConnecting = isConnecting;
+        this.bus.on(EVENTS.STATE_UPDATED, () => {
             this.#updateNewConnectionButtonState();
-        });
-
-        this.bus.on(EVENTS.POINT_SAVED, ({ pointCount }) => {
-            this.currentPointCount = pointCount;
-            this.#calculateHasEnoughPoints();
-        });
-
-        this.bus.on(EVENTS.POINT_SAVE_STARTED, () => {
-            this.pointSaveInProgress = true;
             this.#updateSavePointButtonState();
         });
 
-        this.bus.on(EVENTS.POINT_SAVE_FINISHED, () => {
-            this.pointSaveInProgress = false;
-            this.#updateSavePointButtonState();
-        });
-
-        this.bus.on(EVENTS.EQUIRECTANGULAR_IMAGE_LOADING_STARTED, () => {
-            this.pointImageLoading = true;
-            this.#updateSavePointButtonState();
-        });
-
-        this.bus.on(EVENTS.EQUIRECTANGULAR_IMAGE_LOADED, () => {
-            this.pointImageLoading = false;
-            this.#updateSavePointButtonState();
-        });
-
-        this.bus.on(EVENTS.MARKER_SELECTED, ({ id, mapId, position, data }) => {
-            this.activePointId = id;
-            this.activePointMapId = mapId;
+        this.bus.on(EVENTS.MARKER_SELECTED, ({ position, data }) => {
             this.elements.coordinateXInput.value = position.x;
             this.elements.coordinateYInput.value = position.y;
             this.elements.northDirectionInput.setValue(data ? data.north_direction : 0);
-            this.#calculateHasEnoughPoints();
+            this.#updateNewConnectionButtonState();
             this.#showCollapse();
         });
 
         this.bus.on(EVENTS.UI_DISCARD_CHANGES_CONFIRMED, () => {
-            this.hasUnsavedChanges = false;
-            if (this.pendingAction) {
-                switch (this.pendingAction.type) {
-                    case "collapse_close":
-                        this.elements.collapseBootstrapElement.hide();
-                        break;
-                }
-                this.pendingAction = null;
+            if (this.forceClose) {
+                this.elements.collapseBootstrapElement.hide();
             }
         });
 
         this.bus.on(EVENTS.UI_MODAL_HIDDEN, () => {
-            this.pendingAction = null;
+            this.forceClose = false;
         });
 
         this.bus.on(EVENTS.MARKER_DELETED, () => {
@@ -258,17 +208,6 @@ export class MarkerEditorManager {
 
         this.bus.on(EVENTS.UI_MARKER_EDITOR_CLOSE_REQUESTED, () => {
             this.elements.collapseBootstrapElement.hide();
-        });
-
-        this.bus.on(EVENTS.POINT_DIRTY_STATE_CHANGED, ({ isDirty }) => {
-            this.hasUnsavedChanges = isDirty;
-            this.#updateSavePointButtonState();
-        });
-
-        this.bus.on(EVENTS.UI_MARKER_EDITOR_CLOSED, () => {
-            this.activePointId = null;
-            this.activePointMapId = null;
-            this.#calculateHasEnoughPoints();
         });
     }
 
@@ -293,23 +232,39 @@ export class MarkerEditorManager {
         }
     }
 
-    #calculateHasEnoughPoints() {
-        let totalHasEnough = this.currentPointCount >= 2;
-        
-        if (this.currentPointCount >= 1 && this.activePointId && this.activePointId != CONSTANTS.TEMP_ID && this.activePointMapId && this.activePointMapId != this.currentMapId) {
+    #hasEnoughPoints() {
+        const state = this.store.getState();
+        const currentPointCount = state.currentMapPointCount;
+        let totalHasEnough = currentPointCount >= 2;
+
+        const activePointId = state.activePoint.id;
+        const activePointMapId = state.activePoint.mapId;
+
+        const doesCurrentMapHaveAtleastOnePoint = currentPointCount >= 1;
+        const activePointIsNotTemp = activePointId && activePointId != CONSTANTS.TEMP_ID;
+        const activePointIsOnDifferentMap = activePointMapId && activePointMapId != state.activeMapId;
+        if (doesCurrentMapHaveAtleastOnePoint && activePointIsNotTemp && activePointIsOnDifferentMap) {
             totalHasEnough = true;
         }
-        
-        this.connectionUiState.hasEnoughPoints = totalHasEnough;
-        this.#updateNewConnectionButtonState();
+
+        return totalHasEnough;
     }
 
     #updateNewConnectionButtonState() {
-        this.elements.newConnectionBtn.disabled = !this.connectionUiState.hasEnoughPoints || this.connectionUiState.isConnecting;
+        const state = this.store.getState();
+        this.elements.newConnectionBtn.disabled = !this.#hasEnoughPoints() || state.isConnecting || state.activeMapId == CONSTANTS.TEMP_ID;
     }
 
     #updateSavePointButtonState() {
-        this.elements.savePointButton.disabled = this.pointSaveInProgress || this.pointImageLoading || !this.hasUnsavedChanges;
+        const state = this.store.getState();
+
+        const isNewPointMissingFile = (state.activePoint.id === CONSTANTS.TEMP_ID && !state.activePoint.pendingEquirectangularFile);
+
+        this.elements.savePointButton.disabled =
+            state.isBusy.point ||
+            state.isBusy.equirectangular ||
+            !this.store.doesActivePointHaveUnsavedChanges() ||
+            isNewPointMissingFile;
     }
 
     #emitSettingsCloseOnMobileBreakpoint() {

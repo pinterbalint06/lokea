@@ -1,4 +1,4 @@
-import { EVENTS } from "../../events/EventBus.js";
+import { EVENTS } from "../../shared/EventBus.js";
 import { HoldToUnlockButton } from "../../../libs/elements/HoldToUnlockButton.js";
 import { DegreeInput } from "../../../libs/elements/DegreeInput.js";
 
@@ -18,14 +18,14 @@ export class ConnectionListManager {
     }
 
     #bindBusEvents() {
-        this.bus.on(EVENTS.CONNECTION_LIST_UI_UPDATE, ({ connections, unsavedConnections, activePointId }) => {
-            this.#renderConnectionList(connections, unsavedConnections, activePointId);
+        this.bus.on(EVENTS.CONNECTION_LIST_UI_UPDATE, ({ connections, unsavedConnections, activePointId, draftDirections }) => {
+            this.#renderConnectionList(connections, unsavedConnections, activePointId, draftDirections);
         });
     }
 
-    #bindDegreeInput(connection, wrapper, directionField) {
+    #bindDegreeInput(connection, wrapper, directionField, draftDirections) {
         if (wrapper) {
-            let initialValue = connection[directionField] ?? 0;
+            let initialValue = draftDirections[connection.connection_id]?.[directionField] ?? connection[directionField] ?? 0;
 
             let degreeInput = new DegreeInput(wrapper, { value: initialValue });
 
@@ -51,7 +51,7 @@ export class ConnectionListManager {
         };
     }
 
-    #renderConnectionList(connections, unsavedConnections, activePointId) {
+    #renderConnectionList(connections, unsavedConnections, activePointId, draftDirections) {
         this.elements.connectionsList.innerHTML = "";
 
         let allConnections = [...connections, ...unsavedConnections];
@@ -90,8 +90,8 @@ export class ConnectionListManager {
                     let currentPointField = (activePointId == connection.start_point_id) ? "direction_end_to_start" : "direction_start_to_end";
                     let otherMapField = (activePointId == connection.start_point_id) ? "direction_start_to_end" : "direction_end_to_start";
 
-                    this.#bindDegreeInput(connection, currentWrapper, currentPointField);
-                    this.#bindDegreeInput(connection, otherWrapper, otherMapField);
+                    this.#bindDegreeInput(connection, currentWrapper, currentPointField, draftDirections);
+                    this.#bindDegreeInput(connection, otherWrapper, otherMapField, draftDirections);
                 } else {
                     if (directionWrapper) {
                         directionWrapper.remove();

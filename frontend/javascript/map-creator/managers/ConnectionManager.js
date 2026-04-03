@@ -1,29 +1,26 @@
 import { fetchConnections, saveUnsavedConnections, deleteConnection, saveDraftConnectionDirections } from "../shared/api.js";
 import { ICONS } from "../../libs/icons/icons.js";
 import { CONSTANTS } from "../shared/constants.js";
-import { EVENTS } from "../events/EventBus.js";
+import { EVENTS } from "../shared/EventBus.js";
 import { degreeToRadian } from "../../libs/math/mathUtils.js";
 
 export class ConnectionManager {
-    constructor(eventBus, mapViewer, appState) {
+    constructor(eventBus, mapViewer, appStore) {
         this.bus = eventBus;
         this.mapViewer = mapViewer;
-        this.appState = appState; // gameMapId, activeMapId
+        this.store = appStore;
 
-        this.portalIdStart = -9999;
+        this.portalId = CONSTANTS.PORTAL_ID_START;
         this.portalMarkerIdsByConnection = {};
+
         this.connectionsList = [];
         this.unsavedConnections = [];
         this.draftConnectionDirections = {};
-        this.isConnecting = false;
-        this.activePointId = null;
-        this.activePointMapId = null;
+
         this.focusedConnectionId = null;
-        this.showOffMapConnectionsWhenNotActive = true;
-        this.showAllConnectionsWhenNotActive = true;
-        this.temporaryId = -1;
-        this.isLocked = false;
-        this.connectionToastId = "connectionMode";
+
+        this.temporaryId = CONSTANTS.TEMP_ID;
+
         this.#bindBusEvents();
     }
 
@@ -70,50 +67,29 @@ export class ConnectionManager {
             this.#emitConnectionListUpdate();
         });
 
-        this.bus.on(EVENTS.MARKER_SELECTED, ({ id, mapId }) => {
-            this.activePointId = id;
-            this.activePointMapId = mapId ?? this.appState.activeMapId;
+        this.bus.on(EVENTS.MARKER_SELECTED, () => {
             this.#renderConnectionsForActiveMap();
             this.#emitConnectionListUpdate();
         });
 
-        this.bus.on(EVENTS.POINT_SAVED, ({ previousPointId, pointId, isNewPoint }) => {
-            if (isNewPoint && this.activePointId == previousPointId) {
-                this.activePointId = pointId;
-                this.#renderConnectionsForActiveMap();
-                this.#emitConnectionListUpdate();
-            }
-        });
-
-        this.bus.on(EVENTS.MARKER_PLACING_STARTED, () => {
-            this.activePointId = CONSTANTS.TEMP_ID;
-            this.activePointMapId = this.appState.activeMapId;
-        });
-
-        this.bus.on(EVENTS.MARKER_PLACING_CANCELLED, () => {
-            if (this.activePointId == CONSTANTS.TEMP_ID) {
-                this.activePointId = null;
-                this.activePointMapId = null;
-            }
-        });
-
         this.bus.on(EVENTS.MAP_CLICKED, () => {
-            if (this.isConnecting) {
+            if (this.store.getState().isConnecting) {
                 this.bus.emit(EVENTS.TOAST_SHOW, { msg: "Kattints egy térképjelölőre!", type: "danger", duration: 1500 });
             }
         });
 
         this.bus.on(EVENTS.MARKER_CLICKED, ({ id }) => {
-            if (this.isConnecting) {
-                if (this.activePointId != id) {
-                    if (!this.#hasConnection(this.activePointId, id)) {
+            if (this.store.getState().isConnecting) {
+                const activePointId = this.store.getState().activePoint.id;
+                if (activePointId != id) {
+                    if (!this.#hasConnection(activePointId, id)) {
                         let newConnection = {
                             connection_id: this.temporaryId,
-                            start_point_id: this.activePointId,
+                            start_point_id: activePointId,
                             end_point_id: id,
-                            game_maps_id: this.appState.gameMapID,
-                            start_map_id: this.activePointMapId ?? this.appState.activeMapId,
-                            end_map_id: this.appState.activeMapId
+                            game_maps_id: this.store.getState().gameMapId,
+                            start_map_id: this.store.getState().activePoint.mapId,
+                            end_map_id: this.store.getState().activeMapId
                         };
 
                         if (newConnection.start_map_id != newConnection.end_map_id) {
@@ -124,6 +100,7 @@ export class ConnectionManager {
                         this.#checkIdOrder(newConnection);
 
                         this.unsavedConnections.push(newConnection);
+                        this.#updateDirtyState();
                         this.temporaryId--;
                         this.#renderConnectionsForActiveMap();
 
@@ -142,11 +119,10 @@ export class ConnectionManager {
         });
 
         this.bus.on(EVENTS.UI_COLLAPSE_HIDE_STARTED, () => {
-            this.activePointId = null;
-            this.activePointMapId = null;
             this.focusedConnectionId = null;
             this.unsavedConnections = [];
             this.draftConnectionDirections = {};
+            this.#updateDirtyState();
             this.bus.emit(EVENTS.UNSAVED_CONNECTION_DIRECTION_CHANGED, { areThereUnsaved: false });
             this.#cancelConnectingMode();
             this.#renderConnectionsForActiveMap();
@@ -180,6 +156,7 @@ export class ConnectionManager {
 
                     let hasUnsaved = Object.keys(this.draftConnectionDirections).length > 0;
                     if (hasUnsaved != hadUnsaved) {
+                        this.#updateDirtyState();
                         this.bus.emit(EVENTS.UNSAVED_CONNECTION_DIRECTION_CHANGED, { areThereUnsaved: hasUnsaved });
                     }
                 }
@@ -189,20 +166,23 @@ export class ConnectionManager {
         });
 
         this.bus.on(EVENTS.UI_SETTINGS_CONNECTION_OFF_MAP_VISIBILITY_CHANGED, ({ enabled }) => {
-            this.showOffMapConnectionsWhenNotActive = enabled;
+            this.store.setState({ settings: { showOffMapConnections: enabled } });
             this.#renderConnectionsForActiveMap();
         });
 
         this.bus.on(EVENTS.UI_SETTINGS_CONNECTION_ALL_VISIBILITY_CHANGED, ({ enabled }) => {
-            this.showAllConnectionsWhenNotActive = enabled;
+            this.store.setState({ settings: { showAllConnections: enabled } });
             this.#renderConnectionsForActiveMap();
         });
 
         this.bus.on(EVENTS.UI_POINT_SAVE_REQUESTED, () => {
-            if (!this.isLocked) { // updated to use isLocked
-                if (this.activePointId != CONSTANTS.TEMP_ID && (this.unsavedConnections.length > 0 || Object.keys(this.draftConnectionDirections).length > 0)) {
+            const lockReason = this.store.getState().isBusy.connection;
+            if (!lockReason) {
+                if (this.store.getState().activePoint.id != CONSTANTS.TEMP_ID && (this.unsavedConnections.length > 0 || Object.keys(this.draftConnectionDirections).length > 0)) {
                     this.#saveConnections();
                 }
+            } else {
+                this.bus.emit(EVENTS.TOAST_SHOW, { msg: lockReason, type: "danger" });
             }
         });
 
@@ -217,24 +197,8 @@ export class ConnectionManager {
             this.#emitConnectionListUpdate();
         });
 
-        const eventsToBlock = [
-            EVENTS.UI_COLLAPSE_CLOSE_REQUESTED,
-            EVENTS.MAP_SWITCH_REQUESTED,
-            EVENTS.UI_ADD_NEW_MAP_REQUEST,
-            EVENTS.UI_DELETE_POINT_REQUESTED
-        ];
-
-        eventsToBlock.forEach(event => {
-            this.bus.on(event, ({ request }) => {
-                if (this.isLocked) {
-                    request.canProceed = false;
-                    request.reason = "Kapcsolatok mentése/törlése folyamatban, kérlek várj!";
-                }
-            });
-        });
-
         this.bus.on(EVENTS.UI_CONNECTION_HIGHLIGHT, ({ connectionId, type }) => {
-            if (this.activePointId) {
+            if (this.store.getState().activePoint.id) {
                 if (type == "focused") {
                     this.focusedConnectionId = connectionId;
                 } else {
@@ -264,7 +228,8 @@ export class ConnectionManager {
         });
 
         this.bus.on(EVENTS.UI_CONNECTION_DELETE_REQUEST, async ({ connectionId }) => {
-            if (!this.isLocked) {
+            const lockReason = this.store.getState().isBusy.connection;
+            if (!lockReason) {
                 if (connectionId < 0) {
                     // unsaved connection
                     this.unsavedConnections = this.unsavedConnections.filter(connection =>
@@ -280,22 +245,26 @@ export class ConnectionManager {
                 } else {
                     await this.#deleteConnection(connectionId);
                 }
+                this.#updateDirtyState();
             } else {
-                this.bus.emit(EVENTS.TOAST_SHOW, { msg: "Kérlek várj, művelet folyamatban!", type: "danger" });
+                this.bus.emit(EVENTS.TOAST_SHOW, { msg: lockReason, type: "danger" });
             }
         });
+
+        this.bus.on(EVENTS.MARKER_MOVED, () => this.#renderConnectionsForActiveMap());
     }
 
     #startConnectingMode() {
-        if (!this.isConnecting) {
-            if (this.activePointId) {
-                if (this.activePointId != CONSTANTS.TEMP_ID) {
-                    this.isConnecting = true;
+        if (!this.store.getState().isConnecting) {
+            const activePointId = this.store.getState().activePoint.id;
+            if (activePointId) {
+                if (activePointId != CONSTANTS.TEMP_ID) {
+                    this.store.setState({ isConnecting: true });
                     this.mapViewer.canvasInput.setDefaultCursor("crosshair");
                     this.bus.emit(EVENTS.CONNECTION_MODE_CHANGED, { isConnecting: true });
                     let currentUnsavedConnections = this.unsavedConnections.length;
                     this.bus.emit(EVENTS.TOAST_SHOW, {
-                        id: this.connectionToastId,
+                        id: CONSTANTS.CONNECTION_TOAST_ID,
                         msg: "Kattints a végpontra!",
                         autohide: false,
                         callback: () => {
@@ -313,7 +282,6 @@ export class ConnectionManager {
             }
         }
     }
-
 
     #hasConnection(startPointId, endPointId) {
         let hasConnection = false;
@@ -337,10 +305,10 @@ export class ConnectionManager {
     }
 
     #cancelConnectingMode() {
-        if (this.isConnecting) {
-            this.isConnecting = false;
+        if (this.store.getState().isConnecting) {
+            this.store.setState({ isConnecting: false });
             this.mapViewer.canvasInput.setDefaultCursor("default");
-            this.bus.emit(EVENTS.TOAST_HIDE_ID, { id: this.connectionToastId });
+            this.bus.emit(EVENTS.TOAST_HIDE_ID, { id: CONSTANTS.CONNECTION_TOAST_ID });
             this.bus.emit(EVENTS.CONNECTION_MODE_CHANGED, { isConnecting: false });
         }
     }
@@ -350,96 +318,94 @@ export class ConnectionManager {
     }
 
     async #saveConnections() {
-        if (!this.isLocked) {
-            this.isLocked = true;
-            this.bus.emit(EVENTS.TOAST_SHOW, { msg: "Kapcsolatok mentése", id: "savingConnections", closable: false, autohide: false, spinner: true });
+        this.store.setState({ isBusy: { connection: "Kapcsolatok mentése folyamatban, kérlek várj!" } });
+        this.bus.emit(EVENTS.TOAST_SHOW, { msg: "Kapcsolatok mentése", id: "savingConnections", closable: false, autohide: false, spinner: true });
 
-            try {
-                if (this.unsavedConnections.length > 0) {
-                    let saveNewResult = await saveUnsavedConnections(this.appState.gameMapID, this.unsavedConnections);
+        try {
+            if (this.unsavedConnections.length > 0) {
+                let saveNewResult = await saveUnsavedConnections(this.store.getState().gameMapId, this.unsavedConnections);
 
-                    let newSaveSuccess = saveNewResult.saved.length;
-                    let newSaveFailed = saveNewResult.failed.length;
+                let newSaveSuccess = saveNewResult.saved.length;
+                let newSaveFailed = saveNewResult.failed.length;
 
-                    if (newSaveSuccess > 0) {
-                        saveNewResult.saved.forEach(connection => this.#checkIdOrder(connection));
-                        this.connectionsList.push(...saveNewResult.saved);
+                if (newSaveSuccess > 0) {
+                    saveNewResult.saved.forEach(connection => this.#checkIdOrder(connection));
+                    this.connectionsList.push(...saveNewResult.saved);
 
-                        this.unsavedConnections = this.unsavedConnections.filter(connection =>
-                            !saveNewResult.saved.some(savedConn =>
-                                savedConn.start_point_id == connection.start_point_id &&
-                                savedConn.end_point_id == connection.end_point_id
-                            )
-                        );
-                    }
-
-                    for (let fail of saveNewResult.failed) {
-                        this.bus.emit(EVENTS.TOAST_SHOW, { msg: `Új kapcsolat mentése sikertelen: ${fail.message}`, type: "danger" });
-                    }
-
-                    if (newSaveSuccess > 0) {
-                        this.bus.emit(EVENTS.TOAST_SHOW, { msg: `${newSaveSuccess} új kapcsolat sikeresen mentve!`, type: "success", iconObject: ICONS.SAVE_FLOPPY });
-                        this.bus.emit(EVENTS.CONNECTIONS_SAVED, { successCount: newSaveSuccess });
-                    }
-                    if (newSaveFailed > 0) {
-                        this.bus.emit(EVENTS.TOAST_SHOW, { msg: `${newSaveFailed} új kapcsolat mentése sikertelen!`, type: "danger" });
-                    }
+                    this.unsavedConnections = this.unsavedConnections.filter(connection =>
+                        !saveNewResult.saved.some(savedConn =>
+                            savedConn.start_point_id == connection.start_point_id &&
+                            savedConn.end_point_id == connection.end_point_id
+                        )
+                    );
                 }
 
-                let draftIds = Object.keys(this.draftConnectionDirections);
-                if (draftIds.length > 0) {
-                    let draftResult = await saveDraftConnectionDirections(this.draftConnectionDirections);
-
-                    let directionSaveSuccess = draftResult.saved.length;
-                    let directionSaveFailed = draftResult.failed.length;
-
-                    if (directionSaveSuccess > 0) {
-                        draftResult.saved.forEach(savedDraft => {
-                            let connection = this.connectionsList.find(connection => connection.connection_id == savedDraft.connection_id);
-                            if (connection) {
-                                if (savedDraft.direction_start_to_end != undefined) {
-                                    connection.direction_start_to_end = savedDraft.direction_start_to_end;
-                                }
-                                if (savedDraft.direction_end_to_start != undefined) {
-                                    connection.direction_end_to_start = savedDraft.direction_end_to_start;
-                                }
-                            }
-                            delete this.draftConnectionDirections[savedDraft.connection_id];
-                        });
-
-                        this.bus.emit(EVENTS.UNSAVED_CONNECTION_DIRECTION_CHANGED, {
-                            areThereUnsaved: Object.keys(this.draftConnectionDirections).length > 0
-                        });
-                    }
-
-                    for (let fail of draftResult.failed) {
-                        this.bus.emit(EVENTS.TOAST_SHOW, { msg: `Új kapcsolat irány mentése sikertelen: ${fail.message}`, type: "danger" });
-                    }
-
-                    if (directionSaveSuccess > 0) {
-                        this.bus.emit(EVENTS.TOAST_SHOW, { msg: `${directionSaveSuccess} kapcsolat új irányainak mentése sikeres!`, type: "success", iconObject: ICONS.SAVE_FLOPPY });
-                    }
-                    if (directionSaveFailed > 0) {
-                        this.bus.emit(EVENTS.TOAST_SHOW, { msg: `${directionSaveFailed} kapcsolat új irányainak mentése sikertelen!`, type: "danger" });
-                    }
+                for (let fail of saveNewResult.failed) {
+                    this.bus.emit(EVENTS.TOAST_SHOW, { msg: `Új kapcsolat mentése sikertelen: ${fail.message}`, type: "danger" });
                 }
 
-                this.#renderConnectionsForActiveMap();
-                this.#emitConnectionListUpdate();
-
-            } catch (error) {
-                console.error("Error saving connections:", error);
-                this.bus.emit(EVENTS.TOAST_SHOW, { msg: "Hiba a kapcsolatok mentésekor!", type: "danger" });
-            } finally {
-                this.bus.emit(EVENTS.TOAST_HIDE_ID, { id: "savingConnections" });
-                this.isLocked = false;
+                if (newSaveSuccess > 0) {
+                    this.bus.emit(EVENTS.TOAST_SHOW, { msg: `${newSaveSuccess} új kapcsolat sikeresen mentve!`, type: "success", iconObject: ICONS.SAVE_FLOPPY });
+                    this.bus.emit(EVENTS.CONNECTIONS_SAVED, { successCount: newSaveSuccess });
+                }
+                if (newSaveFailed > 0) {
+                    this.bus.emit(EVENTS.TOAST_SHOW, { msg: `${newSaveFailed} új kapcsolat mentése sikertelen!`, type: "danger" });
+                }
             }
+
+            let draftIds = Object.keys(this.draftConnectionDirections);
+            if (draftIds.length > 0) {
+                let draftResult = await saveDraftConnectionDirections(this.draftConnectionDirections);
+
+                let directionSaveSuccess = draftResult.saved.length;
+                let directionSaveFailed = draftResult.failed.length;
+
+                if (directionSaveSuccess > 0) {
+                    draftResult.saved.forEach(savedDraft => {
+                        let connection = this.connectionsList.find(connection => connection.connection_id == savedDraft.connection_id);
+                        if (connection) {
+                            if (savedDraft.direction_start_to_end != undefined) {
+                                connection.direction_start_to_end = savedDraft.direction_start_to_end;
+                            }
+                            if (savedDraft.direction_end_to_start != undefined) {
+                                connection.direction_end_to_start = savedDraft.direction_end_to_start;
+                            }
+                        }
+                        delete this.draftConnectionDirections[savedDraft.connection_id];
+                    });
+
+                    this.bus.emit(EVENTS.UNSAVED_CONNECTION_DIRECTION_CHANGED, {
+                        areThereUnsaved: Object.keys(this.draftConnectionDirections).length > 0
+                    });
+                }
+
+                for (let fail of draftResult.failed) {
+                    this.bus.emit(EVENTS.TOAST_SHOW, { msg: `Új kapcsolat irány mentése sikertelen: ${fail.message}`, type: "danger" });
+                }
+
+                if (directionSaveSuccess > 0) {
+                    this.bus.emit(EVENTS.TOAST_SHOW, { msg: `${directionSaveSuccess} kapcsolat új irányainak mentése sikeres!`, type: "success", iconObject: ICONS.SAVE_FLOPPY });
+                }
+                if (directionSaveFailed > 0) {
+                    this.bus.emit(EVENTS.TOAST_SHOW, { msg: `${directionSaveFailed} kapcsolat új irányainak mentése sikertelen!`, type: "danger" });
+                }
+            }
+
+            this.#renderConnectionsForActiveMap();
+            this.#emitConnectionListUpdate();
+        } catch (error) {
+            console.error("Error saving connections:", error);
+            this.bus.emit(EVENTS.TOAST_SHOW, { msg: "Hiba a kapcsolatok mentésekor!", type: "danger" });
+        } finally {
+            this.bus.emit(EVENTS.TOAST_HIDE_ID, { id: "savingConnections" });
+            this.#updateDirtyState();
+            this.store.setState({ isBusy: { connection: false } });
         }
     }
 
     async #loadConnections() {
         try {
-            const gameMapID = this.appState.gameMapID;
+            const gameMapID = this.store.getState().gameMapId;
             let connections = await fetchConnections(gameMapID);
 
             connections.forEach(conn => this.#checkIdOrder(conn));
@@ -519,18 +485,19 @@ export class ConnectionManager {
         if (portalMarkerId != null && this.mapViewer.doesMarkerExist(portalMarkerId)) {
             this.mapViewer.moveMarkerToImageCoordinates(portalMarkerId, targetX, targetY);
         } else {
-            portalMarkerId = this.portalIdStart--;
-
             this.mapViewer.placeMarkerByImageCoordinates(
-                portalMarkerId,
+                this.portalId,
                 targetX,
                 targetY,
                 CONSTANTS.PORTAL_MARKER_SIZE.width,
                 CONSTANTS.PORTAL_MARKER_SIZE.height,
                 "portal"
             );
-            this.mapViewer.setMarkerSelectable(portalMarkerId, false);
-            this.portalMarkerIdsByConnection[connection.connection_id] = portalMarkerId;
+            this.mapViewer.setMarkerSelectable(this.portalId, false);
+            this.portalMarkerIdsByConnection[connection.connection_id] = this.portalId;
+
+            portalMarkerId = this.portalId;
+            this.portalId--;
         }
 
         this.mapViewer.connectMarkers(existingMarkerId, portalMarkerId, connection.connection_id, lineType);
@@ -544,14 +511,18 @@ export class ConnectionManager {
         for (const connection of this.connectionsList) {
             let startExists = this.mapViewer.doesMarkerExist(connection.start_point_id);
             let endExists = this.mapViewer.doesMarkerExist(connection.end_point_id);
-            let isActive = (this.activePointId == connection.start_point_id || this.activePointId == connection.end_point_id);
+            const activePointId = this.store.getState().activePoint.id;
+            let isActive = (activePointId == connection.start_point_id || activePointId == connection.end_point_id);
 
-            if (this.showAllConnectionsWhenNotActive || isActive) {
+            const settings = this.store.getState().settings;
+            if (settings.showAllConnections || isActive) {
                 if (startExists && endExists) {
                     let lineType = isActive ? "editing" : "default";
                     this.mapViewer.connectMarkers(connection.start_point_id, connection.end_point_id, connection.connection_id, lineType);
                 } else {
-                    let shouldRenderOffMap = ((this.showAllConnectionsWhenNotActive && this.showOffMapConnectionsWhenNotActive) || isActive) && (startExists != endExists);
+                    let shouldRenderOffMap = (
+                        (settings.showAllConnections && settings.showOffMapConnections) || isActive) &&
+                        (startExists != endExists);
                     if (shouldRenderOffMap) {
                         let existingMarkerId = startExists ? connection.start_point_id : connection.end_point_id;
                         let lineType = isActive ? "editing" : "default";
@@ -599,20 +570,22 @@ export class ConnectionManager {
     }
 
     #emitConnectionListUpdate() {
+        const activePointId = this.store.getState().activePoint.id;
         let currentMarkerConnections = this.connectionsList.filter(connection =>
-            connection.start_point_id === this.activePointId ||
-            connection.end_point_id === this.activePointId
+            connection.start_point_id == activePointId ||
+            connection.end_point_id == activePointId
         );
 
         this.bus.emit(EVENTS.CONNECTION_LIST_UI_UPDATE, {
             connections: currentMarkerConnections,
             unsavedConnections: this.unsavedConnections,
-            activePointId: this.activePointId
+            draftDirections: this.draftConnectionDirections,
+            activePointId: activePointId
         });
     }
 
     async #deleteConnection(connectionId) {
-        this.isLocked = true;
+        this.store.setState({ isBusy: { connection: "Kapcsolat törlése folyamatban, kérlek várj!" } });
         this.bus.emit(EVENTS.TOAST_SHOW, { msg: "Kapcsolat törlése", id: "deletingConnection", closable: false, autohide: false, spinner: true });
 
         try {
@@ -639,7 +612,12 @@ export class ConnectionManager {
             this.bus.emit(EVENTS.TOAST_SHOW, { msg: "Hiba a kapcsolat törlésekor!", type: "danger" });
         } finally {
             this.bus.emit(EVENTS.TOAST_HIDE_ID, { id: "deletingConnection" });
-            this.isLocked = false;
+            this.store.setState({ isBusy: { connection: false } });
         }
+    }
+
+    #updateDirtyState() {
+        const hasUnsaved = this.unsavedConnections.length > 0 || Object.keys(this.draftConnectionDirections).length > 0;
+        this.store.setState({ activePoint: { isDirty: { connections: hasUnsaved } } });
     }
 }

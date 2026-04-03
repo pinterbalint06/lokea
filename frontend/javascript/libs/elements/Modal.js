@@ -23,6 +23,7 @@ export class Modal extends EventTarget {
      * @param {string} [config.confirmBtnClass] - additional class for the confirm button (e.g. 'btn-danger')
      * @param {number|boolean} [config.holdToUnlock] - if a number (ms), use HoldToUnlockButton with that duration
      * @param {boolean} [config.isStatic] - if true, backdrop is static and modal won't close on backdrop click
+     * @param {Function} [config.onEarlyClick] - callback function for early clicks on the hold-to-unlock button
      */
     show(config) {
         this.destroy();
@@ -98,13 +99,17 @@ export class Modal extends EventTarget {
         });
         this.confirmBtn.innerText = config.confirmText || "OK";
 
-        const holdDuration = typeof config.holdToUnlock == "number" ? config.holdToUnlock : 0;
+        const holdDuration = config.holdToUnlock || 0;
         if (holdDuration > 0) {
             this.holdBtnInstance = new HoldToUnlockButton(this.confirmBtn, holdDuration);
             this.holdBtnInstance.addEventListener("confirm", (event) => {
                 event.detail.originalEvent.target.blur();
                 this.dispatchEvent(new CustomEvent("confirm"));
             });
+
+            if (config.onEarlyClick) {
+                this.holdBtnInstance.addEventListener("earlyClick", config.onEarlyClick);
+            }
         } else {
             this.confirmBtn.addEventListener("click", () => {
                 this.confirmBtn.blur();

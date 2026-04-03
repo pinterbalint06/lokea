@@ -1,9 +1,9 @@
 import { MapViewer } from "../libs/viewer/MapViewer.js";
 import { EquirectangularViewer } from "../libs/viewer/EquirectangularViewer.js";
 import { CONSTANTS } from "./shared/constants.js";
-import { appState } from "./shared/state.js";
+import { AppStore } from "./shared/AppStore.js";
 import { getGameMapIdFromUrl } from "./shared/utils.js";
-import { eventBus, EVENTS } from "./events/EventBus.js";
+import { eventBus, EVENTS } from "./shared/EventBus.js";
 import { MarkerManager } from "./managers/MarkerManager.js";
 import { MapManager } from "./managers/MapManager.js";
 import { MapSelectorManager } from "./managers/ui/MapSelectorManager.js";
@@ -25,21 +25,22 @@ async function init() {
     await mapViewer.ready();
     await equirectangularViewer.ready();
 
+    const gameMapID = getGameMapIdFromUrl();
+    const appStore = new AppStore(eventBus, gameMapID);
+
     new LoadingOverlayManager(eventBus);
-    new MarkerEditorManager(eventBus);
-    new ToolbarManager(eventBus);
+    new MarkerEditorManager(eventBus, appStore);
+    new ToolbarManager(eventBus, appStore);
     new ToastManager(eventBus);
-    new SettingsManager(eventBus);
-    new ModalManager(eventBus);
-    new MapSelectorManager(eventBus);
+    new SettingsManager(eventBus, appStore);
+    new ModalManager(eventBus, appStore);
+    new MapSelectorManager(eventBus, appStore);
     new ConnectionListManager(eventBus);
 
-    new MarkerManager(eventBus, mapViewer, appState);
-    new MapManager(eventBus, mapViewer, appState);
-    new EquirectangularManager(eventBus, equirectangularViewer, mapViewer, appState);
-    new ConnectionManager(eventBus, mapViewer, appState);
-
-    appState.gameMapID = getGameMapIdFromUrl();
+    new MarkerManager(eventBus, mapViewer, appStore);
+    new MapManager(eventBus, mapViewer, appStore);
+    new EquirectangularManager(eventBus, equirectangularViewer, mapViewer, appStore);
+    new ConnectionManager(eventBus, mapViewer, appStore);
 
     await markersCached;
     eventBus.emit(EVENTS.APP_INIT);

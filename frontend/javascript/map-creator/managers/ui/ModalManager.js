@@ -2,11 +2,12 @@ import { Modal } from "../../../libs/elements/Modal.js";
 import { createElement } from "../../../libs/utils/DOMUtils.js";
 import { ICONS } from "../../../libs/icons/icons.js";
 import { createSVGIcon } from "../../../libs/utils/svgUtils.js";
-import { EVENTS } from "../../events/EventBus.js";
+import { EVENTS } from "../../shared/EventBus.js";
 
 export class ModalManager {
-    constructor(eventBus) {
+    constructor(eventBus, appStore) {
         this.bus = eventBus;
+        this.store = appStore;
         this.wrapperElement = document.getElementById("modal-wrapper");
         this.modal = new Modal(this.wrapperElement);
         this.currentContext = null;
@@ -26,29 +27,25 @@ export class ModalManager {
                         break;
                     }
                     case "delete_map": {
-                        let request = { canProceed: true, reason: "" };
                         let mapId = context.id;
 
-                        this.bus.emit(EVENTS.UI_DELETE_MAP_REQUESTED, { request, mapId });
-
-                        if (request.canProceed) {
+                        const lockReason = this.store.getState().isBusy.map;
+                        if (!lockReason) {
                             this.modal.disableConfirm();
                             this.bus.emit(EVENTS.UI_DELETE_MAP_CONFIRMED, { mapId: mapId });
                         } else {
-                            this.bus.emit(EVENTS.TOAST_SHOW, { msg: request.reason, type: "danger" });
+                            this.bus.emit(EVENTS.TOAST_SHOW, { msg: lockReason, type: "danger" });
                             this.modal.enableConfirm();
                         }
                         break;
                     }
                     case "delete_point": {
-                        let request = { canProceed: true, reason: "" };
-                        this.bus.emit(EVENTS.UI_DELETE_POINT_REQUESTED, { request });
-
-                        if (request.canProceed) {
+                        const lockReason = this.store.getState().isBusy.point;
+                        if (!lockReason) {
                             this.modal.disableConfirm();
                             this.bus.emit(EVENTS.UI_DELETE_POINT_CONFIRMED);
                         } else {
-                            this.bus.emit(EVENTS.TOAST_SHOW, { msg: request.reason, type: "danger" });
+                            this.bus.emit(EVENTS.TOAST_SHOW, { msg: lockReason, type: "danger" });
                             this.modal.enableConfirm();
                         }
                         break;
@@ -110,7 +107,10 @@ export class ModalManager {
                 confirmBtnClass: "btn-danger",
                 dangerStyle: true,
                 holdToUnlock: 2000,
-                isStatic: true
+                isStatic: true,
+                onEarlyClick: () => {
+                    this.bus.emit(EVENTS.TOAST_SHOW, { msg: "Tartsd lenyomva a gombot a megerősítéshez" });
+                }
             });
         });
 
@@ -140,7 +140,10 @@ export class ModalManager {
                 confirmBtnClass: "btn-danger",
                 dangerStyle: true,
                 holdToUnlock: 2000,
-                isStatic: true
+                isStatic: true,
+                onEarlyClick: () => {
+                    this.bus.emit(EVENTS.TOAST_SHOW, { msg: "Tartsd lenyomva a gombot a megerősítéshez" });
+                }
             });
         });
 

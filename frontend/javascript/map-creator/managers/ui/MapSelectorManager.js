@@ -1,4 +1,4 @@
-import { EVENTS } from "../../events/EventBus.js";
+import { EVENTS } from "../../shared/EventBus.js";
 import { createSVGIcon } from "../../../libs/utils/svgUtils.js";
 import { CustomSelect } from "../../../libs/elements/CustomSelect.js";
 import { createElement } from "../../../libs/utils/DOMUtils.js";
@@ -6,8 +6,9 @@ import { ICONS } from "../../../libs/icons/icons.js";
 import { DragAndDropUploader } from "../../../libs/elements/DragAndDropUploader.js";
 
 export class MapSelectorManager {
-    constructor(eventBus) {
+    constructor(eventBus, appStore) {
         this.bus = eventBus;
+        this.store = appStore;
         this.elements = {};
         this.renameContexts = {};
 
@@ -40,28 +41,23 @@ export class MapSelectorManager {
         });
 
         this.elements.addNewMapBtn.addEventListener("click", () => {
-            let request = { canProceed: true, reason: "" };
-
-            this.bus.emit(EVENTS.UI_ADD_NEW_MAP_REQUEST, { request });
-
-            if (request.canProceed) {
+            const lockReason = this.store.isAppLocked();
+            if (!lockReason) {
                 this.elements.mapUploader.openFileDialog();
             } else {
-                this.bus.emit(EVENTS.TOAST_SHOW, { msg: request.reason, type: "danger" });
+                this.bus.emit(EVENTS.TOAST_SHOW, { msg: lockReason, type: "danger" });
             }
         });
 
         this.elements.customMapSelector.addEventListener("change", (event) => {
             let targetMapId = parseInt(event.detail.value);
 
-            let request = { canProceed: true, reason: "" };
-            this.bus.emit(EVENTS.MAP_SWITCH_REQUESTED, { request });
-
-            if (request.canProceed) {
+            const lockReason = this.store.isAppLocked();
+            if (!lockReason) {
                 this.bus.emit(EVENTS.UI_SWITCH_MAP_REQUEST, { mapId: targetMapId });
             } else {
                 event.preventDefault();
-                this.bus.emit(EVENTS.TOAST_SHOW, { msg: request.reason, type: "danger" });
+                this.bus.emit(EVENTS.TOAST_SHOW, { msg: lockReason, type: "danger" });
             }
         });
     }
@@ -159,16 +155,14 @@ export class MapSelectorManager {
 
             this.#cancelRenameSessions();
 
-            let request = { canProceed: true, reason: "" };
-            this.bus.emit(EVENTS.UI_DELETE_MAP_REQUESTED, { request, mapId });
-
-            if (request.canProceed) {
+            const lockReason = this.store.isAppLocked();
+            if (!lockReason) {
                 this.bus.emit(EVENTS.UI_SHOW_MAP_DELETE_MODAL, {
                     mapId,
                     mapName: textSpan.innerText
                 });
             } else {
-                this.bus.emit(EVENTS.TOAST_SHOW, { msg: request.reason, type: "danger" });
+                this.bus.emit(EVENTS.TOAST_SHOW, { msg: lockReason, type: "danger" });
             }
         });
 
