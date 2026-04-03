@@ -13,5 +13,6 @@ export const CONSTANTS = {
     PORTAL_MARKER_SIZE: {
         width: 32.0,
         height: 32.0
-    }
+    },
+    MOBILE_BREAKPOINT: 992
 };

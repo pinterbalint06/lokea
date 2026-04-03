@@ -254,7 +254,7 @@ export class MapSelectorManager {
                     } else {
                         if (!newTitle.match(mapTitleRegex)) {
                             this.bus.emit(EVENTS.TOAST_SHOW, {
-                                msg: "A térkép neve 1-20 karakter lehet, csak betű, szám és aláhúzás használható.",
+                                msg: "A térkép neve 1-20 karakter lehet, csak betű, szám, szóköz, aláhúzás és vonás használható.",
                                 type: "danger"
                             });
                             inputField.select();

@@ -302,7 +302,6 @@ export class MarkerManager {
                 this.#updateCurrentMapPointCount();
                 this.#syncActivePointForCurrentMap();
                 this.bus.emit(EVENTS.POINTS_LOADED, { points: this.markersCache });
-                this.bus.emit(EVENTS.TOAST_SHOW, { msg: "Pontok sikeresen betöltve!", type: "success" });
             }
         } catch (e) {
             console.error("Error loading points: ", e);

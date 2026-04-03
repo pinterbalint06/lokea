@@ -16,6 +16,7 @@ import { ToastManager } from "./managers/ui/ToastManager.js";
 import { SettingsManager } from "./managers/ui/SettingsManager.js";
 import { EquirectangularManager } from "./managers/EquirectangularManager.js";
 import { ConnectionManager } from "./managers/ConnectionManager.js";
+import { BreakpointManager } from "./managers/ui/BreakpointManager.js";
 
 async function init() {
     const mapViewer = new MapViewer(CONSTANTS.MAP_CANVAS_ID);
@@ -30,14 +31,16 @@ async function init() {
     const gameMapID = getGameMapIdFromUrl();
     const appStore = new AppStore(eventBus, gameMapID);
 
+    new BreakpointManager(eventBus, appStore);
     new LoadingOverlayManager(eventBus);
+    new ToastManager(eventBus);
+    new ConnectionListManager(eventBus);
+
     new MarkerEditorManager(eventBus, appStore);
     new ToolbarManager(eventBus, appStore);
-    new ToastManager(eventBus);
     new SettingsManager(eventBus, appStore);
     new ModalManager(eventBus, appStore);
     new MapSelectorManager(eventBus, appStore);
-    new ConnectionListManager(eventBus);
 
     new MarkerManager(eventBus, mapViewer, appStore);
     new MapManager(eventBus, mapViewer, appStore);

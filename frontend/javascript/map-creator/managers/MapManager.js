@@ -209,7 +209,6 @@ export class MapManager {
                         onLowReady: () => {
                             if (this.store.getState().activeMapId == mapId && this.activeLoadGeneration == loadGeneration) {
                                 this.viewer.clearMarkersAndLines();
-                                this.bus.emit(EVENTS.TOAST_SHOW, { msg: "Térkép sikeresen betöltve!", type: "success" });
                                 this.bus.emit(EVENTS.MAP_LOADED, { mapId });
                             }
                         }

@@ -395,6 +395,7 @@ export class ConnectionManager {
 
     async #loadConnections() {
         try {
+            this.bus.emit(EVENTS.TOAST_SHOW, { msg: "Kapcsolatok betöltése", id: "loadingConnections", closable: false, autohide: false, spinner: true });
             const gameMapID = this.store.getState().gameMapId;
             let connections = await fetchConnections(gameMapID);
 
@@ -406,6 +407,8 @@ export class ConnectionManager {
             this.#emitConnectionListUpdate();
         } catch (error) {
             console.error("Error loading connections:", error);
+        } finally {
+            this.bus.emit(EVENTS.TOAST_HIDE_ID, { id: "loadingConnections" });
         }
     }
 

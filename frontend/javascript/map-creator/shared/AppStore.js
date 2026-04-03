@@ -1,4 +1,5 @@
 import { EVENTS } from "./EventBus.js";
+import { CONSTANTS } from "./constants.js";
 
 export class AppStore {
     constructor(eventBus, gameMapId) {
@@ -43,7 +44,9 @@ export class AppStore {
                 fovHeight: 100,
                 showOffMapConnections: true,
                 showAllConnections: true
-            }
+            },
+
+            isMobile: window.innerWidth <= CONSTANTS.MOBILE_BREAKPOINT,
         };
     }
 

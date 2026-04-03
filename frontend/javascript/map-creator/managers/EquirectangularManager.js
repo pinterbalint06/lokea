@@ -23,9 +23,9 @@ export class EquirectangularManager {
         this.bus.on(EVENTS.UI_EQUIRECTANGULAR_FILE_DROPPED, async ({ file }) => this.#handleEquirectangularLoad(file));
 
         this.bus.on(EVENTS.MARKER_SELECTED, async ({ id }) => {
-            this.bus.emit(EVENTS.TOAST_SHOW, { msg: "Kép betöltése", id: "equirectangularLoading", closable: false, spinner: true });
             this.activeLoadGeneration++
             const loadGeneration = this.activeLoadGeneration;
+            this.bus.emit(EVENTS.TOAST_SHOW, { msg: "Kép betöltése", id: `loading${loadGeneration}`, autohide: false, closable: false, spinner: true });
 
             if (this.abortController) {
                 this.abortController.abort();
@@ -46,7 +46,6 @@ export class EquirectangularManager {
                     onLowReady: () => {
                         if (this.store.getState().activePoint.id == id && this.activeLoadGeneration == loadGeneration) {
                             this.equirectangularViewer.setYaw(degreeToRadian(this.store.getState().activePoint.northDirection));
-                            this.bus.emit(EVENTS.TOAST_SHOW, { msg: "Kép sikeresen betöltve!", type: "success" });
                             this.#startFOVSync();
                         }
                     }
@@ -57,7 +56,7 @@ export class EquirectangularManager {
                     this.bus.emit(EVENTS.TOAST_SHOW, { msg: "Hiba a kép betöltésekor!", type: "danger" });
                 }
             } finally {
-                this.bus.emit(EVENTS.TOAST_HIDE_ID, { id: "equirectangularLoading" });
+                this.bus.emit(EVENTS.TOAST_HIDE_ID, { id: `loading${loadGeneration}` });
                 if (this.abortController && this.activeLoadGeneration == loadGeneration) {
                     this.abortController = null;
                 }
@@ -150,7 +149,6 @@ export class EquirectangularManager {
                 await this.equirectangularViewer.loadImage(imgData.url, imgData.width, imgData.height);
 
                 if (this.store.getState().activePoint.id) {
-                    this.bus.emit(EVENTS.TOAST_SHOW, { msg: "Kép sikeresen betöltve!", type: "success", delay: 3000 });
                     this.bus.emit(EVENTS.EQUIRECTANGULAR_IMAGE_LOADED);
                 }
             }

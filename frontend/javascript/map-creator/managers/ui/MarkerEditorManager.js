@@ -13,7 +13,6 @@ export class MarkerEditorManager {
             isCollapsing: false
         };
         this.forceClose = false;
-        this.previousWidth = window.innerWidth;
 
         this.#gatherElements();
         this.#updateCollapseDirection();
@@ -86,7 +85,7 @@ export class MarkerEditorManager {
                 this.animations.isCollapsing = true;
                 this.store.setState({ isOpen: { markerEditor: true } });
                 this.bus.emit(EVENTS.UI_MARKER_EDITOR_OPENING);
-                if (window.innerWidth <= 992) {
+                if (this.store.getState().isMobile) {
                     this.bus.emit(EVENTS.UI_SETTINGS_CLOSE_REQUESTED);
                 }
             }
@@ -160,11 +159,6 @@ export class MarkerEditorManager {
             // "hide.bs.collapse" event will be called and handles the rest
             this.elements.collapseBootstrapElement.hide();
         });
-
-        window.addEventListener("resize", () => {
-            this.#updateCollapseDirection();
-            this.#emitSettingsCloseOnMobileBreakpoint();
-        });
     }
 
     #bindBusEvents() {
@@ -177,6 +171,13 @@ export class MarkerEditorManager {
         this.bus.on(EVENTS.STATE_UPDATED, () => {
             this.#updateNewConnectionButtonState();
             this.#updateSavePointButtonState();
+
+            this.#updateCollapseDirection();
+
+            const state = this.store.getState();
+            if (state.isMobile && state.isOpen.markerEditor && state.isOpen.settings) {
+                this.bus.emit(EVENTS.UI_SETTINGS_CLOSE_REQUESTED);
+            }
         });
 
         this.bus.on(EVENTS.MARKER_SELECTED, ({ position, data }) => {
@@ -224,7 +225,7 @@ export class MarkerEditorManager {
     }
 
     #updateCollapseDirection() {
-        if (window.innerWidth <= 992) {
+        if (this.store.getState().isMobile) {
             this.elements.collapseElement.classList.remove("collapse-horizontal");
         } else {
             this.elements.collapseElement.classList.add("collapse-horizontal");
@@ -264,18 +265,5 @@ export class MarkerEditorManager {
             state.isBusy.equirectangular ||
             !this.store.doesActivePointHaveUnsavedChanges() ||
             isNewPointMissingFile;
-    }
-
-    #emitSettingsCloseOnMobileBreakpoint() {
-        let currentWidth = window.innerWidth;
-        let wasAbove992 = this.previousWidth > 992;
-        let isBelow992 = currentWidth <= 992;
-        let markerEditorOpen = this.elements.collapseElement.classList.contains("show");
-
-        if (wasAbove992 && isBelow992 && markerEditorOpen) {
-            this.bus.emit(EVENTS.UI_SETTINGS_CLOSE_REQUESTED);
-        }
-
-        this.previousWidth = currentWidth;
     }
 }

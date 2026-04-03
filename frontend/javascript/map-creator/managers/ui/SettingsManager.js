@@ -5,7 +5,7 @@ export class SettingsManager {
         this.bus = eventBus;
         this.store = appStore;
         this.elements = {};
-        
+
         this.#gatherElements();
         this.#bindUIEvents();
         this.#bindBusEvents();
@@ -55,7 +55,7 @@ export class SettingsManager {
         this.elements.beallitasokCollapseElement.addEventListener("show.bs.collapse", (event) => {
             if (event.target == this.elements.beallitasokCollapseElement) {
                 this.store.setState({ isOpen: { settings: true } });
-                if (window.innerWidth <= 992) {
+                if (this.store.getState().isMobile) {
                     this.bus.emit(EVENTS.UI_MARKER_EDITOR_CLOSE_REQUESTED);
                 }
             }
@@ -76,10 +76,6 @@ export class SettingsManager {
 
         this.#syncFovInputs(this.elements.fovHeightRange, this.elements.fovHeightNumber, "height");
         this.#syncFovInputs(this.elements.fovHeightNumber, this.elements.fovHeightRange, "height");
-
-        window.addEventListener("resize", () => {
-            this.#updateCollapseDirection();
-        });
     }
 
     #bindBusEvents() {
@@ -94,6 +90,10 @@ export class SettingsManager {
         this.bus.on(EVENTS.MAP_DELETED, () => {
             this.elements.beallitasokCollapseBootstrapElement.hide();
         });
+
+        this.bus.on(EVENTS.STATE_UPDATED, () => {
+            this.#updateCollapseDirection();
+        });
     }
 
     #syncFovInputs(source, target, propertyName) {
@@ -104,7 +104,7 @@ export class SettingsManager {
     }
 
     #updateCollapseDirection() {
-        if (window.innerWidth <= 992) {
+        if (this.store.getState().isMobile) {
             this.elements.beallitasokCollapseElement.classList.remove("collapse-horizontal");
         } else {
             this.elements.beallitasokCollapseElement.classList.add("collapse-horizontal");

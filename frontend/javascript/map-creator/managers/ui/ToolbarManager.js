@@ -6,8 +6,6 @@ export class ToolbarManager {
         this.store = appStore;
         this.elements = {};
 
-        this.isMobile = window.innerWidth <= 992;
-
         this.#gatherElements();
         this.#bindUIEvents();
         this.#bindBusEvents();
@@ -24,7 +22,6 @@ export class ToolbarManager {
     }
 
     #bindUIEvents() {
-
         this.elements.saveMapButton.addEventListener("click", () => {
             this.bus.emit(EVENTS.UI_SAVE_MAP_CLICKED);
         });
@@ -37,8 +34,7 @@ export class ToolbarManager {
             this.bus.emit(EVENTS.UI_MARKER_PLACEMENT_REQUESTED);
         });
 
-        window.addEventListener("resize", () => {
-            this.isMobile = window.innerWidth <= 992;
+        this.bus.on(EVENTS.STATE_UPDATED, () => {
             this.#updateVisibility();
         });
     }
@@ -62,9 +58,12 @@ export class ToolbarManager {
 
     #updateVisibility() {
         const state = this.store.getState();
-        const shouldHideInMobileView = this.isMobile
+
+        const isMobile = state.isMobile;
+
+        const shouldHideInMobileView = isMobile
             && (state.isPlacingMarker || state.isOpen.markerEditor || state.isOpen.settings);
-        const shouldHideInDesktopView = !this.isMobile
+        const shouldHideInDesktopView = !isMobile
             && (state.isPlacingMarker || state.isOpen.markerEditor);
 
         if (shouldHideInMobileView || shouldHideInDesktopView) {
