@@ -1,5 +1,6 @@
 import { usersDisplayre } from "./usersDisplay.js";
 import { logsDisplayre } from "./logsDisplay.js";
+import { settingsDisplayre } from "./settingsDisplay.js";
 import { kijelentkezes } from "./fetchs.js";
 
 document.addEventListener("DOMContentLoaded", function () {
@@ -89,7 +90,7 @@ async function melyikValaszt(melyik) {
             await logsDisplayre();
             break;
         case "settings":
-            display.appendChild(await settingsDisplayre());
+            await settingsDisplayre();
             break;
         case "devlog":
             display.appendChild(await devlogDisplayre());
@@ -121,13 +122,6 @@ async function transactionsDisplayre() {
     let h1 = document.createElement('h1');
     h1.classList.add("h2", "m-5", "text-center");
     h1.innerText = "404 Egyenlőre nincs itt semmi... de itt lenne a tranzakciok";
-    return h1;
-}
-
-async function settingsDisplayre() {
-    let h1 = document.createElement('h1');
-    h1.classList.add("h2", "m-5", "text-center");
-    h1.innerText = "404 Egyenlőre nincs itt semmi... de itt lenne a settings";
     return h1;
 }
 

@@ -1,22 +1,36 @@
-1. alertek megjelenitese modalon belul es azon kivul
-2. formdata hasznalata?
-3. külön fájl létrehozása az admin dolgoknak (pl. admin_api.js)
-4. kommentelés
+TODO - egész
+-reszponzivitás
+-nagynézetben sidebar, kisnézetben navbar
+-email rendszer min.: üdvözlés, jelszóváltoztatás, törlés
+-forditás
+-oldal nyelv egységesités
 
-logs oldal
-files oldal
-settings oldal
-write devlog oldal
+TODO - dashboard (main)
+-diagram a napi/heti játékosszámról, táblázat a legjátszottabb játékmódokról, stb.
+
+TODO - settings
+-rendezés, javitás
+-minden fetch -> fetch.js, ott csak fetch legyen
+-settings+users -> validálás
+
+TODO - files 
+-logs és users exportálása (files fülön vagy az adott fülön)
+
+TODO - devlog
+-suneditor beepitese
+
+TODO - feature flags
+-esetleges játékmódok tiltása
+
+
 test tools oldal
 transactions oldal
-feature flags oldal
-2fa megcsinalasa - email kuldese
 
 hibak amiket javitani kell:
-
 -stack trace
--oldal nyelvet egysegesiteni kell
 
 kerdes:
 -compare attetele database.js-be
--adminbol inditott updateuser/adduser kell frontend validalas?
+-kell test tools?
+-kell transactions?
+-kell 2fa? 

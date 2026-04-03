@@ -21,6 +21,21 @@ export async function getUser(id) {
     }
 }
 
+export async function getUserData() {
+    try {
+        let response = await fetch('/api/getUserData');
+        if (response.ok) {
+            let data = await response.json();
+            return data.users;
+        }
+        else {
+            throw new Error("baj");
+        }
+    } catch (error) {
+        console.error(error);
+    }
+}
+
 export async function sortedUser(params) {
     let roles = params.selectedRoles || [];
     try {
@@ -137,68 +152,29 @@ export async function userUpdate(user_id, username, email, role, is_2fa, deleted
     }
 }
 
-export async function userToInactive(id, role, deleted) {
-    let mitadokvissza;
-    try {
-        let response = await fetch("/api/admin/userToInactive", {
-            method: "POST",
-            headers: {
-                "Content-Type": "application/json"
-            },
-            body: JSON.stringify({
-                userId: id,
-                role,
-                deleted
-            })
-        });
-        if (response.status == 204) {
-            mitadokvissza = "Sikerült a törlés";
-        }
-        else {
-            mitadokvissza = (await response.json()).message;
-        }
-    } catch (error) {
-        console.error(error);
-        mitadokvissza = "Baj";
-    }
-    return mitadokvissza;
-}
-
-export async function uploadProfilePic(picture, id) {
+export async function uploadProfilePic(picture, id = -1) {
     let fd = new FormData();
+    let link = "/api/admin/updateProfilePicFromAdmin";
     fd.append("profilePic", picture);
-    fd.append("user_id", id);
+    if (id == -1) {
+        link = "/api/updateProfilePic";
+        fd.append("user_id", id);
+    }
     try {
-        let response = await fetch("/api/admin/updateProfilePicFromAdmin", {
+        let response = await fetch(link, {
             method: "POST",
             body: fd
         });
 
         if (response.ok) {
-            console.log("sikerult a feltoltes");
+            console.log(data.message);
+        }
+        else {
+            throw new Error(data.message);
         }
     } catch (error) {
         console.log(`hálózati hiba: ${error}`);
-    }
-}
-
-export async function deleteProfilePicture(id) {
-    try {
-        let response = await fetch("/api/admin/deleteProfilePicFromAdmin", {
-            method: "POST",
-            headers: {
-                "Content-Type": "application/json"
-            },
-            body: JSON.stringify({
-                user_id: id
-            })
-        });
-
-        if (response.ok) {
-            console.log("sikerult a torles");
-        }
-    } catch (error) {
-        console.log(`hálózati hiba: ${error}`);
+        throw error;
     }
 }
 
@@ -229,5 +205,79 @@ export async function sortedLogs(variables) {
     } catch (error) {
         console.error("Fetch error:", error.message);
         return [];
+    }
+}
+
+//delete fetchings
+
+export async function deleteProfile() {
+    try {
+        let response = await fetch("/api/inactiveUser", {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json"
+            }
+        });
+        let data = await response.json();
+        if (data.success) {
+            setTimeout(() => {
+                location.reload();
+            }, 1000);
+        }
+        else {
+            console.error("baj a törlésben, baj: " + data.error);
+        }
+
+    } catch (error) {
+        console.error(`hálózati hiba: ${error}`);
+    }
+}
+
+export async function userToInactive(id, role, deleted) {
+    let mitadokvissza;
+    try {
+        let response = await fetch("/api/admin/userToInactive", {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json"
+            },
+            body: JSON.stringify({
+                userId: id,
+                role,
+                deleted
+            })
+        });
+        if (response.status == 204) {
+            mitadokvissza = "Sikerült a törlés";
+        }
+        else {
+            mitadokvissza = (await response.json()).message;
+        }
+    } catch (error) {
+        console.error(error);
+        mitadokvissza = "Baj";
+    }
+    return mitadokvissza;
+}
+
+export async function deleteProfilePicture(id = -1) {
+    let link = (id = -1) ? "/api/admin/deleteProfilePicFromAdmin" : "/api/deleteProfilePic";
+    try {
+        let response = await fetch(link, {
+            method: "DELETE",
+            headers: {
+                "Content-Type": "application/json"
+            }
+        })
+        let data = await response.json();
+        if (response.ok) {
+            console.log(data.message);
+        }
+        else {
+            throw new Error(data.message);
+        }
+    } catch (error) {
+        console.log(`hálózati hiba: ${error}`);
+        throw error;
     }
 }
