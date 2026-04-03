@@ -53,7 +53,6 @@ export class MarkerManager {
                     };
                     this.store.setState({ isPlacingMarker: true });
                     this.mapViewer.canvasInput.setDefaultCursor("crosshair");
-                    this.bus.emit(EVENTS.MARKER_PLACING_STARTED);
 
                     this.bus.emit(EVENTS.TOAST_SHOW, {
                         id: "placeMarker",
@@ -126,7 +125,7 @@ export class MarkerManager {
             }
         });
 
-        this.bus.on(EVENTS.UI_COLLAPSE_HIDE_STARTED, () => {
+        this.bus.on(EVENTS.UI_MARKER_EDITOR_CLOSING, () => {
             const activePointId = this.store.getState().activePoint.id;
             if (activePointId != null) {
                 if (activePointId == CONSTANTS.TEMP_ID) {
@@ -231,12 +230,14 @@ export class MarkerManager {
             }
         });
 
-        this.bus.on(EVENTS.UI_DELETE_POINT_CONFIRMED, async () => {
-            const lockReason = this.store.getState().isBusy.point;
-            if (!lockReason) {
-                await this.#deletePoint(this.store.getState().activePoint.id);
-            } else {
-                this.bus.emit(EVENTS.TOAST_SHOW, { msg: lockReason, type: "danger" });
+        this.bus.on(EVENTS.UI_MODAL_CONFIRMED, async ({ modalType }) => {
+            if (modalType == "delete_point") {
+                const lockReason = this.store.getState().isBusy.point;
+                if (!lockReason) {
+                    await this.#deletePoint(this.store.getState().activePoint.id);
+                } else {
+                    this.bus.emit(EVENTS.TOAST_SHOW, { msg: lockReason, type: "danger" });
+                }
             }
         });
     }
@@ -258,7 +259,6 @@ export class MarkerManager {
             });
             this.activePointSession = null;
             this.mapViewer.canvasInput.setDefaultCursor("default");
-            this.bus.emit(EVENTS.MARKER_PLACING_CANCELLED);
         }
     }
 

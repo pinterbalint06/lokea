@@ -157,7 +157,8 @@ export class MapSelectorManager {
 
             const lockReason = this.store.isAppLocked();
             if (!lockReason) {
-                this.bus.emit(EVENTS.UI_SHOW_MAP_DELETE_MODAL, {
+                this.bus.emit(EVENTS.UI_MODAL_REQUESTED, {
+                    modalType: "delete_map",
                     mapId,
                     mapName: textSpan.innerText
                 });

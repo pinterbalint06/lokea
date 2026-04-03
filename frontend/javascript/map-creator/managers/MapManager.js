@@ -56,12 +56,14 @@ export class MapManager {
             }
         });
 
-        this.bus.on(EVENTS.UI_DELETE_MAP_CONFIRMED, ({ mapId }) => {
-            const lockReason = this.store.getState().isBusy.map;
-            if (!lockReason) {
-                this.#deleteMap(mapId);
-            } else {
-                this.bus.emit(EVENTS.TOAST_SHOW, { msg: lockReason, type: "danger" });
+        this.bus.on(EVENTS.UI_MODAL_CONFIRMED, ({ modalType, mapId }) => {
+            if (modalType == "delete_map") {
+                const lockReason = this.store.getState().isBusy.map;
+                if (!lockReason) {
+                    this.#deleteMap(mapId);
+                } else {
+                    this.bus.emit(EVENTS.TOAST_SHOW, { msg: lockReason, type: "danger" });
+                }
             }
         });
 
@@ -105,7 +107,6 @@ export class MapManager {
                 throw new Error("A térkép kép még nincs kiválasztva!");
             }
 
-            this.bus.emit(EVENTS.MAP_SAVE_STARTED);
             let result = await saveNewMap(this.pendingMapFile, this.store.getState().gameMapId, currentMap.name);
             let newId = result.mapId;
 
@@ -131,7 +132,6 @@ export class MapManager {
         } catch (error) {
             this.bus.emit(EVENTS.TOAST_HIDE_ID, { id: `savingMap${idToSave}` });
             this.bus.emit(EVENTS.TOAST_SHOW, { msg: error.message, type: "danger" });
-            this.bus.emit(EVENTS.MAP_SAVE_FAILED, { error });
         } finally {
             // if save successful it this will emit not saveable because pendingMapFile is set to null
             // if failed it will emit saveable because pendingMapFile is still set
@@ -214,14 +214,13 @@ export class MapManager {
                             }
                         }
                     });
-                    setTimeout(() => this.bus.emit(EVENTS.TOAST_HIDE_ID, { id: `mapSwitching${mapId}-${randomIdForToast}` }));
                 } catch (error) {
                     if (!isCancellationError(error) && this.store.getState().activeMapId == mapId && this.activeLoadGeneration == loadGeneration) {
                         console.error(error);
                         this.bus.emit(EVENTS.TOAST_SHOW, { msg: "Hiba a kép betöltésekor!", type: "danger" });
                     }
                 } finally {
-                    this.bus.emit(EVENTS.TOAST_HIDE_ID, { id: `mapSwitching${mapId}-${randomIdForToast}` });
+                    setTimeout(() => this.bus.emit(EVENTS.TOAST_HIDE_ID, { id: `mapSwitching${mapId}-${randomIdForToast}` }));
                     if (this.abortController && this.activeLoadGeneration == loadGeneration) {
                         this.abortController = null;
                     }

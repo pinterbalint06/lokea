@@ -13,7 +13,7 @@
 
 #include "mapViewer/mapMarker.h"
 
-constexpr int MAX_MARKER_REPETITIONS = 10; // Cap to prevent geometry overflow
+constexpr int MAX_MARKER_REPETITIONS = 10;
 
 enum VertexIndex
 {

@@ -87,7 +87,7 @@ export class EquirectangularManager {
             }
         });
 
-        this.bus.on(EVENTS.UI_COLLAPSE_HIDE_STARTED, () => {
+        this.bus.on(EVENTS.UI_MARKER_EDITOR_CLOSING, () => {
             this.#stopFOVSync();
             this.store.setState({ activePoint: { pendingEquirectangularFile: null } });
             this.activeLoadGeneration++;
@@ -98,7 +98,7 @@ export class EquirectangularManager {
             }
         });
 
-        this.bus.on(EVENTS.UI_COLLAPSE_HIDDEN, () => {
+        this.bus.on(EVENTS.UI_MARKER_EDITOR_CLOSED, () => {
             this.equirectangularViewer.setYaw(0);
             this.equirectangularViewer.setZoom(0.05);
             this.equirectangularViewer.clearImage();

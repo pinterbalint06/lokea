@@ -94,7 +94,7 @@ export function showToast(container, message, type = "", isClosable, options = {
 
     toastElement.addEventListener("hidden.bs.toast", () => {
         onClosed();
-        toast = null;
+        toast.dispose();
         toastElement.remove();
     });
     return toast;

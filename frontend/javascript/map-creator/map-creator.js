@@ -3,7 +3,7 @@ import { EquirectangularViewer } from "../libs/viewer/EquirectangularViewer.js";
 import { CONSTANTS } from "./shared/constants.js";
 import { AppStore } from "./shared/AppStore.js";
 import { getGameMapIdFromUrl } from "./shared/utils.js";
-import { eventBus, EVENTS } from "./shared/EventBus.js";
+import { EventBus, EVENTS } from "./shared/EventBus.js";
 import { MarkerManager } from "./managers/MarkerManager.js";
 import { MapManager } from "./managers/MapManager.js";
 import { MapSelectorManager } from "./managers/ui/MapSelectorManager.js";
@@ -24,6 +24,8 @@ async function init() {
     let markersCached = mapViewer.cacheMarkers();
     await mapViewer.ready();
     await equirectangularViewer.ready();
+
+    const eventBus = new EventBus();
 
     const gameMapID = getGameMapIdFromUrl();
     const appStore = new AppStore(eventBus, gameMapID);
@@ -47,5 +49,3 @@ async function init() {
 }
 
 document.addEventListener("DOMContentLoaded", init);
-
-// TODOp!: látótérhez svg renderelés

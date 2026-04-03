@@ -85,7 +85,7 @@ export class MarkerEditorManager {
             if (event.target == this.elements.collapseElement) {
                 this.animations.isCollapsing = true;
                 this.store.setState({ isOpen: { markerEditor: true } });
-                this.bus.emit(EVENTS.UI_COLLAPSE_SHOW_STARTED);
+                this.bus.emit(EVENTS.UI_MARKER_EDITOR_OPENING);
                 if (window.innerWidth <= 992) {
                     this.bus.emit(EVENTS.UI_SETTINGS_CLOSE_REQUESTED);
                 }
@@ -105,13 +105,13 @@ export class MarkerEditorManager {
                     if (this.store.doesActivePointHaveUnsavedChanges() && !this.forceClose) {
                         event.preventDefault();
                         this.forceClose = true;
-                        this.bus.emit(EVENTS.UI_SHOW_DISCARD_MODAL);
+                        this.bus.emit(EVENTS.UI_MODAL_REQUESTED, { modalType: "discard" });
                     } else {
                         this.forceClose = false;
 
                         this.animations.isCollapsing = true;
                         this.elements.savePointButton.disabled = true;
-                        this.bus.emit(EVENTS.UI_COLLAPSE_HIDE_STARTED);
+                        this.bus.emit(EVENTS.UI_MARKER_EDITOR_CLOSING);
                     }
                 } else {
                     event.preventDefault();
@@ -128,14 +128,13 @@ export class MarkerEditorManager {
                 this.elements.northDirectionInput.setValue(0);
                 this.elements.savePointButton.disabled = true;
                 this.bus.emit(EVENTS.UI_MARKER_EDITOR_CLOSED);
-                this.bus.emit(EVENTS.UI_COLLAPSE_HIDDEN);
             }
         });
 
         this.elements.deletePointBtn.addEventListener("click", (event) => {
             const lockReason = this.store.getState().isBusy.point;
             if (!lockReason) {
-                this.bus.emit(EVENTS.UI_SHOW_POINT_DELETE_MODAL);
+                this.bus.emit(EVENTS.UI_MODAL_REQUESTED, { modalType: "delete_point" });
             } else {
                 event.preventDefault();
                 this.bus.emit(EVENTS.TOAST_SHOW, { msg: lockReason, type: "danger" });
@@ -188,8 +187,8 @@ export class MarkerEditorManager {
             this.#showCollapse();
         });
 
-        this.bus.on(EVENTS.UI_DISCARD_CHANGES_CONFIRMED, () => {
-            if (this.forceClose) {
+        this.bus.on(EVENTS.UI_MODAL_CONFIRMED, ({ modalType }) => {
+            if (modalType == "discard" && this.forceClose) {
                 this.elements.collapseBootstrapElement.hide();
             }
         });

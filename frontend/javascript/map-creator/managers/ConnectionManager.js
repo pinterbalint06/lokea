@@ -24,23 +24,6 @@ export class ConnectionManager {
         this.#bindBusEvents();
     }
 
-    #checkIdOrder(connection) {
-        if (connection.start_point_id > connection.end_point_id) {
-            let tempPoint = connection.start_point_id;
-            connection.start_point_id = connection.end_point_id;
-            connection.end_point_id = tempPoint;
-
-            let tempMap = connection.start_map_id;
-            connection.start_map_id = connection.end_map_id;
-            connection.end_map_id = tempMap;
-
-            let tempDir = connection.direction_start_to_end;
-            connection.direction_start_to_end = connection.direction_end_to_start;
-            connection.direction_end_to_start = tempDir;
-        }
-        return connection;
-    }
-
     #bindBusEvents() {
         this.bus.on(EVENTS.APP_INIT, async () => {
             await this.#loadConnections();
@@ -118,12 +101,11 @@ export class ConnectionManager {
             }
         });
 
-        this.bus.on(EVENTS.UI_COLLAPSE_HIDE_STARTED, () => {
+        this.bus.on(EVENTS.UI_MARKER_EDITOR_CLOSING, () => {
             this.focusedConnectionId = null;
             this.unsavedConnections = [];
             this.draftConnectionDirections = {};
             this.#updateDirtyState();
-            this.bus.emit(EVENTS.UNSAVED_CONNECTION_DIRECTION_CHANGED, { areThereUnsaved: false });
             this.#cancelConnectingMode();
             this.#renderConnectionsForActiveMap();
         });
@@ -157,7 +139,6 @@ export class ConnectionManager {
                     let hasUnsaved = Object.keys(this.draftConnectionDirections).length > 0;
                     if (hasUnsaved != hadUnsaved) {
                         this.#updateDirtyState();
-                        this.bus.emit(EVENTS.UNSAVED_CONNECTION_DIRECTION_CHANGED, { areThereUnsaved: hasUnsaved });
                     }
                 }
 
@@ -240,7 +221,6 @@ export class ConnectionManager {
                     }
                     this.#renderConnectionsForActiveMap();
                     this.#emitConnectionListUpdate();
-                    this.bus.emit(EVENTS.UNSAVED_CONNECTION_DELETED);
                     this.bus.emit(EVENTS.TOAST_SHOW, { msg: "Kapcsolat sikeresen törölve!", type: "success" });
                 } else {
                     await this.#deleteConnection(connectionId);
@@ -254,6 +234,23 @@ export class ConnectionManager {
         this.bus.on(EVENTS.MARKER_MOVED, () => this.#renderConnectionsForActiveMap());
     }
 
+    #checkIdOrder(connection) {
+        if (connection.start_point_id > connection.end_point_id) {
+            let tempPoint = connection.start_point_id;
+            connection.start_point_id = connection.end_point_id;
+            connection.end_point_id = tempPoint;
+
+            let tempMap = connection.start_map_id;
+            connection.start_map_id = connection.end_map_id;
+            connection.end_map_id = tempMap;
+
+            let tempDir = connection.direction_start_to_end;
+            connection.direction_start_to_end = connection.direction_end_to_start;
+            connection.direction_end_to_start = tempDir;
+        }
+        return connection;
+    }
+
     #startConnectingMode() {
         if (!this.store.getState().isConnecting) {
             const activePointId = this.store.getState().activePoint.id;
@@ -261,7 +258,6 @@ export class ConnectionManager {
                 if (activePointId != CONSTANTS.TEMP_ID) {
                     this.store.setState({ isConnecting: true });
                     this.mapViewer.canvasInput.setDefaultCursor("crosshair");
-                    this.bus.emit(EVENTS.CONNECTION_MODE_CHANGED, { isConnecting: true });
                     let currentUnsavedConnections = this.unsavedConnections.length;
                     this.bus.emit(EVENTS.TOAST_SHOW, {
                         id: CONSTANTS.CONNECTION_TOAST_ID,
@@ -309,7 +305,6 @@ export class ConnectionManager {
             this.store.setState({ isConnecting: false });
             this.mapViewer.canvasInput.setDefaultCursor("default");
             this.bus.emit(EVENTS.TOAST_HIDE_ID, { id: CONSTANTS.CONNECTION_TOAST_ID });
-            this.bus.emit(EVENTS.CONNECTION_MODE_CHANGED, { isConnecting: false });
         }
     }
 
@@ -346,7 +341,6 @@ export class ConnectionManager {
 
                 if (newSaveSuccess > 0) {
                     this.bus.emit(EVENTS.TOAST_SHOW, { msg: `${newSaveSuccess} új kapcsolat sikeresen mentve!`, type: "success", iconObject: ICONS.SAVE_FLOPPY });
-                    this.bus.emit(EVENTS.CONNECTIONS_SAVED, { successCount: newSaveSuccess });
                 }
                 if (newSaveFailed > 0) {
                     this.bus.emit(EVENTS.TOAST_SHOW, { msg: `${newSaveFailed} új kapcsolat mentése sikertelen!`, type: "danger" });
@@ -372,10 +366,6 @@ export class ConnectionManager {
                             }
                         }
                         delete this.draftConnectionDirections[savedDraft.connection_id];
-                    });
-
-                    this.bus.emit(EVENTS.UNSAVED_CONNECTION_DIRECTION_CHANGED, {
-                        areThereUnsaved: Object.keys(this.draftConnectionDirections).length > 0
                     });
                 }
 
@@ -597,7 +587,6 @@ export class ConnectionManager {
 
             if (this.draftConnectionDirections[connectionId]) {
                 delete this.draftConnectionDirections[connectionId];
-                this.bus.emit(EVENTS.UNSAVED_CONNECTION_DIRECTION_CHANGED, { areThereUnsaved: Object.keys(this.draftConnectionDirections).length > 0 });
             }
             this.connectionsList = this.connectionsList.filter(connection =>
                 connection.connection_id != connectionId

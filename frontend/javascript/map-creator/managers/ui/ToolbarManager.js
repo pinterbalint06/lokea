@@ -45,8 +45,6 @@ export class ToolbarManager {
 
     #bindBusEvents() {
         this.bus.on(EVENTS.MAP_DELETED, () => {
-            this.state.isMarkerEditorCollapseOpen = false;
-            this.state.isSettingsCollapseOpen = false;
             this.#updateVisibility();
         });
 
