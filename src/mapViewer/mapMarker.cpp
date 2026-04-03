@@ -79,6 +79,11 @@ MapMarker::MapMarker(int id, const std::string &textureUrl, float u, float v, fl
 
 MapMarker::~MapMarker()
 {
+    Texture *texture = getMaterial().getTexture();
+    if (texture)
+    {
+        delete texture;
+    }
 }
 
 void MapMarker::changeTexture(const std::string &textureUrl)

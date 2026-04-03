@@ -27,7 +27,7 @@ public:
     float getV() const { return v_; }
     float getWidth() const { return width_; }
     float getHeight() const { return height_; }
-    float getId() const { return id_; }
+    int getId() const { return id_; }
     float getRotation() const { return rotation_; }
     bool isSelectable() const { return selectable_; }
     bool isFixedToMap() const { return fixedToMap_; }

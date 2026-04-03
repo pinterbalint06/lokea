@@ -116,17 +116,7 @@ export class EquirectangularViewer extends WASMViewerBase {
     }
 
     async clearImage() {
-        if (!this._engine) {
-            await this._engineInitPromise;
-
-            if (this._isDestroyed) {
-                console.warn("clearImage() called on destroyed viewer!");
-            }
-
-            if (!this._engine) {
-                console.warn("clearImage() called on failed engine!");
-            }
-        }
+        await this._ensureEngineReadyAsync();
 
         this.#currentImageRequestID++;
 

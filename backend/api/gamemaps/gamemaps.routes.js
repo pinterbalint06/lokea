@@ -6,6 +6,7 @@ const AppError = require("#utils/AppError.js");
 const schemas = require("#gamemaps/gamemaps.schemas.js");
 const controller = require("#gamemaps/gamemaps.controller.js");
 const { isAllowedToGetMapImage, isAllowedToAccessPoint } = require("#gamemaps/gamemaps.middleware.js");
+const ERRORS = require("#utils/errorMessages.js");
 
 router.use(checkAuth);
 

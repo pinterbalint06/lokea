@@ -127,6 +127,10 @@ void Texture::uploadToGPU()
 {
     glBindTexture(GL_TEXTURE_2D, textureGL_);
     glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, width_, height_, 0, GL_RGB, GL_UNSIGNED_BYTE, imgData_);
+    if (needsMipmaps())
+    {
+        glGenerateMipmap(GL_TEXTURE_2D);
+    }
     updateOptions();
     glBindTexture(GL_TEXTURE_2D, 0);
 }
