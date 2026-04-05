@@ -11,6 +11,7 @@ const sharp = require('sharp');
 //!Multer
 const multer = require('multer'); //?npm install multer
 const path = require('path');
+const { error } = require('console');
 
 const storage = multer.diskStorage({
     destination: (request, file, callback) => {
@@ -146,6 +147,81 @@ router.post('/updateUserFromAdmin', auth.checkAuth, auth.checkRole("ADMIN"),
             response.status(500).json({ error: error });
         }
     })
+
+router.post('/userSelfUpdate', auth.checkAuth,
+    [
+        body("username")
+            .not().isEmail().withMessage("Felhasználónév nem lehet email cim!")
+            .matches(/^[a-zA-Z0-9áéíóöőúüűÁÉÍÓÖŐÚÜŰ_-]+$/).withMessage('A felhasználónév csak betűket, számokat, - vagy _ karaktert, és ékezetes betűket tartalmazhat.')
+            .isLength({ min: 1, max: 20 }).withMessage("Felhasználónév hossza nem megfelelő!"),
+        body("email")
+            .isEmail().withMessage("Hibás email formátum")
+            .isLength({ min: 5, max: 250 }).withMessage("Email max 250 karakter!")
+    ],
+    async (request, response) => {
+        try {
+            const errors = validationResult(request);
+            if (!errors.isEmpty()) {
+                response.status(400).json({
+                    success: false,
+                    error: errors.array()
+                });
+            }
+            else {
+                let { username, email, is_2fa } = request.body;
+                if (role == "ADMIN" && request.session.role != "LORD") {
+                    response.status(403).json({ error: "Nincs jogosultságod ehhez!" });
+                }
+                else {
+                    let success = await database.updateUserByAdmin(request.session.userid, username, email, role, is_2fa);
+                    if (success == 1) {
+                        await database.addLog(request.session.userid, 'User update');
+                        response.status(204).json({ message: "Sikeres felhasználófrissités!" });
+                    }
+                    else {
+                        response.status(404).json({ error: "Nincs ilyen felhasználó, vagy a felhasználó inaktiv már!" });
+                    }
+                }
+            }
+        } catch (error) {
+            response.status(500).json({ error: error });
+        }
+    })
+
+router.post('/userDarkModeUpdate', auth.checkAuth,
+    [
+        body("darkmode").isBoolean().withMessage("Nem true/false értéket adtál meg!")
+    ],
+    async (request, response) => {
+        try {
+            const errors = validationResult(request);
+            if (!errors.isEmpty()) {
+                response.status(400).json({
+                    success: false,
+                    error: errors.array()
+                });
+            }
+            else {
+                let { darkmode } = request.body;
+                if (role == "ADMIN" && request.session.role != "LORD") {
+                    response.status(403).json({ error: "Nincs jogosultságod ehhez!" });
+                }
+                else {
+                    let success = await database.updateDarkMode(request.session.userid, darkmode);
+                    if (success == 1) {
+                        await database.addLog(request.session.userid, 'User update');
+                        response.status(204).json({ message: "Sikeres felhasználófrissités!" });
+                    }
+                    else {
+                        response.status(404).json({ error: "Nincs ilyen felhasználó, vagy a felhasználó inaktiv már!" });
+                    }
+                }
+            }
+        } catch (error) {
+            response.status(500).json({ error: error });
+        }
+    })
+
 
 router.post('/userToInactive', auth.checkAuth, auth.checkRole("ADMIN"),
     [

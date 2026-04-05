@@ -51,6 +51,16 @@ export function inputGeneral(type, placeholder, value, id, osztalyok, disabled) 
     return input;
 }
 
+export function labelGeneral(id, text, classes) {
+    let label = document.createElement('label');
+    label.setAttribute('for', id);
+    label.innerText = text;
+    if (classes != null) {
+        label.classList.add(...classes);
+    }
+    return label;
+}
+
 export function svggeneral(name, className) {
     const svg = document.createElementNS("http://www.w3.org/2000/svg", "svg");
     svg.classList.add(className);
@@ -60,6 +70,13 @@ export function svggeneral(name, className) {
 
     svg.appendChild(use);
     return svg;
+}
+
+export function makeSubtitle(text) {
+    let subtitle = document.createElement('h5');
+    subtitle.classList.add("subtitle");
+    subtitle.innerText = text;
+    return subtitle;
 }
 
 export function formatDate(date) {

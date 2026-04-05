@@ -186,6 +186,26 @@ async function updateUserByAdmin(user_id, username, email, role, is_2fa) {
     }
 }
 
+async function updateDarkMode(user_id, darkmode) {
+    let connection;
+    let result;
+    try {
+        connection = await pool.getConnection();
+        await connection.beginTransaction();
+        const query = 'UPDATE users SET darkmode = ? WHERE user_id = ? AND deleted_at IS NULL';
+        [result] = await connection.execute(query, [darkmode, user_id]);
+        await connection.commit();
+    } catch (error) {
+        if (connection) {
+            await connection.rollback();
+        }
+    }
+    finally {
+        if (connection) connection.release();
+    }
+    return result.affectedRows;
+}
+
 async function userToInactive(user_id) {
     let connection;
     let result;
@@ -377,6 +397,7 @@ module.exports = {
     getUserNameProfile,
     sortedUsers,
     updateUserByAdmin,
+    updateDarkMode,
     userToInactive,
     uploadProfilePic,
     deleteProfilePic,

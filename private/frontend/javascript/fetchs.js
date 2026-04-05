@@ -127,11 +127,11 @@ export async function newUser(username, email, password, role, is_2fa) {
         console.log(data.message);
 
     } catch (error) {
-        console.log("Hálózati vagy szerver hiba:");
+        console.log("Hálózati vagy szerver hiba");
     }
 }
 
-export async function userUpdate(user_id, username, email, role, is_2fa, deleted) {
+export async function userUpdate(user_id, username, email, role, is_2fa) {
     try {
         let response = await fetch("/api/admin/updateUserFromAdmin", {
             method: "POST",
@@ -148,7 +148,61 @@ export async function userUpdate(user_id, username, email, role, is_2fa, deleted
         });
         return response.ok;
     } catch (error) {
-        console.log("Hálózati vagy szerver hiba:");
+        console.log("Hálózati vagy szerver hiba");
+    }
+}
+
+export async function userSelfUpdate(username, email, is_2fa) {
+    try {
+        let response = await fetch("/api/admin/userSelfUpdate", {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json"
+            },
+            body: JSON.stringify({
+                username,
+                email,
+                is_2fa
+            })
+        });
+        return response;
+    } catch (error) {
+        console.log("Hálózati vagy szerver hiba");
+    }
+}
+
+export async function updatePassword(oldPass, newPass) {
+    try {
+        let response = await fetch("/api/updatePassword", {
+            method: "PUT",
+            headers: {
+                "Content-Type": "application/json"
+            },
+            body: JSON.stringify({
+                oldPass: oldPass,
+                newPass: newPass
+            })
+        })
+        return response;
+    } catch (error) {
+        console.log("Hálózati vagy szerver hiba");
+    }
+}
+
+export async function updateDarkMode(is_dark) {
+    try {
+        let response = await fetch("/api/updatePassword", {
+            method: "PUT",
+            headers: {
+                "Content-Type": "application/json"
+            },
+            body: JSON.stringify({
+                darkmode: is_dark
+            })
+        })
+        return response;
+    } catch (error) {
+        console.log("Hálózati vagy szerver hiba");
     }
 }
 
