@@ -14,6 +14,8 @@ document.addEventListener("DOMContentLoaded", function () {
     closeBtn.addEventListener('click', () => {
         document.getElementById('myModal').classList.remove('active');
     });
+    setupContinueGameModal();
+    checkAndShowContinueModal();
     loadGameMaps('plays');
     document.querySelectorAll('.sortDiv button').forEach(button => {
         button.addEventListener('click', function () {
@@ -33,7 +35,8 @@ document.addEventListener("DOMContentLoaded", function () {
         loadGameMaps(selectedButton.id.replace('sortBy', '').toLowerCase());
     });
     document.getElementById('startGame').addEventListener('click', function () {
-        postGameId();
+        let gameMapId = document.getElementById('myModal').dataset.gameMapId;
+        postGameId(gameMapId);
     });
 });
 
@@ -86,7 +89,6 @@ async function loadCardBackground(card, cover_image_id) {
     card.style.backgroundImage = "url('" + image + "')";
 }
 
-
 function createReview(rating) {
     let card_rating = document.createElement('div');
     card_rating.classList.add('stars');
@@ -106,15 +108,14 @@ function createModal(game_map) {
     modalDesc.innerText = game_map.game_description;
 }
 
-async function postGameId() {
-    let gameMapId = document.getElementById('myModal').dataset.gameMapId;
-        try {
+async function postGameId(gamemapId) {
+    try {
         const response = await fetch('http://127.0.0.1:3000/api/post_game_id', {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json'
             },
-            body: JSON.stringify({ gameMapId })
+            body: JSON.stringify({ gameMapId: Number(gamemapId) })
         });
         if (!response.ok) {
             throw new Error('Hiba a játék indításakor: ' + response.message);
@@ -154,5 +155,47 @@ async function getCoverImage(cover_image_id) {
         }
     } catch (error) {
         console.error('GET hiba:', error);
+    }
+}
+
+function setupContinueGameModal() {
+    const dismissButton = document.getElementById('dismissContinueBtn');
+    const continueButton = document.getElementById('continueGameBtn');
+
+    dismissButton.addEventListener('click', () => {
+        document.getElementById('continueGameModal').classList.remove('active');
+        finishStartedGameSession();
+    });
+
+    continueButton.addEventListener('click', () => {
+        window.location.href = 'game';
+    });
+}
+
+async function checkAndShowContinueModal() {
+    const activeGameSession = await fetchURL('http://127.0.0.1:3000/api/active_game_session');
+    if (activeGameSession.success && activeGameSession.hasActiveSession) {
+        const continueModal = document.getElementById('continueGameModal');
+        const continueModalDescription = document.getElementById('continue-modal-desc');
+        if (activeGameSession.gameTitle) {
+            continueModalDescription.innerText = `Van egy futó játékod ezen a pályán: ${activeGameSession.gameTitle}. Szeretnéd folytatni?`;
+        }
+        continueModal.classList.add('active');
+    }
+}
+
+async function finishStartedGameSession() {
+    try {
+        const response = await fetch('http://127.0.0.1:3000/api/finish_game_session', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            }
+        });
+        if (!response.ok) {
+            throw new Error('Hiba a játék befejezésekor: ' + response.statusText);
+        }
+    } catch (error) {
+        console.error('POST hiba:', error);
     }
 }

@@ -298,18 +298,52 @@ router.get('/get_cover_image/:cover_image_id', async (request, response) => {
     }
 });
 
+router.get('/active_game_session', async (request, response) => {
+    try {
+        const userId = request.session?.userid || 1; //TODO: torles ha mar stabil a session
+        const activeSession = await database.selectLatestActiveGameSession(userId);
+
+        if (!activeSession) {
+            return response.status(200).json({ success: true, hasActiveSession: false });
+        }
+            
+        request.session.gameMapId = activeSession.game_maps_id;
+        response.status(200).json({
+            success: true,
+            hasActiveSession: true,
+            gameMapId: activeSession.game_maps_id,
+            sessionId: activeSession.session_id,
+            gameTitle: activeSession.title,
+            startedAt: activeSession.started_at
+        });
+    } catch (error) {
+        response.status(500).json({ success: false, message: 'Database error', error: error });
+    }
+});
+
+router.post('/finish_game_session', async (request, response) => {
+    try {
+        const userId = request.session?.userid || 1; //TODO: torles ha mar stabil a session
+        const activeSession = await database.selectLatestActiveGameSession(userId);
+        await database.finishGameSession(activeSession.session_id);
+        response.status(200).json({ success: true, message: 'Game session finished' });
+    } catch (error) {
+        response.status(500).json({ success: false, message: 'Database error', error: error });
+    }
+});
+
+
 router.post('/post_game_id', async (request, response) => {
     const gameMapId = Number(request.body.gameMapId);
     const userId = request.session?.userid || 1; //TODO: törlés ha már stabil a session
 
     if (!Number.isInteger(gameMapId) || gameMapId <= 0) {
-        return response.status(400).json({ success: false, message: 'Invalid gameMapId' });
+        response.status(400).json({ success: false, message: 'Invalid gameMapId' });
     }
     try {   
         await database.insertGameSession(userId, gameMapId);
-        
     } catch (error) {
-        return response.status(500).json({ success: false, message: 'Database error', error: error });
+        response.status(500).json({ success: false, message: 'Database error', error: error });
     }
     request.session.gameMapId = gameMapId;
     response.status(200).json({ success: true, message: 'Game map ID saved in session' });

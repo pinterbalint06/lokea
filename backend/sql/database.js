@@ -290,6 +290,27 @@ async function insertGameSession(userId, gameMapId) {
     await pool.execute(query, [userId, gameMapId]);
 }
 
+async function selectLatestActiveGameSession(userId) {
+    const query = `
+        SELECT game_sessions.session_id, game_sessions.game_maps_id, game_sessions.started_at, game_maps.title
+        FROM game_sessions
+            INNER JOIN game_maps ON game_sessions.game_maps_id = game_maps.game_maps_id
+        WHERE game_sessions.user_id = ? AND game_sessions.finished_at IS NULL
+        ORDER BY game_sessions.session_id DESC
+        LIMIT 1;
+    `;
+    const [result] = await pool.execute(query, [userId]);
+    return result.length > 0 ? result[0] : null;
+}
+
+async function finishGameSession(sessionId) {
+    const query = `
+        UPDATE game_sessions 
+        SET finished_at = CURRENT_TIMESTAMP 
+        WHERE session_id = ? AND finished_at IS NULL`;
+    const [result] = await pool.execute(query, [sessionId]);
+    return result;
+}
 
 //!Game map szerkesztéshez szükséges adatok lekérése
 async function getConnection() {
@@ -528,5 +549,7 @@ module.exports = {
     deleteProfilePic,
     getGameMaps,
     getImagePath,
-    insertGameSession
+    insertGameSession,
+    selectLatestActiveGameSession,
+    finishGameSession
 };
