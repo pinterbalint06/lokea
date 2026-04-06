@@ -57,7 +57,7 @@ describe("Map Creator API - /api/map-creator/", () => {
                 });
             });
 
-            describe("Input validation (400, 413, 422)", () => {
+            describe("Input validation (400, 413, 415, 422)", () => {
                 it("Should respond with 400 if the map id is incorrect", async () => {
                     await testInvalidIDs(
                         (id) => makeGetRequest({ id }),
@@ -166,7 +166,7 @@ describe("Map Creator API - /api/map-creator/", () => {
                 });
             });
 
-            describe("Input validation (400, 413, 422)", () => {
+            describe("Input validation (400, 413, 415, 422)", () => {
                 it("Should respond with 400 if the point id is incorrect", async () => {
                     await testInvalidIDs(
                         (id) => makePutRequest({ id }),
@@ -257,6 +257,14 @@ describe("Map Creator API - /api/map-creator/", () => {
                         const response = await makePutRequest({ file: tooBigFile });
 
                         expectErrorResponse(response, 413, ERRORS.COMMON.FILE_TOO_LARGE);
+                    });
+
+                    it("Should respond with 415 if the image mimetype is invalid", async () => {
+                        const response = await makePutRequest({ filename: "map.txt" });
+
+                        expect(mockConnection.beginTransaction).not.toHaveBeenCalled();
+
+                        expectErrorResponse(response, 415, ERRORS.COMMON.INVALID_IMAGE_TYPE);
                     });
                 });
             });
@@ -566,7 +574,7 @@ describe("Map Creator API - /api/map-creator/", () => {
                 });
             });
 
-            describe("Input validation (400, 413, 422)", () => {
+            describe("Input validation (400, 413, 415, 422)", () => {
 
                 it("Should respond with 400 if the map id is incorrect", async () => {
                     await testInvalidIDs(
@@ -669,6 +677,14 @@ describe("Map Creator API - /api/map-creator/", () => {
                         const response = await makePostRequest({ fileFieldName: "wrongFieldName" });
 
                         expectErrorResponse(response, 400, ERRORS.COMMON.FILE_UPLOAD_ERROR);
+                    });
+
+                    it("Should respond with 415 if the image mimetype is invalid", async () => {
+                        const response = await makePostRequest({ filename: "map.txt", file: Buffer.from("notanimage") });
+
+                        expect(mockConnection.beginTransaction).not.toHaveBeenCalled();
+
+                        expectErrorResponse(response, 415, ERRORS.COMMON.INVALID_IMAGE_TYPE);
                     });
                 });
             });
@@ -871,7 +887,7 @@ describe("Map Creator API - /api/map-creator/", () => {
                 });
             });
 
-            describe("Input validation (400, 413, 422)", () => {
+            describe("Input validation (400, 413, 415, 422)", () => {
                 it("Should respond with 400 if the point id is incorrect", async () => {
                     await testInvalidIDs(
                         (id) => makeDeleteRequest({ id }),

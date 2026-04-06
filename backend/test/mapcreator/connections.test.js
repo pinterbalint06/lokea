@@ -70,7 +70,7 @@ describe("Map Creator API - /api/map-creator/", () => {
                 });
             });
 
-            describe("Input validation (400, 413, 422)", () => {
+            describe("Input validation (400, 413, 415, 422)", () => {
                 it("Should respond with 400 if the game map id is incorrect", async () => {
                     await testInvalidIDs(
                         (id) => makeGetRequest({ id }),
@@ -140,7 +140,7 @@ describe("Map Creator API - /api/map-creator/", () => {
                 });
             });
 
-            describe("Input validation (400, 413, 422)", () => {
+            describe("Input validation (400, 413, 415, 422)", () => {
                 it("Should respond with 400 if a body is not provided", async () => {
                     const response = await makePutRequest({ directionStartToEnd: undefined, directionEndToStart: undefined });
 
@@ -343,7 +343,7 @@ describe("Map Creator API - /api/map-creator/", () => {
                 });
             });
 
-            describe("Input validation (400, 413, 422)", () => {
+            describe("Input validation (400, 413, 415, 422)", () => {
                 it("Should respond with 400 if the game map id is incorrect", async () => {
                     await testInvalidIDs(
                         (id) => makePostRequest({ id }),
@@ -554,7 +554,7 @@ describe("Map Creator API - /api/map-creator/", () => {
                 });
             });
 
-            describe("Input validation (400, 413, 422)", () => {
+            describe("Input validation (400, 413, 415, 422)", () => {
                 it("Should respond with 400 if the connection id is incorrect", async () => {
                     await testInvalidIDs(
                         (id) => makeDeleteRequest({ id }),

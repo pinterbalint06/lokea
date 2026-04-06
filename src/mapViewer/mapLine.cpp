@@ -34,7 +34,7 @@ MapLine::MapLine(int id, int startMarkerId, int endMarkerId, float thickness, ui
 
     // initialize with zero z is -0.005 so it is between the markers and the map
     // hiding all lines off-screen initially
-    for (int i = 0; i < MAX_LINE_REPETITIONS; ++i)
+    for (int i = 0; i < MAX_LINE_REPETITIONS; i++)
     {
         int vIdx = i * 4;
         //                                   x        y        z      w     nx    ny    nz    u     v
@@ -45,7 +45,7 @@ MapLine::MapLine(int id, int startMarkerId, int endMarkerId, float thickness, ui
     }
 
     uint32_t indices[6 * MAX_LINE_REPETITIONS];
-    for (int i = 0; i < MAX_LINE_REPETITIONS; ++i)
+    for (int i = 0; i < MAX_LINE_REPETITIONS; i++)
     {
         int vIdx = i * 4;
         int iIdx = i * 6;

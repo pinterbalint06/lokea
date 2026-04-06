@@ -36,7 +36,7 @@ MapMarker::MapMarker(int id, const std::string &textureUrl, float u, float v, fl
 
     Vertex vertices[4 * MAX_MARKER_REPETITIONS];
 
-    for (int i = 0; i < MAX_MARKER_REPETITIONS; ++i)
+    for (int i = 0; i < MAX_MARKER_REPETITIONS; i++)
     {
         int markerRepetitionId = i * 4;
         //                                             x        y     z     w     nx    ny    nz    u     v
@@ -48,7 +48,7 @@ MapMarker::MapMarker(int id, const std::string &textureUrl, float u, float v, fl
 
     uint32_t indices[6 * MAX_MARKER_REPETITIONS];
     int indicesIndex = 0;
-    for (int i = 0; i < MAX_MARKER_REPETITIONS; ++i)
+    for (int i = 0; i < MAX_MARKER_REPETITIONS; i++)
     {
         int markerRepetitionId = i * 4;
         indices[indicesIndex++] = markerRepetitionId + TOP_RIGHT;
@@ -132,7 +132,7 @@ void MapMarker::updateRenderPosition(const std::vector<Vec2> &positions, float s
     float planePerPixelX = 2.0f / screenWidth;
     float planePerPixelY = 2.0f / screenHeight;
 
-    for (int i = 0; i < MAX_MARKER_REPETITIONS; ++i)
+    for (int i = 0; i < MAX_MARKER_REPETITIONS; i++)
     {
         int markerRepetitionId = i * 4;
 
@@ -232,13 +232,45 @@ void MapMarker::updateRenderPosition(const std::vector<Vec2> &positions, float s
 
 bool MapMarker::doesPointOverlapRepetition(float pointX, float pointY, int repetitionIndex)
 {
-    float minX = vertices_[repetitionIndex * 4 + TOP_LEFT].x;
-    float maxX = vertices_[repetitionIndex * 4 + TOP_RIGHT].x;
-    float minY = vertices_[repetitionIndex * 4 + BOTTOM_LEFT].y;
-    float maxY = vertices_[repetitionIndex * 4 + TOP_LEFT].y;
+    int offset = repetitionIndex * 4;
+
+    int cornerIndices[4];
+    cornerIndices[0] = TOP_LEFT;
+    cornerIndices[1] = TOP_RIGHT;
+    cornerIndices[2] = BOTTOM_LEFT;
+    cornerIndices[3] = BOTTOM_RIGHT;
+
+    float minX = vertices_[offset + cornerIndices[0]].x;
+    float maxX = vertices_[offset + cornerIndices[0]].x;
+    float minY = vertices_[offset + cornerIndices[0]].y;
+    float maxY = vertices_[offset + cornerIndices[0]].y;
+
+    for (int i = 1; i < 4; i++)
+    {
+        float vX = vertices_[offset + cornerIndices[i]].x;
+        float vY = vertices_[offset + cornerIndices[i]].y;
+
+        if (vX < minX)
+        {
+            minX = vX;
+        }
+        if (vX > maxX)
+        {
+            maxX = vX;
+        }
+
+        if (vY < minY)
+        {
+            minY = vY;
+        }
+        if (vY > maxY)
+        {
+            maxY = vY;
+        }
+    }
 
     // if pointX in [minX;maxX] and y in [minY;maxY] then the point overlaps the marker (rectangle)
-    return (minX <= pointX && pointX <= maxX && minY <= pointY && pointY <= maxY);
+    return (pointX >= minX && pointX <= maxX && pointY >= minY && pointY <= maxY);
 }
 
 bool MapMarker::doesPointOverlap(float pointX, float pointY)

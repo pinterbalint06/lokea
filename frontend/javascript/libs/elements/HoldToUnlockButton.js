@@ -5,7 +5,7 @@ export class HoldToUnlockButton extends EventTarget {
     #isUnlocked;
     #unlockedDuringPress;
 
-    #clickCount
+    #clickCount;
     #clickTimeout;
 
     constructor(button, duration = 2000) {

@@ -1,8 +1,16 @@
 const multer = require("multer");
-const path = require("path");
 const fs = require("fs/promises");
 const crypto = require("crypto");
 const { TEMP_DIR, MAX_FILE_SIZE } = require("#config/mapStorage.js");
+const ERRORS = require("#utils/errorMessages.js");
+const AppError = require("#utils/AppError.js");
+
+const ALLOWED_IMAGE_TYPES = {
+    "image/jpeg": ".jpg",
+    "image/png": ".png",
+    "image/webp": ".webp",
+    "image/gif": ".gif"
+};
 
 const storage = multer.diskStorage({
     destination: async (request, file, callback) => {
@@ -15,16 +23,24 @@ const storage = multer.diskStorage({
     },
     filename: (request, file, callback) => {
         let uuid = crypto.randomBytes(16).toString("hex");
-        let extension = path.extname(file.originalname).toLowerCase();
+        const extension = ALLOWED_IMAGE_TYPES[file.mimetype] || "";
 
         callback(null, uuid + extension);
-    },
-    limits: { fileSize: MAX_FILE_SIZE }
+    }
 });
+
+const fileFilter = (request, file, callback) => {
+    if (ALLOWED_IMAGE_TYPES[file.mimetype]) {
+        callback(null, true);
+    } else {
+        callback(new AppError(ERRORS.COMMON.INVALID_IMAGE_TYPE, 415));
+    }
+};
 
 const upload = multer({
     storage,
-    limits: { fileSize: MAX_FILE_SIZE }
+    limits: { fileSize: MAX_FILE_SIZE },
+    fileFilter
 });
 
 module.exports = upload;

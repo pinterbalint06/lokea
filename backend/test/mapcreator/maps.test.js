@@ -56,7 +56,7 @@ describe("Map Creator API - /api/map-creator/", () => {
                 });
             })
 
-            describe("Input validation (400, 413, 422)", () => {
+            describe("Input validation (400, 413, 415, 422)", () => {
                 it("Should respond with 400 if the game map id is incorrect", async () => {
                     await testInvalidIDs(
                         (id) => makeGetRequest({ id }),
@@ -128,7 +128,7 @@ describe("Map Creator API - /api/map-creator/", () => {
                 });
             });
 
-            describe("Input validation (400, 413, 422)", () => {
+            describe("Input validation (400, 413, 415, 422)", () => {
                 it("Should respond with 400 if the map id is incorrect", async () => {
                     await testInvalidIDs(
                         (id) => makePutRequest({ id }),
@@ -251,7 +251,7 @@ describe("Map Creator API - /api/map-creator/", () => {
                 });
             });
 
-            describe("Input validation (400, 413, 422)", () => {
+            describe("Input validation (400, 413, 415, 422)", () => {
                 it("Should respond with 400 if the game map id is incorrect", async () => {
                     await testInvalidIDs(
                         (id) => makePostRequest({ id }),
@@ -322,6 +322,14 @@ describe("Map Creator API - /api/map-creator/", () => {
                         expect(deleteFile).toHaveBeenCalledWith(expect.any(String));
 
                         expectErrorResponse(response, 422, ERRORS.COMMON.IMAGE_PROCESSING_ERROR);
+                    });
+
+                    it("Should respond with 415 if the image mimetype is invalid", async () => {
+                        const response = await makePostRequest({ filename: "map.txt", file: Buffer.from("notanimage") });
+
+                        expect(mockConnection.beginTransaction).not.toHaveBeenCalled();
+
+                        expectErrorResponse(response, 415, ERRORS.COMMON.INVALID_IMAGE_TYPE);
                     });
                 });
             });
@@ -504,7 +512,7 @@ describe("Map Creator API - /api/map-creator/", () => {
                 });
             });
 
-            describe("Input validation (400, 413, 422)", () => {
+            describe("Input validation (400, 413, 415, 422)", () => {
                 it("Should respond with 400 if the map id is incorrect", async () => {
                     await testInvalidIDs(
                         (id) => makeDeleteRequest({ id }),

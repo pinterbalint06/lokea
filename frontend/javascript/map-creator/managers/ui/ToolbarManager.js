@@ -33,10 +33,6 @@ export class ToolbarManager {
         this.elements.addNewMarkerButton.addEventListener("click", () => {
             this.bus.emit(EVENTS.UI_MARKER_PLACEMENT_REQUESTED);
         });
-
-        this.bus.on(EVENTS.STATE_UPDATED, () => {
-            this.#updateVisibility();
-        });
     }
 
     #bindBusEvents() {

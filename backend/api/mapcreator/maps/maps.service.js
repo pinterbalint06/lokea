@@ -4,7 +4,7 @@ const ERRORS = require("#utils/errorMessages.js");
 const fs = require("fs/promises");
 const path = require("path");
 const crypto = require("crypto");
-const { UPLOAD_ROOT } = require("#config/mapStorage.js");
+const { UPLOAD_ROOT, isInsideRoot } = require("#config/mapStorage.js");
 const { processImageMetadata, createWebpAndLowRes } = require("#utils/imageProcessor.js");
 const { deleteFile } = require("#utils/fileUtils.js");
 const { assertUserOwnsGameMap, assertUserOwnsMap, cleanupAfterError } = require("#mapcreator/shared/utils/mapcreator.utils.js");
@@ -158,7 +158,9 @@ async function deleteMap(userId, mapID) {
         );
 
         try {
-            await fs.rm(targetPath, { recursive: true, force: true });
+            if (isInsideRoot(targetPath)) {
+                await fs.rm(targetPath, { recursive: true, force: true });
+            }
         } catch (err) {
             console.error(`Error deleting directory ${targetPath}: ${err.message}`);
         }

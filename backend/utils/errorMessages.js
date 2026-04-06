@@ -7,7 +7,8 @@ const ERRORS = {
         IMAGE_PROCESSING_ERROR: "Hiba a kép feldolgozásakor!",
         UNEXPECTED_ERROR: "Váratlan hiba történt!",
         INVALID_RESOLUTION: "Helytelen felbontás!",
-        FILE_NOT_FOUND: "A fájl nem létezik vagy helytelen!"
+        FILE_NOT_FOUND: "A fájl nem létezik vagy helytelen!",
+        INVALID_IMAGE_TYPE: "Érvénytelen fájltípus! Csak JPG, PNG, WEBP és GIF képek engedélyezettek!"
     },
 
     GAMEMAP: {

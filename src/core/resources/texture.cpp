@@ -30,6 +30,7 @@ Texture::Texture(int width, int height, bool invisiblePlaceholder)
     height_ = height;
     invisiblePlaceholder_ = invisiblePlaceholder;
     imgData_ = (uint8_t *)malloc(width_ * height_ * 3 * sizeof(uint8_t));
+    options_ = TextureStyle::Default;
     initGL();
 }
 

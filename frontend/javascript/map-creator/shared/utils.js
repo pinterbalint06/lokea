@@ -74,8 +74,6 @@ export function showToast(container, message, type = "", isClosable, options = {
 
     toastDiv.appendChild(toastBody);
 
-    toastElement.appendChild(toastDiv);
-
     if (isClosable) {
         let closeButton = document.createElement("button");
         closeButton.setAttribute("type", "button");
