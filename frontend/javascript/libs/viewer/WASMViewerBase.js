@@ -227,25 +227,7 @@ export class WASMViewerBase {
                 });
         }
 
-        if (!this._engine) {
-            await this._engineInitPromise;
-
-            if (this._isDestroyed) {
-                throw new WebassemblyError(
-                    "WASM Viewer is destroyed!",
-                    {
-                        "type": WASM_ERROR_TYPES.DESTROYED
-                    });
-            }
-
-            if (!this._engine) {
-                throw new WebassemblyError(
-                    "Engine failed to initialize",
-                    {
-                        "type": WASM_ERROR_TYPES.INITIALIZATION
-                    });
-            }
-        }
+        await this._ensureEngineReadyAsync();
 
         if (this._canvasWidth != width || this._canvasHeight != height) {
             this._canvasWidth = width;

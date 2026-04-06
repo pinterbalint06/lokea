@@ -12,6 +12,7 @@ namespace Materials
         setSpecularity(specularity);
         setShininess(shininess);
         setTexture(nullptr);
+        data_.padding = 0.0f;
     }
 
     void Material::setAlbedo(Color albedo)
