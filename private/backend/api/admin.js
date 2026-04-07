@@ -7,6 +7,7 @@ const bcrypt = require('bcrypt');
 const validator = require('validator');
 const { body, validationResult } = require("express-validator");
 const sharp = require('sharp');
+const { sendWelcomeEmail, sendChangeEmail, sendDeleteEmail } = require('../../../backend/mails.js')
 
 //!Multer
 const multer = require('multer'); //?npm install multer
@@ -61,6 +62,7 @@ router.post("/signupFromAdmin", auth.checkAuth, auth.checkRole("ADMIN"),
                 if (insert.success) {
                     let userid = insert.insertId;
                     await database.addLog(userid, 'Sign up (A)');
+                    await sendWelcomeEmail(email, username);
                     response.status(201).json({
                         success: true,
                         message: "Sikeres regisztráció!"
@@ -136,6 +138,7 @@ router.post('/updateUserFromAdmin', auth.checkAuth, auth.checkRole("ADMIN"),
                     let success = await database.updateUserByAdmin(user_id, username, email, role, is_2fa);
                     if (success == 1) {
                         await database.addLog(request.session.userid, 'User update (A)', user_id);
+                        // await sendChangeEmail(email, username);
                         response.status(204).json({ message: "Sikeres felhasználófrissités!" });
                     }
                     else {
@@ -169,18 +172,14 @@ router.post('/userSelfUpdate', auth.checkAuth,
             }
             else {
                 let { username, email, is_2fa } = request.body;
-                if (role == "ADMIN" && request.session.role != "LORD") {
-                    response.status(403).json({ error: "Nincs jogosultságod ehhez!" });
+                let success = await database.updateUserByAdmin(request.session.userid, username, email, role, is_2fa);
+                if (success == 1) {
+                    await database.addLog(request.session.userid, 'User update');
+                    // await sendChangeEmail(email, username);
+                    response.status(204).json({ message: "Sikeres felhasználófrissités!" });
                 }
                 else {
-                    let success = await database.updateUserByAdmin(request.session.userid, username, email, role, is_2fa);
-                    if (success == 1) {
-                        await database.addLog(request.session.userid, 'User update');
-                        response.status(204).json({ message: "Sikeres felhasználófrissités!" });
-                    }
-                    else {
-                        response.status(404).json({ error: "Nincs ilyen felhasználó, vagy a felhasználó inaktiv már!" });
-                    }
+                    response.status(404).json({ error: "Nincs ilyen felhasználó, vagy a felhasználó inaktiv már!" });
                 }
             }
         } catch (error) {
@@ -203,18 +202,13 @@ router.post('/userDarkModeUpdate', auth.checkAuth,
             }
             else {
                 let { darkmode } = request.body;
-                if (role == "ADMIN" && request.session.role != "LORD") {
-                    response.status(403).json({ error: "Nincs jogosultságod ehhez!" });
+                let success = await database.updateDarkMode(request.session.userid, darkmode);
+                if (success == 1) {
+                    await database.addLog(request.session.userid, 'User update');
+                    response.status(204).json({ message: "Sikeres felhasználófrissités!" });
                 }
                 else {
-                    let success = await database.updateDarkMode(request.session.userid, darkmode);
-                    if (success == 1) {
-                        await database.addLog(request.session.userid, 'User update');
-                        response.status(204).json({ message: "Sikeres felhasználófrissités!" });
-                    }
-                    else {
-                        response.status(404).json({ error: "Nincs ilyen felhasználó, vagy a felhasználó inaktiv már!" });
-                    }
+                    response.status(404).json({ error: "Nincs ilyen felhasználó, vagy a felhasználó inaktiv már!" });
                 }
             }
         } catch (error) {
@@ -247,6 +241,7 @@ router.post('/userToInactive', auth.checkAuth, auth.checkRole("ADMIN"),
                 }
                 else {
                     await database.addLog(request.session.userid, 'User delete (A)', userId);
+                    // await sendDeleteEmail(email, username);
                     response.status(204).end();
                 }
             }

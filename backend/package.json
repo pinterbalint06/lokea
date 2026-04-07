@@ -22,6 +22,7 @@
         "http": "^0.0.1-security",
         "multer": "^2.0.2",
         "mysql2": "^3.16.1",
+        "nodemailer": "^8.0.4",
         "sharp": "^0.34.5",
         "socket.io": "^4.8.3",
         "validator": "^13.15.26"

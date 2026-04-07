@@ -7,6 +7,7 @@ const bcrypt = require('bcrypt');
 const validator = require('validator');
 const { body, check, validationResult } = require("express-validator");
 const sharp = require('sharp');
+const { sendWelcomeEmail, sendDeleteEmail, sendChangeEmail, sendPasswordChangeEmail } = require('../mails.js')
 
 //!Multer
 const multer = require('multer'); //?npm install multer
@@ -67,6 +68,7 @@ router.post("/signup",
                 if (insert.success) {
                     let userid = insert.insertId;
                     await database.addLog(userid, 'Sign up');
+                    // await sendWelcomeEmail(email, username);
                     response.status(201).json({
                         success: true,
                         message: "Sikeres regisztráció!"
@@ -226,6 +228,7 @@ router.put('/updateUser', auth.checkAuth,
                 if (result == 1) {
                     await database.addLog(request.session.userid, 'User update');
                     response.status(200).json({ message: "Sikeres frissités!" });
+                    // await sendChangeEmail(email, username);
                 }
                 else {
                     response.status(200).json({ message: "Nem történt módositás!" });
@@ -257,8 +260,9 @@ router.put("/updatePassword", auth.checkAuth,
             }
             else {
                 let { oldPass, newPass } = request.body;
-                await database.updatePassword(request.session.userid, oldPass, newPass);
+                await database.updatePassword(request.session.userid, oldPass, newPass); // atiras, hogy visszaadja az emailt, username-t az emailhez
                 await database.addLog(request.session.userid, 'Password update');
+                // await sendPasswordChangeEmail(email, username);
                 response.status(200).json({ message: "Sikeres frissités!" });
             }
 
@@ -277,6 +281,7 @@ router.post("/inactiveUser", auth.checkAuth, async (request, response) => {
             else {
                 await database.addLog(request.session.userid, 'User delete');
                 response.clearCookie('geo.sid');
+                // await sendDeleteEmail(email, username);
                 response.status(200).json({ success: true, message: "Sikeres törlés!" });
             }
         });
