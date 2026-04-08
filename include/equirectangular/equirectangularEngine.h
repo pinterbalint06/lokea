@@ -8,9 +8,11 @@
 #include "core/math/vector.h"
 
 #include "core/engine.h"
+#include "equirectangular/equirectangularEngineConfig.h"
 
 // Forward declaration
 class Mesh; // defined in "core/resources/mesh.h"
+class Arrow; // defined in "equirectangular/Arrow.h"
 
 enum EQUIRECTANGULARMODE
 {
@@ -19,18 +21,11 @@ enum EQUIRECTANGULARMODE
     SPLIT_4X4 = 4
 };
 
-// TODO: ennek osztaly es renderelese
-struct ArrowVector
-{
-    int id;
-    Vec2 direction;
-};
-
 class EquirectangularEngine : public Engine
 {
 private:
     int currentRequestID;
-    std::vector<ArrowVector> arrows_;
+    std::vector<std::shared_ptr<Arrow>> arrows_;
 
     std::shared_ptr<Mesh> generateSphereSegment(int rings, int segments, float radius,
                                 float uMin, float uMax, float vMin, float vMax);
@@ -41,6 +36,8 @@ private:
     void changeImageMode(EQUIRECTANGULARMODE mode);
     void uploadTiles(const std::string &url, int ctx, emscripten::val onSuccess, emscripten::val onError);
 
+    bool isValidClick(const Vec3 &clickDirection, bool isSingleClick, bool &outIsDirectArrowClick);
+    int findClosestArrowInDirection(const Vec3 &clickDirection, bool isDirectArrowClick);
 public:
     EquirectangularEngine(const std::string &canvasID);
     ~EquirectangularEngine();
@@ -49,7 +46,7 @@ public:
 
     void clearArrows();
     void addArrow(int id, float yaw);
-    int getClickedArrow(float screenX, float screenY);
+    int getClickedArrow(float screenX, float screenY, bool isSingleClick);
 };
 
 #endif

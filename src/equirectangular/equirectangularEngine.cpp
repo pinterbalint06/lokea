@@ -18,6 +18,7 @@
 
 #include "core/engine.h"
 
+#include "equirectangular/arrow.h"
 #include "equirectangular/equirectangularEngine.h"
 
 #include "core/math/mathUtils.h"
@@ -129,9 +130,9 @@ std::shared_ptr<Mesh> EquirectangularEngine::generateSphereSegment(int rings, in
 
 void EquirectangularEngine::generateSphere()
 {
-    int rings = 32;
-    int segs = 32;
-    float rad = 10.0f;
+    int rings = EQUIRECTANGULAR_SETTINGS.sphereRingCount;
+    int segs = EQUIRECTANGULAR_SETTINGS.sphereSegmentCount;
+    float rad = EQUIRECTANGULAR_SETTINGS.sphereRadius;
 
     const int tiles = currMode_;
     const float rec = 1.0f / (float)tiles;
@@ -155,6 +156,7 @@ void EquirectangularEngine::generateSphere()
 EquirectangularEngine::EquirectangularEngine(const std::string &canvasID) : Engine(canvasID)
 {
     setShadingMode(Shaders::SHADINGMODE::NO_SHADING);
+    enableAlphaBlending();
 
     currentRequestID = 0;
     const int maxTextures = 16;
@@ -255,47 +257,65 @@ void EquirectangularEngine::clearImage()
 
 void EquirectangularEngine::clearArrows()
 {
+    for (int i = 0; i < arrows_.size(); i++)
+    {
+        removeMesh(arrows_[i]);
+    }
     arrows_.clear();
 }
 
 void EquirectangularEngine::addArrow(int id, float yaw)
 {
-    ArrowVector arrow;
-    arrow.id = id;
+    std::shared_ptr<Arrow> newArrow = std::make_shared<Arrow>(id, yaw);
 
-    Vec2 direction;
-    direction.x = -std::sin(yaw);
-    direction.y = -std::cos(yaw);
+    arrows_.push_back(newArrow);
 
-    arrow.direction = direction;
-
-    arrows_.push_back(arrow);
+    addMesh(newArrow);
 }
 
-int EquirectangularEngine::getClickedArrow(float screenX, float screenY)
+bool EquirectangularEngine::isValidClick(const Vec3 &clickDirection, bool isSingleClick, bool &outIsDirectArrowClick)
 {
-    Vec3 clickDirection = scene_->getCamera()->getClickRayVector(screenX, screenY);
+    outIsDirectArrowClick = (clickDirection.y <= -0.764f && clickDirection.y >= -0.83f);
+    bool isHorizonClick = (std::abs(clickDirection.y) <= 0.6f);
 
+    return isSingleClick ? outIsDirectArrowClick : (outIsDirectArrowClick || isHorizonClick);
+}
+
+int EquirectangularEngine::findClosestArrowInDirection(const Vec3 &clickDirection, bool isDirectArrowClick)
+{
+    Vec2 horizontalDirection(clickDirection.x, clickDirection.z);
+    horizontalDirection.normalize();
+
+    float highestDotProduct = isDirectArrowClick ? 0.976f : 0.995f;
     int bestArrowId = -1;
 
-    if (std::abs(clickDirection.y) <= 0.6f)
+    for (int i = 0; i < arrows_.size(); i++)
     {
-        Vec2 horizontalClickDirection(clickDirection.x, clickDirection.z);
-        horizontalClickDirection.normalize();
+        Vec2 arrowDirection = arrows_[i]->getDirection();
+        float currentDotProduct = Vec2::dotProduct(horizontalDirection, arrowDirection);
 
-        float closestArrowDotProduct = 0.995f;
-
-        for (int i = 0; i < arrows_.size(); i++)
+        if (currentDotProduct > highestDotProduct)
         {
-            float dotproduct = Vec2::dotProduct(horizontalClickDirection, arrows_[i].direction);
-
-            if (dotproduct > closestArrowDotProduct)
-            {
-                closestArrowDotProduct = dotproduct;
-                bestArrowId = arrows_[i].id;
-            }
+            highestDotProduct = currentDotProduct;
+            bestArrowId = arrows_[i]->getId();
         }
     }
 
     return bestArrowId;
+}
+
+int EquirectangularEngine::getClickedArrow(float screenX, float screenY, bool isSingleClick)
+{
+    Vec3 clickDirection = scene_->getCamera()->getClickRayVector(screenX, screenY);
+
+    bool isDirectArrowClick = false;
+    bool isValid = isValidClick(clickDirection, isSingleClick, isDirectArrowClick);
+    int clickedArrowId = -1;
+
+    if (isValid)
+    {
+        clickedArrowId = findClosestArrowInDirection(clickDirection, isDirectArrowClick);
+    }
+
+    return clickedArrowId;
 }

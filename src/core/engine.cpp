@@ -41,6 +41,12 @@ Engine::~Engine()
 {
 }
 
+void Engine::enableAlphaBlending()
+{
+    glEnable(GL_BLEND);
+    glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+}
+
 void Engine::setLightIntensity(float intensity)
 {
     scene_->getLight()->setIntensity(intensity);

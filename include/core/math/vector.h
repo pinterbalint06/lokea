@@ -19,7 +19,7 @@ struct Vec2
         y = 0.0f;
     }
 
-    Vec2(float x, float y)
+    constexpr Vec2(float x, float y)
     {
         this->x = x;
         this->y = y;

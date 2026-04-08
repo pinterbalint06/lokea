@@ -227,9 +227,19 @@ export class EquirectangularViewer extends WASMViewerBase {
                 }
                 return true;
             },
+            onClick: (x, y) => {
+                if (this._engine) {
+                    let clickedId = this._engine.getClickedArrow(x, y, true);
+
+                    if (clickedId != -1 && this._arrowCallbacks[clickedId]) {
+                        let callback = this._arrowCallbacks[clickedId];
+                        callback();
+                    }
+                }
+            },
             onDoubleClick: (x, y) => {
                 if (this._engine) {
-                    let clickedId = this._engine.getClickedArrow(x, y);
+                    let clickedId = this._engine.getClickedArrow(x, y, false);
 
                     if (clickedId != -1 && this._arrowCallbacks[clickedId]) {
                         let callback = this._arrowCallbacks[clickedId];

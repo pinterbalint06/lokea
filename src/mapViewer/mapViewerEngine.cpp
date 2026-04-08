@@ -509,9 +509,7 @@ MapViewerEngine::MapViewerEngine(const std::string &canvasID, int width, int hei
     // set image dimension to 1:1 aspect ratio so it only covers the plane
     scene_->getCamera()->setImageDimensions(1.0f, 1.0f);
 
-    // enable transparent background for marker
-    glEnable(GL_BLEND);
-    glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+    enableAlphaBlending();
 
     // disable depth mask so map markers are not overlapping
     glDepthMask(GL_FALSE);

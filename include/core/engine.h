@@ -22,6 +22,8 @@ protected:
     std::unique_ptr<Renderer> renderer_;
     std::string canvas_;
 
+    void enableAlphaBlending();
+
 public:
     Engine(std::string canvID);
     virtual ~Engine();

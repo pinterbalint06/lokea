@@ -103,6 +103,9 @@ async function loadCathedral() {
     equirectangularViewer.addArrow(1, degreeToRadian(270), async () => {
         await loadHerdecke();
     });
+    equirectangularViewer.addArrow(2, degreeToRadian(90), async () => {
+        await loadHerdecke();
+    });
 }
 
 async function init() {

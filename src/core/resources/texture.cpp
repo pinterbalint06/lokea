@@ -12,24 +12,28 @@ extern "C"
     extern void textureFromURL(int textureID, const char *url, int ctxId, bool needsMipmaps, emscripten::EM_VAL onSuccessHandle, emscripten::EM_VAL onErrorHandle);
 }
 
-Texture::Texture(bool invisiblePlaceholder)
+Texture::Texture(bool invisiblePlaceholder, bool hasAlpha)
 {
     width_ = 0;
     height_ = 0;
     textureGL_ = 0;
     invisiblePlaceholder_ = invisiblePlaceholder;
+    hasAlpha_ = hasAlpha;
     imgData_ = nullptr;
     options_ = TextureStyle::Default;
     initGL();
 }
 
-Texture::Texture(int width, int height, bool invisiblePlaceholder)
+Texture::Texture(int width, int height, bool invisiblePlaceholder, bool hasAlpha)
 {
     textureGL_ = 0;
     width_ = width;
     height_ = height;
     invisiblePlaceholder_ = invisiblePlaceholder;
-    imgData_ = (uint8_t *)malloc(width_ * height_ * 3 * sizeof(uint8_t));
+
+    int channels = hasAlpha_ ? 4 : 3;
+    imgData_ = (uint8_t *)malloc(width_ * height_ * channels * sizeof(uint8_t));
+
     options_ = TextureStyle::Default;
     initGL();
 }
@@ -90,12 +94,24 @@ void Texture::generatePlaceholder()
     {
         glBindTexture(GL_TEXTURE_2D, textureGL_);
 
-        uint8_t placeholder[4];
-        placeholder[0] = 0;
-        placeholder[1] = 0;
-        placeholder[2] = 0;
-        placeholder[3] = invisiblePlaceholder_ ? 0 : 255;
-        glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, 1, 1, 0, GL_RGBA, GL_UNSIGNED_BYTE, placeholder);
+        if (hasAlpha_)
+        {
+            uint8_t placeholder[4];
+            placeholder[0] = 0;
+            placeholder[1] = 0;
+            placeholder[2] = 0;
+            placeholder[3] = invisiblePlaceholder_ ? 0 : 255;
+            glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, 1, 1, 0, GL_RGBA, GL_UNSIGNED_BYTE, placeholder);
+        }
+        else
+        {
+            uint8_t placeholder[3];
+            placeholder[0] = 0;
+            placeholder[1] = 0;
+            placeholder[2] = 0;
+            glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, 1, 1, 0, GL_RGB, GL_UNSIGNED_BYTE, placeholder);
+        }
+
         glGenerateMipmap(GL_TEXTURE_2D);
 
         glBindTexture(GL_TEXTURE_2D, 0);
@@ -127,7 +143,10 @@ void Texture::loadFromUrl(const std::string &url, emscripten::val onSuccess, ems
 void Texture::uploadToGPU()
 {
     glBindTexture(GL_TEXTURE_2D, textureGL_);
-    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, width_, height_, 0, GL_RGB, GL_UNSIGNED_BYTE, imgData_);
+
+    GLuint format = hasAlpha_ ? GL_RGBA : GL_RGB;
+    glTexImage2D(GL_TEXTURE_2D, 0, format, width_, height_, 0, format, GL_UNSIGNED_BYTE, imgData_);
+
     if (needsMipmaps())
     {
         glGenerateMipmap(GL_TEXTURE_2D);

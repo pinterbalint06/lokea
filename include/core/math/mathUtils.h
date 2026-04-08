@@ -65,6 +65,90 @@ namespace MathUtils
         m[15] = 1.0f;
     }
 
+    inline void setTranslation(float *matrix, float translateX, float translateY, float translateZ)
+    {
+        setIdentity(matrix);
+        /*
+            translation matrix:
+            [1,          0,          0,          0]
+            [0,          1,          0,          0]
+            [0,          0,          1,          0]
+            [translateX, translateY, translateZ, 1]
+        */
+        matrix[12] = translateX;
+        matrix[13] = translateY;
+        matrix[14] = translateZ;
+    }
+
+    inline void setScale(float *matrix, float scaleX, float scaleY, float scaleZ)
+    {
+        setIdentity(matrix);
+        /*
+            scale matrix:
+            [scaleX, 0,      0,      0]
+            [0,      scaleY, 0,      0]
+            [0,      0,      scaleZ, 0]
+            [0,      0,      0,      1]
+        */
+        matrix[0] = scaleX;
+        matrix[5] = scaleY;
+        matrix[10] = scaleZ;
+    }
+
+    inline void setRotationX(float *matrix, float angleRadians)
+    {
+        setIdentity(matrix);
+        float cosine = std::cos(angleRadians);
+        float sine = std::sin(angleRadians);
+        /*
+            X rotation matrix:
+            [1, 0,     0,    0]
+            [0, cos,   sine, 0]
+            [0, -sine, cos,  0]
+            [0, 0,     0,    1]
+        */
+        matrix[5] = cosine;
+        matrix[6] = sine;
+        matrix[9] = -sine;
+        matrix[10] = cosine;
+    }
+
+    inline void setRotationY(float *matrix, float angleRadians)
+    {
+        setIdentity(matrix);
+        float cosine = std::cos(angleRadians);
+        float sine = std::sin(angleRadians);
+        /*
+            Y rotation matrix:
+            [cos,  0, -sine, 0]
+            [0,    1, 0,     0]
+            [sine, 0, cos,   0]
+            [0,    0, 0,     1]
+        */
+        matrix[0] = cosine;
+        matrix[2] = -sine;
+        matrix[8] = sine;
+        matrix[10] = cosine;
+    }
+
+    inline void setRotationZ(float *matrix, float angleRadians)
+    {
+        setIdentity(matrix);
+        float cosine = std::cos(angleRadians);
+        float sine = std::sin(angleRadians);
+        /*
+            Z rotation matrix:
+            [cos,   sine, 0, 0]
+            [-sine, cos,  0, 0]
+            [0,     0,    1, 0]
+            [0,     0,    0, 1]
+        */
+        matrix[0] = cosine;
+        matrix[1] = sine;
+        matrix[4] = -sine;
+        matrix[5] = cosine;
+    }
+
     inline float sign(float val)
     {
         return static_cast<float>((val > 0.0f) - (val < 0.0f));

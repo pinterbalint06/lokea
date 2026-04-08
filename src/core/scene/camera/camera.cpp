@@ -130,40 +130,14 @@ void Camera::updateViewMatrix()
         float sinX = sinf(pitch_);
         float cosX = cosf(pitch_);
 
-        /*
-        Y rotation matrix:
-            [cos, 0,  -sin, 0]
-            [0,   1,  0,    0]
-            [sin, 0,  cos,  0]
-            [0,   0,  0,    1]
-        */
-        MathUtils::setIdentity(yRotMatr);
-        yRotMatr[0] = cosY;
-        yRotMatr[2] = -sinY;
-        yRotMatr[8] = sinY;
-        yRotMatr[10] = cosY;
-
-        /*
-        X rotation matrix:
-            [1, 0,    0,   0]
-            [0, cos,  sin, 0]
-            [0, -sin, cos, 0]
-            [0, 0,    0,   1]
-        */
-        MathUtils::setIdentity(xRotMatr);
-        xRotMatr[5] = cosX;
-        xRotMatr[6] = sinX;
-        xRotMatr[9] = -sinX;
-        xRotMatr[10] = cosX;
+        MathUtils::setRotationY(yRotMatr, yaw_);
+        MathUtils::setRotationX(xRotMatr, pitch_);
 
         // order: Z Y X
         MathUtils::multiplyMatrix(yRotMatr, xRotMatr, rotMatr);
 
         // translation matrix
-        MathUtils::setIdentity(translation);
-        translation[12] = -data_.camPos[0];
-        translation[13] = -data_.camPos[1];
-        translation[14] = -data_.camPos[2];
+        MathUtils::setTranslation(translation, -data_.camPos[0], -data_.camPos[1], -data_.camPos[2]);
 
         MathUtils::multiplyMatrix(translation, rotMatr, viewMatrix_);
         newView_ = false;
