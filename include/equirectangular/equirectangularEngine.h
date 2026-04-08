@@ -5,6 +5,8 @@
 #include <vector>
 #include <memory>
 
+#include "core/math/vector.h"
+
 #include "core/engine.h"
 
 // Forward declaration
@@ -17,10 +19,18 @@ enum EQUIRECTANGULARMODE
     SPLIT_4X4 = 4
 };
 
+// TODO: ennek osztaly es renderelese
+struct ArrowVector
+{
+    int id;
+    Vec2 direction;
+};
+
 class EquirectangularEngine : public Engine
 {
 private:
     int currentRequestID;
+    std::vector<ArrowVector> arrows_;
 
     std::shared_ptr<Mesh> generateSphereSegment(int rings, int segments, float radius,
                                 float uMin, float uMax, float vMin, float vMax);
@@ -36,6 +46,10 @@ public:
     ~EquirectangularEngine();
     void loadEquirectangularImage(const std::string &url, int width, int height, emscripten::val onSuccess, emscripten::val onError);
     void clearImage();
+
+    void clearArrows();
+    void addArrow(int id, float yaw);
+    int getClickedArrow(float screenX, float screenY);
 };
 
 #endif

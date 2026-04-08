@@ -1,4 +1,5 @@
 import { EquirectangularViewer } from "./libs/viewer/EquirectangularViewer.js";
+import { degreeToRadian } from "./libs/math/mathUtils.js";
 
 // |------------------|
 // | GLOBAL VARIABLES |
@@ -81,6 +82,29 @@ function createOptionsForImageList() {
     }
 }
 
+async function loadHerdecke() {
+    equirectangularViewer.clearArrows();
+    equirectangularViewer.clearImage();
+    equirectangularViewer.setYaw(1.2);
+    await equirectangularViewer.loadImage(imageList[1].url, imageList[1].width, imageList[1].height);
+
+    equirectangularViewer.addArrow(1, degreeToRadian(180), async () => {
+        await loadCathedral();
+    });
+}
+
+async function loadCathedral() {
+    equirectangularViewer.clearArrows();
+    equirectangularViewer.clearImage();
+    await equirectangularViewer.loadImage(imageList[0].url, imageList[0].width, imageList[0].height);
+    equirectangularViewer.setYaw(0);
+
+    // TODO animacio a mozgasnak
+    equirectangularViewer.addArrow(1, degreeToRadian(270), async () => {
+        await loadHerdecke();
+    });
+}
+
 async function init() {
     createOptionsForImageList();
     document.getElementById("autoRotate").addEventListener("change", setAutoRotate);
@@ -92,16 +116,12 @@ async function init() {
             "canvasHeight": 1000
         }
     );
+
+    await equirectangularViewer.ready();
+
     let select = document.getElementById("kepek");
     if (imageList[0]) {
-        equirectangularViewer.loadImage(imageList[select.value].url, imageList[select.value].width, imageList[select.value].height).then(function () {
-            console.log("image loaded");
-        }).catch(function (e) {
-            console.log(e);
-            for (const key in e) {
-                console.log(key, e[key]);
-            }
-        });
+        await loadCathedral();
     }
 }
 

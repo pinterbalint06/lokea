@@ -9,6 +9,7 @@
 #include <cstdint>
 #include <memory>
 
+#include "core/math/vector.h"
 #include "core/rendering/shader.h"
 #include "core/resources/mesh.h"
 #include "core/resources/vertex.h"
@@ -250,4 +251,51 @@ void EquirectangularEngine::clearImage()
     {
         imageTiles_[i]->clear();
     }
+}
+
+void EquirectangularEngine::clearArrows()
+{
+    arrows_.clear();
+}
+
+void EquirectangularEngine::addArrow(int id, float yaw)
+{
+    ArrowVector arrow;
+    arrow.id = id;
+
+    Vec2 direction;
+    direction.x = -std::sin(yaw);
+    direction.y = -std::cos(yaw);
+
+    arrow.direction = direction;
+
+    arrows_.push_back(arrow);
+}
+
+int EquirectangularEngine::getClickedArrow(float screenX, float screenY)
+{
+    Vec3 clickDirection = scene_->getCamera()->getClickRayVector(screenX, screenY);
+
+    int bestArrowId = -1;
+
+    if (std::abs(clickDirection.y) <= 0.6f)
+    {
+        Vec2 horizontalClickDirection(clickDirection.x, clickDirection.z);
+        horizontalClickDirection.normalize();
+
+        float closestArrowDotProduct = 0.995f;
+
+        for (int i = 0; i < arrows_.size(); i++)
+        {
+            float dotproduct = Vec2::dotProduct(horizontalClickDirection, arrows_[i].direction);
+
+            if (dotproduct > closestArrowDotProduct)
+            {
+                closestArrowDotProduct = dotproduct;
+                bestArrowId = arrows_[i].id;
+            }
+        }
+    }
+
+    return bestArrowId;
 }

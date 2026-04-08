@@ -471,6 +471,7 @@ export class CanvasInput {
 
     #triggerClick(releasedPointer) {
         const releasedCoordinates = this.#getCanvasCoordinates(releasedPointer.clientX, releasedPointer.clientY);
+        // TODO double click
         this.onClick(releasedCoordinates.x, releasedCoordinates.y);
     }
 

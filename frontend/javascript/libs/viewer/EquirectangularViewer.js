@@ -41,6 +41,8 @@ export class EquirectangularViewer extends WASMViewerBase {
         this.#currentImageRequestID = 0;
         this.autoRotate = options.autoRotate != undefined ? options.autoRotate : DEFAULT_OPTIONS["autoRotate"];
         this.autoRotateSpeed = options.autoRotateSpeed != undefined ? options.autoRotateSpeed : DEFAULT_OPTIONS["autoRotateSpeed"];
+
+        this._arrowCallbacks = {};
     }
 
     // |------------------|
@@ -160,6 +162,43 @@ export class EquirectangularViewer extends WASMViewerBase {
         this._engine.setZoom(zoom);
     }
 
+    addArrow(id, yaw, callback) {
+        this._ensureEngineReady();
+
+        if (Number.isNaN(id) || !Number.isInteger(id) || id <= 0) {
+            throw new WebassemblyError(
+                "Invalid ID",
+                {
+                    "type": EQUIRECTANGULAR_ERROR_TYPES.INVALID_INPUT
+                });
+        }
+
+        if (Number.isNaN(yaw)) {
+            throw new WebassemblyError(
+                "Invalid yaw",
+                {
+                    "type": EQUIRECTANGULAR_ERROR_TYPES.INVALID_INPUT
+                });
+        }
+
+        if (typeof callback != "function") {
+            throw new WebassemblyError(
+                "Invalid callback",
+                {
+                    "type": EQUIRECTANGULAR_ERROR_TYPES.INVALID_INPUT
+                });
+        }
+
+        this._engine.addArrow(id, yaw);
+        this._arrowCallbacks[id] = callback;
+    }
+
+    clearArrows() {
+        this._ensureEngineReady();
+        this._engine.clearArrows();
+        this._arrowCallbacks = {};
+    }
+
     // |-----------------|
     // | PRIVATE METHODS |
     // |-----------------|
@@ -187,6 +226,16 @@ export class EquirectangularViewer extends WASMViewerBase {
                     this._engine.zoom(zoomAmount);
                 }
                 return true;
+            },
+            onClick: (x, y) => {
+                if (this._engine) {
+                    let clickedId = this._engine.getClickedArrow(x, y);
+
+                    if (clickedId != -1 && this._arrowCallbacks[clickedId]) {
+                        let callback = this._arrowCallbacks[clickedId];
+                        callback();
+                    }
+                }
             }
         };
     }

@@ -3,6 +3,7 @@
 #include <algorithm>
 #include <memory>
 
+#include "core/math/vector.h"
 #include "core/projection/projectionMatrix.h"
 #include "core/projection/orthographicProjectionMatrix.h"
 #include "core/projection/perspectiveProjectionMatrix.h"
@@ -39,6 +40,30 @@ Camera::Camera()
 
 Camera::~Camera()
 {
+}
+
+Vec3 Camera::getClickRayVector(float clickedPixelX, float clickedPixelY)
+{
+    float screenCenterRelativeX = (clickedPixelX / imageW_) * 2.0f - 1.0f;
+    float screenCenterRelativeY = 1.0f - (clickedPixelY / imageH_) * 2.0f;
+
+    Vec3 straightRayOutFromLens(
+        screenCenterRelativeX * projectionMatrix_->getRightClippingPlane(),
+        screenCenterRelativeY * projectionMatrix_->getTopClippingPlane(),
+        -projectionMatrix_->getNearClippingPlane()
+    );
+
+    Vec3 inverseViewRight(viewMatrix_[0], viewMatrix_[4], viewMatrix_[8]);
+    Vec3 inverseViewUp(viewMatrix_[1], viewMatrix_[5], viewMatrix_[9]);
+    Vec3 inverseViewBack(viewMatrix_[2], viewMatrix_[6], viewMatrix_[10]);
+
+    Vec3 finalWorldDirection = (inverseViewRight * straightRayOutFromLens.x) +
+        (inverseViewUp * straightRayOutFromLens.y) +
+        (inverseViewBack * straightRayOutFromLens.z);
+
+    finalWorldDirection.normalize();
+
+    return finalWorldDirection;
 }
 
 void Camera::setPosition(float x, float y, float z)
