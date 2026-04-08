@@ -227,7 +227,7 @@ export class EquirectangularViewer extends WASMViewerBase {
                 }
                 return true;
             },
-            onClick: (x, y) => {
+            onDoubleClick: (x, y) => {
                 if (this._engine) {
                     let clickedId = this._engine.getClickedArrow(x, y);
 
