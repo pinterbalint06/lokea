@@ -1,9 +1,10 @@
+import { dashboardDisplayre } from "./dashboardDisplay.js";
 import { usersDisplayre } from "./usersDisplay.js";
 import { logsDisplayre } from "./logsDisplay.js";
 import { settingsDisplayre } from "./settingsDisplay.js";
 import { kijelentkezes } from "./fetchs.js";
 
-document.addEventListener("DOMContentLoaded", function () {
+document.addEventListener("DOMContentLoaded", async function () {
     modalElement = document.getElementById('modalView');
     modalElement.addEventListener('hidden.bs.modal', function () {
         if (objectURL) {
@@ -29,6 +30,7 @@ document.addEventListener("DOMContentLoaded", function () {
             await melyikValaszt(element.dataset.route);
         })
     })
+    await dashboardDisplayre();
 });
 
 //SIDEBAR
@@ -75,7 +77,7 @@ async function melyikValaszt(melyik) {
     display.innerHTML = "";
     switch (melyik) {
         case "dashboard":
-            display.appendChild(dashboardDisplayre());
+            await dashboardDisplayre();
             break;
         case "users":
             await usersDisplayre({modal, objectURL});
@@ -102,13 +104,6 @@ async function melyikValaszt(melyik) {
             display.appendChild(await featureFlagsDisplayre());
             break;
     }
-}
-
-function dashboardDisplayre() {
-    let h1 = document.createElement('h1');
-    h1.classList.add("h2", "m-5", "text-center");
-    h1.innerText = "404 Egyenlőre nincs itt semmi... tenyleg nincs";
-    return h1;
 }
 
 async function filesDisplayre() {

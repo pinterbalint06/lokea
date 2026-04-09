@@ -1,18 +1,19 @@
-const express = require('express');
+const express = require('../../../backend/node_modules/express');
 const router = express.Router();
 const database = require('../sql/database.js');
-const auth = require('../auth.js')
+const auth = require('../auth.js');
 const fs = require('fs/promises');
-const bcrypt = require('bcrypt');
-const validator = require('validator');
-const { body, validationResult } = require("express-validator");
-const sharp = require('sharp');
-const { sendWelcomeEmail, sendChangeEmail, sendDeleteEmail } = require('../../../backend/mails.js')
+const bcrypt = require('../../../backend/node_modules/bcrypt');
+const validator = require('../../../backend/node_modules/validator');
+const { body, validationResult } = require('../../../backend/node_modules/express-validator');
+const sharp = require('../../../backend/node_modules/sharp');
+const { sendWelcomeEmail, sendChangeEmail, sendDeleteEmail } = require('../../../backend/mails.js');
+const { Chart, registerables } = require('../../../backend/node_modules/chart.js');
+const { Canvas } = require('../../../backend/node_modules/skia-canvas');
 
 //!Multer
-const multer = require('multer'); //?npm install multer
+const multer = require('../../../backend/node_modules/multer'); //?npm install multer
 const path = require('path');
-const { error } = require('console');
 
 const storage = multer.diskStorage({
     destination: (request, file, callback) => {
@@ -27,6 +28,8 @@ const upload = multer({
     storage: storage,
     limits: { fileSize: 5 * 1024 * 1024 } // 5 MB
 });
+
+Chart.register(...registerables);
 
 //Endpoints - admin
 
@@ -62,7 +65,7 @@ router.post("/signupFromAdmin", auth.checkAuth, auth.checkRole("ADMIN"),
                 if (insert.success) {
                     let userid = insert.insertId;
                     await database.addLog(userid, 'Sign up (A)');
-                    await sendWelcomeEmail(email, username);
+                    // await sendWelcomeEmail(email, username);
                     response.status(201).json({
                         success: true,
                         message: "Sikeres regisztráció!"
@@ -344,6 +347,65 @@ router.post('/sortedLogs', auth.checkAuth, auth.checkRole("ADMIN"), async (reque
         response.status(200).json({ logs: logs.rows, total: logs.total });
     } catch (error) {
         response.status(500).json({ error: error.message });
+    }
+});
+
+router.get('/chart', auth.checkAuth, auth.checkRole("ADMIN"), async (req, res) => {
+    try {
+        const canvas = new Canvas(1200, 600);
+        const ctx = canvas.getContext("2d");
+
+        const chart = new Chart(ctx, {
+            type: 'line',
+            data: {
+                labels: ['H', 'K', 'Sze', 'Cs', 'P', 'Szo', 'V'],
+                datasets: [{
+                    label: 'Aktivitás',
+                    data: [65, 59, 80, 81, 56, 55, 40],
+                    borderColor: '#0d6efd',
+                    borderWidth: 5,
+                    pointRadius: 6,
+                    backgroundColor: 'rgba(13, 110, 253, 0.1)',
+                    fill: true,
+                    tension: 0.4
+                }]
+            },
+            options: {
+                devicePixelRatio: 1,
+                plugins: {
+                    legend: {
+                        labels: {
+                            font: { size: 18, weight: 'bold' }
+                        }
+                    }
+                },
+                scales: {
+                    x: {
+                        ticks: { font: { size: 16, weight: 'bold' } }
+                    },
+                    y: {
+                        ticks: { font: { size: 16, weight: 'bold' } }
+                    }
+                }
+            }
+        });
+
+        const rawBuffer = await canvas.toBuffer('png');
+
+        const optimizedImage = await sharp(rawBuffer)
+            .toFormat('webp', { quality: 95, lossless: true })
+            .toBuffer();
+
+        // 5. Válasz küldése
+        res.set('Content-Type', 'image/webp');
+        res.send(optimizedImage);
+
+        // Takarítás
+        chart.destroy();
+
+    } catch (err) {
+        console.error(err);
+        res.status(500).send("Hiba a generáláskor");
     }
 });
 

@@ -48,7 +48,6 @@ export async function settingsDisplayre() {
             errordiv.appendChild(closeBtn);
         }
     });
-    personalSec.appendChild(saveAllBtn);
 
     let uiSec = createSection('ui', 'UI Settings');
     let adminSec = createSection('admin', 'Admin Settings');
@@ -129,7 +128,11 @@ export async function settingsDisplayre() {
     changePassBtn.setAttribute('data-bs-target', '#passwordCollapse');
 
     let deleteProfileBtn = gombGeneral("button", "Delete account", null, "red", null);
-    deleteProfileBtn.addEventListener("click", () => deleteProfile());
+    deleteProfileBtn.addEventListener("click", async function() {
+        if (await deleteProfile()) {
+            window.location.href = "/main";
+        }
+    });
 
     let collapseDiv = document.createElement('div');
     collapseDiv.className = 'collapse';
@@ -166,6 +169,7 @@ export async function settingsDisplayre() {
     row.appendChild(pfpCol);
     row.appendChild(dataCol);
     personalSec.body.appendChild(row);
+    personalSec.body.appendChild(saveAllBtn);
 
     uiSec.body.appendChild(makeSubtitle("Select language:"));
     let langSelect = document.createElement('select');

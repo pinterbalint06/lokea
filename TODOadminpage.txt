@@ -1,12 +1,12 @@
 TODO - egész
 -reszponzivitás
 -nagynézetben sidebar, kisnézetben navbar
--email rendszer min.: üdvözlés, jelszóváltoztatás, törlés
+-email rendszer egyedi linkek
 -forditás
 -oldal nyelv egységesités
 
 TODO - dashboard (main)
--diagram a napi/heti játékosszámról, táblázat a legjátszottabb játékmódokról, stb.
+-diagramhoz adatok lekérése
 
 TODO - settings
 -rendezés, javitás

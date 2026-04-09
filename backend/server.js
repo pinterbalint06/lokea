@@ -7,6 +7,7 @@ const auth = require('./auth.js')
 const { Server } = require("socket.io");
 const http = require('http');
 const nodemailer = require("nodemailer");
+const { Chart, registerables } = require('chart.js');
 
 //!Beállítások
 const app = express();

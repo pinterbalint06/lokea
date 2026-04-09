@@ -274,14 +274,12 @@ export async function deleteProfile() {
         });
         let data = await response.json();
         if (data.success) {
-            setTimeout(() => {
-                location.reload();
-            }, 1000);
+            alert("Sikeres törlés!");
         }
         else {
             console.error("baj a törlésben, baj: " + data.error);
         }
-
+        return data.success;
     } catch (error) {
         console.error(`hálózati hiba: ${error}`);
     }

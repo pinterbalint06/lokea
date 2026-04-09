@@ -1,6 +1,5 @@
-const mysql = require('mysql2/promise');
-const bcrypt = require('bcrypt');
-const { add } = require('lodash');
+const mysql = require('../../../backend/node_modules/mysql2/promise');
+const bcrypt = require('../../../backend/node_modules/bcrypt');
 
 const pool = mysql.createPool({
     host: '127.0.0.1',
@@ -53,7 +52,7 @@ async function newUserFromAdmin(username, email, password, role, is_2fa) {
         error = "User exists";
     }
 
-    return success ? { success } : { success, error };
+    return success ? { success, insertId: result.insertId } : { success, error };
 }
 
 async function getUsers() {
@@ -93,8 +92,7 @@ async function sortedUsers(mireKeresek, mit, status, adminChecked, modChecked, u
     let query = 'SELECT deleted_at, user_id, username, email, role FROM users';
     let conditions = [];
     let params = [];
-    console.log(mireKeresek, mit, status, adminChecked, modChecked, userChecked);
-
+    
     if (mit && mit.trim() !== '') {
         const validColumns = ['user_id', 'username', 'email'];
         const targetColumn = validColumns.includes(mireKeresek) ? mireKeresek : 'username';

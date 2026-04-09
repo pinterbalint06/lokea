@@ -1,3 +1,11 @@
+export function createHTMLelement(tag, classes = [], text = "", id = "") {
+    let htmlElement = document.createElement(tag);
+    if (classes.length) htmlElement.classList.add(...classes);
+    if (text || text == null) htmlElement.textContent = text;
+    if (id) htmlElement.id = id;
+    return htmlElement;
+};
+
 export function gombGeneral(type, text, svg, color, id) {
     let button = document.createElement('button');
     button.type = type;
