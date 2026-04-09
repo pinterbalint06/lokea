@@ -1,12 +1,13 @@
 TODO - egész
--reszponzivitás
+-reszponzivitás, sötétmód
 -nagynézetben sidebar, kisnézetben navbar
 -email rendszer egyedi linkek
 -forditás
 -oldal nyelv egységesités
 
 TODO - dashboard (main)
--diagramhoz adatok lekérése
+-más diagramok
+-check: diagram nulla adattal mit csinal
 
 TODO - settings
 -rendezés, javitás
@@ -28,6 +29,7 @@ transactions oldal
 
 hibak amiket javitani kell:
 -stack trace
+-fetch.js -> tovabbdobja a hibat olyan helyeken, ahol kesobb nincs try-catch
 
 kerdes:
 -compare attetele database.js-be

@@ -321,6 +321,18 @@ router.post('/deleteProfilePicFromAdmin', auth.checkAuth, auth.checkRole("ADMIN"
     }
 })
 
+router.get('/getDashboardInfo', auth.checkAuth, auth.checkRole("ADMIN"), async (request, response) => {
+    try {
+        let playerCount = await database.getUserCount();
+        let activePlayerCount = await database.getActiveUserCount();
+        let logsPreview = await database.getLogs(5);
+
+        response.status(200).json({ playerCount, activePlayerCount, logsPreview: logsPreview.rows });
+    } catch (error) {
+        response.status(500).json({ error: error });
+    }
+})
+
 router.get('/getLogs', auth.checkAuth, auth.checkRole("ADMIN"), async (request, response) => {
     try {
         let logs = await database.getLogs();
@@ -350,18 +362,25 @@ router.post('/sortedLogs', auth.checkAuth, auth.checkRole("ADMIN"), async (reque
     }
 });
 
-router.get('/chart', auth.checkAuth, auth.checkRole("ADMIN"), async (req, res) => {
+router.get('/userActivityByWeekChart', auth.checkAuth, auth.checkRole("ADMIN"), async (req, res) => {
     try {
+        let data = await database.getUserActivityByWeek();
+        let weeks = [];
+        let playerCount = [];
+        for (let i = 0; i < data.length; i++) {
+            weeks.push(data[i].het_megnevezes);
+            playerCount.push(data[i].felhasznalok_szama);
+        }
         const canvas = new Canvas(1200, 600);
         const ctx = canvas.getContext("2d");
 
         const chart = new Chart(ctx, {
             type: 'line',
             data: {
-                labels: ['H', 'K', 'Sze', 'Cs', 'P', 'Szo', 'V'],
+                labels: weeks,
                 datasets: [{
-                    label: 'Aktivitás',
-                    data: [65, 59, 80, 81, 56, 55, 40],
+                    label: 'Activity',
+                    data: playerCount,
                     borderColor: '#0d6efd',
                     borderWidth: 5,
                     pointRadius: 6,
@@ -381,10 +400,24 @@ router.get('/chart', auth.checkAuth, auth.checkRole("ADMIN"), async (req, res) =
                 },
                 scales: {
                     x: {
+                        title: {
+                            display: true,
+                            text: 'Weeks',
+                            font: { size: 18, weight: 'bold' },
+                            padding: { top: 10 }
+                        },
                         ticks: { font: { size: 16, weight: 'bold' } }
                     },
                     y: {
-                        ticks: { font: { size: 16, weight: 'bold' } }
+                        title: {
+                            display: true,
+                            text: 'Number of logins',
+                            font: { size: 18, weight: 'bold' },
+                            padding: { bottom: 10 }
+                        },
+                        ticks: {
+                            font: { size: 16, weight: 'bold' },
+                        }
                     }
                 }
             }
@@ -396,11 +429,9 @@ router.get('/chart', auth.checkAuth, auth.checkRole("ADMIN"), async (req, res) =
             .toFormat('webp', { quality: 95, lossless: true })
             .toBuffer();
 
-        // 5. Válasz küldése
         res.set('Content-Type', 'image/webp');
         res.send(optimizedImage);
 
-        // Takarítás
         chart.destroy();
 
     } catch (err) {

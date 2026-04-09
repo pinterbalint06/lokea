@@ -1,23 +1,12 @@
-import {createHTMLelement} from "./utils/domUtils.js";
+import { createHTMLelement, formatTime } from "./utils/domUtils.js";
+import { getDashboardInfo } from "./fetchs.js";
+import { initSocket } from "./utils/socketio.js";
 
 export async function dashboardDisplayre() {
     let display = document.getElementById('content');
     display.innerHTML = "";
 
-    let staticData = {
-        stats: {
-            total: 15420,
-            active: 842,
-            online: 45
-        },
-        logs: [
-            "Rendszer sikeresen elindult",
-            "Új adminisztrátor bejelentkezve: Admin_01",
-            "Adatbázis mentés elkészült",
-            "Biztonsági frissítés telepítve",
-            "Szerver válaszidő: 14ms"
-        ]
-    };
+    let data = await getDashboardInfo();
 
     let mainRow = createHTMLelement('div', ['row', 'g-4']);
 
@@ -25,10 +14,9 @@ export async function dashboardDisplayre() {
 
     let rightCol = createHTMLelement('div', ['col-lg-4']);
     let rightStack = createHTMLelement('div', ['d-flex', 'flex-column', 'gap-4']);
-    
-    rightStack.appendChild(createKpi(staticData.stats));
-    rightStack.appendChild(createLogs(staticData.logs));
-    
+    rightStack.appendChild(createKpi(data.playerCount, data.activePlayerCount));
+    rightStack.appendChild(createLogs(data.logsPreview));
+
     rightCol.appendChild(rightStack);
     mainRow.appendChild(rightCol);
 
@@ -38,22 +26,22 @@ export async function dashboardDisplayre() {
     if (chartContainer) {
         chartContainer.innerHTML = "";
         let chartImg = createHTMLelement('img', ['img-fluid', 'rounded']);
-        chartImg.src = '/api/admin/chart';
+        chartImg.src = '/api/admin/userActivityByWeekChart';
         chartImg.style.maxHeight = "400px";
         chartContainer.appendChild(chartImg);
     }
+    await initSocket();
 }
 
-function createKpi(stats) {
+function createKpi(playerCount, activePlayerCount) {
     let card = createHTMLelement('div', ['card', 'p-4', 'shadow-sm', 'border-0']);
-    card.appendChild(createHTMLelement('h6', ['text-muted', 'text-uppercase', 'small', 'fw-bold', 'mb-3'], 'Játékos adatok'));
+    card.appendChild(createHTMLelement('h6', ['text-muted', 'text-uppercase', 'small', 'fw-bold', 'mb-3'], 'Player data'));
 
     let list = createHTMLelement('div', ['d-flex', 'flex-column', 'gap-2']);
 
     const items = [
-        { label: 'Regisztrált', val: stats.total, color: 'text-primary', bg: 'bg-primary-subtle' },
-        { label: 'Aktív', val: stats.active, color: 'text-info', bg: 'bg-info-subtle' },
-        { label: 'Online', val: stats.online, color: 'text-success', bg: 'bg-success-subtle' }
+        { label: 'Registered players', val: playerCount, color: 'text-primary', bg: 'bg-primary-subtle' },
+        { label: 'Active players', val: activePlayerCount, color: 'text-info', bg: 'bg-info-subtle' }
     ];
 
     items.forEach(item => {
@@ -62,6 +50,11 @@ function createKpi(stats) {
         row.appendChild(createHTMLelement('span', ['badge', item.bg, item.color, 'border'], item.val.toLocaleString()));
         list.appendChild(row);
     });
+    let row = createHTMLelement('div', ['d-flex', 'justify-content-between', 'align-items-center', 'p-2', 'rounded', 'bg-success-subtle']);
+    row.appendChild(createHTMLelement('span', ['small', 'fw-bold'], "Online players"));
+    row.appendChild(createHTMLelement('span', ['badge', 'bg-success-subtle', 'text-success', 'border'], null, "onlinePlayerCounter"));
+    list.appendChild(row);
+
 
     card.appendChild(list);
     return card;
@@ -70,9 +63,9 @@ function createKpi(stats) {
 function createChartBox() {
     let col = createHTMLelement('div', ['col-lg-8']);
     let card = createHTMLelement('div', ['card', 'p-4', 'shadow-sm', 'h-100', 'border-0']);
-    card.appendChild(createHTMLelement('h6', ['text-muted', 'text-uppercase', 'small', 'fw-bold', 'mb-3'], 'Heti aktivitás'));
+    card.appendChild(createHTMLelement('h6', ['text-muted', 'text-uppercase', 'small', 'fw-bold', 'mb-3'], 'Weekly activity'));
 
-    let chartContainer = createHTMLelement('div', ['d-flex', 'justify-content-center', 'align-items-center', 'bg-light', 'rounded', 'h-100'], "Diagram betöltése...", "chart-container");
+    let chartContainer = createHTMLelement('div', ['d-flex', 'justify-content-center', 'align-items-center', 'bg-light', 'rounded', 'h-100'], "Loading chart...", "chart-container");
     chartContainer.style.minHeight = "450px";
 
     card.appendChild(chartContainer);
@@ -82,21 +75,16 @@ function createChartBox() {
 
 function createLogs(logArray) {
     let card = createHTMLelement('div', ['card', 'p-4', 'shadow-sm', 'border-0']);
-    card.appendChild(createHTMLelement('h6', ['text-muted', 'text-uppercase', 'small', 'fw-bold', 'mb-2'], 'Rendszer Log'));
+    card.appendChild(createHTMLelement('h6', ['text-muted', 'text-uppercase', 'small', 'fw-bold', 'mb-2'], 'System log'));
 
-    let shell = createHTMLelement('div', ['bg-dark', 'text-success', 'p-3', 'rounded']);
-    shell.style.height = "215px";
-    shell.style.overflowY = "auto";
-    shell.style.fontFamily = "'Courier New', monospace";
-    shell.style.fontSize = "0.75rem";
-
-    logArray.forEach(msg => {
+    let shell = createHTMLelement('div', ['bg-dark', 'text-success', 'p-3', 'rounded', 'dashboardShell']);
+    for (let i = 0; i < logArray.length; i++) {
         let line = createHTMLelement('div', ['mb-1', 'border-bottom', 'border-secondary', 'pb-1']);
         line.style.opacity = "0.8";
-        line.appendChild(createHTMLelement('span', ['text-info'], new Date().toLocaleTimeString()));
-        line.append(msg);
+        line.appendChild(createHTMLelement('span', ['text-info'], formatTime(logArray[i].happened_at)));
+        line.append(` - ${logArray[i].username} ${logArray[i].victim == null ? "" : logArray[i].victim}: ${logArray[i].activity}`);
         shell.appendChild(line);
-    });
+    }
 
     card.appendChild(shell);
     return card;

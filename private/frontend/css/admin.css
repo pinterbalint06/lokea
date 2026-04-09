@@ -52,3 +52,10 @@
     width: 15px;
     margin-right: 8px;
 }
+
+.dashboardShell {
+    height: 215px;
+    overflow-y: auto;
+    font-family:  'Courier New', Courier, monospace;
+    font-size: 0.75rem;
+}

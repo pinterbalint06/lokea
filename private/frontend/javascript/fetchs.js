@@ -60,8 +60,6 @@ export async function sortedUser(params) {
     }
 }
 
-//TODO - atirni usersDisplay.jsbe
-
 export async function getProfilePicture(route) {
     try {
         let response = await fetch(`/api/getProfilePic?route=${route}`);
@@ -71,6 +69,16 @@ export async function getProfilePicture(route) {
         return objectURL;
     } catch (error) {
         console.log(error);
+    }
+}
+
+export async function getDashboardInfo() {
+    try {
+        let response = await fetch("/api/admin/getDashboardInfo");
+        let data = await response.json();
+        return data;
+    } catch (error) {
+        console.error(error.message);
     }
 }
 

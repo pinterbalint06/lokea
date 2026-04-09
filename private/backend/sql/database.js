@@ -92,7 +92,7 @@ async function sortedUsers(mireKeresek, mit, status, adminChecked, modChecked, u
     let query = 'SELECT deleted_at, user_id, username, email, role FROM users';
     let conditions = [];
     let params = [];
-    
+
     if (mit && mit.trim() !== '') {
         const validColumns = ['user_id', 'username', 'email'];
         const targetColumn = validColumns.includes(mireKeresek) ? mireKeresek : 'username';
@@ -294,6 +294,39 @@ async function getOldPicturePath(user_id) {
     }
 }
 
+async function getUserCount() {
+    try {
+        const queryUserCount = 'SELECT COUNT(*) AS jatekosok_szama FROM users;'
+        const [oldImageData] = await pool.execute(queryUserCount);
+        return oldImageData[0].jatekosok_szama;
+    } catch (error) {
+        console.error('DB hiba getUserNumbers:', error);
+        throw error;
+    }
+}
+
+async function getActiveUserCount() {
+    try {
+        const queryUserCount = "SELECT COUNT(DISTINCT log.user_id) AS egyedi_belepok_szama FROM log WHERE log.activity = 'Login' AND log.happened_at >= DATE_SUB(NOW(), INTERVAL 31 DAY);";
+        const [result] = await pool.execute(queryUserCount);
+        return result[0].egyedi_belepok_szama;
+    } catch (error) {
+        console.error('DB hiba getUserNumbers:', error);
+        throw error;
+    }
+}
+
+async function getUserActivityByWeek() {
+    try {
+        const queryUserCount = "SELECT DATE_FORMAT(log.happened_at, '%v.') AS het_megnevezes, COUNT(log.log_id) AS felhasznalok_szama FROM log WHERE log.activity LIKE '%Login%' GROUP BY het_megnevezes ORDER BY YEARWEEK(log.happened_at, 1);";
+        const [result] = await pool.execute(queryUserCount);
+        return result;
+    } catch (error) {
+        console.error('DB hiba getUserNumbers:', error);
+        throw error;
+    }
+}
+
 async function addLog(user_id, activity, victimid = null) {
     let connection;
     try {
@@ -319,13 +352,13 @@ async function addLog(user_id, activity, victimid = null) {
     }
 }
 
-async function getLogs() {
+async function getLogs(limit = 15) {
     try {
         const countQuery = `SELECT COUNT(*) as total FROM log LEFT JOIN users AS who ON log.user_id = who.user_id LEFT JOIN users AS victim ON log.victim_id = victim.user_id`;
         const [[{ total }]] = await pool.execute(countQuery);
 
-        const query = 'SELECT who.username, victim.username AS victim, log.activity, log.happened_at FROM log INNER JOIN users who ON log.user_id = who.user_id LEFT JOIN users victim ON log.victim_id = victim.user_id ORDER BY log.happened_at DESC LIMIT 15';
-        const [rows] = await pool.execute(query);
+        const query = 'SELECT who.username, victim.username AS victim, log.activity, log.happened_at FROM log INNER JOIN users who ON log.user_id = who.user_id LEFT JOIN users victim ON log.victim_id = victim.user_id ORDER BY log.happened_at DESC LIMIT ?';
+        const [rows] = await pool.execute(query, [limit]);
         return { rows, total };
     } catch (error) {
         console.error('DB hiba getLogs:', error);
@@ -399,6 +432,9 @@ module.exports = {
     userToInactive,
     uploadProfilePic,
     deleteProfilePic,
+    getUserCount,
+    getActiveUserCount,
+    getUserActivityByWeek,
     addLog,
     getLogs,
     sortedLogs
