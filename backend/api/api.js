@@ -306,15 +306,10 @@ router.get('/active_game_session', async (request, response) => {
         if (!activeSession) {
             return response.status(200).json({ success: true, hasActiveSession: false });
         }
-            
-        request.session.gameMapId = activeSession.game_maps_id;
         response.status(200).json({
             success: true,
             hasActiveSession: true,
-            gameMapId: activeSession.game_maps_id,
-            sessionId: activeSession.session_id,
-            gameTitle: activeSession.title,
-            startedAt: activeSession.started_at
+            gameTitle: activeSession.title
         });
     } catch (error) {
         response.status(500).json({ success: false, message: 'Database error', error: error });
@@ -332,7 +327,6 @@ router.post('/finish_game_session', async (request, response) => {
     }
 });
 
-
 router.post('/post_game_id', async (request, response) => {
     const gameMapId = Number(request.body.gameMapId);
     const userId = request.session?.userid || 1; //TODO: törlés ha már stabil a session
@@ -345,7 +339,6 @@ router.post('/post_game_id', async (request, response) => {
     } catch (error) {
         response.status(500).json({ success: false, message: 'Database error', error: error });
     }
-    request.session.gameMapId = gameMapId;
     response.status(200).json({ success: true, message: 'Game map ID saved in session' });
 });
 
