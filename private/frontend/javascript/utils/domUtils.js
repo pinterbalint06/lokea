@@ -1,12 +1,12 @@
 export function createHTMLelement(tag, classes = [], text = "", id = "") {
     let htmlElement = document.createElement(tag);
     if (classes.length) htmlElement.classList.add(...classes);
-    if (text || text == null) htmlElement.textContent = text;
+    if (text) htmlElement.textContent = text;
     if (id) htmlElement.id = id;
     return htmlElement;
 };
 
-export function gombGeneral(type, text, svg, color, id) {
+export function gombGeneral(type, text, svg, color, id, classes = []) {
     let button = document.createElement('button');
     button.type = type;
     if (svg == null) {
@@ -38,6 +38,9 @@ export function gombGeneral(type, text, svg, color, id) {
         case "link":
             button.classList.add('btn-link');
             break;
+    }
+    if (classes != null) {
+        button.classList.add(...classes);
     }
     return button;
 }

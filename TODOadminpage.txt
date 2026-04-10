@@ -30,6 +30,7 @@ transactions oldal
 hibak amiket javitani kell:
 -stack trace
 -fetch.js -> tovabbdobja a hibat olyan helyeken, ahol kesobb nincs try-catch
+-logs - oldalazasi problemak
 
 kerdes:
 -compare attetele database.js-be

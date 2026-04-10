@@ -1,21 +1,16 @@
 import { osszesUser, getUser, sortedUser, getProfilePicture, newUser, userUpdate, userToInactive, uploadProfilePic, deleteProfilePicture } from "./fetchs.js";
-import { gombGeneral, inputGeneral} from "./utils/domUtils.js";
+import { createHTMLelement, gombGeneral, inputGeneral, labelGeneral} from "./utils/domUtils.js";
 
 export async function usersDisplayre(variables) {
     let display = document.getElementById('content');
-    let row = document.createElement('div');
-    row.classList.add("row", "p-3");
+    let row = createHTMLelement('row', ["row", "p-3"]);
 
     //kereso
-    let col9div = document.createElement('div');
-    col9div.classList.add("col-9");
+    let col9div = createHTMLelement('div', ["col-9"]);
 
-    let fejlec = document.createElement('div');
-    fejlec.classList.add("d-flex", "justify-content-between");
+    let fejlec = createHTMLelement('div', ["d-flex", "justify-content-between"]);
 
-    let cim = document.createElement('h2');
-    cim.innerText = "Users";
-    cim.classList.add("h2");
+    let cim = createHTMLelement('h2', ["h2"], "Users");
 
     let newUserGomb = gombGeneral("button", "Create new user", "user-plus", "green", null);
     newUserGomb.addEventListener("click", async function () {
@@ -24,11 +19,9 @@ export async function usersDisplayre(variables) {
         variables.modal.show();
     });
 
-    let keresodiv = document.createElement('div');
-    keresodiv.classList.add("mb-3");
+    let keresodiv = createHTMLelement('div', ["mb-3"]);
 
-    let inputgroupdiv = document.createElement('div');
-    inputgroupdiv.classList.add("input-group");
+    let inputgroupdiv = createHTMLelement('div', ["input-group"]);
 
     let keresoInput = inputGeneral("text", "Keresés...", null, "keresoInput", ["form-control"], false);
     keresoInput.addEventListener("input", async function () {
@@ -72,24 +65,16 @@ export async function usersDisplayre(variables) {
 
     //szures
 
-    let col3div = document.createElement("div");
-    col3div.classList.add("col-3");
-    let kartya = document.createElement("div");
-    kartya.classList.add("card", "bg-light", "p-3");
-    let kiscim = document.createElement('h4');
-    kiscim.classList.add("h4");
-    kiscim.innerText = 'Sort';
-    let szuresDiv = document.createElement('div');
-    szuresDiv.classList.add("mb-3");
+    let col3div = createHTMLelement('div', ["col-3"]);
+    let kartya = createHTMLelement('div', ["card", "bg-light", "p-3"]);
+    let kiscim = createHTMLelement('h4', ["h4"], 'Sort');
+    let szuresDiv = createHTMLelement('div', ['mb-3']);
 
     let statusDiv = document.createElement('div');
-    let statusDivCim = document.createElement('h6');
-    statusDivCim.classList.add("h6");
-    statusDivCim.innerText = "User status";
+    let statusDivCim = createHTMLelement('h6', ["h6"], "User status");
     let statuszok = ["Any", "Active", "Deleted"];
     for (let i = 0; i < statuszok.length; i++) {
-        let formcheck = document.createElement('div');
-        formcheck.classList.add("form-check");
+        let formcheck = createHTMLelement('div', ["form-check"]);
         let radioButton = document.createElement('input');
         radioButton.type = "radio"
         radioButton.classList.add("form-check-input");
@@ -103,10 +88,7 @@ export async function usersDisplayre(variables) {
             tablePlace.innerHTML = "";
             tablePlace.appendChild(tablazatGeneral(await sortedUser(getFilterValues()), variables));
         })
-        let label = document.createElement('label');
-        label.setAttribute("for", `status${statuszok[i]}`);
-        label.classList.add("form-check-label");
-        label.innerText = statuszok[i];
+        let label = labelGeneral(`status${statuszok[i]}`, statuszok[i], ["form-check-label"]);
         formcheck.appendChild(radioButton);
         formcheck.appendChild(label);
         statusDiv.appendChild(formcheck);
@@ -115,13 +97,10 @@ export async function usersDisplayre(variables) {
     szuresDiv.appendChild(statusDiv);
 
     let roleDiv = document.createElement('div');
-    let roleDivCim = document.createElement('h6');
-    roleDivCim.classList.add("h6");
-    roleDivCim.innerText = "Role";
+    let roleDivCim = createHTMLelement('h6', ["h6"], "Role");
     let roleok = ["Admin", "Moderator", "User"];
     for (let i = 0; i < roleok.length; i++) {
-        let formcheck = document.createElement('div');
-        formcheck.classList.add("form-check");
+        let formcheck = createHTMLelement('div', ["form-check"]);
         let checkbox = document.createElement('input');
         checkbox.type = "checkbox";
         checkbox.classList.add("form-check-input");
@@ -132,10 +111,7 @@ export async function usersDisplayre(variables) {
             tablePlace.innerHTML = "";
             tablePlace.appendChild(tablazatGeneral(await sortedUser(getFilterValues()), variables));
         })
-        let label = document.createElement('label');
-        label.setAttribute("for", `role${roleok[i]}`);
-        label.classList.add("form-check-label");
-        label.innerText = roleok[i];
+        let label = labelGeneral(`role${roleok[i]}`, roleok[i], ["form-check-label"]);
         formcheck.appendChild(checkbox);
         formcheck.appendChild(label);
         roleDiv.appendChild(formcheck);
@@ -148,8 +124,7 @@ export async function usersDisplayre(variables) {
     col3div.appendChild(kartya);
 
     //tablazat
-    let tablazat = document.createElement('div');
-    tablazat.id = "usersTableDiv";
+    let tablazat = createHTMLelement('div', [], null, "usersTableDiv");
     tablazat.appendChild(tablazatGeneral(await osszesUser(), variables));
     col9div.appendChild(tablazat);
 
@@ -160,39 +135,33 @@ export async function usersDisplayre(variables) {
 }
 
 function newUserToModal() {
-    let form = document.createElement('form');
-    form.id = 'newUserFrom';
+    let form = createHTMLelement('form', [], null, 'newUserFrom');
 
-    let formGroup = document.createElement("div");
-    formGroup.classList.add("form-group");
+    let formGroup = createHTMLelement('div', ["form-group"]);
 
     let userDiv = document.createElement("div");
-    let userP = document.createElement("p");
-    userP.textContent = "Username";
+    let userP = createHTMLelement('p', [], "Username");
     let userInput = inputGeneral("text", "Username here...", null, "newUsernameInput", ["form-control"], false);
 
     userDiv.appendChild(userP);
     userDiv.appendChild(userInput);
 
     let emailDiv = document.createElement("div");
-    let emailP = document.createElement("p");
-    emailP.textContent = "E-mail address";
+    let emailP = createHTMLelement('p', [], "E-mail address");
     let emailInput = inputGeneral("text", "E-mail address here...", null, "newEmailInput", ["form-control"], false);
 
     emailDiv.appendChild(emailP);
     emailDiv.appendChild(emailInput);
 
     let passDiv = document.createElement("div");
-    let passP = document.createElement("p");
-    passP.textContent = "Password";
+    let passP = createHTMLelement('p', [], "Password");
     let passInput = inputGeneral("password", "Password here...", null, "newPasswordInput", ["form-control"], false);
 
     passDiv.appendChild(passP);
     passDiv.appendChild(passInput);
 
     let roleDiv = document.createElement("div");
-    let roleP = document.createElement("p");
-    roleP.textContent = "Roles:";
+    let roleP = createHTMLelement('p', [], "Roles:");
     let select = document.createElement("select");
     select.classList.add("form-select");
     select.id = 'newRoleSelect';
@@ -214,15 +183,11 @@ function newUserToModal() {
     roleDiv.appendChild(roleP);
     roleDiv.appendChild(select);
 
-    let switchDiv = document.createElement("div");
-    switchDiv.classList.add("form-check", "form-switch", "mt-3");
+    let switchDiv = createHTMLelement('div', ["form-check", "form-switch", "mt-3"]);
     let switchInput = inputGeneral("checkbox", null, null, "new2faInput", ["form-check-input"], false);
     switchInput.role = "switch";
 
-    let switchLabel = document.createElement("label");
-    switchLabel.setAttribute("for", "new2faInput");
-    switchLabel.textContent = "Two-factor authentication";
-    switchLabel.classList.add("form-check-label");
+    let switchLabel = labelGeneral("new2faInput", "Two-factor authentication", ["form-check-label"]);
 
     switchDiv.appendChild(switchInput);
     switchDiv.appendChild(switchLabel);
@@ -245,15 +210,12 @@ async function editUserToModal(data, variables) {
     let role = data.role;
     let is_2fa = data.is_2fa;
     let pfproute = data.filepath;
-    let container = document.createElement("div");
-    container.classList.add("container-fluid");
+    let container = createHTMLelement('div', ["container-fluid"]);
 
-    let row = document.createElement("div");
-    row.classList.add("row");
+    let row = createHTMLelement('div', ["row"]);
 
     /* BAL OLDAL */
-    let colLeft = document.createElement("div");
-    colLeft.classList.add("col-4");
+    let colLeft = createHTMLelement('div', ["col-4"]);
 
     let pfp = document.createElement("img");
     let deletePfpButton;
@@ -286,8 +248,7 @@ async function editUserToModal(data, variables) {
         }
     })
 
-    let pfpTitle = document.createElement("h6");
-    pfpTitle.textContent = username;
+    let pfpTitle = createHTMLelement('h6', [], username);
 
     colLeft.appendChild(pfp);
     colLeft.appendChild(newPfpInput);
@@ -298,43 +259,34 @@ async function editUserToModal(data, variables) {
     colLeft.appendChild(pfpTitle);
 
     /* JOBB OLDAL */
-    let colRight = document.createElement("div");
-    colRight.classList.add("col-8");
-
-    let form = document.createElement("form");
-    form.id = 'editUserForm';
-
-    let formGroup = document.createElement("div");
-    formGroup.classList.add("form-group");
+    let colRight = createHTMLelement('div', ["col-8"]);
+    let form = createHTMLelement('form', [], null, 'editUserForm');
+    let formGroup = createHTMLelement('div', ["form-group"]);
 
     /* INPUTOK */
     let idDiv = document.createElement("div");
-    let idP = document.createElement("p");
-    idP.textContent = "ID";
+    let idP = createHTMLelement('p', [], "ID");
     let idInput = inputGeneral("number", null, user_id, "editIdInput", ["form-control"], true);
 
     idDiv.appendChild(idP);
     idDiv.appendChild(idInput);
 
     let userDiv = document.createElement("div");
-    let userP = document.createElement("p");
-    userP.textContent = "Username";
+    let userP = createHTMLelement('p', [], "Username");
     let userInput = inputGeneral("text", null, username, "editUsernameInput", ["form-control"], false);
 
     userDiv.appendChild(userP);
     userDiv.appendChild(userInput);
 
     let emailDiv = document.createElement("div");
-    let emailP = document.createElement("p");
-    emailP.textContent = "E-mail address";
+    let emailP = createHTMLelement('p', [], "E-mail address");
     let emailInput = inputGeneral("text", null, email, "editEmailInput", ["form-control"], false);
 
     emailDiv.appendChild(emailP);
     emailDiv.appendChild(emailInput);
 
     let roleDiv = document.createElement("div");
-    let roleP = document.createElement("p");
-    roleP.textContent = "Roles:";
+    let roleP = createHTMLelement('p', [], "Roles:");
     let select = document.createElement("select");
     select.classList.add("form-select");
     select.id = 'editRoleSelect';
@@ -362,19 +314,14 @@ async function editUserToModal(data, variables) {
     roleDiv.appendChild(roleP);
     roleDiv.appendChild(select);
 
-    let switchDiv = document.createElement("div");
-    switchDiv.classList.add("form-check", "form-switch", "mt-3");
+    let switchDiv = createHTMLelement('div', ["form-check", "form-switch", "mt-3"]);
     let switchInput = inputGeneral("checkbox", null, null, "edit2faInput", ["form-check-input"], false);
     switchInput.role = "switch";
     if (is_2fa) {
         switchInput.checked = true;
     }
 
-    let switchLabel = document.createElement("label");
-    switchLabel.setAttribute("for", "edit2faInput");
-    switchLabel.textContent = "Two-factor authentication";
-    switchLabel.classList.add("form-check-label");
-
+    let switchLabel = labelGeneral("edit2faInput", "Two-factor authentication", ["form-check-label"]);
     switchDiv.appendChild(switchInput);
     switchDiv.appendChild(switchLabel);
 
@@ -403,15 +350,12 @@ async function viewUserToModal(data, variables) {
     let role = data.role;
     let is_2fa = data.is_2fa;
     let pfproute = data.filepath;
-    let container = document.createElement("div");
-    container.classList.add("container-fluid");
+    let container = createHTMLelement('div', ["container-fluid"]);
 
-    let row = document.createElement("div");
-    row.classList.add("row");
+    let row = createHTMLelement('div', ["row"]);
 
     /* BAL OLDAL */
-    let colLeft = document.createElement("div");
-    colLeft.classList.add("col-4");
+    let colLeft = createHTMLelement('div', ["col-4"]);
 
     let pfp = document.createElement("img");
     if (pfproute == null) {
@@ -426,55 +370,40 @@ async function viewUserToModal(data, variables) {
     pfp.classList.add("img-fluid", "img-thumbnail", "rounded-circle", "h-75"
     );
 
-    let pfpTitle = document.createElement("h6");
-    pfpTitle.textContent = username;
+    let pfpTitle = createHTMLelement('h6', [], username);
 
     colLeft.appendChild(pfp);
     colLeft.appendChild(pfpTitle);
 
     /* JOBB OLDAL */
-    let colRight = document.createElement("div");
-    colRight.classList.add("col-8");
-
-    let form = document.createElement("form");
-    form.id = 'editUserForm';
-
-    let formGroup = document.createElement("div");
-    formGroup.classList.add("form-group");
+    let colRight = createHTMLelement('div', ["col-8"]);
+    let form = createHTMLelement('form', [], null, 'editUserForm');
+    let formGroup = createHTMLelement('div', ["form-group"]);
 
     /* INPUTOK */
     let idDiv = document.createElement("div");
-    let idP = document.createElement("p");
-    idP.textContent = "ID";
+    let idP = createHTMLelement('p', [], "ID");
     let idInput = inputGeneral("number", null, user_id, "editIdInput", ["form-control"], true);
 
     idDiv.appendChild(idP);
     idDiv.appendChild(idInput);
 
     let userDiv = document.createElement("div");
-    let userP = document.createElement("p");
-    userP.textContent = "Username";
+    let userP = createHTMLelement('p', [], "Username");
     let userInput = inputGeneral("text", null, username, "editUsernameInput", ["form-control"], true);
 
     userDiv.appendChild(userP);
     userDiv.appendChild(userInput);
 
     let emailDiv = document.createElement("div");
-    let emailP = document.createElement("p");
-    emailP.textContent = "E-mail address";
+    let emailP = createHTMLelement('p', [], "E-mail address");
     let emailInput = inputGeneral("text", null, email, "editEmailInput", ["form-control"], true);
-    emailInput.type = "text";
-    emailInput.id = "editEmailInput";
-    emailInput.value = email;
-    emailInput.classList.add("form-control");
-    emailInput.disabled = true;
 
     emailDiv.appendChild(emailP);
     emailDiv.appendChild(emailInput);
 
     let roleDiv = document.createElement("div");
-    let roleP = document.createElement("p");
-    roleP.textContent = "Roles:";
+    let roleP = createHTMLelement('p', [], "Roles:");
     let select = document.createElement("select");
     select.classList.add("form-select");
     let opt1 = document.createElement("option");
@@ -507,22 +436,14 @@ async function viewUserToModal(data, variables) {
     roleDiv.appendChild(roleP);
     roleDiv.appendChild(select);
 
-    let switchDiv = document.createElement("div");
-    switchDiv.classList.add("form-check", "form-switch", "mt-3");
+    let switchDiv = createHTMLelement('div', ["form-check", "form-switch", "mt-3"]);
     let switchInput = inputGeneral("checkbox", null, null, "edit2faInput", ["form-check-input"], false);
-    switchInput.type = "checkbox";
     switchInput.role = "switch";
-    switchInput.id = "edit2faInput";
     if (is_2fa) {
         switchInput.checked = true;
     }
-    switchInput.classList.add("form-check-input");
-    switchInput.disabled = true;
 
-    let switchLabel = document.createElement("label");
-    switchLabel.htmlFor = "edit2faInput";
-    switchLabel.textContent = "Two-factor authentication";
-    switchLabel.classList.add("form-check-label");
+    let switchLabel = labelGeneral("edit2faInput", "Two-factor authentication", ["form-check-label"]);
 
     switchDiv.appendChild(switchInput);
     switchDiv.appendChild(switchLabel);
@@ -545,25 +466,19 @@ async function viewUserToModal(data, variables) {
 }
 
 function tablazatGeneral(data, variables) {
-    let tablazat = document.createElement('table');
-    tablazat.id = 'usersTable';
-    tablazat.classList.add("table", "table-striped", "table-hover");
-
+    let tablazat = createHTMLelement('table', ["table", "table-striped", "table-hover"], null, 'usersTable');
     let thead = document.createElement('thead');
     let tr = document.createElement('tr');
     let oszlopfok = ["Active", "ID", "Username", "E-mail", "Role", "Actions"];
 
     for (let i = 0; i < oszlopfok.length; i++) {
-        let th = document.createElement("th");
-        th.innerText = oszlopfok[i];
+        let th = createHTMLelement('th', [], oszlopfok[i]);
         tr.appendChild(th);
     }
     thead.appendChild(tr);
 
-    let tbody = document.createElement('tbody');
-    tbody.classList.add("table-group-divider");
+    let tbody = createHTMLelement('tbody', ["table-group-divider"]);
     let adatok = data.users;
-    console.log(adatok);
     for (let i = 0; i < adatok.length; i++) {
         let tr = document.createElement('tr');
         let ertekek = Object.values(adatok[i]);
@@ -579,14 +494,12 @@ function tablazatGeneral(data, variables) {
             tr.appendChild(td);
         }
         for (let j = 1; j < ertekek.length; j++) {
-            let td = document.createElement('td');
-            td.innerText = ertekek[j];
+            let td = createHTMLelement('td', [], ertekek[j])
             tr.appendChild(td);
         }
 
         let td = document.createElement('td');
-        let modositoGombokDiv = document.createElement('div');
-        modositoGombokDiv.classList.add("d-flex", "justify-content-evenly");
+        let modositoGombokDiv = createHTMLelement('div', ["d-flex", "justify-content-evenly"]);
         let editGomb, torloGomb;
         if (adatok[i].role != "ADMIN" && adatok[i].deleted_at == null) {
             editGomb = gombGeneral("button", "Szerkesztés", "edit", "blue", null);
@@ -740,10 +653,7 @@ function modalView(title, type, content, variables) {
 }
 
 function infoToModal(text) {
-    let content = document.createElement('p');
-    content.classList.add('text-center');
-    content.innerText = text;
-
+    let content = createHTMLelement('p', ['text-center'], text);
     return content;
 }
 

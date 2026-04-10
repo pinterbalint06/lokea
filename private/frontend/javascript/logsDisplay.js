@@ -1,40 +1,28 @@
-import { inputGeneral, formatDate, gombGeneral } from "./utils/domUtils.js";
+import { createHTMLelement, inputGeneral, formatDate, gombGeneral, labelGeneral } from "./utils/domUtils.js";
 import { getLogs, sortedLogs } from "./fetchs.js";
 
 export async function logsDisplayre() {
     currentPage = 1;
     let display = document.getElementById('content');
-    let row = document.createElement('div');
-    row.classList.add("row", "p-3");
 
-    let col9div = document.createElement('div');
-    col9div.classList.add("col-9");
+    let row = createHTMLelement('div', ["row", "p-3"]);
+    let col9div = createHTMLelement('div', ["col-9"]);
+    let fejlec = createHTMLelement('div', ["d-flex", "justify-content-between"])
 
-    let fejlec = document.createElement('div');
-    fejlec.classList.add("d-flex", "justify-content-between");
-
-    let cim = document.createElement('h2');
-    cim.innerText = "Logs";
-    cim.classList.add("h2");
-
+    let cim = createHTMLelement('h2', ["h2"], "Logs");
 
     fejlec.appendChild(cim);
     col9div.appendChild(fejlec);
 
     //tablazat
-    let tablazat = document.createElement('div');
-    tablazat.id = "logsDiv";
+    let tablazat = createHTMLelement('div', [], null, "logsDiv");
     col9div.appendChild(tablazat);
 
     //szures
 
-    let col3div = document.createElement("div");
-    col3div.classList.add("col-3");
-    let kartya = document.createElement("div");
-    kartya.classList.add("card", "bg-light", "p-3");
-    let kiscim = document.createElement('h4');
-    kiscim.classList.add("h4");
-    kiscim.innerText = 'Sort';
+    let col3div = createHTMLelement('div', ["col-3"]);
+    let kartya = createHTMLelement('div', ["card", "bg-light", "p-3"]);
+    let kiscim = createHTMLelement('h4', ["h4"], 'Sort');
     let szuresDiv = szuresek();
 
     kartya.appendChild(kiscim);
@@ -52,23 +40,19 @@ export async function logsDisplayre() {
 
 function tablazatGeneral(adatok) {
     //todo - ha ures a data, ird ki hogy nincs talalat
-    let tablazat = document.createElement('table');
-    tablazat.id = 'logsTable';
-    tablazat.classList.add("table", "table-striped", "table-hover", "mt-3");
+    let tablazat = createHTMLelement('table', ["table", "table-striped", "table-hover", "mt-3"], null, 'logsTable');
 
     let thead = document.createElement('thead');
     let tr = document.createElement('tr');
     let oszlopfok = ["User (victim)", "Activity", "Happened at"];
 
     for (let i = 0; i < oszlopfok.length; i++) {
-        let th = document.createElement("th");
-        th.innerText = oszlopfok[i];
+        let th = createHTMLelement('th', [], oszlopfok[i]);
         tr.appendChild(th);
     }
     thead.appendChild(tr);
 
-    let tbody = document.createElement('tbody');
-    tbody.classList.add("table-group-divider");
+    let tbody = createHTMLelement('tbody', ["table-group-divider"]);
     for (let i = 0; i < adatok.length; i++) {
         let tr = document.createElement('tr');
         let log = adatok[i];
@@ -82,8 +66,7 @@ function tablazatGeneral(adatok) {
         ];
 
         sorAdat.forEach(ertek => {
-            let td = document.createElement('td');
-            td.innerText = ertek;
+            let td = createHTMLelement('th', [], ertek);
             tr.appendChild(td);
         });
 
@@ -106,16 +89,13 @@ function frissitLogTablazat(data, logCount) {
 }
 
 function szuresek() {
-    let szuresDiv = document.createElement('div');
-    szuresDiv.classList.add("mb-3", "d-flex", "flex-column");
+    let szuresDiv = createHTMLelement('div', ["mb-3", "d-flex", "flex-column"]);
 
     //kereso
 
-    let keresodiv = document.createElement('div');
-    keresodiv.classList.add("mb-3");
+    let keresodiv = createHTMLelement('div', ["mb-3"]);
 
-    let inputgroupdiv = document.createElement('div');
-    inputgroupdiv.classList.add("input-group");
+    let inputgroupdiv = createHTMLelement('div', ["input-group"]);
 
     let keresoInput = inputGeneral("text", "Sort by name...", null, "keresoInput", ["form-control"], false);
     inputgroupdiv.appendChild(keresoInput);
@@ -125,9 +105,7 @@ function szuresek() {
     //activities
 
     let activityDiv = document.createElement('div');
-    let activityDivCim = document.createElement('h6');
-    activityDivCim.classList.add("h6", "mt-3");
-    activityDivCim.innerText = "Activities";
+    let activityDivCim = createHTMLelement('h6', ["h6", "mt-3"], "Activities");
     let activities = ["Sign up", "Login", "User update", "Password update", "User delete", "Update profile picture", "Delete profile picture"];
     let activitiesName = ["Sign up", "Login", "User update", "Password update", "User delete", "Profile picture update", "Profile picture delete"];
     for (let i = 0; i < activities.length; i++) {
@@ -139,10 +117,7 @@ function szuresek() {
         checkbox.id = `activities${activities[i]}`;
         checkbox.name = "sort1";
         checkbox.value = activitiesName[i];
-        let label = document.createElement('label');
-        label.setAttribute("for", `activities${activities[i]}`);
-        label.classList.add("form-check-label");
-        label.innerText = activities[i];
+        let label = labelGeneral(`activities${activities[i]}`, activities[i], ["form-check-label"]);
         formcheck.appendChild(checkbox);
         formcheck.appendChild(label);
         activityDiv.appendChild(formcheck);
@@ -153,9 +128,7 @@ function szuresek() {
     //roles
 
     let roleDiv = document.createElement('div');
-    let roleDivCim = document.createElement('h6');
-    roleDivCim.classList.add("h6", "mt-3");
-    roleDivCim.innerText = "Role";
+    let roleDivCim = createHTMLelement('h6', ["h6", "mt-3"], "Role");
     let roles = ["Admin", "Moderator", "User"];
     let roleValues = ["Admin", "Mod", "User"];
     for (let i = 0; i < roles.length; i++) {
@@ -167,10 +140,7 @@ function szuresek() {
         checkbox.id = `role${roles[i]}`;
         checkbox.name = "sort2";
         checkbox.value = roleValues[i];
-        let label = document.createElement('label');
-        label.setAttribute("for", `role${roles[i]}`);
-        label.classList.add("form-check-label");
-        label.innerText = roles[i];
+        let label = labelGeneral(`role${roles[i]}`, roles[i], ["form-check-label"]);
         formcheck.appendChild(checkbox);
         formcheck.appendChild(label);
         roleDiv.appendChild(formcheck);
@@ -181,15 +151,11 @@ function szuresek() {
     //dates
 
     let datesDiv = document.createElement('div');
-    let datesHeader = document.createElement('div');
-    datesHeader.classList.add("d-flex", "justify-content-between", "align-items-center", "mt-3", "mb-2");
+    let datesHeader = createHTMLelement('div', ["d-flex", "justify-content-between", "align-items-center", "mt-3", "mb-2"]);
 
-    let datesDivCim = document.createElement('h6');
-    datesDivCim.classList.add("h6", "m-0");
-    datesDivCim.innerText = "Dates";
+    let datesDivCim = createHTMLelement('h6', ["h6", "m-0"], "Dates");
 
-    let switchDiv = document.createElement('div');
-    switchDiv.classList.add("form-check", "form-switch");
+    let switchDiv = createHTMLelement('div', ["form-check", "form-switch"]);
     let dateSwitch = document.createElement('input');
     dateSwitch.type = "checkbox";
     dateSwitch.classList.add("form-check-input");
@@ -245,8 +211,7 @@ function szuresek() {
 
     //szures gomb
 
-    let sortBtn = gombGeneral("button", "Sort", null, "green", null);
-    sortBtn.classList.add("text-center", "mt-2");
+    let sortBtn = gombGeneral("button", "Sort", null, "green", null, ["text-center", "mt-2"]);
     sortBtn.addEventListener("click", async function () {
         currentPage = 1;
         let data = await sortedLogs(getFilterValues());
@@ -279,32 +244,21 @@ function getTimeFromSlider(sliderValue) {
 }
 
 function createDatePicker(labelStr, idPrefix) {
-    let container = document.createElement('div');
-    container.classList.add("mb-3", "p-2", "border", "rounded", "bg-light");
+    let container = createHTMLelement('div', ["mb-3", "p-2", "border", "rounded", "bg-light"]);
 
     let label = document.createElement('label');
     label.classList.add("form-label", "small", "fw-bold");
     label.innerText = labelStr;
+    //megnezni
 
-    let dateInp = document.createElement('input');
-    dateInp.type = "date";
-    dateInp.id = `${idPrefix}Date`;
-    dateInp.classList.add("form-control", "form-control-sm", "mb-2");
-    dateInp.value = new Date().toISOString().split('T')[0];
-    dateInp.disabled = true;
+    let dateInp = inputGeneral('date', null, new Date().toISOString().split('T')[0], `${idPrefix}Date`, ["form-control", "form-control-sm", "mb-2"], true);
 
-    let slider = document.createElement('input');
-    slider.type = "range";
+    let slider = inputGeneral('range', null, idPrefix === "from" ? "32" : "96", null, ["form-range"], true);
     slider.min = "0";
     slider.max = "96";
-    slider.value = idPrefix === "from" ? "32" : "96";
-    slider.classList.add("form-range");
-    slider.disabled = true;
 
-    let timeDisplay = document.createElement('div');
-    timeDisplay.classList.add("text-center", "badge", "bg-primary", "d-block", "time-display");
+    let timeDisplay = createHTMLelement('div', ["text-center", "badge", "bg-primary", "d-block", "time-display"], formatTime(slider.value));
     timeDisplay.style.fontSize = "0.9rem";
-    timeDisplay.innerText = formatTime(slider.value);
 
     slider.addEventListener("input", function () {
         timeDisplay.innerText = formatTime(slider.value);
@@ -321,20 +275,11 @@ function lapozasGeneral(totalRecords) {
     const limit = 15;
     let maxPage = Math.ceil(totalRecords / limit);
 
-    let paginationDiv = document.createElement('div');
-    paginationDiv.classList.add("d-flex", "justify-content-center", "align-items-center", "gap-3", "border", "rounded", "mt-3", "mb-5", "mx-auto", "p-2");
+    let paginationDiv = createHTMLelement('div', ["d-flex", "justify-content-center", "align-items-center", "gap-3", "border", "rounded", "mt-3", "mb-5", "mx-auto", "p-2"]);
     paginationDiv.style.width = "fit-content";
 
     let prevBtn = gombGeneral("button", "Previous", null, "green", null);
-    let nextBtn = gombGeneral("button", "Next", null, "green", null);
-
     prevBtn.disabled = (currentPage === 1);
-    nextBtn.disabled = (currentPage >= maxPage || maxPage === 0);
-
-    let pageInfo = document.createElement('span');
-    pageInfo.classList.add("align-self-center", "fw-bold");
-    pageInfo.innerText = `${currentPage} / ${maxPage}`;
-
     prevBtn.addEventListener("click", async () => {
         if (currentPage > 1) {
             currentPage--;
@@ -343,6 +288,8 @@ function lapozasGeneral(totalRecords) {
         }
     });
 
+    let nextBtn = gombGeneral("button", "Next", null, "green", null);
+    nextBtn.disabled = (currentPage >= maxPage || maxPage === 0);
     nextBtn.addEventListener("click", async () => {
         if (currentPage < maxPage) {
             currentPage++;
@@ -351,6 +298,8 @@ function lapozasGeneral(totalRecords) {
         }
     });
 
+    let pageInfo = createHTMLelement('span', ["align-self-center", "fw-bold"], `${currentPage} / ${maxPage}`);
+    
     paginationDiv.appendChild(prevBtn);
     paginationDiv.appendChild(pageInfo);
     paginationDiv.appendChild(nextBtn);

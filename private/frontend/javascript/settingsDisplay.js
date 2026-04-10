@@ -1,13 +1,11 @@
 import { getUserData, deleteProfile, deleteProfilePicture, uploadProfilePic, userSelfUpdate, updatePassword, updateDarkMode } from "./fetchs.js";
-import { inputGeneral, gombGeneral, labelGeneral, makeSubtitle } from "./utils/domUtils.js";
+import { createHTMLelement, inputGeneral, gombGeneral, labelGeneral, makeSubtitle } from "./utils/domUtils.js";
 
 export async function settingsDisplayre() {
     let hova = document.getElementById('content');
     hova.innerHTML = "";
 
-    let errordiv = document.createElement('div');
-    errordiv.id = 'errorLocation';
-    errordiv.classList.add('d-none');
+    let errordiv = createHTMLelement('div', ["d-none"], null, "errorLocation");
 
     tempPfp = null;
     let deleteLast = false;
@@ -18,16 +16,12 @@ export async function settingsDisplayre() {
         is_2fa: data.is_2fa
     }
 
-    let container = document.createElement('div');
-    container.classList.add('container', 'p-4');
+    let container = createHTMLelement('div', ['container', 'p-4']);
 
-    let accordion = document.createElement('div');
-    accordion.id = 'settingsAccordion';
-    accordion.classList.add('accordion');
+    let accordion = createHTMLelement('div', ['accordion'], null, 'settingsAccordion');
 
     let personalSec = createSection('personal', 'Personal Settings', true);
-    let saveAllBtn = gombGeneral("button", "Save settings", null, "green", null);
-    saveAllBtn.classList.add('w-100', 'mt-4', 'py-3', 'fw-bold');
+    let saveAllBtn = gombGeneral("button", "Save settings", null, "green", null, ['w-100', 'mt-4', 'py-3', 'fw-bold']);
     saveAllBtn.addEventListener("click", async function () {
         try {
             await checkModification();
@@ -52,14 +46,11 @@ export async function settingsDisplayre() {
     let uiSec = createSection('ui', 'UI Settings');
     let adminSec = createSection('admin', 'Admin Settings');
 
-    let row = document.createElement("div");
-    row.classList.add("row");
+    let row = createHTMLelement('div', ['row']);
 
-    let pfpCol = document.createElement("div");
-    pfpCol.classList.add("col-12", "col-md-4", "d-flex", "flex-column", "align-items-center");
+    let pfpCol = createHTMLelement('div', ["col-12", "col-md-4", "d-flex", "flex-column", "align-items-center"]);
 
-    let dropzone = document.createElement("div");
-    dropzone.classList.add("dropzone");
+    let dropzone = createHTMLelement('div', ["dropzone"]);
     dropzone.addEventListener("dragover", function (e) {
         e.preventDefault();
     });
@@ -76,14 +67,13 @@ export async function settingsDisplayre() {
         reader.readAsDataURL(file);
     });
 
-    let pfp = document.createElement("img");
+    let pfp = createHTMLelement('img', ["img-fluid", "img-thumbnail", "settingsPfp"]);
     if (data.filepath == null) {
         pfp.src = "../images/default.png";
     } else {
         objectURL = await getProfilePicture(data.filepath);
         pfp.src = objectURL;
     }
-    pfp.classList.add("img-fluid", "img-thumbnail", "settingsPfp");
 
     let newPfpInput = inputGeneral("file", null, null, "newPfpInput", ["form-control", "d-none"], false);
     newPfpInput.setAttribute("accept", "image/*");
@@ -109,8 +99,7 @@ export async function settingsDisplayre() {
         pfpCol.appendChild(deletePfpButton);
     }
 
-    let dataCol = document.createElement("div");
-    dataCol.classList.add("col-12", "col-md-8");
+    let dataCol = createHTMLelement('div', ["col-12", "col-md-8"]);
 
     let date = new Date(data.created_at);
     dataCol.appendChild(makeSubtitle(`Registered: ${date.toLocaleString("hu-HU")}`));
@@ -119,11 +108,9 @@ export async function settingsDisplayre() {
     dataCol.appendChild(makeSubtitle("E-mail address"));
     dataCol.appendChild(inputGeneral("text", "email", data.email, "emailInput", ["form-control"], false));
 
-    let buttonsDiv = document.createElement('div');
-    buttonsDiv.classList.add("d-flex", "gap-2", "my-3");
+    let buttonsDiv = createHTMLelement('div', ["d-flex", "gap-2", "my-3"]);
 
-    let changePassBtn = gombGeneral("button", "Change password", null, null, null);
-    changePassBtn.classList.add("btn", "btn-purple", "rounded-pill");
+    let changePassBtn = gombGeneral("button", "Change password", null, null, null, ["btn", "btn-purple", "rounded-pill"]);
     changePassBtn.setAttribute('data-bs-toggle', 'collapse');
     changePassBtn.setAttribute('data-bs-target', '#passwordCollapse');
 
@@ -134,26 +121,18 @@ export async function settingsDisplayre() {
         }
     });
 
-    let collapseDiv = document.createElement('div');
-    collapseDiv.className = 'collapse';
-    collapseDiv.id = 'passwordCollapse';
+    let collapseDiv = createHTMLelement('div', ['collapse'], null, 'passwordCollapse');
 
-    let innerCard = document.createElement('div');
-    innerCard.classList.add("d-flex", "flex-column", "border", "rounded", "p-3", "bg-light");
+    let innerCard = createHTMLelement('div', ["d-flex", "flex-column", "border", "rounded", "p-3", "bg-light"]);
 
-    let passGroup1 = document.createElement('div');
-    passGroup1.classList.add('mb-2');
+    let passGroup1, passGroup2 = createHTMLelement('div', ['mb-2']);
     passGroup1.appendChild(labelGeneral('oldPassword', 'Old password:'));
     passGroup1.appendChild(inputGeneral('password', null, null, 'oldPassword', ["form-control"], false));
 
-    let passGroup2 = document.createElement('div');
-    passGroup2.classList.add('mb-2');
     passGroup2.appendChild(labelGeneral('newPassword', 'New password:'));
     passGroup2.appendChild(inputGeneral('password', null, null, 'newPassword', ["form-control"], false));
 
-    let savePassBtn = document.createElement('button');
-    savePassBtn.className = 'btn btn-success btn-sm';
-    savePassBtn.innerText = 'Save';
+    let savePassBtn = gombGeneral('button', "Save", null, "green", null, ["btn-sm"]);
     savePassBtn.onclick = jelszoValtoztat;
 
     innerCard.appendChild(passGroup1);
@@ -182,8 +161,7 @@ export async function settingsDisplayre() {
     uiSec.body.appendChild(langSelect);
 
     uiSec.body.appendChild(makeSubtitle("Dark mode"));
-    let darkSwitchDiv = document.createElement('div');
-    darkSwitchDiv.classList.add('form-check', 'form-switch');
+    let darkSwitchDiv = createHTMLelement('div', ['form-check', 'form-switch']);
     let darkInput = inputGeneral("checkbox", null, null, "darkMode", ["form-check-input"], false);
     darkInput.checked = (data.darkmode == 1);
     darkInput.onclick = async function () {
@@ -206,28 +184,20 @@ export async function settingsDisplayre() {
 }
 
 function createSection(id, title, isOpen = false) {
-    let item = document.createElement('div');
-    item.classList.add('accordion-item', 'mb-3', 'border-0', 'shadow-sm');
+    let item = createHTMLelement('div', ['accordion-item', 'mb-3', 'border-0', 'shadow-sm']);
 
-    let header = document.createElement('h2');
-    header.classList.add('accordion-header');
+    let header = createHTMLelement('h2', ['accordion-header']);
 
-    let button = document.createElement('button');
-    button.classList.add('accordion-button');
+    let button = gombGeneral('button', title, null, null, null, ['accordion-button']);
     if (!isOpen) button.classList.add('collapsed');
-    button.type = 'button';
-    button.innerText = title;
     button.setAttribute('data-bs-toggle', 'collapse');
     button.setAttribute('data-bs-target', `#collapse-${id}`);
 
-    let collapse = document.createElement('div');
-    collapse.id = `collapse-${id}`;
-    collapse.classList.add('accordion-collapse', 'collapse');
+    let collapse = createHTMLelement('div', ['accordion-collapse', 'collapse'], null, `collapse-${id}`);
     if (isOpen) collapse.classList.add('show');
     collapse.setAttribute('data-bs-parent', '#settingsAccordion');
 
-    let body = document.createElement('div');
-    body.classList.add('accordion-body');
+    let body = createHTMLelement('div', ['accordion-body']);
 
     header.appendChild(button);
     collapse.appendChild(body);
@@ -277,19 +247,14 @@ async function saveModification(username, email, is_2fa) {
         errordiv.classList.remove('d-none');
         if (data.error) {
             let ul = document.createElement('ul');
-            let hiba;
             if (Array.isArray(data.error)) {
                 for (let i = 0; i < data.error.length; i++) {
-                    let li = document.createElement('li');
-                    hiba = data.error[i].msg;
-                    li.innerText = `${data.error[i].path}: ${hiba}`;
+                    let li = createHTMLelement('li', [], `${data.error[i].path}: ${data.error[i].msg}`);
                     ul.appendChild(li);
                 }
             }
             else {
-                let li = document.createElement('li');
-                hiba = data.error.msg;
-                li.innerText = `${data.error.path}: ${hiba}`;
+                let li = createHTMLelement('li', [], `${data.error.path}: ${data.error.msg}`);
                 ul.appendChild(li);
             }
 
@@ -354,20 +319,16 @@ function ejszakaimod() {
 }
 
 function createAlert(message, type) {
-    let alertDiv = document.createElement('div');
-    alertDiv.classList.add("alert", "alert-dismissible", "fade", "show");
+    let alertDiv = createHTMLelement('div', ["alert", "alert-dismissible", "fade", "show"]);
     if (type) {
         alertDiv.classList.add(`alert-${type}`)
     }
     alertDiv.role = 'alert';
 
-    let textNode = document.createElement('span');
-    textNode.innerHTML = message;
+    let textNode = createHTMLelement('span', [], message);
     alertDiv.appendChild(textNode);
 
-    let closeBtn = document.createElement('button');
-    closeBtn.type = 'button';
-    closeBtn.className = 'btn-close';
+    let closeBtn = gombGeneral('button', null, null, null, null, ['btn-close']);
     closeBtn.setAttribute('data-bs-dismiss', 'alert');
     closeBtn.setAttribute('aria-label', 'Close');
 
@@ -448,3 +409,5 @@ let settingsModal;
 let currentSettings;
 let objectURL;
 let tempPfp;
+
+//megnezni selectet
