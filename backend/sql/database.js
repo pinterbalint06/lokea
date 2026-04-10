@@ -292,7 +292,7 @@ async function insertGameSession(userId, gameMapId) {
 
 async function selectLatestActiveGameSession(userId) {
     const query = `
-        SELECT game_sessions.session_id, game_sessions.game_maps_id, game_sessions.started_at, game_maps.title
+        SELECT game_maps.title
         FROM game_sessions
             INNER JOIN game_maps ON game_sessions.game_maps_id = game_maps.game_maps_id
         WHERE game_sessions.user_id = ? AND game_sessions.finished_at IS NULL
