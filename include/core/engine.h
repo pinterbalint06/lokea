@@ -45,6 +45,8 @@ public:
     void setCameraRotation(float pitch, float yaw);
     void setPitch(float pitch);
     void setYaw(float yaw);
+    void setCameraPosition(float x, float y, float z);
+    void resetCameraPosition();
     void render() { renderer_->render(scene_.get()); };
     uint8_t *initTexture(int width, int height, int meshIndex);
     void uploadTextureToGPU(int meshIndex);

@@ -84,28 +84,55 @@ function createOptionsForImageList() {
 
 async function loadHerdecke() {
     equirectangularViewer.clearArrows();
-    equirectangularViewer.clearImage();
-    equirectangularViewer.setYaw(1.2);
-    await equirectangularViewer.loadImage(imageList[1].url, imageList[1].width, imageList[1].height);
+    await equirectangularViewer.loadImage(imageList[1].url, imageList[1].width, imageList[1].height, degreeToRadian(90));
 
-    equirectangularViewer.addArrow(1, degreeToRadian(180), async () => {
-        await loadCathedral();
+    equirectangularViewer.addArrow(1, degreeToRadian(0), async () => {
+        await equirectangularViewer.animateDirection(degreeToRadian(0), async () => {
+            await loadCathedral();
+        });
     });
 }
 
 async function loadCathedral() {
     equirectangularViewer.clearArrows();
-    equirectangularViewer.clearImage();
-    await equirectangularViewer.loadImage(imageList[0].url, imageList[0].width, imageList[0].height);
-    equirectangularViewer.setYaw(0);
+    await equirectangularViewer.loadImage(imageList[0].url, imageList[0].width, imageList[0].height, degreeToRadian(0));
 
-    // TODO animacio a mozgasnak
-    equirectangularViewer.addArrow(1, degreeToRadian(270), async () => {
-        await loadHerdecke();
+    equirectangularViewer.addArrow(1, degreeToRadian(90), async () => {
+        await equirectangularViewer.animateDirection(degreeToRadian(90), async () => {
+            await loadHerdecke();
+        });
     });
-    equirectangularViewer.addArrow(2, degreeToRadian(90), async () => {
-        await loadHerdecke();
-    });
+
+    // TODO: ez a pelda tesztelese uj eszakirannyal
+    // PELDA a progressziv betoltessel
+    /**
+        await equirectangularViewer.animateDirection(degreeToRadian(270), (markLoaded) => {
+            return loadPointEquirectangularLowThenHigh({
+                pointId: 104,
+                isCurrent: () => {},
+                loadToViewer: async (imgData) => {
+                    await equirectangularViewer.loadImage(imgData.url, imgData.width, imgData.height);
+                },
+                onLowReady: () => {
+                    // elozo nyilak eltavolitasa
+                    equirectangularViewer.clearArrows();
+
+                    // eszakirany beallitasa
+                    equirectangularViewer.setYaw(degreeToRadian(northDirection));
+
+                    itt lehet for a kapcsolatokon
+
+                    const kapcsolatIrany = (vektorokbol vagy az adatbazisbol);
+                    equirectangularViewer.addArrow(kapcsolatid, degreeToRadian(kapcsolatIrany), async () => {
+                        await equirectangularViewer.animateDirection(degreeToRadian(kapcsolatIrany), async () => {
+                            masik kep betoltese it loadPointEquirectangularLowThenHigh-val es akkor a kapcsolat masik vegpont idjaval
+                        });
+                    });
+                    markLoaded();
+                }
+            });
+        });
+     */
 }
 
 async function init() {

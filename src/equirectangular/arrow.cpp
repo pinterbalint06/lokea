@@ -76,7 +76,7 @@ void Arrow::createModelMatrix()
     const float radius = EQUIRECTANGULAR_SETTINGS.arrowCameraRadiusDistance;
     const float height = EQUIRECTANGULAR_SETTINGS.arrowHeightY;
 
-    const float posX = -std::sin(yaw_) * radius;
+    const float posX = std::sin(yaw_) * radius;
     const float posY = height;
     const float posZ = -std::cos(yaw_) * radius;
 
@@ -84,7 +84,7 @@ void Arrow::createModelMatrix()
     MathUtils::setScale(scaleMat, scale, scale, scale);
 
     float yRotMat[16];
-    MathUtils::setRotationY(yRotMat, yaw_);
+    MathUtils::setRotationY(yRotMat, -yaw_);
 
     float tempMat[16];
     MathUtils::setIdentity(tempMat);
@@ -149,7 +149,7 @@ Arrow::~Arrow() {}
 
 Vec2 Arrow::getDirection() const
 {
-    return Vec2(-std::sin(yaw_), -std::cos(yaw_));
+    return Vec2(std::sin(yaw_), -std::cos(yaw_));
 }
 
 void Arrow::generateMesh()

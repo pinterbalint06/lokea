@@ -18,7 +18,6 @@ private:
     void createMaterial();
     void generateMesh();
 public:
-    Arrow(int id, const Vec2& direction);
     Arrow(int id, float directionYaw);
     ~Arrow();
 

@@ -126,6 +126,16 @@ void Engine::setCameraRotation(float pitch, float yaw)
     scene_->getCamera()->setRotation(pitch, yaw);
 }
 
+void Engine::setCameraPosition(float x, float y, float z)
+{
+    scene_->getCamera()->setPosition(x, y, z);
+}
+
+void Engine::resetCameraPosition()
+{
+    scene_->getCamera()->setPosition(0.0f, 0.0f, 0.0f);
+}
+
 uint8_t *Engine::initTexture(int width, int height, int meshIndex)
 {
     uint8_t *retPtr = nullptr;

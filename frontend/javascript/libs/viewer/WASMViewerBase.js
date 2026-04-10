@@ -195,7 +195,7 @@ export class WASMViewerBase {
                     success = true;
                 } else {
                     throw new WebassemblyError(
-                        "_creatEngine was not implemented!",
+                        "_createEngine was not implemented!",
                         {
                             "type": WASM_ERROR_TYPES.INITIALIZATION
                         });

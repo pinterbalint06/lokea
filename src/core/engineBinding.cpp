@@ -17,6 +17,8 @@ EMSCRIPTEN_BINDINGS(engineBinding)
         .function("zoom", &Engine::zoom)
         .function("rotateCamera", &Engine::rotateCamera)
         .function("setCameraRotation", &Engine::setCameraRotation)
+        .function("setCameraPosition", &Engine::setCameraPosition)
+        .function("resetCameraPosition", &Engine::resetCameraPosition)
         .function("render", &Engine::render)
         .function("initTexture", emscripten::optional_override(
             [](Engine &self, int width, int height, int meshIndex) -> int

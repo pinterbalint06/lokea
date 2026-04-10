@@ -1,10 +1,14 @@
-import { degreeToRadian } from "../math/mathUtils.js";
+import { degreeToRadian, normalizeAngleRadians } from "../math/mathUtils.js";
 import ModuleBuilder from "../webassembly/equirectangular/equirectangular.js";
 import { WASMViewerBase, WASM_ERROR_TYPES, WebassemblyError } from "./WASMViewerBase.js";
+import { AnimationHelper } from "./AnimationHelper.js";
 
 const DEFAULT_OPTIONS = {
     "autoRotate": false,
-    "autoRotateSpeed": 1.0
+    "autoRotateSpeed": 1.0,
+    "transitionDuration": 700,
+    "transitionMaxBlur": 6.0,
+    "transitionMoveDistance": 6.0
 };
 
 export const EQUIRECTANGULAR_ERROR_TYPES = {
@@ -25,6 +29,15 @@ export class EquirectangularViewer extends WASMViewerBase {
      * The ID of the current requested image loading (used to dismiss old image load requests) */
     #currentImageRequestID;
 
+    /** 
+     * @type {number} 
+     * The north offset for the image */
+    #imageNorthOffset;
+
+    #activeTransition;
+    #transitionID;
+    #isTransitionManagedLoad;
+
     /**
      * Constructor for EquirectangularViewer class.
      *
@@ -39,8 +52,19 @@ export class EquirectangularViewer extends WASMViewerBase {
     constructor(canvasId, options = {}) {
         super(canvasId, options, ModuleBuilder);
         this.#currentImageRequestID = 0;
+
+        this.#activeTransition = null;
+        this.#transitionID = 0;
+        this.#isTransitionManagedLoad = false;
+
+        this.#imageNorthOffset = 0.0;
+
         this.autoRotate = options.autoRotate != undefined ? options.autoRotate : DEFAULT_OPTIONS["autoRotate"];
         this.autoRotateSpeed = options.autoRotateSpeed != undefined ? options.autoRotateSpeed : DEFAULT_OPTIONS["autoRotateSpeed"];
+
+        this.transitionDuration = options.transitionDuration != undefined ? options.transitionDuration : DEFAULT_OPTIONS["transitionDuration"];
+        this.transitionMaxBlur = options.transitionMaxBlur != undefined ? options.transitionMaxBlur : DEFAULT_OPTIONS["transitionMaxBlur"];
+        this.transitionMoveDistance = options.transitionMoveDistance != undefined ? options.transitionMoveDistance : DEFAULT_OPTIONS["transitionMoveDistance"];
 
         this._arrowCallbacks = {};
     }
@@ -62,7 +86,7 @@ export class EquirectangularViewer extends WASMViewerBase {
      * @returns {Promise<void>} Resolves when the image is successfully loaded, rejects if loading fails or a new image is requested.
      * @throws {Error} If the viewer is destroyed or the engine fails to initialize.
      */
-    async loadImage(url, width, height) {
+    async loadImage(url, width, height, imageNorthOffsetRadians = 0.0) {
         if (!url || typeof url != "string") {
             throw new WebassemblyError(
                 "Invalid URL provided",
@@ -81,10 +105,25 @@ export class EquirectangularViewer extends WASMViewerBase {
                 });
         }
 
+        if (!Number.isFinite(imageNorthOffsetRadians)) {
+            throw new WebassemblyError(
+                "Invalid north offset provided",
+                {
+                    "type": EQUIRECTANGULAR_ERROR_TYPES.INVALID_INPUT,
+                    "imgUrl": imageUrl
+                });
+        }
+
         await this._ensureEngineReadyAsync();
+
+        if (!this.#isTransitionManagedLoad) {
+            this.#cancelTransition("Image load interrupted active transition.");
+        }
 
         this.#currentImageRequestID++;
         let currentRequestId = this.#currentImageRequestID;
+
+        let currentAbsoluteHeading = this.getHeading();
 
         return new Promise((resolve, reject) => {
             this._engine.loadEquirectangularImage(
@@ -94,6 +133,9 @@ export class EquirectangularViewer extends WASMViewerBase {
                 () => {
                     if (!this._isDestroyed) {
                         if (this.#currentImageRequestID == currentRequestId) {
+                            this.#imageNorthOffset = imageNorthOffsetRadians;
+
+                            this.setHeading(currentAbsoluteHeading);
                             resolve();
                         } else {
                             reject(new WebassemblyError(
@@ -117,12 +159,102 @@ export class EquirectangularViewer extends WASMViewerBase {
         });
     }
 
+    getHeading() {
+        let currentAbsoluteHeading = 0.0;
+        this._ensureEngineReady();
+
+        currentAbsoluteHeading = this._engine.yaw - this.#imageNorthOffset;
+
+        // TODO itt az eszakirany atdolgozasa
+        return currentAbsoluteHeading;
+    }
+
+    setHeading(targetAbsoluteHeadingRadians) {
+        this._ensureEngineReady();
+
+        if (!Number.isFinite(targetAbsoluteHeadingRadians)) {
+            throw new WebassemblyError(
+                "Invalid absolute heading",
+                {
+                    "type": EQUIRECTANGULAR_ERROR_TYPES.INVALID_INPUT
+                });
+        }
+
+        let calculatedNewYaw = targetAbsoluteHeadingRadians + this.#imageNorthOffset;
+        calculatedNewYaw = normalizeAngleRadians(calculatedNewYaw);
+
+        this._engine.yaw = calculatedNewYaw;
+    }
+
     async clearImage() {
         await this._ensureEngineReadyAsync();
+
+        if (!this.#isTransitionManagedLoad) {
+            this.#cancelTransition("Image cleared during active transition.");
+        }
 
         this.#currentImageRequestID++;
 
         this._engine.clearImage();
+    }
+
+    async animateDirection(arrowYaw, onLoad) {
+        await this._ensureEngineReadyAsync();
+
+        if (!Number.isFinite(arrowYaw)) {
+            throw new WebassemblyError("Invalid arrow yaw", {
+                "type": EQUIRECTANGULAR_ERROR_TYPES.INVALID_INPUT,
+                "arrowYaw": arrowYaw
+            });
+        }
+
+        if (typeof onLoad != "function") {
+            throw new WebassemblyError("Invalid load callback", {
+                "type": EQUIRECTANGULAR_ERROR_TYPES.INVALID_INPUT
+            });
+        }
+
+        this.#cancelTransition("New transition requested.");
+
+        this.canvasInput.stopMomentum();
+
+        this.#transitionID++;
+        let currentId = this.#transitionID;
+
+        const { promise, resolve, reject } = Promise.withResolvers();
+
+        this.#activeTransition = {
+            id: currentId,
+            helper: new AnimationHelper(
+                currentId, arrowYaw, this.transitionDuration,
+                this.transitionMaxBlur, this.transitionMoveDistance
+            ),
+            settled: false,
+            resolve,
+            reject
+        };
+
+        this.#isTransitionManagedLoad = true;
+
+        try {
+            const markAsLoaded = () => {
+                if (this.#activeTransition?.id == currentId) {
+                    this.#activeTransition.helper.loadCompleted();
+                }
+            };
+            await onLoad(markAsLoaded);
+            markAsLoaded();
+        } catch (error) {
+            if (this.#activeTransition?.id == currentId) {
+                this.#cancelTransition("Image load failed during transition.");
+            }
+        } finally {
+            if (this.#activeTransition?.id == currentId) {
+                this.#isTransitionManagedLoad = false;
+            }
+        }
+
+        return promise;
     }
 
     setAutoRotate(enabled) {
@@ -137,7 +269,7 @@ export class EquirectangularViewer extends WASMViewerBase {
     setYaw(yaw) {
         this._ensureEngineReady();
 
-        if (Number.isNaN(yaw)) {
+        if (!Number.isFinite(yaw)) {
             throw new WebassemblyError(
                 "Invalid yaw",
                 {
@@ -151,7 +283,7 @@ export class EquirectangularViewer extends WASMViewerBase {
     setZoom(zoom) {
         this._ensureEngineReady();
 
-        if (Number.isNaN(zoom) || zoom < 0.0 || 10.0 < zoom) {
+        if (!Number.isFinite(zoom) || zoom < 0.0 || 10.0 < zoom) {
             throw new WebassemblyError(
                 "Invalid zoom",
                 {
@@ -203,8 +335,12 @@ export class EquirectangularViewer extends WASMViewerBase {
     // | PRIVATE METHODS |
     // |-----------------|
     _beforeRender() {
-        if (this.autoRotate) {
-            this._engine.rotateCamera(0, degreeToRadian(this.autoRotateSpeed));
+        this.#updateTransition();
+
+        if (this.#activeTransition == null) {
+            if (this.autoRotate) {
+                this._engine.rotateCamera(0, degreeToRadian(this.autoRotateSpeed));
+            }
         }
     }
 
@@ -217,36 +353,120 @@ export class EquirectangularViewer extends WASMViewerBase {
         return {
             "friction": 0.96,
             onRotate: (pitch, yaw) => {
-                if (this._engine) {
+                if (this._engine && this.#activeTransition == null) {
                     this._engine.rotateCamera(degreeToRadian(pitch), degreeToRadian(yaw));
                 }
             },
             onZoom: (zoomAmount) => {
-                if (this._engine) {
+                if (this._engine && this.#activeTransition == null) {
                     this._engine.zoom(zoomAmount);
+                    return true;
                 }
-                return true;
+                return false;
             },
-            onClick: (x, y) => {
+            onClick: async (x, y) => {
                 if (this._engine) {
                     let clickedId = this._engine.getClickedArrow(x, y, true);
+                    let callback = this._arrowCallbacks[clickedId];
 
-                    if (clickedId != -1 && this._arrowCallbacks[clickedId]) {
-                        let callback = this._arrowCallbacks[clickedId];
-                        callback();
+                    if (clickedId != -1 && callback) {
+                        try {
+                            await callback();
+                        } catch (error) {
+                            if (!(error instanceof WebassemblyError) || error.type != EQUIRECTANGULAR_ERROR_TYPES.CANCELLED) {
+                                console.error(error);
+                            }
+                        }
                     }
                 }
             },
-            onDoubleClick: (x, y) => {
+            onDoubleClick: async (x, y) => {
                 if (this._engine) {
                     let clickedId = this._engine.getClickedArrow(x, y, false);
+                    let callback = this._arrowCallbacks[clickedId];
 
-                    if (clickedId != -1 && this._arrowCallbacks[clickedId]) {
-                        let callback = this._arrowCallbacks[clickedId];
-                        callback();
+                    if (clickedId != -1 && callback) {
+                        try {
+                            await callback();
+                        } catch (error) {
+                            if (!(error instanceof WebassemblyError) || error.type != EQUIRECTANGULAR_ERROR_TYPES.CANCELLED) {
+                                console.error(error);
+                            }
+                        }
                     }
                 }
             }
         };
+    }
+
+    #updateTransition() {
+        if (this.#activeTransition) {
+            const frameState = this.#activeTransition.helper.getFrameState();
+
+            this._engine.setCameraPosition(frameState.camX, 0.0, frameState.camZ);
+            this.#setCanvasBlur(frameState.blurPx);
+
+            if (frameState.isComplete) {
+                this.#completeTransition(this.#activeTransition);
+            }
+        }
+    }
+
+    #completeTransition(transition) {
+        if (this.#activeTransition?.id == transition.id) {
+            this.#activeTransition = null;
+            this.#clearTransitionEffects();
+
+            this.#settleTransition(transition, true);
+        }
+    }
+
+    #cancelTransition(message) {
+        const transition = this.#activeTransition;
+        if (transition) {
+            this.#activeTransition = null;
+            this.#clearTransitionEffects();
+
+            let error = new WebassemblyError(
+                message,
+                {
+                    "type": EQUIRECTANGULAR_ERROR_TYPES.CANCELLED,
+                    "transitionId": transition.id
+                }
+            );
+
+            this.#settleTransition(transition, false, error);
+        } else {
+            this.#clearTransitionEffects();
+        }
+    }
+
+    #clearTransitionEffects() {
+        this.#isTransitionManagedLoad = false;
+        this.#setCanvasBlur(0.0);
+
+        if (this._engine) {
+            this._engine.resetCameraPosition();
+        }
+    }
+
+    #settleTransition(transition, isSuccess, error = null) {
+        if (!transition.settled) {
+            transition.settled = true;
+            if (isSuccess) {
+                transition.resolve();
+            } else {
+                transition.reject(error);
+            }
+        }
+    }
+
+    #setCanvasBlur(px) {
+        const blurPx = Math.max(0.0, px);
+        if (blurPx > 0.0) {
+            this._canvas.style.filter = `blur(${blurPx}px)`;
+        } else {
+            this._canvas.style.filter = "none";
+        }
     }
 }
