@@ -253,6 +253,28 @@ router.post('/userToInactive', auth.checkAuth, auth.checkRole("ADMIN"),
         }
     })
 
+router.post('/exportUsers', auth.checkAuth, auth.checkRole("ADMIN"), async (request, response) => {
+    try {
+        let { mireKeresek, mit, status, adminChecked, modChecked, userChecked } = request.body;
+        let users = await database.sortedUsers(mireKeresek, mit, status, adminChecked, modChecked, userChecked);
+
+        let csvContent = "\uFEFFID;Username;Email;Status;Role\n";
+
+        users.forEach(user => {
+            let statusText = user.deleted_at ? "Deleted" : "Active";
+            csvContent += `${user.user_id};${user.username};${user.email};${statusText};${user.role}\n`;
+        });
+
+        response.setHeader('Content-Type', 'text/csv; charset=utf-8');
+        response.setHeader('Content-Disposition', 'attachment; filename=users_export.csv');
+
+        return response.status(200).send(csvContent);
+
+    } catch (error) {
+        return response.status(500).json({ error: "Export error" });
+    }
+});
+
 router.post('/updateProfilePicFromAdmin', auth.checkAuth, auth.checkRole("ADMIN"), upload.single('profilePic'), async (request, response) => {
     let originalFile;
     let newFilePath;
@@ -359,6 +381,33 @@ router.post('/sortedLogs', auth.checkAuth, auth.checkRole("ADMIN"), async (reque
         response.status(200).json({ logs: logs.rows, total: logs.total });
     } catch (error) {
         response.status(500).json({ error: error.message });
+    }
+});
+
+router.post('/exportLogs', auth.checkAuth, auth.checkRole("ADMIN"), async (request, response) => {
+    try {
+        let { username, periodFrom, periodTo, roles, activities } = request.body;
+        let logs = await database.sortedLogs(username, periodFrom, periodTo, roles, activities, 1, 999999);
+
+        let csvContent = "\uFEFFUser;Victim;Activity;Date\n";
+
+        logs.rows.forEach(log => {
+            const d = new Date(log.happened_at);
+            const isoDatum = d.toISOString()
+                .replace('T', ' ')
+                .split('.')[0];
+
+            csvContent += `${log.username || 'System'};${log.victim || '-'};${log.activity};${isoDatum}\n`;
+        });
+
+        response.setHeader('Content-Type', 'text/csv; charset=utf-8');
+        response.setHeader('Content-Disposition', 'attachment; filename=logs_export.csv');
+
+        return response.status(200).send(csvContent);
+
+    } catch (error) {
+        console.error("Log export error:", error);
+        return response.status(500).json({ error: "Export error" });
     }
 });
 

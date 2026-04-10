@@ -14,15 +14,14 @@ TODO - settings
 -minden fetch -> fetch.js, ott csak fetch legyen
 -settings+users -> validálás
 
-TODO - files 
--logs és users exportálása (files fülön vagy az adott fülön)
+TODO - users
+-oldalazas, mint a lognal
 
 TODO - devlog
 -suneditor beepitese
 
 TODO - feature flags
 -esetleges játékmódok tiltása
-
 
 test tools oldal
 transactions oldal
@@ -36,4 +35,5 @@ kerdes:
 -compare attetele database.js-be
 -kell test tools?
 -kell transactions?
+-filesba mit kene? 
 -kell 2fa? 

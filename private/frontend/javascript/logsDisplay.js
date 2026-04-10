@@ -1,5 +1,5 @@
 import { createHTMLelement, inputGeneral, formatDate, gombGeneral, labelGeneral } from "./utils/domUtils.js";
-import { getLogs, sortedLogs } from "./fetchs.js";
+import { getLogs, sortedLogs, exportLogs } from "./fetchs.js";
 
 export async function logsDisplayre() {
     currentPage = 1;
@@ -218,6 +218,12 @@ function szuresek() {
         frissitLogTablazat(data.logs, data.total);
     })
     szuresDiv.appendChild(sortBtn);
+
+    let exportBtn = gombGeneral("button", "Export Logs", null, "blue", null, ["text-center", "mt-2"]);
+    exportBtn.addEventListener("click", async function () {
+        await exportLogs(getFilterValues());
+    });
+    szuresDiv.appendChild(exportBtn);
 
     return szuresDiv;
 }

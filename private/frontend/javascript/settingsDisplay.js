@@ -125,10 +125,11 @@ export async function settingsDisplayre() {
 
     let innerCard = createHTMLelement('div', ["d-flex", "flex-column", "border", "rounded", "p-3", "bg-light"]);
 
-    let passGroup1, passGroup2 = createHTMLelement('div', ['mb-2']);
+    let passGroup1 = createHTMLelement('div', ['mb-2']);
     passGroup1.appendChild(labelGeneral('oldPassword', 'Old password:'));
     passGroup1.appendChild(inputGeneral('password', null, null, 'oldPassword', ["form-control"], false));
 
+    let passGroup2 = createHTMLelement('div', ['mb-2']);
     passGroup2.appendChild(labelGeneral('newPassword', 'New password:'));
     passGroup2.appendChild(inputGeneral('password', null, null, 'newPassword', ["form-control"], false));
 

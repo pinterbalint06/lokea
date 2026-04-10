@@ -240,6 +240,33 @@ export async function uploadProfilePic(picture, id = -1) {
     }
 }
 
+export async function exportUsers(filters) {
+    try {
+        const response = await fetch('/api/admin/exportUsers', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(filters)
+        });
+
+        if (!response.ok) throw new Error('Szerver hiba az exportáláskor');
+
+        const blob = await response.blob();
+        const url = window.URL.createObjectURL(blob);
+        
+        let a = document.createElement('a');
+        a.href = url;
+        a.download = `users_export_${new Date().getTime()}.csv`;
+        document.body.appendChild(a);
+        a.click();
+        
+        window.URL.revokeObjectURL(url);
+        a.remove();
+    } catch (err) {
+        console.error("Export hiba:", err);
+        alert("Hiba történt az exportálás során!");
+    }
+}
+
 export async function sortedLogs(variables) {
     let { username, periodFrom, periodTo, roles, activities, page } = variables;
     try {
@@ -267,6 +294,32 @@ export async function sortedLogs(variables) {
     } catch (error) {
         console.error("Fetch error:", error.message);
         return [];
+    }
+}
+
+export async function exportLogs(filters) {
+    try {
+        const response = await fetch('/api/admin/exportLogs', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(filters)
+        });
+
+        if (!response.ok) throw new Error('Szerver hiba');
+
+        const blob = await response.blob();
+        const url = window.URL.createObjectURL(blob);
+
+        let a = document.createElement('a');
+        a.href = url;
+        a.download = `logs_export_${new Date().getTime()}.csv`;
+        document.body.appendChild(a);
+        a.click();
+        window.URL.revokeObjectURL(url);
+        a.remove();
+    } catch (err) {
+        console.error("Export hiba:", err);
+        alert("Nem sikerült a logok exportálása!");
     }
 }
 

@@ -1,5 +1,5 @@
-import { osszesUser, getUser, sortedUser, getProfilePicture, newUser, userUpdate, userToInactive, uploadProfilePic, deleteProfilePicture } from "./fetchs.js";
-import { createHTMLelement, gombGeneral, inputGeneral, labelGeneral} from "./utils/domUtils.js";
+import { osszesUser, getUser, sortedUser, getProfilePicture, newUser, userUpdate, userToInactive, exportUsers, uploadProfilePic, deleteProfilePicture } from "./fetchs.js";
+import { createHTMLelement, gombGeneral, inputGeneral, labelGeneral } from "./utils/domUtils.js";
 
 export async function usersDisplayre(variables) {
     let display = document.getElementById('content');
@@ -118,6 +118,15 @@ export async function usersDisplayre(variables) {
     }
     szuresDiv.appendChild(roleDivCim);
     szuresDiv.appendChild(roleDiv);
+
+    let exportGombDiv = createHTMLelement('div', ["mt-3", "border-top", "pt-3"]);
+    let exportGomb = gombGeneral("button", "Export to CSV", null, "blue", null, ["w-100"]);
+    exportGomb.addEventListener("click", async function () {
+        await exportUsers(getFilterValues());
+    });
+
+    exportGombDiv.appendChild(exportGomb);
+    szuresDiv.appendChild(exportGombDiv);
 
     kartya.appendChild(kiscim);
     kartya.appendChild(szuresDiv);
