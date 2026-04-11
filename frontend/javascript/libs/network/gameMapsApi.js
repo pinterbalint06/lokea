@@ -18,6 +18,10 @@ async function fetchImage(url, abortSignal = null) {
 
         let width = parseInt(response.headers.get("imageWidth"));
         let height = parseInt(response.headers.get("imageHeight"));
+        let northDirection = parseFloat(response.headers.get("northDirection"));
+        if (!Number.isFinite(northDirection)) {
+            northDirection = 0;
+        }
         let data = await response.blob();
 
         imageURL = URL.createObjectURL(data);
@@ -26,6 +30,7 @@ async function fetchImage(url, abortSignal = null) {
             url: imageURL,
             width,
             height,
+            northDirection,
             cleanup: () => {
                 if (imageURL) {
                     URL.revokeObjectURL(imageURL);

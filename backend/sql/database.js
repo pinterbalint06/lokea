@@ -350,7 +350,7 @@ async function getMapImage(mapId) {
 
 async function getPointImage(pointId) {
     const query = `
-        SELECT images.image_id, images.filepath, images.width, images.height 
+        SELECT images.image_id, images.filepath, images.width, images.height, points.north_direction
         FROM points
             INNER JOIN images ON (points.image_id = images.image_id)
         WHERE points.point_id = ?

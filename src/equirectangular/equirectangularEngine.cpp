@@ -307,7 +307,10 @@ int EquirectangularEngine::findClosestArrowInDirection(const Vec3 &clickDirectio
     Vec2 horizontalDirection(clickDirection.x, clickDirection.z);
     horizontalDirection.normalize();
 
-    float highestDotProduct = isDirectArrowClick ? 0.976f : 0.995f;
+    float highestDotProduct =
+        isDirectArrowClick
+        ? EQUIRECTANGULAR_SETTINGS.directClickDotProductThreshold
+        : EQUIRECTANGULAR_SETTINGS.horizonClickDotProductThreshold;
     int bestArrowId = -1;
 
     for (int i = 0; i < arrows_.size(); i++)

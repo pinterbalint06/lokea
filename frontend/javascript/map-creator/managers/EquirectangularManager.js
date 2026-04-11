@@ -40,7 +40,7 @@ export class EquirectangularManager {
                     pointId: id,
                     signal,
                     loadToViewer: async (imgData) => {
-                        await this.equirectangularViewer.loadImage(imgData.url, imgData.width, imgData.height, degreeToRadian(this.store.getState().activePoint.northDirection));
+                        await this.equirectangularViewer.loadImage(imgData.url, imgData.width, imgData.height, degreeToRadian(imgData.northDirection));
                     },
                     isCurrent: () => this.store.getState().activePoint.id == id && this.activeLoadGeneration == loadGeneration,
                     onLowReady: () => {

@@ -5,10 +5,14 @@ struct EquirectangularEngineConfig
 {
     // arrow mesh generation
     float arrowSize = 0.25f;
-    float arrowCameraRadiusDistance = 0.75f;
-    float arrowHeightY = -1.0f;
+    float arrowCameraRadiusDistance = 1.0f;
+    float arrowHeightY = -0.75f;
     float shadowYOffset = -0.025f;
     float shadowOutlineWidth = 0.01f;
+
+    // closest arrow detection
+    float directClickDotProductThreshold = 0.9f;
+    float horizonClickDotProductThreshold = 0.995f;
 
     // sphere generation
     int sphereRingCount = 32;

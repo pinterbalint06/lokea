@@ -264,3 +264,33 @@ async function init() {
 }
 
 document.addEventListener("DOMContentLoaded", init);
+
+// PELDA a progressziv betoltessel
+/**
+    await equirectangularViewer.animateDirection(degreeToRadian(270), (markLoaded) => {
+        return loadPointEquirectangularLowThenHigh({
+            pointId: 104,
+            isCurrent: () => {},
+            loadToViewer: async (imgData) => {
+                await equirectangularViewer.loadImage(imgData.url, imgData.width, imgData.height, degreeToRadian(imgData.northDirection));
+            },
+            onLowReady: () => {
+                // elozo nyilak eltavolitasa
+                equirectangularViewer.clearArrows();
+
+                // eszakirany beallitasa
+                equirectangularViewer.setYaw(degreeToRadian(northDirection));
+
+                itt lehet for a kapcsolatokon
+
+                const kapcsolatIrany = (vektorokbol vagy az adatbazisbol);
+                equirectangularViewer.addArrow(kapcsolatid, degreeToRadian(kapcsolatIrany), async () => {
+                    await equirectangularViewer.animateDirection(degreeToRadian(kapcsolatIrany), async () => {
+                        masik kep betoltese it loadPointEquirectangularLowThenHigh-val es akkor a kapcsolat masik vegpont idjaval
+                    });
+                });
+                markLoaded();
+            }
+        });
+    });
+ */

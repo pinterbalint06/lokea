@@ -161,12 +161,9 @@ export class EquirectangularViewer extends WASMViewerBase {
     }
 
     getHeading() {
-        let currentAbsoluteHeading = 0.0;
         this._ensureEngineReady();
 
-        currentAbsoluteHeading = this._engine.yaw - this.#imageNorthDirection;
-
-        return normalizeAngleRadians(currentAbsoluteHeading);
+        return this.#yawToHeading(this._engine.yaw);
     }
 
     setHeading(targetAbsoluteHeadingRadians) {
@@ -180,10 +177,7 @@ export class EquirectangularViewer extends WASMViewerBase {
                 });
         }
 
-        let calculatedNewYaw = targetAbsoluteHeadingRadians + this.#imageNorthDirection;
-        calculatedNewYaw = normalizeAngleRadians(calculatedNewYaw);
-
-        this._engine.yaw = calculatedNewYaw;
+        this._engine.yaw = this.#headingToYaw(targetAbsoluteHeadingRadians);
     }
 
     async clearImage() {
@@ -220,15 +214,17 @@ export class EquirectangularViewer extends WASMViewerBase {
 
         this.#transitionID++;
         let currentId = this.#transitionID;
+        const absoluteHeading = this.#yawToHeading(arrowYaw);
 
         const { promise, resolve, reject } = Promise.withResolvers();
 
         this.#activeTransition = {
             id: currentId,
             helper: new AnimationHelper(
-                currentId, arrowYaw, this.transitionDuration,
+                currentId, this.transitionDuration,
                 this.transitionMaxBlur, this.transitionMoveDistance
             ),
+            absoluteHeading,
             settled: false,
             resolve,
             reject
@@ -425,7 +421,8 @@ export class EquirectangularViewer extends WASMViewerBase {
 
     #updateTransition() {
         if (this.#activeTransition) {
-            const frameState = this.#activeTransition.helper.getFrameState();
+            const frameLocalYaw = this.#headingToYaw(this.#activeTransition.absoluteHeading);
+            const frameState = this.#activeTransition.helper.getFrameState(frameLocalYaw);
 
             this._engine.setCameraPosition(frameState.camX, 0.0, frameState.camZ);
             this.#setCanvasBlur(frameState.blurPx);
@@ -483,6 +480,16 @@ export class EquirectangularViewer extends WASMViewerBase {
                 transition.reject(error);
             }
         }
+    }
+
+    #yawToHeading(localYaw) {
+        const absoluteHeading = localYaw - this.#imageNorthDirection;
+        return normalizeAngleRadians(absoluteHeading);
+    }
+
+    #headingToYaw(absoluteHeading) {
+        const localYaw = absoluteHeading + this.#imageNorthDirection;
+        return normalizeAngleRadians(localYaw);
     }
 
     #setCanvasBlur(px) {
