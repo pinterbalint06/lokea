@@ -345,10 +345,128 @@ export class EquirectangularViewer extends WASMViewerBase {
         this._arrowCallbacks[id] = callback;
     }
 
+    addArrowFromHeading(id, absoluteHeadingRadians, callback) {
+        this._ensureEngineReady();
+
+        if (Number.isNaN(id) || !Number.isInteger(id) || id <= 0) {
+            throw new WebassemblyError(
+                "Invalid ID",
+                {
+                    "type": EQUIRECTANGULAR_ERROR_TYPES.INVALID_INPUT
+                });
+        }
+
+        if (!Number.isFinite(absoluteHeadingRadians)) {
+            throw new WebassemblyError(
+                "Invalid absolute heading",
+                {
+                    "type": EQUIRECTANGULAR_ERROR_TYPES.INVALID_INPUT
+                });
+        }
+
+        if (typeof callback != "function") {
+            throw new WebassemblyError(
+                "Invalid callback",
+                {
+                    "type": EQUIRECTANGULAR_ERROR_TYPES.INVALID_INPUT
+                });
+        }
+
+        const yaw = this.#headingToYaw(absoluteHeadingRadians);
+        this._engine.addArrow(id, yaw);
+        this._arrowCallbacks[id] = callback;
+    }
+
+    changeArrowDirection(id, yaw) {
+        this._ensureEngineReady();
+
+        if (Number.isNaN(id) || !Number.isInteger(id) || id <= 0) {
+            throw new WebassemblyError(
+                "Invalid ID",
+                {
+                    "type": EQUIRECTANGULAR_ERROR_TYPES.INVALID_INPUT
+                });
+        }
+
+        if (Number.isNaN(yaw)) {
+            throw new WebassemblyError(
+                "Invalid yaw",
+                {
+                    "type": EQUIRECTANGULAR_ERROR_TYPES.INVALID_INPUT
+                });
+        }
+
+        if (!this.doesArrowExist(id)) {
+            throw new WebassemblyError(
+                "Invalid arrow ID",
+                {
+                    "type": EQUIRECTANGULAR_ERROR_TYPES.INVALID_INPUT
+                });
+        }
+
+        this._engine.changeArrowDirection(id, yaw);
+    }
+
+    changeArrowDirectionFromHeading(id, absoluteHeadingRadians) {
+        this._ensureEngineReady();
+
+        if (Number.isNaN(id) || !Number.isInteger(id) || id <= 0) {
+            throw new WebassemblyError(
+                "Invalid ID",
+                {
+                    "type": EQUIRECTANGULAR_ERROR_TYPES.INVALID_INPUT
+                });
+        }
+
+        if (!Number.isFinite(absoluteHeadingRadians)) {
+            throw new WebassemblyError(
+                "Invalid absolute heading",
+                {
+                    "type": EQUIRECTANGULAR_ERROR_TYPES.INVALID_INPUT
+                });
+        }
+
+        if (!this.doesArrowExist(id)) {
+            throw new WebassemblyError(
+                "Invalid arrow ID",
+                {
+                    "type": EQUIRECTANGULAR_ERROR_TYPES.INVALID_INPUT
+                });
+        }
+
+        const yaw = this.#headingToYaw(absoluteHeadingRadians);
+        this._engine.changeArrowDirection(id, yaw);
+    }
+
     clearArrows() {
         this._ensureEngineReady();
         this._engine.clearArrows();
         this._arrowCallbacks = {};
+    }
+
+    doesArrowExist(id) {
+        this._ensureEngineReady();
+
+        let returnValue = false;
+        if (Number.isInteger(id)) {
+            returnValue = this._engine.doesArrowExist(id);
+        }
+
+        return returnValue;
+    }
+
+    removeArrowById(id) {
+        this._ensureEngineReady();
+
+        if (!this.doesArrowExist(id)) {
+            throw new WebassemblyError(
+                "Invalid arrow ID",
+                {
+                    "type": EQUIRECTANGULAR_ERROR_TYPES.INVALID_INPUT
+                });
+        }
+
+        this._engine.removeArrow(id);
     }
 
     // |-----------------|

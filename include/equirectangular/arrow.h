@@ -23,6 +23,7 @@ public:
 
     int getId() const { return id_; }
     float getYaw() const { return yaw_; }
+    void setYaw(float newYaw);
     Vec2 getDirection() const;
 };
 

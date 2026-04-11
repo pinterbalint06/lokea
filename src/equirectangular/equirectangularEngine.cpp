@@ -294,6 +294,38 @@ void EquirectangularEngine::addArrow(int id, float yaw)
     }
 }
 
+bool EquirectangularEngine::doesArrowExist(int id)
+{
+    return getArrowIndexById(id) != -1;
+}
+
+void EquirectangularEngine::removeArrow(int id)
+{
+    int index = getArrowIndexById(id);
+    if (index != -1)
+    {
+        removeMesh(arrows_[index]);
+        arrows_.erase(arrows_.begin() + index);
+    }
+    else
+    {
+        emscripten_console_error("Arrow with given id doesn't exist!");
+    }
+}
+
+void EquirectangularEngine::changeArrowDirection(int id, float yaw)
+{
+    int index = getArrowIndexById(id);
+    if (index != -1)
+    {
+        arrows_[index]->setYaw(yaw);
+    }
+    else
+    {
+        emscripten_console_error("Arrow with given id doesn't exist!");
+    }
+}
+
 bool EquirectangularEngine::isValidClick(const Vec3 &clickDirection, bool isSingleClick, bool &outIsDirectArrowClick)
 {
     outIsDirectArrowClick = (clickDirection.y <= -0.565f && clickDirection.y >= -0.632f);

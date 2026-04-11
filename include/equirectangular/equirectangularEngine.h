@@ -47,6 +47,9 @@ public:
 
     void clearArrows();
     void addArrow(int id, float yaw);
+    bool doesArrowExist(int id);
+    void removeArrow(int id);
+    void changeArrowDirection(int id, float yaw);
     int getClickedArrow(float screenX, float screenY, bool isSingleClick);
 };
 

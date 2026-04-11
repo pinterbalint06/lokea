@@ -147,6 +147,12 @@ Arrow::Arrow(int id, float yaw) : Mesh(12, 24)
 
 Arrow::~Arrow() {}
 
+void Arrow::setYaw(float newYaw)
+{
+    yaw_ = newYaw;
+    createModelMatrix();
+}
+
 Vec2 Arrow::getDirection() const
 {
     return Vec2(std::sin(yaw_), -std::cos(yaw_));
