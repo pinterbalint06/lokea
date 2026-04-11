@@ -30,6 +30,7 @@ Texture::Texture(int width, int height, bool invisiblePlaceholder, bool hasAlpha
     width_ = width;
     height_ = height;
     invisiblePlaceholder_ = invisiblePlaceholder;
+    hasAlpha_ = hasAlpha;
 
     int channels = hasAlpha_ ? 4 : 3;
     imgData_ = (uint8_t *)malloc(width_ * height_ * channels * sizeof(uint8_t));

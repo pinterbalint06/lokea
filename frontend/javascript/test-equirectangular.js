@@ -278,10 +278,7 @@ document.addEventListener("DOMContentLoaded", init);
                 // elozo nyilak eltavolitasa
                 equirectangularViewer.clearArrows();
 
-                // eszakirany beallitasa
-                equirectangularViewer.setYaw(degreeToRadian(northDirection));
-
-                itt lehet for a kapcsolatokon
+                itt lehet for loopal a kapcsolatokat
 
                 const kapcsolatIrany = (vektorokbol vagy az adatbazisbol);
                 equirectangularViewer.addArrow(kapcsolatid, degreeToRadian(kapcsolatIrany), async () => {

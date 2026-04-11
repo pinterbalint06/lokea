@@ -51,4 +51,6 @@ async function init() {
     eventBus.emit(EVENTS.APP_INIT);
 }
 
+// TODO: arrowok használata a térkép készítőben
+
 document.addEventListener("DOMContentLoaded", init);

@@ -296,7 +296,7 @@ void EquirectangularEngine::addArrow(int id, float yaw)
 
 bool EquirectangularEngine::isValidClick(const Vec3 &clickDirection, bool isSingleClick, bool &outIsDirectArrowClick)
 {
-    outIsDirectArrowClick = (clickDirection.y <= -0.764f && clickDirection.y >= -0.83f);
+    outIsDirectArrowClick = (clickDirection.y <= -0.565f && clickDirection.y >= -0.632f);
     bool isHorizonClick = (std::abs(clickDirection.y) <= 0.6f);
 
     return isSingleClick ? outIsDirectArrowClick : (outIsDirectArrowClick || isHorizonClick);
@@ -331,6 +331,10 @@ int EquirectangularEngine::findClosestArrowInDirection(const Vec3 &clickDirectio
 int EquirectangularEngine::getClickedArrow(float screenX, float screenY, bool isSingleClick)
 {
     Vec3 clickDirection = scene_->getCamera()->getClickRayVector(screenX, screenY);
+
+#ifdef DEBUG
+    emscripten_console_logf("Click direction: (%f, %f, %f)", clickDirection.x, clickDirection.y, clickDirection.z);
+#endif
 
     bool isDirectArrowClick = false;
     bool isValid = isValidClick(clickDirection, isSingleClick, isDirectArrowClick);
