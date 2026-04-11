@@ -47,6 +47,7 @@ public:
     void setYaw(float yaw);
     void setCameraPosition(float x, float y, float z);
     void resetCameraPosition();
+    
     void render() { renderer_->render(scene_.get()); };
     uint8_t *initTexture(int width, int height, int meshIndex);
     void uploadTextureToGPU(int meshIndex);
@@ -56,6 +57,7 @@ public:
 
     float getPitch() const { return scene_->getCamera()->getPitch(); }
     float getYaw() const { return scene_->getCamera()->getYaw(); }
+    float getZoom() const { return scene_->getCamera()->getZoom(); }
 
     void addMesh(std::shared_ptr<Mesh> mesh) { scene_->addMesh(mesh); }
     void removeMesh(int index) { scene_->removeMesh(index); }

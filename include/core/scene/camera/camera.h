@@ -144,6 +144,13 @@ public:
      */
     const CameraData &getUBOData() const { return data_; };
 
+    /**
+     * @brief Returns the current zoom of the camera [0;1].
+     *
+     * @return The current zoomFactor of the camera.
+     */
+    float getZoom() const { return zoomFactor_; }
+
     // camera propery sett
     void zoom(float amount);
 

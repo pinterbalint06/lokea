@@ -31,8 +31,8 @@ export class EquirectangularViewer extends WASMViewerBase {
 
     /** 
      * @type {number} 
-     * The north offset for the image */
-    #imageNorthOffset;
+     * The north offset for the image radians */
+    #imageNorthDirection;
 
     #activeTransition;
     #transitionID;
@@ -57,7 +57,7 @@ export class EquirectangularViewer extends WASMViewerBase {
         this.#transitionID = 0;
         this.#isTransitionManagedLoad = false;
 
-        this.#imageNorthOffset = 0.0;
+        this.#imageNorthDirection = 0.0;
 
         this.autoRotate = options.autoRotate != undefined ? options.autoRotate : DEFAULT_OPTIONS["autoRotate"];
         this.autoRotateSpeed = options.autoRotateSpeed != undefined ? options.autoRotateSpeed : DEFAULT_OPTIONS["autoRotateSpeed"];
@@ -83,10 +83,11 @@ export class EquirectangularViewer extends WASMViewerBase {
      * @param {string} url - The URL of the equirectangular image to load.
      * @param {number} width - The width of the image.
      * @param {number} height - The height of the image.
+     * @param {number} [imageNorthDirection=0.0] - The north direction of the image in radians.
      * @returns {Promise<void>} Resolves when the image is successfully loaded, rejects if loading fails or a new image is requested.
      * @throws {Error} If the viewer is destroyed or the engine fails to initialize.
      */
-    async loadImage(url, width, height, imageNorthOffsetRadians = 0.0) {
+    async loadImage(url, width, height, imageNorthDirection = 0.0) {
         if (!url || typeof url != "string") {
             throw new WebassemblyError(
                 "Invalid URL provided",
@@ -105,12 +106,12 @@ export class EquirectangularViewer extends WASMViewerBase {
                 });
         }
 
-        if (!Number.isFinite(imageNorthOffsetRadians)) {
+        if (!Number.isFinite(imageNorthDirection)) {
             throw new WebassemblyError(
-                "Invalid north offset provided",
+                "Invalid north direction provided",
                 {
                     "type": EQUIRECTANGULAR_ERROR_TYPES.INVALID_INPUT,
-                    "imgUrl": imageUrl
+                    "imgUrl": url
                 });
         }
 
@@ -133,7 +134,7 @@ export class EquirectangularViewer extends WASMViewerBase {
                 () => {
                     if (!this._isDestroyed) {
                         if (this.#currentImageRequestID == currentRequestId) {
-                            this.#imageNorthOffset = imageNorthOffsetRadians;
+                            this.#imageNorthDirection = imageNorthDirection;
 
                             this.setHeading(currentAbsoluteHeading);
                             resolve();
@@ -163,10 +164,9 @@ export class EquirectangularViewer extends WASMViewerBase {
         let currentAbsoluteHeading = 0.0;
         this._ensureEngineReady();
 
-        currentAbsoluteHeading = this._engine.yaw - this.#imageNorthOffset;
+        currentAbsoluteHeading = this._engine.yaw - this.#imageNorthDirection;
 
-        // TODO itt az eszakirany atdolgozasa
-        return currentAbsoluteHeading;
+        return normalizeAngleRadians(currentAbsoluteHeading);
     }
 
     setHeading(targetAbsoluteHeadingRadians) {
@@ -180,7 +180,7 @@ export class EquirectangularViewer extends WASMViewerBase {
                 });
         }
 
-        let calculatedNewYaw = targetAbsoluteHeadingRadians + this.#imageNorthOffset;
+        let calculatedNewYaw = targetAbsoluteHeadingRadians + this.#imageNorthDirection;
         calculatedNewYaw = normalizeAngleRadians(calculatedNewYaw);
 
         this._engine.yaw = calculatedNewYaw;
@@ -280,10 +280,34 @@ export class EquirectangularViewer extends WASMViewerBase {
         this._engine.yaw = yaw;
     }
 
+    getPitch() {
+        this._ensureEngineReady();
+        return this._engine.pitch;
+    }
+
+    setPitch(pitch) {
+        this._ensureEngineReady();
+
+        if (!Number.isFinite(pitch)) {
+            throw new WebassemblyError(
+                "pitch",
+                {
+                    "type": EQUIRECTANGULAR_ERROR_TYPES.INVALID_INPUT
+                });
+        }
+
+        this._engine.pitch = pitch;
+    }
+
+    getZoom() {
+        this._ensureEngineReady();
+        return this._engine.zoom;
+    }
+
     setZoom(zoom) {
         this._ensureEngineReady();
 
-        if (!Number.isFinite(zoom) || zoom < 0.0 || 10.0 < zoom) {
+        if (!Number.isFinite(zoom) || zoom < 0.0 || 1.0 < zoom) {
             throw new WebassemblyError(
                 "Invalid zoom",
                 {
@@ -291,7 +315,7 @@ export class EquirectangularViewer extends WASMViewerBase {
                 });
         }
 
-        this._engine.setZoom(zoom);
+        this._engine.zoom = zoom;
     }
 
     addArrow(id, yaw, callback) {
@@ -359,7 +383,7 @@ export class EquirectangularViewer extends WASMViewerBase {
             },
             onZoom: (zoomAmount) => {
                 if (this._engine && this.#activeTransition == null) {
-                    this._engine.zoom(zoomAmount);
+                    this._engine.zoomBy(zoomAmount);
                     return true;
                 }
                 return false;

@@ -38,6 +38,7 @@ private:
 
     bool isValidClick(const Vec3 &clickDirection, bool isSingleClick, bool &outIsDirectArrowClick);
     int findClosestArrowInDirection(const Vec3 &clickDirection, bool isDirectArrowClick);
+    int getArrowIndexById(int id);
 public:
     EquirectangularEngine(const std::string &canvasID);
     ~EquirectangularEngine();

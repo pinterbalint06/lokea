@@ -77,7 +77,7 @@ void Camera::setPosition(float x, float y, float z)
 void Camera::setRotation(float pitch, float yaw)
 {
     pitch_ = pitch;
-    yaw_ = yaw;
+    yaw_ = MathUtils::normalizeAngleRadians(yaw);
     newView_ = true;
 }
 
@@ -89,7 +89,7 @@ void Camera::setPitch(float pitch)
 
 void Camera::setYaw(float yaw)
 {
-    yaw_ = yaw;
+    yaw_ = MathUtils::normalizeAngleRadians(yaw);
     newView_ = true;
 }
 
@@ -101,18 +101,10 @@ void Camera::rotate(float dPitch, float dYaw)
 
     pitch_ = std::clamp<float>(pitch_ + (dPitch * zoomCorrectedSensitivity), -M_PI_2, M_PI_2);
     yaw_ += dYaw * zoomCorrectedSensitivity;
-    // wrap to [-2pi;2pi]
-    if (yaw_ >= MathUtils::TWO_PI)
-    {
-        yaw_ -= MathUtils::TWO_PI;
-    }
-    else
-    {
-        if (yaw_ <= -MathUtils::TWO_PI)
-        {
-            yaw_ += MathUtils::TWO_PI;
-        }
-    }
+
+    // normalize to [0;2pi[
+    yaw_ = MathUtils::normalizeAngleRadians(yaw_);
+
     newView_ = true;
 }
 

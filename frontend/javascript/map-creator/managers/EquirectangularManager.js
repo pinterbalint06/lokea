@@ -40,12 +40,12 @@ export class EquirectangularManager {
                     pointId: id,
                     signal,
                     loadToViewer: async (imgData) => {
-                        await this.equirectangularViewer.loadImage(imgData.url, imgData.width, imgData.height);
+                        await this.equirectangularViewer.loadImage(imgData.url, imgData.width, imgData.height, degreeToRadian(this.store.getState().activePoint.northDirection));
                     },
                     isCurrent: () => this.store.getState().activePoint.id == id && this.activeLoadGeneration == loadGeneration,
                     onLowReady: () => {
                         if (this.store.getState().activePoint.id == id && this.activeLoadGeneration == loadGeneration) {
-                            this.equirectangularViewer.setYaw(degreeToRadian(this.store.getState().activePoint.northDirection));
+                            this.equirectangularViewer.setHeading(0);
                             this.#startFOVSync();
                         }
                     }

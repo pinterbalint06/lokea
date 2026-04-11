@@ -1,8 +1,6 @@
 #include <emscripten/html5.h>
 #include <emscripten/emscripten.h>
-#ifdef DEBUG
 #include <emscripten/console.h>
-#endif
 #include <emscripten/val.h>
 #include <string>
 #include <cmath>
@@ -264,13 +262,36 @@ void EquirectangularEngine::clearArrows()
     arrows_.clear();
 }
 
+int EquirectangularEngine::getArrowIndexById(int id)
+{
+    int i = 0;
+    while (i < arrows_.size() && arrows_[i]->getId() != id)
+    {
+        i++;
+    }
+    int foundIndex = -1;
+    if (i < arrows_.size())
+    {
+        foundIndex = i;
+    }
+
+    return foundIndex;
+}
+
 void EquirectangularEngine::addArrow(int id, float yaw)
 {
-    std::shared_ptr<Arrow> newArrow = std::make_shared<Arrow>(id, yaw);
+    if (getArrowIndexById(id) == -1)
+    {
+        std::shared_ptr<Arrow> newArrow = std::make_shared<Arrow>(id, yaw);
 
-    arrows_.push_back(newArrow);
+        arrows_.push_back(newArrow);
 
-    addMesh(newArrow);
+        addMesh(newArrow);
+    }
+    else
+    {
+        emscripten_console_error("Arrow with given id already exists!");
+    }
 }
 
 bool EquirectangularEngine::isValidClick(const Vec3 &clickDirection, bool isSingleClick, bool &outIsDirectArrowClick)

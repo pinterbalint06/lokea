@@ -204,6 +204,7 @@ export class WASMViewerBase {
         } catch (error) {
             // if initialization failed set destroyed so class can't be used anymore
             this._isDestroyed = true;
+            console.error("Error during engine initialization:", error);
             throw new WebassemblyError(
                 "Unexpected error during engine initialization",
                 {

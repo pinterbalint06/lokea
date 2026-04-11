@@ -153,6 +153,11 @@ namespace MathUtils
     {
         return static_cast<float>((val > 0.0f) - (val < 0.0f));
     }
+
+    inline float normalizeAngleRadians(float angleInRadians)
+    {
+        return angleInRadians - TWO_PI * std::floor(angleInRadians / TWO_PI);
+    }
 }
 
 #endif
