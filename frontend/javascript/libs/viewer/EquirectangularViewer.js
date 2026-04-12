@@ -38,6 +38,8 @@ export class EquirectangularViewer extends WASMViewerBase {
     #transitionID;
     #isTransitionManagedLoad;
 
+    #arrowHeadings;
+
     /**
      * Constructor for EquirectangularViewer class.
      *
@@ -67,6 +69,7 @@ export class EquirectangularViewer extends WASMViewerBase {
         this.transitionMoveDistance = options.transitionMoveDistance != undefined ? options.transitionMoveDistance : DEFAULT_OPTIONS["transitionMoveDistance"];
 
         this._arrowCallbacks = {};
+        this.#arrowHeadings = {};
     }
 
     // |------------------|
@@ -134,7 +137,7 @@ export class EquirectangularViewer extends WASMViewerBase {
                 () => {
                     if (!this._isDestroyed) {
                         if (this.#currentImageRequestID == currentRequestId) {
-                            this.#imageNorthDirection = imageNorthDirection;
+                            this.setNorthDirection(imageNorthDirection);
 
                             this.setHeading(currentAbsoluteHeading);
                             resolve();
@@ -178,6 +181,25 @@ export class EquirectangularViewer extends WASMViewerBase {
         }
 
         this._engine.yaw = this.#headingToYaw(targetAbsoluteHeadingRadians);
+    }
+
+    setNorthDirection(imageNorthDirectionRadians) {
+        this._ensureEngineReady();
+
+        if (!Number.isFinite(imageNorthDirectionRadians)) {
+            throw new WebassemblyError(
+                "Invalid north direction",
+                {
+                    "type": EQUIRECTANGULAR_ERROR_TYPES.INVALID_INPUT
+                });
+        }
+
+        this.#imageNorthDirection = imageNorthDirectionRadians;
+
+        for (const id in this.#arrowHeadings) {
+            const absoluteYaw = this.#headingToYaw(this.#arrowHeadings[id]);
+            this._engine.changeArrowDirection(parseInt(id), absoluteYaw);
+        }
     }
 
     async clearImage() {
@@ -341,11 +363,14 @@ export class EquirectangularViewer extends WASMViewerBase {
                 });
         }
 
+        const absoluteHeading = this.#yawToHeading(yaw);
+        this.#arrowHeadings[id] = absoluteHeading;
+
         this._engine.addArrow(id, yaw);
         this._arrowCallbacks[id] = callback;
     }
 
-    addArrowFromHeading(id, absoluteHeadingRadians, callback) {
+    addArrowFromHeading(id, headingRadians, callback) {
         this._ensureEngineReady();
 
         if (Number.isNaN(id) || !Number.isInteger(id) || id <= 0) {
@@ -356,7 +381,7 @@ export class EquirectangularViewer extends WASMViewerBase {
                 });
         }
 
-        if (!Number.isFinite(absoluteHeadingRadians)) {
+        if (!Number.isFinite(headingRadians)) {
             throw new WebassemblyError(
                 "Invalid absolute heading",
                 {
@@ -372,7 +397,9 @@ export class EquirectangularViewer extends WASMViewerBase {
                 });
         }
 
-        const yaw = this.#headingToYaw(absoluteHeadingRadians);
+        const yaw = this.#headingToYaw(headingRadians);
+        this.#arrowHeadings[id] = headingRadians;
+
         this._engine.addArrow(id, yaw);
         this._arrowCallbacks[id] = callback;
     }
@@ -403,6 +430,9 @@ export class EquirectangularViewer extends WASMViewerBase {
                     "type": EQUIRECTANGULAR_ERROR_TYPES.INVALID_INPUT
                 });
         }
+
+        const heading = this.#yawToHeading(yaw);
+        this.#arrowHeadings[id] = heading;
 
         this._engine.changeArrowDirection(id, yaw);
     }
@@ -435,6 +465,7 @@ export class EquirectangularViewer extends WASMViewerBase {
         }
 
         const yaw = this.#headingToYaw(absoluteHeadingRadians);
+        this.#arrowHeadings[id] = absoluteHeadingRadians;
         this._engine.changeArrowDirection(id, yaw);
     }
 
@@ -442,6 +473,7 @@ export class EquirectangularViewer extends WASMViewerBase {
         this._ensureEngineReady();
         this._engine.clearArrows();
         this._arrowCallbacks = {};
+        this.#arrowHeadings = {};
     }
 
     doesArrowExist(id) {
@@ -467,6 +499,8 @@ export class EquirectangularViewer extends WASMViewerBase {
         }
 
         this._engine.removeArrow(id);
+        delete this.#arrowHeadings[id];
+        delete this._arrowCallbacks[id];
     }
 
     // |-----------------|

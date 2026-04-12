@@ -34,7 +34,7 @@ async function init() {
     new BreakpointManager(eventBus, appStore);
     new LoadingOverlayManager(eventBus);
     new ToastManager(eventBus);
-    new ConnectionListManager(eventBus);
+    new ConnectionListManager(eventBus, appStore);
 
     new MarkerEditorManager(eventBus, appStore);
     new ToolbarManager(eventBus, appStore);
@@ -51,6 +51,6 @@ async function init() {
     eventBus.emit(EVENTS.APP_INIT);
 }
 
-// TODO: arrowok használata a térkép készítőben
+// TODO: arrowok használata a térkép készítőben (külön osztály neki pl. ArrowManager)
 
 document.addEventListener("DOMContentLoaded", init);

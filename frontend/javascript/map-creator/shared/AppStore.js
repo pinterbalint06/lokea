@@ -18,6 +18,9 @@ export class AppStore {
                 id: null,
                 mapId: null,
                 northDirection: 0,
+                connections: [],
+                unsavedConnections: [],
+                draftConnectionDirections: {},
                 isDirty: {
                     position: false,
                     northDirection: false,
