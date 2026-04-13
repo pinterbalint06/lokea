@@ -22,46 +22,47 @@ export class EquirectangularManager {
     #bindBusEvents() {
         this.bus.on(EVENTS.UI_EQUIRECTANGULAR_FILE_DROPPED, async ({ file }) => this.#handleEquirectangularLoad(file));
 
-        this.bus.on(EVENTS.MARKER_SELECTED, async ({ id }) => {
-            this.activeLoadGeneration++
-            const loadGeneration = this.activeLoadGeneration;
-            this.bus.emit(EVENTS.TOAST_SHOW, { msg: "Kép betöltése", id: `loading${loadGeneration}`, autohide: false, closable: false, spinner: true });
+        this.bus.on(EVENTS.MARKER_SELECTED, async ({ id, isSync }) => {
+            if (!isSync) {
+                this.activeLoadGeneration++
+                const loadGeneration = this.activeLoadGeneration;
+                this.bus.emit(EVENTS.TOAST_SHOW, { msg: "Kép betöltése", id: `loading${loadGeneration}`, autohide: false, closable: false, spinner: true });
 
-            if (this.abortController) {
-                this.abortController.abort();
-                this.abortController = null;
-            }
-
-            try {
-                this.abortController = new AbortController();
-                let signal = this.abortController.signal;
-
-                await loadPointEquirectangularLowThenHigh({
-                    pointId: id,
-                    signal,
-                    loadToViewer: async (imgData) => {
-                        await this.equirectangularViewer.loadImage(imgData.url, imgData.width, imgData.height, degreeToRadian(imgData.northDirection));
-                    },
-                    isCurrent: () => this.store.getState().activePoint.id == id && this.activeLoadGeneration == loadGeneration,
-                    onLowReady: () => {
-                        if (this.store.getState().activePoint.id == id && this.activeLoadGeneration == loadGeneration) {
-                            this.equirectangularViewer.setHeading(0);
-                            this.#startFOVSync();
-                        }
-                    }
-                });
-            } catch (error) {
-                if (!isCancellationError(error) && this.store.getState().activePoint.id == id && this.activeLoadGeneration == loadGeneration) {
-                    console.error(error);
-                    this.bus.emit(EVENTS.TOAST_SHOW, { msg: "Hiba a kép betöltésekor!", type: "danger" });
-                }
-            } finally {
-                this.bus.emit(EVENTS.TOAST_HIDE_ID, { id: `loading${loadGeneration}` });
-                if (this.abortController && this.activeLoadGeneration == loadGeneration) {
+                if (this.abortController) {
+                    this.abortController.abort();
                     this.abortController = null;
                 }
-            }
 
+                try {
+                    this.abortController = new AbortController();
+                    let signal = this.abortController.signal;
+
+                    await loadPointEquirectangularLowThenHigh({
+                        pointId: id,
+                        signal,
+                        loadToViewer: async (imgData) => {
+                            await this.equirectangularViewer.loadImage(imgData.url, imgData.width, imgData.height, degreeToRadian(imgData.northDirection));
+                        },
+                        isCurrent: () => this.store.getState().activePoint.id == id && this.activeLoadGeneration == loadGeneration,
+                        onLowReady: () => {
+                            if (this.store.getState().activePoint.id == id && this.activeLoadGeneration == loadGeneration) {
+                                this.equirectangularViewer.setHeading(0);
+                                this.#startFOVSync();
+                            }
+                        }
+                    });
+                } catch (error) {
+                    if (!isCancellationError(error) && this.store.getState().activePoint.id == id && this.activeLoadGeneration == loadGeneration) {
+                        console.error(error);
+                        this.bus.emit(EVENTS.TOAST_SHOW, { msg: "Hiba a kép betöltésekor!", type: "danger" });
+                    }
+                } finally {
+                    this.bus.emit(EVENTS.TOAST_HIDE_ID, { id: `loading${loadGeneration}` });
+                    if (this.abortController && this.activeLoadGeneration == loadGeneration) {
+                        this.abortController = null;
+                    }
+                }
+            }
         });
 
         this.bus.on(EVENTS.MARKER_MOVED, ({ x, y, screenX, screenY }) => {
@@ -129,6 +130,12 @@ export class EquirectangularManager {
             if (this.mapViewer.doesMarkerExist(CONSTANTS.FOV_MARKER_ID)) {
                 const settings = this.store.getState().settings;
                 this.mapViewer.resizeMarker(CONSTANTS.FOV_MARKER_ID, settings.fovWidth, settings.fovHeight);
+            }
+        });
+
+        this.bus.on(EVENTS.UI_NORTH_DIRECTION_CHANGED, ({ northDirection }) => {
+            if (this.store.getState().activePoint.id) {
+                this.equirectangularViewer.setNorthDirection(degreeToRadian(northDirection));
             }
         });
     }

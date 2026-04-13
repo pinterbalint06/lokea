@@ -8,6 +8,8 @@ export class ConnectionListManager {
         this.store = appStore;
 
         this.elements = {};
+        this.lastRenderedActivePointId = null;
+        this.lastRenderedConnectionCount = -1;
 
         this.#gatherElements();
         this.#bindBusEvents();
@@ -21,7 +23,14 @@ export class ConnectionListManager {
     #bindBusEvents() {
         this.bus.on(EVENTS.STATE_UPDATED, () => {
             const activePoint = this.store.getState().activePoint;
-            this.#renderConnectionList(activePoint.connections, activePoint.unsavedConnections, activePoint.id, activePoint.draftConnectionDirections);
+            const totalConnectionCount = activePoint.connections.length + activePoint.unsavedConnections.length;
+            const shouldRerender = this.lastRenderedActivePointId != activePoint.id || this.lastRenderedConnectionCount != totalConnectionCount;
+
+            if (shouldRerender) {
+                this.#renderConnectionList(activePoint.connections, activePoint.unsavedConnections, activePoint.id, activePoint.draftConnectionDirections);
+                this.lastRenderedActivePointId = activePoint.id;
+                this.lastRenderedConnectionCount = totalConnectionCount;
+            }
         });
     }
 

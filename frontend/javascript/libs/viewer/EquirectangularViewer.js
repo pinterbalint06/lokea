@@ -339,7 +339,7 @@ export class EquirectangularViewer extends WASMViewerBase {
     addArrow(id, yaw, callback) {
         this._ensureEngineReady();
 
-        if (Number.isNaN(id) || !Number.isInteger(id) || id <= 0) {
+        if (Number.isNaN(id) || !Number.isInteger(id)) {
             throw new WebassemblyError(
                 "Invalid ID",
                 {
@@ -373,7 +373,7 @@ export class EquirectangularViewer extends WASMViewerBase {
     addArrowFromHeading(id, headingRadians, callback) {
         this._ensureEngineReady();
 
-        if (Number.isNaN(id) || !Number.isInteger(id) || id <= 0) {
+        if (Number.isNaN(id) || !Number.isInteger(id)) {
             throw new WebassemblyError(
                 "Invalid ID",
                 {
@@ -407,7 +407,7 @@ export class EquirectangularViewer extends WASMViewerBase {
     changeArrowDirection(id, yaw) {
         this._ensureEngineReady();
 
-        if (Number.isNaN(id) || !Number.isInteger(id) || id <= 0) {
+        if (Number.isNaN(id) || !Number.isInteger(id)) {
             throw new WebassemblyError(
                 "Invalid ID",
                 {
@@ -440,7 +440,7 @@ export class EquirectangularViewer extends WASMViewerBase {
     changeArrowDirectionFromHeading(id, absoluteHeadingRadians) {
         this._ensureEngineReady();
 
-        if (Number.isNaN(id) || !Number.isInteger(id) || id <= 0) {
+        if (Number.isNaN(id) || !Number.isInteger(id)) {
             throw new WebassemblyError(
                 "Invalid ID",
                 {
