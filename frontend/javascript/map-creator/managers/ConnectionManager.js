@@ -137,9 +137,12 @@ export class ConnectionManager {
                 if (isUnsaved) {
                     connection[direction] = value;
                 } else {
-                    const { draftConnectionDirections } = this.store.getState().activePoint;
-                    let hadUnsaved = Object.keys(draftConnectionDirections).length > 0;
-                    if (!draftConnectionDirections[connectionId]) {
+                    const currentDrafts = this.store.getState().activePoint.draftConnectionDirections;
+                    const draftConnectionDirections = { ...currentDrafts };
+                    let hadUnsaved = Object.keys(currentDrafts).length > 0;
+                    if (draftConnectionDirections[connectionId]) {
+                        draftConnectionDirections[connectionId] = { ...draftConnectionDirections[connectionId] };
+                    } else {
                         draftConnectionDirections[connectionId] = {};
                     }
                     if (this.#getConnectionById(connectionId)?.[direction] != value) {
@@ -600,7 +603,7 @@ export class ConnectionManager {
 
     #updateActivePointConnectionsStore() {
         const activePointId = this.store.getState().activePoint.id;
-        
+
         let currentMarkerConnections = [];
         if (activePointId) {
             currentMarkerConnections = this.connectionsList.filter(connection =>

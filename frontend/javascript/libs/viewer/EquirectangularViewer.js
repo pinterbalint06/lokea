@@ -347,7 +347,7 @@ export class EquirectangularViewer extends WASMViewerBase {
                 });
         }
 
-        if (Number.isNaN(yaw)) {
+        if (Number.isFinite(yaw)) {
             throw new WebassemblyError(
                 "Invalid yaw",
                 {
@@ -415,7 +415,7 @@ export class EquirectangularViewer extends WASMViewerBase {
                 });
         }
 
-        if (Number.isNaN(yaw)) {
+        if (Number.isFinite(yaw)) {
             throw new WebassemblyError(
                 "Invalid yaw",
                 {

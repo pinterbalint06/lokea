@@ -498,7 +498,7 @@ MapViewerEngine::MapViewerEngine(const std::string &canvasID, int width, int hei
 {
     setShadingMode(Shaders::SHADINGMODE::NO_SHADING);
     setProjectionType(PROJECTIONTYPE::ORTHOGRAPHIC);
-    setZoom(5.0f / 23.0f); // calculated default zoom so the camera shows only tha plane and nothing else
+    setZoom(5.0f / 23.0f); // calculated default zoom so the camera shows only the plane and nothing else
     // it is calculated from the camera's getOrthoHeight interpolation = 2 so top is 1
 
     mapWidth_ = -1.0f;

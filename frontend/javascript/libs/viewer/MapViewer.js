@@ -708,11 +708,7 @@ export class MapViewer extends WASMViewerBase {
     }
 
     onClickHandler = (cursorX, cursorY) => {
-        if (this.doesMarkerExist(1)) {
-            this.moveMarker(1, cursorX, cursorY);
-        } else {
-            this.placeMarker(1, cursorX, cursorY, 24.0, 32.0, "uploading");
-        }
+        // to be implented by the user of the class
     }
 
     getZoomLevel() {

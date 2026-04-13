@@ -10,6 +10,7 @@ class Arrow : public Mesh
 private:
     int id_;
     float yaw_;
+    Texture *arrowTexture_;
 
     void generateVertices();
     void createModelMatrix();

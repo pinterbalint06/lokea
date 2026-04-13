@@ -140,12 +140,20 @@ Arrow::Arrow(int id, float yaw) : Mesh(12, 24)
 {
     id_ = id;
     yaw_ = yaw;
+    arrowTexture_ = nullptr;
 
     generateMesh();
     createMaterial();
 }
 
-Arrow::~Arrow() {}
+Arrow::~Arrow()
+{
+    if (arrowTexture_ != nullptr)
+    {
+        delete arrowTexture_;
+        arrowTexture_ = nullptr;
+    }
+}
 
 void Arrow::setYaw(float newYaw)
 {
@@ -168,8 +176,8 @@ void Arrow::createMaterial()
 {
     Materials::Material defaultMat = Materials::Material::Error();
 
-    Texture *arrowTexture = createArrowTexture();
-    defaultMat.setTexture(arrowTexture);
+    arrowTexture_ = createArrowTexture();
+    defaultMat.setTexture(arrowTexture_);
 
     setMaterial(defaultMat);
 }
