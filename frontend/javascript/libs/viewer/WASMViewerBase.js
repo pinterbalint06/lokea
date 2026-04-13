@@ -195,7 +195,7 @@ export class WASMViewerBase {
                     success = true;
                 } else {
                     throw new WebassemblyError(
-                        "_creatEngine was not implemented!",
+                        "_createEngine was not implemented!",
                         {
                             "type": WASM_ERROR_TYPES.INITIALIZATION
                         });
@@ -204,6 +204,7 @@ export class WASMViewerBase {
         } catch (error) {
             // if initialization failed set destroyed so class can't be used anymore
             this._isDestroyed = true;
+            console.error("Error during engine initialization:", error);
             throw new WebassemblyError(
                 "Unexpected error during engine initialization",
                 {

@@ -708,7 +708,7 @@ export class MapViewer extends WASMViewerBase {
     }
 
     onClickHandler = (cursorX, cursorY) => {
-        this.placeMarker(cursorX, cursorY);
+        // to be implented by the user of the class
     }
 
     getZoomLevel() {

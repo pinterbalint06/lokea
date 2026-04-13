@@ -7,7 +7,9 @@ const DEFAULT_OPTIONS = {
     "maxTimeToStartMomentum": 40,
     "zoomAnimationSpeed": 10.0,
     "defaultCursor": "grab",
-    "grabbingCursor": "grabbing"
+    "grabbingCursor": "grabbing",
+    "doubleClickDelay": 300,
+    "doubleClickDistance": 15
 };
 
 const MAX_TRACKED_POINTERS = 2;
@@ -54,6 +56,14 @@ export class CanvasInput {
      * @type {number}
      * Max ms between last move and now to trigger momentum. */
     maxTimeToStartMomentum;
+    /**
+     * @type {number}
+     * Max ms between clicks to trigger a double click. */
+    doubleClickDelay;
+    /**
+     * @type {number}
+     * Maximum distance between clicks to trigger a double click. */
+    doubleClickDistance;
 
     // POINTER RELATED
     /**
@@ -77,6 +87,20 @@ export class CanvasInput {
      * Previous distance between two pointers (for pinch zoom).
      */
     #previousPinchDistance;
+
+    // DOUBLE CLICK RELATED
+    /**
+     * @type {number}
+     * Timestamp of the last click */
+    #lastClickTime;
+    /**
+     * @type {number}
+     * X coordinate of the last click */
+    #lastClickX;
+    /**
+     * @type {number}
+     * Y coordinate of the last click */
+    #lastClickY;
 
     // PHYSICS RELATED
     /**
@@ -107,6 +131,10 @@ export class CanvasInput {
      * @type {function}
      * Callback function called on click. */
     onClick;
+    /**
+     * @type {function}
+     * Callback function called on double click. */
+    onDoubleClick;
 
     // LISTENERS
     /**
@@ -158,7 +186,7 @@ export class CanvasInput {
 
     /**
      * @param {HTMLCanvasElement} canvas - The HTML canvas element.
-     * @param {object} options - The options for default max and min focal length, sensitivity, zoom speed and onRotate and onZoom functions.
+     * @param {object} options - The options for default max and min focal length, sensitivity, zoom speed and callbacks.
      */
     constructor(canvas, options = {}) {
         this.#canvas = canvas;
@@ -172,10 +200,13 @@ export class CanvasInput {
         this.drag = options.drag || DEFAULT_OPTIONS["drag"];
         this.maxTimeToStartMomentum = options.maxTimeToStartMomentum || DEFAULT_OPTIONS["maxTimeToStartMomentum"];
         this.zoomAnimationSpeed = options.zoomAnimationSpeed || DEFAULT_OPTIONS["zoomAnimationSpeed"];
+        this.doubleClickDelay = options.doubleClickDelay || DEFAULT_OPTIONS["doubleClickDelay"];
+        this.doubleClickDistance = options.doubleClickDistance || DEFAULT_OPTIONS["doubleClickDistance"];
 
         this.onRotate = options.onRotate || (() => { });
         this.onZoom = options.onZoom || (() => { });
         this.onClick = options.onClick || (() => { });
+        this.onDoubleClick = options.onDoubleClick || (() => { });
 
         this.#pointers = [];
         this.#lastX = 0;
@@ -185,6 +216,10 @@ export class CanvasInput {
         this.#lastMoveTime = 0;
         this.#previousPinchDistance = 0;
         this.#rotationMomentumFrameId = null;
+
+        this.#lastClickTime = 0;
+        this.#lastClickX = 0;
+        this.#lastClickY = 0;
 
         this.#pendingZoom = 0;
         this.#zoomAnchorX = 0;
@@ -471,7 +506,24 @@ export class CanvasInput {
 
     #triggerClick(releasedPointer) {
         const releasedCoordinates = this.#getCanvasCoordinates(releasedPointer.clientX, releasedPointer.clientY);
+        const now = Date.now();
+        const timeSinceLastClick = now - this.#lastClickTime;
+
+        const distance = Math.hypot(
+            releasedCoordinates.x - this.#lastClickX,
+            releasedCoordinates.y - this.#lastClickY
+        );
+
         this.onClick(releasedCoordinates.x, releasedCoordinates.y);
+
+        if (timeSinceLastClick <= this.doubleClickDelay && distance <= this.doubleClickDistance) {
+            this.onDoubleClick(releasedCoordinates.x, releasedCoordinates.y);
+            this.#lastClickTime = 0;
+        } else {
+            this.#lastClickTime = now;
+            this.#lastClickX = releasedCoordinates.x;
+            this.#lastClickY = releasedCoordinates.y;
+        }
     }
 
     #isWithinMomentumTimeframe() {

@@ -17,7 +17,8 @@ async function getPointImageDetails(pointID, resolution) {
     return {
         imagePath,
         width: imageData.width,
-        height: imageData.height
+        height: imageData.height,
+        northDirection: imageData.north_direction
     };
 }
 

@@ -1,4 +1,5 @@
 @import url('./variables.css');
+@import url('./base.css');
 @import url('./custom-select.css');
 @import url('./drag-and-drop-uploader.css');
 @import url('./hold-to-unlock-button.css');
@@ -63,14 +64,6 @@ body {
     color: var(--text-main);
 }
 
-.uveg {
-    background: var(--surface-glass) !important;
-    backdrop-filter: blur(12px);
-    border: 1px solid var(--surface-glass-border);
-    box-shadow: var(--shadow-strong);
-    color: var(--text-main);
-}
-
 .lilagradiensbg {
     background: var(--bg-radial-main);
 }
@@ -92,35 +85,6 @@ main {
     z-index: 0;
 }
 
-.uvegform {
-    background-color: var(--surface-glass-input) !important;
-    border: 1px solid var(--surface-glass-border) !important;
-    color: var(--text-main) !important;
-}
-
-.uvegbutton {
-    background-color: var(--accent-main);
-    border-color: var(--accent-main);
-}
-
-.uvegbutton:hover {
-    background-color: var(--accent-focus);
-    border-color: var(--accent-focus);
-    box-shadow: 0 0 15px var(--accent-glow);
-}
-
-.uvegbutton:disabled {
-    filter: opacity(0.5);
-    cursor: not-allowed;
-    background-color: var(--color-disabled-bg) !important;
-    border-color: var(--color-disabled-border) !important;
-}
-
-.uvegform:focus {
-    box-shadow: 0 0 0 0.2rem var(--accent-glow) !important;
-    border-color: var(--accent-focus) !important;
-}
-
 .form-check-input:checked {
     background-color: var(--accent-main) !important;
     border-color: var(--accent-main) !important;
@@ -139,7 +103,6 @@ main {
 .form-check-input:disabled {
     opacity: 0.6;
 }
-
 
 #upload-overlay {
     background: var(--bg-radial-overlay);
@@ -223,7 +186,6 @@ main {
 }
 
 #loading {
-    /* one bigger than bootstrap toast z index */
     z-index: 10000;
 }
 
@@ -262,7 +224,6 @@ main {
 }
 
 .accordion-button::after {
-    /* override bootstraps arrow */
     background-image: none;
     background-color: var(--text-main);
     mask-image: url("../images/map-creator-icons.svg#icon-chevron");
@@ -362,27 +323,6 @@ main {
     filter: opacity(0.5);
     cursor: not-allowed !important;
     box-shadow: none;
-}
-
-.btn-outline-secondary {
-    background: transparent;
-    color: var(--secondary-main);
-    border-color: var(--secondary-border);
-}
-
-.btn-outline-secondary:hover,
-.btn-outline-secondary:focus {
-    background: var(--secondary-soft);
-    color: var(--secondary-contrast-text);
-    border-color: var(--secondary-focus);
-    box-shadow: 0 0 8px var(--secondary-focus);
-}
-
-.btn-outline-secondary:disabled {
-    color: rgba(255, 255, 255, 0.45);
-    border-color: rgba(255, 255, 255, 0.08);
-    cursor: not-allowed;
-    background: transparent;
 }
 
 .btn-delete {

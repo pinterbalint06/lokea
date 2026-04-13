@@ -498,7 +498,8 @@ MapViewerEngine::MapViewerEngine(const std::string &canvasID, int width, int hei
 {
     setShadingMode(Shaders::SHADINGMODE::NO_SHADING);
     setProjectionType(PROJECTIONTYPE::ORTHOGRAPHIC);
-    setZoom(5.0f / 23.0f);
+    setZoom(5.0f / 23.0f); // calculated default zoom so the camera shows only the plane and nothing else
+    // it is calculated from the camera's getOrthoHeight interpolation = 2 so top is 1
 
     mapWidth_ = -1.0f;
     mapHeight_ = -1.0f;
@@ -509,9 +510,7 @@ MapViewerEngine::MapViewerEngine(const std::string &canvasID, int width, int hei
     // set image dimension to 1:1 aspect ratio so it only covers the plane
     scene_->getCamera()->setImageDimensions(1.0f, 1.0f);
 
-    // enable transparent background for marker
-    glEnable(GL_BLEND);
-    glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+    enableAlphaBlending();
 
     // disable depth mask so map markers are not overlapping
     glDepthMask(GL_FALSE);

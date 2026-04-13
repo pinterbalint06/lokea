@@ -278,7 +278,8 @@ export class MarkerManager {
                             id: activePointId,
                             mapId: this.activePointSession.mapId,
                             position,
-                            data: { ...this.markersCache[activePointId], north_direction: this.store.getState().activePoint.northDirection }
+                            data: { ...this.markersCache[activePointId], north_direction: this.store.getState().activePoint.northDirection },
+                            isSync: true
                         });
                     }
                 }

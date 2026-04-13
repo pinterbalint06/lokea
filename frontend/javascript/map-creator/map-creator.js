@@ -16,6 +16,7 @@ import { ToastManager } from "./managers/ui/ToastManager.js";
 import { SettingsManager } from "./managers/ui/SettingsManager.js";
 import { EquirectangularManager } from "./managers/EquirectangularManager.js";
 import { ConnectionManager } from "./managers/ConnectionManager.js";
+import { ArrowManager } from "./managers/ArrowManager.js";
 import { BreakpointManager } from "./managers/ui/BreakpointManager.js";
 
 async function init() {
@@ -34,7 +35,7 @@ async function init() {
     new BreakpointManager(eventBus, appStore);
     new LoadingOverlayManager(eventBus);
     new ToastManager(eventBus);
-    new ConnectionListManager(eventBus);
+    new ConnectionListManager(eventBus, appStore);
 
     new MarkerEditorManager(eventBus, appStore);
     new ToolbarManager(eventBus, appStore);
@@ -46,6 +47,7 @@ async function init() {
     new MapManager(eventBus, mapViewer, appStore);
     new EquirectangularManager(eventBus, equirectangularViewer, mapViewer, appStore);
     new ConnectionManager(eventBus, mapViewer, appStore);
+    new ArrowManager(eventBus, mapViewer, equirectangularViewer, appStore);
 
     await markersCached;
     eventBus.emit(EVENTS.APP_INIT);

@@ -3,10 +3,13 @@ import { HoldToUnlockButton } from "../../../libs/elements/HoldToUnlockButton.js
 import { DegreeInput } from "../../../libs/elements/DegreeInput.js";
 
 export class ConnectionListManager {
-    constructor(eventBus) {
+    constructor(eventBus, appStore) {
         this.bus = eventBus;
+        this.store = appStore;
 
         this.elements = {};
+        this.lastRenderedActivePointId = null;
+        this.lastRenderedConnectionCount = -1;
 
         this.#gatherElements();
         this.#bindBusEvents();
@@ -18,8 +21,16 @@ export class ConnectionListManager {
     }
 
     #bindBusEvents() {
-        this.bus.on(EVENTS.CONNECTION_LIST_UI_UPDATE, ({ connections, unsavedConnections, activePointId, draftDirections }) => {
-            this.#renderConnectionList(connections, unsavedConnections, activePointId, draftDirections);
+        this.bus.on(EVENTS.STATE_UPDATED, () => {
+            const activePoint = this.store.getState().activePoint;
+            const totalConnectionCount = activePoint.connections.length + activePoint.unsavedConnections.length;
+            const shouldRerender = this.lastRenderedActivePointId != activePoint.id || this.lastRenderedConnectionCount != totalConnectionCount;
+
+            if (shouldRerender) {
+                this.#renderConnectionList(activePoint.connections, activePoint.unsavedConnections, activePoint.id, activePoint.draftConnectionDirections);
+                this.lastRenderedActivePointId = activePoint.id;
+                this.lastRenderedConnectionCount = totalConnectionCount;
+            }
         });
     }
 

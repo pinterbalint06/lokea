@@ -62,7 +62,7 @@ MapMarker::MapMarker(int id, const std::string &textureUrl, float u, float v, fl
     std::memcpy(getVertices(), vertices, sizeof(vertices));
     std::memcpy(getIndices(), indices, sizeof(indices));
 
-    Texture *texture = new Texture(true);
+    Texture *texture = new Texture(true, true);
     TextureOptions textureOptions;
     textureOptions.wrapS = GL_CLAMP_TO_EDGE;
     textureOptions.wrapT = GL_CLAMP_TO_EDGE;

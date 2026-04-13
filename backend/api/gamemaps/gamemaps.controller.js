@@ -7,11 +7,12 @@ async function getPointImage(request, response, next) {
         const { pointID } = request.params;
         const { resolution } = request.query;
 
-        const { imagePath, width, height } = await gamemapsService.getPointImageDetails(pointID, resolution);
+        const { imagePath, width, height, northDirection } = await gamemapsService.getPointImageDetails(pointID, resolution);
 
-        response.set("Access-Control-Expose-Headers", "imageWidth, imageHeight");
+        response.set("Access-Control-Expose-Headers", "imageWidth, imageHeight, northDirection");
         response.set("imageWidth", width);
         response.set("imageHeight", height);
+        response.set("northDirection", northDirection);
 
         response.sendFile(imagePath, { root: UPLOAD_ROOT }, function (err) {
             if (err && !response.headersSent) {

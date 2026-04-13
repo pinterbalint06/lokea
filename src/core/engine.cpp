@@ -41,6 +41,12 @@ Engine::~Engine()
 {
 }
 
+void Engine::enableAlphaBlending()
+{
+    glEnable(GL_BLEND);
+    glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+}
+
 void Engine::setLightIntensity(float intensity)
 {
     scene_->getLight()->setIntensity(intensity);
@@ -118,6 +124,16 @@ void Engine::setYaw(float yaw)
 void Engine::setCameraRotation(float pitch, float yaw)
 {
     scene_->getCamera()->setRotation(pitch, yaw);
+}
+
+void Engine::setCameraPosition(float x, float y, float z)
+{
+    scene_->getCamera()->setPosition(x, y, z);
+}
+
+void Engine::resetCameraPosition()
+{
+    scene_->getCamera()->setPosition(0.0f, 0.0f, 0.0f);
 }
 
 uint8_t *Engine::initTexture(int width, int height, int meshIndex)
