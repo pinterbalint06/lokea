@@ -1,7 +1,8 @@
 import { osszesUser, getUser, sortedUser, getProfilePicture, newUser, userUpdate, userToInactive, exportUsers, uploadProfilePic, deleteProfilePicture } from "./fetchs.js";
-import { createHTMLelement, gombGeneral, inputGeneral, labelGeneral } from "./utils/domUtils.js";
+import { createHTMLelement, gombGeneral, inputGeneral, labelGeneral, lapozasGeneral } from "./utils/domUtils.js";
 
 export async function usersDisplayre(variables) {
+    currentPage.page = 1;
     let display = document.getElementById('content');
     let row = createHTMLelement('row', ["row", "p-3"]);
 
@@ -25,18 +26,18 @@ export async function usersDisplayre(variables) {
 
     let keresoInput = inputGeneral("text", "Keresés...", null, "keresoInput", ["form-control"], false);
     keresoInput.addEventListener("input", async function () {
-        let tablePlace = document.getElementById('usersTableDiv');
-        tablePlace.innerHTML = "";
-        tablePlace.appendChild(tablazatGeneral(await sortedUser(getFilterValues()), variables));
+        currentPage.page = 1;
+        let data = await sortedUser(getFilterValues());
+        frissitUserTablazat(data.users, data.total, variables);
     })
 
     let keresoSelect = document.createElement('select');
     keresoSelect.classList.add("form-select");
     keresoSelect.id = 'keresoSelect';
     keresoSelect.addEventListener("change", async function () {
-        let tablePlace = document.getElementById('usersTableDiv');
-        tablePlace.innerHTML = "";
-        tablePlace.appendChild(tablazatGeneral(await sortedUser(getFilterValues()), variables));
+        currentPage.page = 1;
+        let data = await sortedUser(getFilterValues());
+        frissitUserTablazat(data.users, data.total, variables);
     })
 
     let option = document.createElement('option');
@@ -84,9 +85,9 @@ export async function usersDisplayre(variables) {
             radioButton.checked = true;
         }
         radioButton.addEventListener("change", async function () {
-            let tablePlace = document.getElementById('usersTableDiv');
-            tablePlace.innerHTML = "";
-            tablePlace.appendChild(tablazatGeneral(await sortedUser(getFilterValues()), variables));
+            currentPage.page = 1;
+            let data = await sortedUser(getFilterValues());
+            frissitUserTablazat(data.users, data.total, variables);
         })
         let label = labelGeneral(`status${statuszok[i]}`, statuszok[i], ["form-check-label"]);
         formcheck.appendChild(radioButton);
@@ -107,9 +108,9 @@ export async function usersDisplayre(variables) {
         checkbox.id = `role${roleok[i]}`;
         checkbox.name = "sort2";
         checkbox.addEventListener("change", async function () {
-            let tablePlace = document.getElementById('usersTableDiv');
-            tablePlace.innerHTML = "";
-            tablePlace.appendChild(tablazatGeneral(await sortedUser(getFilterValues()), variables));
+            currentPage.page = 1;
+            let data = await sortedUser(getFilterValues());
+            frissitUserTablazat(data.users, data.total, variables);
         })
         let label = labelGeneral(`role${roleok[i]}`, roleok[i], ["form-check-label"]);
         formcheck.appendChild(checkbox);
@@ -134,7 +135,9 @@ export async function usersDisplayre(variables) {
 
     //tablazat
     let tablazat = createHTMLelement('div', [], null, "usersTableDiv");
-    tablazat.appendChild(tablazatGeneral(await osszesUser(), variables));
+    let data = await osszesUser();
+    tablazat.appendChild(lapozasGeneral(data.total, paginate, currentPage, variables));
+    tablazat.appendChild(tablazatGeneral(data.users, variables));
     col9div.appendChild(tablazat);
 
     row.appendChild(col9div);
@@ -474,7 +477,14 @@ async function viewUserToModal(data, variables) {
     return container;
 }
 
-function tablazatGeneral(data, variables) {
+function frissitUserTablazat(data, userCount, variables) {
+    let tablePlace = document.getElementById('usersTableDiv');
+    tablePlace.innerHTML = "";
+    tablePlace.appendChild(lapozasGeneral(userCount, paginate, currentPage, variables));
+    tablePlace.appendChild(tablazatGeneral(data, variables));
+}
+
+function tablazatGeneral(adatok, variables) {
     let tablazat = createHTMLelement('table', ["table", "table-striped", "table-hover"], null, 'usersTable');
     let thead = document.createElement('thead');
     let tr = document.createElement('tr');
@@ -486,8 +496,8 @@ function tablazatGeneral(data, variables) {
     }
     thead.appendChild(tr);
 
+    console.log(adatok[1])
     let tbody = createHTMLelement('tbody', ["table-group-divider"]);
-    let adatok = data.users;
     for (let i = 0; i < adatok.length; i++) {
         let tr = document.createElement('tr');
         let ertekek = Object.values(adatok[i]);
@@ -521,9 +531,9 @@ function tablazatGeneral(data, variables) {
             torloGomb = gombGeneral("button", "Törlés", "trash-2", "red", null);
             torloGomb.addEventListener("click", async function () {
                 alert(await userToInactive(adatok[i].user_id, adatok[i].role, adatok[i].deleted_at == null));
-                let tablePlace = document.getElementById('usersTable');
-                tablePlace.innerHTML = "";
-                tablePlace.appendChild(tablazatGeneral(await sortedUser(getFilterValues()), variables));
+                currentPage.page = 1;
+                let data = await sortedUser(getFilterValues());
+                frissitUserTablazat(data.users, data.total, variables);
             });
 
         }
@@ -562,7 +572,6 @@ function modalView(title, type, content, variables) {
     footertext.className = "";
     let footerButtons = document.getElementById('footerButtons');
     footerButtons.innerHTML = "";
-    let tablePlace = document.getElementById('usersTableDiv');
     let button;
     switch (type) {
         case "new":
@@ -588,8 +597,9 @@ function modalView(title, type, content, variables) {
                 });
                 if (!ures) {
                     await newUser(inInput.username, inInput.email, inInput.password, inInput.role, inInput.is_2fa);
-                    tablePlace.innerHTML = "";
-                    tablePlace.appendChild(tablazatGeneral(await sortedUser(getFilterValues()), variables));
+                    currentPage.page = 1;
+                    let data = await sortedUser(getFilterValues());
+                    frissitUserTablazat(data.users, data.total, variables);
                 }
                 variables.modal.hide();
             })
@@ -631,8 +641,9 @@ function modalView(title, type, content, variables) {
                 if (valtozas) {
                     let siker = await userUpdate(currentData.user_id, inInput.username, inInput.email, inInput.role, inInput.is_2fa);
                     if (siker) {
-                        tablePlace.innerHTML = "";
-                        tablePlace.appendChild(tablazatGeneral(await sortedUser(getFilterValues()), variables));
+                        currentPage.page = 1;
+                        let data = await sortedUser(getFilterValues());
+                        frissitUserTablazat(data.users, data.total, variables);
                     }
                 }
                 variables.modal.hide();
@@ -666,6 +677,11 @@ function infoToModal(text) {
     return content;
 }
 
+async function paginate(variables) {
+    let data = await sortedUser(getFilterValues());
+    frissitUserTablazat(data.users, data.total, variables);
+}
+
 function getFilterValues() {
     let kereso = document.getElementById('keresoInput').value;
     let selectOption = document.getElementById('keresoSelect').value;
@@ -680,8 +696,10 @@ function getFilterValues() {
         status: selectedStatus,
         adminChecked,
         modChecked,
-        userChecked
+        userChecked,
+        page: currentPage.page
     };
 }
 
 let currentData = {};
+let currentPage = {page: 1};

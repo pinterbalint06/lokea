@@ -115,3 +115,36 @@ export function formatTime(date) {
         hour12: false
     }).format(rawDate);
 }
+
+export function lapozasGeneral(totalRecords, pageFunction, currentPage, ...args) {
+    const limit = 15;
+    let maxPage = Math.ceil(totalRecords / limit);
+
+    let paginationDiv = createHTMLelement('div', ["d-flex", "justify-content-center", "align-items-center", "gap-3", "border", "rounded", "mt-3", "mb-5", "mx-auto", "p-2"]);
+    paginationDiv.style.width = "fit-content";
+
+    let prevBtn = gombGeneral("button", "Previous", null, "green", null);
+    prevBtn.disabled = (currentPage.page === 1);
+    prevBtn.addEventListener("click", async () => {
+        if (currentPage.page > 1) {
+            currentPage.page--;
+            await pageFunction(...args);
+        }
+    });
+
+    let nextBtn = gombGeneral("button", "Next", null, "green", null);
+    nextBtn.disabled = (currentPage.page >= maxPage || maxPage === 0);
+    nextBtn.addEventListener("click", async () => {
+        if (currentPage.page < maxPage) {
+            currentPage.page++;
+            await pageFunction(...args);
+        }
+    });
+
+    let pageInfo = createHTMLelement('span', ["align-self-center", "fw-bold"], `${currentPage.page} / ${maxPage}`);
+    
+    paginationDiv.appendChild(prevBtn);
+    paginationDiv.appendChild(pageInfo);
+    paginationDiv.appendChild(nextBtn);
+    return paginationDiv;
+}

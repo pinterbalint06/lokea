@@ -87,7 +87,7 @@ router.post("/signupFromAdmin", auth.checkAuth, auth.checkRole("ADMIN"),
 router.get('/users', auth.checkAuth, auth.checkRole("ADMIN"), async (request, response) => {
     try {
         let users = await database.getUsers();
-        response.status(200).json({ message: "Sikeres lekérés", users: users });
+        response.status(200).json({ users: users.rows, total: users.total });
     } catch (error) {
         response.status(500).json({ error: error });
     }
@@ -105,9 +105,9 @@ router.get('/user', auth.checkAuth, auth.checkRole("ADMIN"), async (request, res
 
 router.post('/sortedUsers', auth.checkAuth, auth.checkRole("ADMIN"), async (request, response) => {
     try {
-        let { mireKeresek, mit, status, adminChecked, modChecked, userChecked } = request.body;
-        let users = await database.sortedUsers(mireKeresek, mit, status, adminChecked, modChecked, userChecked);
-        response.status(200).json({ message: "Sikeres lekérés", users: users });
+        let { mireKeresek, mit, status, adminChecked, modChecked, userChecked, page } = request.body;
+        let users = await database.sortedUsers(mireKeresek, mit, status, adminChecked, modChecked, userChecked, page || 1);
+        response.status(200).json({ users: users.rows, total: users.total });
     } catch (error) {
         response.status(500).json({ error: error });
     }
@@ -256,7 +256,7 @@ router.post('/userToInactive', auth.checkAuth, auth.checkRole("ADMIN"),
 router.post('/exportUsers', auth.checkAuth, auth.checkRole("ADMIN"), async (request, response) => {
     try {
         let { mireKeresek, mit, status, adminChecked, modChecked, userChecked } = request.body;
-        let users = await database.sortedUsers(mireKeresek, mit, status, adminChecked, modChecked, userChecked);
+        let users = (await database.sortedUsers(mireKeresek, mit, status, adminChecked, modChecked, userChecked, 1, 999999)).rows;
 
         let csvContent = "\uFEFFID;Username;Email;Status;Role\n";
 
@@ -271,6 +271,7 @@ router.post('/exportUsers', auth.checkAuth, auth.checkRole("ADMIN"), async (requ
         return response.status(200).send(csvContent);
 
     } catch (error) {
+        console.log(error.message)
         return response.status(500).json({ error: "Export error" });
     }
 });

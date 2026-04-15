@@ -1,8 +1,8 @@
-import { createHTMLelement, inputGeneral, formatDate, gombGeneral, labelGeneral } from "./utils/domUtils.js";
+import { createHTMLelement, inputGeneral, formatDate, gombGeneral, labelGeneral, lapozasGeneral } from "./utils/domUtils.js";
 import { getLogs, sortedLogs, exportLogs } from "./fetchs.js";
 
 export async function logsDisplayre() {
-    currentPage = 1;
+    currentPage.page = 1;
     let display = document.getElementById('content');
 
     let row = createHTMLelement('div', ["row", "p-3"]);
@@ -82,9 +82,8 @@ function tablazatGeneral(adatok) {
 function frissitLogTablazat(data, logCount) {
     let tablePlace = document.getElementById('logsDiv');
     tablePlace.innerHTML = "";
-    console.log(logCount)
     //todo - alert ha nincs log
-    tablePlace.appendChild(lapozasGeneral(logCount));
+    tablePlace.appendChild(lapozasGeneral(logCount, paginate, currentPage));
     tablePlace.appendChild(tablazatGeneral(data));
 }
 
@@ -203,7 +202,7 @@ function szuresek() {
         datePickers.style.opacity = "0.5";
         datePickers.querySelectorAll('input').forEach(i => i.disabled = true);
 
-        currentPage = 1;
+        currentPage.page = 1;
         let data = await getLogs();
         frissitLogTablazat(data.logs, data.total);
     });
@@ -213,7 +212,7 @@ function szuresek() {
 
     let sortBtn = gombGeneral("button", "Sort", null, "green", null, ["text-center", "mt-2"]);
     sortBtn.addEventListener("click", async function () {
-        currentPage = 1;
+        currentPage.page = 1;
         let data = await sortedLogs(getFilterValues());
         frissitLogTablazat(data.logs, data.total);
     })
@@ -277,39 +276,9 @@ function createDatePicker(labelStr, idPrefix) {
     return container;
 }
 
-function lapozasGeneral(totalRecords) {
-    const limit = 15;
-    let maxPage = Math.ceil(totalRecords / limit);
-
-    let paginationDiv = createHTMLelement('div', ["d-flex", "justify-content-center", "align-items-center", "gap-3", "border", "rounded", "mt-3", "mb-5", "mx-auto", "p-2"]);
-    paginationDiv.style.width = "fit-content";
-
-    let prevBtn = gombGeneral("button", "Previous", null, "green", null);
-    prevBtn.disabled = (currentPage === 1);
-    prevBtn.addEventListener("click", async () => {
-        if (currentPage > 1) {
-            currentPage--;
-            let data = await sortedLogs(getFilterValues());
-            frissitLogTablazat(data.logs, data.total);
-        }
-    });
-
-    let nextBtn = gombGeneral("button", "Next", null, "green", null);
-    nextBtn.disabled = (currentPage >= maxPage || maxPage === 0);
-    nextBtn.addEventListener("click", async () => {
-        if (currentPage < maxPage) {
-            currentPage++;
-            let data = await sortedLogs(getFilterValues());
-            frissitLogTablazat(data.logs, data.total);
-        }
-    });
-
-    let pageInfo = createHTMLelement('span', ["align-self-center", "fw-bold"], `${currentPage} / ${maxPage}`);
-    
-    paginationDiv.appendChild(prevBtn);
-    paginationDiv.appendChild(pageInfo);
-    paginationDiv.appendChild(nextBtn);
-    return paginationDiv;
+async function paginate() {
+    let data = await sortedLogs(getFilterValues());
+    frissitLogTablazat(data.logs, data.total);
 }
 
 function getFilterValues() {
@@ -333,8 +302,8 @@ function getFilterValues() {
         periodTo,
         roles: Array.from(document.querySelectorAll('input[name="sort2"]:checked')).map(cb => cb.value),
         activities: Array.from(document.querySelectorAll('input[name="sort1"]:checked')).map(cb => cb.value),
-        page: currentPage
+        page: currentPage.page
     };
 }
 
-let currentPage = 1;
+let currentPage = {page: 1};

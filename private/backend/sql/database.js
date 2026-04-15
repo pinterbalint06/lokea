@@ -55,11 +55,15 @@ async function newUserFromAdmin(username, email, password, role, is_2fa) {
     return success ? { success, insertId: result.insertId } : { success, error };
 }
 
-async function getUsers() {
+async function getUsers(limit = 10) {
     try {
-        const query = 'SELECT users.deleted_at, users.user_id, users.username, users.email, users.role FROM users';
-        const [rows] = await pool.execute(query);
-        return rows;
+        const countQuery = 'SELECT COUNT(*) as total FROM users';
+        const [[{ total }]] = await pool.execute(countQuery);
+
+        const query = 'SELECT deleted_at, user_id, username, email, role FROM users ORDER BY user_id LIMIT ?';
+        const [rows] = await pool.execute(query, [limit]);
+
+        return { rows, total };
     } catch (error) {
         console.error('DB hiba getUsers:', error);
         throw error;
@@ -88,15 +92,16 @@ async function getUserNameProfile(user_id) {
     }
 }
 
-async function sortedUsers(mireKeresek, mit, status, adminChecked, modChecked, userChecked) {
-    let query = 'SELECT deleted_at, user_id, username, email, role FROM users';
+async function sortedUsers(mireKeresek, mit, status, adminChecked, modChecked, userChecked, page = 1, customLimit = 10) {
+    const limit = customLimit;
+    const offset = (page - 1) * limit;
+
     let conditions = [];
     let params = [];
 
     if (mit && mit.trim() !== '') {
         const validColumns = ['user_id', 'username', 'email'];
         const targetColumn = validColumns.includes(mireKeresek) ? mireKeresek : 'username';
-
         conditions.push(`${targetColumn} LIKE ?`);
         params.push(`%${mit}%`);
     }
@@ -120,11 +125,20 @@ async function sortedUsers(mireKeresek, mit, status, adminChecked, modChecked, u
         params.push(...roles);
     }
 
-    if (conditions.length > 0) {
-        query += ' WHERE ' + conditions.join(' AND ');
+    const whereClause = conditions.length > 0 ? ' WHERE ' + conditions.join(' AND ') : '';
+
+    const countQuery = `SELECT COUNT(*) as total FROM users ${whereClause}`;
+    const dataQuery = `SELECT deleted_at, user_id, username, email, role FROM users ${whereClause} ORDER BY user_id LIMIT ? OFFSET ?`;
+
+    try {
+        let [[{ total }]] = await pool.execute(countQuery, params);
+        const [rows] = await pool.execute(dataQuery, [...params, limit, offset]);
+
+        return { rows, total };
+    } catch (error) {
+        console.error("Database error:", error);
+        throw error;
     }
-    const [rows] = await pool.execute(query, params);
-    return rows;
 }
 
 async function updateUserByAdmin(user_id, username, email, role, is_2fa) {

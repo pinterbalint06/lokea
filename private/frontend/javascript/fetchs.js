@@ -4,7 +4,7 @@ export async function osszesUser() {
     try {
         let response = await fetch("/api/admin/users");
         let data = await response.json();
-        return data;
+        return { users: data.users, total: data.total };
     } catch (error) {
         throw error;
     }
@@ -37,7 +37,6 @@ export async function getUserData() {
 }
 
 export async function sortedUser(params) {
-    let roles = params.selectedRoles || [];
     try {
         let response = await fetch("/api/admin/sortedUsers", {
             method: "POST",
@@ -50,11 +49,12 @@ export async function sortedUser(params) {
                 status: params.status,
                 adminChecked: params.adminChecked,
                 modChecked: params.modChecked,
-                userChecked: params.userChecked
+                userChecked: params.userChecked,
+                page: params.page
             })
         });
         let data = await response.json();
-        return data;
+        return { users: data.users, total: data.total } || [];
     } catch (error) {
         throw error;
     }
@@ -252,13 +252,13 @@ export async function exportUsers(filters) {
 
         const blob = await response.blob();
         const url = window.URL.createObjectURL(blob);
-        
+
         let a = document.createElement('a');
         a.href = url;
         a.download = `users_export_${new Date().getTime()}.csv`;
         document.body.appendChild(a);
         a.click();
-        
+
         window.URL.revokeObjectURL(url);
         a.remove();
     } catch (err) {
