@@ -213,19 +213,30 @@ export class MarkerManager {
         });
 
         this.bus.on(EVENTS.UI_POINT_CENTER_VIEW, ({ targetPointId, targetMapId }) => {
-            this.pendingCenterMarker = {
-                pointId: targetPointId,
-                mapId: targetMapId
-            };
-            if (targetMapId == this.store.getState().activeMapId) {
-                this.#centerPendingMarker();
-            } else {
-                const lockReason = this.store.isAppLocked();
-                if (!lockReason) {
-                    this.bus.emit(EVENTS.UI_SWITCH_MAP_REQUEST, { mapId: targetMapId });
+            const hasSamePendingCenterRequest = this.pendingCenterMarker
+                && this.pendingCenterMarker.pointId == targetPointId
+                && this.pendingCenterMarker.mapId == targetMapId;
+
+            if (!hasSamePendingCenterRequest) {
+                this.pendingCenterMarker = {
+                    pointId: targetPointId,
+                    mapId: targetMapId
+                };
+                if (targetMapId == this.store.getState().activeMapId) {
+                    const hasTargetNow = this.mapViewer.doesMarkerExist(targetPointId)
+                        || !!this.markersCache[targetPointId];
+
+                    if (hasTargetNow) {
+                        this.#centerPendingMarker();
+                    }
                 } else {
-                    this.pendingCenterMarker = null;
-                    this.bus.emit(EVENTS.TOAST_SHOW, { msg: lockReason, type: "danger" });
+                    const lockReason = this.store.isAppLocked();
+                    if (!lockReason) {
+                        this.bus.emit(EVENTS.UI_SWITCH_MAP_REQUEST, { mapId: targetMapId });
+                    } else {
+                        this.pendingCenterMarker = null;
+                        this.bus.emit(EVENTS.TOAST_SHOW, { msg: lockReason, type: "danger" });
+                    }
                 }
             }
         });
