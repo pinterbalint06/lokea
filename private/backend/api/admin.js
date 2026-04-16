@@ -408,76 +408,87 @@ router.post('/exportLogs', async (request, response) => {
     }
 });
 
-router.get('/userActivityByWeekChart', async (req, res) => {
+router.get('/getAdminSettings', async (request, response) => {
     try {
-        let data = await database.getUserActivityByWeek();
-        let weeks = [];
-        let playerCount = [];
-        for (let i = 0; i < data.length; i++) {
-            weeks.push(data[i].het_megnevezes);
-            playerCount.push(data[i].felhasznalok_szama);
+        const settings = await database.getAdminSettings(request.session.user_id);
+        
+        if (!settings) {
+            return response.status(404).json({ message: "Beállítások nem találhatók" });
         }
+
+        response.status(200).json(settings);
+    } catch (error) {
+        console.error(error);
+        response.status(500).json({ message: "Hiba a lekérdezés során" });
+    }
+});
+
+router.post('/updateAdminSettings', async (request, response) => {
+    try {
+        const { darkmode, selected_chart } = request.body;
+
+        const affectedRows = await database.updateDarkMode(request.session.user_id, darkmode, selected_chart);
+
+        if (affectedRows === 0) {
+            response.status(200).json({ message: "Nem történt változtatás" });
+        }
+        else {
+            response.status(200).json({ message: "Sikeres frissítés", affectedRows });
+        }
+    } catch (error) {
+        console.error(error);
+        response.status(500).json({ message: "Hiba a frissítés során" });
+    }
+});
+
+router.get('/chart/:type', async (request, response) => {
+    try {
+        let type = req.params;
+        let dbData, label, color, xKey, yKey;
+
+        switch (type) {
+            case 'activity-day':
+                dbData = await database.getUserActivityByDay();
+                label = 'Napi aktivitás';
+                xKey = 'datum';
+                yKey = 'felhasznalok_szama';
+                break;
+            case 'activity-week':
+                dbData = await database.getUserActivityByWeek();
+                label = 'Heti aktivitás';
+                xKey = 'het_megnevezes';
+                yKey = 'bejelentkezesek_szama';
+                break;
+            case 'registrations':
+                dbData = await database.getRegistrationByWeek();
+                label = 'Heti regisztrációk';
+                xKey = 'het_megnevezes';
+                yKey = 'regisztraciok_szama';
+                color = '#198754';
+                break;
+            case 'matches':
+                dbData = await database.getMatchCountByWeek();
+                label = 'Heti meccsek';
+                xKey = 'het_megnevezes';
+                yKey = 'meccsek_szama';
+                color = '#dc3545';
+                break;
+            default:
+                return res.status(400).send("Érvénytelen grafikon típus");
+        }
+
         const canvas = new Canvas(1200, 600);
         const ctx = canvas.getContext("2d");
-
-        const chart = new Chart(ctx, {
-            type: 'line',
-            data: {
-                labels: weeks,
-                datasets: [{
-                    label: 'Activity',
-                    data: playerCount,
-                    borderColor: '#0d6efd',
-                    borderWidth: 5,
-                    pointRadius: 6,
-                    backgroundColor: 'rgba(13, 110, 253, 0.1)',
-                    fill: true,
-                    tension: 0.4
-                }]
-            },
-            options: {
-                devicePixelRatio: 1,
-                plugins: {
-                    legend: {
-                        labels: {
-                            font: { size: 18, weight: 'bold' }
-                        }
-                    }
-                },
-                scales: {
-                    x: {
-                        title: {
-                            display: true,
-                            text: 'Weeks',
-                            font: { size: 18, weight: 'bold' },
-                            padding: { top: 10 }
-                        },
-                        ticks: { font: { size: 16, weight: 'bold' } }
-                    },
-                    y: {
-                        title: {
-                            display: true,
-                            text: 'Number of logins',
-                            font: { size: 18, weight: 'bold' },
-                            padding: { bottom: 10 }
-                        },
-                        ticks: {
-                            font: { size: 16, weight: 'bold' },
-                        }
-                    }
-                }
-            }
-        });
+        const chart = new Chart(ctx, createChartConfig(xKey, yKey, label, color));
 
         const rawBuffer = await canvas.toBuffer('png');
-
         const optimizedImage = await sharp(rawBuffer)
-            .toFormat('webp', { quality: 95, lossless: true })
+            .toFormat('webp', { quality: 95 })
             .toBuffer();
 
         res.set('Content-Type', 'image/webp');
         res.send(optimizedImage);
-
+        
         chart.destroy();
 
     } catch (err) {
