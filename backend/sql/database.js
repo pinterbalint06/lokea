@@ -287,7 +287,8 @@ async function getImagePath(image_id) {
 
 async function insertGameSession(userId, gameMapId) {
     const query = 'INSERT INTO game_sessions (user_id, game_maps_id) VALUES (?, ?)';
-    await pool.execute(query, [userId, gameMapId]);
+    const result = await pool.execute(query, [userId, gameMapId]);
+    return result.insertId;
 }
 
 async function selectLatestActiveGameSession(userId) {
@@ -308,6 +309,40 @@ async function finishGameSession(sessionId) {
         UPDATE game_sessions 
         SET finished_at = CURRENT_TIMESTAMP 
         WHERE session_id = ? AND finished_at IS NULL`;
+    const [result] = await pool.execute(query, [sessionId]);
+    return result;
+}
+
+//Játékfolyamathoz szükséges adatok lekérése
+async function getRandomPoint(gameSessionId) {
+    const query = `
+        SELECT points.point_id, points.north_direction, images.filepath, images.width, images.height
+        FROM points
+            INNER JOIN images ON points.image_id = images.image_id
+            INNER JOIN map ON map.map_id = points.map_id
+        WHERE map.game_maps_id =  (
+            SELECT game_maps_id FROM game_sessions WHERE game_sessions.session_id = ?
+            )
+        AND points.point_id NOT IN (
+            SELECT session_guesses.point_id FROM session_guesses
+            WHERE session_guesses.session_id = ?
+            )
+        ORDER BY RAND() 
+        LIMIT 1;
+    `;
+    const [result] = await pool.execute(query, [gameSessionId, gameSessionId]);
+    return result[0];
+}
+
+async function getAllMaps(sessionId) {
+    const query = `
+        SELECT map.map_id, map.title, images.filepath, images.width, images.height
+        FROM map
+            INNER JOIN images ON map.image_id = images.image_id
+        WHERE map.game_maps_id = (
+            SELECT game_maps_id FROM game_sessions WHERE game_sessions.session_id = ?
+        );
+    `;
     const [result] = await pool.execute(query, [sessionId]);
     return result;
 }
@@ -551,5 +586,7 @@ module.exports = {
     getImagePath,
     insertGameSession,
     selectLatestActiveGameSession,
-    finishGameSession
+    finishGameSession,
+    getRandomPoint,
+    getAllMaps
 };

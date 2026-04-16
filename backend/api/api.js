@@ -306,6 +306,7 @@ router.get('/active_game_session', async (request, response) => {
         if (!activeSession) {
             return response.status(200).json({ success: true, hasActiveSession: false });
         }
+        request.session.activeSessionId = activeSession.session_id;
         response.status(200).json({
             success: true,
             hasActiveSession: true,
@@ -318,9 +319,8 @@ router.get('/active_game_session', async (request, response) => {
 
 router.post('/finish_game_session', async (request, response) => {
     try {
-        const userId = request.session?.userid || 1; //TODO: torles ha mar stabil a session
-        const activeSession = await database.selectLatestActiveGameSession(userId);
-        await database.finishGameSession(activeSession.session_id);
+        await database.finishGameSession(request.session.activeSessionId);
+        delete request.session.activeSessionId;
         response.status(200).json({ success: true, message: 'Game session finished' });
     } catch (error) {
         response.status(500).json({ success: false, message: 'Database error', error: error });
@@ -335,7 +335,7 @@ router.post('/post_game_id', async (request, response) => {
         response.status(400).json({ success: false, message: 'Invalid gameMapId' });
     }
     try {   
-        await database.insertGameSession(userId, gameMapId);
+        request.session.activeSessionId = await database.insertGameSession(userId, gameMapId);
     } catch (error) {
         response.status(500).json({ success: false, message: 'Database error', error: error });
     }
