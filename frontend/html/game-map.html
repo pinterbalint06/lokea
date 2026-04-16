@@ -1,0 +1,212 @@
+<!DOCTYPE html>
+<html lang="hu" data-bs-theme="dark">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Lokea</title>
+    <link href="/bootstrap/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="/css/game-map.css">
+    <script type="module" src="/javascript/game/game-map.js"></script>
+</head>
+
+<body class="lilagradiensbg">
+    <nav class="navbar navbar-expand-lg uveg sticky-top">
+        <div class="container-fluid justify-content-between">
+            <a class="navbar-brand" href="#">
+                <img src="/images/lokea.png" alt="Lokea logo" class="navPic">
+            </a>
+        </div>
+    </nav>
+
+    <main class="py-3">
+        <div class="container-fluid">
+            <section id="gameMapPage" class="game-map-page mx-auto rounded-4 p-3">
+                <div class="row g-4">
+                    <div class="col-12 col-xl-5">
+                        <div class="d-flex flex-column gap-3">
+                            <div class="cover-image-wrapper uveg rounded-4 overflow-hidden position-relative">
+                                <img id="coverImage" class="cover-image" src="/images/worldmap.webp"
+                                    alt="Pálya borítókép">
+                                <div class="cover-overlay p-3">
+                                    <div class="d-flex align-items-center gap-2">
+                                        <span class="small text-uppercase opacity-75">Értékelés</span>
+                                        <div id="displayRatingStars" class="rating-stars" style="--rating: 0;"></div>
+                                        <span id="displayRatingValue" class="small fw-semibold">0.0</span>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="meta-grid">
+                                <article class="meta-card uveg rounded-3 p-3">
+                                    <p class="meta-label mb-1">Létrehozva</p>
+                                    <p id="createdAtValue" class="meta-value mb-0">-</p>
+                                </article>
+                                <article class="meta-card uveg rounded-3 p-3">
+                                    <p class="meta-label mb-1">Játékok száma</p>
+                                    <p id="playsValue" class="meta-value mb-0">0</p>
+                                </article>
+                            </div>
+
+                            <section id="leaderboardPanel" class="uveg rounded-4 p-3 p-lg-4">
+                                <h2 class="section-title mb-3">Rangsor</h2>
+                                <div id="leaderboardList" class="leaderboard-list" aria-live="polite">
+                                    <article class="leaderboard-item d-flex align-items-center gap-2 flex-wrap">
+                                        <span class="leaderboard-rank flex-shrink-0">1</span>
+                                        <div class="flex-grow-1 min-w-0">
+                                            <p class="mb-0 fw-semibold text-truncate">Laszti1</p>
+                                            <p class="mb-0 small opacity-75">Lejátszások: 34</p>
+                                        </div>
+                                        <span class="leaderboard-score flex-shrink-0">1280</span>
+                                    </article>
+                                    <article class="leaderboard-item d-flex align-items-center gap-2 flex-wrap">
+                                        <span class="leaderboard-rank flex-shrink-0">2</span>
+                                        <div class="flex-grow-1 min-w-0">
+                                            <p class="mb-0 fw-semibold text-truncate">Laszti2</p>
+                                            <p class="mb-0 small opacity-75">Lejátszások: 28</p>
+                                        </div>
+                                        <span class="leaderboard-score flex-shrink-0">1175</span>
+                                    </article>
+                                    <article class="leaderboard-item d-flex align-items-center gap-2 flex-wrap">
+                                        <span class="leaderboard-rank flex-shrink-0">3</span>
+                                        <div class="flex-grow-1 min-w-0">
+                                            <p class="mb-0 fw-semibold text-truncate">Laszti3</p>
+                                            <p class="mb-0 small opacity-75">Lejátszások: 22</p>
+                                        </div>
+                                        <span class="leaderboard-score flex-shrink-0">1090</span>
+                                    </article>
+                                    <article class="leaderboard-item d-flex align-items-center gap-2 flex-wrap">
+                                        <span class="leaderboard-rank flex-shrink-0">4</span>
+                                        <div class="flex-grow-1 min-w-0">
+                                            <p class="mb-0 fw-semibold text-truncate">Laszti4</p>
+                                            <p class="mb-0 small opacity-75">Lejátszások: 18</p>
+                                        </div>
+                                        <span class="leaderboard-score flex-shrink-0">980</span>
+                                    </article>
+                                    <article class="leaderboard-item d-flex align-items-center gap-2 flex-wrap">
+                                        <span class="leaderboard-rank flex-shrink-0">5</span>
+                                        <div class="flex-grow-1 min-w-0">
+                                            <p class="mb-0 fw-semibold text-truncate">Laszti5</p>
+                                            <p class="mb-0 small opacity-75">Lejátszások: 15</p>
+                                        </div>
+                                        <span class="leaderboard-score flex-shrink-0">905</span>
+                                    </article>
+                                </div>
+                            </section>
+                        </div>
+                    </div>
+
+                    <div class="col-12 col-xl-7">
+                        <div class="d-flex flex-column gap-3">
+                            <section class="uveg rounded-4 p-3 p-lg-4">
+                                <div class="d-flex flex-wrap justify-content-between align-items-start gap-2">
+                                    <div class="flex-grow-1">
+                                        <h1 id="titleDisplay" class="game-title m-0">Teszt</h1>
+                                        <input id="titleInput" type="text" class="form-control uvegform d-none mt-1"
+                                            maxlength="50" placeholder="Adj meg egy címet...">
+                                    </div>
+                                    <button id="enterEditModeBtn"
+                                        class="btn btn-outline-secondary btn-sm rounded-pill px-3 d-none">
+                                        Cím és leírás szerkesztése
+                                    </button>
+                                </div>
+
+                                <div class="mt-3">
+                                    <h2 class="section-title mb-2">Leírás</h2>
+                                    <p id="descriptionDisplay" class="description-text mb-0">Teszt leírás...</p>
+                                    <textarea id="descriptionInput" class="form-control uvegform d-none mt-2" rows="4"
+                                        maxlength="255" placeholder="Írj rövid leírást a pályáról..."></textarea>
+
+                                    <div id="metadataEditActions" class="d-flex flex-wrap gap-2 mt-3 d-none">
+                                        <button id="saveMetadataBtn" type="button"
+                                            class="btn uvegbutton rounded-pill px-3">
+                                            Változások mentése
+                                        </button>
+                                        <button id="cancelMetadataBtn" type="button"
+                                            class="btn btn-outline-secondary rounded-pill px-3">
+                                            Mégse
+                                        </button>
+                                    </div>
+                                </div>
+                                <div class="action-row d-flex flex-wrap gap-2 d-none">
+                                    <a id="editMapButton" href="#" class="btn btn-outline-secondary rounded-pill px-4">
+                                        Pálya szerkesztése
+                                    </a>
+                                    <button id="deleteGameMapButton" type="button"
+                                        class="btn btn-outline-danger rounded-pill px-4">
+                                        Pálya törlése
+                                    </button>
+                                </div>
+                            </section>
+
+                            <section class="uveg rounded-4 p-3 p-lg-4 comments-section">
+                                <h2 class="section-title mb-0">Hozzászólások</h2>
+
+
+                                <form id="commentForm" class="comment-form mt-3">
+                                    <label for="commentText" class="form-label mb-1">Írj hozzászólást</label>
+                                    <textarea id="commentText" class="form-control uvegform" rows="4" maxlength="255"
+                                        placeholder="A véleményed erről a pályáról..." required></textarea>
+
+                                    <div class="d-flex flex-wrap justify-content-between align-items-end gap-3 mt-3">
+                                        <fieldset class="rating-input-group">
+                                            <legend class="small mb-2">Értékelés</legend>
+                                            <div class="rating-input">
+                                                <input type="radio" id="csillag5" name="rating" value="5">
+                                                <label for="csillag5" aria-label="5 csillag">&#9733;</label>
+
+                                                <input type="radio" id="csillag4" name="rating" value="4">
+                                                <label for="csillag4" aria-label="4 csillag">&#9733;</label>
+
+                                                <input type="radio" id="csillag3" name="rating" value="3">
+                                                <label for="csillag3" aria-label="3 csillag">&#9733;</label>
+
+                                                <input type="radio" id="csillag2" name="rating" value="2">
+                                                <label for="csillag2" aria-label="2 csillag">&#9733;</label>
+
+                                                <input type="radio" id="csillag1" name="rating" value="1">
+                                                <label for="csillag1" aria-label="1 csillag">&#9733;</label>
+                                            </div>
+                                        </fieldset>
+
+                                        <button type="submit" class="btn uvegbutton rounded-pill px-4">
+                                            Hozzászólás küldése
+                                        </button>
+                                    </div>
+                                </form>
+
+                                <hr class="my-4">
+
+                                <div id="commentsList" class="comments-list mt-3">
+                                    <article class="comment-card">
+                                        <div class="d-flex justify-content-between align-items-center gap-2 flex-wrap">
+                                            <strong class="comment-author">Laszti1</strong>
+                                            <span class="comment-date small opacity-75">2026. 04. 16.</span>
+                                        </div>
+                                        <div class="comment-rating mt-1">
+                                            <div class="rating-stars" style="--rating: 1.0;"></div>
+                                        </div>
+                                        <p class="comment-text mb-0 mt-2">Szörnyű.</p>
+                                    </article>
+                                </div>
+                            </section>
+                        </div>
+                    </div>
+                </div>
+            </section>
+        </div>
+
+        <div id="toastPlace" class="toast-container position-fixed bottom-0 start-50 translate-middle-x mb-4"></div>
+        <div id="modal-wrapper"></div>
+        <button id="playMapButton" type="button"
+            class="btn uvegbutton rounded-circle floating-button floating-button-primary" aria-label="Játék indítása">
+            <svg viewBox="0 0 119.4 122.88" style="height: 1.5em; fill: white;">
+                <use href="/images/game-map-icons.svg#icon-start"></use>
+            </svg>
+        </button>
+    </main>
+
+    <script src="/bootstrap/js/bootstrap.min.js"></script>
+</body>
+
+</html>

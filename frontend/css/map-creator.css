@@ -49,11 +49,6 @@ body {
     color: var(--color-white);
 }
 
-.navPic {
-    height: 45px;
-    width: auto;
-}
-
 body {
     display: flex;
     flex-direction: column;
@@ -112,38 +107,6 @@ main {
 #equirectangularPreview {
     display: block;
     border: solid 1px var(--surface-glass-border);
-}
-
-.floating-button {
-    width: 60px;
-    height: 60px;
-    padding: 0;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    border: none;
-    box-shadow: var(--shadow-fab);
-    transition: transform var(--transition-fast);
-}
-
-.floating-button:hover {
-    transform: scale(1.05);
-}
-
-.floating-button-primary {
-    background: var(--accent-gradient);
-}
-
-.floating-button-success {
-    background: var(--success-gradient);
-}
-
-.fab-btn:disabled {
-    filter: opacity(0.5);
-    cursor: not-allowed;
-    background-color: var(--color-disabled-bg) !important;
-    background: none !important;
-    border: 1px solid var(--color-disabled-border) !important;
 }
 
 #ujPontCollapse {

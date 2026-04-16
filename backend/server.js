@@ -59,7 +59,7 @@ router.get('/webgl', (request, response) => {
 router.get('/map', (request, response) => {
     response.sendFile(path.join(__dirname, '../frontend/html/test-map.html'));
 });
-router.get('/maps/:gameMapId/edit',
+router.get('/game-maps/:gameMapId/edit',
     auth.checkAuth,
     async (request, response) => {
         try {
@@ -98,6 +98,25 @@ router.get('/admin', auth.checkRole("ADMIN"), (request, response) => {
 });
 router.get('/choose_game', (request, response) => {
     response.sendFile(path.join(__dirname, '../frontend/html/game-choosing.html'));
+});
+router.get('/game-maps/:gameMapId', async (request, response) => {
+    try {
+        await idSchema(ERRORS.GAMEMAP.INVALID_ID).validateAsync(request.params.gameMapId, {
+            abortEarly: true,
+            stripUnknown: true,
+            convert: true
+        });
+
+        response.sendFile(path.join(__dirname, '../frontend/html/game-map.html'));
+    } catch (error) {
+        if (error.isJoi) {
+            // TODO: valami oldal ennek
+            response.status(400).json({ error: error.details[0].message });
+        } else {
+            console.error(error);
+            response.status(500).send();
+        }
+    }
 });
 router.use((request, response) => {
     response.status(404).sendFile(path.join(__dirname, '../frontend/html/notfound.html'));
