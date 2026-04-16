@@ -1,12 +1,11 @@
 import { osszesUser, getUser, sortedUser, getProfilePicture, newUser, userUpdate, userToInactive, exportUsers, uploadProfilePic, deleteProfilePicture } from "./fetchs.js";
-import { createHTMLelement, gombGeneral, inputGeneral, labelGeneral, lapozasGeneral } from "./utils/domUtils.js";
+import { createHTMLelement, gombGeneral, inputGeneral, labelGeneral, lapozasGeneral, createPreview } from "./utils/domUtils.js";
 
 export async function usersDisplayre(variables) {
     currentPage.page = 1;
     let display = document.getElementById('content');
     let row = createHTMLelement('row', ["row", "p-3"]);
 
-    //kereso
     let col9div = createHTMLelement('div', ["col-9"]);
 
     let fejlec = createHTMLelement('div', ["d-flex", "justify-content-between"]);
@@ -20,7 +19,19 @@ export async function usersDisplayre(variables) {
         variables.modal.show();
     });
 
-    let keresodiv = createHTMLelement('div', ["mb-3"]);
+    fejlec.appendChild(cim);
+    fejlec.appendChild(newUserGomb);
+    col9div.appendChild(fejlec);
+
+    //szures
+
+    let col3div = createHTMLelement('div', ["col-3"]);
+    let kartya = createHTMLelement('div', ["card", "bg-light", "p-3"]);
+    let kiscim = createHTMLelement('h4', ["h4"], 'Sort');
+    let szuresDiv = createHTMLelement('div', ['mb-3']);
+
+    //kereso
+    let keresodiv = createHTMLelement('div', ["my-3"]);
 
     let inputgroupdiv = createHTMLelement('div', ["input-group"]);
 
@@ -59,17 +70,7 @@ export async function usersDisplayre(variables) {
     inputgroupdiv.appendChild(keresoInput);
     inputgroupdiv.appendChild(keresoSelect);
     keresodiv.append(inputgroupdiv);
-    fejlec.appendChild(cim);
-    fejlec.appendChild(newUserGomb);
-    fejlec.appendChild(keresodiv);
-    col9div.appendChild(fejlec);
-
-    //szures
-
-    let col3div = createHTMLelement('div', ["col-3"]);
-    let kartya = createHTMLelement('div', ["card", "bg-light", "p-3"]);
-    let kiscim = createHTMLelement('h4', ["h4"], 'Sort');
-    let szuresDiv = createHTMLelement('div', ['mb-3']);
+    szuresDiv.appendChild(keresodiv);
 
     let statusDiv = document.createElement('div');
     let statusDivCim = createHTMLelement('h6', ["h6"], "User status");
@@ -121,7 +122,7 @@ export async function usersDisplayre(variables) {
     szuresDiv.appendChild(roleDiv);
 
     let exportGombDiv = createHTMLelement('div', ["mt-3", "border-top", "pt-3"]);
-    let exportGomb = gombGeneral("button", "Export to CSV", null, "blue", null, ["w-100"]);
+    let exportGomb = gombGeneral("button", "Export to CSV", "file-text", "blue", null, ["w-100"]);
     exportGomb.addEventListener("click", async function () {
         await exportUsers(getFilterValues());
     });
@@ -222,12 +223,33 @@ async function editUserToModal(data, variables) {
     let role = data.role;
     let is_2fa = data.is_2fa;
     let pfproute = data.filepath;
-    let container = createHTMLelement('div', ["container-fluid"]);
 
+    // Alaphelyzetbe állítjuk a variables-t minden megnyitáskor
+    variables.tempPfp = null;
+    variables.deleteLast = false;
+
+    let container = createHTMLelement('div', ["container-fluid"]);
     let row = createHTMLelement('div', ["row"]);
 
     /* BAL OLDAL */
     let colLeft = createHTMLelement('div', ["col-4"]);
+
+    let dropzone = document.createElement("div");
+    dropzone.classList.add("dropzone");
+    dropzone.addEventListener("dragover", function (e) {
+        e.preventDefault();
+    });
+
+    dropzone.addEventListener("drop", async function (e) {
+        e.preventDefault();
+        let file = e.dataTransfer.files[0];
+        if (file) {
+            variables.tempPfp = file;
+            variables.deleteLast = false;
+            let preview = await createPreview(file);
+            pfp.src = preview;
+        }
+    });
 
     let pfp = document.createElement("img");
     let deletePfpButton;
@@ -238,37 +260,43 @@ async function editUserToModal(data, variables) {
         variables.objectURL = await getProfilePicture(pfproute);
         pfp.src = variables.objectURL;
         deletePfpButton = gombGeneral("button", "Profilkép törlése", "trash-2", "red", null);
-        deletePfpButton.addEventListener("click", async function () {
-            await deleteProfilePicture(user_id);
+        deletePfpButton.addEventListener("click", function () {
+            pfp.src = "../images/default.png";
+            variables.deleteLast = true;
+            variables.tempPfp = null;
         })
     }
     pfp.alt = "Profile picture";
     pfp.title = "Profile picture";
-    pfp.classList.add("img-fluid", "img-thumbnail", "rounded-circle", "h-75"
-    );
+    pfp.classList.add("img-fluid", "img-thumbnail", "rounded-circle", "h-75");
 
-    let newPfpInput = inputGeneral("file", null, null, "newPfpInput", ["form-control"], false);
+    let newPfpInput = inputGeneral("file", null, null, "newPfpInput", ["form-control", "d-none"], false);
     newPfpInput.setAttribute("accept", "image/*");
-    let newPfpButton = gombGeneral("button", "Profilkép feltöltése", "upload", "green", null);
-    newPfpButton.addEventListener("click", async function () {
-        let feltoltott = document.getElementById('newPfpInput');
-        if (feltoltott.files.length === 0) {
-            alert("Kérlek, válassz ki egy képet!");
+    newPfpInput.addEventListener("change", async function () {
+        if (this.files.length != 0) {
+            let file = this.files[0];
+            variables.tempPfp = file;
+            variables.deleteLast = false;
+            let preview = await createPreview(file);
+            pfp.src = preview;
         }
-        else {
-            await uploadProfilePic(feltoltott.files[0], user_id);
-        }
-    })
+    });
 
-    let pfpTitle = createHTMLelement('h6', [], username);
+    let dropzoneText = document.createElement('p');
+    dropzoneText.innerText = "Kép feltöltéshez kattints ide, vagy húzz be egy képet!";
+    dropzoneText.classList.add("text-center");
 
-    colLeft.appendChild(pfp);
-    colLeft.appendChild(newPfpInput);
-    colLeft.appendChild(newPfpButton);
+    dropzone.appendChild(pfp);
+    dropzone.appendChild(newPfpInput);
+    dropzone.appendChild(dropzoneText);
+    dropzone.addEventListener("click", function () {
+        newPfpInput.click();
+    });
+
+    colLeft.appendChild(dropzone);
     if (pfproute != null) {
         colLeft.appendChild(deletePfpButton);
     }
-    colLeft.appendChild(pfpTitle);
 
     /* JOBB OLDAL */
     let colRight = createHTMLelement('div', ["col-8"]);
@@ -495,8 +523,6 @@ function tablazatGeneral(adatok, variables) {
         tr.appendChild(th);
     }
     thead.appendChild(tr);
-
-    console.log(adatok[1])
     let tbody = createHTMLelement('tbody', ["table-group-divider"]);
     for (let i = 0; i < adatok.length; i++) {
         let tr = document.createElement('tr');
@@ -623,22 +649,32 @@ function modalView(title, type, content, variables) {
             button = gombGeneral("button", "Mentés", "save", "blue", null);
             button.addEventListener('click', async function () {
                 let valtozas = false;
+
+                // 1. Profilkép kezelése
+                if (variables.deleteLast) {
+                    await deleteProfilePicture(currentData.user_id);
+                    valtozas = true;
+                } else if (variables.tempPfp) {
+                    await uploadProfilePic(variables.tempPfp, currentData.user_id);
+                    valtozas = true;
+                }
+
+                // 2. Szöveges adatok ellenőrzése (marad az eredeti logikád)
                 let inInput = {
                     username: document.getElementById("editUsernameInput").value,
                     email: document.getElementById("editEmailInput").value,
                     role: document.getElementById("editRoleSelect").value,
                     is_2fa: document.getElementById("edit2faInput").checked,
                 }
-                console.log(inInput);
+
                 Object.keys(inInput).forEach(key => {
-                    if (inInput[key] == currentData[key]) {
-                        console.log(inInput[key], currentData[key])
-                    }
-                    else {
+                    if (inInput[key] != currentData[key]) {
                         valtozas = true;
                     }
                 });
+
                 if (valtozas) {
+                    // Frissítjük a szöveges adatokat is
                     let siker = await userUpdate(currentData.user_id, inInput.username, inInput.email, inInput.role, inInput.is_2fa);
                     if (siker) {
                         currentPage.page = 1;
@@ -647,7 +683,7 @@ function modalView(title, type, content, variables) {
                     }
                 }
                 variables.modal.hide();
-            })
+            });
             footerButtons.appendChild(button);
             break;
         case "view":
@@ -702,4 +738,4 @@ function getFilterValues() {
 }
 
 let currentData = {};
-let currentPage = {page: 1};
+let currentPage = { page: 1 };

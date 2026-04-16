@@ -81,7 +81,7 @@ router.use((request, response) => {
 app.use(express.static(path.join(__dirname, '../frontend')));
 app.use(express.static(path.join(__dirname, '../private/frontend')));
 const adminEndpoints = require('../private/backend/api/admin.js');
-app.use('/api/admin', adminEndpoints);
+app.use('/api/admin', auth.checkAuth, auth.checkRole("ADMIN"), adminEndpoints);
 const endpoints = require('./api/api.js');
 app.use('/api', endpoints);
 app.use('/', router);

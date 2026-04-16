@@ -218,7 +218,7 @@ function szuresek() {
     })
     szuresDiv.appendChild(sortBtn);
 
-    let exportBtn = gombGeneral("button", "Export Logs", null, "blue", null, ["text-center", "mt-2"]);
+    let exportBtn = gombGeneral("button", "Export Logs", "file-text", "blue", null, ["text-center", "mt-2"]);
     exportBtn.addEventListener("click", async function () {
         await exportLogs(getFilterValues());
     });

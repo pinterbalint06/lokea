@@ -148,3 +148,34 @@ export function lapozasGeneral(totalRecords, pageFunction, currentPage, ...args)
     paginationDiv.appendChild(nextBtn);
     return paginationDiv;
 }
+
+export async function createPreview(file) {
+
+    const img = new Image();
+    const url = URL.createObjectURL(file);
+
+    img.src = url;
+    await new Promise(res => img.onload = res);
+    URL.revokeObjectURL(url);
+
+    const canvas = document.createElement("canvas");
+    const ctx = canvas.getContext("2d");
+
+    canvas.width = 400;
+    canvas.height = 400;
+
+    let size = Math.min(img.width, img.height);
+
+    let sx = (img.width - size) / 2;
+    let sy = (img.height - size) / 2;
+
+    ctx.drawImage(
+        img,
+        sx, sy,
+        size, size,
+        0, 0,
+        400, 400
+    );
+
+    return canvas.toDataURL("image/webp");
+}

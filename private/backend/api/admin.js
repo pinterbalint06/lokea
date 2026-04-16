@@ -14,13 +14,14 @@ const { Canvas } = require('../../../backend/node_modules/skia-canvas');
 //!Multer
 const multer = require('../../../backend/node_modules/multer'); //?npm install multer
 const path = require('path');
+const TARGET_UPLOADS_DIR = path.resolve(process.cwd(), 'uploads');
 
 const storage = multer.diskStorage({
     destination: (request, file, callback) => {
-        callback(null, path.join(__dirname, '../uploads'));
+        callback(null, path.resolve(process.cwd(), 'uploads'));
     },
     filename: (request, file, callback) => {
-        callback(null, Date.now() + '-' + file.originalname); //?egyedi név: dátum - file eredeti neve
+        callback(null, Date.now() + '-' + file.originalname);
     }
 });
 
@@ -33,7 +34,7 @@ Chart.register(...registerables);
 
 //Endpoints - admin
 
-router.post("/signupFromAdmin", auth.checkAuth, auth.checkRole("ADMIN"),
+router.post("/signupFromAdmin",
     [
         body("username")
             .not().isEmail().withMessage("Felhasználónév nem lehet email cim!")
@@ -84,7 +85,7 @@ router.post("/signupFromAdmin", auth.checkAuth, auth.checkRole("ADMIN"),
     }
 );
 
-router.get('/users', auth.checkAuth, auth.checkRole("ADMIN"), async (request, response) => {
+router.get('/users', async (request, response) => {
     try {
         let users = await database.getUsers();
         response.status(200).json({ users: users.rows, total: users.total });
@@ -93,7 +94,7 @@ router.get('/users', auth.checkAuth, auth.checkRole("ADMIN"), async (request, re
     }
 })
 
-router.get('/user', auth.checkAuth, auth.checkRole("ADMIN"), async (request, response) => {
+router.get('/user', async (request, response) => {
     try {
         let params = request.query.id;
         let users = await database.getUser(params);
@@ -103,7 +104,7 @@ router.get('/user', auth.checkAuth, auth.checkRole("ADMIN"), async (request, res
     }
 })
 
-router.post('/sortedUsers', auth.checkAuth, auth.checkRole("ADMIN"), async (request, response) => {
+router.post('/sortedUsers', async (request, response) => {
     try {
         let { mireKeresek, mit, status, adminChecked, modChecked, userChecked, page } = request.body;
         let users = await database.sortedUsers(mireKeresek, mit, status, adminChecked, modChecked, userChecked, page || 1);
@@ -113,7 +114,7 @@ router.post('/sortedUsers', auth.checkAuth, auth.checkRole("ADMIN"), async (requ
     }
 })
 
-router.post('/updateUserFromAdmin', auth.checkAuth, auth.checkRole("ADMIN"),
+router.post('/updateUserFromAdmin',
     [
         body("username")
             .not().isEmail().withMessage("Felhasználónév nem lehet email cim!")
@@ -220,7 +221,7 @@ router.post('/userDarkModeUpdate', auth.checkAuth,
     })
 
 
-router.post('/userToInactive', auth.checkAuth, auth.checkRole("ADMIN"),
+router.post('/userToInactive',
     [
         body("role")
             .not().matches("ADMIN").withMessage("Nem frissithetsz admin-t!"),
@@ -253,7 +254,7 @@ router.post('/userToInactive', auth.checkAuth, auth.checkRole("ADMIN"),
         }
     })
 
-router.post('/exportUsers', auth.checkAuth, auth.checkRole("ADMIN"), async (request, response) => {
+router.post('/exportUsers', async (request, response) => {
     try {
         let { mireKeresek, mit, status, adminChecked, modChecked, userChecked } = request.body;
         let users = (await database.sortedUsers(mireKeresek, mit, status, adminChecked, modChecked, userChecked, 1, 999999)).rows;
@@ -276,75 +277,70 @@ router.post('/exportUsers', auth.checkAuth, auth.checkRole("ADMIN"), async (requ
     }
 });
 
-router.post('/updateProfilePicFromAdmin', auth.checkAuth, auth.checkRole("ADMIN"), upload.single('profilePic'), async (request, response) => {
+router.post('/updateProfilePicFromAdmin', upload.single('profilePic'), async (request, response) => {
     let originalFile;
     let newFilePath;
     try {
         if (!request.file) {
             response.status(400).json({ message: "Nincs kép!" });
         }
-        else {
-            originalFile = request.file.path;
-            let newFileName = `processed-${Date.now()}.webp`;
-            newFilePath = path.join('uploads', newFileName);
 
-            //Kép tömöritése
-            sharp.cache(false);
-            const metadata = await sharp(originalFile)
-                .resize(400, 400, {
-                    fit: 'cover',
-                    position: 'center'
-                })
-                .toFormat('webp')
-                .toFile(newFilePath);
+        let user_id = request.body.user_id;
+        originalFile = request.file.path;
 
-            let { width, height } = metadata;
-            let finalUrl = `${newFileName}`;
+        let newFileName = `processed-${Date.now()}.webp`;
+        newFilePath = path.join(TARGET_UPLOADS_DIR, newFileName);
 
-            let lastPfp = await database.uploadProfilePic(finalUrl, width, height, request.body.user_id);
+        sharp.cache(false);
+        const metadata = await sharp(originalFile)
+            .resize(400, 400, {
+                fit: 'cover',
+                position: 'center'
+            })
+            .toFormat('webp')
+            .toFile(newFilePath);
 
-            await fs.unlink(originalFile).catch(() => { });
+        let { width, height } = metadata;
+        let lastPfp = await database.uploadProfilePic(newFileName, width, height, user_id);
 
-            if (lastPfp) {
-                let lastPfpPath = path.join(__dirname, '..', lastPfp);
-                await fs.unlink(lastPfpPath).catch(() => { });
-            }
-            await database.addLog(request.session.userid, 'Profile picture update (A)', user_id);
-            response.status(201).json({ success: true, message: "Profilkép frissítve!" });
+        await fs.unlink(originalFile).catch(() => { });
+
+        if (lastPfp) {
+            let lastPfpPath = path.join(TARGET_UPLOADS_DIR, lastPfp);
+            await fs.unlink(lastPfpPath).catch(() => { });
         }
+
+        await database.addLog(request.session.userid, 'Profile picture update (A)', user_id);
+        response.status(201).json({ success: true, message: "Profilkép frissítve!" });
+
     } catch (error) {
-        if (originalFile) {
-            await fs.unlink(originalFile).catch(() => { });
-        }
-        if (newFilePath) {
-            await fs.unlink(newFilePath).catch(() => { });
-        }
-        response.status(500).json({ error: error.message, details: error.stack });
+        if (originalFile) await fs.unlink(originalFile).catch(() => { });
+        if (newFilePath) await fs.unlink(newFilePath).catch(() => { });
+        response.status(500).json({ error: error.message });
     }
-})
+});
 
-router.post('/deleteProfilePicFromAdmin', auth.checkAuth, auth.checkRole("ADMIN"), async (request, response) => {
+router.delete('/deleteProfilePicFromAdmin', async (request, response) => {
     try {
-        let lastPfp = await database.deleteProfilePic(request.body.user_id);
+        let user_id = request.body.user_id;
+        let lastPfp = await database.deleteProfilePic(user_id);
+
         if (!lastPfp) {
             response.status(200).json({ success: true, message: "A profilkép már alapértelmezett volt." });
         }
         else {
-            let lastPfpPath = path.join(__dirname, '..', lastPfp);
-            try {
-                await fs.unlink(lastPfpPath);
-            } catch (error) {
-                console.log("a kép nincs a szerveren!" + error);
-            }
-            response.status(201).json({ success: true, message: "Profilkép törölve!" });
+            let lastPfpPath = path.join(TARGET_UPLOADS_DIR, lastPfp);
+            await fs.unlink(lastPfpPath).catch(() => { });
+
             await database.addLog(request.session.userid, 'Profile picture delete (A)', user_id);
+            response.status(201).json({ success: true, message: "Profilkép törölve!" });
         }
     } catch (error) {
-        response.status(500).json({ error: error });
+        response.status(500).json({ error: error.message });
     }
-})
+});
 
-router.get('/getDashboardInfo', auth.checkAuth, auth.checkRole("ADMIN"), async (request, response) => {
+router.get('/getDashboardInfo', async (request, response) => {
     try {
         let playerCount = await database.getUserCount();
         let activePlayerCount = await database.getActiveUserCount();
@@ -356,7 +352,7 @@ router.get('/getDashboardInfo', auth.checkAuth, auth.checkRole("ADMIN"), async (
     }
 })
 
-router.get('/getLogs', auth.checkAuth, auth.checkRole("ADMIN"), async (request, response) => {
+router.get('/getLogs', async (request, response) => {
     try {
         let logs = await database.getLogs();
         response.status(200).json({ message: "Sikeres lekérés", logs: logs.rows, total: logs.total });
@@ -375,7 +371,7 @@ router.post('/addLog', auth.checkAuth, async (request, response) => {
     }
 })
 
-router.post('/sortedLogs', auth.checkAuth, auth.checkRole("ADMIN"), async (request, response) => {
+router.post('/sortedLogs', async (request, response) => {
     try {
         let { username, periodFrom, periodTo, roles, activities, page } = request.body;
         let logs = await database.sortedLogs(username, periodFrom, periodTo, roles, activities, page || 1);
@@ -385,7 +381,7 @@ router.post('/sortedLogs', auth.checkAuth, auth.checkRole("ADMIN"), async (reque
     }
 });
 
-router.post('/exportLogs', auth.checkAuth, auth.checkRole("ADMIN"), async (request, response) => {
+router.post('/exportLogs', async (request, response) => {
     try {
         let { username, periodFrom, periodTo, roles, activities } = request.body;
         let logs = await database.sortedLogs(username, periodFrom, periodTo, roles, activities, 1, 999999);
@@ -412,7 +408,7 @@ router.post('/exportLogs', auth.checkAuth, auth.checkRole("ADMIN"), async (reque
     }
 });
 
-router.get('/userActivityByWeekChart', auth.checkAuth, auth.checkRole("ADMIN"), async (req, res) => {
+router.get('/userActivityByWeekChart', async (req, res) => {
     try {
         let data = await database.getUserActivityByWeek();
         let weeks = [];

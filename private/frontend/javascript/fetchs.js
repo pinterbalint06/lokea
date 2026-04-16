@@ -220,6 +220,8 @@ export async function uploadProfilePic(picture, id = -1) {
     fd.append("profilePic", picture);
     if (id == -1) {
         link = "/api/updateProfilePic";
+    }
+    else {
         fd.append("user_id", id);
     }
     try {
@@ -227,6 +229,7 @@ export async function uploadProfilePic(picture, id = -1) {
             method: "POST",
             body: fd
         });
+        let data = await response.json();
 
         if (response.ok) {
             console.log(data.message);
@@ -374,23 +377,27 @@ export async function userToInactive(id, role, deleted) {
 }
 
 export async function deleteProfilePicture(id = -1) {
-    let link = (id = -1) ? "/api/admin/deleteProfilePicFromAdmin" : "/api/deleteProfilePic";
+    let link = (id !== -1) ? "/api/admin/deleteProfilePicFromAdmin" : "/api/deleteProfilePic";
+
     try {
         let response = await fetch(link, {
             method: "DELETE",
             headers: {
                 "Content-Type": "application/json"
-            }
-        })
+            },
+            body: JSON.stringify({ user_id: id })
+        });
+
         let data = await response.json();
+
         if (response.ok) {
             console.log(data.message);
-        }
-        else {
-            throw new Error(data.message);
+            return data;
+        } else {
+            throw new Error(data.message || "Hiba a törlés során");
         }
     } catch (error) {
-        console.log(`hálózati hiba: ${error}`);
+        console.error(`Hálózati hiba: ${error.message}`);
         throw error;
     }
 }

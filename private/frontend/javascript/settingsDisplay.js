@@ -1,5 +1,5 @@
-import { getUserData, deleteProfile, deleteProfilePicture, uploadProfilePic, userSelfUpdate, updatePassword, updateDarkMode } from "./fetchs.js";
-import { createHTMLelement, inputGeneral, gombGeneral, labelGeneral, makeSubtitle } from "./utils/domUtils.js";
+import { getUserData, deleteProfile, deleteProfilePicture, uploadProfilePic, userSelfUpdate, updatePassword, updateDarkMode, getProfilePicture } from "./fetchs.js";
+import { createHTMLelement, inputGeneral, gombGeneral, labelGeneral, makeSubtitle, createPreview } from "./utils/domUtils.js";
 
 export async function settingsDisplayre() {
     let hova = document.getElementById('content');
@@ -107,6 +107,16 @@ export async function settingsDisplayre() {
     dataCol.appendChild(inputGeneral("text", "username", data.username, "usernameInput", ["form-control"], false));
     dataCol.appendChild(makeSubtitle("E-mail address"));
     dataCol.appendChild(inputGeneral("text", "email", data.email, "emailInput", ["form-control"], false));
+    dataCol.appendChild(makeSubtitle("Security"));
+    let twoFaDiv = createHTMLelement('div', ['form-check', 'form-switch', 'mb-3']);
+    let twoFaInput = inputGeneral("checkbox", null, null, "2faInput", ["form-check-input"], false);
+    twoFaInput.checked = data.is_2fa;
+    let twoFaLabel = document.createElement('label');
+    twoFaLabel.className = 'form-check-label';
+    twoFaLabel.innerText = "Two-factor authentication (2FA)";
+    twoFaDiv.appendChild(twoFaInput);
+    twoFaDiv.appendChild(twoFaLabel);
+    dataCol.appendChild(twoFaDiv);
 
     let buttonsDiv = createHTMLelement('div', ["d-flex", "gap-2", "my-3"]);
 
@@ -115,7 +125,7 @@ export async function settingsDisplayre() {
     changePassBtn.setAttribute('data-bs-target', '#passwordCollapse');
 
     let deleteProfileBtn = gombGeneral("button", "Delete account", null, "red", null);
-    deleteProfileBtn.addEventListener("click", async function() {
+    deleteProfileBtn.addEventListener("click", async function () {
         if (await deleteProfile()) {
             window.location.href = "/main";
         }
@@ -213,7 +223,7 @@ async function checkModification() {
     let inInput = {
         username: document.getElementById('usernameInput').value,
         email: document.getElementById('emailInput').value,
-        is_2fa: document.getElementById('is2faInput').checked
+        is_2fa: document.getElementById('2faInput').checked
     }
     Object.keys(inInput).forEach(key => {
         if (inInput[key] == currentSettings[key]) {
@@ -336,37 +346,6 @@ function createAlert(message, type) {
     alertDiv.appendChild(closeBtn);
 
     return alertDiv;
-}
-
-async function createPreview(file) {
-
-    const img = new Image();
-    const url = URL.createObjectURL(file);
-
-    img.src = url;
-    await new Promise(res => img.onload = res);
-    URL.revokeObjectURL(url);
-
-    const canvas = document.createElement("canvas");
-    const ctx = canvas.getContext("2d");
-
-    canvas.width = 400;
-    canvas.height = 400;
-
-    let size = Math.min(img.width, img.height);
-
-    let sx = (img.width - size) / 2;
-    let sy = (img.height - size) / 2;
-
-    ctx.drawImage(
-        img,
-        sx, sy,
-        size, size,
-        0, 0,
-        400, 400
-    );
-
-    return canvas.toDataURL("image/webp");
 }
 
 function wrongInput(input) {
