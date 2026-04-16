@@ -316,16 +316,20 @@ async function finishGameSession(sessionId) {
 //Játékfolyamathoz szükséges adatok lekérése
 async function getRandomPoint(gameSessionId) {
     const query = `
-        SELECT points.point_id, points.north_direction, images.filepath, images.width, images.height
+        SELECT points.point_id, points.north_direction, images.image_id, images.filepath, images.width, images.height
         FROM points
             INNER JOIN images ON points.image_id = images.image_id
             INNER JOIN map ON map.map_id = points.map_id
         WHERE map.game_maps_id =  (
-            SELECT game_maps_id FROM game_sessions WHERE game_sessions.session_id = ?
+            SELECT game_maps_id
+            FROM game_sessions
+            WHERE game_sessions.session_id = ?
             )
         AND points.point_id NOT IN (
-            SELECT session_guesses.point_id FROM session_guesses
-            WHERE session_guesses.session_id = ?
+            SELECT session_guesses.point_id
+            FROM session_guesses
+                INNER JOIN game_sessions ON session_guesses.session_id = game_sessions.session_id
+            WHERE session_guesses.session_id = ? AND session_guesses.cycle = game_sessions.current_cycle
             )
         ORDER BY RAND() 
         LIMIT 1;
@@ -336,12 +340,22 @@ async function getRandomPoint(gameSessionId) {
 
 async function getAllMaps(sessionId) {
     const query = `
-        SELECT map.map_id, map.title, images.filepath, images.width, images.height
+        SELECT map.map_id, map.title, images.image_id, images.filepath, images.width, images.height
         FROM map
             INNER JOIN images ON map.image_id = images.image_id
         WHERE map.game_maps_id = (
             SELECT game_maps_id FROM game_sessions WHERE game_sessions.session_id = ?
         );
+    `;
+    const [result] = await pool.execute(query, [sessionId]);
+    return result;
+}
+
+async function incrementCycle(sessionId) {
+    const query = `
+        UPDATE game_sessions
+        SET current_cycle = current_cycle + 1
+        WHERE session_id = ?
     `;
     const [result] = await pool.execute(query, [sessionId]);
     return result;
@@ -588,5 +602,6 @@ module.exports = {
     selectLatestActiveGameSession,
     finishGameSession,
     getRandomPoint,
-    getAllMaps
+    getAllMaps,
+    incrementCycle
 };
