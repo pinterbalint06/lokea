@@ -2,7 +2,7 @@ import { dashboardDisplayre } from "./dashboardDisplay.js";
 import { usersDisplayre } from "./usersDisplay.js";
 import { logsDisplayre } from "./logsDisplay.js";
 import { settingsDisplayre } from "./settingsDisplay.js";
-import { kijelentkezes } from "./fetchs.js";
+import { getAdminSettings, kijelentkezes } from "./fetchs.js";
 
 document.addEventListener("DOMContentLoaded", async function () {
     modalElement = document.getElementById('modalView');
@@ -30,7 +30,10 @@ document.addEventListener("DOMContentLoaded", async function () {
             await melyikValaszt(element.dataset.route);
         })
     })
-    await dashboardDisplayre();
+    adminSettings = await getAdminSettings();
+    console.log(adminSettings)
+    document.body.dataset.bsTheme = (adminSettings.darkmode == 1) ? 'dark' : 'light';
+    await dashboardDisplayre(adminSettings.selectedChart);
 });
 
 //SIDEBAR
@@ -92,7 +95,7 @@ async function melyikValaszt(melyik) {
             await logsDisplayre();
             break;
         case "settings":
-            await settingsDisplayre();
+            await settingsDisplayre(adminSettings);
             break;
         case "devlog":
             display.appendChild(await devlogDisplayre());
@@ -146,3 +149,4 @@ async function featureFlagsDisplayre() {
 let modalElement;
 let modal;
 let objectURL;
+let adminSettings;

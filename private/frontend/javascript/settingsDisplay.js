@@ -1,7 +1,7 @@
-import { getUserData, deleteProfile, deleteProfilePicture, uploadProfilePic, userSelfUpdate, updatePassword, updateDarkMode, getProfilePicture } from "./fetchs.js";
+import { getUserData, deleteProfile, deleteProfilePicture, uploadProfilePic, userSelfUpdate, updatePassword, updateDarkMode, getProfilePicture, updateAdminSettings } from "./fetchs.js";
 import { createHTMLelement, inputGeneral, gombGeneral, labelGeneral, makeSubtitle, createPreview } from "./utils/domUtils.js";
 
-export async function settingsDisplayre() {
+export async function settingsDisplayre(adminSettings) {
     let hova = document.getElementById('content');
     hova.innerHTML = "";
 
@@ -44,7 +44,6 @@ export async function settingsDisplayre() {
     });
 
     let uiSec = createSection('ui', 'UI Settings');
-    let adminSec = createSection('admin', 'Admin Settings');
 
     let row = createHTMLelement('div', ['row']);
 
@@ -184,6 +183,50 @@ export async function settingsDisplayre() {
     darkSwitchDiv.appendChild(darkInput);
     darkSwitchDiv.appendChild(darkLabel);
     uiSec.body.appendChild(darkSwitchDiv);
+    
+    let adminSec = createSection('admin', 'Admin Settings');
+
+    adminSec.body.appendChild(makeSubtitle("Darkmode for admin"));
+    let adminDarkDiv = createHTMLelement('div', ['form-check', 'form-switch', 'mb-3']);
+    let adminDarkInput = inputGeneral("checkbox", null, null, "adminDarkMode", ["form-check-input"], false);
+
+    adminDarkInput.checked = (adminSettings.darkmode == 1);
+
+    let adminDarkLabel = document.createElement('label');
+    adminDarkLabel.innerText = "Enable dark mode for charts";
+    adminDarkDiv.appendChild(adminDarkInput);
+    adminDarkDiv.appendChild(adminDarkLabel);
+    adminSec.body.appendChild(adminDarkDiv);
+
+    adminSec.body.appendChild(makeSubtitle("Default Statistic View"));
+    let chartSelect = document.createElement('select');
+    chartSelect.id = 'adminChartSelect';
+    chartSelect.classList.add('form-select', 'mb-3');
+
+    chartSelect.add(new Option("Napi aktivitás", "activity-day"));
+    chartSelect.add(new Option("Heti aktivitás", "activity-week"));
+    chartSelect.add(new Option("Heti regisztrációk", "registrations"));
+    chartSelect.add(new Option("Heti meccsek", "matches"));
+
+    chartSelect.value = adminSettings.selectedChart || "Heti aktivitás";
+    adminSec.body.appendChild(chartSelect);
+
+    let adminSaveBtn = gombGeneral("button", "Save admin settings", null, "green", null, ['w-100']);
+    adminSaveBtn.addEventListener("click", async function () {
+        const isDark = adminDarkInput.checked ? 1 : 0;
+        const chartVal = chartSelect.value === "" ? null : chartSelect.value;
+
+        let response = await updateAdminSettings(isDark, chartVal);
+        if (response && response.ok) {
+            alert("Admin beállítások mentve!");
+            document.body.dataset.bsTheme = (adminDarkInput.checked) ? 'dark' : 'light';
+            console.log(adminSettings)
+            adminSettings.darkmode = adminDarkInput.checked ? 1 : 0;
+            adminSettings.selectedChart = chartSelect.value;
+            console.log(adminSettings)
+        }
+    });
+    adminSec.body.appendChild(adminSaveBtn);
 
     accordion.appendChild(personalSec.item);
     accordion.appendChild(uiSec.item);

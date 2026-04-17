@@ -2,7 +2,7 @@ import { createHTMLelement, formatTime } from "./utils/domUtils.js";
 import { getDashboardInfo } from "./fetchs.js";
 import { initSocket } from "./utils/socketio.js";
 
-export async function dashboardDisplayre() {
+export async function dashboardDisplayre(selectedChart) {
     let display = document.getElementById('content');
     display.innerHTML = "";
 
@@ -26,7 +26,7 @@ export async function dashboardDisplayre() {
     if (chartContainer) {
         chartContainer.innerHTML = "";
         let chartImg = createHTMLelement('img', ['img-fluid', 'rounded']);
-        chartImg.src = '/api/admin/userActivityByWeekChart';
+        chartImg.src = `/api/admin/chart/${selectedChart}`;
         chartImg.style.maxHeight = "400px";
         chartContainer.appendChild(chartImg);
     }

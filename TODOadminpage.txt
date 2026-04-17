@@ -6,7 +6,6 @@ TODO - egész
 -oldal nyelv egységesités
 
 TODO - dashboard (main)
--más diagramok
 -check: diagram nulla adattal mit csinal
 
 TODO - settings
@@ -26,6 +25,7 @@ transactions oldal
 hibak amiket javitani kell:
 -stack trace
 -fetch.js -> tovabbdobja a hibat olyan helyeken, ahol kesobb nincs try-catch
+-settings frissitesnel ha atlepek vissza dashboard-ra, undefined lesz a charthoz link
 
 kerdes:
 -compare attetele database.js-be

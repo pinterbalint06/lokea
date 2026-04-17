@@ -258,9 +258,13 @@ async function createAdminSettings(user_id) {
 
 async function getAdminSettings(user_id) {
     try {
-        const queryUserCount = "SELECT as.darkmode, as.selected_chart FROM admin_settings as INNER JOIN users ON users.user_id = as.admin_id WHERE as.admin_id = ?";
-        const [result] = await pool.execute(queryUserCount, [user_id]);
-        return result[0].egyedi_belepok_szama;
+        let row;
+        const queryUserCount = "SELECT darkmode, selected_chart FROM admin_settings WHERE admin_id = ?";
+        const [rows] = await pool.execute(queryUserCount, [user_id]);
+        if (rows && rows.length > 0) {
+            row = { darkmode: rows[0].darkmode, selectedChart: rows[0].selected_chart };
+        }
+        return row;
     } catch (error) {
         console.error('DB hiba getAdminSettings:', error);
         throw error;
@@ -273,8 +277,14 @@ async function updateAdminSettings(user_id, darkmode, selected_chart) {
     try {
         connection = await pool.getConnection();
         await connection.beginTransaction();
-        const query = 'UPDATE users SET darkmode = ? WHERE user_id = ? AND deleted_at IS NULL';
-        [result] = await connection.execute(query, [darkmode, user_id]);
+        const query = `
+            INSERT INTO admin_settings (admin_id, darkmode, selected_chart)
+            VALUES (?, ?, ?)
+            ON DUPLICATE KEY UPDATE
+            darkmode = IF(VALUES(darkmode) <=> darkmode, darkmode, VALUES(darkmode)),
+            selected_chart = IF(VALUES(selected_chart) <=> selected_chart, selected_chart, VALUES(selected_chart))
+        `;
+        [result] = await connection.execute(query, [user_id, darkmode, selected_chart]);
         await connection.commit();
     } catch (error) {
         if (connection) {

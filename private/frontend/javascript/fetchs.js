@@ -214,6 +214,39 @@ export async function updateDarkMode(is_dark) {
     }
 }
 
+export async function getAdminSettings() {
+    try {
+        let response = await fetch("/api/admin/getAdminSettings");
+        if (!response.ok) throw new Error("Hiba a letöltésnél");
+        let data = await response.json();
+        return {
+            darkmode: data.darkmode,
+            selectedChart: data.selectedChart
+        };
+    } catch (error) {
+        console.error(error.message);
+        return { darkmode: 0, selectedChart: 'activity-week' };
+    }
+}
+
+export async function updateAdminSettings(darkmode, selected_chart) {
+    try {
+        let response = await fetch("/api/admin/updateAdminSettings", {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json"
+            },
+            body: JSON.stringify({
+                darkmode: darkmode,
+                selected_chart: selected_chart === "" ? null : selected_chart
+            })
+        });
+        return response;
+    } catch (error) {
+        console.error("Hiba az API hívás során");
+    }
+}
+
 export async function uploadProfilePic(picture, id = -1) {
     let fd = new FormData();
     let link = "/api/admin/updateProfilePicFromAdmin";

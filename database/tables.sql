@@ -27,11 +27,11 @@ CREATE TABLE users (
 );
 
 CREATE TABLE admin_settings (
-    settings_id INT AUTO_INCREMENT PRIMARY KEY NOT NULL
-    admin_id INT,
+    settings_id INT AUTO_INCREMENT PRIMARY KEY NOT NULL,
+    admin_id INT UNIQUE,
     darkmode BOOLEAN DEFAULT 0,
     selected_chart VARCHAR(20) DEFAULT 'Heti aktivitás',
-    foreign key (admin_id) references users(user_id) ON DELETE CASCADE,
+    foreign key (admin_id) references users(user_id) ON DELETE CASCADE
 )
 
 CREATE TABLE game_maps (

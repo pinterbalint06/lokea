@@ -155,7 +155,7 @@ router.post('/updateUserFromAdmin',
         }
     })
 
-router.post('/userSelfUpdate', auth.checkAuth,
+router.post('/userSelfUpdate',
     [
         body("username")
             .not().isEmail().withMessage("Felhasználónév nem lehet email cim!")
@@ -191,7 +191,7 @@ router.post('/userSelfUpdate', auth.checkAuth,
         }
     })
 
-router.post('/userDarkModeUpdate', auth.checkAuth,
+router.post('/userDarkModeUpdate',
     [
         body("darkmode").isBoolean().withMessage("Nem true/false értéket adtál meg!")
     ],
@@ -361,7 +361,7 @@ router.get('/getLogs', async (request, response) => {
     }
 })
 
-router.post('/addLog', auth.checkAuth, async (request, response) => {
+router.post('/addLog', async (request, response) => {
     try {
         let { victimid, activity } = request.body;
         await database.addLog(request.session.userid, activity, victimid);
@@ -410,13 +410,17 @@ router.post('/exportLogs', async (request, response) => {
 
 router.get('/getAdminSettings', async (request, response) => {
     try {
-        const settings = await database.getAdminSettings(request.session.user_id);
-        
-        if (!settings) {
-            return response.status(404).json({ message: "Beállítások nem találhatók" });
-        }
+        const result = await database.getAdminSettings(request.session.userid);
 
-        response.status(200).json(settings);
+        if (!result) {
+            response.status(200).json({
+                darkmode: 0,
+                selectedChart: 'activity-week'
+            });
+        }
+        else {
+            response.status(200).json(result);
+        }
     } catch (error) {
         console.error(error);
         response.status(500).json({ message: "Hiba a lekérdezés során" });
@@ -427,13 +431,13 @@ router.post('/updateAdminSettings', async (request, response) => {
     try {
         const { darkmode, selected_chart } = request.body;
 
-        const affectedRows = await database.updateDarkMode(request.session.user_id, darkmode, selected_chart);
+        const affectedRows = await database.updateAdminSettings(request.session.userid, darkmode, selected_chart);
 
         if (affectedRows === 0) {
             response.status(200).json({ message: "Nem történt változtatás" });
         }
         else {
-            response.status(200).json({ message: "Sikeres frissítés", affectedRows });
+            response.status(200).json({ message: "Sikeres frissítés" });
         }
     } catch (error) {
         console.error(error);
@@ -443,7 +447,7 @@ router.post('/updateAdminSettings', async (request, response) => {
 
 router.get('/chart/:type', async (request, response) => {
     try {
-        let type = req.params;
+        let type = request.params.type;
         let dbData, label, color, xKey, yKey;
 
         switch (type) {
@@ -474,26 +478,54 @@ router.get('/chart/:type', async (request, response) => {
                 color = '#dc3545';
                 break;
             default:
-                return res.status(400).send("Érvénytelen grafikon típus");
+                response.status(400).send("Érvénytelen grafikon típus");
         }
+
+        const labels = dbData.map(row => row[xKey]);
+        const values = dbData.map(row => row[yKey]);
 
         const canvas = new Canvas(1200, 600);
         const ctx = canvas.getContext("2d");
-        const chart = new Chart(ctx, createChartConfig(xKey, yKey, label, color));
+        const chart = new Chart(ctx, createChartConfig(labels, values, label, color));
 
         const rawBuffer = await canvas.toBuffer('png');
         const optimizedImage = await sharp(rawBuffer)
             .toFormat('webp', { quality: 95 })
             .toBuffer();
 
-        res.set('Content-Type', 'image/webp');
-        res.send(optimizedImage);
-        
+        response.set('Content-Type', 'image/webp');
+        response.send(optimizedImage);
+
         chart.destroy();
 
-    } catch (err) {
-        console.error(err);
-        res.status(500).send("Hiba a generáláskor");
+    } catch (error) {
+        console.error(error);
+        response.status(500).send("Hiba a generáláskor");
+    }
+});
+
+const createChartConfig = (labels, data, label, color) => ({
+    type: 'line',
+    data: {
+        labels: labels,
+        datasets: [{
+            label: label,
+            data: data,
+            borderColor: color || '#0d6efd',
+            borderWidth: 5,
+            pointRadius: 6,
+            backgroundColor: 'rgba(13, 110, 253, 0.1)',
+            fill: true,
+            tension: 0.4
+        }]
+    },
+    options: {
+        devicePixelRatio: 1,
+        plugins: { legend: { labels: { font: { size: 18, weight: 'bold' } } } },
+        scales: {
+            x: { ticks: { font: { size: 16, weight: 'bold' } } },
+            y: { ticks: { font: { size: 16, weight: 'bold' }, beginAtZero: true } }
+        }
     }
 });
 
