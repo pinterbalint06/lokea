@@ -70,12 +70,14 @@ export function gombGeneral(type, text, svg, color, id) {
 
 export function makeSvg(name, svgclasses, useclasses) {
     let svg = document.createElementNS("http://www.w3.org/2000/svg", "svg");
-    svg.classList.add(svgclasses);
+    if (svgclasses) {
+        use.classList.add(...svgclasses);
+    }
     let use = document.createElementNS("http://www.w3.org/2000/svg", "use");
     if (useclasses) {
-        use.classList.add(useclasses);
+        use.classList.add(...useclasses);
     }
-    
+
     use.setAttribute("href", `../images/icons/sprite.svg#${name}`);
 
     svg.appendChild(use);

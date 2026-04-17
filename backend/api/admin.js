@@ -207,7 +207,7 @@ router.post('/updateProfilePicFromAdmin', auth.checkAuth,auth.checkRole("ADMIN")
             await fs.unlink(originalFile).catch(() => { });
 
             if (lastPfp) {
-                let lastPfpPath = path.join(__dirname, '..', lastPfp);
+                let lastPfpPath = path.join(__dirname, '..', 'uploads', lastPfp);
                 await fs.unlink(lastPfpPath).catch(() => { });
             }
             response.status(201).json({ success: true, message: "Profilkép frissítve!" });
@@ -230,7 +230,7 @@ router.post('/deleteProfilePicFromAdmin', auth.checkAuth, auth.checkRole("ADMIN"
             response.status(200).json({ success: true, message: "A profilkép már alapértelmezett volt." });
         }
         else {
-            let lastPfpPath = path.join(__dirname, '..', lastPfp);
+            let lastPfpPath = path.join(__dirname, '..', 'uploads', lastPfp);
             try {
                 await fs.unlink(lastPfpPath);
             } catch (error) {

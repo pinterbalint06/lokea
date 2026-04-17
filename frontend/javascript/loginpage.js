@@ -1,4 +1,4 @@
-import { validalvaBej, validalvaReg } from "./libs/utils/validations";
+import { validalvaBej, validalvaReg } from "./libs/utils/validations.js";
 
 document.addEventListener("DOMContentLoaded", async function () {
     document.getElementById('register').addEventListener("click", async function () {

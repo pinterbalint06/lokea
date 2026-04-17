@@ -26,7 +26,7 @@ async function regisztracio(username, email, password, is2fa) {
                 username: username.value,
                 email: email.value,
                 password: password.value,
-                is2fa
+                is2fa: is2fa.checked
             })
         });
 
@@ -75,7 +75,7 @@ function regisztralt(hibauzenet = "") {
         setTimeout(() => {
             container.classList.add('error-draw');
             container.classList.remove('spinning');
-            title.innerText = `Regisztálás sikertelen!`;
+            title.innerText = `Regisztrálás sikertelen!`;
             modalText.innerText = hibauzenet;
             setTimeout(() => {
                 modal.hide();

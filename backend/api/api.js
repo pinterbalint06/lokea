@@ -78,7 +78,7 @@ router.post("/signup",
                 }
             }
         } catch (error) {
-            response.status(500).json({ error: error.message});
+            response.status(500).json({ error: error.message });
         }
     }
 );
@@ -109,18 +109,18 @@ router.post("/login",
                     rows = await database.getUserByUsername(username);
                 }
                 if (rows.length === 0 || rows[0].deleted_at != null) {
-                    response.status(401).json({ message: "Hibás email vagy jelszó"});
+                    response.status(401).json({ message: "Hibás email vagy jelszó" });
                 }
                 else {
                     let sPass = rows[0].password;
                     let egyezes = await bcrypt.compare(password, sPass);
                     if (!egyezes) {
-                        response.status(401).json({ message: "Hibás email vagy jelszó"});
+                        response.status(401).json({ message: "Hibás email vagy jelszó" });
                     }
                     else {
                         let sesRole = rows[0].role;
                         if (remember) {
-                            if (sesRole.role === 'ADMIN') {
+                            if (sesRole === 'ADMIN') {
                                 request.session.cookie.maxAge = 15 * 60 * 1000;
                             }
                             else {
@@ -188,12 +188,12 @@ router.get('/getUserData', auth.checkAuth, async (request, response) => {
 router.put('/updateUser', auth.checkAuth,
     [
         body("username")
-            .optional({ values: "null" })
+            .optional({ nullable: true })
             .not().isEmail().withMessage("Felhasználónév nem lehet email cim!")
             .matches(/^[a-zA-Z0-9áéíóöőúüűÁÉÍÓÖŐÚÜŰ_-]+$/).withMessage('A felhasználónév csak betűket, számokat, - vagy _ karaktert, és ékezetes betűket tartalmazhat.')
             .isLength({ min: 1, max: 20 }).withMessage("Felhasználónév hossza nem megfelelő!"),
         body("email")
-            .optional({ values: "null" })
+            .optional({ nullable: true })
             .isEmail().withMessage("Hibás email formátum")
             .isLength({ min: 5, max: 250 }).withMessage("Email max 250 karakter!")
     ], async (request, response) => {
@@ -292,8 +292,10 @@ router.post('/updateProfilePic', auth.checkAuth, upload.single('profilePic'), as
             await fs.unlink(originalFile).catch(() => { });
 
             if (lastPfp) {
-                let lastPfpPath = path.join(__dirname, '..', lastPfp);
-                await fs.unlink(lastPfpPath).catch(() => { });
+                let lastPfpPath = path.join(__dirname, '..', 'uploads', lastPfp);
+                await fs.unlink(lastPfpPath).catch((err) => {
+                    console.error("Régi kép törlése sikertelen:", err.path);
+                });
             }
             response.status(201).json({ success: true, message: "Profilkép frissítve!" });
         }
@@ -316,7 +318,6 @@ router.delete('/deleteProfilePic', auth.checkAuth, async (request, response) => 
         }
         else {
             let lastPfpPath = path.join(__dirname, '..', 'uploads', lastPfp);
-            console.log(lastPfpPath);
             try {
                 await fs.unlink(lastPfpPath);
             } catch (error) {

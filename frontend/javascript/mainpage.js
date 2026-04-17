@@ -84,7 +84,7 @@ async function bejelentkezesAnimacio(username, jelszo, remember) {
 
     container.querySelectorAll('svg').forEach(svg => svg.remove());
     container.classList.remove('success-draw', 'error-draw');
-    container.appendChild(makeSvg("circle-border", "progress-svg", "progress-circle"));
+    container.appendChild(makeSvg("circle-border", ["progress-svg"], ["progress-circle"]));
     container.classList.add('spinning');
 
     try {
@@ -97,7 +97,7 @@ async function bejelentkezesAnimacio(username, jelszo, remember) {
             modalText.innerHTML = "";
 
             if (response.ok) {
-                container.appendChild(makeSvg("checkmark", "check-svg", "mark"));
+                container.appendChild(makeSvg("checkmark", ["check-svg"], ["mark"]));
                 container.classList.add('success-draw');
 
                 title.innerText = `Sikeres bejelentkezés!`;
@@ -109,7 +109,7 @@ async function bejelentkezesAnimacio(username, jelszo, remember) {
                     location.reload();
                 }, 2500);
             } else {
-                container.appendChild(makeSvg("icon-x", "check-svg", "mark"));
+                container.appendChild(makeSvg("icon-x", ["check-svg"], ["mark"]));
                 container.classList.add('error-draw');
 
                 title.innerText = "Bejelentkezés sikertelen!";
@@ -177,9 +177,7 @@ async function dropdownLetrehoz(link, nev, kep) {
     ul.appendChild(dropdownLink("Saját játékaim", null, null, "map"));
     ul.appendChild(dropdownDivider());
     if (link) {
-        li = dropdownLink("Belépés az admin oldalra", 'enterAdmin', null, "shield")
-        li.href = link;
-        ul.appendChild(li);
+        ul.appendChild(dropdownLink("Belépés az admin oldalra", 'enterAdmin', null, "shield", link));
         ul.appendChild(dropdownDivider());
     }
     li = dropdownLink("Kijelentkezés", 'signOut', ["text-danger"], "logout");
@@ -192,7 +190,7 @@ async function dropdownLetrehoz(link, nev, kep) {
     hova.appendChild(div);
 }
 
-function dropdownLink(title, id, customClasses, svgName) {
+function dropdownLink(title, id, customClasses, svgName, link = null) {
     let li = document.createElement('li');
 
     let a = document.createElement('a');
@@ -203,9 +201,12 @@ function dropdownLink(title, id, customClasses, svgName) {
     if (id) {
         a.id = id;
     }
+    if (link) {
+        a.href = link;
+    }
     let span = document.createElement('span');
     span.innerText = title;
-    a.appendChild(makeSvg(svgName, "dropdown-icons", null));
+    a.appendChild(makeSvg(svgName, ["dropdown-icons"], null));
     a.appendChild(span);
 
     li.appendChild(a);
@@ -399,7 +400,7 @@ async function showSettingsModal() {
     div.appendChild(collapseDiv);
 
 
-    div.appendChild(makeSubtitle("Két lépcsős azonositás"));
+    div.appendChild(makeSubtitle("Két lépcsős azonosítás"));
     let checkbox = inputGeneral("checkbox", null, null, "is2faInput", null, false);
     checkbox.checked = data.is_2fa;
     div.appendChild(checkbox);
@@ -410,9 +411,9 @@ async function showSettingsModal() {
         username: data.username,
         email: data.email,
         is_2fa: data.is_2fa,
-        language: document.getElementById('languageSelect').value,
+        language: data.language,
         darkmode: document.getElementById('darkMode').checked
-    }
+    };
 
     document.getElementById('settingsSave').onclick = async function () {
         try {
@@ -638,12 +639,12 @@ function createAlert(message, type) {
     let alertDiv = document.createElement('div');
     alertDiv.classList.add("alert", "alert-dismissible", "fade", "show");
     if (type) {
-        alertDiv.classList.add(`alert-${type}`)
+        alertDiv.classList.add(`alert-${type}`);
     }
     alertDiv.role = 'alert';
 
     let textNode = document.createElement('span');
-    textNode.innerHTML = message;
+    textNode.textContent = message;
     alertDiv.appendChild(textNode);
 
     let closeBtn = document.createElement('button');

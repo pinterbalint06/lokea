@@ -24,6 +24,7 @@ export function validalvaBej(user, pass) {
     let username = user.value;
     let password = pass.value;
     if (username.length > 50 || username.length < 1) {
+        fail = true;
         wrongInput(user);
     }
     if (password.length > 50 || password.length < 8) {
@@ -34,7 +35,7 @@ export function validalvaBej(user, pass) {
 }
 
 export function validalvaUsername(username) {
-    return username.length < 50 && username.length > 1 && isCorrectUsername(username);
+    return username.length < 50 && username.length >= 1 && isCorrectUsername(username);
 }
 
 export function validalvaEmail(email) {
