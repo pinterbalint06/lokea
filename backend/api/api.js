@@ -346,7 +346,6 @@ router.post('/post_game_id', upload.none('file'), async (request, response) => {
     const rounds = parseInt(request.body.rounds);
     const roundTime = parseInt(request.body.roundTime);
     const userId = request.session?.userid || 1; //TODO: törlés ha már stabil a session
-
     const allowedDifficulties = { easy: -1.5, normal: -3, hard: -5 };
     const sharpness = allowedDifficulties[difficulty] ?? -3;
 
@@ -357,7 +356,7 @@ router.post('/post_game_id', upload.none('file'), async (request, response) => {
     }
     try {
         const activeSession = await database.insertGameSession(userId, rounds, roundTime, gameMapId, sharpness);
-
+        const gameTitle = await database.getGameTitleById(gameMapId);
         request.session.game = {
             activeSessionId: activeSession,
             gameMapId: gameMapId,

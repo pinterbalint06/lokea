@@ -37,17 +37,55 @@ function resolvePathInsideUploadRoot(filePath) {
 
 //ENDPOINTS
 
-router.get("/get_random_point", async (request, response) => {
-    const sessionId = request.session?.activeSessionId || 1; //TODO: törlés amikor login kész lesz
+router.get('/get_game_info', async (request, response) => {
     try {
-        let point = await database.getRandomPoint(sessionId);
+        const game = request.session.game;
+        if (!game || !game.activeSessionId) {
+            const err = new Error("No active game session found");
+            err.statusCode = 404;
+            throw err;
+        }
+        response.status(200).json({
+            success: true,
+            title: game.gameTitle,
+            rounds: game.rounds,
+            roundTime: game.roundTime,
+        });
+    } catch (error) {
+        if (error.statusCode) {
+            response.status(error.statusCode).json({ success: false, message: error.message });
+        } else {
+            response.status(500).json({ success: false, message: "Error fetching game info" });
+        }
+    }
+});
+
+router.get("/get_random_point", async (request, response) => {
+    try {
+        const sessionId = request.session?.game.activeSessionId || 1; //TODO: törlés amikor login kész lesz
+        const gameMapId = request.session?.game.gameMapId || 1; //TODO: törlés amikor login kész lesz
+        if (!sessionId || !request.session.game) {
+            const err = new Error("No active game session found");
+            err.statusCode = 404;
+            throw err;
+        }
+        let point = await database.getRandomPoint(gameMapId, sessionId);
         if (!point) {
             await database.incrementCycle(sessionId);
-            point = await database.getRandomPoint(sessionId);
+            point = await database.getRandomPoint(gameMapId, sessionId);
+            request.session.game.currentCycle += 1;
         }
         const imageFullPath = resolvePathInsideUploadRoot(point.filepath);
         const imageBuffer = await fs.readFile(imageFullPath);
         const mimeType = getMimeTypeFromPath(point.filepath);
+
+        request.session.game.point = {
+            pointId: point.point_id,
+            pointx: point.point_x,
+            pointy: point.point_y,
+            width: point.width,
+            height: point.height
+        }
 
         point = {
             point_id: point.point_id,
@@ -62,8 +100,11 @@ router.get("/get_random_point", async (request, response) => {
         };
         response.status(200).json({ success: true, point: point });
     } catch (error) {
-        console.error("Error fetching random point:", error);
-        response.status(500).json({ success: false, message: "Error fetching random point" });
+        if (error.statusCode) {
+            response.status(error.statusCode).json({ success: false, message: error.message });
+        } else {
+            response.status(500).json({ success: false, message: "Error fetching random point" });
+        }
     }
 });
 
@@ -96,6 +137,61 @@ router.get("/get_all_maps", async (request, response) => {
     } catch (error) {
         console.error("Error fetching all maps:", error);
         response.status(500).json({ success: false, message: "Error fetching all maps" });
+    }
+});
+
+router.post('/session_guess', async (request, response) => {
+    try {
+        const sessionId = request.session?.game.activeSessionId || 1; //TODO: törlés amikor login kész lesz
+        const game = request.session.game;
+        const guessx = parseFloat(request.body.x);
+        const guessy = parseFloat(request.body.y);
+        const timeLeft = parseInt(request.body.timeLeft);
+        const timePunishment = game.roundTime - 5;
+        let score;
+        let reJson;
+        if (!sessionId) {
+            const err = new Error("No active game session found");
+            err.statusCode = 404;
+            throw err;
+        }
+        if (!game || !game.point) {
+            const err = new Error("No active game or game point found");
+            err.statusCode = 404;
+            throw err;
+        }
+        if (isNaN(guessx) || isNaN(guessy) || isNaN(timeLeft)) {
+            const err = new Error("Invalid guess coordinates or time left");
+            err.statusCode = 400;
+            throw err;
+        }
+        if (guessx < 0 || guessy < 0 || timeLeft <= 0) {
+            score = 0;
+            reJson = { success: true, score: score, distance: null };
+            await database.saveGuess(sessionId, game.point.pointId, guessx, guessy, -1, 0, game.currentCycle);
+        } else {
+            const dx = (guessx - game.point.pointx) / 2048; //törlés ha át lesz állítva a koordináta rendszer
+            const dy = (guessy - game.point.pointy) / 1024; //törlés ha át lesz állítva a koordináta rendszer
+            const distance = Math.sqrt(dx * dx + dy * dy);
+            const pixelDx = dx * game.point.width;
+            const pixelDy = dy * game.point.height;
+            const pixelDistance = Math.round(Math.sqrt(pixelDx * pixelDx + pixelDy * pixelDy));
+            if (timeLeft > timePunishment && timeLeft <= game.roundTime) {
+                score = Math.round(5000 * Math.exp(game.sharpness * (distance / Math.SQRT2)));
+            } else {
+                score = Math.round(5000 * Math.exp(game.sharpness * (distance / Math.SQRT2))) * (timeLeft / timePunishment);
+            }
+            reJson = { success: true, score: score, distance: pixelDistance };
+            await database.saveGuess(sessionId, game.point.pointId, guessx, guessy, distance, score, game.currentCycle);
+        }
+
+        response.status(200).json(reJson);
+    } catch (error) {
+        if (error.statusCode) {
+            response.status(error.statusCode).json({ success: false, message: error.message });
+        } else {
+            response.status(500).json({ success: false, message: "Error processing guess" });
+        }
     }
 });
 

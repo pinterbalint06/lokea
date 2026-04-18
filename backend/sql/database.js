@@ -291,6 +291,16 @@ async function getImagePath(image_id) {
     return re;
 }
 
+async function getGameTitleById(gameMapId) {
+    const query = `
+        SELECT game_maps.title
+        FROM game_maps
+        WHERE game_maps.game_maps_id = ?
+    `;
+    const [result] = await pool.execute(query, [gameMapId]);
+    return result[0].title;
+}
+
 async function insertGameSession(userId, rounds, roundTime, gameMapId, sharpness) {
     const query = 'INSERT INTO game_sessions (user_id, game_maps_id, rounds, sharpness, time_per_round) VALUES (?, ?, ?, ?, ?)';
     const [result] = await pool.execute(query, [userId, gameMapId, rounds, sharpness, roundTime]);
@@ -320,17 +330,13 @@ async function finishGameSession(sessionId) {
 }
 
 //Játékfolyamathoz szükséges adatok lekérése
-async function getRandomPoint(gameSessionId) {
+async function getRandomPoint(gameMapId, gameSessionId) {
     const query = `
-        SELECT points.point_id, points.north_direction, images.image_id, images.filepath, images.width, images.height
+        SELECT points.point_id, points.point_x, points.point_y, points.north_direction, images.image_id, images.filepath, images.width, images.height
         FROM points
             INNER JOIN images ON points.image_id = images.image_id
             INNER JOIN map ON map.map_id = points.map_id
-        WHERE map.game_maps_id =  (
-            SELECT game_maps_id
-            FROM game_sessions
-            WHERE game_sessions.session_id = ?
-            )
+        WHERE map.game_maps_id =  ?
         AND points.point_id NOT IN (
             SELECT session_guesses.point_id
             FROM session_guesses
@@ -340,7 +346,7 @@ async function getRandomPoint(gameSessionId) {
         ORDER BY RAND() 
         LIMIT 1;
     `;
-    const [result] = await pool.execute(query, [gameSessionId, gameSessionId]);
+    const [result] = await pool.execute(query, [gameMapId, gameSessionId]);
     return result[0];
 }
 
@@ -365,6 +371,15 @@ async function incrementCycle(sessionId) {
     `;
     const [result] = await pool.execute(query, [sessionId]);
     return result;
+}
+
+async function saveGuess(sessionId, pointId, guessx, guessy, distanceError, score, cycle) {
+    const query = `
+        INSERT INTO session_guesses (session_id, point_id, guessed_x, guessed_y, distance_error, points_awarded, cycle)
+        VALUES (?, ?, ?, ?, ?, ?, ?)
+    `;
+    const [result] = await pool.execute(query, [sessionId, pointId, guessx, guessy, distanceError, score, cycle]);
+    return result.insertId;
 }
 
 //!Game map szerkesztéshez szükséges adatok lekérése
@@ -609,5 +624,7 @@ module.exports = {
     finishGameSession,
     getRandomPoint,
     getAllMaps,
-    incrementCycle
+    incrementCycle,
+    getGameTitleById,
+    saveGuess
 };

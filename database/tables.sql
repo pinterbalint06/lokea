@@ -122,7 +122,7 @@ CREATE TABLE session_guesses (
     distance_error FLOAT NOT NULL,
     points_awarded INT NOT NULL,
     guessed_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    cycle INT NOT NULL DEFAULT 1,
+    cycle INT NOT NULL,
     FOREIGN KEY (session_id) REFERENCES game_sessions(session_id) ON DELETE CASCADE,
     FOREIGN KEY (point_id) REFERENCES points(point_id) ON DELETE SET NULL
 );
