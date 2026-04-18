@@ -24,6 +24,7 @@ export class Modal extends EventTarget {
      * @param {number|boolean} [config.holdToUnlock] - if a number (ms), use HoldToUnlockButton with that duration
      * @param {boolean} [config.isStatic] - if true, backdrop is static and modal won't close on backdrop click
      * @param {Function} [config.onEarlyClick] - callback function for early clicks on the hold-to-unlock button
+     * @param {boolean} [config.hideConfirmButton] - if true, only render the cancel button in the footer
      */
     show(config) {
         this.destroy();
@@ -99,25 +100,31 @@ export class Modal extends EventTarget {
         });
         this.confirmBtn.innerText = config.confirmText || "OK";
 
-        const holdDuration = config.holdToUnlock || 0;
-        if (holdDuration > 0) {
-            this.holdBtnInstance = new HoldToUnlockButton(this.confirmBtn, holdDuration);
-            this.holdBtnInstance.addEventListener("confirm", (event) => {
-                event.detail.originalEvent.target.blur();
-                this.dispatchEvent(new CustomEvent("confirm"));
-            });
+        const hideConfirmButton = config.hideConfirmButton;
+        if (!hideConfirmButton) {
+            const holdDuration = config.holdToUnlock || 0;
+            if (holdDuration > 0) {
+                this.holdBtnInstance = new HoldToUnlockButton(this.confirmBtn, holdDuration);
+                this.holdBtnInstance.addEventListener("confirm", (event) => {
+                    event.detail.originalEvent.target.blur();
+                    this.dispatchEvent(new CustomEvent("confirm"));
+                });
 
-            if (config.onEarlyClick) {
-                this.holdBtnInstance.addEventListener("earlyClick", config.onEarlyClick);
+                if (config.onEarlyClick) {
+                    this.holdBtnInstance.addEventListener("earlyClick", config.onEarlyClick);
+                }
+            } else {
+                this.confirmBtn.addEventListener("click", () => {
+                    this.confirmBtn.blur();
+                    this.dispatchEvent(new CustomEvent("confirm"));
+                });
             }
-        } else {
-            this.confirmBtn.addEventListener("click", () => {
-                this.confirmBtn.blur();
-                this.dispatchEvent(new CustomEvent("confirm"));
-            });
         }
 
-        modalFooter.append(cancelBtn, this.confirmBtn);
+        modalFooter.append(cancelBtn);
+        if (!hideConfirmButton) {
+            modalFooter.append(this.confirmBtn);
+        }
         modalContent.append(modalHeader, modalBody, modalFooter);
         modalDialog.appendChild(modalContent);
         this.modalElement.appendChild(modalDialog);

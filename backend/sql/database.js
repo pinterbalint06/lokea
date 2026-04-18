@@ -667,6 +667,7 @@ async function isConnectionCrossMap(connection, connectionId) {
 async function getGameMapDetails(gameMapID) {
     const query = `
         SELECT
+            game_maps.creator_id,
             users.username AS creator_name,
             game_maps.title,
             COALESCE(
@@ -720,13 +721,23 @@ async function doesGameMapExist(gameMapId) {
 
 async function getGameMapCoverImage(gameMapId) {
     const query = `
-        SELECT images.filepath, images.width, images.height
+        SELECT images.image_id, images.filepath, images.width, images.height
         FROM game_maps
             INNER JOIN images ON (game_maps.cover_image_id = images.image_id)
         WHERE game_maps.game_maps_id = ?
     `;
     const [rows] = await pool.execute(query, [gameMapId]);
     return rows.length > 0 ? rows[0] : null;
+}
+
+async function updateGameMapCoverImage(connection, gameMapId, imageId) {
+    const query = `
+        UPDATE game_maps
+        SET cover_image_id = ?
+        WHERE game_maps_id = ?
+    `;
+    const [result] = await connection.execute(query, [imageId, gameMapId]);
+    return result.affectedRows == 1;
 }
 
 //!Export
@@ -783,5 +794,6 @@ module.exports = {
     getGameMapDetails,
     getTopScoresForGameMap,
     doesGameMapExist,
-    getGameMapCoverImage
+    getGameMapCoverImage,
+    updateGameMapCoverImage
 };

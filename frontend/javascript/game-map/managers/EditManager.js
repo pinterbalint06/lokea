@@ -12,14 +12,19 @@ export class EditManager {
         this.wasEditing = false;
 
         this.#gatherElements();
-        this.elements.editDeleteDiv.classList.remove("d-none");
         this.#bindUIEvents();
         this.#bindBusEvents();
+
+        this.elements.editDeleteDiv.classList.remove("d-none");
+        this.elements.editCoverImageButton.classList.remove("d-none");
+
+        this.#updateUI(this.store.getState().gameMapDetails);
     }
 
     #gatherElements() {
         this.elements.editMapButton = document.getElementById("editMapButton");
         this.elements.enterEditModeBtn = document.getElementById("enterEditModeBtn");
+        this.elements.editCoverImageButton = document.getElementById("editCoverImageButton");
         this.elements.saveDetailsBtn = document.getElementById("saveDetailsBtn");
         this.elements.cancelDetailsBtn = document.getElementById("cancelDetailsBtn");
         this.elements.detailsEditActions = document.getElementById("detailsEditActions");
@@ -36,6 +41,10 @@ export class EditManager {
         });
         this.elements.enterEditModeBtn.addEventListener("click", () => {
             this.#enterEditMode();
+        });
+
+        this.elements.editCoverImageButton.addEventListener("click", () => {
+            this.bus.emit(EVENTS.UI_MODAL_REQUESTED, { modalType: "cover_image" });
         });
 
         this.elements.cancelDetailsBtn.addEventListener("click", () => {

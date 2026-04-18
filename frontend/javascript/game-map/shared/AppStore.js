@@ -12,6 +12,7 @@ export class AppStore {
                 createdAt: null,
                 playCount: 0,
                 rating: 0,
+                isOwner: false,
                 topScores: []
             }
         };

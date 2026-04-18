@@ -14,7 +14,9 @@ const ERRORS = {
     GAMEMAP: {
         INVALID_ID: "Helytelen pálya ID!",
 
-        NO_ACCESS: "Nincs hozzáférése ehhez a pályához!"
+        NO_ACCESS: "Nincs hozzáférése ehhez a pályához!",
+        COVER_IMAGE_UPDATE_FAILED: "A borítókép frissítése nem sikerült!",
+        NOT_FOUND: "A pálya nem létezik!"
     },
 
     MAP: {

@@ -6,7 +6,7 @@ export class DetailsManager {
         this.bus = eventBus;
         this.elements = {};
         this.#gatherElements();
-        this.bindBusEvents();
+        this.#bindBusEvents();
     }
 
     #gatherElements() {
@@ -29,7 +29,7 @@ export class DetailsManager {
         this.elements.displayRatingStars.style.setProperty("--rating", gameMapDetails.rating);
     }
 
-    bindBusEvents() {
+    #bindBusEvents() {
         this.bus.on(EVENTS.STATE_UPDATED, ({ state }) => {
             this.#updateUI(state.gameMapDetails);
         });

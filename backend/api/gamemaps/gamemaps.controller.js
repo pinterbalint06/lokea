@@ -60,8 +60,9 @@ async function getPointConnections(request, response, next) {
 async function getGameMapDetails(request, response, next) {
     try {
         const { gameMapID } = request.params;
+        const userId = request.session.userid;
 
-        const game_map_details = await gamemapsService.getGameMapDetails(gameMapID);
+        const game_map_details = await gamemapsService.getGameMapDetails(gameMapID, userId);
 
         response.status(200).json({ game_map_details });
     } catch (error) {

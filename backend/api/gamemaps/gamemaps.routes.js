@@ -1,5 +1,6 @@
 const express = require("express");
 const router = express.Router();
+const multer = require("multer");
 const { validateRequest } = require("#utils/validation.js");
 const { checkAuth } = require("#root/auth.js");
 const AppError = require("#utils/AppError.js");
@@ -8,6 +9,7 @@ const controller = require("#gamemaps/gamemaps.controller.js");
 const { isAllowedToGetMapImage, isAllowedToAccessPoint } = require("#gamemaps/gamemaps.middleware.js");
 const ERRORS = require("#utils/errorMessages.js");
 const upload = require("#mapcreator/shared/middlewares/uploadConfig.js"); // TODO: egyenlore a mapcreator uploadja van hasznalva van mert jo ide is lehet azt ki kene szervezni
+const { deleteFile } = require("#utils/fileUtils.js");
 
 router.use(checkAuth);
 
@@ -57,11 +59,29 @@ router.use(async (error, request, response, next) => {
     let statusCode = 500;
     let errorMessage = ERRORS.COMMON.UNEXPECTED_ERROR;
 
-    if (error instanceof AppError) {
-        statusCode = error.statusCode;
-        errorMessage = error.message;
+    if (error instanceof multer.MulterError) {
+        if (request.file && request.file.path) {
+            try {
+                await deleteFile(request.file.path);
+            } catch (deleteErr) {
+                console.error("Error deleting temporary uploaded file:", deleteErr);
+            }
+        }
+
+        if (error.code == "LIMIT_FILE_SIZE") {
+            statusCode = 413;
+            errorMessage = ERRORS.COMMON.FILE_TOO_LARGE;
+        } else {
+            statusCode = 400;
+            errorMessage = ERRORS.COMMON.FILE_UPLOAD_ERROR;
+        }
     } else {
-        console.error("Unexpected error in map creator endpoints:", error);
+        if (error instanceof AppError) {
+            statusCode = error.statusCode;
+            errorMessage = error.message;
+        } else {
+            console.error("Unexpected error in map creator endpoints:", error);
+        }
     }
 
     if (!response.headersSent) {

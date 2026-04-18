@@ -22,6 +22,7 @@ export class DataManager {
                     createdAt: gameMapDetails.game_created,
                     playCount: gameMapDetails.plays,
                     rating: gameMapDetails.rating,
+                    isOwner: gameMapDetails.is_owner,
                     topScores: gameMapDetails.top_scores
                 }
             });

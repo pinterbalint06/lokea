@@ -26,6 +26,10 @@
                     <div class="col-12 col-xl-5">
                         <div class="d-flex flex-column gap-3">
                             <div class="cover-image-wrapper uveg rounded-4 overflow-hidden position-relative">
+                                <button id="editCoverImageButton" type="button"
+                                    class="btn btn-outline-light btn-sm rounded-pill px-3 cover-edit-button d-none">
+                                    Borítókép szerkesztése
+                                </button>
                                 <div id="coverPlaceholder"
                                     class="placeholder position-absolute top-0 start-0 w-100 h-100 cover-placeholder">
                                 </div>
@@ -63,42 +67,57 @@
                                     <article class="score-item placeholder-glow" aria-hidden="true">
                                         <span class="score-rank placeholder"></span>
                                         <div class="score-main">
-                                            <p class="score-name mb-1"><span class="placeholder col-7 rounded"></span></p>
-                                            <small class="score-time d-block"><span class="placeholder col-5 rounded"></span></small>
+                                            <p class="score-name mb-1"><span class="placeholder col-7 rounded"></span>
+                                            </p>
+                                            <small class="score-time d-block"><span
+                                                    class="placeholder col-5 rounded"></span></small>
                                         </div>
-                                        <span class="placeholder rounded-pill d-inline-block score-value-placeholder"></span>
+                                        <span
+                                            class="placeholder rounded-pill d-inline-block score-value-placeholder"></span>
                                     </article>
                                     <article class="score-item placeholder-glow" aria-hidden="true">
                                         <span class="score-rank placeholder"></span>
                                         <div class="score-main">
-                                            <p class="score-name mb-1"><span class="placeholder col-8 rounded"></span></p>
-                                            <small class="score-time d-block"><span class="placeholder col-4 rounded"></span></small>
+                                            <p class="score-name mb-1"><span class="placeholder col-8 rounded"></span>
+                                            </p>
+                                            <small class="score-time d-block"><span
+                                                    class="placeholder col-4 rounded"></span></small>
                                         </div>
-                                        <span class="placeholder rounded-pill d-inline-block score-value-placeholder"></span>
+                                        <span
+                                            class="placeholder rounded-pill d-inline-block score-value-placeholder"></span>
                                     </article>
                                     <article class="score-item placeholder-glow" aria-hidden="true">
                                         <span class="score-rank placeholder"></span>
                                         <div class="score-main">
-                                            <p class="score-name mb-1"><span class="placeholder col-6 rounded"></span></p>
-                                            <small class="score-time d-block"><span class="placeholder col-5 rounded"></span></small>
+                                            <p class="score-name mb-1"><span class="placeholder col-6 rounded"></span>
+                                            </p>
+                                            <small class="score-time d-block"><span
+                                                    class="placeholder col-5 rounded"></span></small>
                                         </div>
-                                        <span class="placeholder rounded-pill d-inline-block score-value-placeholder"></span>
+                                        <span
+                                            class="placeholder rounded-pill d-inline-block score-value-placeholder"></span>
                                     </article>
                                     <article class="score-item placeholder-glow" aria-hidden="true">
                                         <span class="score-rank placeholder"></span>
                                         <div class="score-main">
-                                            <p class="score-name mb-1"><span class="placeholder col-7 rounded"></span></p>
-                                            <small class="score-time d-block"><span class="placeholder col-6 rounded"></span></small>
+                                            <p class="score-name mb-1"><span class="placeholder col-7 rounded"></span>
+                                            </p>
+                                            <small class="score-time d-block"><span
+                                                    class="placeholder col-6 rounded"></span></small>
                                         </div>
-                                        <span class="placeholder rounded-pill d-inline-block score-value-placeholder"></span>
+                                        <span
+                                            class="placeholder rounded-pill d-inline-block score-value-placeholder"></span>
                                     </article>
                                     <article class="score-item placeholder-glow" aria-hidden="true">
                                         <span class="score-rank placeholder"></span>
                                         <div class="score-main">
-                                            <p class="score-name mb-1"><span class="placeholder col-8 rounded"></span></p>
-                                            <small class="score-time d-block"><span class="placeholder col-4 rounded"></span></small>
+                                            <p class="score-name mb-1"><span class="placeholder col-8 rounded"></span>
+                                            </p>
+                                            <small class="score-time d-block"><span
+                                                    class="placeholder col-4 rounded"></span></small>
                                         </div>
-                                        <span class="placeholder rounded-pill d-inline-block score-value-placeholder"></span>
+                                        <span
+                                            class="placeholder rounded-pill d-inline-block score-value-placeholder"></span>
                                     </article>
                                 </div>
                             </section>
@@ -113,13 +132,13 @@
                                         <h1 id="titleDisplay" class="game-title m-0 placeholder-glow">
                                             <span class="placeholder col-6 rounded"></span>
                                         </h1>
+                                        <input id="titleInput" type="text" class="form-control uvegform d-none mt-1"
+                                            maxlength="50" placeholder="Adj meg egy címet...">
                                         <p class="game-creator mb-0 mt-1 placeholder-glow">
                                             Készítő: <span id="creatorValue" class="game-creator-value">
                                                 <span class="placeholder col-4 rounded"></span>
                                             </span>
                                         </p>
-                                        <input id="titleInput" type="text" class="form-control uvegform d-none mt-1"
-                                            maxlength="50" placeholder="Adj meg egy címet...">
                                     </div>
                                     <button id="enterEditModeBtn"
                                         class="btn btn-outline-secondary btn-sm rounded-pill px-3 d-none">
