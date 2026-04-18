@@ -74,12 +74,12 @@ async function getGameMapCoverImage(request, response, next) {
         const { gameMapID } = request.params;
         const { resolution } = request.query;
 
-        const { filepath: imagePath, width, height } = await gamemapsService.getGameMapCoverImagePath(gameMapID, resolution);
+        const { imagePath, width, height } = await gamemapsService.getGameMapCoverImagePath(gameMapID, resolution);
 
         response.set("Access-Control-Expose-Headers", "imageWidth, imageHeight");
         response.set("imageWidth", width);
         response.set("imageHeight", height);
-        response.sendFile(imagePath, { root: UPLOAD_ROOT }, function (err) {
+        response.sendFile(imagePath, { root: UPLOAD_ROOT_MAP_DATA }, function (err) {
             if (err && !response.headersSent) {
                 response.status(404).json({ error: ERRORS.COMMON.FILE_NOT_FOUND });
             }

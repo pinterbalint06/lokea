@@ -26,13 +26,20 @@
                     <div class="col-12 col-xl-5">
                         <div class="d-flex flex-column gap-3">
                             <div class="cover-image-wrapper uveg rounded-4 overflow-hidden position-relative">
-                                <img id="coverImage" class="cover-image" src="/images/worldmap.webp"
-                                    alt="Pálya borítókép">
-                                <div class="cover-overlay p-3">
+                                <div id="coverPlaceholder"
+                                    class="placeholder position-absolute top-0 start-0 w-100 h-100 cover-placeholder">
+                                </div>
+
+                                <!-- 16:9es svg, placeholdernek -->
+                                <img id="coverImage" class="cover-image position-relative"
+                                    src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 9'%3E%3C/svg%3E"
+                                    alt="A pálya borítóképe">
+                                <div class="cover-overlay p-3 z-2">
                                     <div class="d-flex align-items-center gap-2 flex-wrap">
                                         <span class="small text-uppercase opacity-75">Értékelés</span>
-                                        <div id="displayRatingStars" class="rating-stars" style="--rating: 0;"></div>
-                                        <span id="displayRatingValue" class="small fw-semibold">0.0</span>
+                                        <div id="displayRatingStars" class="rating-stars"></div>
+                                        <span id="displayRatingValue" class="small fw-semibold placeholder-glow"><span
+                                                class="placeholder col-8 rounded"></span></span>
                                     </div>
                                 </div>
                             </div>
@@ -40,17 +47,60 @@
                             <div class="meta-grid">
                                 <article class="meta-card uveg rounded-3 p-3">
                                     <p class="meta-label mb-1">Létrehozva</p>
-                                    <p id="createdAtValue" class="meta-value mb-0">-</p>
+                                    <p id="createdAtValue" class="meta-value mb-0 placeholder-glow"><span
+                                            class="placeholder col-8 rounded"></span></p>
                                 </article>
                                 <article class="meta-card uveg rounded-3 p-3">
                                     <p class="meta-label mb-1">Játékok száma</p>
-                                    <p id="playsValue" class="meta-value mb-0">0</p>
+                                    <p id="playsValue" class="meta-value mb-0 placeholder-glow"><span
+                                            class="placeholder col-4 rounded"></span></p>
                                 </article>
                             </div>
 
                             <section id="leaderboardPanel" class="uveg rounded-4 p-3">
                                 <h2 class="section-title mb-3">Rangsor</h2>
-                                <div id="leaderboardList" class="leaderboard-list" aria-live="polite"></div>
+                                <div id="leaderboardList" class="leaderboard-list" aria-live="polite">
+                                    <article class="score-item placeholder-glow" aria-hidden="true">
+                                        <span class="score-rank placeholder"></span>
+                                        <div class="score-main">
+                                            <p class="score-name mb-1"><span class="placeholder col-7 rounded"></span></p>
+                                            <small class="score-time d-block"><span class="placeholder col-5 rounded"></span></small>
+                                        </div>
+                                        <span class="placeholder rounded-pill d-inline-block score-value-placeholder"></span>
+                                    </article>
+                                    <article class="score-item placeholder-glow" aria-hidden="true">
+                                        <span class="score-rank placeholder"></span>
+                                        <div class="score-main">
+                                            <p class="score-name mb-1"><span class="placeholder col-8 rounded"></span></p>
+                                            <small class="score-time d-block"><span class="placeholder col-4 rounded"></span></small>
+                                        </div>
+                                        <span class="placeholder rounded-pill d-inline-block score-value-placeholder"></span>
+                                    </article>
+                                    <article class="score-item placeholder-glow" aria-hidden="true">
+                                        <span class="score-rank placeholder"></span>
+                                        <div class="score-main">
+                                            <p class="score-name mb-1"><span class="placeholder col-6 rounded"></span></p>
+                                            <small class="score-time d-block"><span class="placeholder col-5 rounded"></span></small>
+                                        </div>
+                                        <span class="placeholder rounded-pill d-inline-block score-value-placeholder"></span>
+                                    </article>
+                                    <article class="score-item placeholder-glow" aria-hidden="true">
+                                        <span class="score-rank placeholder"></span>
+                                        <div class="score-main">
+                                            <p class="score-name mb-1"><span class="placeholder col-7 rounded"></span></p>
+                                            <small class="score-time d-block"><span class="placeholder col-6 rounded"></span></small>
+                                        </div>
+                                        <span class="placeholder rounded-pill d-inline-block score-value-placeholder"></span>
+                                    </article>
+                                    <article class="score-item placeholder-glow" aria-hidden="true">
+                                        <span class="score-rank placeholder"></span>
+                                        <div class="score-main">
+                                            <p class="score-name mb-1"><span class="placeholder col-8 rounded"></span></p>
+                                            <small class="score-time d-block"><span class="placeholder col-4 rounded"></span></small>
+                                        </div>
+                                        <span class="placeholder rounded-pill d-inline-block score-value-placeholder"></span>
+                                    </article>
+                                </div>
                             </section>
                         </div>
                     </div>
@@ -60,9 +110,13 @@
                             <section class="uveg rounded-4 p-3 gap-3 d-flex flex-column">
                                 <div class="d-flex flex-wrap justify-content-between align-items-start gap-2">
                                     <div class="flex-grow-1">
-                                        <h1 id="titleDisplay" class="game-title m-0">Teszt</h1>
-                                        <p class="game-creator mb-0 mt-1">
-                                            Készítő: <span id="creatorValue" class="game-creator-value">-</span>
+                                        <h1 id="titleDisplay" class="game-title m-0 placeholder-glow">
+                                            <span class="placeholder col-6 rounded"></span>
+                                        </h1>
+                                        <p class="game-creator mb-0 mt-1 placeholder-glow">
+                                            Készítő: <span id="creatorValue" class="game-creator-value">
+                                                <span class="placeholder col-4 rounded"></span>
+                                            </span>
                                         </p>
                                         <input id="titleInput" type="text" class="form-control uvegform d-none mt-1"
                                             maxlength="50" placeholder="Adj meg egy címet...">
@@ -75,7 +129,11 @@
 
                                 <div>
                                     <h2 class="section-title mb-2">Leírás</h2>
-                                    <p id="descriptionDisplay" class="description-text mb-0">Teszt leírás...</p>
+                                    <p id="descriptionDisplay" class="description-text mb-0 placeholder-glow">
+                                        <span class="placeholder col-12 rounded"></span>
+                                        <span class="placeholder col-9 rounded"></span>
+                                        <span class="placeholder col-8 rounded"></span>
+                                    </p>
                                     <textarea id="descriptionInput" class="form-control uvegform d-none mt-2" rows="4"
                                         maxlength="255" placeholder="Írj rövid leírást a pályáról..."></textarea>
 
@@ -90,7 +148,7 @@
                                         </button>
                                     </div>
                                 </div>
-                                <div class="action-row d-flex flex-wrap gap-2 d-none">
+                                <div id="editDeleteDiv" class="d-flex flex-wrap gap-2 d-none">
                                     <a id="editMapButton" href="#" class="btn btn-outline-secondary rounded-pill px-4">
                                         Pálya szerkesztése
                                     </a>
@@ -140,16 +198,10 @@
                                 <hr class="my-4">
 
                                 <div id="commentsList" class="comments-list mt-3">
-                                    <article class="comment-card">
-                                        <div class="d-flex justify-content-between align-items-center gap-2 flex-wrap">
-                                            <strong class="comment-author">Laszti1</strong>
-                                            <span class="comment-date small opacity-75">2026. 04. 16.</span>
-                                        </div>
-                                        <div class="comment-rating mt-1">
-                                            <div class="rating-stars" style="--rating: 1.0;"></div>
-                                        </div>
-                                        <p class="comment-text mb-0 mt-2">Szörnyű.</p>
-                                    </article>
+                                    <div class="text-center p-3 opacity-50">
+                                        <div class="spinner-border spinner-border-sm" role="status"></div>
+                                        <span class="ms-2">Hozzászólások betöltése...</span>
+                                    </div>
                                 </div>
                             </section>
                         </div>
@@ -162,7 +214,7 @@
         <div id="modal-wrapper"></div>
         <button id="playMapButton" type="button"
             class="btn uvegbutton rounded-circle floating-button floating-button-primary" aria-label="Játék indítása">
-            <svg viewBox="0 0 119.4 122.88" style="height: 1.5em; fill: white;">
+            <svg viewBox="0 0 119.4 122.88" class="play-map-icon">
                 <use href="/images/game-map-icons.svg#icon-start"></use>
             </svg>
         </button>

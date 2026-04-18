@@ -6,6 +6,7 @@ import { DetailsManager } from "./managers/DetailsManager.js";
 import { EditManager } from "./managers/EditManager.js";
 import { ToastManager } from "./managers/ToastManager.js";
 import { DataManager } from "./managers/DataManager.js";
+import { CoverImageManager } from "./managers/CoverImageManager.js";
 
 async function init() {
     const eventBus = new EventBus();
@@ -14,6 +15,7 @@ async function init() {
 
     new ToastManager(eventBus);
 
+    new CoverImageManager(eventBus);
     new DetailsManager(eventBus);
     new LeaderboardManager(eventBus, appStore);
     new EditManager(eventBus, appStore);
@@ -25,7 +27,6 @@ async function init() {
 document.addEventListener("DOMContentLoaded", init);
 
 // TODO: isowner elkeszitese
-// TODO: cover image betoltese
 // TODO: cover image szerkesztesee
 // TODO: cim, leiras szerkesztese
 // TODO: kommentek betoltese

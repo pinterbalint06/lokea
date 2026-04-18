@@ -12,6 +12,7 @@ export class EditManager {
         this.wasEditing = false;
 
         this.#gatherElements();
+        this.elements.editDeleteDiv.classList.remove("d-none");
         this.#bindUIEvents();
         this.#bindBusEvents();
     }
@@ -26,6 +27,7 @@ export class EditManager {
         this.elements.titleInput = document.getElementById("titleInput");
         this.elements.descriptionDisplay = document.getElementById("descriptionDisplay");
         this.elements.descriptionInput = document.getElementById("descriptionInput");
+        this.elements.editDeleteDiv = document.getElementById("editDeleteDiv");
     }
 
     #bindUIEvents() {

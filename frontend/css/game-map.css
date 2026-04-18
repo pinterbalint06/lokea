@@ -104,11 +104,25 @@ main {
     color: #8fd5ff;
 }
 
+.score-value-placeholder {
+    width: 3rem;
+    height: 0.85rem;
+}
+
+#displayRatingStars {
+    --rating: 0;
+}
+
 #playMapButton {
     position: fixed;
     right: 1rem;
     bottom: 1rem;
     z-index: 1200;
+}
+
+.play-map-icon {
+    height: 1.5em;
+    fill: var(--text-main);
 }
 
 .cover-image-wrapper {
@@ -123,6 +137,13 @@ main {
     height: 100%;
     object-fit: cover;
     filter: saturate(1.08);
+    opacity: 0;
+    z-index: 1;
+    transition: opacity var(--transition-soft);
+}
+
+.cover-placeholder {
+    transition: opacity var(--transition-soft);
 }
 
 .cover-overlay {

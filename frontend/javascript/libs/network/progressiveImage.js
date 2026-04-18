@@ -20,7 +20,7 @@ export function isCancellationError(error) {
  * @param {function(error): void} [onError]           - Called on non-cancellation errors
  * @returns {Promise<{stage: string}>}
  */
-async function loadLowThenHigh({ fetchLow, fetchHigh, loadToViewer, isCurrent, onLowReady, onHighReady, onError }) {
+export async function loadLowThenHigh({ fetchLow, fetchHigh, loadToViewer, isCurrent, onLowReady, onHighReady, onError }) {
     let lowImgData = null;
     let highImgData = null;
     let lowError = null;
