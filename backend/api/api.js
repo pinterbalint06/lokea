@@ -302,25 +302,38 @@ router.get('/active_game_session', async (request, response) => {
     try {
         const userId = request.session?.userid || 1; //TODO: torles ha mar stabil a session
         const activeSession = await database.selectLatestActiveGameSession(userId);
+        let responseData;
 
         if (!activeSession) {
-            return response.status(200).json({ success: true, hasActiveSession: false });
+            responseData = { success: true, hasActiveSession: false };
+            responseData.status = 200;
         }
-        request.session.activeSessionId = activeSession.session_id;
-        response.status(200).json({
-            success: true,
-            hasActiveSession: true,
-            gameTitle: activeSession.title
-        });
+        else {
+            request.session.game = {
+                activeSessionId: activeSession.session_id,
+                gameMapId: activeSession.game_maps_id,
+                currentCycle: activeSession.current_cycle,
+                sharpness: activeSession.sharpness,
+                rounds: activeSession.rounds,
+                roundTime: activeSession.time_per_round
+            };
+            responseData = {
+                success: true,
+                hasActiveSession: true,
+                gameTitle: activeSession.title
+            };
+            responseData.status = 200;
+        }
+        response.status(responseData.status).json(responseData);
     } catch (error) {
-        response.status(500).json({ success: false, message: 'Database error', error: error });
+        response.status(500).json({ success: false, message: error.message, error: error });
     }
 });
 
 router.post('/finish_game_session', async (request, response) => {
     try {
-        await database.finishGameSession(request.session.activeSessionId);
-        delete request.session.activeSessionId;
+        await database.finishGameSession(request.session.game.activeSessionId);
+        delete request.session.game;
         response.status(200).json({ success: true, message: 'Game session finished' });
     } catch (error) {
         response.status(500).json({ success: false, message: 'Database error', error: error });
@@ -343,7 +356,16 @@ router.post('/post_game_id', upload.none('file'), async (request, response) => {
         throw err;
     }
     try {
-        request.session.activeSessionId = await database.insertGameSession( userId, rounds, roundTime, gameMapId, sharpness);
+        const activeSession = await database.insertGameSession(userId, rounds, roundTime, gameMapId, sharpness);
+
+        request.session.game = {
+            activeSessionId: activeSession,
+            gameMapId: gameMapId,
+            currentCycle: 1,
+            sharpness: sharpness,
+            rounds: rounds,
+            roundTime: roundTime
+        };
 
         response.status(200).json({ success: true, message: 'Game map ID saved in session' });
     } catch (error) {
