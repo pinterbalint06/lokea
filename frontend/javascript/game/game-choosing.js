@@ -11,8 +11,15 @@ function clearLoadedURLs() {
 document.addEventListener("DOMContentLoaded", function () {
     let selectedButton = document.getElementById('sortByPlays');
     let closeBtn = document.querySelector('.modal-close-btn');
+    const settingsForm = document.getElementById('settingsForm');
+    initRoundTimeRange();
     closeBtn.addEventListener('click', () => {
         document.getElementById('myModal').classList.remove('active');
+    });
+    settingsForm.addEventListener('submit', (event) => {
+        event.preventDefault();
+        let gameMapId = document.getElementById('myModal').dataset.gameMapId;
+        postGameId(gameMapId);
     });
     setupContinueGameModal();
     checkAndShowContinueModal();
@@ -34,14 +41,11 @@ document.addEventListener("DOMContentLoaded", function () {
         cardLoadedTimes++;
         loadGameMaps(selectedButton.id.replace('sortBy', '').toLowerCase());
     });
-    document.getElementById('startGame').addEventListener('click', function () {
-        let gameMapId = document.getElementById('myModal').dataset.gameMapId;
-        postGameId(gameMapId);
-    });
 });
 
 async function loadGameMaps(sort) {
     const gameMaps = await fetchURL('http://127.0.0.1:3000/api/game_maps?sort=' + sort + '&offset=' + (cardLoadedTimes * 20));
+    console.log(gameMaps.results);
     let gameMapsContainer = document.getElementById('game_maps_container');
     if (gameMaps.success) {
         for (let i = 0; i < gameMaps.results.length; i++) {
@@ -101,21 +105,45 @@ function createModal(game_map) {
     let modalTitle = document.getElementById('modal-title');
     let modalStars = document.getElementById('modal-stars');
     let modalDesc = document.getElementById('modal-desc');
+    let maxUniqueRounds = document.getElementById('maxUniqueRounds');
+    console.log(game_map);
+    const pointCount = Number(game_map.point_count);
+    const safePointCount = Number.isFinite(pointCount) && pointCount > 0 ? pointCount : 0;
     modal.dataset.gameMapId = game_map.game_maps_id;
     modal.classList.add('active');
     modalTitle.innerText = game_map.title;
     modalStars.style.setProperty('--rating', game_map.rating);
     modalDesc.innerText = game_map.game_description;
+    maxUniqueRounds.innerText = safePointCount === 0 ? 'N/A' : `${safePointCount} pont`;
+}
+
+function initRoundTimeRange() {
+    let timeRange = document.getElementById("times");
+    updateTimeValue();
+    timeRange.addEventListener("input", updateTimeValue);
+}
+function updateTimeValue() {
+    let timeValue = document.getElementById("timesValue");
+    let timeRange = document.getElementById("times");
+    let seconds = Number.parseInt(timeRange.value);
+    timeValue.value = formatSecondsToMinutes(seconds);
+    timeValue.textContent = formatSecondsToMinutes(seconds);
+};
+
+
+function formatSecondsToMinutes(seconds) {
+    let minutesPart = Math.floor(seconds / 60).toString().padStart(2, "0");
+    let secondsPart = (seconds % 60).toString().padStart(2, "0");
+    return `${minutesPart}:${secondsPart}`;
 }
 
 async function postGameId(gamemapId) {
+    const formData = new FormData(document.getElementById('settingsForm'));
+    formData.append('gameMapId', gamemapId);
     try {
         const response = await fetch('http://127.0.0.1:3000/api/post_game_id', {
             method: 'POST',
-            headers: {
-                'Content-Type': 'application/json'
-            },
-            body: JSON.stringify({ gameMapId: Number(gamemapId) })
+            body: formData 
         });
         if (!response.ok) {
             throw new Error('Hiba a játék indításakor: ' + response.message);

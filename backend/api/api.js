@@ -327,19 +327,29 @@ router.post('/finish_game_session', async (request, response) => {
     }
 });
 
-router.post('/post_game_id', async (request, response) => {
-    const gameMapId = Number(request.body.gameMapId);
+router.post('/post_game_id', upload.none('file'), async (request, response) => {
+    const difficulty = request.body.difficulty;
+    const gameMapId = parseInt(request.body.gameMapId);
+    const rounds = parseInt(request.body.rounds);
+    const roundTime = parseInt(request.body.roundTime);
     const userId = request.session?.userid || 1; //TODO: törlés ha már stabil a session
 
+    const allowedDifficulties = { easy: -1.5, normal: -3, hard: -5 };
+    const sharpness = allowedDifficulties[difficulty] ?? -3;
+
     if (!Number.isInteger(gameMapId) || gameMapId <= 0) {
-        response.status(400).json({ success: false, message: 'Invalid gameMapId' });
+        const err = new Error('Invalid gameMapId');
+        err.statusCode = 400;
+        throw err;
     }
-    try {   
-        request.session.activeSessionId = await database.insertGameSession(userId, gameMapId);
+    try {
+        request.session.activeSessionId = await database.insertGameSession( userId, rounds, roundTime, gameMapId, sharpness);
+
+        response.status(200).json({ success: true, message: 'Game map ID saved in session' });
     } catch (error) {
-        response.status(500).json({ success: false, message: 'Database error', error: error });
+        const status = error.statusCode ?? 500;
+        response.status(status).json({ success: false, message: error.message });
     }
-    response.status(200).json({ success: true, message: 'Game map ID saved in session' });
 });
 
 module.exports = router;

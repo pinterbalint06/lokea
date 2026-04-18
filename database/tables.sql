@@ -106,6 +106,9 @@ CREATE TABLE game_sessions (
     finished_at TIMESTAMP NULL,
     total_score INT DEFAULT 0,
     current_cycle INT NOT NULL DEFAULT 1,
+    rounds INT NOT NULL DEFAULT 5,
+    sharpness FLOAT NOT NULL DEFAULT -3,
+    time_per_round INT NOT NULL DEFAULT 30,
     FOREIGN KEY (user_id) REFERENCES users(user_id) ON DELETE SET NULL,
     FOREIGN KEY (game_maps_id) REFERENCES game_maps(game_maps_id) ON DELETE CASCADE
 );

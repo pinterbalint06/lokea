@@ -3,7 +3,7 @@ const mysql = require('mysql2/promise');
 const pool = mysql.createPool({
     host: '127.0.0.1',
     user: 'root',
-    password: 'rootpassword',
+    // password: 'rootpassword',
     database: 'bigprojekt_db',
     waitForConnections: true,
     connectionLimit: 10,
@@ -247,7 +247,13 @@ async function deleteProfilePic(user_id) {
 //Játékhoz szükséges ab adatok lekérése
 async function getGameMaps(sort = 'plays', user_id = null, offset = 0) {
     const safeSort = String(sort).toLowerCase();
-    const baseSelect = 'SELECT game_maps.game_maps_id, game_maps.creator_id, game_maps.title, game_maps.cover_image_id, game_maps.rating, game_maps.plays, game_maps.game_created, game_maps.game_description FROM game_maps';
+    const baseSelect = `
+        SELECT game_maps.game_maps_id, game_maps.creator_id, game_maps.title, game_maps.cover_image_id, game_maps.rating, game_maps.plays, game_maps.game_created, game_maps.game_description, COUNT(points.point_id) AS point_count
+        FROM game_maps
+            LEFT JOIN map ON (game_maps.game_maps_id = map.game_maps_id)
+            LEFT JOIN points ON (map.map_id = points.map_id)
+        GROUP BY game_maps.game_maps_id
+    `;
     let query;
     let params = [offset];
     switch (safeSort) {
@@ -285,15 +291,15 @@ async function getImagePath(image_id) {
     return re;
 }
 
-async function insertGameSession(userId, gameMapId) {
-    const query = 'INSERT INTO game_sessions (user_id, game_maps_id) VALUES (?, ?)';
-    const result = await pool.execute(query, [userId, gameMapId]);
+async function insertGameSession(userId, rounds, roundTime, gameMapId, sharpness) {
+    const query = 'INSERT INTO game_sessions (user_id, game_maps_id, rounds, sharpness, time_per_round) VALUES (?, ?, ?, ?, ?)';
+    const [result] = await pool.execute(query, [userId, gameMapId, rounds, sharpness, roundTime]);
     return result.insertId;
 }
 
 async function selectLatestActiveGameSession(userId) {
     const query = `
-        SELECT game_maps.title
+        SELECT game_maps.title, game_sessions.session_id
         FROM game_sessions
             INNER JOIN game_maps ON game_sessions.game_maps_id = game_maps.game_maps_id
         WHERE game_sessions.user_id = ? AND game_sessions.finished_at IS NULL

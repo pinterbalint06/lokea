@@ -65,10 +65,38 @@
     <div class="modal-overlay" id="myModal">
         <div class="modal-box">
             <span class="modal-close-btn">&times;</span>
-            <h3 id="modal-title"></h3>
-            <div class="stars" id="modal-stars"></div>
-            <p id="modal-desc"></p>
-            <button class="btn btn-light" id="startGame">Játék indítása</button>
+            <div class="modal-header-block">
+                <h3 id="modal-title"></h3>
+                <div class="stars" id="modal-stars"></div>
+                <p id="modal-desc"></p>
+            </div>
+
+            <form id="settingsForm" class="settings-form" novalidate>
+                <div class="settings-grid">
+                    <label for="rounds">Körök száma:</label>
+                    <input name="rounds" type="number" id="rounds" min="1" max="100" value="5">
+
+                    <label for="difficulty">Nehézség:</label>
+                    <select name="difficulty" id="difficulty">
+                        <option value="easy">Könnyű</option>
+                        <option value="normal">Közepes</option>
+                        <option value="hard">Nehéz</option>
+                    </select>
+
+                    <label for="times">Egy kör időtartama:</label>
+                    <div class="time-row">
+                        <input name="roundTime" type="range" id="times" min="1" max="300" step="1" value="30">
+                        <output id="timesValue" for="times">00:30</output>
+                    </div>
+                </div>
+
+                <div class="max-rounds-info" id="maxRoundsInfo">
+                    <p class="info-title">Ismétlés nélküli max kör: <strong id="maxUniqueRounds">-</strong></p>
+                    <p class="info-desc">A körszám nincs ehhez limitálva, a pontok újrajátszhatók.</p>
+                </div>
+
+                <button type="submit" class="btn btn-light start-btn" id="startGame">Játék indítása</button>
+            </form>
         </div>
     </div>
 
