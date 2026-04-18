@@ -132,22 +132,6 @@ main {
     width: 4.5em !important;
 }
 
-.successColor {
-    background-color: var(--state-success) !important;
-    border-color: var(--state-success) !important;
-    backdrop-filter: blur(12px);
-}
-
-.dangerColor {
-    background-color: var(--state-danger) !important;
-    border-color: var(--state-danger) !important;
-    backdrop-filter: blur(12px);
-}
-
-.successColor:disabled {
-    opacity: 0.5;
-}
-
 #loading {
     z-index: 10000;
 }

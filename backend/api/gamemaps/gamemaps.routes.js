@@ -7,6 +7,7 @@ const schemas = require("#gamemaps/gamemaps.schemas.js");
 const controller = require("#gamemaps/gamemaps.controller.js");
 const { isAllowedToGetMapImage, isAllowedToAccessPoint } = require("#gamemaps/gamemaps.middleware.js");
 const ERRORS = require("#utils/errorMessages.js");
+const upload = require("#mapcreator/shared/middlewares/uploadConfig.js"); // TODO: egyenlore a mapcreator uploadja van hasznalva van mert jo ide is lehet azt ki kene szervezni
 
 router.use(checkAuth);
 
@@ -38,6 +39,19 @@ router.get(
     "/:gameMapID",
     validateRequest(schemas.getGameMapDetailsSchema),
     controller.getGameMapDetails);
+
+//?GET /api/game-maps/:gameMapID/cover-image
+router.get(
+    "/:gameMapID/cover-image",
+    validateRequest(schemas.getGameMapCoverImageSchema),
+    controller.getGameMapCoverImage);
+
+//?PUT /api/game-maps/:gameMapID/cover-image
+router.put(
+    "/:gameMapID/cover-image",
+    upload.single("coverImage"),
+    validateRequest(schemas.putGameMapCoverImageSchema),
+    controller.updateGameMapCoverImage);
 
 router.use(async (error, request, response, next) => {
     let statusCode = 500;

@@ -64,3 +64,9 @@ export function showToast(container, message, type = "", isClosable, options = {
     });
     return toast;
 }
+
+export function createSpinnerIcon() {
+    const div = document.createElement("div");
+    div.className = "spinner-border spinner-border-sm";
+    return div;
+}

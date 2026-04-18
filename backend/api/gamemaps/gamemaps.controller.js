@@ -1,5 +1,5 @@
 const gamemapsService = require("#gamemaps/gamemaps.service.js");
-const { UPLOAD_ROOT } = require("#config/mapStorage.js");
+const { UPLOAD_ROOT_MAP_DATA } = require("#config/mapStorage.js");
 const ERRORS = require("#utils/errorMessages.js");
 
 async function getPointImage(request, response, next) {
@@ -14,7 +14,7 @@ async function getPointImage(request, response, next) {
         response.set("imageHeight", height);
         response.set("northDirection", northDirection);
 
-        response.sendFile(imagePath, { root: UPLOAD_ROOT }, function (err) {
+        response.sendFile(imagePath, { root: UPLOAD_ROOT_MAP_DATA }, function (err) {
             if (err && !response.headersSent) {
                 return response.status(404).json({ error: ERRORS.COMMON.FILE_NOT_FOUND });
             }
@@ -35,7 +35,7 @@ async function getMapImage(request, response, next) {
         response.set("imageWidth", width);
         response.set("imageHeight", height);
 
-        response.sendFile(imagePath, { root: UPLOAD_ROOT }, function (err) {
+        response.sendFile(imagePath, { root: UPLOAD_ROOT_MAP_DATA }, function (err) {
             if (err && !response.headersSent) {
                 return response.status(404).json({ error: ERRORS.COMMON.FILE_NOT_FOUND });
             }
@@ -69,9 +69,47 @@ async function getGameMapDetails(request, response, next) {
     }
 }
 
+async function getGameMapCoverImage(request, response, next) {
+    try {
+        const { gameMapID } = request.params;
+        const { resolution } = request.query;
+
+        const { filepath: imagePath, width, height } = await gamemapsService.getGameMapCoverImagePath(gameMapID, resolution);
+
+        response.set("Access-Control-Expose-Headers", "imageWidth, imageHeight");
+        response.set("imageWidth", width);
+        response.set("imageHeight", height);
+        response.sendFile(imagePath, { root: UPLOAD_ROOT }, function (err) {
+            if (err && !response.headersSent) {
+                response.status(404).json({ error: ERRORS.COMMON.FILE_NOT_FOUND });
+            }
+        });
+    } catch (error) {
+        next(error);
+    }
+}
+
+async function updateGameMapCoverImage(request, response, next) {
+    try {
+        const userId = request.session.userid;
+        const { gameMapID } = request.params;
+        const file = request.file;
+
+        await gamemapsService.updateGameMapCoverImage(userId, gameMapID, file);
+
+        response.status(204).send();
+    } catch (error) {
+        next(error);
+    }
+};
+
+
+
 module.exports = {
     getPointImage,
     getMapImage,
     getPointConnections,
-    getGameMapDetails
+    getGameMapDetails,
+    getGameMapCoverImage,
+    updateGameMapCoverImage
 };

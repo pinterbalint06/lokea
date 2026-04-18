@@ -4,7 +4,7 @@ const ERRORS = require("#utils/errorMessages.js");
 const fs = require("fs/promises");
 const path = require("path");
 const crypto = require("crypto");
-const { UPLOAD_ROOT, isInsideRoot } = require("#config/mapStorage.js");
+const { UPLOAD_ROOT_MAP_DATA, isInsideRoot } = require("#config/mapStorage.js");
 const { processImageMetadata, createWebpAndLowRes } = require("#utils/imageProcessor.js");
 const { deleteFile } = require("#utils/fileUtils.js");
 const { assertUserOwnsGameMap, assertUserOwnsMap, cleanupAfterError } = require("#mapcreator/shared/utils/mapcreator.utils.js");
@@ -70,14 +70,14 @@ async function createMap(userId, gameMapID, title, file) {
 
         const newMapId = await database.insertMap(dbConnection, title, gameMapID, imageId);
 
-        // private/userId/gameMapId/mapId/
+        // backend/uploads/mapdatas/:userId/:gameMapId/:mapId/
         let relativeDestDir = path.join(
             userId.toString(),
             gameMapID.toString(),
             newMapId.toString()
         );
         let targetPath = path.join(
-            UPLOAD_ROOT,
+            UPLOAD_ROOT_MAP_DATA,
             relativeDestDir
         );
         let baseName = newMapId.toString() + "_" + crypto.randomBytes(4).toString("hex");
@@ -144,16 +144,16 @@ async function deleteMap(userId, mapID) {
         await dbConnection.commit();
 
         let gameMapID = mapInfo.game_maps_id;
-        // userId/gameMapId/mapId/
+        // :userId/:gameMapId/:mapId/
         let relativeDestDir = path.join(
             userId.toString(),
             gameMapID.toString(),
             mapID.toString()
         );
 
-        // private/userId/gameMapId/mapId/
+        // backend/uploads/mapdatas/:userId/:gameMapId/:mapId/
         let targetPath = path.join(
-            UPLOAD_ROOT,
+            UPLOAD_ROOT_MAP_DATA,
             relativeDestDir
         );
 

@@ -3,7 +3,7 @@ const AppError = require("#utils/AppError.js");
 const fs = require("fs/promises");
 const path = require("path");
 const crypto = require("crypto");
-const { UPLOAD_ROOT, isInsideRoot } = require("#config/mapStorage.js");
+const { UPLOAD_ROOT_MAP_DATA, isInsideRoot } = require("#config/mapStorage.js");
 const { processImageMetadata, createWebpAndLowRes, deleteImageAndLowResByMainPath } = require("#utils/imageProcessor.js");
 const { deleteFile } = require("#utils/fileUtils.js");
 const { assertUserOwnsMap, assertUserOwnsPoint, cleanupAfterError } = require("#mapcreator/shared/utils/mapcreator.utils.js");
@@ -71,7 +71,7 @@ async function updatePoint(userId, pointID, pointData, file) {
                 pointID.toString()
             );
             let targetPath = path.join(
-                UPLOAD_ROOT,
+                UPLOAD_ROOT_MAP_DATA,
                 relativeDestDir
             );
             let baseName = pointID.toString() + "_" + crypto.randomBytes(4).toString("hex");
@@ -100,7 +100,7 @@ async function updatePoint(userId, pointID, pointData, file) {
             await dbConnection.commit();
 
             if (oldImageInfo && oldImageInfo.filepath) {
-                let absoluteOldPath = path.join(UPLOAD_ROOT, oldImageInfo.filepath);
+                let absoluteOldPath = path.join(UPLOAD_ROOT_MAP_DATA, oldImageInfo.filepath);
                 deleteImageAndLowResByMainPath(absoluteOldPath)
                     .catch(function () {
                         console.error("unsuccessful deletion: " + absoluteOldPath);
@@ -164,7 +164,7 @@ async function createPoint(userId, mapID, pointData, file) {
 
         let newPointId = await database.insertPoint(dbConnection, mapID, uCoordinate, vCoordinate, northDirection, imageId);
 
-        // private/userId/gameMapId/mapId/point_images/pointID/
+        // backend/uploads/mapdatas/:userId/:gameMapId/:mapId/point_images/:pointID/
         let relativeDestDir = path.join(
             userId.toString(),
             gameMapID.toString(),
@@ -173,7 +173,7 @@ async function createPoint(userId, mapID, pointData, file) {
             newPointId.toString()
         );
         let targetPath = path.join(
-            UPLOAD_ROOT,
+            UPLOAD_ROOT_MAP_DATA,
             relativeDestDir
         );
         let baseName = newPointId.toString() + "_" + crypto.randomBytes(4).toString("hex");
@@ -240,7 +240,7 @@ async function deletePoint(userId, pointID) {
 
         let gameMapID = pointInfo.game_maps_id;
         let mapID = pointInfo.map_id;
-        // userId/gameMapId/mapId/point_images/pointID/
+        // :userId/:gameMapId/:mapId/point_images/:pointID/
         let relativeDestDir = path.join(
             userId.toString(),
             gameMapID.toString(),
@@ -249,9 +249,9 @@ async function deletePoint(userId, pointID) {
             pointID.toString()
         );
 
-        // private/userId/gameMapId/mapId/point_images/pointID/
+        // backend/uploads/mapdatas/:userId/:gameMapId/:mapId/point_images/:pointID/
         let targetPath = path.join(
-            UPLOAD_ROOT,
+            UPLOAD_ROOT_MAP_DATA,
             relativeDestDir
         );
 

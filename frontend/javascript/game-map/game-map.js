@@ -24,6 +24,7 @@ async function init() {
 
 document.addEventListener("DOMContentLoaded", init);
 
+// TODO: isowner elkeszitese
 // TODO: cover image betoltese
 // TODO: cover image szerkesztesee
 // TODO: cim, leiras szerkesztese

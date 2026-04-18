@@ -1,10 +1,6 @@
 import { CONSTANTS } from "./constants.js";
 
-export function createSpinnerIcon() {
-    const div = document.createElement("div");
-    div.className = "spinner-border spinner-border-sm";
-    return div;
-}
+export { createSpinnerIcon } from "../../libs/utils.js";
 
 export async function readImageFile(file) {
     let url = URL.createObjectURL(file);

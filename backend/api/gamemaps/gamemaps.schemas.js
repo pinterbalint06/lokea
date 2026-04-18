@@ -49,9 +49,29 @@ const getGameMapDetailsSchema = {
         })
 };
 
+const getGameMapCoverImageSchema = {
+    params:
+        joi.object({
+            gameMapID: idSchema(ERRORS.GAMEMAP.INVALID_ID)
+        }),
+    query:
+        joi.object({
+            resolution
+        })
+};
+
+const putGameMapCoverImageSchema = {
+    params:
+        joi.object({
+            gameMapID: idSchema(ERRORS.GAMEMAP.INVALID_ID)
+        })
+};
+
 module.exports = {
     getPointImageSchema,
     getMapImageSchema,
     getPointConnectionsSchema,
-    getGameMapDetailsSchema
+    getGameMapDetailsSchema,
+    getGameMapCoverImageSchema,
+    putGameMapCoverImageSchema
 };
