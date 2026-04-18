@@ -14,6 +14,7 @@ const mockDatabase = {
     checkUserOwnsConnection: jest.fn().mockResolvedValue(true),
 
     updateMapTitle: jest.fn().mockResolvedValue(true),
+    getGameMapDetails: jest.fn(),
     getMapsByGameMapId: jest.fn(),
     getMapInfo: jest.fn(),
     insertMap: jest.fn(),

@@ -27,15 +27,24 @@ CREATE TABLE users (
 CREATE TABLE game_maps (
     game_maps_id int AUTO_INCREMENT PRIMARY KEY NOT NULL,
     creator_id int,
-    title varchar(50) NOT NULL,
+    title varchar(50) NOT NULL DEFAULT 'Névtelen pálya',
     cover_image_id int,
-    rating float DEFAULT 0,
-    rating_count int DEFAULT 0,
-    plays int DEFAULT 0,
     game_description varchar(255) DEFAULT 'Nem található leírás',
     game_created TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     foreign key (creator_id) references users(user_id) ON DELETE SET NULL,
     foreign key (cover_image_id) references images(image_id) ON DELETE SET NULL
+);
+
+CREATE TABLE game_maps_comments (
+    comment_id int AUTO_INCREMENT PRIMARY KEY NOT NULL,
+    game_maps_id int,
+    user_id int,
+    comment_text varchar(255) NOT NULL,
+    rating int NOT NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    foreign key (game_maps_id) references game_maps(game_maps_id) ON DELETE CASCADE,
+    foreign key (user_id) references users(user_id) ON DELETE SET NULL,
+    CONSTRAINT check_rating_range CHECK (rating >= 1 AND rating <= 5)
 );
 
 CREATE TABLE map (

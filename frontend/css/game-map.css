@@ -59,54 +59,49 @@ main {
     padding-right: 0.2rem;
 }
 
-.leaderboard-item {
-    display: grid;
-    grid-template-columns: 2rem minmax(0, 1fr) auto;
-    gap: 0.65rem;
+.score-item {
+    display: flex;
     align-items: center;
+    gap: 0.65rem;
     border: 1px solid var(--surface-glass-border);
     border-radius: 0.8rem;
     background: var(--surface-glass-soft);
     padding: 0.65rem 0.75rem;
 }
 
-.leaderboard-rank {
-    display: inline-flex;
-    justify-content: center;
-    align-items: center;
-    width: 2rem;
+.score-rank {
+    min-width: 2rem;
     height: 2rem;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
     border-radius: 999px;
     background: rgba(255, 216, 107, 0.18);
     color: #ffd86b;
-    font-size: 0.88rem;
     font-weight: 700;
+    font-size: 0.88rem;
 }
 
-.leaderboard-main {
+.score-main {
+    flex: 1;
     min-width: 0;
 }
 
-.leaderboard-name {
+.score-name {
     margin: 0;
-    color: var(--text-main);
     font-weight: 600;
-    font-size: 0.92rem;
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
 }
 
-.leaderboard-sub {
-    margin: 0.1rem 0 0;
-    color: rgba(255, 255, 255, 0.7);
-    font-size: 0.76rem;
+.score-time {
+    color: rgba(255, 255, 255, 0.62);
 }
 
-.leaderboard-score {
-    color: #8fd5ff;
-    font-size: 0.93rem;
+.score-value {
     font-weight: 700;
+    color: #8fd5ff;
 }
 
 #playMapButton {
@@ -118,6 +113,7 @@ main {
 
 .cover-image-wrapper {
     min-height: 320px;
+    background: rgba(10, 6, 16, 0.48);
 }
 
 .cover-image {
@@ -161,6 +157,17 @@ main {
     font-size: clamp(1.45rem, 2.5vw, 2.2rem);
     line-height: 1.2;
     color: var(--text-main);
+}
+
+.game-creator {
+    font-size: 0.84rem;
+    color: rgba(255, 255, 255, 0.72);
+    letter-spacing: 0.02em;
+}
+
+.game-creator-value {
+    color: rgba(255, 255, 255, 0.95);
+    font-weight: 600;
 }
 
 .section-title {
@@ -306,6 +313,16 @@ main {
 
     .meta-grid {
         grid-template-columns: 1fr;
+    }
+
+    .cover-image-wrapper {
+        min-height: 260px;
+    }
+
+    .cover-image {
+        min-height: 0;
+        object-fit: contain;
+        object-position: center;
     }
 
     #playMapButton {

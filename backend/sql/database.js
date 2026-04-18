@@ -664,6 +664,60 @@ async function isConnectionCrossMap(connection, connectionId) {
     return rows[0].start_map_id != rows[0].end_map_id;
 }
 
+async function getGameMapDetails(gameMapID) {
+    const query = `
+        SELECT
+            users.username AS creator_name,
+            game_maps.title,
+            COALESCE(
+                (
+                    SELECT ROUND(AVG(game_maps_comments.rating), 1)
+                    FROM game_maps_comments
+                    WHERE game_maps_comments.game_maps_id = ?
+                ),
+                0
+            ) AS rating,
+            (
+                SELECT COUNT(*)
+                FROM scores
+                WHERE scores.game_maps_id = ?
+            ) AS plays,
+            game_maps.game_created,
+            game_maps.game_description
+        FROM game_maps
+            INNER JOIN users ON (game_maps.creator_id = users.user_id)
+        WHERE game_maps.game_maps_id = ?
+    `;
+    const [rows] = await pool.execute(query, [gameMapID, gameMapID, gameMapID]);
+    return rows.length > 0 ? rows[0] : null;
+}
+
+async function getTopScoresForGameMap(gameMapID) {
+    const query = `
+        SELECT 
+            users.username,
+            scores.score,
+            scores.score_time
+        FROM scores
+            INNER JOIN users ON (scores.user_id = users.user_id)
+        WHERE scores.game_maps_id = ?
+        ORDER BY scores.score DESC
+        LIMIT 5
+    `;
+    const [rows] = await pool.execute(query, [gameMapID]);
+    return rows;
+}
+
+async function doesGameMapExist(gameMapId) {
+    const query = `
+        SELECT COUNT(*) as count
+        FROM game_maps
+        WHERE game_maps.game_maps_id = ?
+    `;
+    const [rows] = await pool.execute(query, [gameMapId]);
+    return rows[0].count > 0;
+}
+
 //!Export
 module.exports = {
     // selectall,
@@ -714,5 +768,8 @@ module.exports = {
     getAllImageIdsForMap,
     arePointsInSameMap,
     updateConnectionDirections,
-    isConnectionCrossMap
+    isConnectionCrossMap,
+    getGameMapDetails,
+    getTopScoresForGameMap,
+    doesGameMapExist
 };

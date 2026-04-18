@@ -37,8 +37,21 @@ async function getPointConnections(pointID) {
     return await database.getConnectionsByPointId(pointID);
 }
 
+async function getGameMapDetails(gameMapID) {
+    let retunData = null;
+    const gameMapDetails = await database.getGameMapDetails(gameMapID);
+
+    if (gameMapDetails) {
+        const topScores = await database.getTopScoresForGameMap(gameMapID);
+        retunData = { ...gameMapDetails, top_scores: topScores };
+    }
+
+    return retunData;
+}
+
 module.exports = {
     getPointImageDetails,
     getMapImageDetails,
-    getPointConnections
+    getPointConnections,
+    getGameMapDetails
 };

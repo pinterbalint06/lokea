@@ -7,7 +7,7 @@
     <title>Lokea</title>
     <link href="/bootstrap/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="/css/game-map.css">
-    <script type="module" src="/javascript/game/game-map.js"></script>
+    <script type="module" src="/javascript/game-map/game-map.js"></script>
 </head>
 
 <body class="lilagradiensbg">
@@ -29,7 +29,7 @@
                                 <img id="coverImage" class="cover-image" src="/images/worldmap.webp"
                                     alt="Pálya borítókép">
                                 <div class="cover-overlay p-3">
-                                    <div class="d-flex align-items-center gap-2">
+                                    <div class="d-flex align-items-center gap-2 flex-wrap">
                                         <span class="small text-uppercase opacity-75">Értékelés</span>
                                         <div id="displayRatingStars" class="rating-stars" style="--rating: 0;"></div>
                                         <span id="displayRatingValue" class="small fw-semibold">0.0</span>
@@ -48,60 +48,22 @@
                                 </article>
                             </div>
 
-                            <section id="leaderboardPanel" class="uveg rounded-4 p-3 p-lg-4">
+                            <section id="leaderboardPanel" class="uveg rounded-4 p-3">
                                 <h2 class="section-title mb-3">Rangsor</h2>
-                                <div id="leaderboardList" class="leaderboard-list" aria-live="polite">
-                                    <article class="leaderboard-item d-flex align-items-center gap-2 flex-wrap">
-                                        <span class="leaderboard-rank flex-shrink-0">1</span>
-                                        <div class="flex-grow-1 min-w-0">
-                                            <p class="mb-0 fw-semibold text-truncate">Laszti1</p>
-                                            <p class="mb-0 small opacity-75">Lejátszások: 34</p>
-                                        </div>
-                                        <span class="leaderboard-score flex-shrink-0">1280</span>
-                                    </article>
-                                    <article class="leaderboard-item d-flex align-items-center gap-2 flex-wrap">
-                                        <span class="leaderboard-rank flex-shrink-0">2</span>
-                                        <div class="flex-grow-1 min-w-0">
-                                            <p class="mb-0 fw-semibold text-truncate">Laszti2</p>
-                                            <p class="mb-0 small opacity-75">Lejátszások: 28</p>
-                                        </div>
-                                        <span class="leaderboard-score flex-shrink-0">1175</span>
-                                    </article>
-                                    <article class="leaderboard-item d-flex align-items-center gap-2 flex-wrap">
-                                        <span class="leaderboard-rank flex-shrink-0">3</span>
-                                        <div class="flex-grow-1 min-w-0">
-                                            <p class="mb-0 fw-semibold text-truncate">Laszti3</p>
-                                            <p class="mb-0 small opacity-75">Lejátszások: 22</p>
-                                        </div>
-                                        <span class="leaderboard-score flex-shrink-0">1090</span>
-                                    </article>
-                                    <article class="leaderboard-item d-flex align-items-center gap-2 flex-wrap">
-                                        <span class="leaderboard-rank flex-shrink-0">4</span>
-                                        <div class="flex-grow-1 min-w-0">
-                                            <p class="mb-0 fw-semibold text-truncate">Laszti4</p>
-                                            <p class="mb-0 small opacity-75">Lejátszások: 18</p>
-                                        </div>
-                                        <span class="leaderboard-score flex-shrink-0">980</span>
-                                    </article>
-                                    <article class="leaderboard-item d-flex align-items-center gap-2 flex-wrap">
-                                        <span class="leaderboard-rank flex-shrink-0">5</span>
-                                        <div class="flex-grow-1 min-w-0">
-                                            <p class="mb-0 fw-semibold text-truncate">Laszti5</p>
-                                            <p class="mb-0 small opacity-75">Lejátszások: 15</p>
-                                        </div>
-                                        <span class="leaderboard-score flex-shrink-0">905</span>
-                                    </article>
-                                </div>
+                                <div id="leaderboardList" class="leaderboard-list" aria-live="polite"></div>
                             </section>
                         </div>
                     </div>
 
                     <div class="col-12 col-xl-7">
                         <div class="d-flex flex-column gap-3">
-                            <section class="uveg rounded-4 p-3 p-lg-4">
+                            <section class="uveg rounded-4 p-3 gap-3 d-flex flex-column">
                                 <div class="d-flex flex-wrap justify-content-between align-items-start gap-2">
                                     <div class="flex-grow-1">
                                         <h1 id="titleDisplay" class="game-title m-0">Teszt</h1>
+                                        <p class="game-creator mb-0 mt-1">
+                                            Készítő: <span id="creatorValue" class="game-creator-value">-</span>
+                                        </p>
                                         <input id="titleInput" type="text" class="form-control uvegform d-none mt-1"
                                             maxlength="50" placeholder="Adj meg egy címet...">
                                     </div>
@@ -111,18 +73,18 @@
                                     </button>
                                 </div>
 
-                                <div class="mt-3">
+                                <div>
                                     <h2 class="section-title mb-2">Leírás</h2>
                                     <p id="descriptionDisplay" class="description-text mb-0">Teszt leírás...</p>
                                     <textarea id="descriptionInput" class="form-control uvegform d-none mt-2" rows="4"
                                         maxlength="255" placeholder="Írj rövid leírást a pályáról..."></textarea>
 
-                                    <div id="metadataEditActions" class="d-flex flex-wrap gap-2 mt-3 d-none">
-                                        <button id="saveMetadataBtn" type="button"
+                                    <div id="detailsEditActions" class="d-flex flex-wrap gap-2 mt-3 d-none">
+                                        <button id="saveDetailsBtn" type="button"
                                             class="btn uvegbutton rounded-pill px-3">
                                             Változások mentése
                                         </button>
-                                        <button id="cancelMetadataBtn" type="button"
+                                        <button id="cancelDetailsBtn" type="button"
                                             class="btn btn-outline-secondary rounded-pill px-3">
                                             Mégse
                                         </button>
@@ -139,7 +101,7 @@
                                 </div>
                             </section>
 
-                            <section class="uveg rounded-4 p-3 p-lg-4 comments-section">
+                            <section class="uveg rounded-4 p-3 comments-section">
                                 <h2 class="section-title mb-0">Hozzászólások</h2>
 
 

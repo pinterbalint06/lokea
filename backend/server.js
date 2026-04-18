@@ -7,6 +7,7 @@ const database = require("./sql/database.js");
 const auth = require('./auth.js')
 const { idSchema } = require('./utils/schemas.js');
 const ERRORS = require('./utils/errorMessages.js');
+const AppError = require('#utils/AppError.js');
 
 //!Beállítások
 const app = express();
@@ -107,14 +108,23 @@ router.get('/game-maps/:gameMapId', async (request, response) => {
             convert: true
         });
 
+        const doesGameMapExist = await database.doesGameMapExist(request.params.gameMapId);
+        if (!doesGameMapExist) {
+            throw new AppError(ERRORS.GAMEMAP.NOT_FOUND, 404);
+        }
+
         response.sendFile(path.join(__dirname, '../frontend/html/game-map.html'));
     } catch (error) {
         if (error.isJoi) {
             // TODO: valami oldal ennek
             response.status(400).json({ error: error.details[0].message });
         } else {
-            console.error(error);
-            response.status(500).send();
+            if (error instanceof AppError && error.statusCode == 404) {
+                response.status(404).sendFile(path.join(__dirname, '../frontend/html/notfound.html'));
+            } else {
+                console.error(error);
+                response.status(500).send();
+            }
         }
     }
 });

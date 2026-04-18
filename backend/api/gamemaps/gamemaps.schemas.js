@@ -42,8 +42,16 @@ const getPointConnectionsSchema = {
         })
 };
 
+const getGameMapDetailsSchema = {
+    params:
+        joi.object({
+            gameMapID: idSchema(ERRORS.GAMEMAP.INVALID_ID)
+        })
+};
+
 module.exports = {
     getPointImageSchema,
     getMapImageSchema,
-    getPointConnectionsSchema
+    getPointConnectionsSchema,
+    getGameMapDetailsSchema
 };

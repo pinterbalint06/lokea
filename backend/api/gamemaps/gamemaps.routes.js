@@ -33,6 +33,12 @@ router.get(
     isAllowedToAccessPoint,
     controller.getPointConnections);
 
+//?GET /api/game-maps/:gameMapID
+router.get(
+    "/:gameMapID",
+    validateRequest(schemas.getGameMapDetailsSchema),
+    controller.getGameMapDetails);
+
 router.use(async (error, request, response, next) => {
     let statusCode = 500;
     let errorMessage = ERRORS.COMMON.UNEXPECTED_ERROR;

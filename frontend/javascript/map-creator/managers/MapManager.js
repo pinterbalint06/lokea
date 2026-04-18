@@ -192,8 +192,8 @@ export class MapManager {
             if (mapId == CONSTANTS.TEMP_ID) {
                 this.viewer.clearMarkersAndLines();
                 await this.viewer.loadMap(mapData.temporaryURL, mapData.imgWidth, mapData.imgHeight);
-                // show change toast for 1 sec after the map was loaded then hide it
-                setTimeout(() => this.bus.emit(EVENTS.TOAST_HIDE_ID, { id: `mapSwitching${mapId}-${randomIdForToast}` }), 1000);
+                // show change toast for 0.5 sec after the map was loaded then hide it
+                setTimeout(() => this.bus.emit(EVENTS.TOAST_HIDE_ID, { id: `mapSwitching${mapId}-${randomIdForToast}` }), 500);
             } else {
                 try {
                     this.abortController = new AbortController();
@@ -219,7 +219,7 @@ export class MapManager {
                         this.bus.emit(EVENTS.TOAST_SHOW, { msg: "Hiba a kép betöltésekor!", type: "danger" });
                     }
                 } finally {
-                    setTimeout(() => this.bus.emit(EVENTS.TOAST_HIDE_ID, { id: `mapSwitching${mapId}-${randomIdForToast}` }));
+                    setTimeout(() => this.bus.emit(EVENTS.TOAST_HIDE_ID, { id: `mapSwitching${mapId}-${randomIdForToast}` }), 500);
                     if (this.abortController && this.activeLoadGeneration == loadGeneration) {
                         this.abortController = null;
                     }
