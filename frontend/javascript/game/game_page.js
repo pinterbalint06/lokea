@@ -144,10 +144,8 @@ async function startGame() {
 
 async function createPoint() {
     try {
-        const [pointData] = await Promise.all([
-            fetchGameData('http://127.0.0.1:3000/api/game/get_random_point'),
-            createCountdownTimer()
-        ]);
+        const pointData = await fetchGameData('http://127.0.0.1:3000/api/game/get_random_point')
+        console.log(pointData);
         if (!pointData.success || !pointData.point) throw new Error("Failed to fetch random point");
         const point = pointData.point;
         equirectangularViewer.loadImage(
@@ -158,6 +156,7 @@ async function createPoint() {
     } catch (error) {
         console.error("Error creating point:", error);
     }
+    await createCountdownTimer();
 }
 
 function nextMap() {

@@ -106,6 +106,7 @@ CREATE TABLE game_sessions (
     finished_at TIMESTAMP NULL,
     total_score INT DEFAULT 0,
     current_cycle INT NOT NULL DEFAULT 1,
+    current_round INT NOT NULL DEFAULT 0,
     rounds INT NOT NULL DEFAULT 5,
     sharpness FLOAT NOT NULL DEFAULT -3,
     time_per_round INT NOT NULL DEFAULT 30,
