@@ -10,3 +10,23 @@ INSERT INTO game_maps (creator_id, title, cover_image_id, rating) VALUES
 (1, "testgame", 1, 5.8);
 INSERT INTO game_maps (creator_id, title, cover_image_id, rating) VALUES 
 (1, "testgame", 1, 2);
+
+INSERT INTO map (title, game_maps_id, image_id) VALUES 
+('testmap', 1, 1);
+
+INSERT INTO images (width, height, filepath) VALUES 
+(2048, 1024, 'maps/testmap1.webp'),
+(640, 320, 'maps/testmap2.webp'),
+(1024, 512, 'points/testpoint1.webp'),
+(1024, 512, 'points/testpoint2.webp'),
+(1024, 512, 'points/testpoint3.webp');
+
+INSERT INTO points (map_id, point_x, point_y, north_direction, image_id) VALUES 
+(1, 120, 140, 0, 2),
+(1, 420, 180, 90, 3),
+(1, 250, 350, 180, 4);
+
+INSERT INTO point_connections (start_point_id, end_point_id, game_maps_id) VALUES 
+(1, 2, 1),
+(2, 3, 1),
+(3, 1, 1);

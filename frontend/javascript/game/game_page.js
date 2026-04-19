@@ -30,14 +30,36 @@ const mapImage = {
 
 document.addEventListener("DOMContentLoaded", function () {
     init();
+    createCountdownTimer();
 });
 
+function showCountdownStep(overlay, numberEl, steps, i, resolve) {
+    numberEl.textContent = steps[i];
+    numberEl.style.animation = "none";
+    numberEl.offsetHeight; // reflow to restart animation
+    numberEl.style.animation = "";
 
-function formatSecondsToMinutes(seconds) {
-    let minutesPart = Math.floor(seconds / 60).toString().padStart(2, "0");
-    let secondsPart = (seconds % 60).toString().padStart(2, "0");
-    return `${minutesPart}:${secondsPart}`;
+    i++;
+    if (i < steps.length) {
+        setTimeout(() => showCountdownStep(overlay, numberEl, steps, i, resolve), 1000);
+    } else {
+        setTimeout(() => {
+            overlay.classList.remove("active");
+            resolve();
+        }, 1000);
+    }
 }
+
+function createCountdownTimer() {
+    return new Promise(resolve => {
+        const overlay = document.getElementById("countdownOverlay");
+        const numberEl = document.getElementById("countdownNumber");
+        const steps = ["3", "2", "1", "Rajt!"];
+        overlay.classList.add("active");
+        showCountdownStep(overlay, numberEl, steps, 0, resolve);
+    });
+}
+
 function init() {
     mapViewerEngine = new MapViewer(mapCanvasId, {
         "canvasWidth": mapCanvasWidth,
