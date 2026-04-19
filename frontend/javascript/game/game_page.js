@@ -1,12 +1,7 @@
 import { MapViewer } from "../libs/viewer/MapViewer.js";
 import { EquirectangularViewer } from "../libs/viewer/EquirectangularViewer.js";
 
-const pictureCanvasWidth = document.getElementById("pictureCanvas").width;
-const pictureCanvasHeight = document.getElementById("pictureCanvas").height;
 const pictureCanvasId = "pictureCanvas";
-
-const mapCanvasWidth = document.getElementById("mapCanvas").width;
-const mapCanvasHeight = document.getElementById("mapCanvas").height;
 const mapCanvasId = "mapCanvas";
 
 /** 
@@ -28,9 +23,12 @@ const mapImage = {
     "height": 1920
 };
 
+var gameMaps = [];
+var gameMapsIndex = 0;
+
 document.addEventListener("DOMContentLoaded", function () {
     init();
-    createCountdownTimer();
+    startGame();
 });
 
 function showCountdownStep(overlay, numberEl, steps, i, resolve) {
@@ -61,34 +59,9 @@ function createCountdownTimer() {
 }
 
 function init() {
-    mapViewerEngine = new MapViewer(mapCanvasId, {
-        "canvasWidth": mapCanvasWidth,
-        "canvasHeight": mapCanvasHeight
-    });
-    mapViewerEngine.loadMap(mapImage.url, mapImage.width, mapImage.height)
-        .then(function () {
-            console.log("image loaded");
-        }).catch(function (e) {
-            console.log(e);
-            for (const key in e) {
-                console.log(key, e[key]);
-            }
-        });
+    mapViewerEngine = new MapViewer(mapCanvasId);
     document.getElementById("autoRotate").addEventListener("change", setAutoRotate);
-
-    equirectangularViewer = new EquirectangularViewer(pictureCanvasId, {
-        "canvasWidth": pictureCanvasWidth,
-        "canvasHeight": pictureCanvasHeight
-    }
-    );
-    equirectangularViewer.loadImage(pictureImage.url, pictureImage.width, pictureImage.height).then(function () {
-        console.log("image loaded");
-    }).catch(function (e) {
-        console.log(e);
-        for (const key in e) {
-            console.log(key, e[key]);
-        }
-    });
+    equirectangularViewer = new EquirectangularViewer(pictureCanvasId);
 }
 
 
@@ -99,6 +72,14 @@ function mapFullScreen() {
 function markerPosition() {
     console.log(mapViewerEngine.getMarkerPosition(0));
     return mapViewerEngine.getMarkerPosition(0);
+}
+
+function doesmarkerExist() {
+    return mapViewerEngine.doesMarkerExist(0);
+}
+
+function removeMarker() {
+    mapViewerEngine.removeMarker(0);
 }
 
 function setAutoRotate() {
@@ -114,7 +95,158 @@ function clearImage() {
     equirectangularViewer.clearImage();
 }
 
+let resolveGuess = null;
+let resolveNext = null;
+
+function waitForGuess() {
+    return new Promise(resolve => { resolveGuess = resolve; });
+}
+
+function waitForNext() {
+    return new Promise(resolve => { resolveNext = resolve; });
+}
+
+function nextRound() {
+    if (resolveNext) {
+        resolveNext();
+        resolveNext = null;
+    }
+}
+
+async function startGame() {
+    try {
+        const gameData = await fetchGameData('http://127.0.0.1:3000/api/game/get_game_info');
+        const mapsData = await fetchGameData('http://127.0.0.1:3000/api/game/get_all_maps');
+
+        if (!gameData.success || !gameData.game) throw new Error("Failed to fetch game info");
+        if (!mapsData.success || !mapsData.maps) throw new Error("Failed to fetch game maps");
+
+        gameMaps = mapsData.maps;
+        nextMap();
+
+        const roundCount = gameData.game.rounds;
+        const roundTime = gameData.game.roundTime;
+
+        for (let i = 0; i < roundCount; i++) {
+            if (doesmarkerExist()) {
+                removeMarker();
+            }
+            await createPoint();
+            startRoundTimer(roundTime);
+            await waitForGuess();
+            await waitForNext();
+        }
+        console.log("Game over");
+    } catch (error) {
+        console.error("Error starting game:", error);
+    }
+}
+
+async function createPoint() {
+    try {
+        const [pointData] = await Promise.all([
+            fetchGameData('http://127.0.0.1:3000/api/game/get_random_point'),
+            createCountdownTimer()
+        ]);
+        if (!pointData.success || !pointData.point) throw new Error("Failed to fetch random point");
+        const point = pointData.point;
+        equirectangularViewer.loadImage(
+            `data:${point.image.mime_type};base64,${point.image.base64}`,
+            point.image.width, point.image.height
+        ).then(() => console.log("Game image loaded:", point.point_id))
+            .catch(e => console.error("Failed to load game image:", e));
+    } catch (error) {
+        console.error("Error creating point:", error);
+    }
+}
+
+function nextMap() {
+    if (gameMaps.length <= gameMapsIndex) {
+        gameMapsIndex = 0;
+    }
+    const map = gameMaps[gameMapsIndex];
+    gameMapsIndex++;
+    const imageDataUrl = `data:${map.image.mime_type};base64,${map.image.base64}`;
+    mapViewerEngine.loadMap(imageDataUrl, map.image.width, map.image.height)
+        .then(function () {
+            console.log("Game map loaded:", map.map_id);
+        })
+        .catch(function (e) {
+            console.error("Failed to load game map:", e);
+        });
+    if (doesmarkerExist()) {
+        removeMarker();
+    }
+}
+
+let timerInterval = null;
+let timeLeft = 0;
+
+function startRoundTimer(seconds) {
+    timeLeft = seconds;
+    timerInterval = setInterval(() => {
+        timeLeft--;
+        document.getElementById("timer").textContent = timeLeft;
+        if (timeLeft <= 0) {
+            sendGuess(); // auto-submit when time runs out
+        }
+    }, 1000);
+}
+
+function stopRoundTimer() {
+    clearInterval(timerInterval);
+    timerInterval = null;
+}
+
+async function sendGuess() {
+    stopRoundTimer();
+    let sendData;
+    if (!doesmarkerExist()) {
+        sendData = { x: -1, y: -1 };
+    }
+    else {
+        sendData = markerPosition();
+    }
+    sendData.timeLeft = timeLeft;
+    try {
+        const response = await fetch('http://127.0.0.1:3000/api/game/session_guess', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify(sendData)
+        });
+        const result = await response.json();
+        console.log(result);
+    } catch (error) {
+        console.error("Error sending guess:", error);
+    }
+    if (resolveGuess) {
+        resolveGuess();
+        resolveGuess = null;
+    }
+}
+
+
+async function fetchGameData(url) {
+    let re;
+    try {
+        const response = await fetch(url);
+        if (!response.ok) {
+            throw new Error('Hiba a játék adatok lekérésekor: ' + response.statusText);
+        }
+        re = await response.json();
+    } catch (error) {
+        re = { message: error.message };
+    }
+    return re;
+}
+
 window.mapFullScreen = mapFullScreen;
 window.markerPosition = markerPosition;
 window.pictureFullScreen = pictureFullScreen;
 window.clearImage = clearImage;
+window.startGame = startGame;
+window.nextMap = nextMap;
+window.nextRound = nextRound;
+window.sendGuess = sendGuess;

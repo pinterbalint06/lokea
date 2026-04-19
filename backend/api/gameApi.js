@@ -47,9 +47,11 @@ router.get('/get_game_info', async (request, response) => {
         }
         response.status(200).json({
             success: true,
-            title: game.gameTitle,
-            rounds: game.rounds,
-            roundTime: game.roundTime,
+            game: {
+                title: game.gameTitle,
+                rounds: game.rounds,
+                roundTime: game.roundTime
+            }
         });
     } catch (error) {
         if (error.statusCode) {
@@ -142,12 +144,14 @@ router.get("/get_all_maps", async (request, response) => {
 
 router.post('/session_guess', async (request, response) => {
     try {
+        //TODO: map ellenőrzése
         const sessionId = request.session?.game.activeSessionId || 1; //TODO: törlés amikor login kész lesz
         const game = request.session.game;
         const guessx = parseFloat(request.body.x);
         const guessy = parseFloat(request.body.y);
         const timeLeft = parseInt(request.body.timeLeft);
         const timePunishment = game.roundTime - 5;
+        const minTimeMultiplier = 0.1;
         let score;
         let reJson;
         if (!sessionId) {
@@ -165,7 +169,7 @@ router.post('/session_guess', async (request, response) => {
             err.statusCode = 400;
             throw err;
         }
-        if (guessx < 0 || guessy < 0 || timeLeft <= 0) {
+        if (guessx < 0 || guessy < 0) {
             score = 0;
             reJson = { success: true, score: score, distance: null };
             await database.saveGuess(sessionId, game.point.pointId, guessx, guessy, -1, 0, game.currentCycle);
@@ -178,8 +182,10 @@ router.post('/session_guess', async (request, response) => {
             const pixelDistance = Math.round(Math.sqrt(pixelDx * pixelDx + pixelDy * pixelDy));
             if (timeLeft > timePunishment && timeLeft <= game.roundTime) {
                 score = Math.round(5000 * Math.exp(game.sharpness * (distance / Math.SQRT2)));
+            } else if (timeLeft == 0) {
+                score = Math.round(5000 * Math.exp(game.sharpness * (distance / Math.SQRT2)) * minTimeMultiplier);
             } else {
-                score = Math.round(5000 * Math.exp(game.sharpness * (distance / Math.SQRT2))) * (timeLeft / timePunishment);
+                score = Math.round(5000 * Math.exp(game.sharpness * (distance / Math.SQRT2)) * (timeLeft / timePunishment));
             }
             reJson = { success: true, score: score, distance: pixelDistance };
             await database.saveGuess(sessionId, game.point.pointId, guessx, guessy, distance, score, game.currentCycle);
