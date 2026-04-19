@@ -23,11 +23,11 @@ export function validalvaBej(user, pass) {
     let fail = false;
     let username = user.value;
     let password = pass.value;
-    if (username.length > 50 || username.length < 1) {
+    if (username.length > 20 || username.length < 1) {
         fail = true;
         wrongInput(user);
     }
-    if (password.length > 50 || password.length < 8) {
+    if (password.length > 60 || password.length < 8) {
         fail = true;
         wrongInput(pass);
     }
@@ -35,15 +35,15 @@ export function validalvaBej(user, pass) {
 }
 
 export function validalvaUsername(username) {
-    return username.length < 50 && username.length >= 1 && isCorrectUsername(username);
+    return username.length < 20 && username.length >= 1 && isCorrectUsername(username);
 }
 
 export function validalvaEmail(email) {
-    return email.length < 250 && email.length > 5 && isEmail(email);
+    return email.length < 255 && email.length > 5 && isEmail(email);
 }
 
 export function validalvaJelszo(password) {
-    return password.length < 50 && password.length > 7 && isCorrectPassword(password);
+    return password.length < 61 && password.length > 7 && isCorrectPassword(password);
 }
 
 function isCorrectUsername(username) {

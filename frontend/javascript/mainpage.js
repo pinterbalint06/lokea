@@ -29,20 +29,21 @@ document.addEventListener("DOMContentLoaded", async function () {
 })
 
 async function isLogined() {
+    let loginStatus = false;
     try {
         let response = await fetch("/api/loginRole");
         let data = await response.json();
         if (response.ok) {
-            if (data.login) {
+            loginStatus = data.login;
+            if (loginStatus) {
                 if (data.adminLink) {
-                    await dropdownLetrehoz(data.adminLink, data.user[0].username, data.user[0].filepath);
+                    await dropdownLetrehoz(data.adminLink, data.user.username, data.user.filepath);
                 }
                 else {
-                    await dropdownLetrehoz(null, data.user[0].username, data.user[0].filepath);
+                    await dropdownLetrehoz(null, data.user.username, data.user.filepath);
                 }
                 let body = document.body;
-                console.log(data)
-                if (data.user[0].darkmode == 1) {
+                if (data.user.darkmode == 1) {
                     body.setAttribute('data-bs-theme', 'dark');
                 }
                 else {
@@ -50,11 +51,10 @@ async function isLogined() {
                 }
             }
         }
-
-        return data.login;
     } catch (error) {
         console.log(`hálózati hiba: ${error}`);
     }
+    return loginStatus;
 }
 
 async function bejelentkezes(username, jelszo, remember) {
@@ -90,7 +90,6 @@ async function bejelentkezesAnimacio(username, jelszo, remember) {
     try {
         let response = await bejelentkezes(username, jelszo, remember);
         let data = await response.json();
-        console.log(data);
         setTimeout(() => {
             container.classList.remove('spinning');
             title.innerHTML = "";
@@ -114,7 +113,14 @@ async function bejelentkezesAnimacio(username, jelszo, remember) {
 
                 title.innerText = "Bejelentkezés sikertelen!";
                 form.classList.add('collapse-out');
-                modalText.innerText = data.message;
+                let message = data.message;
+                if (Array.isArray(message)) {
+                    let errors = message.join('<br>');
+                    modalText.innerHTML = errors;
+                }
+                else {
+                    modalText.innerText = message;
+                }
 
                 setTimeout(() => {
                     container.classList.remove('error-draw');
@@ -157,6 +163,7 @@ async function dropdownLetrehoz(link, nev, kep) {
         img.src = "../images/default.png";
     }
     img.alt = "Profile pic";
+    img.id = "dropdownProfilePicture";
     img.classList.add("img-fluid", "profilePicture");
     let username = document.createElement("span");
     username.id = "profileUsername";
@@ -422,7 +429,15 @@ async function showSettingsModal() {
                 await uploadProfilePic(tempPfp);
             } else {
                 if (deleteLast) {
-                    await deleteProfilePicture();
+                    let response = await deleteProfilePicture();
+                    let data = await response.json();
+                    if (response.ok) {
+                        console.log(data.message);
+                        document.getElementById('dropdownProfilePicture').src = "../images/default.png";
+                    }
+                    else {
+                        throw new Error(data.message);
+                    }
                 }
             }
             settingsModal.hide();
@@ -644,7 +659,7 @@ function createAlert(message, type) {
     alertDiv.role = 'alert';
 
     let textNode = document.createElement('span');
-    textNode.textContent = message;
+    textNode.innerHTML = message;
     alertDiv.appendChild(textNode);
 
     let closeBtn = document.createElement('button');
@@ -683,6 +698,14 @@ async function uploadProfilePic(picture) {
         let data = await response.json();
         if (response.ok) {
             console.log(data.message);
+            let image = document.getElementById('dropdownProfilePicture');
+            if (image) {
+                let objectUrl = URL.createObjectURL(picture);
+                image.onload = () => {
+                    URL.revokeObjectURL(objectUrl);
+                };
+                image.src = objectUrl;
+            }
         }
         else {
             throw new Error(data.message);
@@ -701,13 +724,9 @@ async function deleteProfilePicture() {
                 "Content-Type": "application/json"
             }
         })
+
+        return response;
         let data = await response.json();
-        if (response.ok) {
-            console.log(data.message);
-        }
-        else {
-            throw new Error(data.message);
-        }
     } catch (error) {
         console.log(`hálózati hiba: ${error}`);
         throw error;
