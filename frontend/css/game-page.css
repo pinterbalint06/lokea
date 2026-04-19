@@ -1,0 +1,24 @@
+#pictureWrapper {
+    position: relative;
+    display: inline-block;
+}
+
+#pictureCanvas {
+    width: 1700px;
+    height: 1000px;
+    display: block;
+}
+
+#mapCanvas {
+    position: absolute;
+    bottom: 0;
+    right: 0;
+    width: 500px;
+    height: 300px;
+    transition: transform 0.3s ease;
+    transform-origin: bottom right;
+}
+
+#mapCanvas:hover {
+    /* transform: scale(1.3); */
+}

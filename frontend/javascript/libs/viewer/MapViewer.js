@@ -591,7 +591,11 @@ export class MapViewer extends WASMViewerBase {
     }
 
     onClickHandler = (cursorX, cursorY) => {
-        this.placeMarker(cursorX, cursorY);
+        if (this.doesMarkerExist(0)) {
+            this.moveMarker(0, cursorX, cursorY);
+        } else {
+            this.placeMarker(0, cursorX, cursorY, 24.0, 32.0, "uploading");
+        }
     }
 
     getZoomLevel() {
