@@ -1,14 +1,13 @@
 #include <emscripten/html5.h>
 #include <emscripten/emscripten.h>
-#ifdef DEBUG
 #include <emscripten/console.h>
-#endif
 #include <emscripten/val.h>
 #include <string>
 #include <cmath>
 #include <cstdint>
 #include <memory>
 
+#include "core/math/vector.h"
 #include "core/rendering/shader.h"
 #include "core/resources/mesh.h"
 #include "core/resources/vertex.h"
@@ -17,6 +16,7 @@
 
 #include "core/engine.h"
 
+#include "equirectangular/arrow.h"
 #include "equirectangular/equirectangularEngine.h"
 
 #include "core/math/mathUtils.h"
@@ -128,9 +128,9 @@ std::shared_ptr<Mesh> EquirectangularEngine::generateSphereSegment(int rings, in
 
 void EquirectangularEngine::generateSphere()
 {
-    int rings = 32;
-    int segs = 32;
-    float rad = 10.0f;
+    int rings = EQUIRECTANGULAR_SETTINGS.sphereRingCount;
+    int segs = EQUIRECTANGULAR_SETTINGS.sphereSegmentCount;
+    float rad = EQUIRECTANGULAR_SETTINGS.sphereRadius;
 
     const int tiles = currMode_;
     const float rec = 1.0f / (float)tiles;
@@ -154,6 +154,7 @@ void EquirectangularEngine::generateSphere()
 EquirectangularEngine::EquirectangularEngine(const std::string &canvasID) : Engine(canvasID)
 {
     setShadingMode(Shaders::SHADINGMODE::NO_SHADING);
+    enableAlphaBlending();
 
     currentRequestID = 0;
     const int maxTextures = 16;
@@ -250,4 +251,131 @@ void EquirectangularEngine::clearImage()
     {
         imageTiles_[i]->clear();
     }
+}
+
+void EquirectangularEngine::clearArrows()
+{
+    for (int i = 0; i < arrows_.size(); i++)
+    {
+        removeMesh(arrows_[i]);
+    }
+    arrows_.clear();
+}
+
+int EquirectangularEngine::getArrowIndexById(int id)
+{
+    int i = 0;
+    while (i < arrows_.size() && arrows_[i]->getId() != id)
+    {
+        i++;
+    }
+    int foundIndex = -1;
+    if (i < arrows_.size())
+    {
+        foundIndex = i;
+    }
+
+    return foundIndex;
+}
+
+void EquirectangularEngine::addArrow(int id, float yaw)
+{
+    if (getArrowIndexById(id) == -1)
+    {
+        std::shared_ptr<Arrow> newArrow = std::make_shared<Arrow>(id, yaw);
+
+        arrows_.push_back(newArrow);
+
+        addMesh(newArrow);
+    }
+    else
+    {
+        emscripten_console_error("Arrow with given id already exists!");
+    }
+}
+
+bool EquirectangularEngine::doesArrowExist(int id)
+{
+    return getArrowIndexById(id) != -1;
+}
+
+void EquirectangularEngine::removeArrow(int id)
+{
+    int index = getArrowIndexById(id);
+    if (index != -1)
+    {
+        removeMesh(arrows_[index]);
+        arrows_.erase(arrows_.begin() + index);
+    }
+    else
+    {
+        emscripten_console_error("Arrow with given id doesn't exist!");
+    }
+}
+
+void EquirectangularEngine::changeArrowDirection(int id, float yaw)
+{
+    int index = getArrowIndexById(id);
+    if (index != -1)
+    {
+        arrows_[index]->setYaw(yaw);
+    }
+    else
+    {
+        emscripten_console_error("Arrow with given id doesn't exist!");
+    }
+}
+
+bool EquirectangularEngine::isValidClick(const Vec3 &clickDirection, bool isSingleClick, bool &outIsDirectArrowClick)
+{
+    outIsDirectArrowClick = (clickDirection.y <= -0.565f && clickDirection.y >= -0.632f);
+    bool isHorizonClick = (std::abs(clickDirection.y) <= 0.6f);
+
+    return isSingleClick ? outIsDirectArrowClick : (outIsDirectArrowClick || isHorizonClick);
+}
+
+int EquirectangularEngine::findClosestArrowInDirection(const Vec3 &clickDirection, bool isDirectArrowClick)
+{
+    Vec2 horizontalDirection(clickDirection.x, clickDirection.z);
+    horizontalDirection.normalize();
+
+    float highestDotProduct =
+        isDirectArrowClick
+        ? EQUIRECTANGULAR_SETTINGS.directClickDotProductThreshold
+        : EQUIRECTANGULAR_SETTINGS.horizonClickDotProductThreshold;
+    int bestArrowId = -1;
+
+    for (int i = 0; i < arrows_.size(); i++)
+    {
+        Vec2 arrowDirection = arrows_[i]->getDirection();
+        float currentDotProduct = Vec2::dotProduct(horizontalDirection, arrowDirection);
+
+        if (currentDotProduct > highestDotProduct)
+        {
+            highestDotProduct = currentDotProduct;
+            bestArrowId = arrows_[i]->getId();
+        }
+    }
+
+    return bestArrowId;
+}
+
+int EquirectangularEngine::getClickedArrow(float screenX, float screenY, bool isSingleClick)
+{
+    Vec3 clickDirection = scene_->getCamera()->getClickRayVector(screenX, screenY);
+
+#ifdef DEBUG
+    emscripten_console_logf("Click direction: (%f, %f, %f)", clickDirection.x, clickDirection.y, clickDirection.z);
+#endif
+
+    bool isDirectArrowClick = false;
+    bool isValid = isValidClick(clickDirection, isSingleClick, isDirectArrowClick);
+    int clickedArrowId = -1;
+
+    if (isValid)
+    {
+        clickedArrowId = findClosestArrowInDirection(clickDirection, isDirectArrowClick);
+    }
+
+    return clickedArrowId;
 }

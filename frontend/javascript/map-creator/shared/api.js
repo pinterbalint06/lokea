@@ -1,94 +1,11 @@
-async function handleResponseError(response) {
-    let error = await response.json();
-    throw new Error(error.error || "Szerver hiba: " + response.status);
-}
-
-function validateJsonResponse(data, defaultErrorMsg = "Sikertelen művelet!") {
-    if (!data.success) {
-        throw new Error(data.error || defaultErrorMsg);
-    }
-    return data;
-}
-
-async function fetchAndValidate(url, returnKey) {
-    let response = await fetch(
-        url,
-        {
-            method: "GET"
-        }
-    );
-
-    if (!response.ok) {
-        await handleResponseError(response);
-    }
-
-    let data = await response.json();
-    validateJsonResponse(data);
-
-    return data[returnKey];
-}
-
-async function fetchImage(url, abortSignal = null) {
-    let imageURL = null;
-
-    try {
-        let response = await fetch(
-            url,
-            {
-                "method": "GET",
-                "signal": abortSignal
-            }
-        );
-
-        if (!response.ok) {
-            await handleResponseError(response);
-        }
-
-        let width = parseInt(response.headers.get("imageWidth"));
-        let height = parseInt(response.headers.get("imageHeight"));
-        let data = await response.blob();
-
-        imageURL = URL.createObjectURL(data);
-
-        return {
-            url: imageURL,
-            width,
-            height,
-            cleanup: () => {
-                if (imageURL) {
-                    URL.revokeObjectURL(imageURL);
-                }
-            }
-        };
-    } catch (error) {
-        if (imageURL) {
-            URL.revokeObjectURL(imageURL);
-        }
-        throw error;
-    }
-}
-
-export async function fetchMapImage(mapId, abortSignal = null) {
-    return await fetchImage(
-        `/api/game_maps/getMapImageById?mapId=${mapId}`,
-        abortSignal
-    );
-}
-
-export async function fetchEquirectangularImage(pointId, abortSignal = null) {
-    return await fetchImage(
-        `/api/game_maps/getImageByPointId?pointId=${pointId}`,
-        abortSignal
-    );
-}
+import { fetchAndValidate, handleResponseError } from "../../libs/network/fetch.js";
 
 export async function saveNewMap(mapFile, gameMapID, mapTitle) {
     let formData = new FormData();
     formData.append("mapImage", mapFile);
-    formData.append("gameMapID", gameMapID);
     formData.append("title", mapTitle);
 
-    let response = await fetch("/api/map_creator/saveNewMap", {
+    let response = await fetch(`/api/map-creator/game-maps/${gameMapID}/maps`, {
         method: "POST",
         body: formData
     });
@@ -98,7 +15,6 @@ export async function saveNewMap(mapFile, gameMapID, mapTitle) {
     }
 
     let data = await response.json();
-    validateJsonResponse(data);
 
     return {
         mapId: data.mapId
@@ -110,38 +26,33 @@ export async function savePoint({
     position,
     northDirection,
     equirectangularFile,
-    gameMapID,
     mapID,
     isNew
 }) {
-    let fields = {
-        x: position.x,
-        y: position.y,
-        northDirection: northDirection
-    };
-
     let url = "";
     let method = "";
 
+    if (!Number.isFinite(position.u) || !Number.isFinite(position.v)) {
+        throw new Error("Helytelen UV koordináták!");
+    }
+
     let formData = new FormData();
-    formData.append("x", fields.x);
-    formData.append("y", fields.y);
-    formData.append("northDirection", fields.northDirection);
+    formData.append("u", position.u);
+    formData.append("v", position.v);
+    formData.append("northDirection", northDirection);
 
     if (isNew) {
         if (!equirectangularFile) {
             throw new Error("Nincs kép megadva!");
         }
         formData.append("equirectangularImage", equirectangularFile);
-        formData.append("gameMapID", gameMapID);
-        formData.append("mapID", mapID);
-        url = "/api/map_creator/savePoint";
+        url = `/api/map-creator/maps/${mapID}/points`;
         method = "POST";
     } else {
         if (equirectangularFile) {
             formData.append("equirectangularImage", equirectangularFile);
         }
-        url = `/api/map_creator/point/${pointId}`;
+        url = `/api/map-creator/points/${pointId}`;
         method = "PUT";
     }
 
@@ -154,19 +65,62 @@ export async function savePoint({
         await handleResponseError(response);
     }
 
-    let data = await response.json();
-    validateJsonResponse(data, "Sikertelen mentés!");
+    let data = isNew ? await response.json() : {};
 
     return data;
+}
+
+export async function deletePoint(pointId) {
+    let response = await fetch(`/api/map-creator/points/${pointId}`, {
+        method: "DELETE"
+    });
+
+    if (!response.ok) {
+        await handleResponseError(response);
+    }
+}
+
+export async function deleteMap(mapId) {
+    let response = await fetch(`/api/map-creator/maps/${mapId}`, {
+        method: "DELETE"
+    });
+    if (!response.ok) {
+        await handleResponseError(response);
+    }
+}
+
+export async function renameMap(mapId, title) {
+    let formData = new FormData();
+    formData.append("title", title);
+
+    let response = await fetch(`/api/map-creator/maps/${mapId}`, {
+        method: "PUT",
+        body: formData
+    });
+
+    if (!response.ok) {
+        await handleResponseError(response);
+    }
+
+    let data = await response.json();
+
+    return {
+        title: data.title
+    };
 }
 
 export async function saveConnection(gameMapID, connection) {
     let formData = new FormData();
     formData.append("startPointId", connection.start_point_id);
     formData.append("endPointId", connection.end_point_id);
-    formData.append("gameMapID", gameMapID);
+    if (connection.direction_start_to_end != undefined) {
+        formData.append("directionStartToEnd", connection.direction_start_to_end);
+    }
+    if (connection.direction_end_to_start != undefined) {
+        formData.append("directionEndToStart", connection.direction_end_to_start);
+    }
 
-    let response = await fetch("/api/map_creator/saveConnection", {
+    let response = await fetch(`/api/map-creator/game-maps/${gameMapID}/connections`, {
         method: "POST",
         body: formData
     });
@@ -176,13 +130,16 @@ export async function saveConnection(gameMapID, connection) {
     }
 
     let data = await response.json();
-    validateJsonResponse(data, "Sikertelen mentés!");
 
     return {
         connection_id: data.connectionId,
         start_point_id: connection.start_point_id,
         end_point_id: connection.end_point_id,
-        game_maps_id: connection.game_maps_id
+        game_maps_id: connection.game_maps_id,
+        start_map_id: connection.start_map_id,
+        end_map_id: connection.end_map_id,
+        direction_start_to_end: connection.direction_start_to_end,
+        direction_end_to_start: connection.direction_end_to_start
     };
 }
 
@@ -212,14 +169,75 @@ export async function saveUnsavedConnections(gameMapID, unsavedConnections) {
     };
 }
 
+export async function updateConnectionDirections(connectionId, directions) {
+    let formData = new FormData();
+
+    if (directions.direction_start_to_end != undefined) {
+        formData.append("directionStartToEnd", directions.direction_start_to_end);
+    }
+    if (directions.direction_end_to_start != undefined) {
+        formData.append("directionEndToStart", directions.direction_end_to_start);
+    }
+
+    let response = await fetch(`/api/map-creator/connections/${connectionId}`, {
+        method: "PUT",
+        body: formData
+    });
+
+    if (!response.ok) {
+        await handleResponseError(response);
+    }
+
+    return {
+        connection_id: connectionId,
+        ...directions
+    };
+}
+
+export async function saveDraftConnectionDirections(draftDirections) {
+    let saved = [];
+    let failed = [];
+
+    let savePromises = [];
+    for (const connectionId in draftDirections) {
+        savePromises.push(updateConnectionDirections(parseInt(connectionId), draftDirections[connectionId]));
+    }
+
+    let results = await Promise.allSettled(savePromises);
+
+    for (let i = 0; i < results.length; i++) {
+        let result = results[i];
+        if (result.status == "fulfilled") {
+            saved.push(result.value);
+        } else {
+            failed.push(result.reason);
+        }
+    }
+
+    return {
+        saved: saved,
+        failed: failed
+    };
+}
+
 export async function fetchPoints(mapID) {
-    return fetchAndValidate(`/api/map_creator/${mapID}/points`, "points");
+    return fetchAndValidate(`/api/map-creator/maps/${mapID}/points`, "points");
 }
 
 export async function fetchMapList(gameMapID) {
-    return fetchAndValidate(`/api/map_creator/maps?gameMapID=${gameMapID}`, "maps");
+    return fetchAndValidate(`/api/map-creator/game-maps/${gameMapID}/maps`, "maps");
 }
 
 export async function fetchConnections(gameMapID) {
-    return fetchAndValidate(`/api/map_creator/${gameMapID}/connections`, "connections");
+    return fetchAndValidate(`/api/map-creator/game-maps/${gameMapID}/connections`, "connections");
+}
+
+export async function deleteConnection(connectionId) {
+    let response = await fetch(`/api/map-creator/connections/${connectionId}`, {
+        method: "DELETE"
+    });
+
+    if (!response.ok) {
+        await handleResponseError(response);
+    }
 }

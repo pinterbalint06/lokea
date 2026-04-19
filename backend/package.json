@@ -4,14 +4,26 @@
     "description": "Template project",
     "main": "server.js",
     "scripts": {
-        "test": "echo \"Error: no test specified\" && exit 1",
+        "test": "cross-env NODE_ENV=test jest --testTimeout=10000",
         "start": "node server.js",
         "dev": "nodemon"
+    },
+    "imports": {
+        "#utils/*": "./utils/*",
+        "#sql/*": "./sql/*",
+        "#config/*": "./config/*",
+        "#mapcreatortest/*": "./test/mapcreator/*",
+        "#root/*": "./*",
+        "#mapcreator/*": "./api/mapcreator/*",
+        "#gamemaps/*": "./api/gamemaps/*"
     },
     "author": "Kardos Krisztián",
     "license": "ISC",
     "devDependencies": {
-        "nodemon": "^3.1.14"
+        "cross-env": "^10.1.0",
+        "jest": "^30.3.0",
+        "nodemon": "^3.1.14",
+        "supertest": "^7.2.2"
     },
     "dependencies": {
         "bcrypt": "^6.0.0",
@@ -19,6 +31,7 @@
         "express": "^5.1.0",
         "express-session": "^1.18.2",
         "express-validator": "^7.3.1",
+        "joi": "^18.1.1",
         "multer": "^2.0.2",
         "mysql2": "^3.16.1",
         "sharp": "^0.34.5",

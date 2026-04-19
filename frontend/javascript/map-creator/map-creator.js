@@ -1,36 +1,56 @@
 import { MapViewer } from "../libs/viewer/MapViewer.js";
 import { EquirectangularViewer } from "../libs/viewer/EquirectangularViewer.js";
 import { CONSTANTS } from "./shared/constants.js";
-import { appState } from "./shared/state.js";
+import { AppStore } from "./shared/AppStore.js";
 import { getGameMapIdFromUrl } from "./shared/utils.js";
-import { eventBus, EVENTS } from './events/EventBus.js';
+import { EventBus, EVENTS } from "./shared/EventBus.js";
 import { MarkerManager } from "./managers/MarkerManager.js";
 import { MapManager } from "./managers/MapManager.js";
-import { UIManager } from "./managers/UIManager.js";
+import { MapSelectorManager } from "./managers/ui/MapSelectorManager.js";
+import { ModalManager } from "./managers/ui/ModalManager.js";
+import { ConnectionListManager } from "./managers/ui/ConnectionListManager.js";
+import { LoadingOverlayManager } from "./managers/ui/LoadingOverlayManager.js";
+import { MarkerEditorManager } from "./managers/ui/MarkerEditorManager.js";
+import { ToolbarManager } from "./managers/ui/ToolbarManager.js";
+import { ToastManager } from "./managers/ui/ToastManager.js";
+import { SettingsManager } from "./managers/ui/SettingsManager.js";
 import { EquirectangularManager } from "./managers/EquirectangularManager.js";
 import { ConnectionManager } from "./managers/ConnectionManager.js";
+import { ArrowManager } from "./managers/ArrowManager.js";
+import { BreakpointManager } from "./managers/ui/BreakpointManager.js";
 
 async function init() {
     const mapViewer = new MapViewer(CONSTANTS.MAP_CANVAS_ID);
     const equirectangularViewer = new EquirectangularViewer(CONSTANTS.EQUIRECTANGULAR_CANVAS_ID);
 
-    new UIManager(eventBus);
-    new MarkerManager(eventBus, mapViewer, appState);
-    new MapManager(eventBus, mapViewer, appState);
-    new EquirectangularManager(eventBus, equirectangularViewer, mapViewer, appState);
-    new ConnectionManager(eventBus, mapViewer, appState);
+    let markersCached = mapViewer.cacheMarkers();
+    await mapViewer.ready();
+    await equirectangularViewer.ready();
 
-    appState.gameMapID = getGameMapIdFromUrl();
+    const eventBus = new EventBus();
 
+    const gameMapID = getGameMapIdFromUrl();
+    const appStore = new AppStore(eventBus, gameMapID);
+
+    new BreakpointManager(eventBus, appStore);
+    new LoadingOverlayManager(eventBus);
+    new ToastManager(eventBus);
+    new ConnectionListManager(eventBus, appStore);
+
+    new MarkerEditorManager(eventBus, appStore);
+    new ToolbarManager(eventBus, appStore);
+    new SettingsManager(eventBus, appStore);
+    new ModalManager(eventBus, appStore);
+    new MapSelectorManager(eventBus, appStore);
+
+    new MarkerManager(eventBus, mapViewer, appStore);
+    new MapManager(eventBus, mapViewer, appStore);
+    new EquirectangularManager(eventBus, equirectangularViewer, mapViewer, appStore);
+    new ConnectionManager(eventBus, mapViewer, appStore);
+    new ArrowManager(eventBus, mapViewer, equirectangularViewer, appStore);
+
+    await markersCached;
     eventBus.emit(EVENTS.APP_INIT);
 }
 
 document.addEventListener("DOMContentLoaded", init);
-
-// TODO!!!!: látótér a beállított méretű maradjon
-// TODO!: új markernél elsőre nincs helyesen rajta a markeren a fov cone
-// TODO!!!: pontok, kapcsolatok, térképek törlése
-// TODO!!!: térkép, pontok átnevezése
-// TODO!!: térkép képének cseréje mentés után
-// TODO!!: mapok közti kapcsolatok
-// TODO!: markerek fixálása pixel koordinátákra? mindig egy adott pixelen legyenek?

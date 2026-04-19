@@ -19,7 +19,7 @@ struct Vec2
         y = 0.0f;
     }
 
-    Vec2(float x, float y)
+    constexpr Vec2(float x, float y)
     {
         this->x = x;
         this->y = y;
@@ -51,6 +51,51 @@ struct Vec2
     inline Vec2 operator-(const Vec2& other) const
     {
         return Vec2(x - other.x, y - other.y);
+    }
+};
+
+/**
+ * @brief It's a vector in 3D space.
+ */
+struct Vec3
+{
+    float x, y, z;
+
+    Vec3()
+    {
+        x = 0.0f;
+        y = 0.0f;
+        z = 0.0f;
+    }
+
+    Vec3(float x, float y, float z)
+    {
+        this->x = x;
+        this->y = y;
+        this->z = z;
+    }
+
+    inline float length()
+    {
+        return std::sqrt(x * x + y * y + z * z);
+    }
+
+    void normalize()
+    {
+        float lengthInv = 1.0f / length();
+        x *= lengthInv;
+        y *= lengthInv;
+        z *= lengthInv;
+    }
+
+    inline Vec3 operator+(const Vec3& other) const
+    {
+        return Vec3(x + other.x, y + other.y, z + other.z);
+    }
+
+    inline Vec3 operator*(float scalar) const
+    {
+        return Vec3(x * scalar, y * scalar, z * scalar);
     }
 };
 

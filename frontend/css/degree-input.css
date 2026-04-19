@@ -1,0 +1,24 @@
+.degreeWrapper {
+    position: relative;
+}
+
+.degreeWrapper::after {
+    content: "°";
+    position: absolute;
+    right: 10px;
+    top: 50%;
+    transform: translateY(-50%);
+    pointer-events: none;
+}
+
+/* hide arrows on number input */
+.hide-arrows::-webkit-outer-spin-button,
+.hide-arrows::-webkit-inner-spin-button {
+    -webkit-appearance: none;
+    margin: 0;
+}
+
+.hide-arrows[type=number] {
+    appearance: textfield;
+    -moz-appearance: textfield;
+}

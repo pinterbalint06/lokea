@@ -1,0 +1,101 @@
+@import url('./variables.css');
+
+.custom-select {
+    position: relative;
+}
+
+.custom-select>button {
+    background-color: var(--surface-glass-input) !important;
+    border: 1px solid var(--surface-glass-border) !important;
+    border-radius: 0.25rem !important;
+    padding: 0.25rem 0.5rem 0.25rem 0.75rem !important;
+    min-width: 140px;
+    justify-content: space-between !important;
+    transition: all var(--transition-fast);
+}
+
+.custom-select>button:hover {
+    border-color: var(--accent-focus) !important;
+    color: var(--color-white) !important;
+    box-shadow: 0 0 10px var(--accent-glow) !important;
+}
+
+.custom-select>button:focus,
+.custom-select>button:active {
+    box-shadow: 0 0 0 0.2rem var(--accent-glow) !important;
+    border-color: var(--accent-focus) !important;
+    outline: none;
+}
+
+.custom-select-menu {
+    top: calc(100% + 10px);
+    left: 50%;
+    transform: translateX(-50%) translateY(-10px);
+    width: max-content;
+    min-width: 250px;
+    z-index: 1050;
+    overflow: hidden;
+    transition: transform var(--transition-soft), opacity var(--transition-soft);
+}
+
+.custom-select-menu.show {
+    opacity: 1 !important;
+    pointer-events: auto !important;
+    transform: translateX(-50%) translateY(0);
+}
+
+.custom-select-chevron {
+    transition: transform var(--transition-soft);
+}
+
+.custom-select-chevron.open {
+    transform: rotate(180deg);
+}
+
+.custom-options-container {
+    max-height: 200px;
+    overflow-y: auto;
+    padding: 0.5rem 0;
+}
+
+.custom-option {
+    padding: 0.5rem 1rem;
+    cursor: pointer;
+    color: var(--text-main);
+    transition: background-color var(--transition-fast), padding-left var(--transition-fast);
+    font-size: 0.9rem;
+    font-weight: 500;
+}
+
+.custom-option:hover {
+    background: var(--surface-glass-soft-hover);
+    padding-left: 1.25rem;
+    color: var(--color-white);
+}
+
+.custom-option.selected {
+    background: var(--surface-glass-soft);
+    border-left: 3px solid var(--accent-glow);
+    font-weight: bold;
+}
+
+.pointer-events-none {
+    pointer-events: none;
+}
+
+.custom-scrollbar::-webkit-scrollbar {
+    width: 6px;
+}
+
+.custom-scrollbar::-webkit-scrollbar-track {
+    background: transparent;
+}
+
+.custom-scrollbar::-webkit-scrollbar-thumb {
+    background: var(--surface-glass-border);
+    border-radius: 10px;
+}
+
+.custom-scrollbar::-webkit-scrollbar-thumb:hover {
+    background: var(--accent-main);
+}

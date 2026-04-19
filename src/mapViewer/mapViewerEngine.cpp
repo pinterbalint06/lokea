@@ -109,7 +109,7 @@ void MapViewerEngine::updateSingleMarker(MapMarker *mapMarker)
             positions.push_back(Vec2(planeX, planeY));
         }
 
-        mapMarker->updateRenderPosition(positions, (float)width_, (float)height_);
+        mapMarker->updateRenderPosition(positions, (float)width_, (float)height_, (float)mapWidth_, (float)mapHeight_, uPerPixel_, vPerPixel_);
     }
 }
 
@@ -253,15 +253,20 @@ void MapViewerEngine::addMarkerByImageCoordinates(int id, float imageX, float im
 
 void MapViewerEngine::moveMarkerToImageCoordinates(int id, int xCoordinate, int yCoordinate)
 {
+    // convert to uv
+    float newU = (float)xCoordinate / mapWidth_;
+    float newV = (float)yCoordinate / mapHeight_;
+
+    moveMarkerToUV(id, newU, newV);
+}
+
+void MapViewerEngine::moveMarkerToUV(int id, float u, float v)
+{
     int index = getMarkerIndexById(id);
     if (isMapLoaded_ && index != -1)
     {
-        // convert to uv
-        float newU = (float)xCoordinate / mapWidth_;
-        float newV = (float)yCoordinate / mapHeight_;
-
-        markers_[index]->setU(newU);
-        markers_[index]->setV(newV);
+        markers_[index]->setU(u);
+        markers_[index]->setV(v);
 
         updateSingleMarker(markers_[index].get());
         updateLinesWithMarker(id);
@@ -365,6 +370,20 @@ void MapViewerEngine::setMarkerSelectable(int id, bool selectable)
     }
 }
 
+void MapViewerEngine::setMarkerFixedToMap(int id, bool fixedToMap)
+{
+    int index = getMarkerIndexById(id);
+    if (isMapLoaded_ && index != -1)
+    {
+        markers_[index]->setFixedToMap(fixedToMap);
+        updateSingleMarker(markers_[index].get());
+    }
+    else
+    {
+        emscripten_console_error("Point doesn't exist!");
+    }
+}
+
 emscripten::val MapViewerEngine::getCenterOffsetByImageCoords(float imageX, float imageY)
 {
     emscripten::val offset = emscripten::val::object();
@@ -431,6 +450,8 @@ emscripten::val MapViewerEngine::getMarkerPosition(int id)
         int imageCoordinateY = std::floor(markerVFractional * mapHeight_);
         imageCoordinates.set("x", imageCoordinateX);
         imageCoordinates.set("y", imageCoordinateY);
+        imageCoordinates.set("u", markerUFractional);
+        imageCoordinates.set("v", markerVFractional);
     }
     else
     {
@@ -477,20 +498,19 @@ MapViewerEngine::MapViewerEngine(const std::string &canvasID, int width, int hei
 {
     setShadingMode(Shaders::SHADINGMODE::NO_SHADING);
     setProjectionType(PROJECTIONTYPE::ORTHOGRAPHIC);
-    setZoom(5.0f / 23.0f);
+    setZoom(5.0f / 23.0f); // calculated default zoom so the camera shows only the plane and nothing else
+    // it is calculated from the camera's getOrthoHeight interpolation = 2 so top is 1
 
     mapWidth_ = -1.0f;
     mapHeight_ = -1.0f;
     isMapLoaded_ = false;
     width_ = width;
     height_ = height;
-    renderer_->setDefaultColor(255.0f, 0.0f, 255.0f);
+    renderer_->setDefaultColor(168.0f, 129.0f, 202.0f);
     // set image dimension to 1:1 aspect ratio so it only covers the plane
     scene_->getCamera()->setImageDimensions(1.0f, 1.0f);
 
-    // enable transparent background for marker
-    glEnable(GL_BLEND);
-    glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+    enableAlphaBlending();
 
     // disable depth mask so map markers are not overlapping
     glDepthMask(GL_FALSE);
@@ -677,10 +697,6 @@ void MapViewerEngine::loadMap(const std::string & url, int mapWidth, int mapHeig
 {
     if (mapPlane_ != nullptr)
     {
-        if (mapPlane_->getMaterial().getTexture())
-        {
-            mapPlane_->getMaterial().getTexture()->clear();
-        }
         loadTextureFromUrl(url, 0, onSuccess, onError);
         mapWidth_ = mapWidth;
         mapHeight_ = mapHeight;

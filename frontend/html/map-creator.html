@@ -13,23 +13,15 @@
 <body class="lilagradiensbg">
     <nav class="navbar navbar-expand-lg uveg sticky-top">
         <div class="container-fluid justify-content-between">
-            <a class="navbar-brand">Lokea</a>
+            <a class="navbar-brand" href="#">
+                <img src="/images/lokea.png" alt="Lokea logo" class="navPic">
+            </a>
         </div>
     </nav>
     <main>
         <div id="upload-overlay"
             class="d-flex justify-content-center align-items-center w-100 h-100 position-absolute bg-body z-2 d-none">
-            <div id="drop-zone" class="text-center p-5 dropzone border-dashed rounded-3">
-                <div class="mb-3">
-                    <svg style="height: 3em; fill: white;" viewBox="0 0 24 24">
-                        <use href="/images/map-creator-icons.svg#icon-upload-cloud"></use>
-                    </svg>
-                </div>
-                <h4>Húzd ide a térkép fájlt</h4>
-                <p class="text-muted">vagy</p>
-                <button class="btn uvegbutton rounded-pill" id="uploadBtn">Kattints ide feltöltéshez</button>
-                <input type="file" id="fileInput" accept="image/*" hidden>
-            </div>
+            <div id="drop-zone" class="p-5"></div>
         </div>
         <div id="loading"
             class="d-flex justify-content-center align-items-center w-100 h-100 position-absolute lilagradiensbg">
@@ -38,14 +30,14 @@
         </div>
         <div id="mapSelector" class="position-absolute top-0 start-50 translate-middle-x mt-3 z-1">
             <div class="d-flex align-items-center uveg border shadow-sm rounded-pill px-3 py-2 gap-2">
-                <svg viewBox="0 0 119.4 122.88" style="height: 2em; fill: white;">
+                <svg viewBox="0 0 119.4 122.88" style="height: 1.5em; fill: white;">
                     <use href="/images/map-creator-icons.svg#icon-map"></use>
                 </svg>
-                <!--TODO: custom select kinézetért-->
-                <select id="mapSelect" class="form-select form-select-sm uvegform border-0 bg-transparent fw-bold">
-                </select>
 
-                <div class="vr"></div>
+                <div id="customSelect" class="custom-select">
+                </div>
+
+                <div class="vr mx-1"></div>
 
                 <button id="addNewMapBtn"
                     class="btn btn-sm btn-link text-decoration-none p-0 d-flex align-items-center">
@@ -63,8 +55,7 @@
             </button>
 
             <button id="settingsBtn" class="btn uvegbutton rounded-circle floating-button floating-button-primary"
-                title="Beállítások" data-bs-toggle="collapse" href="#beallitasokCollapse" role="button"
-                aria-expanded="false" aria-controls="beallitasokCollapse">
+                title="Beállítások">
                 <svg style="height: 1.5em; fill: white;" viewBox="0 0 122.881 122.88">
                     <use href="/images/map-creator-icons.svg#icon-settings-cog"></use>
                 </svg>
@@ -92,8 +83,8 @@
                     <div class="accordion accordion-flush w-100" id="beallitasokAccordion">
                         <div class="accordion-item">
                             <h2 class="accordion-header">
-                                <button class="accordion-button collapsed" data-bs-toggle="collapse"
-                                    data-bs-target="#nezetiBeallitasok" aria-expanded="false"
+                                <button class="accordion-button" data-bs-toggle="collapse"
+                                    data-bs-target="#nezetiBeallitasok" aria-expanded="true"
                                     aria-controls="nezetiBeallitasok">
                                     Nézeti beállítások
                                 </button>
@@ -101,7 +92,6 @@
                             <div id="nezetiBeallitasok" class="accordion-collapse collapse show">
                                 <div class="accordion-body d-flex flex-column gap-3 p-3">
                                     <div class="form-check form-switch w-100">
-                                        <!-- TODO: custom kinézet a switch-nek -->
                                         <input class="form-check-input" type="checkbox" role="switch" id="fovToggle"
                                             checked>
                                         <label class="form-check-label ms-2" for="fovToggle">Látótér
@@ -127,6 +117,25 @@
                                             <input
                                                 class="form-control uvegform p-1 hide-arrows text-center number-input-width"
                                                 type="number" id="fovHeightNumber" min="10" max="1000" value="100">
+                                        </div>
+                                    </div>
+
+                                    <div class="w-100 border-top border-secondary border-opacity-25 pt-3 mt-1">
+                                        <h6 class="h6 text-uppercase text-body-secondary mb-2">Kapcsolatok</h6>
+                                        <div class="form-check form-switch w-100">
+                                            <input class="form-check-input" type="checkbox" role="switch"
+                                                id="allConnectionsWhenNotActiveToggle" checked>
+                                            <label class="form-check-label ms-2"
+                                                for="allConnectionsWhenNotActiveToggle">
+                                                Összes kapcsolat kijelölés nélküli megjelenítése
+                                            </label>
+                                        </div>
+                                        <div class="form-check form-switch w-100 mb-2">
+                                            <input class="form-check-input" type="checkbox" role="switch"
+                                                id="offMapConnectionsToggle" checked>
+                                            <label class="form-check-label ms-2" for="offMapConnectionsToggle">
+                                                Térképen átívelő kapcsolatok megjelenítése
+                                            </label>
                                         </div>
                                     </div>
                                 </div>
@@ -163,7 +172,7 @@
                                         <div class="d-inline-flex flex-column flex-grow-1 ms-2">
                                             <h6 class="h6 text-uppercase text-body-secondary m-0">Koordináták</h6>
                                             <div
-                                                class="d-flex align-items-center gap-2 w-auto flex-grow-1 justify-content-around">
+                                                class="d-flex flex-wrap align-items-center gap-2 w-auto flex-grow-1 justify-content-around">
                                                 <div class="d-flex gap-1 justify-content-center align-items-center">
                                                     <label class="form-label m-0" for="coordinateX">X: </label>
                                                     <input class="form-control uvegform p-1" type="number"
@@ -177,24 +186,12 @@
                                             </div>
                                         </div>
                                     </div>
-                                    <div class="rounded uveg d-inline-flex align-items-center p-2 flex-grow-0">
+                                    <div class="rounded uveg d-inline-flex align-items-center p-2 flex-grow-0 gap-2">
                                         <svg style="height: 2em;" class="text-body" fill="currentColor"
                                             viewBox="0 0 122.88 122.88">
                                             <use href="/images/map-creator-icons.svg#icon-compass"></use>
                                         </svg>
-                                        <div class="d-inline-flex flex-column flex-grow-1 ms-2">
-                                            <h6 class="h6 text-uppercase text-body-secondary m-0">Északirány</h6>
-                                            <div class="d-flex align-items-center gap-2 flex-grow-1">
-                                                <input type="range" class="form-range glass-range" min="0" max="359"
-                                                    step="1" id="northDirectionRange" value="0">
-                                                <div class="degreeWrapper">
-                                                    <input class="form-control uvegform p-1 hide-arrows"
-                                                        style="width: 4em;" type="number" id="northDirection" min="0"
-                                                        max="359" value="0">
-                                                </div>
-                                            </div>
-                                            <small class="text-muted">Az északi irány a kezdő irány.</small>
-                                        </div>
+                                        <div id="northDirectionWrapper"></div>
                                     </div>
                                 </div>
                             </div>
@@ -208,21 +205,7 @@
                             </h2>
                             <div id="kepFeltoltes" class="accordion-collapse collapse">
                                 <div class="accordion-body">
-                                    <div id="drop-zone-equirectangular"
-                                        class="text-center p-2 dropzone border-dashed rounded-3 w-auto">
-                                        <div class="mb-3">
-                                            <svg style="height: 3em; fill: white;" viewBox="0 0 24 24">
-                                                <use href="/images/map-creator-icons.svg#icon-upload-cloud"></use>
-                                            </svg>
-                                        </div>
-                                        <h4>Húzd ide a 360°-os képet</h4>
-                                        <p class="text-muted">vagy</p>
-                                        <button class="btn uvegbutton rounded-pill"
-                                            id="uploadEquirectangularBtn">Kattints
-                                            ide
-                                            feltöltéshez</button>
-                                        <input type="file" id="fileInputEquirectangular" accept="image/*" hidden>
-                                    </div>
+                                    <div id="drop-zone-equirectangular" class="p-2 w-auto"></div>
                                 </div>
                             </div>
                         </div>
@@ -305,38 +288,29 @@
                         </div>
                     </div>
                 </div>
-                <div class="card-footer d-flex justify-content-center flex-shrink-0">
-                    <button id="savePointButton" class="btn successColor rounded-pill" disabled>Pont
+                <div
+                    class="card-footer d-flex flex-wrap justify-content-between align-items-center w-100 flex-shrink-0">
+                    <button id="deletePointBtn"
+                        class="btn btn-outline-danger btn-sm rounded-pill d-flex align-items-center gap-1 px-3">
+                        <svg style="height: 1em; fill: currentColor;" viewBox="0 0 456 511.82">
+                            <use href="/images/map-creator-icons.svg#icon-trash"></use>
+                        </svg>
+                        Pont törlése
+                    </button>
+
+                    <button id="savePointButton" class="btn successColor rounded-pill px-3" disabled>Pont
                         mentése</button>
                 </div>
             </div>
         </div>
-        <div class="modal fade" id="valtoztatasok" tabindex="-1" aria-labelledby="valtoztatasokLabel"
-            aria-hidden="true">
-            <div class="modal-dialog modal-dialog-centered">
-                <div class="modal-content uveg">
-                    <div class="modal-header">
-                        <h1 class="modal-title fs-5" id="valtoztatasokLabel">Változtatások elvetése</h1>
-                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-                    </div>
-                    <div class="modal-body">
-                        <p>Biztos vagy benne, hogy elveted a változtatásokat?</p>
-                    </div>
-                    <div class="modal-footer">
-                        <!-- TODO: secondary szín -->
-                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Mégse</button>
-                        <button type="button" class="btn btn-danger" id="valtoztatasokElveteseBtn">Elvetem a
-                            változtatásokat</button>
-                    </div>
-                </div>
-            </div>
-        </div>
+        <div id="modal-wrapper"></div>
     </main>
 
     <template id="connection-card-template">
-        <div class="kapcsolat-kartya uveg d-flex align-items-center justify-content-between p-2 rounded mb-2">
-            <div class="d-flex align-items-center gap-2 flex-grow-1">
-                <span class="badge point-badge rounded-pill">
+        <div
+            class="kapcsolat-kartya uveg d-flex align-items-center justify-content-between p-2 rounded mb-2 flex-wrap pointer">
+            <div class="d-flex align-items-center gap-2 flex-grow-1 flex-wrap">
+                <span class="start-point badge point-badge rounded-pill pointer">
                     <span class="opacity-50 small me-1">ID</span>
                     <span class="start-id"></span>
                 </span>
@@ -345,10 +319,35 @@
                     <use href="/images/map-creator-icons.svg#icon-width-arrow"></use>
                 </svg>
 
-                <span class="badge point-badge rounded-pill">
+                <span class="end-point badge point-badge rounded-pill pointer">
                     <span class="opacity-50 small me-1">ID</span>
                     <span class="end-id"></span>
                 </span>
+            </div>
+            <button
+                class="btn-delete-connection btn-delete btn-hold-to-unlock d-inline-flex align-items-center justify-content-center rounded-circle p-0 flex-shrink-0"
+                title="Kapcsolat törlése">
+                <svg style="height: 1em; width: 1em; fill: currentColor;" viewBox="0 0 456 511.82">
+                    <use href="/images/map-creator-icons.svg#icon-trash"></use>
+                </svg>
+            </button>
+            <div class="connection-direction-wrapper w-100 mt-2 d-none">
+                <div class="w-100 border-top border-secondary border-opacity-25 pt-2 mt-1">
+                    <h6 class="h6 text-uppercase small text-body-secondary mb-2 mt-3">Irány (Másik térkép felé)</h6>
+                    <div class="d-flex align-items-center gap-2">
+                        <svg style="height: 1.5em;" class="text-body" fill="currentColor" viewBox="0 0 122.88 122.88">
+                            <use href="/images/map-creator-icons.svg#icon-compass"></use>
+                        </svg>
+                        <div class="direction-toward-other-wrapper"></div>
+                    </div>
+                    <h6 class="h6 text-uppercase small text-body-secondary mb-2">Irány (Jelenlegi pont felé)</h6>
+                    <div class="d-flex align-items-center gap-2">
+                        <svg style="height: 1.5em;" class="text-body" fill="currentColor" viewBox="0 0 122.88 122.88">
+                            <use href="/images/map-creator-icons.svg#icon-compass"></use>
+                        </svg>
+                        <div class="direction-toward-current-wrapper"></div>
+                    </div>
+                </div>
             </div>
         </div>
     </template>

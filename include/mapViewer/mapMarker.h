@@ -14,6 +14,7 @@ private:
     float width_, height_;
     float rotation_;
     bool selectable_;
+    bool fixedToMap_;
 
     bool doesPointOverlapRepetition(float pointX, float pointY, int repetitionIndex);
 
@@ -26,9 +27,10 @@ public:
     float getV() const { return v_; }
     float getWidth() const { return width_; }
     float getHeight() const { return height_; }
-    float getId() const { return id_; }
+    int getId() const { return id_; }
     float getRotation() const { return rotation_; }
     bool isSelectable() const { return selectable_; }
+    bool isFixedToMap() const { return fixedToMap_; }
 
     // setters
     void setWidth(float width) { width_ = width; }
@@ -38,8 +40,9 @@ public:
     void setId(int id) { id_ = id; }
     void setRotation(float rotation) { rotation_ = rotation; }
     void setSelectable(bool selectable) { selectable_ = selectable; }
+    void setFixedToMap(bool fixedToMap) { fixedToMap_ = fixedToMap; }
 
-    void updateRenderPosition(const std::vector<Vec2> &positions, float screenWidth, float screenHeight);
+    void updateRenderPosition(const std::vector<Vec2> &positions, float screenWidth, float screenHeight, float totalMapWidth = 0.0f, float totalMapHeight = 0.0f, float mapRatioPerPixelX = 0.0f, float mapRatioPerPixelY = 0.0f);
     bool doesPointOverlap(float pointX, float pointY);
 
     void changeTexture(const std::string &textureUrl);

@@ -1,18 +1,5 @@
 import { CONSTANTS } from "./constants.js";
 
-export function createSvgIcon(icon, height) {
-    const svg = document.createElementNS(CONSTANTS.SVG_NS, "svg");
-    svg.style.height = height;
-    svg.style.fill = "white";
-    svg.setAttribute("viewBox", icon.viewBox);
-
-    const use = document.createElementNS(CONSTANTS.SVG_NS, "use");
-    use.setAttribute("href", icon.href);
-
-    svg.appendChild(use);
-    return svg;
-}
-
 export function createSpinnerIcon() {
     const div = document.createElement("div");
     div.className = "spinner-border spinner-border-sm";
@@ -87,8 +74,6 @@ export function showToast(container, message, type = "", isClosable, options = {
 
     toastDiv.appendChild(toastBody);
 
-    toastElement.appendChild(toastDiv);
-
     if (isClosable) {
         let closeButton = document.createElement("button");
         closeButton.setAttribute("type", "button");
@@ -107,7 +92,7 @@ export function showToast(container, message, type = "", isClosable, options = {
 
     toastElement.addEventListener("hidden.bs.toast", () => {
         onClosed();
-        toast = null;
+        toast.dispose();
         toastElement.remove();
     });
     return toast;

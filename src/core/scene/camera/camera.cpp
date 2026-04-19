@@ -3,6 +3,7 @@
 #include <algorithm>
 #include <memory>
 
+#include "core/math/vector.h"
 #include "core/projection/projectionMatrix.h"
 #include "core/projection/orthographicProjectionMatrix.h"
 #include "core/projection/perspectiveProjectionMatrix.h"
@@ -41,6 +42,30 @@ Camera::~Camera()
 {
 }
 
+Vec3 Camera::getClickRayVector(float clickedPixelX, float clickedPixelY)
+{
+    float screenCenterRelativeX = (clickedPixelX / imageW_) * 2.0f - 1.0f;
+    float screenCenterRelativeY = 1.0f - (clickedPixelY / imageH_) * 2.0f;
+
+    Vec3 straightRayOutFromLens(
+        screenCenterRelativeX * projectionMatrix_->getRightClippingPlane(),
+        screenCenterRelativeY * projectionMatrix_->getTopClippingPlane(),
+        -projectionMatrix_->getNearClippingPlane()
+    );
+
+    Vec3 inverseViewRight(viewMatrix_[0], viewMatrix_[4], viewMatrix_[8]);
+    Vec3 inverseViewUp(viewMatrix_[1], viewMatrix_[5], viewMatrix_[9]);
+    Vec3 inverseViewBack(viewMatrix_[2], viewMatrix_[6], viewMatrix_[10]);
+
+    Vec3 finalWorldDirection = (inverseViewRight * straightRayOutFromLens.x) +
+        (inverseViewUp * straightRayOutFromLens.y) +
+        (inverseViewBack * straightRayOutFromLens.z);
+
+    finalWorldDirection.normalize();
+
+    return finalWorldDirection;
+}
+
 void Camera::setPosition(float x, float y, float z)
 {
     data_.camPos[0] = x;
@@ -52,7 +77,7 @@ void Camera::setPosition(float x, float y, float z)
 void Camera::setRotation(float pitch, float yaw)
 {
     pitch_ = pitch;
-    yaw_ = yaw;
+    yaw_ = MathUtils::normalizeAngleRadians(yaw);
     newView_ = true;
 }
 
@@ -64,7 +89,7 @@ void Camera::setPitch(float pitch)
 
 void Camera::setYaw(float yaw)
 {
-    yaw_ = yaw;
+    yaw_ = MathUtils::normalizeAngleRadians(yaw);
     newView_ = true;
 }
 
@@ -76,18 +101,10 @@ void Camera::rotate(float dPitch, float dYaw)
 
     pitch_ = std::clamp<float>(pitch_ + (dPitch * zoomCorrectedSensitivity), -M_PI_2, M_PI_2);
     yaw_ += dYaw * zoomCorrectedSensitivity;
-    // wrap to [-2pi;2pi]
-    if (yaw_ >= MathUtils::TWO_PI)
-    {
-        yaw_ -= MathUtils::TWO_PI;
-    }
-    else
-    {
-        if (yaw_ <= -MathUtils::TWO_PI)
-        {
-            yaw_ += MathUtils::TWO_PI;
-        }
-    }
+
+    // normalize to [0;2pi[
+    yaw_ = MathUtils::normalizeAngleRadians(yaw_);
+
     newView_ = true;
 }
 
@@ -105,40 +122,14 @@ void Camera::updateViewMatrix()
         float sinX = sinf(pitch_);
         float cosX = cosf(pitch_);
 
-        /*
-        Y rotation matrix:
-            [cos, 0,  -sin, 0]
-            [0,   1,  0,    0]
-            [sin, 0,  cos,  0]
-            [0,   0,  0,    1]
-        */
-        MathUtils::setIdentity(yRotMatr);
-        yRotMatr[0] = cosY;
-        yRotMatr[2] = -sinY;
-        yRotMatr[8] = sinY;
-        yRotMatr[10] = cosY;
-
-        /*
-        X rotation matrix:
-            [1, 0,    0,   0]
-            [0, cos,  sin, 0]
-            [0, -sin, cos, 0]
-            [0, 0,    0,   1]
-        */
-        MathUtils::setIdentity(xRotMatr);
-        xRotMatr[5] = cosX;
-        xRotMatr[6] = sinX;
-        xRotMatr[9] = -sinX;
-        xRotMatr[10] = cosX;
+        MathUtils::setRotationY(yRotMatr, yaw_);
+        MathUtils::setRotationX(xRotMatr, pitch_);
 
         // order: Z Y X
         MathUtils::multiplyMatrix(yRotMatr, xRotMatr, rotMatr);
 
         // translation matrix
-        MathUtils::setIdentity(translation);
-        translation[12] = -data_.camPos[0];
-        translation[13] = -data_.camPos[1];
-        translation[14] = -data_.camPos[2];
+        MathUtils::setTranslation(translation, -data_.camPos[0], -data_.camPos[1], -data_.camPos[2]);
 
         MathUtils::multiplyMatrix(translation, rotMatr, viewMatrix_);
         newView_ = false;

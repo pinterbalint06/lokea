@@ -1,21 +1,20 @@
-import { EVENTS } from "../events/EventBus.js";
+import { EVENTS } from "../shared/EventBus.js";
 import { CONSTANTS } from "../shared/constants.js";
-import { fetchEquirectangularImage } from "../shared/api.js";
 import { processUploadedImageFile } from "../shared/utils.js";
 import { degreeToRadian } from "../../libs/math/mathUtils.js";
+import { isCancellationError, loadPointEquirectangularLowThenHigh } from "../../libs/network/progressiveImage.js";
 
 
 export class EquirectangularManager {
-    constructor(eventBus, equirectangularViewer, mapViewer, appState) {
+    constructor(eventBus, equirectangularViewer, mapViewer, appStore) {
         this.bus = eventBus;
         this.mapViewer = mapViewer;
         this.equirectangularViewer = equirectangularViewer;
-        this.appState = appState; // gameMapId, activeMapId, pendingEquirectangularFile
+        this.store = appStore;
 
         this.fovSyncID = null;
-        this.currentNorthDirection = 0;
         this.abortController = null;
-        this.activePointId = null;
+        this.activeLoadGeneration = 0;
 
         this.#bindBusEvents();
     }
@@ -23,44 +22,46 @@ export class EquirectangularManager {
     #bindBusEvents() {
         this.bus.on(EVENTS.UI_EQUIRECTANGULAR_FILE_DROPPED, async ({ file }) => this.#handleEquirectangularLoad(file));
 
-        this.bus.on(EVENTS.MARKER_SELECTED, async ({ id, data }) => {
-            this.activePointId = id;
-            this.currentNorthDirection = degreeToRadian(data.north_direction);
-            this.bus.emit(EVENTS.TOAST_SHOW, { msg: "Kép betöltése", id: "equirectangularLoading", closable: false, spinner: true });
+        this.bus.on(EVENTS.MARKER_SELECTED, async ({ id, isSync }) => {
+            if (!isSync) {
+                this.activeLoadGeneration++
+                const loadGeneration = this.activeLoadGeneration;
+                this.bus.emit(EVENTS.TOAST_SHOW, { msg: "Kép betöltése", id: `loading${loadGeneration}`, autohide: false, closable: false, spinner: true });
 
-            if (this.abortController) {
-                this.abortController.abort();
-                this.abortController = null;
-            }
-
-            let imgData;
-            try {
-                this.abortController = new AbortController();
-                let signal = this.abortController.signal;
-                imgData = await fetchEquirectangularImage(id, signal);
-                // check if the same point is still active
-                if (this.activePointId == id) {
-                    await this.#loadImage(imgData.url, imgData.width, imgData.height, id);
+                if (this.abortController) {
+                    this.abortController.abort();
+                    this.abortController = null;
                 }
-            } catch (error) {
-                if (error.name != "AbortError" && !(error.type && error.type === "REQUEST_CANCELLED")) {
-                    console.error(error);
-                    this.bus.emit(EVENTS.TOAST_SHOW, { msg: "Hiba a kép betöltésekor!", type: "danger" });
+
+                try {
+                    this.abortController = new AbortController();
+                    let signal = this.abortController.signal;
+
+                    await loadPointEquirectangularLowThenHigh({
+                        pointId: id,
+                        signal,
+                        loadToViewer: async (imgData) => {
+                            await this.equirectangularViewer.loadImage(imgData.url, imgData.width, imgData.height, degreeToRadian(imgData.northDirection));
+                        },
+                        isCurrent: () => this.store.getState().activePoint.id == id && this.activeLoadGeneration == loadGeneration,
+                        onLowReady: () => {
+                            if (this.store.getState().activePoint.id == id && this.activeLoadGeneration == loadGeneration) {
+                                this.equirectangularViewer.setHeading(0);
+                                this.#startFOVSync();
+                            }
+                        }
+                    });
+                } catch (error) {
+                    if (!isCancellationError(error) && this.store.getState().activePoint.id == id && this.activeLoadGeneration == loadGeneration) {
+                        console.error(error);
+                        this.bus.emit(EVENTS.TOAST_SHOW, { msg: "Hiba a kép betöltésekor!", type: "danger" });
+                    }
+                } finally {
+                    this.bus.emit(EVENTS.TOAST_HIDE_ID, { id: `loading${loadGeneration}` });
+                    if (this.abortController && this.activeLoadGeneration == loadGeneration) {
+                        this.abortController = null;
+                    }
                 }
-            } finally {
-                this.bus.emit(EVENTS.TOAST_HIDE_ID, { id: "equirectangularLoading" });
-                if (imgData) {
-                    imgData.cleanup();
-                }
-            }
-
-        });
-
-        this.bus.on(EVENTS.NEW_MARKER_PLACED, () => this.activePointId = CONSTANTS.TEMP_ID);
-
-        this.bus.on(EVENTS.POINT_SAVED, ({ previousPointId, pointId, isNewPoint }) => {
-            if (isNewPoint && this.activePointId == previousPointId) {
-                this.activePointId = pointId;
             }
         });
 
@@ -74,22 +75,33 @@ export class EquirectangularManager {
             }
         });
 
-        this.bus.on(EVENTS.UI_COLLAPSE_HIDE_STARTED, () => {
-            this.#stopFOVSync();
-            this.currentNorthDirection = 0;
-            this.appState.pendingEquirectangularFile = null;
-            this.activePointId = null;
+        this.bus.on(EVENTS.MAP_SWITCHED, () => {
+            const activePointId = this.store.getState().activePoint.id;
+            if (activePointId && !this.mapViewer.doesMarkerExist(activePointId)) {
+                this.#stopFOVSync();
+                this.activeLoadGeneration++;
+                if (this.abortController) {
+                    this.abortController.abort();
+                    this.abortController = null;
+                }
+            }
         });
 
-        this.bus.on(EVENTS.UI_COLLAPSE_HIDDEN, () => {
+        this.bus.on(EVENTS.UI_MARKER_EDITOR_CLOSING, () => {
+            this.#stopFOVSync();
+            this.store.setState({ activePoint: { pendingEquirectangularFile: null } });
+            this.activeLoadGeneration++;
+
+            if (this.abortController) {
+                this.abortController.abort();
+                this.abortController = null;
+            }
+        });
+
+        this.bus.on(EVENTS.UI_MARKER_EDITOR_CLOSED, () => {
             this.equirectangularViewer.setYaw(0);
             this.equirectangularViewer.setZoom(0.05);
             this.equirectangularViewer.clearImage();
-        });
-
-        this.bus.on(EVENTS.UI_NORTH_DIRECTION_CHANGED, ({ northDirection }) => {
-            this.currentNorthDirection = degreeToRadian(northDirection);
-            this.#syncFOV();
         });
 
         this.bus.on(EVENTS.EQUIRECTANGULAR_IMAGE_LOADED, () => this.#startFOVSync());
@@ -97,10 +109,8 @@ export class EquirectangularManager {
         this.bus.on(EVENTS.UI_EQUIRECTANGULAR_FULLSCREEN_REQUEST, () => this.equirectangularViewer.toggleFullscreen());
 
         this.bus.on(EVENTS.UI_SETTINGS_FOV_TOGGLED, ({ enabled }) => {
-            if (this.appState.settings) {
-                this.appState.settings.fovEnabled = enabled;
-            }
-            if (enabled && this.activePointId) {
+            this.store.setState({ settings: { fovEnabled: enabled } });
+            if (enabled) {
                 this.#startFOVSync();
             } else {
                 this.#stopFOVSync();
@@ -108,42 +118,53 @@ export class EquirectangularManager {
         });
 
         this.bus.on(EVENTS.UI_SETTINGS_FOV_SIZE_CHANGED, ({ width, height }) => {
+            let newSettings = {};
             if (width != undefined) {
-                this.appState.settings.fovWidth = width
+                newSettings.fovWidth = width;
             };
             if (height != undefined) {
-                this.appState.settings.fovHeight = height
+                newSettings.fovHeight = height;
             };
+            this.store.setState({ settings: newSettings });
 
             if (this.mapViewer.doesMarkerExist(CONSTANTS.FOV_MARKER_ID)) {
-                this.mapViewer.resizeMarker(CONSTANTS.FOV_MARKER_ID, this.appState.settings.fovWidth, this.appState.settings.fovHeight);
+                const settings = this.store.getState().settings;
+                this.mapViewer.resizeMarker(CONSTANTS.FOV_MARKER_ID, settings.fovWidth, settings.fovHeight);
+            }
+        });
+
+        this.bus.on(EVENTS.UI_NORTH_DIRECTION_CHANGED, ({ northDirection }) => {
+            if (this.store.getState().activePoint.id) {
+                this.equirectangularViewer.setNorthDirection(degreeToRadian(northDirection));
             }
         });
     }
 
     async #handleEquirectangularLoad(file) {
         this.equirectangularViewer.clearImage();
-        // TODO: emit event to so UI nows savePointBUtton should be disabled until the image is loaded
-        this.appState.pendingEquirectangularFile = file;
+        this.store.setState({
+            activePoint: { pendingEquirectangularFile: file },
+            isBusy: { equirectangular: true }
+        });
 
         let imgData;
         try {
             imgData = await processUploadedImageFile(file);
 
             // check if the same file is still pending
-            if (this.appState.pendingEquirectangularFile == file) {
+            if (this.store.getState().activePoint.pendingEquirectangularFile == file) {
                 await this.equirectangularViewer.loadImage(imgData.url, imgData.width, imgData.height);
 
-                if (this.activePointId) {
-                    this.bus.emit(EVENTS.TOAST_SHOW, { msg: "Kép sikeresen betöltve!", type: "success", delay: 3000 });
+                if (this.store.getState().activePoint.id) {
                     this.bus.emit(EVENTS.EQUIRECTANGULAR_IMAGE_LOADED);
                 }
             }
         } catch (error) {
             console.error(error);
-            this.appState.pendingEquirectangularFile = null;
+            this.store.setState({ activePoint: { pendingEquirectangularFile: null } });
             this.bus.emit(EVENTS.TOAST_SHOW, { msg: error.message, type: "danger" });
         } finally {
+            this.store.setState({ isBusy: { equirectangular: false } });
             if (imgData) {
                 if (imgData.url) {
                     URL.revokeObjectURL(imgData.url);
@@ -152,34 +173,20 @@ export class EquirectangularManager {
         }
     }
 
-    async #loadImage(url, width, height, id) {
-        try {
-            this.equirectangularViewer.setYaw(this.currentNorthDirection);
-            await this.equirectangularViewer.loadImage(url, width, height);
-            if (this.activePointId == id) {
-                this.bus.emit(EVENTS.TOAST_SHOW, { msg: "Kép sikeresen betöltve!", type: "success" });
-                this.#startFOVSync();
-            }
-        } catch (error) {
-            if (!(error.type && error.type == "REQUEST_CANCELLED")) {
-                console.error(error);
-                this.bus.emit(EVENTS.TOAST_SHOW, { msg: "Hiba a kép betöltésekor!", type: "danger" });
-            }
-        }
-    }
-
     #startFOVSync() {
         this.#stopFOVSync();
 
-        if (this.appState.settings.fovEnabled) {
-            let pos = this.mapViewer.getMarkerPosition(this.activePointId);
+        const state = this.store.getState();
+        if (state.settings.fovEnabled && state.activePoint.id && this.mapViewer.doesMarkerExist(state.activePoint.id)) {
+            let pos = this.mapViewer.getMarkerPosition(state.activePoint.id);
 
-            this.mapViewer.placeMarkerByImageCoordinates(
+            this.mapViewer.placeMarkerByUV(
                 CONSTANTS.FOV_MARKER_ID,
-                pos.x, pos.y,
-                this.appState.settings.fovWidth, this.appState.settings.fovHeight,
+                pos.u, pos.v,
+                state.settings.fovWidth, state.settings.fovHeight,
                 "fov_cone");
             this.mapViewer.setMarkerSelectable(CONSTANTS.FOV_MARKER_ID, false);
+            this.mapViewer.setMarkerFixedToMap(CONSTANTS.FOV_MARKER_ID, true);
 
             this.fovSyncID = requestAnimationFrame(this.#syncFOVLoop);
         }
@@ -195,10 +202,10 @@ export class EquirectangularManager {
     }
 
     #syncFOV() {
-        if (this.activePointId && this.equirectangularViewer) {
+        if (this.store.getState().activePoint.id && this.equirectangularViewer && this.mapViewer.doesMarkerExist(CONSTANTS.FOV_MARKER_ID)) {
             let viewYaw = -this.equirectangularViewer.getYaw();
 
-            let finalYaw = viewYaw + this.currentNorthDirection;
+            let finalYaw = viewYaw + degreeToRadian(this.store.getState().activePoint.northDirection);
 
             this.mapViewer.rotateMarker(CONSTANTS.FOV_MARKER_ID, finalYaw);
         };

@@ -405,21 +405,23 @@ async function insertMap(connection, title, gameMapId, imageId) {
     return result.insertId;
 }
 
-async function insertPoint(connection, mapId, x, y, northDirection, imageId) {
+async function insertPoint(connection, mapId, u, v, northDirection, imageId) {
     const query = `
-        INSERT INTO points (map_id, point_x, point_y, north_direction, image_id)
+        INSERT INTO points (map_id, point_u, point_v, north_direction, image_id)
         VALUES (?, ?, ?, ?, ?)
     `;
-    const [result] = await connection.execute(query, [mapId, x, y, northDirection, imageId]);
+    const [result] = await connection.execute(query, [mapId, u, v, northDirection, imageId]);
     return result.insertId;
 }
 
-async function insertConnection(connection, startPointId, endPointId, gameMapId) {
+async function insertConnection(connection, startPointId, endPointId, gameMapId, startToEndDirection, endToStartDirection) {
     const query = `
-        INSERT INTO point_connections (start_point_id, end_point_id, game_maps_id)
-        VALUES (?, ?, ?)
+        INSERT INTO point_connections (start_point_id, end_point_id, game_maps_id, direction_start_to_end, direction_end_to_start)
+        VALUES (?, ?, ?, ?, ?)
     `;
-    const [result] = await connection.execute(query, [startPointId, endPointId, gameMapId]);
+    const smallerId = Math.min(startPointId, endPointId);
+    const largerId = Math.max(startPointId, endPointId);
+    const [result] = await connection.execute(query, [smallerId, largerId, gameMapId, startToEndDirection, endToStartDirection]);
     return result.insertId;
 }
 
@@ -429,12 +431,13 @@ async function updateImagePath(connection, imageId, filepath) {
         SET filepath = ?
         WHERE image_id = ?
     `;
-    await connection.execute(query, [filepath, imageId]);
+    const [result] = await connection.execute(query, [filepath, imageId]);
+    return result.affectedRows == 1;
 }
 
 async function getMapImage(mapId) {
     const query = `
-        SELECT images.filepath, images.width, images.height 
+        SELECT images.image_id, images.filepath, images.width, images.height
         FROM map
             INNER JOIN images ON (map.image_id = images.image_id)
         WHERE map.map_id = ?
@@ -445,7 +448,7 @@ async function getMapImage(mapId) {
 
 async function getPointImage(pointId) {
     const query = `
-        SELECT images.image_id, images.filepath, images.width, images.height 
+        SELECT images.image_id, images.filepath, images.width, images.height, points.north_direction
         FROM points
             INNER JOIN images ON (points.image_id = images.image_id)
         WHERE points.point_id = ?
@@ -456,7 +459,7 @@ async function getPointImage(pointId) {
 
 async function getPointsOnMap(mapId) {
     const query = `
-        SELECT points.point_id, points.point_x, points.point_y, points.north_direction 
+        SELECT points.point_id, points.point_u, points.point_v, points.north_direction 
         FROM map
             INNER JOIN points ON (map.map_id = points.map_id)
         WHERE map.map_id = ?
@@ -467,8 +470,17 @@ async function getPointsOnMap(mapId) {
 
 async function getConnectionsByGameMapId(gameMapId) {
     const query = `
-        SELECT point_connections.connection_id, point_connections.start_point_id, point_connections.end_point_id
+        SELECT
+            point_connections.connection_id,
+            point_connections.start_point_id,
+            point_connections.end_point_id,
+            start_point.map_id AS start_map_id,
+            end_point.map_id AS end_map_id,
+            point_connections.direction_start_to_end,
+            point_connections.direction_end_to_start
         FROM point_connections
+            INNER JOIN points AS start_point ON (start_point.point_id = point_connections.start_point_id)
+            INNER JOIN points AS end_point ON (end_point.point_id = point_connections.end_point_id)
         WHERE point_connections.game_maps_id = ?
     `;
     const [rows] = await pool.execute(query, [gameMapId]);
@@ -487,7 +499,7 @@ async function getConnectionsByPointId(pointId) {
 
 async function getPointInfo(pointId) {
     const query = `
-        SELECT points.point_id, points.point_x, points.point_y, points.north_direction, map.map_id, game_maps.game_maps_id
+        SELECT points.point_id, points.point_u, points.point_v, points.north_direction, map.map_id, game_maps.game_maps_id
         FROM points
             INNER JOIN map ON (map.map_id = points.map_id)
             INNER JOIN game_maps ON (game_maps.game_maps_id = map.game_maps_id)
@@ -495,6 +507,55 @@ async function getPointInfo(pointId) {
     `;
     const [rows] = await pool.execute(query, [pointId]);
     return rows[0];
+}
+
+async function getPointOnMapByCoordinates(connection, mapId, u, v) {
+    let query = `
+        SELECT points.point_id
+        FROM points
+        WHERE points.map_id = ?
+            AND points.point_u = ?
+            AND points.point_v = ?
+    `;
+    const [rows] = await connection.execute(query, [mapId, u, v]);
+    return rows;
+}
+
+async function getMapImageIdByMapId(mapId) {
+    const query = `
+        SELECT map.image_id, images.filepath
+        FROM map
+            INNER JOIN images ON (map.image_id = images.image_id)
+        WHERE map.map_id = ?
+    `;
+    const [rows] = await pool.execute(query, [mapId]);
+    let ret = null;
+    if (rows.length > 0) {
+        ret = rows[0].image_id;
+    }
+    return ret;
+}
+
+async function getMapInfo(mapId) {
+    const query = `
+        SELECT map.title, map.game_maps_id
+        FROM map
+        WHERE map.map_id = ?
+    `;
+    const [rows] = await pool.execute(query, [mapId]);
+    return rows.length > 0 ? rows[0] : null;
+}
+
+async function getAllImageIdsForMap(connection, mapId) {
+    const query = `
+        SELECT DISTINCT images.image_id
+        FROM map
+            LEFT JOIN points ON (map.map_id = points.map_id)
+            INNER JOIN images ON (points.image_id = images.image_id OR map.image_id = images.image_id)
+        WHERE map.map_id = ?
+    `;
+    const [rows] = await connection.execute(query, [mapId]);
+    return rows.length > 0 ? rows.map((row) => row.image_id) : [];
 }
 
 async function getMapsByGameMapId(gameMapId) {
@@ -508,6 +569,16 @@ async function getMapsByGameMapId(gameMapId) {
     return rows;
 }
 
+async function getGameMapIdByMapId(mapId) {
+    const query = `
+        SELECT map.game_maps_id
+        FROM map
+        WHERE map.map_id = ?
+    `;
+    const [rows] = await pool.execute(query, [mapId]);
+    return rows.length > 0 ? rows[0].game_maps_id : null;
+}
+
 async function checkUserOwnsGameMap(userId, gameMapId) {
     const query = `
         SELECT COUNT(*) as count
@@ -518,15 +589,49 @@ async function checkUserOwnsGameMap(userId, gameMapId) {
     return rows[0].count > 0;
 }
 
-async function updatePointCoordinates(connection, pointId, x, y) {
+async function checkUserOwnsMap(userId, mapId) {
+    const query = `
+        SELECT COUNT(*) as count
+        FROM map
+            INNER JOIN game_maps ON (map.game_maps_id = game_maps.game_maps_id)
+        WHERE game_maps.creator_id = ? AND map.map_id = ?
+    `;
+    const [rows] = await pool.execute(query, [userId, mapId]);
+    return rows[0].count > 0;
+}
+
+async function checkUserOwnsPoint(userId, pointId) {
+    const query = `
+        SELECT COUNT(*) as count
+        FROM points
+            INNER JOIN map ON (points.map_id = map.map_id)
+            INNER JOIN game_maps ON (map.game_maps_id = game_maps.game_maps_id)
+        WHERE game_maps.creator_id = ? AND points.point_id = ?
+    `;
+    const [rows] = await pool.execute(query, [userId, pointId]);
+    return rows[0].count > 0;
+}
+
+async function checkUserOwnsConnection(userId, connectionId) {
+    const query = `
+        SELECT COUNT(*) as count
+        FROM point_connections
+            INNER JOIN game_maps ON (point_connections.game_maps_id = game_maps.game_maps_id)
+        WHERE game_maps.creator_id = ? AND point_connections.connection_id = ?
+    `;
+    const [rows] = await pool.execute(query, [userId, connectionId]);
+    return rows[0].count > 0;
+}
+
+async function updatePointCoordinates(connection, pointId, u, v) {
     const query = `
         UPDATE points
-        SET points.point_x = ?,
-            points.point_y = ?
+        SET points.point_u = ?,
+            points.point_v = ?
         WHERE points.point_id = ?
     `;
-    const [result] = await connection.execute(query, [x, y, pointId]);
-    return result.affectedRows;
+    const [result] = await connection.execute(query, [u, v, pointId]);
+    return result.affectedRows == 1;
 }
 
 async function updatePointNorthDirection(connection, pointId, northDirection) {
@@ -536,7 +641,7 @@ async function updatePointNorthDirection(connection, pointId, northDirection) {
         WHERE points.point_id = ?
     `;
     const [result] = await connection.execute(query, [northDirection, pointId]);
-    return result.affectedRows;
+    return result.affectedRows == 1;
 }
 
 async function updatePointImage(connection, pointId, imageId) {
@@ -546,7 +651,17 @@ async function updatePointImage(connection, pointId, imageId) {
         WHERE points.point_id = ?
     `;
     const [result] = await connection.execute(query, [imageId, pointId]);
-    return result.affectedRows;
+    return result.affectedRows == 1;
+}
+
+async function updateMapTitle(connection, mapId, title) {
+    const query = `
+        UPDATE map
+        SET map.title = ?
+        WHERE map.map_id = ?
+    `;
+    const [result] = await connection.execute(query, [title, mapId]);
+    return result.affectedRows == 1;
 }
 
 async function deleteImageById(connection, imageId) {
@@ -555,21 +670,33 @@ async function deleteImageById(connection, imageId) {
         WHERE images.image_id = ?
     `;
     const [result] = await connection.execute(query, [imageId]);
-    return result.affectedRows;
+    return result.affectedRows == 1;
 }
 
-async function arePointsInSameGameMap(connection, pointId1, pointId2) {
+async function arePointsInSameGameMap(connection, pointId1, pointId2, gameMapId) {
     const query = `
-            SELECT COUNT(*) as count 
-            FROM points points1
-                INNER JOIN map map1 ON (points1.map_id = map1.map_id)
-                INNER JOIN points points2 ON (points2.point_id = ?)
-                INNER JOIN map map2 ON (points2.map_id = map2.map_id)
-            WHERE points1.point_id = ?
-                AND map1.game_maps_id = map2.game_maps_id;
+        SELECT COUNT(DISTINCT points.point_id) AS count
+        FROM points
+            INNER JOIN map ON (points.map_id = map.map_id)
+        WHERE points.point_id IN (?, ?) 
+          AND map.game_maps_id = ?;
     `;
+
+    const [rows] = await connection.execute(query, [pointId1, pointId2, gameMapId]);
+
+    return rows[0].count == 2;
+}
+
+async function arePointsInSameMap(connection, pointId1, pointId2) {
+    const query = `
+        SELECT COUNT(DISTINCT map_id) AS map_count
+        FROM points
+        WHERE point_id IN (?, ?);
+    `;
+
     const [rows] = await connection.execute(query, [pointId1, pointId2]);
-    return rows[0].count == 1;
+
+    return rows[0].map_count == 1;
 }
 
 async function doesConnectionAlreadyExist(connection, pointId1, pointId2) {
@@ -581,6 +708,58 @@ async function doesConnectionAlreadyExist(connection, pointId1, pointId2) {
     `;
     const [rows] = await connection.execute(query, [pointId1, pointId2, pointId2, pointId1]);
     return rows[0].count == 1;
+}
+
+async function deletePointById(connection, pointId) {
+    const query = `
+        DELETE FROM points
+        WHERE points.point_id = ?
+    `;
+    const [result] = await connection.execute(query, [pointId]);
+    return result.affectedRows == 1;
+}
+
+async function deleteMapById(connection, mapId) {
+    const query = `
+        DELETE FROM map
+        WHERE map.map_id = ?
+    `;
+    const [result] = await connection.execute(query, [mapId]);
+    return result.affectedRows == 1;
+}
+
+async function deleteConnectionById(connection, connectionId) {
+    const query = `
+        DELETE FROM point_connections
+        WHERE point_connections.connection_id = ?
+    `;
+    const [result] = await connection.execute(query, [connectionId]);
+    return result.affectedRows == 1;
+}
+
+async function updateConnectionDirections(connection, connectionId, dirStartToEnd, dirEndToStart) {
+    const query = `
+        UPDATE point_connections
+        SET direction_start_to_end = COALESCE(?, direction_start_to_end),
+            direction_end_to_start = COALESCE(?, direction_end_to_start)
+        WHERE connection_id = ?
+    `;
+    const [result] = await connection.execute(query, [dirStartToEnd, dirEndToStart, connectionId]);
+    return result.affectedRows == 1;
+}
+
+async function isConnectionCrossMap(connection, connectionId) {
+    const query = `
+        SELECT 
+            start_point.map_id AS start_map_id,
+            end_point.map_id AS end_map_id
+        FROM point_connections
+            INNER JOIN points start_point ON (start_point.point_id = point_connections.start_point_id)
+            INNER JOIN points end_point ON (end_point.point_id = point_connections.end_point_id)
+        WHERE point_connections.connection_id = ?
+    `;
+    const [rows] = await connection.execute(query, [connectionId]);
+    return rows[0].start_map_id != rows[0].end_map_id;
 }
 
 //!Export
@@ -598,18 +777,27 @@ module.exports = {
     getConnectionsByGameMapId,
     getConnectionsByPointId,
     getMapsByGameMapId,
+    getGameMapIdByMapId,
     checkUserOwnsGameMap,
+    checkUserOwnsMap,
+    checkUserOwnsPoint,
+    checkUserOwnsConnection,
     updatePointCoordinates,
     updatePointImage,
     updatePointNorthDirection,
+    updateMapTitle,
     deleteImageById,
     getPointInfo,
+    getPointOnMapByCoordinates,
     newUser,
     newUserFromAdmin,
     getUserByUsername,
     getUserByEmail,
     arePointsInSameGameMap,
     doesConnectionAlreadyExist,
+    deletePointById,
+    deleteMapById,
+    deleteConnectionById,
     getUsers,
     getUser,
     sortedUsers,
@@ -618,6 +806,13 @@ module.exports = {
     uploadProfilePic,
     deleteProfilePic,
     getGameMaps,
+    getImagePath,
+    getMapImageIdByMapId,
+    getMapInfo,
+    getAllImageIdsForMap,
+    arePointsInSameMap,
+    updateConnectionDirections,
+    isConnectionCrossMap,
     getImagePath,
     insertGameSession,
     selectLatestActiveGameSession,

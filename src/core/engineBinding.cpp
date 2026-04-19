@@ -14,9 +14,11 @@ EMSCRIPTEN_BINDINGS(engineBinding)
         .function("setFrustum", &Engine::setFrustum)
         .function("setLightColor", &Engine::setLightColor)
         .function("setAmbientLight", &Engine::setAmbientLight)
-        .function("zoom", &Engine::zoom)
+        .function("zoomBy", &Engine::zoom)
         .function("rotateCamera", &Engine::rotateCamera)
         .function("setCameraRotation", &Engine::setCameraRotation)
+        .function("setCameraPosition", &Engine::setCameraPosition)
+        .function("resetCameraPosition", &Engine::resetCameraPosition)
         .function("render", &Engine::render)
         .function("initTexture", emscripten::optional_override(
             [](Engine &self, int width, int height, int meshIndex) -> int
@@ -31,5 +33,5 @@ EMSCRIPTEN_BINDINGS(engineBinding)
         .property("pitch", &Engine::getPitch, &Engine::setPitch)
         .function("setCanvasSize", &Engine::setCanvasSize)
         .function("setProjectionType", emscripten::select_overload<void(int)>(&Engine::setProjectionType))
-        .function("setZoom", &Engine::setZoom);
+        .property("zoom", &Engine::getZoom, &Engine::setZoom);
 }

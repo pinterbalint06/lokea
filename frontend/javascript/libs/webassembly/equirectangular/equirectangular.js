@@ -35,7 +35,7 @@ async function ModuleBuilder(moduleArg = {}) {
     throw Error(`This emscripten-generated code requires Chrome v85 (detected v${b})`);
   }
 })();
-var n = moduleArg, aa = import.meta.url, ba = "", ca;
+var m = moduleArg, aa = import.meta.url, ba = "", ca;
 try {
   ba = (new URL(".", aa)).href;
 } catch {
@@ -44,7 +44,7 @@ if (!globalThis.window && !globalThis.WorkerGlobalScope) {
   throw Error("not compiled for this environment (did you build to HTML and try to run it not on the web, or set ENVIRONMENT to something - like node - and run it someplace else - like on the web?)");
 }
 ca = async a => {
-  q(!da(a), "readAsync does not work with file:// URLs");
+  p(!da(a), "readAsync does not work with file:// URLs");
   a = await fetch(a, {credentials:"same-origin"});
   if (a.ok) {
     return a.arrayBuffer();
@@ -52,12 +52,12 @@ ca = async a => {
   throw Error(a.status + " : " + a.url);
 };
 var ea = console.log.bind(console), r = console.error.bind(console);
-q(!0, "worker environment detected but not enabled at build time.  Add `worker` to `-sENVIRONMENT` to enable.");
-q(!0, "node environment detected but not enabled at build time.  Add `node` to `-sENVIRONMENT` to enable.");
-q(!0, "shell environment detected but not enabled at build time.  Add `shell` to `-sENVIRONMENT` to enable.");
+p(!0, "worker environment detected but not enabled at build time.  Add `worker` to `-sENVIRONMENT` to enable.");
+p(!0, "node environment detected but not enabled at build time.  Add `node` to `-sENVIRONMENT` to enable.");
+p(!0, "shell environment detected but not enabled at build time.  Add `shell` to `-sENVIRONMENT` to enable.");
 globalThis.WebAssembly || r("no native wasm support detected");
 var fa = !1;
-function q(a, b) {
+function p(a, b) {
   a || t("Assertion failed" + (b ? ": " + b : ""));
 }
 var da = a => a.startsWith("file://");
@@ -74,13 +74,13 @@ var ka = new Int16Array(1), la = new Int8Array(ka.buffer);
 ka[0] = 25459;
 115 === la[0] && 99 === la[1] || t("Runtime error: expected the system to be little-endian! (Run with -sSUPPORT_BIG_ENDIAN to bypass)");
 function x(a) {
-  return () => q(!1, `call to '${a}' via reference taken before Wasm module initialization`);
+  return () => p(!1, `call to '${a}' via reference taken before Wasm module initialization`);
 }
 function z(a) {
-  Object.getOwnPropertyDescriptor(n, a) && t(`\`Module.${a}\` was supplied but \`${a}\` not included in INCOMING_MODULE_JS_API`);
+  Object.getOwnPropertyDescriptor(m, a) && t(`\`Module.${a}\` was supplied but \`${a}\` not included in INCOMING_MODULE_JS_API`);
 }
 function ma(a) {
-  Object.getOwnPropertyDescriptor(n, a) || Object.defineProperty(n, a, {configurable:!0, get() {
+  Object.getOwnPropertyDescriptor(m, a) || Object.defineProperty(m, a, {configurable:!0, get() {
     var b = `'${a}' was not exported. add it to EXPORTED_RUNTIME_METHODS (see the Emscripten FAQ)`;
     "FS_createPath" !== a && "FS_createDataFile" !== a && "FS_createPreloadedFile" !== a && "FS_preloadFile" !== a && "FS_unlink" !== a && "addRunDependency" !== a && "FS_createLazyFile" !== a && "FS_createDevice" !== a && "removeRunDependency" !== a || (b += ". Alternatively, forcing filesystem support (-sFORCE_FILESYSTEM) can export this for you");
     t(b);
@@ -100,7 +100,7 @@ function va() {
   sa = new BigInt64Array(a);
   ta = new BigUint64Array(a);
 }
-q(globalThis.Int32Array && globalThis.Float64Array && Int32Array.prototype.subarray && Int32Array.prototype.set, "JS engine does not provide full typed array support");
+p(globalThis.Int32Array && globalThis.Float64Array && Int32Array.prototype.subarray && Int32Array.prototype.set, "JS engine does not provide full typed array support");
 function t(a) {
   a = "Aborted(" + a + ")";
   r(a);
@@ -111,10 +111,10 @@ function t(a) {
 }
 function xa(a, b) {
   return (...c) => {
-    q(ua, `native function \`${a}\` called before runtime initialization`);
+    p(ua, `native function \`${a}\` called before runtime initialization`);
     var d = ya[a];
-    q(d, `exported native function \`${a}\` not found`);
-    q(c.length <= b, `native function \`${a}\` called with ${c.length} args but expects ${b}`);
+    p(d, `exported native function \`${a}\` not found`);
+    p(c.length <= b, `native function \`${a}\` called with ${c.length} args but expects ${b}`);
     return d(...c);
   };
 }
@@ -153,7 +153,7 @@ class Ea {
   }
 }
 var ja = a => {
-  q("number" === typeof a, `ptrToString expects a number, got ${typeof a}`);
+  p("number" === typeof a, `ptrToString expects a number, got ${typeof a}`);
   return "0x" + (a >>> 0).toString(16).padStart(8, "0");
 }, Fa = a => {
   Fa.Ca || (Fa.Ca = {});
@@ -165,7 +165,7 @@ class Ga {
   }
 }
 var Ha = 0, J = () => {
-  q(void 0 != Ia);
+  p(void 0 != Ia);
   var a = I[+Ia >> 2];
   Ia += 4;
   return a;
@@ -247,7 +247,7 @@ var Ha = 0, J = () => {
   }
   return b;
 }, Ua = (a, b, c, d) => {
-  q("string" === typeof a, `stringToUTF8Array expects a string (got ${typeof a})`);
+  p("string" === typeof a, `stringToUTF8Array expects a string (got ${typeof a})`);
   if (!(0 < d)) {
     return 0;
   }
@@ -455,7 +455,7 @@ var Za = {open(a) {
     return 0;
   }
   a = Math.min(a.node.u - e, d);
-  q(0 <= a);
+  p(0 <= a);
   if (8 < a && f.subarray) {
     b.set(f.subarray(e, e + a), c);
   } else {
@@ -465,7 +465,7 @@ var Za = {open(a) {
   }
   return a;
 }, write(a, b, c, d, e, f) {
-  q(!(b instanceof ArrayBuffer));
+  p(!(b instanceof ArrayBuffer));
   b.buffer === A.buffer && (f = !1);
   if (!d) {
     return 0;
@@ -474,7 +474,7 @@ var Za = {open(a) {
   a.J = a.F = Date.now();
   if (b.subarray && (!a.h || a.h.subarray)) {
     if (f) {
-      return q(0 === e, "canOwn must imply no weird position inside the file"), a.h = b.subarray(c, c + d), a.u = d;
+      return p(0 === e, "canOwn must imply no weird position inside the file"), a.h = b.subarray(c, c + d), a.u = d;
     }
     if (0 === a.u && 0 === e) {
       return a.h = b.slice(c, c + d), a.u = d;
@@ -531,25 +531,25 @@ var Za = {open(a) {
   b && (c |= 146);
   return c;
 }, O = (a, b, c) => {
-  q("number" == typeof a, `UTF8ToString expects a number (got ${typeof a})`);
+  p("number" == typeof a, `UTF8ToString expects a number (got ${typeof a})`);
   return a ? Ra(D, a, b, c) : "";
 }, hb = {EPERM:63, ENOENT:44, ESRCH:71, EINTR:27, EIO:29, ENXIO:60, E2BIG:1, ENOEXEC:45, EBADF:8, ECHILD:12, EAGAIN:6, EWOULDBLOCK:6, ENOMEM:48, EACCES:2, EFAULT:21, ENOTBLK:105, EBUSY:10, EEXIST:20, EXDEV:75, ENODEV:43, ENOTDIR:54, EISDIR:31, EINVAL:28, ENFILE:41, EMFILE:33, ENOTTY:59, ETXTBSY:74, EFBIG:22, ENOSPC:51, ESPIPE:70, EROFS:69, EMLINK:34, EPIPE:64, EDOM:18, ERANGE:68, ENOMSG:49, EIDRM:24, ECHRNG:106, EL2NSYNC:156, EL3HLT:107, EL3RST:108, ELNRNG:109, EUNATCH:110, ENOCSI:111, EL2HLT:112, 
 EDEADLK:16, ENOLCK:46, EBADE:113, EBADR:114, EXFULL:115, ENOANO:104, EBADRQC:103, EBADSLT:102, EDEADLOCK:16, EBFONT:101, ENOSTR:100, ENODATA:116, ETIME:117, ENOSR:118, ENONET:119, ENOPKG:120, EREMOTE:121, ENOLINK:47, EADV:122, ESRMNT:123, ECOMM:124, EPROTO:65, EMULTIHOP:36, EDOTDOT:125, EBADMSG:9, ENOTUNIQ:126, EBADFD:127, EREMCHG:128, ELIBACC:129, ELIBBAD:130, ELIBSCN:131, ELIBMAX:132, ELIBEXEC:133, ENOSYS:52, ENOTEMPTY:55, ENAMETOOLONG:37, ELOOP:32, EOPNOTSUPP:138, EPFNOSUPPORT:139, ECONNRESET:15, 
 ENOBUFS:42, EAFNOSUPPORT:5, EPROTOTYPE:67, ENOTSOCK:57, ENOPROTOOPT:50, ESHUTDOWN:140, ECONNREFUSED:14, EADDRINUSE:3, ECONNABORTED:13, ENETUNREACH:40, ENETDOWN:38, ETIMEDOUT:73, EHOSTDOWN:142, EHOSTUNREACH:23, EINPROGRESS:26, EALREADY:7, EDESTADDRREQ:17, EMSGSIZE:35, EPROTONOSUPPORT:66, ESOCKTNOSUPPORT:137, EADDRNOTAVAIL:4, ENETRESET:39, EISCONN:30, ENOTCONN:53, ETOOMANYREFS:141, EUSERS:136, EDQUOT:19, ESTALE:72, ENOTSUP:138, ENOMEDIUM:148, EILSEQ:25, EOVERFLOW:61, ECANCELED:11, ENOTRECOVERABLE:56, 
 EOWNERDEAD:62, ESTRPIPE:135}, ib = async a => {
   var b = await ca(a);
-  q(b, `Loading data file "${a}" failed (no arrayBuffer).`);
+  p(b, `Loading data file "${a}" failed (no arrayBuffer).`);
   return new Uint8Array(b);
 }, jb = 0, kb = null, lb = {}, mb = null, nb = a => {
   jb--;
-  q(a, "removeRunDependency requires an ID");
-  q(lb[a]);
+  p(a, "removeRunDependency requires an ID");
+  p(lb[a]);
   delete lb[a];
   0 == jb && (null !== mb && (clearInterval(mb), mb = null), kb && (a = kb, kb = null, a()));
 }, ob = a => {
   jb++;
-  q(a, "addRunDependency requires an ID");
-  q(!lb[a]);
+  p(a, "addRunDependency requires an ID");
+  p(!lb[a]);
   lb[a] = 1;
   null === mb && globalThis.setInterval && (mb = setInterval(() => {
     if (fa) {
@@ -571,7 +571,7 @@ EOWNERDEAD:62, ESTRPIPE:135}, ib = async a => {
   }
   for (var d of pb) {
     if (d.canHandle(b)) {
-      return q("AsyncFunction" === d.handle.constructor.name, "Filesystem plugin handlers must be async functions (See #24914)"), d.handle(a, b);
+      return p("AsyncFunction" === d.handle.constructor.name, "Filesystem plugin handlers must be async functions (See #24914)"), d.handle(a, b);
     }
   }
   return a;
@@ -734,7 +734,7 @@ function eb(a, b) {
   return a.j.ba(a, b);
 }
 function db(a, b, c, d) {
-  q("object" == typeof a);
+  p("object" == typeof a);
   a = new zb(a, b, c, d);
   b = Cb(a.parent.id, a.name);
   a.Z = P[b];
@@ -779,7 +779,7 @@ function Gb(a) {
   return a;
 }
 function Hb(a, b = -1) {
-  q(-1 <= b);
+  p(-1 <= b);
   a = Object.assign(new yb(), a);
   if (-1 == b) {
     a: {
@@ -1011,7 +1011,7 @@ function Tb(a, b, c) {
   a.vb = [];
 }
 function Ub(a, b, c, d, e, f) {
-  q(0 <= c);
+  p(0 <= c);
   if (0 > d || 0 > e) {
     throw new K(28);
   }
@@ -1091,33 +1091,33 @@ function Yb(a, b, c, d) {
   }, close() {
     d?.buffer?.length && d(10);
   }, read(f, g, k, l) {
-    for (var m = 0, h = 0; h < l; h++) {
+    for (var n = 0, h = 0; h < l; h++) {
       try {
-        var p = c();
+        var q = c();
       } catch (y) {
         throw new K(29);
       }
-      if (void 0 === p && 0 === m) {
+      if (void 0 === q && 0 === n) {
         throw new K(6);
       }
-      if (null === p || void 0 === p) {
+      if (null === q || void 0 === q) {
         break;
       }
-      m++;
-      g[k + h] = p;
+      n++;
+      g[k + h] = q;
     }
-    m && (f.node.W = Date.now());
-    return m;
+    n && (f.node.W = Date.now());
+    return n;
   }, write(f, g, k, l) {
-    for (var m = 0; m < l; m++) {
+    for (var n = 0; n < l; n++) {
       try {
-        d(g[k + m]);
+        d(g[k + n]);
       } catch (h) {
         throw new K(29);
       }
     }
     l && (f.node.J = f.node.F = Date.now());
-    return m;
+    return n;
   }});
   return Nb(a, b, e);
 }
@@ -1135,20 +1135,20 @@ function Zb(a) {
   }
 }
 function $b(a, b, c, d, e) {
-  function f(h, p, y, u, v) {
+  function f(h, q, y, u, v) {
     h = h.node.h;
     if (v >= h.length) {
       return 0;
     }
     u = Math.min(h.length - v, u);
-    q(0 <= u);
+    p(0 <= u);
     if (h.slice) {
       for (var B = 0; B < u; B++) {
-        p[y + B] = h[v + B];
+        q[y + B] = h[v + B];
       }
     } else {
       for (B = 0; B < u; B++) {
-        p[y + B] = h.get(v + B);
+        q[y + B] = h.get(v + B);
       }
     }
     return u;
@@ -1161,8 +1161,8 @@ function $b(a, b, c, d, e) {
     Ka=0;
     get(h) {
       if (!(h > this.length - 1 || 0 > h)) {
-        var p = h % this.Qa;
-        return this.wa(h / this.Qa | 0)[p];
+        var q = h % this.Qa;
+        return this.wa(h / this.Qa | 0)[q];
       }
     }
     tb(h) {
@@ -1173,21 +1173,21 @@ function $b(a, b, c, d, e) {
       h.open("HEAD", c, !1);
       h.send(null);
       200 <= h.status && 300 > h.status || 304 === h.status || t("Couldn't load " + c + ". Status: " + h.status);
-      var p = Number(h.getResponseHeader("Content-length")), y, u = (y = h.getResponseHeader("Accept-Ranges")) && "bytes" === y;
+      var q = Number(h.getResponseHeader("Content-length")), y, u = (y = h.getResponseHeader("Accept-Ranges")) && "bytes" === y;
       h = (y = h.getResponseHeader("Content-Encoding")) && "gzip" === y;
       var v = 1048576;
-      u || (v = p);
+      u || (v = q);
       var B = this;
       B.tb(C => {
         var G = C * v, E = (C + 1) * v - 1;
-        E = Math.min(E, p - 1);
+        E = Math.min(E, q - 1);
         if ("undefined" == typeof B.G[C]) {
           var L = B.G;
           G > E && t("invalid range (" + G + ", " + E + ") or no bytes requested!");
-          E > p - 1 && t("only " + p + " bytes available! programmer error!");
+          E > q - 1 && t("only " + q + " bytes available! programmer error!");
           var H = new XMLHttpRequest();
           H.open("GET", c, !1);
-          p !== v && H.setRequestHeader("Range", "bytes=" + G + "-" + E);
+          q !== v && H.setRequestHeader("Range", "bytes=" + G + "-" + E);
           H.responseType = "arraybuffer";
           H.overrideMimeType && H.overrideMimeType("text/plain; charset=x-user-defined");
           H.send(null);
@@ -1198,10 +1198,10 @@ function $b(a, b, c, d, e) {
         "undefined" == typeof B.G[C] && t("doXHR failed!");
         return B.G[C];
       });
-      if (h || !p) {
-        v = p = 1, v = p = this.wa(0).length, ea("LazyFiles on gzip forces download of the whole file when length is accessed");
+      if (h || !q) {
+        v = q = 1, v = q = this.wa(0).length, ea("LazyFiles on gzip forces download of the whole file when length is accessed");
       }
-      this.La = p;
+      this.La = q;
       this.Ka = v;
       this.xa = !0;
     }
@@ -1221,33 +1221,33 @@ function $b(a, b, c, d, e) {
   } else {
     l = c, k = void 0;
   }
-  var m = Wb(a, b, d, e);
-  k ? m.h = k : l && (m.h = null, m.url = l);
-  Object.defineProperties(m, {u:{get:function() {
+  var n = Wb(a, b, d, e);
+  k ? n.h = k : l && (n.h = null, n.url = l);
+  Object.defineProperties(n, {u:{get:function() {
     return this.h.length;
   }}});
   a = {};
-  for (const [h, p] of Object.entries(m.i)) {
+  for (const [h, q] of Object.entries(n.i)) {
     a[h] = (...y) => {
-      Zb(m);
-      return p(...y);
+      Zb(n);
+      return q(...y);
     };
   }
-  a.read = (h, p, y, u, v) => {
-    Zb(m);
-    return f(h, p, y, u, v);
+  a.read = (h, q, y, u, v) => {
+    Zb(n);
+    return f(h, q, y, u, v);
   };
-  a.za = (h, p, y) => {
-    Zb(m);
+  a.za = (h, q, y) => {
+    Zb(n);
     var u = bb();
     if (!u) {
       throw new K(48);
     }
-    f(h, A, u, p, y);
+    f(h, A, u, q, y);
     return {l:u, Xa:!0};
   };
-  m.i = a;
-  return m;
+  n.i = a;
+  return n;
 }
 var ac = {}, Ia = void 0, R = a => {
   for (var b = "";;) {
@@ -1408,13 +1408,13 @@ var wc = (a, b) => Object.defineProperty(b, "name", {value:a}), xc = (a, b, c) =
     a[b].R[d.$] = d;
   }
 }, yc = (a, b) => {
-  if (n.hasOwnProperty(a)) {
+  if (m.hasOwnProperty(a)) {
     throw new S(`Cannot register public name '${a}' twice`);
   }
-  n[a] = b;
-  n[a].$ = void 0;
+  m[a] = b;
+  m[a].$ = void 0;
 }, zc = a => {
-  q("string" === typeof a);
+  p("string" === typeof a);
   a = a.replace(/[^a-zA-Z0-9_]/g, "$");
   var b = a.charCodeAt(0);
   return 48 <= b && 57 >= b ? `_${a}` : a;
@@ -1528,7 +1528,7 @@ function Fc(a, b) {
 function Gc(a) {
   return this.v(w[a >> 2]);
 }
-function Hc(a, b, c, d, e, f, g, k, l, m, h) {
+function Hc(a, b, c, d, e, f, g, k, l, n, h) {
   this.name = a;
   this.m = b;
   this.ya = c;
@@ -1538,21 +1538,21 @@ function Hc(a, b, c, d, e, f, g, k, l, m, h) {
   this.ub = g;
   this.Ra = k;
   this.rb = l;
-  this.sb = m;
+  this.sb = n;
   this.V = h;
   e || void 0 !== b.C ? this.D = Dc : (this.D = d ? Cc : Fc, this.I = null);
 }
 var Ic = (a, b) => {
-  if (!n.hasOwnProperty(a)) {
+  if (!m.hasOwnProperty(a)) {
     throw new qc("Replacing nonexistent public symbol");
   }
-  n[a] = b;
-  n[a].$ = void 0;
+  m[a] = b;
+  m[a].$ = void 0;
 }, Jc = [], Lc = (a, b, c = !1) => {
-  q(!c, "Async bindings are only supported with JSPI.");
+  p(!c, "Async bindings are only supported with JSPI.");
   a = R(a);
   (c = Jc[b]) || (Jc[b] = c = Kc.get(b));
-  q(Kc.get(b) == c, "JavaScript-side Wasm function table mirror is out of date!");
+  p(Kc.get(b) == c, "JavaScript-side Wasm function table mirror is out of date!");
   if ("function" != typeof c) {
     throw new S(`unknown function pointer with signature ${a}: ${b}`);
   }
@@ -1619,32 +1619,32 @@ function Wc(a, b, c, d, e, f) {
   if (2 > g) {
     throw new S("argTypes array size mismatch! Must at least get return value and 'this' types!");
   }
-  q(!f, "Async bindings are only supported with JSPI.");
+  p(!f, "Async bindings are only supported with JSPI.");
   var k = null !== b[1] && null !== c, l = Uc(b);
   c = !b[0].Ja;
-  var m = g - 2;
+  var n = g - 2;
   var h = b.length - 2;
-  for (var p = b.length - 1; 2 <= p && b[p].optional; --p) {
+  for (var q = b.length - 1; 2 <= q && b[q].optional; --q) {
     h--;
   }
-  p = b[0];
+  q = b[0];
   var y = b[1];
-  d = [a, ec, d, e, Tc, p.v.bind(p), y?.D.bind(y)];
+  d = [a, ec, d, e, Tc, q.v.bind(q), y?.D.bind(y)];
   for (e = 2; e < g; ++e) {
-    p = b[e], d.push(p.D.bind(p));
+    q = b[e], d.push(q.D.bind(q));
   }
   if (!l) {
     for (e = k ? 1 : 2; e < b.length; ++e) {
       null !== b[e].I && d.push(b[e].I);
     }
   }
-  d.push(Vc, h, m);
+  d.push(Vc, h, n);
   l = Uc(b);
-  m = b.length - 2;
+  n = b.length - 2;
   h = [];
   e = ["fn"];
   k && e.push("thisWired");
-  for (g = 0; g < m; ++g) {
+  for (g = 0; g < n; ++g) {
     h.push(`arg${g}`), e.push(`arg${g}Wired`);
   }
   h = h.join(",");
@@ -1652,26 +1652,26 @@ function Wc(a, b, c, d, e, f) {
   h = `return function (${h}) {\n` + "checkArgCount(arguments.length, minArgs, maxArgs, humanName, throwBindingError);\n";
   l && (h += "var destructors = [];\n");
   y = l ? "destructors" : "null";
-  p = "humanName throwBindingError invoker fn runDestructors fromRetWire toClassParamWire".split(" ");
+  q = "humanName throwBindingError invoker fn runDestructors fromRetWire toClassParamWire".split(" ");
   k && (h += `var thisWired = toClassParamWire(${y}, this);\n`);
-  for (g = 0; g < m; ++g) {
+  for (g = 0; g < n; ++g) {
     var u = `toArg${g}Wire`;
     h += `var arg${g}Wired = ${u}(${y}, arg${g});\n`;
-    p.push(u);
+    q.push(u);
   }
   h += (c || f ? "var rv = " : "") + `invoker(${e});\n`;
   if (l) {
     h += "runDestructors(destructors);\n";
   } else {
     for (g = k ? 1 : 2; g < b.length; ++g) {
-      f = 1 === g ? "thisWired" : "arg" + (g - 2) + "Wired", null !== b[g].I && (h += `${f}_dtor(${f});\n`, p.push(`${f}_dtor`));
+      f = 1 === g ? "thisWired" : "arg" + (g - 2) + "Wired", null !== b[g].I && (h += `${f}_dtor(${f});\n`, q.push(`${f}_dtor`));
     }
   }
   c && (h += "var ret = fromRetWire(rv);\nreturn ret;\n");
   h += "}\n";
-  p.push("checkArgCount", "minArgs", "maxArgs");
-  h = `if (arguments.length !== ${p.length}){ throw new Error(humanName + "Expected ${p.length} closure arguments " + arguments.length + " given."); }\n${h}`;
-  b = (new Function(p, h))(...d);
+  q.push("checkArgCount", "minArgs", "maxArgs");
+  h = `if (arguments.length !== ${q.length}){ throw new Error(humanName + "Expected ${q.length} closure arguments " + arguments.length + " given."); }\n${h}`;
+  b = (new Function(q, h))(...d);
   return wc(a, b);
 }
 var Xc = a => {
@@ -1680,7 +1680,7 @@ var Xc = a => {
   if (-1 === b) {
     return a;
   }
-  q(a.endsWith(")"), "Parentheses for argument names should match.");
+  p(a.endsWith(")"), "Parentheses for argument names should match.");
   return a.slice(0, b);
 }, Yc = (a, b, c) => {
   if (!(a instanceof Object)) {
@@ -1694,12 +1694,12 @@ var Xc = a => {
   }
   return Bc(a.g.l, a.g.s.m, b.m);
 }, Zc = [], U = [0, 1, , 1, null, 1, !0, 1, !1, 1], $c = a => {
-  9 < a && 0 === --U[a + 1] && (q(void 0 !== U[a], "Decref for unallocated handle."), U[a] = void 0, Zc.push(a));
+  9 < a && 0 === --U[a + 1] && (p(void 0 !== U[a], "Decref for unallocated handle."), U[a] = void 0, Zc.push(a));
 }, V = a => {
   if (!a) {
     throw new S(`Cannot use deleted val. handle = ${a}`);
   }
-  q(2 === a || void 0 !== U[a] && 0 === a % 2, `invalid handle: ${a}`);
+  p(2 === a || void 0 !== U[a] && 0 === a % 2, `invalid handle: ${a}`);
   return U[a];
 }, Ec = a => {
   switch(a) {
@@ -1735,10 +1735,10 @@ var Xc = a => {
       throw new TypeError(`invalid float width (${b}): ${a}`);
   }
 }, cd = (a, b, c) => {
-  q("number" == typeof c, "stringToUTF8(str, outPtr, maxBytesToWrite) is missing the third parameter that specifies the length of the output buffer!");
+  p("number" == typeof c, "stringToUTF8(str, outPtr, maxBytesToWrite) is missing the third parameter that specifies the length of the output buffer!");
   return Ua(a, D, b, c);
 }, dd = globalThis.TextDecoder ? new TextDecoder("utf-16le") : void 0, ed = (a, b, c) => {
-  q(0 == a % 2, "Pointer passed to UTF16ToString must be aligned to two bytes!");
+  p(0 == a % 2, "Pointer passed to UTF16ToString must be aligned to two bytes!");
   a >>= 1;
   b = Qa(pa, a, b / 2, c);
   if (16 < b - a && dd) {
@@ -1749,8 +1749,8 @@ var Xc = a => {
   }
   return c;
 }, fd = (a, b, c) => {
-  q(0 == b % 2, "Pointer passed to stringToUTF16 must be aligned to two bytes!");
-  q("number" == typeof c, "stringToUTF16(str, outPtr, maxBytesToWrite) is missing the third parameter that specifies the length of the output buffer!");
+  p(0 == b % 2, "Pointer passed to stringToUTF16 must be aligned to two bytes!");
+  p("number" == typeof c, "stringToUTF16(str, outPtr, maxBytesToWrite) is missing the third parameter that specifies the length of the output buffer!");
   c ??= 2147483647;
   if (2 > c) {
     return 0;
@@ -1764,7 +1764,7 @@ var Xc = a => {
   F[b >> 1] = 0;
   return b - d;
 }, gd = a => 2 * a.length, hd = (a, b, c) => {
-  q(0 == a % 4, "Pointer passed to UTF32ToString must be aligned to four bytes!");
+  p(0 == a % 4, "Pointer passed to UTF32ToString must be aligned to four bytes!");
   var d = "";
   a >>= 2;
   for (var e = 0; !(e >= b / 4); e++) {
@@ -1776,8 +1776,8 @@ var Xc = a => {
   }
   return d;
 }, jd = (a, b, c) => {
-  q(0 == b % 4, "Pointer passed to stringToUTF32 must be aligned to four bytes!");
-  q("number" == typeof c, "stringToUTF32(str, outPtr, maxBytesToWrite) is missing the third parameter that specifies the length of the output buffer!");
+  p(0 == b % 4, "Pointer passed to stringToUTF32 must be aligned to four bytes!");
+  p("number" == typeof c, "stringToUTF32(str, outPtr, maxBytesToWrite) is missing the third parameter that specifies the length of the output buffer!");
   c ??= 2147483647;
   if (4 > c) {
     return 0;
@@ -1963,9 +1963,6 @@ var Ld = () => {
   a -= 5120;
   return 0 == a ? A : 1 == a ? D : 2 == a ? F : 4 == a ? I : 6 == a ? qa : 5 == a || 28922 == a || 28520 == a || 30779 == a || 30782 == a ? w : pa;
 };
-function Qd(a, b) {
-  "function" == typeof a ? a(b) : console.error(b);
-}
 P = Array(4096);
 Kb(M, "/");
 Q("/tmp");
@@ -2062,7 +2059,7 @@ Object.assign(Hc.prototype, {eb(a) {
 }, Ha(a) {
   this.V?.(a);
 }, S:Gc, v:tc});
-q(10 === U.length);
+p(10 === U.length);
 z("ENVIRONMENT");
 z("GL_MAX_TEXTURE_IMAGE_UNITS");
 z("SDL_canPlayWithWebAudio");
@@ -2115,67 +2112,67 @@ z("wasm");
 z("wasmBinary");
 z("websocket");
 z("fetchSettings");
-q("undefined" == typeof n.memoryInitializerPrefixURL, "Module.memoryInitializerPrefixURL option was removed, use Module.locateFile instead");
-q("undefined" == typeof n.pthreadMainPrefixURL, "Module.pthreadMainPrefixURL option was removed, use Module.locateFile instead");
-q("undefined" == typeof n.cdInitializerPrefixURL, "Module.cdInitializerPrefixURL option was removed, use Module.locateFile instead");
-q("undefined" == typeof n.filePackagePrefixURL, "Module.filePackagePrefixURL option was removed, use Module.locateFile instead");
-q("undefined" == typeof n.read, "Module.read option was removed");
-q("undefined" == typeof n.readAsync, "Module.readAsync option was removed (modify readAsync in JS)");
-q("undefined" == typeof n.readBinary, "Module.readBinary option was removed (modify readBinary in JS)");
-q("undefined" == typeof n.setWindowTitle, "Module.setWindowTitle option was removed (modify emscripten_set_window_title in JS)");
-q("undefined" == typeof n.TOTAL_MEMORY, "Module.TOTAL_MEMORY has been renamed Module.INITIAL_MEMORY");
-q("undefined" == typeof n.ENVIRONMENT, "Module.ENVIRONMENT has been deprecated. To force the environment, use the ENVIRONMENT compile-time option (for example, -sENVIRONMENT=web or -sENVIRONMENT=node)");
-q("undefined" == typeof n.STACK_SIZE, "STACK_SIZE can no longer be set at runtime.  Use -sSTACK_SIZE at link time");
-q("undefined" == typeof n.wasmMemory, "Use of `wasmMemory` detected.  Use -sIMPORTED_MEMORY to define wasmMemory externally");
-q("undefined" == typeof n.INITIAL_MEMORY, "Detected runtime INITIAL_MEMORY setting.  Use -sIMPORTED_MEMORY to define wasmMemory dynamically");
-n.addRunDependency = ob;
-n.removeRunDependency = nb;
-n.UTF8ToString = O;
-n.FS_preloadFile = async(a, b, c, d, e, f, g, k) => {
-  var l = b ? Oa(Ka(a + "/" + b)) : a, m;
+p("undefined" == typeof m.memoryInitializerPrefixURL, "Module.memoryInitializerPrefixURL option was removed, use Module.locateFile instead");
+p("undefined" == typeof m.pthreadMainPrefixURL, "Module.pthreadMainPrefixURL option was removed, use Module.locateFile instead");
+p("undefined" == typeof m.cdInitializerPrefixURL, "Module.cdInitializerPrefixURL option was removed, use Module.locateFile instead");
+p("undefined" == typeof m.filePackagePrefixURL, "Module.filePackagePrefixURL option was removed, use Module.locateFile instead");
+p("undefined" == typeof m.read, "Module.read option was removed");
+p("undefined" == typeof m.readAsync, "Module.readAsync option was removed (modify readAsync in JS)");
+p("undefined" == typeof m.readBinary, "Module.readBinary option was removed (modify readBinary in JS)");
+p("undefined" == typeof m.setWindowTitle, "Module.setWindowTitle option was removed (modify emscripten_set_window_title in JS)");
+p("undefined" == typeof m.TOTAL_MEMORY, "Module.TOTAL_MEMORY has been renamed Module.INITIAL_MEMORY");
+p("undefined" == typeof m.ENVIRONMENT, "Module.ENVIRONMENT has been deprecated. To force the environment, use the ENVIRONMENT compile-time option (for example, -sENVIRONMENT=web or -sENVIRONMENT=node)");
+p("undefined" == typeof m.STACK_SIZE, "STACK_SIZE can no longer be set at runtime.  Use -sSTACK_SIZE at link time");
+p("undefined" == typeof m.wasmMemory, "Use of `wasmMemory` detected.  Use -sIMPORTED_MEMORY to define wasmMemory externally");
+p("undefined" == typeof m.INITIAL_MEMORY, "Detected runtime INITIAL_MEMORY setting.  Use -sIMPORTED_MEMORY to define wasmMemory dynamically");
+m.addRunDependency = ob;
+m.removeRunDependency = nb;
+m.UTF8ToString = O;
+m.FS_preloadFile = async(a, b, c, d, e, f, g, k) => {
+  var l = b ? Oa(Ka(a + "/" + b)) : a, n;
   a: {
-    for (var h = m = `cp ${l}`;;) {
-      if (!lb[m]) {
+    for (var h = n = `cp ${l}`;;) {
+      if (!lb[n]) {
         break a;
       }
-      m = h + Math.random();
+      n = h + Math.random();
     }
   }
-  ob(m);
+  ob(n);
   try {
     h = c, "string" == typeof c && (h = await ib(c)), h = await qb(h, l), k?.(), f || Xb(a, b, h, d, e, g);
   } finally {
-    nb(m);
+    nb(n);
   }
 };
-n.FS_unlink = (...a) => Pb(...a);
-n.FS_createPath = (...a) => Vb(...a);
-n.FS_createDevice = (...a) => Yb(...a);
-n.FS_createDataFile = (...a) => Xb(...a);
-n.FS_createLazyFile = (...a) => $b(...a);
+m.FS_unlink = (...a) => Pb(...a);
+m.FS_createPath = (...a) => Vb(...a);
+m.FS_createDevice = (...a) => Yb(...a);
+m.FS_createDataFile = (...a) => Xb(...a);
+m.FS_createLazyFile = (...a) => $b(...a);
 "writeI53ToI64Clamped writeI53ToI64Signaling writeI53ToU64Clamped writeI53ToU64Signaling convertI32PairToI53 convertI32PairToI53Checked convertU32PairToI53 stackAlloc getTempRet0 setTempRet0 zeroMemory withStackSave inetPton4 inetNtop4 inetPton6 inetNtop6 readSockaddr writeSockaddr runMainThreadEmAsm autoResumeAudioContext getDynCaller dynCall runtimeKeepalivePush runtimeKeepalivePop asmjsMangle HandleAllocator addOnPreRun addOnInit addOnPostCtor addOnPreMain addOnExit addOnPostRun STACK_SIZE STACK_ALIGN POINTER_SIZE ASSERTIONS ccall cwrap convertJsFunctionToWasm getEmptyTableSlot updateTableMap getFunctionAddress addFunction removeFunction intArrayToString stringToAscii stringToNewUTF8 stringToUTF8OnStack writeArrayToMemory registerKeyEventCallback getBoundingClientRect fillMouseEventData registerMouseEventCallback registerWheelEventCallback registerUiEventCallback registerFocusEventCallback fillDeviceOrientationEventData registerDeviceOrientationEventCallback fillDeviceMotionEventData registerDeviceMotionEventCallback screenOrientation fillOrientationChangeEventData registerOrientationChangeEventCallback fillFullscreenChangeEventData registerFullscreenChangeEventCallback JSEvents_requestFullscreen JSEvents_resizeCanvasForFullscreen registerRestoreOldStyle hideEverythingExceptGivenElement restoreHiddenElements setLetterbox softFullscreenResizeWebGLRenderTarget doRequestFullscreen fillPointerlockChangeEventData registerPointerlockChangeEventCallback registerPointerlockErrorEventCallback requestPointerLock fillVisibilityChangeEventData registerVisibilityChangeEventCallback registerTouchEventCallback fillGamepadEventData registerGamepadEventCallback registerBeforeUnloadEventCallback fillBatteryEventData registerBatteryEventCallback setCanvasElementSize getCanvasElementSize jsStackTrace getCallstack convertPCtoSourceLocation checkWasiClock wasiRightsToMuslOFlags wasiOFlagsToMuslOFlags safeSetTimeout setImmediateWrapped safeRequestAnimationFrame clearImmediateWrapped registerPostMainLoop registerPreMainLoop getPromise makePromise idsToPromises makePromiseCallback findMatchingCatch Browser_asyncPrepareDataCounter isLeapYear ydayFromDate arraySum addDays getSocketFromFD getSocketAddress FS_mkdirTree _setNetworkCallback webgl_enable_WEBGL_multi_draw webgl_enable_EXT_polygon_offset_clamp webgl_enable_EXT_clip_control webgl_enable_WEBGL_polygon_mode emscriptenWebGLGetUniform emscriptenWebGLGetVertexAttrib __glGetActiveAttribOrUniform writeGLArray registerWebGlEventCallback runAndAbortIfError emscriptenWebGLGetIndexed webgl_enable_WEBGL_draw_instanced_base_vertex_base_instance webgl_enable_WEBGL_multi_draw_instanced_base_vertex_base_instance ALLOC_NORMAL ALLOC_STACK allocate writeStringToMemory writeAsciiToMemory allocateUTF8 allocateUTF8OnStack demangle stackTrace getNativeTypeSize getFunctionArgsName createJsInvokerSignature PureVirtualError registerInheritedInstance unregisterInheritedInstance getInheritedInstanceCount getLiveInheritedInstances enumReadValueFromPointer setDelayFunction count_emval_handles".split(" ").forEach(function(a) {
   ma(a);
 });
 "run out err callMain abort wasmExports HEAPF32 HEAPF64 HEAP8 HEAPU8 HEAP16 HEAPU16 HEAP32 HEAPU32 HEAP64 HEAPU64 writeStackCookie checkStackCookie writeI53ToI64 readI53FromI64 readI53FromU64 INT53_MAX INT53_MIN bigintToI53Checked stackSave stackRestore createNamedFunction ptrToString exitJS getHeapMax growMemory ENV ERRNO_CODES strError DNS Protocols Sockets timers warnOnce readEmAsmArgsArray readEmAsmArgs runEmAsmFunction jstoi_q getExecutableName handleException keepRuntimeAlive callUserCallback maybeExit asyncLoad alignMemory mmapAlloc wasmTable wasmMemory getUniqueRunDependency noExitRuntime freeTableIndexes functionsInTableMap setValue getValue PATH PATH_FS UTF8Decoder UTF8ArrayToString stringToUTF8Array stringToUTF8 lengthBytesUTF8 intArrayFromString AsciiToString UTF16Decoder UTF16ToString stringToUTF16 lengthBytesUTF16 UTF32ToString stringToUTF32 lengthBytesUTF32 JSEvents specialHTMLTargets maybeCStringToJsString findEventTarget findCanvasEventTarget currentFullscreenStrategy restoreOldWindowedStyle UNWIND_CACHE ExitStatus getEnvStrings doReadv doWritev initRandomFill randomFill emSetImmediate emClearImmediate_deps emClearImmediate promiseMap uncaughtExceptionCount exceptionLast exceptionCaught ExceptionInfo Browser requestFullscreen requestFullScreen setCanvasSize getUserMedia createContext getPreloadedImageData__data wget MONTH_DAYS_REGULAR MONTH_DAYS_LEAP MONTH_DAYS_REGULAR_CUMULATIVE MONTH_DAYS_LEAP_CUMULATIVE SYSCALLS preloadPlugins FS_createPreloadedFile FS_modeStringToFlags FS_getMode FS_stdin_getChar_buffer FS_stdin_getChar FS_readFile FS FS_root FS_mounts FS_devices FS_streams FS_nextInode FS_nameTable FS_currentPath FS_initialized FS_ignorePermissions FS_filesystems FS_syncFSRequests FS_lookupPath FS_getPath FS_hashName FS_hashAddNode FS_hashRemoveNode FS_lookupNode FS_createNode FS_destroyNode FS_isRoot FS_isMountpoint FS_isFile FS_isDir FS_isLink FS_isChrdev FS_isBlkdev FS_isFIFO FS_isSocket FS_flagsToPermissionString FS_nodePermissions FS_mayLookup FS_mayCreate FS_mayDelete FS_mayOpen FS_checkOpExists FS_nextfd FS_getStreamChecked FS_getStream FS_createStream FS_closeStream FS_dupStream FS_doSetAttr FS_chrdev_stream_ops FS_major FS_minor FS_makedev FS_registerDevice FS_getDevice FS_getMounts FS_syncfs FS_mount FS_unmount FS_lookup FS_mknod FS_statfs FS_statfsStream FS_statfsNode FS_create FS_mkdir FS_mkdev FS_symlink FS_rename FS_rmdir FS_readdir FS_readlink FS_stat FS_fstat FS_lstat FS_doChmod FS_chmod FS_lchmod FS_fchmod FS_doChown FS_chown FS_lchown FS_fchown FS_doTruncate FS_truncate FS_ftruncate FS_utime FS_open FS_close FS_isClosed FS_llseek FS_read FS_write FS_mmap FS_msync FS_ioctl FS_writeFile FS_cwd FS_chdir FS_createDefaultDirectories FS_createDefaultDevices FS_createSpecialDirectories FS_createStandardStreams FS_staticInit FS_init FS_quit FS_findObject FS_analyzePath FS_createFile FS_forceLoadFile FS_absolutePath FS_createFolder FS_createLink FS_joinPath FS_mmapAlloc FS_standardizePath MEMFS TTY PIPEFS SOCKFS tempFixedLengthArray miniTempWebGLFloatBuffers miniTempWebGLIntBuffers heapObjectForWebGLType toTypedArrayIndex GL emscriptenWebGLGet computeUnpackAlignedImageSize colorChannelsInGlTextureFormat emscriptenWebGLGetTexPixelData webglGetUniformLocation webglPrepareUniformLocationsBeforeFirstUse webglGetLeftBracePos AL GLUT EGL GLEW IDBStore SDL SDL_gfx print printErr jstoi_s InternalError BindingError throwInternalError throwBindingError registeredTypes awaitingDependencies typeDependencies tupleRegistrations structRegistrations sharedRegisterType whenDependentTypesAreResolved getTypeName getFunctionName heap32VectorToArray requireRegisteredType usesDestructorStack checkArgCount getRequiredArgCount createJsInvoker UnboundTypeError EmValType EmValOptionalType throwUnboundTypeError ensureOverloadTable exposePublicSymbol replacePublicSymbol embindRepr registeredInstances getBasestPointer getInheritedInstance registeredPointers registerType integerReadValueFromPointer floatReadValueFromPointer assertIntegerRange readPointer runDestructors craftInvokerFunction embind__requireFunction genericPointerToWireType constNoSmartPtrRawPointerToWireType nonConstNoSmartPtrRawPointerToWireType init_RegisteredPointer RegisteredPointer RegisteredPointer_fromWireType runDestructor releaseClassHandle finalizationRegistry detachFinalizer_deps detachFinalizer attachFinalizer makeClassHandle init_ClassHandle ClassHandle throwInstanceAlreadyDeleted deletionQueue flushPendingDeletes delayFunction RegisteredClass shallowCopyInternalPointer downcastPointer upcastPointer validateThis char_0 char_9 makeLegalFunctionName emval_freelist emval_handles emval_symbols getStringOrSymbol Emval emval_returnValue emval_lookupTypes emval_methodCallers emval_addMethodCaller handleError equirectangularReportError getValidTextures".split(" ").forEach(ma);
-var Rd = {100656:() => {
+var Qd = {101408:() => {
   throw "A böngésződ nem támogatja a WebGL-t!";
-}, 100707:a => {
+}, 101459:a => {
   throw "Sikertelen shader fordítás: " + O(a);
-}, 100771:a => {
+}, 101523:a => {
   throw "Sikertelen shader összekapcsolás: " + O(a);
-}, 100841:(a, b) => {
+}, 101593:(a, b) => {
   if (b = document.getElementById(O(b))) {
     b.innerText = a;
   }
-}, 100931:a => {
+}, 101683:a => {
   throw "Sikertelen fájl beolvasás: " + O(a);
-}}, Nc = x("___getTypeName"), Sd = x("_malloc"), Oc = x("_free"), ia = x("_emscripten_stack_get_end"), Td = x("__emscripten_timeout"), xb = x("_strerror"), Ud = x("_emscripten_stack_init"), sd = x("_emscripten_stack_get_current"), wa = x("wasmMemory"), Kc = x("wasmTable"), Vd = {__cxa_throw:(a, b, c) => {
+}}, Nc = x("___getTypeName"), Rd = x("_malloc"), Oc = x("_free"), ia = x("_emscripten_stack_get_end"), Sd = x("__emscripten_timeout"), xb = x("_strerror"), Td = x("_emscripten_stack_init"), sd = x("_emscripten_stack_get_current"), wa = x("wasmMemory"), Kc = x("wasmTable"), Ud = {__cxa_throw:(a, b, c) => {
   a = new Ga(a);
   w[a.l + 16 >> 2] = 0;
   w[a.l + 4 >> 2] = b;
   w[a.l + 8 >> 2] = c;
   Ha++;
-  q(!1, "Exception thrown, but exception catching is not enabled. Compile with -sNO_DISABLE_EXCEPTION_CATCHING or -sEXCEPTION_CATCHING_ALLOWED=[..] to catch.");
+  p(!1, "Exception thrown, but exception catching is not enabled. Compile with -sNO_DISABLE_EXCEPTION_CATCHING or -sEXCEPTION_CATCHING_ALLOWED=[..] to catch.");
 }, __syscall_fcntl64:function(a, b, c) {
   Ia = c;
   try {
@@ -2332,12 +2329,12 @@ var Rd = {100656:() => {
   }, S:function(e) {
     return this.v(D[e]);
   }, I:null});
-}, _embind_register_class:(a, b, c, d, e, f, g, k, l, m, h, p, y) => {
+}, _embind_register_class:(a, b, c, d, e, f, g, k, l, n, h, q, y) => {
   h = R(h);
   f = Lc(e, f);
   k &&= Lc(g, k);
-  m &&= Lc(l, m);
-  y = Lc(p, y);
+  n &&= Lc(l, n);
+  y = Lc(q, y);
   var u = zc(h);
   yc(u, function() {
     Qc(`Cannot construct ${h} due to unbound types`, [d]);
@@ -2365,7 +2362,7 @@ var Rd = {100656:() => {
     });
     var G = Object.create(C, {constructor:{value:v}});
     v.prototype = G;
-    var E = new Ac(h, v, G, y, B, f, k, m);
+    var E = new Ac(h, v, G, y, B, f, k, n);
     if (E.C) {
       var L;
       (L = E.C).Ea ?? (L.Ea = []);
@@ -2379,7 +2376,7 @@ var Rd = {100656:() => {
     return [B, L, C];
   });
 }, _embind_register_class_constructor:(a, b, c, d, e, f) => {
-  q(0 < b);
+  p(0 < b);
   var g = Sc(b, c);
   e = Lc(d, e);
   Rc([], [a], k => {
@@ -2392,58 +2389,58 @@ var Rd = {100656:() => {
     k.m.X[b - 1] = () => {
       Qc(`Cannot construct ${k.name} due to unbound types`, g);
     };
-    Rc([], g, m => {
-      m.splice(1, 0, null);
-      k.m.X[b - 1] = Wc(l, m, null, e, f);
+    Rc([], g, n => {
+      n.splice(1, 0, null);
+      k.m.X[b - 1] = Wc(l, n, null, e, f);
       return [];
     });
     return [];
   });
 }, _embind_register_class_function:(a, b, c, d, e, f, g, k, l) => {
-  var m = Sc(c, d);
+  var n = Sc(c, d);
   b = R(b);
   b = Xc(b);
   f = Lc(e, f, l);
   Rc([], [a], h => {
-    function p() {
-      Qc(`Cannot call ${y} due to unbound types`, m);
+    function q() {
+      Qc(`Cannot call ${y} due to unbound types`, n);
     }
     h = h[0];
     var y = `${h.name}.${b}`;
     b.startsWith("@@") && (b = Symbol[b.substring(2)]);
     k && h.m.qb.push(b);
     var u = h.m.U, v = u[b];
-    void 0 === v || void 0 === v.R && v.className !== h.name && v.$ === c - 2 ? (p.$ = c - 2, p.className = h.name, u[b] = p) : (xc(u, b, y), u[b].R[c - 2] = p);
-    Rc([], m, B => {
+    void 0 === v || void 0 === v.R && v.className !== h.name && v.$ === c - 2 ? (q.$ = c - 2, q.className = h.name, u[b] = q) : (xc(u, b, y), u[b].R[c - 2] = q);
+    Rc([], n, B => {
       B = Wc(y, B, h, f, g, l);
       void 0 === u[b].R ? (B.$ = c - 2, u[b] = B) : u[b].R[c - 2] = B;
       return [];
     });
     return [];
   });
-}, _embind_register_class_property:(a, b, c, d, e, f, g, k, l, m) => {
+}, _embind_register_class_property:(a, b, c, d, e, f, g, k, l, n) => {
   b = R(b);
   e = Lc(d, e);
   Rc([], [a], h => {
     h = h[0];
-    var p = `${h.name}.${b}`, y = {get() {
-      Qc(`Cannot access ${p} due to unbound types`, [c, g]);
+    var q = `${h.name}.${b}`, y = {get() {
+      Qc(`Cannot access ${q} due to unbound types`, [c, g]);
     }, enumerable:!0, configurable:!0};
-    y.set = l ? () => Qc(`Cannot access ${p} due to unbound types`, [c, g]) : () => {
-      throw new S(p + " is a read-only property");
+    y.set = l ? () => Qc(`Cannot access ${q} due to unbound types`, [c, g]) : () => {
+      throw new S(q + " is a read-only property");
     };
     Object.defineProperty(h.m.U, b, y);
     Rc([], l ? [c, g] : [c], u => {
       var v = u[0], B = {get() {
-        var G = Yc(this, h, p + " getter");
+        var G = Yc(this, h, q + " getter");
         return v.v(e(f, G));
       }, enumerable:!0};
       if (l) {
         l = Lc(k, l);
         var C = u[1];
         B.set = function(G) {
-          var E = Yc(this, h, p + " setter"), L = [];
-          l(m, E, C.D(L, G));
+          var E = Yc(this, h, q + " setter"), L = [];
+          l(n, E, C.D(L, G));
           Tc(L);
         };
       }
@@ -2495,7 +2492,7 @@ var Rd = {100656:() => {
       throw new S("Cannot pass non-string to std::string");
     }
     var f = e ? Ta(d) : d.length;
-    var g = Sd(4 + f + 1), k = g + 4;
+    var g = Rd(4 + f + 1), k = g + 4;
     w[g >> 2] = f;
     e ? cd(d, k, f + 1) : D.set(d, k);
     null !== c && c.push(Oc, g);
@@ -2510,7 +2507,7 @@ var Rd = {100656:() => {
     var e = fd;
     var f = gd;
   } else {
-    q(4 === b, "only 2-byte and 4-byte strings are currently supported"), d = hd, e = jd, f = kd;
+    p(4 === b, "only 2-byte and 4-byte strings are currently supported"), d = hd, e = jd, f = kd;
   }
   T(a, {name:c, v:g => {
     var k = d(g + 4, w[g >> 2] * b, !0);
@@ -2520,11 +2517,11 @@ var Rd = {100656:() => {
     if ("string" != typeof k) {
       throw new S(`Cannot pass non-string to C++ string type ${c}`);
     }
-    var l = f(k), m = Sd(4 + l + b);
-    w[m >> 2] = l / b;
-    e(k, m + 4, l + b);
-    null !== g && g.push(Oc, m);
-    return m;
+    var l = f(k), n = Rd(4 + l + b);
+    w[n >> 2] = l / b;
+    e(k, n + 4, l + b);
+    null !== g && g.push(Oc, n);
+    return n;
   }, S:Gc, I(g) {
     Oc(g);
   }});
@@ -2552,10 +2549,10 @@ var Rd = {100656:() => {
   var f = e.map(l => l.S.bind(l));
   a--;
   var g = {toValue:V};
-  a = f.map((l, m) => {
-    var h = `argFromPtr${m}`;
+  a = f.map((l, n) => {
+    var h = `argFromPtr${n}`;
     g[h] = l;
-    return `${h}(args${m ? "+" + 8 * m : ""})`;
+    return `${h}(args${n ? "+" + 8 * n : ""})`;
   });
   switch(c) {
     case 0:
@@ -2601,9 +2598,9 @@ var Rd = {100656:() => {
     return 0;
   }
   var c = setTimeout(() => {
-    q(a in rd);
+    p(a in rd);
     delete rd[a];
-    td(() => Td(a, performance.now()));
+    td(() => Sd(a, performance.now()));
   }, b);
   rd[a] = {id:c, Rb:b};
   return 0;
@@ -2618,34 +2615,34 @@ var Rd = {100656:() => {
   };
   a = b(f);
   b = b(e);
-  q(a);
-  q(b);
-  q(16 >= Ta(a), `timezone name truncated to fit in TZNAME_MAX (${a})`);
-  q(16 >= Ta(b), `timezone name truncated to fit in TZNAME_MAX (${b})`);
+  p(a);
+  p(b);
+  p(16 >= Ta(a), `timezone name truncated to fit in TZNAME_MAX (${a})`);
+  p(16 >= Ta(b), `timezone name truncated to fit in TZNAME_MAX (${b})`);
   e < f ? (cd(a, c, 17), cd(b, d, 17)) : (cd(a, d, 17), cd(b, c, 17));
 }, emscripten_asm_const_int:(a, b, c) => {
-  q(Array.isArray(ud));
-  q(0 == c % 16);
+  p(Array.isArray(ud));
+  p(0 == c % 16);
   ud.length = 0;
   for (var d; d = D[b++];) {
     var e = String.fromCharCode(d), f = ["d", "f", "i", "p"];
     f.push("j");
-    q(f.includes(e), `Invalid character ${d}("${e}") in readEmAsmArgs! Use only [${f}], and do not specify "v" for void return argument.`);
+    p(f.includes(e), `Invalid character ${d}("${e}") in readEmAsmArgs! Use only [${f}], and do not specify "v" for void return argument.`);
     e = 105 != d;
     e &= 112 != d;
     c += e && c % 8 ? 4 : 0;
     ud.push(112 == d ? w[c >> 2] : 106 == d ? sa[c >> 3] : 105 == d ? I[c >> 2] : ra[c >> 3]);
     c += e ? 8 : 4;
   }
-  q(Rd.hasOwnProperty(a), `No EM_ASM constant found at address ${a}.  The loaded WebAssembly file is likely out of sync with the generated JavaScript.`);
-  return Rd[a](...ud);
+  p(Qd.hasOwnProperty(a), `No EM_ASM constant found at address ${a}.  The loaded WebAssembly file is likely out of sync with the generated JavaScript.`);
+  return Qd[a](...ud);
 }, emscripten_console_error:a => {
-  q("number" == typeof a);
+  p("number" == typeof a);
   console.error(O(a));
 }, emscripten_get_now:() => performance.now(), emscripten_resize_heap:a => {
   var b = D.length;
   a >>>= 0;
-  q(a > b);
+  p(a > b);
   if (2147483648 < a) {
     return r(`Cannot enlarge memory, requested ${a} bytes, but the limit is ${2147483648} bytes!`), !1;
   }
@@ -2654,7 +2651,7 @@ var Rd = {100656:() => {
     d = Math.min(d, a + 100663296);
     var e = Math, f = e.min;
     d = Math.max(a, d);
-    q(65536, "alignment argument is required");
+    p(65536, "alignment argument is required");
     e = f.call(e, 2147483648, 65536 * Math.ceil(d / 65536));
     a: {
       f = e;
@@ -2684,7 +2681,7 @@ var Rd = {100656:() => {
   a.height = c;
   return 0;
 }, emscripten_webgl_create_context:(a, b) => {
-  q(b);
+  p(b);
   var c = b >> 2;
   b = {alpha:!!A[b + 0], depth:!!A[b + 1], stencil:!!A[b + 2], antialias:!!A[b + 3], premultipliedAlpha:!!A[b + 4], preserveDrawingBuffer:!!A[b + 5], powerPreference:Gd[I[c + 2]], failIfMajorPerformanceCaveat:!!A[b + 12], ca:I[c + 4], Kb:I[c + 5], Gb:A[b + 24], bb:A[b + 25], Ob:I[c + 7], Qb:A[b + 32]};
   1 !== b.ca && 2 !== b.ca && r(`Invalid WebGL version requested: ${b.ca}`);
@@ -2699,7 +2696,7 @@ var Rd = {100656:() => {
   Z[a] = null;
 }, emscripten_webgl_get_current_context:() => Fd ? Fd.handle : 0, emscripten_webgl_make_context_current:a => {
   Fd = Z[a];
-  n.ctx = W = Fd?.Y;
+  m.ctx = W = Fd?.Y;
   return !a || W ? 0 : -5;
 }, environ_get:(a, b) => {
   var c = 0, d = 0, e;
@@ -2722,16 +2719,16 @@ var Rd = {100656:() => {
 }, equirectangularFromURL:function(a, b, c, d, e, f, g, k) {
   let l = O(a);
   b = Z[b];
-  let m = V(f);
+  let n = V(f);
   if (b) {
-    let h = b.Y, p = V(e), y = V(d);
+    let h = b.Y, q = V(e), y = V(d);
     fetch(l).then(function(u) {
       if (u.ok) {
         let v = u.headers.get("content-type");
-        v && !v.startsWith("image/") && Kd(m, "Invalid content-type:\t" + v, "INVALID_INPUT", a, g);
+        v && !v.startsWith("image/") && Kd(n, "Invalid content-type:\t" + v, "INVALID_INPUT", a, g);
         return u.blob();
       }
-      Kd(m, "Image failed to load:\t" + u.status, "NETWORK", a, g);
+      Kd(n, "Image failed to load:\t" + u.status, "NETWORK", a, g);
     }).then(function(u) {
       return createImageBitmap(u);
     }).then(async function(u) {
@@ -2767,21 +2764,21 @@ var Rd = {100656:() => {
             }
             h.bindTexture(h.TEXTURE_2D, null);
           } catch (L) {
-            u.close(), Kd(m, "Failed to upload texture to GPU", "WEBGL", l, g, L);
+            u.close(), Kd(n, "Failed to upload texture to GPU", "WEBGL", l, g, L);
           }
           u.close();
-          "function" == typeof p && p();
+          "function" == typeof q && q();
         } else {
-          u.close(), Kd(m, "Texture doesn't fit in MAX_TEXTURE_SIZE (" + G + ")", "WEBGL", l, g);
+          u.close(), Kd(n, "Texture doesn't fit in MAX_TEXTURE_SIZE (" + G + ")", "WEBGL", l, g);
         }
       } else {
-        u.close(), B.length != v ? Kd(m, "Textures no longer exist", "WEBGL", l, g) : Kd(m, "New image was requested. Aborting old request", "REQUEST_CANCELLED", l, g);
+        u.close(), B.length != v ? Kd(n, "Textures no longer exist", "WEBGL", l, g) : Kd(n, "New image was requested. Aborting old request", "REQUEST_CANCELLED", l, g);
       }
     }).catch(function() {
-      Kd(m, "Texture failed to load (Fetch/decoding error)", "IMAGE_DECODE", l, g);
+      Kd(n, "Texture failed to load (Fetch/decoding error)", "IMAGE_DECODE", l, g);
     });
   } else {
-    Kd(m, "Invalid WebGL context", "WEBGL", l, g);
+    Kd(n, "Invalid WebGL context", "WEBGL", l, g);
   }
 }, fd_close:function(a) {
   try {
@@ -2802,31 +2799,31 @@ var Rd = {100656:() => {
       for (var f, g = b = 0; g < c; g++) {
         var k = w[a >> 2], l = w[a + 4 >> 2];
         a += 8;
-        var m = e, h = k, p = l, y = f, u = A;
-        q(0 <= h);
-        if (0 > p || 0 > y) {
+        var n = e, h = k, q = l, y = f, u = A;
+        p(0 <= h);
+        if (0 > q || 0 > y) {
           throw new K(28);
         }
-        if (null === m.B) {
+        if (null === n.B) {
           throw new K(8);
         }
-        if (1 === (m.flags & 2097155)) {
+        if (1 === (n.flags & 2097155)) {
           throw new K(8);
         }
-        if (N(m.node.mode)) {
+        if (N(n.node.mode)) {
           throw new K(31);
         }
-        if (!m.i.read) {
+        if (!n.i.read) {
           throw new K(28);
         }
         var v = "undefined" != typeof y;
         if (!v) {
-          y = m.position;
-        } else if (!m.seekable) {
+          y = n.position;
+        } else if (!n.seekable) {
           throw new K(70);
         }
-        var B = m.i.read(m, u, h, p, y);
-        v || (m.position += B);
+        var B = n.i.read(n, u, h, q, y);
+        v || (n.position += B);
         var C = B;
         if (0 > C) {
           var G = -1;
@@ -2873,26 +2870,26 @@ var Rd = {100656:() => {
       for (var f, g = b = 0; g < c; g++) {
         var k = w[a >> 2], l = w[a + 4 >> 2];
         a += 8;
-        var m = Ub(e, A, k, l, f);
-        if (0 > m) {
+        var n = Ub(e, A, k, l, f);
+        if (0 > n) {
           var h = -1;
           break a;
         }
-        b += m;
-        if (m < l) {
+        b += n;
+        if (n < l) {
           break;
         }
-        "undefined" != typeof f && (f += m);
+        "undefined" != typeof f && (f += n);
       }
       h = b;
     }
     w[d >> 2] = h;
     return 0;
-  } catch (p) {
-    if ("undefined" == typeof ac || "ErrnoError" !== p.name) {
-      throw p;
+  } catch (q) {
+    if ("undefined" == typeof ac || "ErrnoError" !== q.name) {
+      throw q;
     }
-    return p.K;
+    return q.K;
   }
 }, glActiveTexture:a => W.activeTexture(a), glAttachShader:(a, b) => {
   W.attachShader(X[a], Y[b]);
@@ -2905,7 +2902,7 @@ var Rd = {100656:() => {
   W.bindTexture(a, zd[b]);
 }, glBindVertexArray:a => {
   W.bindVertexArray(Ad[a]);
-}, glBufferData:(a, b, c, d) => {
+}, glBlendFunc:(a, b) => W.blendFunc(a, b), glBufferData:(a, b, c, d) => {
   c && b ? W.bufferData(a, D, d, c, b) : W.bufferData(a, b, d);
 }, glBufferSubData:(a, b, c, d) => {
   c && W.bufferSubData(a, b, D, d, c);
@@ -3010,13 +3007,13 @@ var Rd = {100656:() => {
         var k = W.getActiveUniform(c, f);
         var l = k.name;
         k = k.size;
-        var m = Od(l);
-        m = 0 < m ? l.slice(0, m) : l;
+        var n = Od(l);
+        n = 0 < n ? l.slice(0, n) : l;
         var h = c.Da;
         c.Da += k;
-        e[m] = [k, h];
+        e[n] = [k, h];
         for (l = 0; l < k; ++l) {
-          d[h] = l, c.Ua[h++] = m;
+          d[h] = l, c.Ua[h++] = n;
         }
       }
     }
@@ -3045,14 +3042,14 @@ var Rd = {100656:() => {
     W.texImage2D(a, b, c, d, e, f, g, k, l);
   } else {
     if (l) {
-      var m = Pd(k);
-      l >>>= 31 - Math.clz32(m.BYTES_PER_ELEMENT);
-      W.texImage2D(a, b, c, d, e, f, g, k, m, l);
+      var n = Pd(k);
+      l >>>= 31 - Math.clz32(n.BYTES_PER_ELEMENT);
+      W.texImage2D(a, b, c, d, e, f, g, k, n, l);
     } else {
       if (l) {
-        m = Pd(k);
-        var h = e * (d * ({5:3, 6:4, 8:2, 29502:3, 29504:4, 26917:2, 26918:2, 29846:3, 29847:4}[g - 6402] || 1) * m.BYTES_PER_ELEMENT + 4 - 1 & -4);
-        l = m.subarray(l >>> 31 - Math.clz32(m.BYTES_PER_ELEMENT), l + h >>> 31 - Math.clz32(m.BYTES_PER_ELEMENT));
+        n = Pd(k);
+        var h = e * (d * ({5:3, 6:4, 8:2, 29502:3, 29504:4, 26917:2, 26918:2, 29846:3, 29847:4}[g - 6402] || 1) * n.BYTES_PER_ELEMENT + 4 - 1 & -4);
+        l = n.subarray(l >>> 31 - Math.clz32(n.BYTES_PER_ELEMENT), l + h >>> 31 - Math.clz32(n.BYTES_PER_ELEMENT));
       } else {
         l = null;
       }
@@ -3061,7 +3058,7 @@ var Rd = {100656:() => {
   }
 }, glTexParameteri:(a, b, c) => W.texParameteri(a, b, c), glUniform1i:(a, b) => {
   var c = W, d = c.uniform1i, e = W.$a;
-  q(e, "Attempted to call glUniform*() without an active GL program set! (build with -sGL_TRACK_ERRORS for standards-conformant behavior)");
+  p(e, "Attempted to call glUniform*() without an active GL program set! (build with -sGL_TRACK_ERRORS for standards-conformant behavior)");
   var f = e.ga[a];
   "number" == typeof f && (e.ga[a] = f = W.getUniformLocation(e, e.Ua[a] + (0 < f ? `[${f}]` : "")));
   d.call(c, f, b);
@@ -3076,60 +3073,76 @@ var Rd = {100656:() => {
   W.vertexAttribPointer(a, b, c, !!d, e, f);
 }, glViewport:(a, b, c, d) => W.viewport(a, b, c, d), proc_exit:a => {
   throw new Ea(a);
-}, textureFromURL:function(a, b, c, d, e, f) {
-  let g = Z[c].Y, k = O(b), l = V(e), m = V(f);
-  fetch(k).then(function(h) {
-    if (h.ok) {
-      let p = h.headers.get("content-type");
-      p && !p.startsWith("image/") && Qd(m, "Invalid content-type:\t" + p);
-      return h.blob();
+}, textureFromURL:async function(a, b, c, d, e, f) {
+  c = Z[c].Y;
+  b = O(b);
+  e = V(e);
+  f = V(f);
+  let g = null;
+  try {
+    const l = await fetch(b);
+    if (!l.ok) {
+      throw Error(`${l.status} ${l.statusText}`);
     }
-  }).then(function(h) {
-    return createImageBitmap(h);
-  }).then(function(h) {
-    let p = zd[a];
-    p ? (g.bindTexture(g.TEXTURE_2D, p), g.texImage2D(g.TEXTURE_2D, 0, g.RGBA, g.RGBA, g.UNSIGNED_BYTE, h), d && g.generateMipmap(g.TEXTURE_2D), g.bindTexture(g.TEXTURE_2D, null), "function" == typeof l && l()) : "function" == typeof m && Qd(m, "Texture failed to load (it no longer exists):\t" + k);
-  }).catch(function() {
-    Qd(m, "Texture failed to load (Fetch/decoding error):\t" + k);
-  });
-}}, Wd;
-function Xd() {
+    const n = l.headers.get("content-type");
+    if (n && !n.startsWith("image/")) {
+      throw Error(`Invalid content-type: ${n}`);
+    }
+    const h = await l.blob();
+    g = await createImageBitmap(h);
+    const q = zd[a];
+    if (!q) {
+      throw Error("Texture failed to load (the webgl texture no longer exists)");
+    }
+    c.bindTexture(c.TEXTURE_2D, q);
+    c.texImage2D(c.TEXTURE_2D, 0, c.RGBA, c.RGBA, c.UNSIGNED_BYTE, g);
+    d && c.generateMipmap(c.TEXTURE_2D);
+    c.bindTexture(c.TEXTURE_2D, null);
+    "function" == typeof e && e();
+  } catch (l) {
+    var k = `Texture error [${b}]: ${l.message}`;
+    "function" == typeof f ? f(k) : console.error(k);
+  } finally {
+    g && g.close();
+  }
+}}, Vd;
+function Wd() {
   if (0 < jb) {
-    kb = Xd;
+    kb = Wd;
   } else {
-    Ud();
+    Td();
     var a = ia();
-    q(0 == (a & 3));
+    p(0 == (a & 3));
     0 == a && (a += 4);
     w[a >> 2] = 34821223;
     w[a + 4 >> 2] = 2310721022;
     w[0] = 1668509029;
     if (0 < jb) {
-      kb = Xd;
+      kb = Wd;
     } else {
-      q(!Wd);
-      Wd = !0;
-      n.calledRun = !0;
+      p(!Vd);
+      Vd = !0;
+      m.calledRun = !0;
       if (!fa) {
-        q(!ua);
+        p(!ua);
         ua = !0;
         ha();
-        if (!n.noFSInit && !vb) {
-          q(!vb, "FS.init was previously called. If you want to initialize later with custom parameters, remove any earlier calls (note that one is automatically added to the generated code)");
+        if (!m.noFSInit && !vb) {
+          p(!vb, "FS.init was previously called. If you want to initialize later with custom parameters, remove any earlier calls (note that one is automatically added to the generated code)");
           vb = !0;
           Ob("/dev/tty", "/dev/stdin");
           Ob("/dev/tty", "/dev/stdout");
           Ob("/dev/tty1", "/dev/stderr");
           a = Rb("/dev/stdin", 0);
           var b = Rb("/dev/stdout", 1), c = Rb("/dev/stderr", 1);
-          q(0 === a.B, `invalid handle for stdin (${a.B})`);
-          q(1 === b.B, `invalid handle for stdout (${b.B})`);
-          q(2 === c.B, `invalid handle for stderr (${c.B})`);
+          p(0 === a.B, `invalid handle for stdin (${a.B})`);
+          p(1 === b.B, `invalid handle for stdout (${b.B})`);
+          p(2 === c.B, `invalid handle for stderr (${c.B})`);
         }
         ya.__wasm_call_ctors();
         wb = !1;
-        na?.(n);
-        q(!n._main, 'compiled without a main, but one is present. if you added it from JS, use Module["onRuntimeInitialized"]');
+        na?.(m);
+        p(!m._main, 'compiled without a main, but one is present. if you added it from JS, use Module["onRuntimeInitialized"]');
         ha();
       }
       ha();
@@ -3138,46 +3151,46 @@ function Xd() {
 }
 var ya;
 ya = await (async function() {
-  var a = {env:Vd, wasi_snapshot_preview1:Vd};
-  Aa ??= n.locateFile ? ba + "equirectangular.wasm" : (new URL("equirectangular.wasm", import.meta.url)).href;
+  var a = {env:Ud, wasi_snapshot_preview1:Ud};
+  Aa ??= m.locateFile ? ba + "equirectangular.wasm" : (new URL("equirectangular.wasm", import.meta.url)).href;
   a = await Da(a);
-  q(n === n, "the Module object should not be replaced during async compilation - perhaps the order of HTML elements is wrong?");
+  p(m === m, "the Module object should not be replaced during async compilation - perhaps the order of HTML elements is wrong?");
   a = ya = a.instance.exports;
-  q("undefined" != typeof a.__getTypeName, "missing Wasm export: __getTypeName");
+  p("undefined" != typeof a.__getTypeName, "missing Wasm export: __getTypeName");
   Nc = xa("__getTypeName", 1);
-  q("undefined" != typeof a.malloc, "missing Wasm export: malloc");
-  Sd = xa("malloc", 1);
-  q("undefined" != typeof a.free, "missing Wasm export: free");
+  p("undefined" != typeof a.malloc, "missing Wasm export: malloc");
+  Rd = xa("malloc", 1);
+  p("undefined" != typeof a.free, "missing Wasm export: free");
   Oc = xa("free", 1);
-  q("undefined" != typeof a.fflush, "missing Wasm export: fflush");
-  q("undefined" != typeof a.emscripten_stack_get_end, "missing Wasm export: emscripten_stack_get_end");
+  p("undefined" != typeof a.fflush, "missing Wasm export: fflush");
+  p("undefined" != typeof a.emscripten_stack_get_end, "missing Wasm export: emscripten_stack_get_end");
   ia = a.emscripten_stack_get_end;
-  q("undefined" != typeof a.emscripten_stack_get_base, "missing Wasm export: emscripten_stack_get_base");
-  q("undefined" != typeof a._emscripten_timeout, "missing Wasm export: _emscripten_timeout");
-  Td = xa("_emscripten_timeout", 2);
-  q("undefined" != typeof a.strerror, "missing Wasm export: strerror");
+  p("undefined" != typeof a.emscripten_stack_get_base, "missing Wasm export: emscripten_stack_get_base");
+  p("undefined" != typeof a._emscripten_timeout, "missing Wasm export: _emscripten_timeout");
+  Sd = xa("_emscripten_timeout", 2);
+  p("undefined" != typeof a.strerror, "missing Wasm export: strerror");
   xb = xa("strerror", 1);
-  q("undefined" != typeof a.emscripten_stack_init, "missing Wasm export: emscripten_stack_init");
-  Ud = a.emscripten_stack_init;
-  q("undefined" != typeof a.emscripten_stack_get_free, "missing Wasm export: emscripten_stack_get_free");
-  q("undefined" != typeof a._emscripten_stack_restore, "missing Wasm export: _emscripten_stack_restore");
-  q("undefined" != typeof a._emscripten_stack_alloc, "missing Wasm export: _emscripten_stack_alloc");
-  q("undefined" != typeof a.emscripten_stack_get_current, "missing Wasm export: emscripten_stack_get_current");
+  p("undefined" != typeof a.emscripten_stack_init, "missing Wasm export: emscripten_stack_init");
+  Td = a.emscripten_stack_init;
+  p("undefined" != typeof a.emscripten_stack_get_free, "missing Wasm export: emscripten_stack_get_free");
+  p("undefined" != typeof a._emscripten_stack_restore, "missing Wasm export: _emscripten_stack_restore");
+  p("undefined" != typeof a._emscripten_stack_alloc, "missing Wasm export: _emscripten_stack_alloc");
+  p("undefined" != typeof a.emscripten_stack_get_current, "missing Wasm export: emscripten_stack_get_current");
   sd = a.emscripten_stack_get_current;
-  q("undefined" != typeof a.__cxa_increment_exception_refcount, "missing Wasm export: __cxa_increment_exception_refcount");
-  q("undefined" != typeof a.memory, "missing Wasm export: memory");
+  p("undefined" != typeof a.__cxa_increment_exception_refcount, "missing Wasm export: __cxa_increment_exception_refcount");
+  p("undefined" != typeof a.memory, "missing Wasm export: memory");
   wa = a.memory;
-  q("undefined" != typeof a.__indirect_function_table, "missing Wasm export: __indirect_function_table");
+  p("undefined" != typeof a.__indirect_function_table, "missing Wasm export: __indirect_function_table");
   Kc = a.__indirect_function_table;
   va();
   return ya;
 }());
-Xd();
-ua ? moduleRtn = n : moduleRtn = new Promise((a, b) => {
+Wd();
+ua ? moduleRtn = m : moduleRtn = new Promise((a, b) => {
   na = a;
   oa = b;
 });
-for (const a of Object.keys(n)) {
+for (const a of Object.keys(m)) {
   a in moduleArg || Object.defineProperty(moduleArg, a, {configurable:!0, get() {
     t(`Access to module property ('${a}') is no longer possible via the module constructor argument; Instead, use the result of the module constructor.`);
   }});

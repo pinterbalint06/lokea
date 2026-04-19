@@ -5,6 +5,8 @@ const path = require('path');
 const cors = require('cors');
 const database = require("./sql/database.js");
 const auth = require('./auth.js')
+const { idSchema } = require('./utils/schemas.js');
+const ERRORS = require('./utils/errorMessages.js');
 
 //!Beállítások
 const app = express();
@@ -34,10 +36,8 @@ app.use(session({
 
 
 async function hasPermissionToEdit(request, gameMapID) {
-    // TODO: change when login works
-    // let userId = request.session.user.user_id;
-    let userId = 1;
-    let isTheirs = await database.checkUserOwnsGameMap(userId, gameMapID);
+    const userId = request.session.userid;
+    const isTheirs = await database.checkUserOwnsGameMap(userId, gameMapID);
     return isTheirs;
 }
 
@@ -59,23 +59,37 @@ router.get('/webgl', (request, response) => {
 router.get('/map', (request, response) => {
     response.sendFile(path.join(__dirname, '../frontend/html/test-map.html'));
 });
-router.get('/maps/:gameMapId/edit', async (request, response) => {
-    try {
-        let gameMapID = Number(request.params.gameMapId);
-        if (!Number.isInteger(gameMapID) || gameMapID <= 0) {
-            response.status(400).send();
+router.get('/maps/:gameMapId/edit',
+    auth.checkAuth,
+    async (request, response) => {
+        try {
+            const gameMapId = await idSchema(ERRORS.GAMEMAP.INVALID_ID).validateAsync(
+                request.params.gameMapId,
+                {
+                    abortEarly: true,
+                    stripUnknown: true,
+                    convert: true
+                }
+            );
+
+            let hasPermission = await hasPermissionToEdit(request, gameMapId);
+            if (hasPermission) {
+                response.sendFile(path.join(__dirname, '../frontend/html/map-creator.html'));
+            } else {
+                response.status(403).send();
+            }
+        } catch (error) {
+            if (error.isJoi) {
+                // TODO: valami oldal ennek
+                response.status(400).json({ error: error.details[0].message });
+            } else {
+                console.error(error);
+                response.status(500).send();
+            }
         }
-        let hasPermission = await hasPermissionToEdit(request, gameMapID);
-        if (hasPermission) {
-            response.sendFile(path.join(__dirname, '../frontend/html/map-creator.html'));
-        } else {
-            response.status(404).send();
-        }
-    } catch (error) {
-        console.error(error);
-        response.status(500).send();
     }
-});
+);
+
 router.get('/login_page', (request, response) => {
     response.sendFile(path.join(__dirname, '../frontend/html/login.html'));
 });
@@ -99,11 +113,11 @@ app.use('/api/admin', adminEndpoints);
 const endpoints = require('./api/api.js');
 app.use('/api', endpoints);
 //!Map Creation API endpoints
-const mapCreationEndpoints = require('./api/mapCreatorAPI.js');
-app.use('/api/map_creator', mapCreationEndpoints);
+const mapCreationEndpoints = require('./api/mapcreator/mapcreator.js');
+app.use('/api/map-creator', mapCreationEndpoints);
 //!game maps API endpoints
-const gameMapsEndpoints = require('./api/gameMaps.js');
-app.use('/api/game_maps', gameMapsEndpoints);
+const gameMapsEndpoints = require('./api/gamemaps/gamemaps.routes.js');
+app.use('/api/game-maps', gameMapsEndpoints);
 //!game API endpoints
 const gameEndpoints = require('./api/gameApi.js');
 app.use('/api/game', gameEndpoints);

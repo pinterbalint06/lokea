@@ -1,5 +1,7 @@
+.github/
 .vscode/
 build/
 **/node_modules/
 backend/temp/*
-private/*
+backend/coverage
+backend/uploads/mapdatas/*

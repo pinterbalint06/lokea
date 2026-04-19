@@ -9,6 +9,9 @@
 
 #include "core/math/mathUtils.h"
 
+// Forward declarations
+struct Vec3; // defined in "core/math/vector.h"
+
 enum class PROJECTIONTYPE
 {
     PERSPECTIVE = 0,
@@ -82,6 +85,20 @@ public:
      */
     ~Camera();
 
+    /**
+     * @brief Calculated a normalized world-space ray direction from a clicked screen pixel.
+     *
+     * Converts the input pixel position from image coordinates to normalized coordinates
+     * in the range [-1, 1], constructs a camera-space ray on the near plane, then
+     * transforms that direction into world space using the camera view basis vectors.
+     *
+     * @param clickedPixelX Horizontal pixel coordinate of the click in image space.
+     * @param clickedPixelY Vertical pixel coordinate of the click in image space.
+     * @return Vec3 Normalized ray direction in world space, pointing from the camera
+     *         through the clicked pixel.
+     */
+    Vec3 getClickRayVector(float clickedPixelX, float clickedPixelY);
+
     // getters
     // position getters
     /**
@@ -126,6 +143,13 @@ public:
      * @return CameraData struct in std140 layout.
      */
     const CameraData &getUBOData() const { return data_; };
+
+    /**
+     * @brief Returns the current zoom of the camera [0;1].
+     *
+     * @return The current zoomFactor of the camera.
+     */
+    float getZoom() const { return zoomFactor_; }
 
     // camera propery sett
     void zoom(float amount);

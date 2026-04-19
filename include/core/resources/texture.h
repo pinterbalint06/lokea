@@ -30,6 +30,7 @@ private:
     GLuint textureGL_;
     bool invisiblePlaceholder_;
     TextureOptions options_;
+    bool hasAlpha_;
 
     void initGL();
     void generatePlaceholder();
@@ -37,8 +38,8 @@ private:
     bool needsMipmaps();
 
 public:
-    Texture(bool invisiblePlaceholder = false);
-    Texture(int width, int height, bool invisiblePlaceholder = false);
+    Texture(bool invisiblePlaceholder = false, bool hasAlpha = false);
+    Texture(int width, int height, bool invisiblePlaceholder = false, bool hasAlpha = false);
     ~Texture();
 
     int getWidth() { return width_; }

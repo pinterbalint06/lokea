@@ -6,7 +6,8 @@ const MARKER_URLS = {
     "edit": "/images/markers/edit-marker.webp",
     "ready": "/images/markers/ready-marker.webp",
     "uploading": "/images/markers/uploading-marker.webp",
-    "fov_cone": "/images/markers/cone.webp"
+    "fov_cone": "/images/markers/cone.webp",
+    "portal": "/images/markers/portal.webp"
 }
 
 const CONNECTION_TYPES = {
@@ -40,6 +41,8 @@ const DEFAULT_OPTIONS = {
     "panAnimationSpeed": 4.0,
     "zoomAnimationSpeed": 1.5
 }
+
+const ZOOM_CHANGE_EPSILON = 0.0001;
 
 export const MAP_VIEWER_ERROR_TYPES = {
     ...WASM_ERROR_TYPES,
@@ -131,6 +134,7 @@ export class MapViewer extends WASMViewerBase {
      * @param {number} [options.canvasWidth=DEFAULT_OPTIONS["canvasWidth"]] - The width of the canvas.
      * @param {number} [options.canvasHeight=DEFAULT_OPTIONS["canvasHeight"]] - The height of the canvas.
      * @param {number} [options.panAnimationSpeed=DEFAULT_OPTIONS["panAnimationSpeed"]] - The speed of the pan animation
+     * @param {number} [options.zoomAnimationSpeed=DEFAULT_OPTIONS["zoomAnimationSpeed"]] - The speed of the zoom animation
      * @throws {Error} Throws an error if the canvas element with the specified ID does not exist.
      */
     constructor(canvasId, options = {}) {
@@ -149,7 +153,7 @@ export class MapViewer extends WASMViewerBase {
         this.#panAnimationSpeed = options.panAnimationSpeed ? options.panAnimationSpeed : DEFAULT_OPTIONS.panAnimationSpeed;
         this.#zoomAnimationSpeed = options.zoomAnimationSpeed ? options.zoomAnimationSpeed : DEFAULT_OPTIONS.zoomAnimationSpeed;
 
-        this.#cacheMarkers();
+        this.#cacheMarker("uploading", MARKER_URLS["uploading"]);
     }
 
     // |------------------|
@@ -238,7 +242,7 @@ export class MapViewer extends WASMViewerBase {
         };
         if (Number.isInteger(imageX) && Number.isInteger(imageY)) {
             if (imageX >= 0 && imageY >= 0) {
-                if (imageX <= this.#imageWidth && imageY <= this.#imageHeight) {
+                if (imageX < this.#imageWidth && imageY < this.#imageHeight) {
                     returnObject.correct = true;
                 } else {
                     returnObject.error = "A koordinátáknak kisebbnek kell lennie mint a kép méretei!";
@@ -323,18 +327,87 @@ export class MapViewer extends WASMViewerBase {
         }
 
         let valid = this.checkCoordinateValid(imageX, imageY);
-        // TODO #2 uncomment when TODO #2 is done
-        // if (!valid.correct) {
-        //     console.log(imageX, imageY);
-        //     console.log(this.#imageWidth, this.#imageHeight);
-        //     throw new WebassemblyError(valid.error, {
-        //         "type": MAP_VIEWER_ERROR_TYPES.INVALID_INPUT
-        //     });
-        // }
+        if (!valid.correct) {
+            throw new WebassemblyError(valid.error, {
+                "type": MAP_VIEWER_ERROR_TYPES.INVALID_INPUT
+            });
+        }
 
         let markerUrl = this.#getMarkerUrl(type);
 
         this._engine.placeMarkerByImageCoordinates(id, imageX, imageY, markerUrl, width, height);
+    }
+
+    placeMarkerByUV(id, u, v, width, height, type = "empty") {
+        this._ensureEngineReady();
+
+        if (Number.isNaN(id)) {
+            throw new WebassemblyError(
+                "Invalid ID",
+                {
+                    "type": MAP_VIEWER_ERROR_TYPES.INVALID_INPUT
+                });
+        }
+
+        if (!Number.isFinite(u) || !Number.isFinite(v) || u < 0 || u >= 1 || v < 0 || v >= 1) {
+            throw new WebassemblyError(
+                "Invalid UV coordinates",
+                {
+                    "type": MAP_VIEWER_ERROR_TYPES.INVALID_INPUT
+                });
+        }
+
+        if (Number.isNaN(width) || Number.isNaN(height) || width < 0 || height < 0) {
+            throw new WebassemblyError(
+                "Invalid marker size",
+                {
+                    "type": MAP_VIEWER_ERROR_TYPES.INVALID_INPUT
+                });
+        }
+
+        if (this.doesMarkerExist(id)) {
+            throw new WebassemblyError(
+                "Point with given ID already exists",
+                {
+                    "type": MAP_VIEWER_ERROR_TYPES.INVALID_INPUT
+                });
+        }
+
+        let markerUrl = this.#getMarkerUrl(type);
+        this._engine.addMarkerByUV(id, u, v, markerUrl, width, height);
+    }
+
+    uvToImageCoordinates(u, v) {
+        this._ensureEngineReady();
+
+        if (!Number.isFinite(u) || !Number.isFinite(v)) {
+            throw new WebassemblyError(
+                "Invalid UV coordinates",
+                {
+                    "type": MAP_VIEWER_ERROR_TYPES.INVALID_INPUT
+                });
+        }
+
+        return {
+            x: Math.floor(u * this.#imageWidth),
+            y: Math.floor(v * this.#imageHeight)
+        };
+    }
+
+    imageToUVCoordinates(imageX, imageY) {
+        this._ensureEngineReady();
+
+        let valid = this.checkCoordinateValid(imageX, imageY);
+        if (!valid.correct) {
+            throw new WebassemblyError(valid.error, {
+                "type": MAP_VIEWER_ERROR_TYPES.INVALID_INPUT
+            });
+        }
+
+        return {
+            u: imageX / this.#imageWidth,
+            v: imageY / this.#imageHeight
+        };
     }
 
     resizeMarker(id, width, height) {
@@ -468,6 +541,28 @@ export class MapViewer extends WASMViewerBase {
         this._engine.moveMarkerToImageCoordinates(id, imageX, imageY);
     }
 
+    moveMarkerToUV(id, u, v) {
+        this._ensureEngineReady();
+
+        if (!Number.isFinite(u) || !Number.isFinite(v) || u < 0 || u >= 1 || v < 0 || v >= 1) {
+            throw new WebassemblyError(
+                "Invalid UV coordinates",
+                {
+                    "type": MAP_VIEWER_ERROR_TYPES.INVALID_INPUT
+                });
+        }
+
+        if (!this.doesMarkerExist(id)) {
+            throw new WebassemblyError(
+                "Invalid marker ID",
+                {
+                    "type": MAP_VIEWER_ERROR_TYPES.INVALID_INPUT
+                });
+        }
+
+        this._engine.moveMarkerToUV(id, u, v);
+    }
+
     removeMarker(id) {
         this._ensureEngineReady();
 
@@ -555,6 +650,28 @@ export class MapViewer extends WASMViewerBase {
         this._engine.setMarkerSelectable(id, selectable);
     }
 
+    setMarkerFixedToMap(id, fixedToMap) {
+        this._ensureEngineReady();
+
+        if (!this.doesMarkerExist(id)) {
+            throw new WebassemblyError(
+                "Invalid marker ID",
+                {
+                    "type": MAP_VIEWER_ERROR_TYPES.INVALID_INPUT
+                });
+        }
+
+        if (typeof fixedToMap != "boolean") {
+            throw new WebassemblyError(
+                "Invalid fixedToMap value",
+                {
+                    "type": MAP_VIEWER_ERROR_TYPES.INVALID_INPUT
+                });
+        }
+
+        this._engine.setMarkerFixedToMap(id, fixedToMap);
+    }
+
     changeMarkerId(oldId, newId) {
         this._ensureEngineReady();
 
@@ -591,11 +708,7 @@ export class MapViewer extends WASMViewerBase {
     }
 
     onClickHandler = (cursorX, cursorY) => {
-        if (this.doesMarkerExist(0)) {
-            this.moveMarker(0, cursorX, cursorY);
-        } else {
-            this.placeMarker(0, cursorX, cursorY, 24.0, 32.0, "uploading");
-        }
+        // to be implented by the user of the class
     }
 
     getZoomLevel() {
@@ -639,6 +752,16 @@ export class MapViewer extends WASMViewerBase {
         }
     }
 
+    async cacheMarkers() {
+        let promises = [];
+
+        for (const type in MARKER_URLS) {
+            promises.push(this.#cacheMarker(type, MARKER_URLS[type]));
+        }
+
+        await Promise.all(promises);
+    }
+
     // |-----------------|
     // | PRIVATE METHODS |
     // |-----------------|
@@ -653,7 +776,7 @@ export class MapViewer extends WASMViewerBase {
         }
         let lowerType = type.toLowerCase();
 
-        // Check Cache first
+        // check cache first
         if (this.#markerCache[lowerType]) {
             markerURL = this.#markerCache[lowerType];
         } else {
@@ -671,27 +794,20 @@ export class MapViewer extends WASMViewerBase {
     }
 
     async #cacheMarker(type, url) {
-        try {
-            let response = await fetch(url);
-            if (!response.ok) {
-                throw new Error("Marker failed to load: " + url);
+        let lowerType = type.toLowerCase();
+        if (!this.#markerCache[lowerType]) {
+            try {
+                let response = await fetch(url);
+                if (!response.ok) {
+                    throw new Error("Marker failed to load: " + url);
+                }
+                let blob = await response.blob();
+                let markerURL = URL.createObjectURL(blob);
+                this.#markerCache[type] = markerURL;
+            } catch (error) {
+                console.error("Marker caching failed:", error);
             }
-            let blob = await response.blob();
-            let markerURL = URL.createObjectURL(blob);
-            this.#markerCache[type] = markerURL;
-        } catch (error) {
-            console.error("Marker caching failed:", error);
         }
-    }
-
-    async #cacheMarkers() {
-        let promises = [];
-
-        for (const type in MARKER_URLS) {
-            promises.push(this.#cacheMarker(type, MARKER_URLS[type]));
-        }
-
-        await Promise.all(promises);
     }
 
     #animatePan = () => {
@@ -709,7 +825,7 @@ export class MapViewer extends WASMViewerBase {
             remainingZoom = (this.#panTargetZoomLevel - this._engine.getZoomLevel()) / 0.01;
         }
 
-        // Verify if we're hitting a map boundary (Engine's limitVCoordinates blocks Y movement)
+        // check if we are blocked by boundaires
         let blockedX = false;
         let blockedY = false;
         if (this.#lastRemainingX != undefined && this.#lastRemainingY != undefined) {
@@ -775,7 +891,7 @@ export class MapViewer extends WASMViewerBase {
         }
     }
 
-    // Functions that have to be implemented
+    // functions that children classes have to implement
     _createEngine(module) {
         return new module.MapViewerEngine(
             this._canvasId,
@@ -796,8 +912,10 @@ export class MapViewer extends WASMViewerBase {
             onZoom: (zoomAmount, cursorX, cursorY) => {
                 this._ensureEngineReady();
                 this.cancelPanAnimation();
-                // TODO: check previous zoom if didn't change stop momentum
+                let prevZoomLevel = this._engine.getZoomLevel();
                 this._engine.zoomMap(zoomAmount, cursorX, cursorY);
+                let newZoomLevel = this._engine.getZoomLevel();
+                return !(Math.abs(newZoomLevel - prevZoomLevel) < ZOOM_CHANGE_EPSILON);
             },
             onClick: (cursorX, cursorY) => {
                 this.cancelPanAnimation();

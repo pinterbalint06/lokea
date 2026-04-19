@@ -195,7 +195,7 @@ export class WASMViewerBase {
                     success = true;
                 } else {
                     throw new WebassemblyError(
-                        "_creatEngine was not implemented!",
+                        "_createEngine was not implemented!",
                         {
                             "type": WASM_ERROR_TYPES.INITIALIZATION
                         });
@@ -204,6 +204,7 @@ export class WASMViewerBase {
         } catch (error) {
             // if initialization failed set destroyed so class can't be used anymore
             this._isDestroyed = true;
+            console.error("Error during engine initialization:", error);
             throw new WebassemblyError(
                 "Unexpected error during engine initialization",
                 {
@@ -227,25 +228,7 @@ export class WASMViewerBase {
                 });
         }
 
-        if (!this._engine) {
-            await this._engineInitPromise;
-
-            if (this._isDestroyed) {
-                throw new WebassemblyError(
-                    "WASM Viewer is destroyed!",
-                    {
-                        "type": WASM_ERROR_TYPES.DESTROYED
-                    });
-            }
-
-            if (!this._engine) {
-                throw new WebassemblyError(
-                    "Engine failed to initialize",
-                    {
-                        "type": WASM_ERROR_TYPES.INITIALIZATION
-                    });
-            }
-        }
+        await this._ensureEngineReadyAsync();
 
         if (this._canvasWidth != width || this._canvasHeight != height) {
             this._canvasWidth = width;
@@ -263,24 +246,24 @@ export class WASMViewerBase {
         return true;
     }
 
-    // Children class should overwrite this
-    // Returns the options which will be given to CanvasInput
+    // children class should overwrite this
+    // returns the options which will be given to CanvasInput
     _getInputCallbacks() {
         return {};
     }
 
-    // Children class should overwrite this
-    // Custom function derived class can override. This is called before rendering.
+    // children class should overwrite this
+    // custom function derived class can override. This is called before rendering.
     _beforeRender() {
     }
 
-    // Children class should overwrite this
+    // children class should overwrite this
     // function that creates the engine object
     _createEngine(module) {
         return null;
     }
 
-    // Children class can implement this
+    // children class can implement this
     // function that is called after initialization but before starting the rendering loop
     _postInitialize() {
 
