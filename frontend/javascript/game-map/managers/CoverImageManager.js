@@ -1,7 +1,7 @@
 import { EVENTS } from "../shared/EventBus.js";
 import { loadLowThenHigh } from "../../libs/network/progressiveImage.js";
 import { fetchGameMapCoverImage } from "../../libs/network/gameMapsApi.js";
-import { uploadGameMapCoverImage } from "../shared/api.js";
+import { uploadGameMapCoverImage, deleteGameMapCoverImage } from "../shared/api.js";
 
 export class CoverImageManager {
     constructor(eventBus, appStore) {
@@ -26,9 +26,16 @@ export class CoverImageManager {
             this.#loadCoverImage(gameMapId);
         });
 
-        this.bus.on(EVENTS.UI_MODAL_CONFIRMED, ({ modalType, file }) => {
-            if (modalType == "cover_image" && file) {
-                this.#handleCoverImageUpload(file);
+        this.bus.on(EVENTS.UI_MODAL_CONFIRMED, ({ modalType, file, action }) => {
+            if (modalType == "cover_image") {
+                switch (action) {
+                    case "upload":
+                        this.#handleCoverImageUpload(file);
+                        break;
+                    case "delete":
+                        this.#handleCoverImageDelete();
+                        break;
+                }
             }
         });
     }
@@ -49,7 +56,6 @@ export class CoverImageManager {
                         imageData.url,
                         () => {
                             this.elements.coverImage.style.opacity = "1";
-
                             this.elements.covertPlaceholder.style.opacity = "0";
                             imageData.cleanup();
                         }
@@ -69,7 +75,7 @@ export class CoverImageManager {
                 msg: "Borítókép frissítése",
                 type: "info",
                 id: randomToastId,
-                autoHide: false,
+                autohide: false,
                 spinner: true
             });
             if (this.uploadAbortController) {
@@ -107,6 +113,42 @@ export class CoverImageManager {
         } else {
             this.bus.emit(EVENTS.TOAST_SHOW, {
                 msg: "Már folyamatban van egy borítókép frissítés. Kérlek várj, amíg az befejeződik.",
+                type: "danger"
+            });
+        }
+    }
+
+    async #handleCoverImageDelete() {
+        if (!this.isUpdatingCover) {
+            this.isUpdatingCover = true;
+            const randomToastId = Math.random().toString();
+            this.bus.emit(EVENTS.TOAST_SHOW, {
+                msg: "Borítókép törlése",
+                id: randomToastId,
+                autohide: false,
+                spinner: true
+            });
+
+            const gameMapId = this.appStore.getState().gameMapId;
+
+            try {
+                await deleteGameMapCoverImage(gameMapId);
+
+                this.#loadCoverImage(gameMapId);
+
+                this.bus.emit(EVENTS.TOAST_SHOW, { msg: "Borítókép sikeresen törölve.", type: "success" });
+            } catch (error) {
+                this.bus.emit(EVENTS.TOAST_SHOW, {
+                    msg: error.message || "Nem sikerült törölni a borítóképet.",
+                    type: "danger"
+                });
+            } finally {
+                this.bus.emit(EVENTS.TOAST_HIDE_ID, { id: randomToastId });
+                this.isUpdatingCover = false;
+            }
+        } else {
+            this.bus.emit(EVENTS.TOAST_SHOW, {
+                msg: "Már folyamatban van egy borítókép módosítás.",
                 type: "danger"
             });
         }

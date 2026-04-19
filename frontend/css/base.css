@@ -107,3 +107,7 @@
     background: transparent;
     box-shadow: none !important;
 }
+
+.font-space-wide {
+    letter-spacing: 0.08em;
+}

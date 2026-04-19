@@ -23,6 +23,8 @@
 
     --state-success: rgb(42, 157, 143, 0.8);
     --state-danger: rgb(217, 4, 41, 0.8);
+    --state-danger-rgb: 217, 4, 41;
+    --text-danger: #ff8ca0;
 
     --shadow-strong: 0px 7px 28px 1px rgba(0, 0, 0, 0.5);
     --shadow-fab: 0px 0px 40px -4px rgba(0, 0, 0, 0.68);
@@ -35,10 +37,10 @@
     --badge-border: 1px solid rgba(255, 255, 255, 0.2);
     --bg-radial-main: radial-gradient(circle at 50% -20%, #3a1c71 0%, #0d0614 100%);
     --bg-radial-overlay: radial-gradient(circle at 50% -20%, #29133e 0%, #0a0510 100%);
-    
+
     --secondary-main: #6C757D;
     --secondary-focus: #5A6268;
-    --secondary-soft: rgba(108,117,125,0.12);
-    --secondary-border: rgba(108,117,125,0.22);
+    --secondary-soft: rgba(108, 117, 125, 0.12);
+    --secondary-border: rgba(108, 117, 125, 0.22);
     --secondary-contrast-text: #FFFFFF;
 }

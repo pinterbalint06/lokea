@@ -67,11 +67,19 @@ const putGameMapCoverImageSchema = {
         })
 };
 
+const deleteGameMapCoverImageSchema = {
+    params:
+        joi.object({
+            gameMapID: idSchema(ERRORS.GAMEMAP.INVALID_ID)
+        })
+};
+
 module.exports = {
     getPointImageSchema,
     getMapImageSchema,
     getPointConnectionsSchema,
     getGameMapDetailsSchema,
     getGameMapCoverImageSchema,
-    putGameMapCoverImageSchema
+    putGameMapCoverImageSchema,
+    deleteGameMapCoverImageSchema
 };

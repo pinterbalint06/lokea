@@ -13,3 +13,36 @@
 .successColor:disabled {
     opacity: 0.5;
 }
+
+.danger-zone {
+    background-color: rgba(var(--state-danger-rgb), 0.08);
+    border: 1px solid rgba(var(--state-danger-rgb), 0.25);
+}
+
+.danger-zone-text {
+    color: var(--text-danger);
+}
+
+.btn-outline-danger {
+    background: transparent;
+    color: var(--text-danger);
+    border-color: rgba(var(--state-danger-rgb), 0.55);
+    transition: all var(--transition-soft);
+}
+
+.btn-outline-danger:hover,
+.btn-outline-danger:focus,
+.btn-outline-danger:active {
+    color: var(--text-main);
+    background: rgba(var(--state-danger-rgb), 0.82);
+    border-color: rgba(var(--state-danger-rgb), 0.92);
+    box-shadow: 0 0 14px rgba(var(--state-danger-rgb), 0.35);
+}
+
+.btn-outline-danger:disabled {
+    color: rgba(var(--state-danger-rgb), 0.45);
+    border-color: rgba(var(--state-danger-rgb), 0.2);
+    cursor: not-allowed;
+    background: transparent;
+    box-shadow: none !important;
+}

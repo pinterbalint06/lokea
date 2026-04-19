@@ -118,7 +118,7 @@ main {
     position: fixed;
     right: 1rem;
     bottom: 1rem;
-    z-index: 1200;
+    z-index: 1000;
 }
 
 .play-map-icon {
@@ -233,19 +233,6 @@ main {
 #descriptionInput {
     min-height: 7.5rem;
     resize: vertical;
-}
-
-#deleteGameMapButton {
-    color: #ff8ca0;
-    border-color: rgba(217, 4, 41, 0.55);
-}
-
-#deleteGameMapButton:hover,
-#deleteGameMapButton:focus {
-    color: var(--text-main);
-    background: rgba(217, 4, 41, 0.82);
-    border-color: rgba(217, 4, 41, 0.92);
-    box-shadow: 0 0 14px rgba(217, 4, 41, 0.35);
 }
 
 .comments-section {

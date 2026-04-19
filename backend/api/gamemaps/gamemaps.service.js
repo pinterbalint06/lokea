@@ -3,7 +3,7 @@ const crypto = require("crypto");
 const AppError = require("#utils/AppError.js");
 const database = require("#sql/database.js");
 const ERRORS = require("#utils/errorMessages.js");
-const { UPLOAD_ROOT_MAP_DATA } = require("#config/mapStorage.js");
+const { UPLOAD_ROOT_MAP_DATA, isInsideRoot } = require("#config/mapStorage.js");
 const { processImageMetadata, createWebpAndLowRes, deleteImageAndLowResByMainPath } = require("#utils/imageProcessor.js");
 const { deleteFile } = require("#utils/fileUtils.js");
 const { assertUserOwnsGameMap } = require("#mapcreator/shared/utils/mapcreator.utils.js");
@@ -99,7 +99,6 @@ async function updateGameMapCoverImage(userId, gameMapID, file) {
     let dbConnection;
     let processedImagePaths;
     let oldCoverImage = null;
-
     try {
         if (!file) {
             throw new AppError(ERRORS.COMMON.MISSING_IMAGE, 400);
@@ -166,10 +165,13 @@ async function updateGameMapCoverImage(userId, gameMapID, file) {
 
         if (oldCoverImage && oldCoverImage.filepath) {
             let absoluteOldPath = path.join(UPLOAD_ROOT_MAP_DATA, oldCoverImage.filepath);
-            deleteImageAndLowResByMainPath(absoluteOldPath)
-                .catch(function () {
-                    console.error("unsuccessful deletion: " + absoluteOldPath);
-                });
+            if (isInsideRoot(absoluteOldPath)) {
+                try {
+                    await deleteImageAndLowResByMainPath(absoluteOldPath)
+                } catch (error) {
+                    console.error("unsuccessful deletion: " + absoluteOldPath, "Error: " + error.message);
+                }
+            }
         }
 
         if (file && file.path) {
@@ -189,11 +191,52 @@ async function updateGameMapCoverImage(userId, gameMapID, file) {
     }
 }
 
+async function deleteGameMapCoverImage(userId, gameMapID) {
+    let dbConnection;
+    try {
+        await assertUserOwnsGameMap(userId, gameMapID);
+
+        const coverImage = await database.getGameMapCoverImage(gameMapID);
+        if (!coverImage) {
+            throw new AppError(ERRORS.GAMEMAP.COVER_IMAGE_NOT_FOUND, 404);
+        }
+
+        dbConnection = await database.getConnection();
+        await dbConnection.beginTransaction();
+
+        const coverDeleteSuccess = await database.deleteImageById(dbConnection, coverImage.image_id);
+        if (!coverDeleteSuccess) {
+            throw new AppError(ERRORS.GAMEMAP.COVER_IMAGE_DELETE_FAILED, 500);
+        }
+
+        await dbConnection.commit();
+
+        if (coverImage.filepath && coverImage.filepath != "pending") {
+            let absolutePath = path.join(UPLOAD_ROOT_MAP_DATA, coverImage.filepath);
+            if (isInsideRoot(absolutePath)) {
+                try {
+                    await deleteImageAndLowResByMainPath(absolutePath)
+                } catch (error) {
+                    console.error("unsuccessful deletion: " + absolutePath, "Error: " + error.message);
+                }
+            }
+        }
+    } catch (error) {
+        await cleanupAfterError(dbConnection);
+        throw error;
+    } finally {
+        if (dbConnection) {
+            dbConnection.release();
+        }
+    }
+}
+
 module.exports = {
     getPointImageDetails,
     getMapImageDetails,
     getPointConnections,
     getGameMapDetails,
     getGameMapCoverImagePath,
-    updateGameMapCoverImage
+    updateGameMapCoverImage,
+    deleteGameMapCoverImage
 };

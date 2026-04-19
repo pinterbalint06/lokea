@@ -34,10 +34,10 @@ async function init() {
 
 document.addEventListener("DOMContentLoaded", init);
 
-// TODO: boritokep torlese
 // TODO: cim, leiras szerkesztese
 // TODO: kommentek betoltese
 // TODO: kommenteles
 // TODO: komment szerkesztese
 // TODO: komment torlese
+// TODO: gamemap backend szetbontasa, cover image, komemnteknek, stb??
 // TODO: backend tesztek megirasa

@@ -16,7 +16,9 @@ const ERRORS = {
 
         NO_ACCESS: "Nincs hozzáférése ehhez a pályához!",
         COVER_IMAGE_UPDATE_FAILED: "A borítókép frissítése nem sikerült!",
-        NOT_FOUND: "A pálya nem létezik!"
+        COVER_IMAGE_DELETE_FAILED: "A borítókép törlése nem sikerült!",
+        NOT_FOUND: "A pálya nem létezik!",
+        COVER_IMAGE_NOT_FOUND: "A borítókép nem létezik!"
     },
 
     MAP: {

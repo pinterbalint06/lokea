@@ -19,3 +19,13 @@ export async function uploadGameMapCoverImage(gameMapId, file, abortSignal = nul
         await handleResponseError(response);
     }
 }
+
+export async function deleteGameMapCoverImage(gameMapId) {
+    const response = await fetch(`/api/game-maps/${gameMapId}/cover-image`, {
+        method: "DELETE"
+    });
+
+    if (!response.ok) {
+        await handleResponseError(response);
+    }
+}
