@@ -255,10 +255,6 @@ main {
     padding: 0.85rem 1rem;
 }
 
-.comment-author {
-    font-size: 0.96rem;
-}
-
 .comment-text {
     color: rgba(255, 255, 255, 0.88);
     white-space: pre-wrap;

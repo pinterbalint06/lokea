@@ -113,6 +113,21 @@ const updateGameMapSchema = {
             })
 };
 
+const getGameMapCommentsSchema = {
+    params:
+        joi.object({
+            gameMapID: idSchema(ERRORS.GAMEMAP.INVALID_ID)
+        }),
+    query:
+        joi.object({
+            page: joi.number().integer().min(1).default(1).messages({
+                "number.base": ERRORS.COMMON.INVALID_PAGE,
+                "number.integer": ERRORS.COMMON.INVALID_PAGE,
+                "number.min": ERRORS.COMMON.INVALID_PAGE
+            })
+        })
+};
+
 module.exports = {
     getPointImageSchema,
     getMapImageSchema,
@@ -121,5 +136,6 @@ module.exports = {
     getGameMapCoverImageSchema,
     putGameMapCoverImageSchema,
     deleteGameMapCoverImageSchema,
-    updateGameMapSchema
+    updateGameMapSchema,
+    getGameMapCommentsSchema
 };

@@ -8,7 +8,8 @@ const ERRORS = {
         UNEXPECTED_ERROR: "Váratlan hiba történt!",
         INVALID_RESOLUTION: "Helytelen felbontás!",
         FILE_NOT_FOUND: "A fájl nem létezik vagy helytelen!",
-        INVALID_IMAGE_TYPE: "Érvénytelen fájltípus! Csak JPG, PNG, WEBP és GIF képek engedélyezettek!"
+        INVALID_IMAGE_TYPE: "Érvénytelen fájltípus! Csak JPG, PNG, WEBP és GIF képek engedélyezettek!",
+        INVALID_PAGE: "Helytelen oldalszám!",
     },
 
     GAMEMAP: {

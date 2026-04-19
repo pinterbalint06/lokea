@@ -68,6 +68,13 @@ router.put(
     validateRequest(schemas.updateGameMapSchema),
     controller.updateGameMap);
 
+//?GET /api/game-maps/:gameMapID/comments
+router.get(
+    "/:gameMapID/comments",
+    upload.none(),
+    validateRequest(schemas.getGameMapCommentsSchema),
+    controller.getGameMapComments);
+
 router.use(async (error, request, response, next) => {
     let statusCode = 500;
     let errorMessage = ERRORS.COMMON.UNEXPECTED_ERROR;

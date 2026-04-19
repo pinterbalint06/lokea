@@ -751,6 +751,36 @@ async function updateGameMapDetails(connection, gameMapId, title, description) {
     return result.affectedRows == 1;
 }
 
+async function getGameMapComments(gameMapId, page) {
+    const safePage = Number.isInteger(Number(page)) && page > 0 ? page : 1;
+    const offset = (safePage - 1) * 50;
+    const query = `
+        SELECT 
+            users.username,
+            game_maps_comments.rating,
+            game_maps_comments.comment_text,
+            game_maps_comments.created_at
+        FROM game_maps_comments
+            INNER JOIN users ON (game_maps_comments.user_id = users.user_id)
+        WHERE game_maps_comments.game_maps_id = ?
+        ORDER BY game_maps_comments.created_at DESC
+        LIMIT 50 OFFSET ${offset}
+    `;
+    const [rows] = await pool.execute(query, [gameMapId]);
+    return rows;
+}
+
+async function getGameMapCommentCount(gameMapId) {
+    const query = `
+        SELECT 
+            COUNT(*) AS comment_count
+        FROM game_maps_comments
+        WHERE game_maps_comments.game_maps_id = ?
+    `;
+    const [rows] = await pool.execute(query, [gameMapId]);
+    return rows[0].comment_count;
+}
+
 //!Export
 module.exports = {
     // selectall,
@@ -807,5 +837,7 @@ module.exports = {
     doesGameMapExist,
     getGameMapCoverImage,
     updateGameMapCoverImage,
-    updateGameMapDetails
+    updateGameMapDetails,
+    getGameMapComments,
+    getGameMapCommentCount
 };

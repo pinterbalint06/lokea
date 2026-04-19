@@ -51,3 +51,7 @@ export async function updateGameMapDetails(gameMapId, details, abortSignal = nul
         await handleResponseError(response);
     }
 }
+
+export async function fetchGameMapComments(gameMapId, page = 1, signal = null) {
+    return await fetchAndValidate(`/api/game-maps/${gameMapId}/comments?page=${page}`, undefined, signal);
+}

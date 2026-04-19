@@ -8,11 +8,12 @@ export async function handleResponseError(response) {
     throw new Error(errorMessage || "Szerver hiba: " + response.status);
 }
 
-export async function fetchAndValidate(url, returnKey) {
+export async function fetchAndValidate(url, returnKey, signal) {
     let response = await fetch(
         url,
         {
-            method: "GET"
+            method: "GET",
+            signal
         }
     );
 
@@ -22,5 +23,5 @@ export async function fetchAndValidate(url, returnKey) {
 
     let data = await response.json();
 
-    return data[returnKey];
+    return returnKey ? data[returnKey] : data;
 }

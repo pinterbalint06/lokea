@@ -131,6 +131,19 @@ async function updateGameMap(request, response, next) {
     }
 }
 
+async function getGameMapComments(request, response, next) {
+    try {
+        const { gameMapID } = request.params;
+        const { page } = request.query;
+
+        const commentsData = await gamemapsService.getGameMapComments(gameMapID, page);
+
+        response.status(200).json(commentsData);
+    } catch (error) {
+        next(error);
+    }
+}
+
 module.exports = {
     getPointImage,
     getMapImage,
@@ -139,5 +152,6 @@ module.exports = {
     getGameMapCoverImage,
     updateGameMapCoverImage,
     deleteGameMapCoverImage,
-    updateGameMap
+    updateGameMap,
+    getGameMapComments
 };

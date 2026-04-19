@@ -258,6 +258,21 @@ async function updateGameMapDetails(userId, gameMapID, title, description) {
     }
 }
 
+async function getGameMapComments(gameMapID, page) {
+    const comments = await database.getGameMapComments(gameMapID, page);
+    const totalCount = await database.getGameMapCommentCount(gameMapID);
+    const totalPages = Math.ceil(totalCount / 50);
+
+    return {
+        comments,
+        pagination: {
+            pageSize: 50,
+            totalCount,
+            totalPages
+        }
+    };
+}
+
 module.exports = {
     getPointImageDetails,
     getMapImageDetails,
@@ -266,5 +281,6 @@ module.exports = {
     getGameMapCoverImagePath,
     updateGameMapCoverImage,
     deleteGameMapCoverImage,
-    updateGameMapDetails
+    updateGameMapDetails,
+    getGameMapComments
 };
