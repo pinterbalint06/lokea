@@ -231,6 +231,33 @@ async function deleteGameMapCoverImage(userId, gameMapID) {
     }
 }
 
+async function updateGameMapDetails(userId, gameMapID, title, description) {
+    let dbConnection;
+    try {
+        await assertUserOwnsGameMap(userId, gameMapID);
+
+        dbConnection = await database.getConnection();
+        await dbConnection.beginTransaction();
+
+        const titleDb = title ?? null;
+        const descriptionDb = description ?? null;
+
+        const updateSuccess = await database.updateGameMapDetails(dbConnection, gameMapID, titleDb, descriptionDb);
+        if (!updateSuccess) {
+            throw new AppError(ERRORS.GAMEMAP.UPDATE_FAILED, 404);
+        }
+
+        await dbConnection.commit();
+    } catch (error) {
+        await cleanupAfterError(dbConnection);
+        throw error;
+    } finally {
+        if (dbConnection) {
+            dbConnection.release();
+        }
+    }
+}
+
 module.exports = {
     getPointImageDetails,
     getMapImageDetails,
@@ -238,5 +265,6 @@ module.exports = {
     getGameMapDetails,
     getGameMapCoverImagePath,
     updateGameMapCoverImage,
-    deleteGameMapCoverImage
+    deleteGameMapCoverImage,
+    updateGameMapDetails
 };

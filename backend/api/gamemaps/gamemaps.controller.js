@@ -117,6 +117,20 @@ async function deleteGameMapCoverImage(request, response, next) {
     }
 }
 
+async function updateGameMap(request, response, next) {
+    try {
+        const userId = request.session.userid;
+        const { gameMapID } = request.params;
+        const { title, description } = request.body;
+
+        await gamemapsService.updateGameMapDetails(userId, gameMapID, title, description);
+
+        response.status(204).send();
+    } catch (error) {
+        next(error);
+    }
+}
+
 module.exports = {
     getPointImage,
     getMapImage,
@@ -124,5 +138,6 @@ module.exports = {
     getGameMapDetails,
     getGameMapCoverImage,
     updateGameMapCoverImage,
-    deleteGameMapCoverImage
+    deleteGameMapCoverImage,
+    updateGameMap
 };

@@ -733,10 +733,21 @@ async function getGameMapCoverImage(gameMapId) {
 async function updateGameMapCoverImage(connection, gameMapId, imageId) {
     const query = `
         UPDATE game_maps
-        SET cover_image_id = ?
-        WHERE game_maps_id = ?
+        SET game_maps.cover_image_id = ?
+        WHERE game_maps.game_maps_id = ?
     `;
     const [result] = await connection.execute(query, [imageId, gameMapId]);
+    return result.affectedRows == 1;
+}
+
+async function updateGameMapDetails(connection, gameMapId, title, description) {
+    const query = `
+        UPDATE game_maps
+        SET game_maps.title = COALESCE(?, game_maps.title),
+            game_maps.game_description = COALESCE(?, game_maps.game_description)
+        WHERE game_maps.game_maps_id = ?
+    `;
+    const [result] = await connection.execute(query, [title, description, gameMapId]);
     return result.affectedRows == 1;
 }
 
@@ -795,5 +806,6 @@ module.exports = {
     getTopScoresForGameMap,
     doesGameMapExist,
     getGameMapCoverImage,
-    updateGameMapCoverImage
+    updateGameMapCoverImage,
+    updateGameMapDetails
 };

@@ -18,11 +18,14 @@ export function formatDateTime(value) {
 export { getGameMapIdFromUrl } from "../../libs/utils.js";
 
 export function getEditMapUrlFromLocation(locationHref) {
-    let targetUrl = locationHref;
-    if (targetUrl.endsWith("/")) {
-        targetUrl = targetUrl.slice(0, -1);
+    const url = new URL(locationHref, window.location.origin);
+    let urlPath = url.pathname;
+
+    if (urlPath.endsWith("/")) {
+        urlPath = urlPath.slice(0, -1);
     }
-    return targetUrl + "/edit";
+
+    return urlPath + "/edit";
 }
 
 export { showToast } from "../../libs/utils.js";

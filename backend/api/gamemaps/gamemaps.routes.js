@@ -61,6 +61,13 @@ router.delete(
     validateRequest(schemas.deleteGameMapCoverImageSchema),
     controller.deleteGameMapCoverImage);
 
+//?PUT /api/game-maps/:gameMapID
+router.put(
+    "/:gameMapID",
+    upload.none(),
+    validateRequest(schemas.updateGameMapSchema),
+    controller.updateGameMap);
+
 router.use(async (error, request, response, next) => {
     let statusCode = 500;
     let errorMessage = ERRORS.COMMON.UNEXPECTED_ERROR;

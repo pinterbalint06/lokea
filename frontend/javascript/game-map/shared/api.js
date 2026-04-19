@@ -29,3 +29,25 @@ export async function deleteGameMapCoverImage(gameMapId) {
         await handleResponseError(response);
     }
 }
+
+export async function updateGameMapDetails(gameMapId, details, abortSignal = null) {
+    const formData = new FormData();
+
+    if (details.title != undefined) {
+        formData.append("title", details.title);
+    }
+
+    if (details.description != undefined) {
+        formData.append("description", details.description);
+    }
+
+    const response = await fetch(`/api/game-maps/${gameMapId}`, {
+        method: "PUT",
+        body: formData,
+        signal: abortSignal
+    });
+
+    if (!response.ok) {
+        await handleResponseError(response);
+    }
+}

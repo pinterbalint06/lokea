@@ -74,6 +74,45 @@ const deleteGameMapCoverImageSchema = {
         })
 };
 
+const updateGameMapSchema = {
+    params:
+        joi.object({
+            gameMapID: idSchema(ERRORS.GAMEMAP.INVALID_ID)
+        }),
+    body:
+        joi.object({
+            title: joi
+                .string()
+                .trim()
+                .min(3)
+                .max(50)
+                .pattern(/^[a-zA-ZáéíóöőúüűÁÉÍÓÖŐÚÜŰ0-9 _-]+$/) // only hungarian letters, numbers, spaces, underscores and -
+                .messages({
+                    "string.base": ERRORS.GAMEMAP.TITLE.INVALID_PATTERN,
+                    "string.empty": ERRORS.GAMEMAP.TITLE.EMPTY,
+                    "string.min": ERRORS.GAMEMAP.TITLE.TOO_SHORT,
+                    "string.max": ERRORS.GAMEMAP.TITLE.TOO_LONG,
+                    "string.pattern.base": ERRORS.GAMEMAP.TITLE.INVALID_PATTERN
+                }),
+            description: joi
+                .string()
+                .trim()
+                .min(3)
+                .max(255)
+                .pattern(/^[a-zA-ZáéíóöőúüűÁÉÍÓÖŐÚÜŰ0-9 _-]+$/) // only hungarian letters, numbers, spaces, underscores and -
+                .messages({
+                    "string.base": ERRORS.GAMEMAP.DESCRIPTION.INVALID_PATTERN,
+                    "string.empty": ERRORS.GAMEMAP.DESCRIPTION.EMPTY,
+                    "string.min": ERRORS.GAMEMAP.DESCRIPTION.TOO_SHORT,
+                    "string.max": ERRORS.GAMEMAP.DESCRIPTION.TOO_LONG,
+                    "string.pattern.base": ERRORS.GAMEMAP.DESCRIPTION.INVALID_PATTERN
+                })
+        }).or("title", "description")
+            .messages({
+                "object.missing": ERRORS.GAMEMAP.ATLEAST_TITLE_OR_DESCRIPTION
+            })
+};
+
 module.exports = {
     getPointImageSchema,
     getMapImageSchema,
@@ -81,5 +120,6 @@ module.exports = {
     getGameMapDetailsSchema,
     getGameMapCoverImageSchema,
     putGameMapCoverImageSchema,
-    deleteGameMapCoverImageSchema
+    deleteGameMapCoverImageSchema,
+    updateGameMapSchema
 };

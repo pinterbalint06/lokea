@@ -29,7 +29,7 @@ CREATE TABLE game_maps (
     creator_id int,
     title varchar(50) NOT NULL DEFAULT 'Névtelen pálya',
     cover_image_id int,
-    game_description varchar(255) DEFAULT 'Nem található leírás',
+    game_description varchar(255) NOT NULL DEFAULT 'Nem található leírás',
     game_created TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     foreign key (creator_id) references users(user_id) ON DELETE SET NULL,
     foreign key (cover_image_id) references images(image_id) ON DELETE SET NULL

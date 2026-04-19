@@ -18,7 +18,24 @@ const ERRORS = {
         COVER_IMAGE_UPDATE_FAILED: "A borítókép frissítése nem sikerült!",
         COVER_IMAGE_DELETE_FAILED: "A borítókép törlése nem sikerült!",
         NOT_FOUND: "A pálya nem létezik!",
-        COVER_IMAGE_NOT_FOUND: "A borítókép nem létezik!"
+        COVER_IMAGE_NOT_FOUND: "A borítókép nem létezik!",
+        UPDATE_FAILED: "A pálya adatainak frissítése nem sikerült!",
+
+        TITLE: {
+            INVALID_PATTERN: "A pálya címe csak betűket, számokat, szóközöket, kötőjeleket és alulvonásokat tartalmazhat!",
+            TOO_LONG: "A pálya címe maximum 50 karakter hosszú lehet!",
+            TOO_SHORT: "A pálya címének legalább 3 karakter hosszúnak kell lennie!",
+            EMPTY: "A pálya címe nem lehet üres!"
+        },
+
+        DESCRIPTION: {
+            INVALID_PATTERN: "A pálya leírása csak betűket, számokat, szóközöket, kötőjeleket és alulvonásokat tartalmazhat!",
+            TOO_LONG: "A pálya leírása maximum 255 karakter hosszú lehet!",
+            TOO_SHORT: "A pálya leírásának legalább 3 karakter hosszúnak kell lennie!",
+            EMPTY: "A pálya leírása nem lehet üres!"
+        },
+
+        ATLEAST_TITLE_OR_DESCRIPTION: "Vagy az új címet, vagy az új leírást kötelező megadni!"
     },
 
     MAP: {

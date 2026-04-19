@@ -34,7 +34,6 @@ async function init() {
 
 document.addEventListener("DOMContentLoaded", init);
 
-// TODO: cim, leiras szerkesztese
 // TODO: kommentek betoltese
 // TODO: kommenteles
 // TODO: komment szerkesztese
