@@ -700,11 +700,8 @@ async function uploadProfilePic(picture) {
             console.log(data.message);
             let image = document.getElementById('dropdownProfilePicture');
             if (image) {
-                let objectUrl = URL.createObjectURL(picture);
-                image.onload = () => {
-                    URL.revokeObjectURL(objectUrl);
-                };
-                image.src = objectUrl;
+                let preview = await createPreview(picture);
+                image.src = preview;
             }
         }
         else {

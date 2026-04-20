@@ -35,7 +35,7 @@ export function validalvaBej(user, pass) {
 }
 
 export function validalvaUsername(username) {
-    return username.length < 20 && username.length >= 1 && isCorrectUsername(username);
+    return username.length < 21 && username.length >= 1 && isCorrectUsername(username);
 }
 
 export function validalvaEmail(email) {

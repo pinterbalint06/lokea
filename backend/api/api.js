@@ -43,7 +43,7 @@ router.post("/signup",
             .isLength({ min: 1, max: 20 }).withMessage("Felhasználónév hossza nem megfelelő!"),
         body("email")
             .isEmail().withMessage("Hibás email formátum")
-            .isLength({ min: 5, max: 254 }).withMessage("Email max 250 karakter"),
+            .isLength({ min: 5, max: 254 }).withMessage("Email max 254 karakter"),
 
         body("password")
             .isLength({ min: 8, max: 60 }).withMessage("Jelszó hossza 8-50")
@@ -165,7 +165,7 @@ router.get('/loginRole', async (request, response) => {
                 response.status(200).json({ login, adminLink: "/admin", user: user[0] });
             }
             else {
-                response.status(200).json({ login, user });
+                response.status(200).json({ login, user: user[0] });
             }
         }
     } catch (error) {
