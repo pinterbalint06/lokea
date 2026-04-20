@@ -39,7 +39,7 @@ export function gombGeneral(type, text, svg, color, id) {
         button.innerText = text;
     }
     else {
-        button.appendChild(makeSvg(svg, "buttonIcon"));
+        button.appendChild(makeSvg(svg, ["buttonIcon"], null));
         let textNode = document.createTextNode(text);
         button.appendChild(textNode);
     }
@@ -70,12 +70,14 @@ export function gombGeneral(type, text, svg, color, id) {
 
 export function makeSvg(name, svgclasses, useclasses) {
     let svg = document.createElementNS("http://www.w3.org/2000/svg", "svg");
-    svg.classList.add(svgclasses);
+    if (svgclasses) {
+        svg.classList.add(...svgclasses);
+    }
     let use = document.createElementNS("http://www.w3.org/2000/svg", "use");
     if (useclasses) {
-        use.classList.add(useclasses);
+        use.classList.add(...useclasses);
     }
-    
+
     use.setAttribute("href", `../images/icons/sprite.svg#${name}`);
 
     svg.appendChild(use);

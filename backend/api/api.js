@@ -44,10 +44,10 @@ router.post("/signup",
             .isLength({ min: 1, max: 20 }).withMessage("Felhasználónév hossza nem megfelelő!"),
         body("email")
             .isEmail().withMessage("Hibás email formátum")
-            .isLength({ min: 5, max: 250 }).withMessage("Email max 250 karakter"),
+            .isLength({ min: 5, max: 254 }).withMessage("Email max 254 karakter"),
 
         body("password")
-            .isLength({ min: 8, max: 50 }).withMessage("Jelszó hossza 8-50")
+            .isLength({ min: 8, max: 60 }).withMessage("Jelszó hossza 8-60 karakter")
             .matches(/\d/).withMessage("Kell benne szám")
             .matches(/[A-Z]/).withMessage("Kell benne nagybetű")
     ],
@@ -57,8 +57,7 @@ router.post("/signup",
             if (!errors.isEmpty()) {
                 response.status(400).json({
                     success: false,
-                    message: "Helytelen karakter(ek) a felhasználónévben/emailben/jelszóban!",
-                    error_code: 400
+                    message: errors.array()
                 });
             }
             else {
@@ -75,13 +74,14 @@ router.post("/signup",
                     });
                 }
                 else {
-                    response.status(500).json({
+                    response.status(409).json({
                         success: false,
-                        message: insert.error
+                        message: "A felhasználó létezik!"
                     })
                 }
             }
         } catch (error) {
+            response.status(500).json({ error: error.message });
             response.status(500).json({ error: error.message });
         }
     }
@@ -90,9 +90,9 @@ router.post("/signup",
 router.post("/login",
     [
         body("username")
-            .isLength({ min: 1, max: 250 }).withMessage("Felhasználónév/email hossza nem megfelelő!"),
+            .isLength({ min: 1, max: 254 }).withMessage("Felhasználónév/email hossza nem megfelelő!"),
         body("password")
-            .isLength({ min: 8, max: 50 }).withMessage("Jelszó hossza nem megfelelő!")
+            .isLength({ min: 8, max: 60 }).withMessage("Jelszó hossza nem megfelelő!")
     ],
     async (request, response) => {
         try {
@@ -100,7 +100,7 @@ router.post("/login",
             if (!errors.isEmpty()) {
                 response.status(400).json({
                     success: false,
-                    message: errors.array().map(err => err.msg).join('<br>')
+                    message: errors.array()
                 });
             }
             else {
@@ -114,17 +114,19 @@ router.post("/login",
                 }
                 if (rows.length === 0 || rows[0].deleted_at != null) {
                     response.status(401).json({ message: "Hibás email vagy jelszó" });
+                    response.status(401).json({ message: "Hibás email vagy jelszó" });
                 }
                 else {
                     let sPass = rows[0].password;
                     let egyezes = await bcrypt.compare(password, sPass);
                     if (!egyezes) {
                         response.status(401).json({ message: "Hibás email vagy jelszó" });
+                        response.status(401).json({ message: "Hibás email vagy jelszó" });
                     }
                     else {
                         let sesRole = rows[0].role;
                         if (remember) {
-                            if (sesRole.role === 'ADMIN') {
+                            if (sesRole === 'ADMIN') {
                                 request.session.cookie.maxAge = 15 * 60 * 1000;
                             }
                             else {
@@ -161,8 +163,8 @@ router.post('/signout', auth.checkAuth, (request, response) => {
 });
 
 router.get('/loginRole', async (request, response) => {
+    let login = false;
     try {
-        let login = false;
         if (!request.session.userid) {
             response.status(200).json({ login })
         }
@@ -170,10 +172,10 @@ router.get('/loginRole', async (request, response) => {
             login = true;
             let user = await database.getUserNameProfile(request.session.userid);
             if (request.session.role == "ADMIN") {
-                response.status(200).json({ login, adminLink: "/admin", user });
+                response.status(200).json({ login, adminLink: "/admin", user: user[0] });
             }
             else {
-                response.status(200).json({ login, user });
+                response.status(200).json({ login, user: user[0] });
             }
         }
     } catch (error) {
@@ -195,13 +197,14 @@ router.get('/getUserData', auth.checkAuth, async (request, response) => {
 router.put('/updateUser', auth.checkAuth,
     [
         body("username")
-            .optional({ values: "null" })
+            .optional({ nullable: true })
             .not().isEmail().withMessage("Felhasználónév nem lehet email cim!")
             .matches(/^[a-zA-Z0-9áéíóöőúüűÁÉÍÓÖŐÚÜŰ_-]+$/).withMessage('A felhasználónév csak betűket, számokat, - vagy _ karaktert, és ékezetes betűket tartalmazhat.')
             .isLength({ min: 1, max: 20 }).withMessage("Felhasználónév hossza nem megfelelő!"),
         body("email")
-            .optional({ values: "null" })
+            .optional({ nullable: true })
             .isEmail().withMessage("Hibás email formátum")
+            .isLength({ min: 5, max: 254 }).withMessage("Email max 254 karakter!")
             .isLength({ min: 5, max: 250 }).withMessage("Email max 250 karakter!"),
         body("is_2fa")
             .optional({ values: "null" })
@@ -245,9 +248,9 @@ router.put('/updateUser', auth.checkAuth,
 router.put("/updatePassword", auth.checkAuth,
     [
         body("oldPass")
-            .isLength({ min: 8, max: 50 }).withMessage("A régi jelszó hossza nem 8-50 karakter!"),
+            .isLength({ min: 8, max: 60 }).withMessage("A régi jelszó hossza nem 8-60 karakter!"),
         body("newPass")
-            .isLength({ min: 8, max: 50 }).withMessage("Az új jelszó hossza nem 8-50 karakter!")
+            .isLength({ min: 8, max: 60 }).withMessage("Az új jelszó hossza nem 8-60 karakter!")
             .matches(/\d/).withMessage("A jelszóba kell minimum 1 szám!")
             .matches(/[A-Z]/).withMessage("A jelszóba kell minimum 1 nagybetű!")
     ],
@@ -322,8 +325,10 @@ router.put('/updateProfilePic', auth.checkAuth, upload.single('profilePic'), asy
             await fs.unlink(originalFile).catch(() => { });
 
             if (lastPfp) {
-                let lastPfpPath = path.join(__dirname, '..', lastPfp);
-                await fs.unlink(lastPfpPath).catch(() => { });
+                let lastPfpPath = path.join(__dirname, '..', 'uploads', lastPfp);
+                await fs.unlink(lastPfpPath).catch((err) => {
+                    console.error("Régi kép törlése sikertelen:", err.path);
+                });
             }
             await database.addLog(request.session.userid, 'Profile picture update');
             response.status(201).json({ success: true, message: "Profilkép frissítve!" });
@@ -347,7 +352,6 @@ router.delete('/deleteProfilePic', auth.checkAuth, async (request, response) => 
         }
         else {
             let lastPfpPath = path.join(__dirname, '..', 'uploads', lastPfp);
-            console.log(lastPfpPath);
             try {
                 await fs.unlink(lastPfpPath);
             } catch (error) {

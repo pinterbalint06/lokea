@@ -98,9 +98,6 @@ router.get('/webgl', (request, response) => {
 router.get('/map', (request, response) => {
     response.sendFile(path.join(__dirname, '../frontend/html/test-map.html'));
 });
-router.get('/login_page', (request, response) => {
-    response.sendFile(path.join(__dirname, '../frontend/html/login.html'));
-});
 router.get('/admin', auth.checkRole("ADMIN"), (request, response) => {
     response.sendFile(path.join(__dirname, '../private/frontend/html/admin.html'));
 });

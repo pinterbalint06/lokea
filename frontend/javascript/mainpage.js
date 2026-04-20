@@ -29,20 +29,21 @@ document.addEventListener("DOMContentLoaded", async function () {
 })
 
 async function isLogined() {
+    let loginStatus = false;
     try {
         let response = await fetch("/api/loginRole");
         let data = await response.json();
         if (response.ok) {
-            if (data.login) {
+            loginStatus = data.login;
+            if (loginStatus) {
                 if (data.adminLink) {
-                    await dropdownLetrehoz(data.adminLink, data.user[0].username, data.user[0].filepath);
+                    await dropdownLetrehoz(data.adminLink, data.user.username, data.user.filepath);
                 }
                 else {
-                    await dropdownLetrehoz(null, data.user[0].username, data.user[0].filepath);
+                    await dropdownLetrehoz(null, data.user.username, data.user.filepath);
                 }
                 let body = document.body;
-                console.log(data)
-                if (data.user[0].darkmode == 1) {
+                if (data.user.darkmode == 1) {
                     body.setAttribute('data-bs-theme', 'dark');
                 }
                 else {
@@ -50,11 +51,10 @@ async function isLogined() {
                 }
             }
         }
-
-        return data.login;
     } catch (error) {
         console.log(`hálózati hiba: ${error}`);
     }
+    return loginStatus;
 }
 
 async function bejelentkezes(username, jelszo, remember) {
@@ -84,20 +84,19 @@ async function bejelentkezesAnimacio(username, jelszo, remember) {
 
     container.querySelectorAll('svg').forEach(svg => svg.remove());
     container.classList.remove('success-draw', 'error-draw');
-    container.appendChild(makeSvg("circle-border", "progress-svg", "progress-circle"));
+    container.appendChild(makeSvg("circle-border", ["progress-svg"], ["progress-circle"]));
     container.classList.add('spinning');
 
     try {
         let response = await bejelentkezes(username, jelszo, remember);
         let data = await response.json();
-        console.log(data);
         setTimeout(() => {
             container.classList.remove('spinning');
             title.innerHTML = "";
             modalText.innerHTML = "";
 
             if (response.ok) {
-                container.appendChild(makeSvg("checkmark", "check-svg", "mark"));
+                container.appendChild(makeSvg("checkmark", ["check-svg"], ["mark"]));
                 container.classList.add('success-draw');
 
                 title.innerText = `Sikeres bejelentkezés!`;
@@ -109,14 +108,20 @@ async function bejelentkezesAnimacio(username, jelszo, remember) {
                     location.reload();
                 }, 2500);
             } else {
-                container.appendChild(makeSvg("icon-x", "check-svg", "mark"));
+                container.appendChild(makeSvg("icon-x", ["check-svg"], ["mark"]));
                 container.classList.add('error-draw');
 
                 title.innerText = "Bejelentkezés sikertelen!";
                 form.classList.add('collapse-out');
-                modalText.innerText = data.message;
+                let message = data.message;
+                if (Array.isArray(message)) {
+                    let errors = message.join('<br>');
+                    modalText.innerHTML = errors;
+                }
+                else {
+                    modalText.innerText = message;
+                }
 
-                // levette collapse-in es nem mutat x es a spinning tobbszor nem mukodik csak 1x
                 setTimeout(() => {
                     container.classList.remove('error-draw');
                     container.querySelectorAll('svg').forEach(svg => svg.remove());
@@ -158,6 +163,7 @@ async function dropdownLetrehoz(link, nev, kep) {
         img.src = "../images/default.png";
     }
     img.alt = "Profile pic";
+    img.id = "dropdownProfilePicture";
     img.classList.add("img-fluid", "profilePicture");
     let username = document.createElement("span");
     username.id = "profileUsername";
@@ -178,6 +184,7 @@ async function dropdownLetrehoz(link, nev, kep) {
     ul.appendChild(dropdownLink("Saját játékaim", null, null, "map"));
     ul.appendChild(dropdownDivider());
     if (link) {
+        ul.appendChild(dropdownLink("Belépés az admin oldalra", 'enterAdmin', null, "shield", link));
         li = dropdownLink("Belépés az admin oldalra", 'enterAdmin', null, "shield")
         li.addEventListener("click", function () {
             window.location.href = link;
@@ -195,7 +202,7 @@ async function dropdownLetrehoz(link, nev, kep) {
     hova.appendChild(div);
 }
 
-function dropdownLink(title, id, customClasses, svgName) {
+function dropdownLink(title, id, customClasses, svgName, link = null) {
     let li = document.createElement('li');
 
     let a = document.createElement('a');
@@ -206,9 +213,12 @@ function dropdownLink(title, id, customClasses, svgName) {
     if (id) {
         a.id = id;
     }
+    if (link) {
+        a.href = link;
+    }
     let span = document.createElement('span');
     span.innerText = title;
-    a.appendChild(makeSvg(svgName, "dropdown-icons", null));
+    a.appendChild(makeSvg(svgName, ["dropdown-icons"], null));
     a.appendChild(span);
 
     li.appendChild(a);
@@ -252,11 +262,11 @@ async function showSettingsModal() {
     let errordiv = document.getElementById('errorLocation');
     errordiv.classList.add('d-none');
     errordiv.innerHTML = "";
-    
+
     let hova = document.getElementById('userData');
     hova.innerHTML = "";
-    
-    let tempPfp = null;
+
+    tempPfp = null;
     let deleteLast = false;
 
     let data = await getUserData();
@@ -402,7 +412,7 @@ async function showSettingsModal() {
     div.appendChild(collapseDiv);
 
 
-    div.appendChild(makeSubtitle("Két lépcsős azonositás"));
+    div.appendChild(makeSubtitle("Két lépcsős azonosítás"));
     let checkbox = inputGeneral("checkbox", null, null, "is2faInput", null, false);
     checkbox.checked = data.is_2fa;
     div.appendChild(checkbox);
@@ -413,38 +423,52 @@ async function showSettingsModal() {
         username: data.username,
         email: data.email,
         is_2fa: data.is_2fa,
-        language: document.getElementById('languageSelect').value,
+        language: data.language,
         darkmode: document.getElementById('darkMode').checked
-    }
+    };
 
-    document.getElementById('settingsSave').addEventListener("click", async function () {
+    document.getElementById('settingsSave').onclick = async function () {
         try {
             await checkModification();
             if (tempPfp != null) {
                 await uploadProfilePic(tempPfp);
-            }
-            else {
+            } else {
                 if (deleteLast) {
-                    await deleteProfilePicture();
+                    let response = await deleteProfilePicture();
+                    let data = await response.json();
+                    if (response.ok) {
+                        console.log(data.message);
+                        document.getElementById('dropdownProfilePicture').src = "../images/default.png";
+                    }
+                    else {
+                        throw new Error(data.message);
+                    }
                 }
             }
             settingsModal.hide();
         } catch (error) {
-            let errorText = document.createElement('p');
-            errorText.innerText = error.message;
+            errordiv.innerHTML = "";
+            let errorMessages = document.createElement('div');
+            error.message.split("\n").forEach(msg => {
+                let errorText = document.createElement('p');
+                errorText.innerText = msg;
+                errorText.style.margin = "0";
+                errorMessages.appendChild(errorText);
+            });
+
             let errorBtn = document.createElement('button');
             errorBtn.classList.add('close-btn');
             errorBtn.addEventListener("click", function () {
-                let errordiv = document.getElementById('errorLocation');
                 errordiv.className = 'd-none';
                 errordiv.innerHTML = "";
-            })
+            });
+
             errorBtn.appendChild(makeSvg("icon-x", null, null));
-            errordiv.appendChild(errorText);
+            errordiv.appendChild(errorMessages);
             errordiv.appendChild(errorBtn);
             errordiv.className = "d-flex";
         }
-    })
+    }
     row.appendChild(div);
     container.appendChild(row);
     hova.appendChild(container);
@@ -498,18 +522,20 @@ async function checkModification() {
         }
     });
     if (valtozas) {
-        let siker = true;
+        let errors = [];
         if (inInput.username != null && !validalvaUsername(inInput.username)) {
             wrongInput(document.getElementById('usernameInput'));
-            siker = false;
+            errors.push("A felhasználónév nem megfelelő!");
         }
         if (inInput.email != null && !validalvaEmail(inInput.email)) {
             wrongInput(document.getElementById('emailInput'));
-            siker = false;
+            errors.push("Az email-cím nem megfelelő!");
         }
-        if (siker) {
-            await saveModification(inInput.username, inInput.email, inInput.is_2fa, inInput.language, inInput.darkmode);
+        if (errors.length > 0) {
+            throw new Error(errors.join("\n"));
         }
+
+        await saveModification(inInput.username, inInput.email, inInput.is_2fa, inInput.language, inInput.darkmode);
     }
 }
 
@@ -633,7 +659,7 @@ function createAlert(message, type) {
     let alertDiv = document.createElement('div');
     alertDiv.classList.add("alert", "alert-dismissible", "fade", "show");
     if (type) {
-        alertDiv.classList.add(`alert-${type}`)
+        alertDiv.classList.add(`alert-${type}`);
     }
     alertDiv.role = 'alert';
 
@@ -677,6 +703,11 @@ async function uploadProfilePic(picture) {
         let data = await response.json();
         if (response.ok) {
             console.log(data.message);
+            let image = document.getElementById('dropdownProfilePicture');
+            if (image) {
+                let preview = await createPreview(picture);
+                image.src = preview;
+            }
         }
         else {
             throw new Error(data.message);
@@ -695,13 +726,9 @@ async function deleteProfilePicture() {
                 "Content-Type": "application/json"
             }
         })
+
+        return response;
         let data = await response.json();
-        if (response.ok) {
-            console.log(data.message);
-        }
-        else {
-            throw new Error(data.message);
-        }
     } catch (error) {
         console.log(`hálózati hiba: ${error}`);
         throw error;
