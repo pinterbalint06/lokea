@@ -170,24 +170,25 @@ main {
     background: linear-gradient(180deg, rgba(10, 6, 16, 0) 0%, rgba(10, 6, 16, 0.88) 100%);
 }
 
-.meta-grid {
-    display: grid;
-    grid-template-columns: repeat(2, minmax(0, 1fr));
+.stats-container {
+    display: flex;
+    flex-direction: row;
     gap: 0.75rem;
 }
 
-.meta-card {
+.stat-card {
     background: var(--surface-glass-soft) !important;
+    flex-grow: 1;
 }
 
-.meta-label {
+.stat-label {
     font-size: 0.73rem;
     letter-spacing: 0.08em;
     text-transform: uppercase;
     color: rgba(255, 255, 255, 0.74);
 }
 
-.meta-value {
+.stat-value {
     font-size: 1.02rem;
     font-weight: 600;
 }
@@ -258,6 +259,17 @@ main {
 .comment-text {
     color: rgba(255, 255, 255, 0.88);
     white-space: pre-wrap;
+}
+
+.user-comment-card {
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    background: rgba(255, 255, 255, 0.05);
+    transition: background 0.2s ease, border-color 0.2s ease;
+}
+
+.user-comment-card:hover {
+    background: rgba(255, 255, 255, 0.08);
+    border-color: rgba(255, 255, 255, 0.3);
 }
 
 .rating-input-group {
@@ -333,8 +345,8 @@ main {
         border-radius: 1rem !important;
     }
 
-    .meta-grid {
-        grid-template-columns: 1fr;
+    .stats-container {
+        flex-direction: column;
     }
 
     .cover-image-wrapper {

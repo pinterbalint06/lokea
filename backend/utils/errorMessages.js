@@ -120,6 +120,9 @@ const ERRORS = {
         EMPTY_CONTENT: "A hozzászólás nem lehet üres!",
         INVALID_CHARACTERS: "A hozzászólás csak betűket, számokat, szóközöket, kötőjeleket és alulvonásokat tartalmazhat!",
         ALREADY_COMMENTED: "Ehhez a pályához már írtál hozzászólást!",
+        NOT_FOUND: "Még nem értékelted ezt a pályát!",
+        UPDATE_FAILED: "Nem sikerült frissíteni a hozzászólást!",
+        DELETE_FAILED: "Nem sikerült törölni a hozzászólást!",
 
         INVALID_RATING: "Helytelen értékelés!",
         TOO_LOW_RATING: "Az értékelésnek legalább 1-nek kell lennie!",

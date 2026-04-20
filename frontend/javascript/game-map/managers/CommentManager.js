@@ -1,7 +1,8 @@
 import { EVENTS } from "../shared/EventBus.js";
 import { formatDateTime } from "../shared/utils.js";
 import { createElement } from "../../libs/utils/DOMUtils.js";
-import { fetchGameMapComments } from "../shared/api.js";
+import { fetchGameMapComments, postGameMapComment, fetchUserComment, updateUserComment, deleteUserComment } from "../shared/api.js";
+import { HoldToUnlockButton } from "../../libs/elements/HoldToUnlockButton.js";
 
 export class CommentManager {
     constructor(eventBus, appStore) {
@@ -27,6 +28,17 @@ export class CommentManager {
     #gatherElements() {
         this.elements.commentsList = document.getElementById("commentsList");
         this.elements.commentsCountBadge = document.getElementById("commentsCountBadge");
+        this.elements.commentForm = document.getElementById("commentForm");
+        this.elements.commentText = document.getElementById("commentText");
+        this.elements.ratingInputs = document.querySelectorAll("input[name='rating']");
+
+        this.elements.userCommentSection = document.getElementById("userCommentSection");
+        this.elements.userCommentRating = document.getElementById("userCommentRating");
+        this.elements.userCommentText = document.getElementById("userCommentText");
+        this.elements.editCommentBtn = document.getElementById("editCommentBtn");
+        this.elements.deleteCommentBtn = document.getElementById("deleteCommentBtn");
+
+        this.elements.holdToDeleteCommentBtn = new HoldToUnlockButton(this.elements.deleteCommentBtn, 1500);
     }
 
     #setupObserver() {
@@ -50,8 +62,99 @@ export class CommentManager {
 
     #bindEvents() {
         this.bus.on(EVENTS.APP_INIT, () => {
+            this.#loadUserComment();
             this.#loadComments();
         });
+
+        this.elements.commentForm.addEventListener("submit", (event) => this.#handleCommentSubmit(event));
+
+        this.elements.editCommentBtn.addEventListener("click", () => this.#handleEditComment());
+
+        this.elements.holdToDeleteCommentBtn.addEventListener("confirm", () => {
+            this.#handleDeleteComment()
+        });
+
+        this.elements.holdToDeleteCommentBtn.addEventListener("earlyClick", () => {
+            this.bus.emit(EVENTS.TOAST_SHOW, {
+                msg: "A törléshez tartsd lenyomva a gombot legalább 1,5 másodpercig!",
+                type: "warning"
+            });
+        });
+    }
+
+    async #loadUserComment() {
+        try {
+            const gameMapId = this.store.getState().gameMapId;
+            const userComment = await fetchUserComment(gameMapId);
+
+            if (userComment) {
+                this.#renderUserComment(userComment);
+            } else {
+                this.#hideUserComment();
+            }
+        } catch (error) {
+            if (error.name != "AbortError") {
+                this.#hideUserComment();
+            }
+        }
+    }
+
+    #renderUserComment(comment) {
+        this.elements.userCommentRating.style.setProperty("--rating", comment.rating);
+        this.elements.userCommentText.innerText = comment.comment_text || "";
+
+        this.elements.userCommentSection.classList.remove("d-none");
+        this.elements.commentForm.classList.add("d-none");
+        this.elements.commentForm.removeAttribute("data-edit-mode");
+    }
+
+    #hideUserComment() {
+        this.elements.userCommentSection.classList.add("d-none");
+
+        this.elements.commentForm.classList.remove("d-none");
+        this.elements.commentForm.removeAttribute("data-edit-mode");
+        this.elements.commentForm.reset();
+    }
+
+    #handleEditComment() {
+        const rating = this.elements.userCommentRating.style.getPropertyValue("--rating").trim();
+        const text = this.elements.userCommentText.innerText;
+
+        this.elements.commentText.value = text;
+        const ratingInput = document.querySelector(`input[name="rating"][value="${rating}"]`);
+        if (ratingInput) {
+            ratingInput.checked = true;
+        }
+
+        this.elements.userCommentSection.classList.add("d-none");
+        this.elements.commentForm.classList.remove("d-none");
+        this.elements.commentForm.setAttribute("data-edit-mode", "true");
+
+        this.elements.commentForm.scrollIntoView({ behavior: "smooth" });
+    }
+
+    async #handleDeleteComment() {
+        try {
+            const gameMapId = this.store.getState().gameMapId;
+            await deleteUserComment(gameMapId);
+
+            this.#hideUserComment();
+            this.elements.commentForm.reset();
+
+            this.currentPage = 0;
+            this.totalCommentCount = null;
+            this.#loadComments();
+
+            this.bus.emit(EVENTS.TOAST_SHOW, {
+                msg: "Hozzászólásod sikeresen törölve!",
+                type: "success"
+            });
+        } catch (error) {
+            this.bus.emit(EVENTS.TOAST_SHOW, {
+                msg: error.message || "Hiba történt a hozzászólás törlésekor.",
+                type: "danger"
+            });
+        }
     }
 
     async #loadComments() {
@@ -196,5 +299,56 @@ export class CommentManager {
         children.push(commentText);
 
         return createElement("article", { class: "comment-card" }, children);
+    }
+
+    async #handleCommentSubmit(event) {
+        event.preventDefault();
+
+        const formData = new FormData(this.elements.commentForm);
+        const commentText = formData.get("comment");
+        const rating = formData.get("rating");
+
+        if (rating) {
+            try {
+                if (commentText && commentText.trim()) {
+                    formData.set("comment", commentText.trim());
+                } else {
+                    formData.delete("comment");
+                }
+
+                const gameMapId = this.store.getState().gameMapId;
+
+                const isEditMode = this.elements.commentForm.getAttribute("data-edit-mode") == "true";
+                if (isEditMode) {
+                    await updateUserComment(gameMapId, formData); // TODO: ha frissites es nem valtozott ne kuldje el
+                } else {
+                    await postGameMapComment(gameMapId, formData);
+                }
+
+                await this.#loadUserComment();
+
+                this.elements.commentForm.reset();
+                this.elements.commentForm.removeAttribute("data-edit-mode");
+
+                this.currentPage = 0;
+                this.totalCommentCount = null;
+                this.#loadComments();
+
+                this.bus.emit(EVENTS.TOAST_SHOW, {
+                    msg: isEditMode ? "Hozzászólásod sikeresen frissítve!" : "Hozzászólásod sikeresen mentve!",
+                    type: "success"
+                });
+            } catch (error) {
+                this.bus.emit(EVENTS.TOAST_SHOW, {
+                    msg: error.message || "Hiba történt a hozzászólás elküldésekor.",
+                    type: "danger"
+                });
+            }
+        } else {
+            this.bus.emit(EVENTS.TOAST_SHOW, {
+                msg: "Kérlek értékeld legalább 1 csillaggal!",
+                type: "danger"
+            });
+        }
     }
 }

@@ -27,6 +27,13 @@ function getDefaultCoverImage() {
     };
 }
 
+async function assertHasCommentedOnGameMap(gameMapID, userId) {
+    const hasCommented = await database.hasUserCommentedOnGameMap(gameMapID, userId);
+    if (!hasCommented) {
+        throw new AppError(ERRORS.COMMENT.NOT_FOUND, 404);
+    }
+}
+
 
 async function getPointImageDetails(pointID, resolution) {
     const imageData = await database.getPointImage(pointID);
@@ -303,6 +310,62 @@ async function postGameMapComment(userId, gameMapID, comment, rating) {
     }
 }
 
+async function getUserComment(userId, gameMapID) {
+    await assertHasCommentedOnGameMap(gameMapID, userId);
+    return await database.getUserCommentOnGameMap(gameMapID, userId);
+}
+
+async function updateUserComment(userId, gameMapID, commentText, rating) {
+    let dbConnection;
+    try {
+        await assertHasCommentedOnGameMap(gameMapID, userId);
+
+        dbConnection = await database.getConnection();
+        await dbConnection.beginTransaction();
+
+        const commentDb = commentText ?? null;
+        const success = await database.updateUserCommentOnGameMap(dbConnection, gameMapID, userId, commentDb, rating);
+
+        if (!success) {
+            throw new AppError(ERRORS.COMMENT.UPDATE_FAILED, 500);
+        }
+
+        await dbConnection.commit();
+    } catch (error) {
+        await cleanupAfterError(dbConnection);
+        throw error;
+    } finally {
+        if (dbConnection) {
+            dbConnection.release();
+        }
+    }
+}
+
+async function deleteUserComment(userId, gameMapID) {
+    let dbConnection;
+    try {
+        await assertHasCommentedOnGameMap(gameMapID, userId);
+
+        dbConnection = await database.getConnection();
+        await dbConnection.beginTransaction();
+
+        const success = await database.deleteUserCommentOnGameMap(dbConnection, gameMapID, userId);
+
+        if (!success) {
+            throw new AppError(ERRORS.COMMENT.DELETE_FAILED, 500);
+        }
+
+        await dbConnection.commit();
+    } catch (error) {
+        await cleanupAfterError(dbConnection);
+        throw error;
+    } finally {
+        if (dbConnection) {
+            dbConnection.release();
+        }
+    }
+}
+
 module.exports = {
     getPointImageDetails,
     getMapImageDetails,
@@ -313,5 +376,8 @@ module.exports = {
     deleteGameMapCoverImage,
     updateGameMapDetails,
     getGameMapComments,
-    postGameMapComment
+    postGameMapComment,
+    getUserComment,
+    updateUserComment,
+    deleteUserComment
 };

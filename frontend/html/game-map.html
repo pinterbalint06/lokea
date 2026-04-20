@@ -48,15 +48,15 @@
                                 </div>
                             </div>
 
-                            <div class="meta-grid">
-                                <article class="meta-card uveg rounded-3 p-3">
-                                    <p class="meta-label mb-1">Létrehozva</p>
-                                    <p id="createdAtValue" class="meta-value mb-0 placeholder-glow"><span
+                            <div class="stats-container">
+                                <article class="stat-card uveg rounded-3 p-3">
+                                    <p class="stat-label mb-1">Létrehozva</p>
+                                    <p id="createdAtValue" class="stat-value mb-0 placeholder-glow"><span
                                             class="placeholder col-8 rounded"></span></p>
                                 </article>
-                                <article class="meta-card uveg rounded-3 p-3">
-                                    <p class="meta-label mb-1">Játékok száma</p>
-                                    <p id="playsValue" class="meta-value mb-0 placeholder-glow"><span
+                                <article class="stat-card uveg rounded-3 p-3">
+                                    <p class="stat-label mb-1">Játékok száma</p>
+                                    <p id="playsValue" class="stat-value mb-0 placeholder-glow"><span
                                             class="placeholder col-4 rounded"></span></p>
                                 </article>
                             </div>
@@ -190,8 +190,8 @@
 
                                 <form id="commentForm" class="comment-form mt-3">
                                     <label for="commentText" class="form-label mb-1">Írj hozzászólást</label>
-                                    <textarea id="commentText" class="form-control uvegform" rows="4" maxlength="255"
-                                        placeholder="A véleményed erről a pályáról..." required></textarea>
+                                    <textarea id="commentText" name="comment" class="form-control uvegform" rows="4"
+                                        maxlength="255" placeholder="A véleményed erről a pályáról..."></textarea>
 
                                     <div class="d-flex flex-wrap justify-content-between align-items-end gap-3 mt-3">
                                         <fieldset class="rating-input-group">
@@ -219,6 +219,28 @@
                                         </button>
                                     </div>
                                 </form>
+
+                                <div id="userCommentSection" class="user-comment-card uveg rounded-4 p-3 mt-3 d-none">
+                                    <div class="d-flex justify-content-between align-items-start gap-2 flex-wrap">
+                                        <div>
+                                            <span class="small text-uppercase opacity-75 fw-semibold">A te
+                                                értékelésed</span>
+                                            <div id="userCommentRating" class="rating-stars mt-1" style="--rating: 0;">
+                                            </div>
+                                        </div>
+                                        <div class="d-flex gap-2 text-nowrap">
+                                            <button id="editCommentBtn" type="button"
+                                                class="btn btn-outline-secondary btn-sm rounded-pill px-3">
+                                                Szerkesztés
+                                            </button>
+                                            <button id="deleteCommentBtn" type="button"
+                                                class="btn btn-outline-danger btn-sm rounded-pill px-3">
+                                                Törlés
+                                            </button>
+                                        </div>
+                                    </div>
+                                    <p id="userCommentText" class="comment-text mb-0 mt-3"></p>
+                                </div>
 
                                 <hr class="my-4">
 

@@ -55,3 +55,42 @@ export async function updateGameMapDetails(gameMapId, details, abortSignal = nul
 export async function fetchGameMapComments(gameMapId, page = 1, signal = null) {
     return await fetchAndValidate(`/api/game-maps/${gameMapId}/comments?page=${page}`, undefined, signal);
 }
+
+export async function postGameMapComment(gameMapId, formData, abortSignal = null) {
+    const response = await fetch(`/api/game-maps/${gameMapId}/comments`, {
+        method: "POST",
+        body: formData,
+        signal: abortSignal
+    });
+
+    if (!response.ok) {
+        await handleResponseError(response);
+    }
+}
+
+export async function fetchUserComment(gameMapId, abortSignal = null) {
+    return await fetchAndValidate(`/api/game-maps/${gameMapId}/my-comment`, undefined, abortSignal);
+}
+
+export async function updateUserComment(gameMapId, formData, abortSignal = null) {
+    const response = await fetch(`/api/game-maps/${gameMapId}/my-comment`, {
+        method: "PUT",
+        body: formData,
+        signal: abortSignal
+    });
+
+    if (!response.ok) {
+        await handleResponseError(response);
+    }
+}
+
+export async function deleteUserComment(gameMapId, abortSignal = null) {
+    const response = await fetch(`/api/game-maps/${gameMapId}/my-comment`, {
+        method: "DELETE",
+        signal: abortSignal
+    });
+
+    if (!response.ok) {
+        await handleResponseError(response);
+    }
+}

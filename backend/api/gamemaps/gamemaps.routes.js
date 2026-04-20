@@ -81,6 +81,25 @@ router.post(
     validateRequest(schemas.postGameMapCommentsSchema),
     controller.postGameMapComments);
 
+//?GET /api/game-maps/:gameMapID/my-comment
+router.get(
+    "/:gameMapID/my-comment",
+    validateRequest(schemas.getUserCommentSchema),
+    controller.getUserComment);
+
+//?PUT /api/game-maps/:gameMapID/my-comment
+router.put(
+    "/:gameMapID/my-comment",
+    upload.none(),
+    validateRequest(schemas.putUserCommentSchema),
+    controller.updateUserComment);
+
+//?DELETE /api/game-maps/:gameMapID/my-comment
+router.delete(
+    "/:gameMapID/my-comment",
+    validateRequest(schemas.deleteUserCommentSchema),
+    controller.deleteUserComment);
+
 router.use(async (error, request, response, next) => {
     let statusCode = 500;
     let errorMessage = ERRORS.COMMON.UNEXPECTED_ERROR;

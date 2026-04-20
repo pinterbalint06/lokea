@@ -158,6 +158,46 @@ async function postGameMapComments(request, response, next) {
     }
 }
 
+async function getUserComment(request, response, next) {
+    try {
+        const userId = request.session.userid;
+        const { gameMapID } = request.params;
+
+        const comment = await gamemapsService.getUserComment(userId, gameMapID);
+
+        response.status(200).json(comment);
+    } catch (error) {
+        next(error);
+    }
+}
+
+async function updateUserComment(request, response, next) {
+    try {
+        const userId = request.session.userid;
+        const { gameMapID } = request.params;
+        const { comment, rating } = request.body;
+
+        await gamemapsService.updateUserComment(userId, gameMapID, comment, rating);
+
+        response.status(204).send();
+    } catch (error) {
+        next(error);
+    }
+}
+
+async function deleteUserComment(request, response, next) {
+    try {
+        const userId = request.session.userid;
+        const { gameMapID } = request.params;
+
+        await gamemapsService.deleteUserComment(userId, gameMapID);
+
+        response.status(204).send();
+    } catch (error) {
+        next(error);
+    }
+}
+
 module.exports = {
     getPointImage,
     getMapImage,
@@ -168,5 +208,8 @@ module.exports = {
     deleteGameMapCoverImage,
     updateGameMap,
     getGameMapComments,
-    postGameMapComments
+    postGameMapComments,
+    getUserComment,
+    updateUserComment,
+    deleteUserComment
 };

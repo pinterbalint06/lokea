@@ -801,6 +801,35 @@ async function insertGameMapComment(connection, gameMapId, userId, commentText, 
     return result.insertId;
 }
 
+async function getUserCommentOnGameMap(gameMapId, userId) {
+    const query = `
+        SELECT game_maps_comments.comment_id, game_maps_comments.comment_text, game_maps_comments.rating, game_maps_comments.created_at
+        FROM game_maps_comments
+        WHERE game_maps_id = ? AND user_id = ?
+    `;
+    const [rows] = await pool.execute(query, [gameMapId, userId]);
+    return rows[0] || null;
+}
+
+async function updateUserCommentOnGameMap(connection, gameMapId, userId, commentText, rating) {
+    const query = `
+        UPDATE game_maps_comments
+        SET game_maps_comments.comment_text = ?, game_maps_comments.rating = ?
+        WHERE game_maps_comments.game_maps_id = ? AND game_maps_comments.user_id = ?
+    `;
+    const [result] = await connection.execute(query, [commentText, rating, gameMapId, userId]);
+    return result.affectedRows > 0;
+}
+
+async function deleteUserCommentOnGameMap(connection, gameMapId, userId) {
+    const query = `
+        DELETE FROM game_maps_comments
+        WHERE game_maps_comments.game_maps_id = ? AND game_maps_comments.user_id = ?
+    `;
+    const [result] = await connection.execute(query, [gameMapId, userId]);
+    return result.affectedRows > 0;
+}
+
 //!Export
 module.exports = {
     // selectall,
@@ -861,5 +890,8 @@ module.exports = {
     getGameMapComments,
     getGameMapCommentCount,
     hasUserCommentedOnGameMap,
-    insertGameMapComment
+    insertGameMapComment,
+    getUserCommentOnGameMap,
+    updateUserCommentOnGameMap,
+    deleteUserCommentOnGameMap
 };
