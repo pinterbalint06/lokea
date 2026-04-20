@@ -266,7 +266,6 @@ async function getGameMapComments(gameMapID, page) {
     return {
         comments,
         pagination: {
-            pageSize: 50,
             totalCount,
             totalPages
         }

@@ -36,7 +36,6 @@ async function init() {
 
 document.addEventListener("DOMContentLoaded", init);
 
-// TODO: kommentekhez oldalak, pagination
 // TODO: kommenteles
 // TODO: komment szerkesztese
 // TODO: komment torlese

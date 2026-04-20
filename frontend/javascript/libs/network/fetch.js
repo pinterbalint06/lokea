@@ -9,13 +9,22 @@ export async function handleResponseError(response) {
 }
 
 export async function fetchAndValidate(url, returnKey, signal) {
-    let response = await fetch(
-        url,
-        {
-            method: "GET",
-            signal
+    let response;
+
+    try {
+        response = await fetch(
+            url,
+            {
+                method: "GET",
+                signal
+            }
+        );
+    } catch (error) {
+        if (error.name == "AbortError") {
+            throw error;
         }
-    );
+        throw new Error("Hálózati hiba történt. Kérjük, ellenőrizze az internetkapcsolatát!");
+    }
 
     if (!response.ok) {
         await handleResponseError(response);
