@@ -71,9 +71,15 @@ router.put(
 //?GET /api/game-maps/:gameMapID/comments
 router.get(
     "/:gameMapID/comments",
-    upload.none(),
     validateRequest(schemas.getGameMapCommentsSchema),
     controller.getGameMapComments);
+
+//?POST /api/game-maps/:gameMapID/comments
+router.post(
+    "/:gameMapID/comments",
+    upload.none(),
+    validateRequest(schemas.postGameMapCommentsSchema),
+    controller.postGameMapComments);
 
 router.use(async (error, request, response, next) => {
     let statusCode = 500;

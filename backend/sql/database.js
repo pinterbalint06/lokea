@@ -781,6 +781,26 @@ async function getGameMapCommentCount(gameMapId) {
     return rows[0].comment_count;
 }
 
+async function hasUserCommentedOnGameMap(gameMapId, userId) {
+    const query = `
+        SELECT COUNT(*) AS comment_count
+        FROM game_maps_comments
+        WHERE game_maps_comments.game_maps_id = ?
+          AND game_maps_comments.user_id = ?
+    `;
+    const [rows] = await pool.execute(query, [gameMapId, userId]);
+    return rows[0].comment_count > 0;
+}
+
+async function insertGameMapComment(connection, gameMapId, userId, commentText, rating) {
+    const query = `
+        INSERT INTO game_maps_comments (game_maps_id, user_id, comment_text, rating)
+        VALUES (?, ?, ?, ?)
+    `;
+    const [result] = await connection.execute(query, [gameMapId, userId, commentText, rating]);
+    return result.insertId;
+}
+
 //!Export
 module.exports = {
     // selectall,
@@ -839,5 +859,7 @@ module.exports = {
     updateGameMapCoverImage,
     updateGameMapDetails,
     getGameMapComments,
-    getGameMapCommentCount
+    getGameMapCommentCount,
+    hasUserCommentedOnGameMap,
+    insertGameMapComment
 };

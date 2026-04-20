@@ -272,6 +272,37 @@ async function getGameMapComments(gameMapID, page) {
     };
 }
 
+async function postGameMapComment(userId, gameMapID, comment, rating) {
+    let dbConnection;
+    try {
+        dbConnection = await database.getConnection();
+        await dbConnection.beginTransaction();
+
+        const gameMapDetails = await database.getGameMapDetails(gameMapID);
+        if (!gameMapDetails) {
+            throw new AppError(ERRORS.GAMEMAP.NOT_FOUND, 404);
+        }
+
+        const hasExistingComment = await database.hasUserCommentedOnGameMap(gameMapID, userId);
+        if (hasExistingComment) {
+            throw new AppError(ERRORS.COMMENT.ALREADY_COMMENTED, 409);
+        }
+
+        const commentDb = comment ?? null;
+
+        await database.insertGameMapComment(dbConnection, gameMapID, userId, commentDb, rating);
+
+        await dbConnection.commit();
+    } catch (error) {
+        await cleanupAfterError(dbConnection);
+        throw error;
+    } finally {
+        if (dbConnection) {
+            dbConnection.release();
+        }
+    }
+}
+
 module.exports = {
     getPointImageDetails,
     getMapImageDetails,
@@ -281,5 +312,6 @@ module.exports = {
     updateGameMapCoverImage,
     deleteGameMapCoverImage,
     updateGameMapDetails,
-    getGameMapComments
+    getGameMapComments,
+    postGameMapComment
 };

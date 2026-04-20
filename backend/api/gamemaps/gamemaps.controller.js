@@ -144,6 +144,20 @@ async function getGameMapComments(request, response, next) {
     }
 }
 
+async function postGameMapComments(request, response, next) {
+    try {
+        const userId = request.session.userid;
+        const { gameMapID } = request.params;
+        const { comment, rating } = request.body;
+
+        await gamemapsService.postGameMapComment(userId, gameMapID, comment, rating);
+
+        response.status(204).send();
+    } catch (error) {
+        next(error);
+    }
+}
+
 module.exports = {
     getPointImage,
     getMapImage,
@@ -153,5 +167,6 @@ module.exports = {
     updateGameMapCoverImage,
     deleteGameMapCoverImage,
     updateGameMap,
-    getGameMapComments
+    getGameMapComments,
+    postGameMapComments
 };

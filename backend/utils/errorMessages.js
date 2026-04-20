@@ -112,6 +112,19 @@ const ERRORS = {
         END_TO_START_MAX: "A végpontból kezdőpontba iránynak 360 foknál kisebbnek kell lennie!",
 
         ATLEAST_ONE_DIRECTION: "Nem adott meg módosítandó irányt!"
+    },
+
+    COMMENT: {
+        INVALID_CONTENT: "Helytelen hozzászólás tartalom!",
+        TOO_LONG: "A hozzászólás maximum 255 karakter hosszú lehet!",
+        EMPTY_CONTENT: "A hozzászólás nem lehet üres!",
+        INVALID_CHARACTERS: "A hozzászólás csak betűket, számokat, szóközöket, kötőjeleket és alulvonásokat tartalmazhat!",
+        ALREADY_COMMENTED: "Ehhez a pályához már írtál hozzászólást!",
+
+        INVALID_RATING: "Helytelen értékelés!",
+        TOO_LOW_RATING: "Az értékelésnek legalább 1-nek kell lennie!",
+        TOO_HIGH_RATING: "Az értékelésnek legfeljebb 5-nek kell lennie!",
+        RATING_REQUIRED: "Az értékelés megadása kötelező!"
     }
 };
 

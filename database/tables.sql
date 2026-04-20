@@ -39,11 +39,12 @@ CREATE TABLE game_maps_comments (
     comment_id int AUTO_INCREMENT PRIMARY KEY NOT NULL,
     game_maps_id int,
     user_id int,
-    comment_text varchar(255) NOT NULL,
+    comment_text varchar(255) DEFAULT NULL,
     rating int NOT NULL,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     foreign key (game_maps_id) references game_maps(game_maps_id) ON DELETE CASCADE,
     foreign key (user_id) references users(user_id) ON DELETE SET NULL,
+    CONSTRAINT unique_comment_per_user_per_map UNIQUE (game_maps_id, user_id),
     CONSTRAINT check_rating_range CHECK (rating >= 1 AND rating <= 5)
 );
 
