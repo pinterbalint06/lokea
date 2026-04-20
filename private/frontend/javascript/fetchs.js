@@ -53,23 +53,20 @@ export async function getUserData() {
 
 export async function sortedUser(params) {
     try {
-        let response = await fetch("/api/admin/sortedUsers", {
-            method: "POST",
-            headers: {
-                "Content-Type": "application/json"
-            },
-            body: JSON.stringify({
-                mireKeresek: params.mireKeresek,
-                mit: params.mit,
-                status: params.status,
-                adminChecked: params.adminChecked,
-                modChecked: params.modChecked,
-                userChecked: params.userChecked,
-                page: params.page
-            })
-        });
+        const queryParams = new URLSearchParams({
+            mireKeresek: params.mireKeresek,
+            mit: params.mit,
+            status: params.status,
+            adminChecked: params.adminChecked,
+            modChecked: params.modChecked,
+            userChecked: params.userChecked,
+            page: params.page
+        }).toString();
+
+        let response = await fetch(`/api/admin/sortedUsers?${queryParams}`);
+
         let data = await response.json();
-        return { users: data.users, total: data.total } || [];
+        return { users: data.users, total: data.total };
     } catch (error) {
         throw error;
     }
@@ -157,7 +154,7 @@ export async function newUser(username, email, password, role, is_2fa) {
 export async function userUpdate(user_id, username, email, role, is_2fa) {
     try {
         let response = await fetch("/api/admin/updateUserFromAdmin", {
-            method: "POST",
+            method: "PUT",
             headers: {
                 "Content-Type": "application/json"
             },
@@ -178,7 +175,7 @@ export async function userUpdate(user_id, username, email, role, is_2fa) {
 export async function userSelfUpdate(username, email, is_2fa) {
     try {
         let response = await fetch("/api/admin/userSelfUpdate", {
-            method: "POST",
+            method: "PUT",
             headers: {
                 "Content-Type": "application/json"
             },
@@ -214,7 +211,7 @@ export async function updatePassword(oldPass, newPass) {
 
 export async function updateDarkMode(is_dark) {
     try {
-        let response = await fetch("/api/updatePassword", {
+        let response = await fetch("/api/admin/userDarkModeUpdate", {
             method: "PUT",
             headers: {
                 "Content-Type": "application/json"
@@ -247,7 +244,7 @@ export async function getAdminSettings() {
 export async function updateAdminSettings(darkmode, selected_chart) {
     try {
         let response = await fetch("/api/admin/updateAdminSettings", {
-            method: "POST",
+            method: "PUT",
             headers: {
                 "Content-Type": "application/json"
             },
@@ -274,7 +271,7 @@ export async function uploadProfilePic(picture, id = -1) {
     }
     try {
         let response = await fetch(link, {
-            method: "POST",
+            method: "PUT",
             body: fd
         });
         let data = await response.json();
@@ -321,30 +318,26 @@ export async function exportUsers(filters) {
 export async function sortedLogs(variables) {
     let { username, periodFrom, periodTo, roles, activities, page } = variables;
     try {
-        let response = await fetch("/api/admin/sortedLogs", {
-            method: "POST",
-            headers: {
-                "Content-Type": "application/json"
-            },
-            body: JSON.stringify({
-                username,
-                periodFrom,
-                periodTo,
-                roles,
-                activities,
-                page: page || 1
-            })
-        });
+        const queryParams = new URLSearchParams({
+            username: username,
+            periodFrom: periodFrom,
+            periodTo: periodTo,
+            roles,
+            activities,
+            page: page || 1
+        }).toString();
+
+        let response = await fetch(`/api/admin/sortedLogs?${queryParams}`);
 
         if (!response.ok) {
             throw new Error(`Server error: ${response.status}`);
         }
 
         let data = await response.json();
-        return { logs: data.logs, total: data.total } || [];
+        return { logs: data.logs, total: data.total };
     } catch (error) {
         console.error("Fetch error:", error.message);
-        return [];
+        return { logs: [], total: 0 };
     }
 }
 
@@ -379,7 +372,7 @@ export async function exportLogs(filters) {
 export async function deleteProfile() {
     try {
         let response = await fetch("/api/inactiveUser", {
-            method: "POST",
+            method: "DELETE",
             headers: {
                 "Content-Type": "application/json"
             }
@@ -401,7 +394,7 @@ export async function userToInactive(id, role, deleted) {
     let mitadokvissza;
     try {
         let response = await fetch("/api/admin/userToInactive", {
-            method: "POST",
+            method: "DELETE",
             headers: {
                 "Content-Type": "application/json"
             },

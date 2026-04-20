@@ -262,7 +262,7 @@ router.put("/updatePassword", auth.checkAuth,
             }
             else {
                 let { oldPass, newPass } = request.body;
-                await database.updatePassword(request.session.userid, oldPass, newPass); // atiras, hogy visszaadja az emailt, username-t az emailhez
+                let { email, username } = await database.updatePassword(request.session.userid, oldPass, newPass);
                 await database.addLog(request.session.userid, 'Password update');
                 // await sendPasswordChangeEmail(email, username);
                 response.status(200).json({ message: "Sikeres frissités!" });
@@ -273,9 +273,9 @@ router.put("/updatePassword", auth.checkAuth,
         }
     })
 
-router.post("/inactiveUser", auth.checkAuth, async (request, response) => {
+router.delete("/inactiveUser", auth.checkAuth, async (request, response) => {
     try {
-        await database.userToInactive(request.session.userid);
+        let { email, username } = await database.userToInactive(request.session.userid);
         request.session.destroy(error => async function () {
             if (error) {
                 response.status(500).json({ success: false, error: error });
@@ -293,7 +293,7 @@ router.post("/inactiveUser", auth.checkAuth, async (request, response) => {
     }
 })
 
-router.post('/updateProfilePic', auth.checkAuth, upload.single('profilePic'), async (request, response) => {
+router.put('/updateProfilePic', auth.checkAuth, upload.single('profilePic'), async (request, response) => {
     let originalFile;
     let newFilePath;
     try {

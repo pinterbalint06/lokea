@@ -555,7 +555,7 @@ async function saveModification(username, email, is_2fa, language, darkmode) {
 async function deleteProfile() {
     try {
         let response = await fetch("/api/inactiveUser", {
-            method: "POST",
+            method: "DELETE",
             headers: {
                 "Content-Type": "application/json"
             }
@@ -671,7 +671,7 @@ async function uploadProfilePic(picture) {
     fd.append("profilePic", picture);
     try {
         let response = await fetch("/api/updateProfilePic", {
-            method: "POST",
+            method: "PUT",
             body: fd
         });
         let data = await response.json();

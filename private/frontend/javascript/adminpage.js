@@ -81,7 +81,7 @@ async function melyikValaszt(melyik) {
     display.innerHTML = "";
     switch (melyik) {
         case "dashboard":
-            await dashboardDisplayre();
+            await dashboardDisplayre(adminSettings.selectedChart);
             break;
         case "users":
             await usersDisplayre({ modal, objectURL });

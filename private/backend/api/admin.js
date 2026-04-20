@@ -114,17 +114,27 @@ router.get('/user', async (request, response) => {
     }
 })
 
-router.post('/sortedUsers', async (request, response) => {
+router.get('/sortedUsers', async (request, response) => {
     try {
-        let { mireKeresek, mit, status, adminChecked, modChecked, userChecked, page } = request.body;
-        let users = await database.sortedUsers(mireKeresek, mit, status, adminChecked, modChecked, userChecked, page || 1);
+        let { mireKeresek, mit, status, adminChecked, modChecked, userChecked, page } = request.query;
+
+        let users = await database.sortedUsers(
+            mireKeresek,
+            mit,
+            status,
+            adminChecked,
+            modChecked,
+            userChecked,
+            parseInt(page)
+        );
+
         response.status(200).json({ users: users.rows, total: users.total });
     } catch (error) {
-        response.status(500).json({ error: error });
+        response.status(500).json({ error: error.message });
     }
-})
+});
 
-router.post('/updateUserFromAdmin',
+router.put('/updateUserFromAdmin',
     [
         body("username")
             .not().isEmail().withMessage("Felhasználónév nem lehet email cim!")
@@ -165,7 +175,7 @@ router.post('/updateUserFromAdmin',
         }
     })
 
-router.post('/userSelfUpdate',
+router.put('/userSelfUpdate',
     [
         body("username")
             .not().isEmail().withMessage("Felhasználónév nem lehet email cim!")
@@ -231,7 +241,7 @@ router.post('/userDarkModeUpdate',
     })
 
 
-router.post('/userToInactive',
+router.delete('/userToInactive',
     [
         body("role")
             .not().matches("ADMIN").withMessage("Nem frissithetsz admin-t!"),
@@ -287,7 +297,7 @@ router.post('/exportUsers', async (request, response) => {
     }
 });
 
-router.post('/updateProfilePicFromAdmin', upload.single('profilePic'), async (request, response) => {
+router.put('/updateProfilePicFromAdmin', upload.single('profilePic'), async (request, response) => {
     let originalFile;
     let newFilePath;
     try {
@@ -437,7 +447,7 @@ router.get('/getAdminSettings', async (request, response) => {
     }
 });
 
-router.post('/updateAdminSettings', async (request, response) => {
+router.put('/updateAdminSettings', async (request, response) => {
     try {
         const { darkmode, selected_chart } = request.body;
 

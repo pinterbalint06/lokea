@@ -144,7 +144,7 @@ async function updateUser(user_id, username, email, is_2fa, language, darkmode) 
 async function updatePassword(user_id, oldPass, newPass) {
     let connection;
     try {
-        const getPasswordQuery = 'SELECT users.password FROM users WHERE users.user_id = ?';
+        const getPasswordQuery = 'SELECT users.username, users.email, users.password FROM users WHERE users.user_id = ?';
         const [result] = await pool.execute(getPasswordQuery, [user_id]);
 
         if (result.length == 0) {
@@ -160,6 +160,7 @@ async function updatePassword(user_id, oldPass, newPass) {
         const passwordUpdateQuery = 'UPDATE users SET password = ? WHERE user_id = ?';
         await connection.execute(passwordUpdateQuery, [hashedPassword, user_id]);
         await connection.commit();
+        return { username: result[0].username, email: result[0].email };
     } catch (error) {
         if (connection) {
             await connection.rollback();
@@ -174,13 +175,18 @@ async function updatePassword(user_id, oldPass, newPass) {
 
 async function userToInactive(user_id) {
     let connection;
-    let result;
     try {
+        const getUserQuery = 'SELECT users.username, users.email FROM users WHERE users.user_id = ?';
+        const [userResult] = await pool.execute(getUserQuery, [user_id]);
+        if (userResult.length == 0) {
+            throw new Error('Felhasználó nem található!');
+        }
         connection = await pool.getConnection();
         await connection.beginTransaction();
         const query = 'UPDATE users SET deleted_at = CURRENT_TIMESTAMP WHERE user_id = ? AND deleted_at IS NULL';
-        [result] = await connection.execute(query, [user_id]);
+        const [result] = await connection.execute(query, [user_id]);
         await connection.commit();
+        return { username: userResult[0].username, email: userResult[0].email };
     } catch (error) {
         if (connection) {
             await connection.rollback();
@@ -191,7 +197,6 @@ async function userToInactive(user_id) {
     finally {
         if (connection) connection.release();
     }
-    return result.affectedRows;
 }
 
 async function uploadProfilePic(filepath, width, height, user_id) {
