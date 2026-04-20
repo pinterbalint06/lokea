@@ -36,9 +36,9 @@ router.post("/signupFromAdmin", auth.checkAuth, auth.checkRole("ADMIN"),
             .isLength({ min: 1, max: 20 }).withMessage("Felhasználónév hossza nem megfelelő!"),
         body("email")
             .isEmail().withMessage("Hibás email formátum")
-            .isLength({ min: 5, max: 250 }).withMessage("Email max 250 karakter"),
+            .isLength({ min: 5, max: 254 }).withMessage("Email max 254 karakter"),
         body("password")
-            .isLength({ min: 8, max: 50 }).withMessage("Jelszó hossza 8-50")
+            .isLength({ min: 8, max: 60 }).withMessage("Jelszó hossza 8-60 karakter")
             .matches(/\d/).withMessage("Kell benne szám")
             .matches(/[A-Z]/).withMessage("Kell benne nagybetű"),
         body("is_2fa")
@@ -113,7 +113,7 @@ router.post('/updateUser', auth.checkAuth, auth.checkRole("ADMIN"),
             .isLength({ min: 1, max: 20 }).withMessage("Felhasználónév hossza nem megfelelő!"),
         body("email")
             .isEmail().withMessage("Hibás email formátum")
-            .isLength({ min: 5, max: 250 }).withMessage("Email max 250 karakter!"),
+            .isLength({ min: 5, max: 254 }).withMessage("Email max 254 karakter!"),
         body("deleted")
             .custom(value => value === true).withMessage("Inaktiv felhasználót nem frissithetsz!")
     ],
@@ -176,5 +176,71 @@ router.post('/userToInactive', auth.checkAuth, auth.checkRole("ADMIN"),
             response.status(500).json({ error: error });
         }
     })
+
+router.post('/updateProfilePicFromAdmin', auth.checkAuth,auth.checkRole("ADMIN"), upload.single('profilePic'), async (request, response) => {
+    let originalFile;
+    let newFilePath;
+    try {
+        if (!request.file) {
+            response.status(400).json({ message: "Nincs kép!" });
+        }
+        else {
+            originalFile = request.file.path;
+            let newFileName = `processed-${Date.now()}.webp`;
+            newFilePath = path.join('uploads', newFileName);
+
+            //Kép tömöritése
+            sharp.cache(false);
+            const metadata = await sharp(originalFile)
+                .resize(400, 400, {
+                    fit: 'cover',
+                    position: 'center'
+                })
+                .toFormat('webp')
+                .toFile(newFilePath);
+
+            let { width, height } = metadata;
+            let finalUrl = `${newFileName}`;
+
+            let lastPfp = await database.uploadProfilePic(finalUrl, width, height, request.body.user_id);
+
+            await fs.unlink(originalFile).catch(() => { });
+
+            if (lastPfp) {
+                let lastPfpPath = path.join(__dirname, '..', 'uploads', lastPfp);
+                await fs.unlink(lastPfpPath).catch(() => { });
+            }
+            response.status(201).json({ success: true, message: "Profilkép frissítve!" });
+        }
+    } catch (error) {
+        if (originalFile) {
+            await fs.unlink(originalFile).catch(() => { });
+        }
+        if (newFilePath) {
+            await fs.unlink(newFilePath).catch(() => { });
+        }
+        response.status(500).json({ error: error.message });
+    }
+})
+
+router.post('/deleteProfilePicFromAdmin', auth.checkAuth, auth.checkRole("ADMIN"), async (request, response) => {
+    try {
+        let lastPfp = await database.deleteProfilePic(request.body.user_id);
+        if (!lastPfp) {
+            response.status(200).json({ success: true, message: "A profilkép már alapértelmezett volt." });
+        }
+        else {
+            let lastPfpPath = path.join(__dirname, '..', 'uploads', lastPfp);
+            try {
+                await fs.unlink(lastPfpPath);
+            } catch (error) {
+                console.log("a kép nincs a szerveren!" + error);
+            }
+            response.status(201).json({ success: true, message: "Profilkép törölve!" });
+        }
+    } catch (error) {
+        response.status(500).json({ error: error });
+    }
+})
 
 module.exports = router;

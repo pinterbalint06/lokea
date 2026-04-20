@@ -1,0 +1,666 @@
+body,
+body[data-bs-theme="light"] {
+    background: #943ec9;
+    background: linear-gradient(132deg, rgba(148, 62, 201, 1) 1%, rgba(201, 66, 153, 1) 52%, rgba(148, 62, 201, 1) 100%);
+}
+
+main {
+    margin-top: 150px;
+    margin-bottom: 30px;
+}
+
+/* header */
+
+header {
+    background-color: rgba(0, 0, 0, 0.7);
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 150px;
+    color: rgba(255, 255, 255, 0.622);
+    font-family: monospace;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 1000;
+}
+
+.online-dot {
+    display: inline-block;
+    width: 10px;
+    height: 10px;
+    background-color: #2ecc71;
+    border-radius: 50%;
+    margin-right: 5px;
+    box-shadow: 0 0 0 rgba(46, 204, 113, 0.4);
+    animation: pulse 2s infinite;
+}
+
+.mainLogo {
+    width: 200px;
+}
+
+.logoTitle {
+    font-size: 20px;
+}
+
+#profileUsername {
+    margin-left: 15px;
+}
+
+.profilePicture {
+    width: 40px;
+    border: 1px solid black;
+    border-radius: 100%;
+}
+
+.dropdown-menu {
+    opacity: 1 !important;
+}
+
+.dropdown:hover .dropdown-menu {
+    display: block;
+}
+
+.dropdown:focus-within .dropdown-menu {
+    display: block;
+}
+
+.dropdown-menu a:hover {
+    background-color: rgba(25, 31, 197, 0.199);
+    cursor: pointer;
+}
+
+.dropdown-icons {
+    width: 20px;
+    height: 20px;
+}
+
+/* zaszlos resz */
+
+section {
+    border-color: black;
+    border-style: solid;
+    border-width: 5px 0px 5px 0px;
+    margin-bottom: 30px !important;
+}
+
+.space-background,
+body[data-bs-theme="dark"] {
+    color: white;
+    width: 100%;
+    min-height: 100vh;
+    margin: 0;
+
+    --space-black: #020205;
+    --nebula-purple: rgba(72, 49, 212, 0.4);
+    --nebula-pink: rgba(204, 43, 94, 0.3);
+    --star-white: rgba(255, 255, 255, 0.8);
+
+    background:
+        radial-gradient(1px 1px at 10% 20%, var(--star-white) 100%, transparent),
+        radial-gradient(1px 1px at 30% 50%, var(--star-white) 100%, transparent),
+        radial-gradient(1.5px 1.5px at 70% 80%, var(--star-white) 100%, transparent),
+        radial-gradient(1px 1px at 90% 10%, var(--star-white) 100%, transparent),
+        radial-gradient(1px 1px at 50% 90%, var(--star-white) 100%, transparent),
+
+        radial-gradient(circle at var(--nebula-pos-1, 20% 30%), var(--nebula-purple) 0%, transparent 50%),
+        radial-gradient(circle at var(--nebula-pos-2, 80% 70%), var(--nebula-pink) 0%, transparent 50%),
+
+        var(--space-black);
+
+    background-attachment: fixed;
+    animation: spaceFloat 20s ease-in-out infinite alternate;
+}
+
+.flag-row {
+    width: 100%;
+    display: flex;
+    overflow-x: auto;
+}
+
+.flag-row::-webkit-scrollbar {
+    display: none;
+}
+
+.flag-group {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 1em;
+    padding-right: 1em;
+}
+
+.col-12 .flag-row:nth-child(even) .flag-group {
+    animation: spinToRight 8s infinite linear;
+}
+
+.col-12 .flag-row:nth-child(odd) .flag-group {
+    animation: spinToLeft 8s infinite linear;
+}
+
+.flag {
+    flex: 0 0 5em;
+    height: 3em;
+    padding: 1em;
+    font-size: 3rem;
+    border-radius: .2em;
+    text-align: center;
+    align-content: center;
+}
+
+/* jatekmodok */
+
+.gamemode {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    text-align: center;
+    border-radius: .6em;
+    height: 350px;
+    width: 100%;
+    position: relative;
+    overflow: hidden;
+    padding: 10px;
+    box-sizing: border-box;
+}
+
+.pinpoint {
+    background-color: rgb(4, 167, 4);
+    border: 5px solid rgb(2, 117, 2);
+}
+
+.guess-the-country {
+    background-color: rgb(1, 161, 197);
+    border: 5px solid rgb(2, 134, 163);
+}
+
+[data-bs-theme="dark"] .gamemode {
+    background-color: rgba(128, 128, 128, 0.2) !important;
+    border-color: rgba(255, 255, 255, 0.1);
+}
+
+.gamemode img {
+    height: 60%;
+    transition: all 0.4s cubic-bezier(0.25, 1, 0.5, 1);
+}
+
+.gamemode h5 {
+    margin: 15px 0 5px 0;
+    transition: all 0.4s ease;
+    font-size: 1.2rem;
+}
+
+.description {
+    opacity: 0;
+    visibility: hidden;
+    font-size: 0.9em;
+    margin: 0;
+    max-height: 0;
+    transition: all 0.4s ease;
+    transform: translateY(10px);
+}
+
+.gamemode:hover img {
+    transform: scale(0.6);
+    margin-top: -20px;
+}
+
+.gamemode:hover h5 {
+    transform: scale(0.8);
+}
+
+.gamemode:hover .description {
+    opacity: 1;
+    visibility: visible;
+    max-height: 60px;
+    transform: translateY(0);
+    margin-top: 10px;
+}
+
+/* egyedi terkepek */
+
+.customMap {
+    background: url(../images/examplelocation.jpg);
+    background-repeat: no-repeat;
+    background-size: cover;
+    background-position: center;
+    height: 400px;
+}
+
+.customMapTitle {
+    background-color: black;
+    opacity: 0.8;
+    color: white;
+    margin: 0 auto;
+}
+
+.customMapRatings {
+    background-color: black;
+    opacity: 0.8;
+    color: white;
+}
+
+/* osszehasonlitas */
+
+table img {
+    height: 50px;
+    display: block;
+    margin: auto;
+    max-width: 100%;
+    object-fit: contain
+}
+
+.table-fixed {
+    table-layout: fixed;
+}
+
+.comparison-container {
+    width: 100%;
+    background-color: #1a1a1a;
+    border-radius: 10px;
+    overflow: hidden;
+}
+
+.comparison-header,
+.comparison-row {
+    display: flex;
+    align-items: center;
+    border-bottom: 1px solid #333;
+}
+
+.header-item,
+.cell {
+    flex: 1;
+    padding: 15px;
+    text-align: center;
+    color: white;
+    font-size: smaller;
+}
+
+.comparison-header {
+    background-color: #000;
+    font-weight: bold;
+    font-size: 0.9rem;
+}
+
+.cell img {
+    height: 25px;
+}
+
+.platform-logo img {
+    max-width: 100%;
+    object-fit: contain;
+    flex-shrink: 0;
+}
+
+/* modalok */
+
+body.modal-open> :not(.modal):not(.modal-backdrop) {
+    filter: blur(8px);
+    transition: filter 0.5s ease;
+}
+
+
+/* modal - beallitasok */
+
+.custom-modal-content {
+    border: none;
+    border-radius: 12px;
+    overflow: hidden;
+}
+
+.custom-modal-header {
+    padding-bottom: 0;
+    border-bottom: none;
+}
+
+#userTextData input {
+    margin-bottom: 15px;
+}
+
+.nav-browser-tabs .nav-link {
+    border: 1px solid transparent;
+    border-radius: 10px 10px 0px 0px;
+    color: #6c757d;
+    padding: 10px 25px;
+    margin-bottom: -1px;
+    transition: all 0.2s ease;
+}
+
+.nav-browser-tabs .nav-link:hover {
+    background-color: #dbdee2;
+}
+
+.nav-browser-tabs .nav-link.active {
+    background-color: #943ec9 !important;
+    border-color: #dee2e6 #dee2e6 #ffffff !important;
+    color: white;
+    font-weight: 600;
+}
+
+.settings-content {
+    min-height: 300px;
+    padding: 2rem;
+}
+
+.section-title {
+    font-weight: 700;
+    margin-bottom: 1.5rem;
+}
+
+.subtitle {
+    font-weight: 700;
+    margin-bottom: 1rem;
+}
+
+.form-check-input:checked {
+    background-color: #943ec9;
+    border-color: #943ec9;
+}
+
+.btn-purple {
+    background-color: #943ec9;
+    color: white;
+}
+
+.btn-purple:hover {
+    background-color: purple;
+    color: white;
+}
+
+.buttonIcon {
+    width: 20px;
+    height: 20px;
+}
+
+.settingsPfp {
+    width: 100% !important;
+    border-radius: 50%
+}
+
+.dropzone {
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
+.dropzone:hover {
+    border: 2px dashed #aaa;
+    border-radius: 10px;
+    cursor: copy;
+}
+
+.settings-content-blur {
+    filter: blur(8px);
+    transition: filter 0.3s ease;
+    pointer-events: none;
+}
+
+#errorLocation {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    background-color: #fde8e8;
+    color: red;
+    border: 1px solid #f8b4b4;
+    padding: 12px 16px;
+    margin-bottom: 10px;
+    border-radius: 8px;
+    font-family: sans-serif;
+    position: relative;
+}
+
+.close-btn {
+    background: transparent;
+    border: none;
+    font-size: 20px;
+    font-weight: bold;
+    color: #c81e1e;
+    cursor: pointer;
+    padding: 0 5px;
+    line-height: 1;
+    border-radius: 4px;
+    transition: all 0.2s ease;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.close-btn svg {
+    height: 20px;
+    width: 20px;
+}
+
+.close-btn:hover {
+    background-color: rgba(200, 30, 30, 0.1);
+    transform: scale(1.1);
+}
+
+.close-btn:active {
+    transform: scale(0.95);
+}
+
+/* animaciok */
+
+/* csillagok hatterhez */
+@keyframes spaceFloat {
+    0% {
+        --nebula-pos-1: 20% 30%;
+        --nebula-pos-2: 80% 70%;
+    }
+
+    100% {
+        --nebula-pos-1: 30% 40%;
+        --nebula-pos-2: 70% 60%;
+    }
+}
+
+/* pulzalas */
+
+@keyframes pulse {
+    0% {
+        transform: scale(0.95);
+        box-shadow: 0 0 0 0 rgba(46, 204, 113, 0.7);
+    }
+
+    70% {
+        transform: scale(1);
+        box-shadow: 0 0 0 10px rgba(46, 204, 113, 0);
+    }
+
+    100% {
+        transform: scale(0.95);
+        box-shadow: 0 0 0 0 rgba(46, 204, 113, 0);
+    }
+}
+
+/* zaszlok bal-jobb mozgasa */
+
+@keyframes spinToLeft {
+    from {
+        translate: 0;
+    }
+
+    to {
+        translate: -100%
+    }
+}
+
+@keyframes spinToRight {
+    from {
+        translate: -100%
+    }
+
+    to {
+        translate: 0
+    }
+}
+
+/* reszponzivitas  */
+
+@media screen and (max-width: 576px) {
+    .navbar {
+        flex-direction: column;
+        justify-content: center;
+    }
+
+    #onlineAndIP,
+    .logoTitle {
+        display: none;
+    }
+
+    #LogOrDropdown {
+        justify-content: center !important;
+    }
+
+    .flag {
+        height: 100px;
+        padding: 0;
+    }
+
+    .space-background {
+        min-height: 0;
+    }
+
+    .col-12:nth-child(even) .gamemode {
+        flex-direction: row-reverse;
+    }
+
+    .gamemode img {
+        height: 70%;
+        object-fit: contain;
+    }
+
+    .customMaps {
+        margin-bottom: 20px;
+    }
+
+    .comparison-row {
+        display: flex;
+        flex-direction: column;
+        margin-bottom: 20px;
+        border: 2px solid #333;
+        border-radius: 10px;
+    }
+
+    .cell {
+        width: 100% !important;
+        display: flex !important;
+        flex-direction: row !important;
+        justify-content: space-between !important;
+        align-items: center;
+        padding: 15px 25px;
+        border-bottom: 1px solid #222;
+    }
+
+    .cell::before {
+        content: attr(data-label);
+        display: block;
+        color: #888;
+        margin-right: 10px;
+    }
+
+    .platform-logo {
+        justify-content: center !important;
+        background-color: #111;
+    }
+
+    .platform-logo::before {
+        display: none !important;
+    }
+
+    .settingsPfp {
+        width: 50% !important;
+    }
+
+    .dropzone {
+        border: 2px dashed #aaa;
+        border-radius: 10px;
+        margin-bottom: 10px;
+    }
+}
+
+@media screen and (max-width: 767px) {
+    .col-12 .gamemode {
+        flex-direction: row;
+        margin-bottom: 20px;
+        height: 250px;
+        width: 100%;
+        padding: 20px;
+    }
+
+    .gamemode img {
+        width: 70%;
+        object-fit: contain;
+    }
+
+    .description {
+        opacity: 1;
+        visibility: visible;
+        max-height: none;
+    }
+
+    .gamemode,
+    .gamemode * {
+        transition: none !important;
+        transform: none !important;
+        animation: none !important;
+        scale: 1 !important;
+    }
+
+    .gamemode:hover {
+        transform: none !important;
+        top: auto !important;
+    }
+
+    .gamemode:hover img {
+        margin-top: 0 !important;
+    }
+
+    .gamemode:hover h5 {
+        margin-top: 15px !important;
+    }
+
+    .gamemode:hover .description {
+        margin-top: 0 !important;
+        max-height: none !important;
+    }
+}
+
+@media screen and (min-width: 577px) and (max-width: 767px) {
+    .col-12 .gamemode {
+        height: 300px;
+    }
+
+    .gamemode {
+        padding: 20px 30px !important;
+    }
+
+    .gamemode-text {
+        padding-right: 15px;
+    }
+
+    .gamemode h5 {
+        margin-top: 0;
+    }
+}
+
+@media screen and (min-width: 768px) and (max-width: 991px) {
+    .col-12 .gamemode {
+        margin-bottom: 20px;
+    }
+}
+
+@media screen and (min-width: 992px) and (max-width: 1199px) {
+    .col-12 .gamemode {
+        justify-content: start;
+    }
+
+    .gamemode img {
+        height: 50%;
+    }
+}
