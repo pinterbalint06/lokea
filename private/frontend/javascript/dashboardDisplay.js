@@ -1,6 +1,7 @@
 import { createHTMLelement, formatTime } from "./utils/domUtils.js";
 import { getDashboardInfo } from "./fetchs.js";
 import { initSocket } from "./utils/socketio.js";
+import i18next from "./utils/i18next.js";
 
 export async function dashboardDisplayre(selectedChart) {
     let display = document.getElementById('content');
@@ -35,13 +36,13 @@ export async function dashboardDisplayre(selectedChart) {
 
 function createKpi(playerCount, activePlayerCount) {
     let card = createHTMLelement('div', ['card', 'p-4', 'shadow-sm', 'border-0']);
-    card.appendChild(createHTMLelement('h6', ['text-muted', 'text-uppercase', 'small', 'fw-bold', 'mb-3'], 'Player data'));
+    card.appendChild(createHTMLelement('h6', ['text-muted', 'text-uppercase', 'small', 'fw-bold', 'mb-3'], i18next.t('admin:dashboard.player_data')));
 
     let list = createHTMLelement('div', ['d-flex', 'flex-column', 'gap-2']);
 
     const items = [
-        { label: 'Registered players', val: playerCount, color: 'text-primary', bg: 'bg-primary-subtle' },
-        { label: 'Active players', val: activePlayerCount, color: 'text-info', bg: 'bg-info-subtle' }
+        { label: i18next.t('admin:dashboard.registered_players'), val: playerCount, color: 'text-primary', bg: 'bg-primary-subtle' },
+        { label: i18next.t('admin:dashboard.active_players'), val: activePlayerCount, color: 'text-info', bg: 'bg-info-subtle' }
     ];
 
     items.forEach(item => {
@@ -51,7 +52,7 @@ function createKpi(playerCount, activePlayerCount) {
         list.appendChild(row);
     });
     let row = createHTMLelement('div', ['d-flex', 'justify-content-between', 'align-items-center', 'p-2', 'rounded', 'bg-success-subtle']);
-    row.appendChild(createHTMLelement('span', ['small', 'fw-bold'], "Online players"));
+    row.appendChild(createHTMLelement('span', ['small', 'fw-bold'], i18next.t('admin:dashboard.online_players')));
     row.appendChild(createHTMLelement('span', ['badge', 'bg-success-subtle', 'text-success', 'border'], null, "onlinePlayerCounter"));
     list.appendChild(row);
 
@@ -63,9 +64,9 @@ function createKpi(playerCount, activePlayerCount) {
 function createChartBox() {
     let col = createHTMLelement('div', ['col-lg-8']);
     let card = createHTMLelement('div', ['card', 'p-4', 'shadow-sm', 'h-100', 'border-0']);
-    card.appendChild(createHTMLelement('h6', ['text-muted', 'text-uppercase', 'small', 'fw-bold', 'mb-3'], 'Weekly activity'));
+    card.appendChild(createHTMLelement('h6', ['text-muted', 'text-uppercase', 'small', 'fw-bold', 'mb-3'], i18next.t('admin:dashboard.weekly_activity')));
 
-    let chartContainer = createHTMLelement('div', ['d-flex', 'justify-content-center', 'align-items-center', 'bg-light', 'rounded', 'h-100'], "Loading chart...", "chart-container");
+    let chartContainer = createHTMLelement('div', ['d-flex', 'justify-content-center', 'align-items-center', 'bg-light', 'rounded', 'h-100'], i18next.t('admin:dashboard.loading_chart'), "chart-container");
     chartContainer.style.minHeight = "450px";
 
     card.appendChild(chartContainer);
@@ -75,7 +76,7 @@ function createChartBox() {
 
 function createLogs(logArray) {
     let card = createHTMLelement('div', ['card', 'p-4', 'shadow-sm', 'border-0']);
-    card.appendChild(createHTMLelement('h6', ['text-muted', 'text-uppercase', 'small', 'fw-bold', 'mb-2'], 'System log'));
+    card.appendChild(createHTMLelement('h6', ['text-muted', 'text-uppercase', 'small', 'fw-bold', 'mb-2'], i18next.t('admin:dashboard.system_log')));
 
     let shell = createHTMLelement('div', ['bg-dark', 'text-success', 'p-3', 'rounded', 'dashboardShell']);
     for (let i = 0; i < logArray.length; i++) {

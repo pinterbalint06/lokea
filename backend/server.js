@@ -8,6 +8,9 @@ const { Server } = require("socket.io");
 const http = require('http');
 const nodemailer = require("nodemailer");
 const { Chart, registerables } = require('chart.js');
+const i18next = require('i18next');
+const i18n_Backend = require('i18next-fs-backend');
+const i18n_Middleware = require('i18next-http-middleware');
 
 //!Beállítások
 const app = express();
@@ -18,6 +21,33 @@ const port = 3000;
 const server = http.createServer(app);
 const onlineUsers = new Map();
 const io = new Server(server);
+
+const lngDetector = new i18n_Middleware.LanguageDetector();
+lngDetector.addDetector({
+    name: 'customDetector',
+    lookup(req, res, options) {
+        if (req.session && req.session.userLanguage) {
+            return req.session.userLanguage;
+        }
+        return null;
+    }
+});
+
+i18next
+    .use(i18n_Backend)
+    .use(lngDetector)
+    .init({
+        fallbackLng: 'en',
+        ns: ['admin', 'common'],
+        defaultNS: 'common',
+        backend: {
+            loadPath: path.join(__dirname, '/locales/{{lng}}/{{ns}}.json'),
+        },
+        detection: {
+            order: ['customDetector', 'querystring', 'cookie'],
+            caches: ['cookie']
+        }
+    });
 
 app.use(cors());
 app.use(express.json()); //?Middleware JSON
@@ -40,6 +70,10 @@ const sessionMiddleware = session({
 });
 app.use(sessionMiddleware);
 io.engine.use(sessionMiddleware);
+app.use(i18n_Middleware.handle(i18next));
+app.use(express.static(path.join(__dirname, '../frontend')));
+app.use(express.static(path.join(__dirname, '../private/frontend')));
+app.use('/locales', express.static(path.join(__dirname, 'locales')));
 
 //!Routing
 //?Főoldal:
@@ -73,13 +107,11 @@ router.get('/admin', auth.checkRole("ADMIN"), (request, response) => {
 router.get('/choose_game', (request, response) => {
     response.sendFile(path.join(__dirname, '../frontend/html/game-choosing.html'));
 });
-router.use((request, response) => {
-    response.status(404).sendFile(path.join(__dirname, '../frontend/html/notfound.html'));
-});
+// router.use((request, response) => {
+//     response.status(404).sendFile(path.join(__dirname, '../frontend/html/notfound.html'));
+// });
 
 //!API endpoints
-app.use(express.static(path.join(__dirname, '../frontend')));
-app.use(express.static(path.join(__dirname, '../private/frontend')));
 const adminEndpoints = require('../private/backend/api/admin.js');
 app.use('/api/admin', auth.checkAuth, auth.checkRole("ADMIN"), adminEndpoints);
 const endpoints = require('./api/api.js');
@@ -118,7 +150,6 @@ io.on("connection", (socket) => {
         }
     });
 });
-
 
 //!Szerver futtatása
 server.listen(port, ip, () => {

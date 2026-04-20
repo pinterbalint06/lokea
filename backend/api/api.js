@@ -134,8 +134,10 @@ router.post("/login",
                         else {
                             request.session.cookie.expires = false;
                         }
+                        console.log(rows[0]);
                         request.session.userid = rows[0].user_id;
                         request.session.role = sesRole;
+                        request.session.userLanguage = rows[0].language;
                         await database.addLog(rows[0].user_id, 'Login');
                         response.status(200).json({ message: "Sikeres bejelentkezés", role: sesRole, username: rows[0].username });
                     }

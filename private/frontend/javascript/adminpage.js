@@ -2,9 +2,10 @@ import { dashboardDisplayre } from "./dashboardDisplay.js";
 import { usersDisplayre } from "./usersDisplay.js";
 import { logsDisplayre } from "./logsDisplay.js";
 import { settingsDisplayre } from "./settingsDisplay.js";
-import { getAdminSettings, kijelentkezes } from "./fetchs.js";
+import { getAdminSettings, nyelvSzinkronizalas, kijelentkezes } from "./fetchs.js";
 
 document.addEventListener("DOMContentLoaded", async function () {
+    await nyelvSzinkronizalas();
     modalElement = document.getElementById('modalView');
     modalElement.addEventListener('hidden.bs.modal', function () {
         if (objectURL) {
@@ -83,7 +84,7 @@ async function melyikValaszt(melyik) {
             await dashboardDisplayre();
             break;
         case "users":
-            await usersDisplayre({modal, objectURL});
+            await usersDisplayre({ modal, objectURL });
             break;
         case "files":
             display.appendChild(await filesDisplayre());

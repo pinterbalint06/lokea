@@ -1,0 +1,14 @@
+{
+    "common": {
+        "Sign up": "Regisztráció",
+        "Login": "Bejelentkezés",
+        "User update": "Profil szerkesztése",
+        "Password update": "Jelszó frissitése",
+        "User delete": "Felhasználó törlése",
+        "Update profile picture": "Profilkép frissitése",
+        "Delete profile picture": "Profilkép törlése",
+        "from": "Mikortól",
+        "to": "Meddig",
+        "reset": "Visszaállítás"
+    }
+}

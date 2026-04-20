@@ -1,4 +1,19 @@
+import i18next, { initI18next } from "./utils/i18next.js";
+
 //GET fetchings
+
+export async function nyelvSzinkronizalas() {
+    try {
+        let response = await fetch('/api/admin/getLanguage');
+        let data = await response.json();
+
+        await initI18next(data.language);
+
+        console.log("Sikeres nyelv betöltés:", data.language);
+    } catch (error) {
+        console.error("Nyelv hiba:", error);
+    }
+}
 
 export async function osszesUser() {
     try {

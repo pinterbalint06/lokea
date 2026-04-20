@@ -1,5 +1,6 @@
 import { osszesUser, getUser, sortedUser, getProfilePicture, newUser, userUpdate, userToInactive, exportUsers, uploadProfilePic, deleteProfilePicture } from "./fetchs.js";
 import { createHTMLelement, gombGeneral, inputGeneral, labelGeneral, lapozasGeneral, createPreview } from "./utils/domUtils.js";
+import i18next from "./utils/i18next.js";
 
 export async function usersDisplayre(variables) {
     currentPage.page = 1;
@@ -10,11 +11,11 @@ export async function usersDisplayre(variables) {
 
     let fejlec = createHTMLelement('div', ["d-flex", "justify-content-between"]);
 
-    let cim = createHTMLelement('h2', ["h2"], "Users");
+    let cim = createHTMLelement('h2', ["h2"], i18next.t('admin:users.title'));
 
-    let newUserGomb = gombGeneral("button", "Create new user", "user-plus", "green", null);
+    let newUserGomb = gombGeneral("button", i18next.t('admin:users.create_new'), "user-plus", "green", null);
     newUserGomb.addEventListener("click", async function () {
-        modalView("Új felhasználó létrehozása", "new", newUserToModal(), variables);
+        modalView(i18next.t('admin:users.create_new'), "new", newUserToModal(), variables);
 
         variables.modal.show();
     });
@@ -27,7 +28,7 @@ export async function usersDisplayre(variables) {
 
     let col3div = createHTMLelement('div', ["col-3"]);
     let kartya = createHTMLelement('div', ["card", "bg-light", "p-3"]);
-    let kiscim = createHTMLelement('h4', ["h4"], 'Sort');
+    let kiscim = createHTMLelement('h4', ["h4"], i18next.t('admin:users.sort'));
     let szuresDiv = createHTMLelement('div', ['mb-3']);
 
     //kereso
@@ -35,7 +36,7 @@ export async function usersDisplayre(variables) {
 
     let inputgroupdiv = createHTMLelement('div', ["input-group"]);
 
-    let keresoInput = inputGeneral("text", "Keresés...", null, "keresoInput", ["form-control"], false);
+    let keresoInput = inputGeneral("text", i18next.t('admin:users.search_placeholder'), null, "keresoInput", ["form-control"], false);
     keresoInput.addEventListener("input", async function () {
         currentPage.page = 1;
         let data = await sortedUser(getFilterValues());
@@ -73,8 +74,8 @@ export async function usersDisplayre(variables) {
     szuresDiv.appendChild(keresodiv);
 
     let statusDiv = document.createElement('div');
-    let statusDivCim = createHTMLelement('h6', ["h6"], "User status");
-    let statuszok = ["Any", "Active", "Deleted"];
+    let statusDivCim = createHTMLelement('h6', ["h6"], i18next.t('admin:users.user_status'));
+    let statuszok = [i18next.t('admin:users.any'), i18next.t('admin:users.active'), i18next.t('admin:users.deleted')];
     for (let i = 0; i < statuszok.length; i++) {
         let formcheck = createHTMLelement('div', ["form-check"]);
         let radioButton = document.createElement('input');
@@ -99,8 +100,8 @@ export async function usersDisplayre(variables) {
     szuresDiv.appendChild(statusDiv);
 
     let roleDiv = document.createElement('div');
-    let roleDivCim = createHTMLelement('h6', ["h6"], "Role");
-    let roleok = ["Admin", "Moderator", "User"];
+    let roleDivCim = createHTMLelement('h6', ["h6"], i18next.t('admin:users.role'));
+    let roleok = [i18next.t('admin:common.admin'), i18next.t('admin:common.moderator'), i18next.t('admin:common.user')];
     for (let i = 0; i < roleok.length; i++) {
         let formcheck = createHTMLelement('div', ["form-check"]);
         let checkbox = document.createElement('input');
@@ -122,7 +123,7 @@ export async function usersDisplayre(variables) {
     szuresDiv.appendChild(roleDiv);
 
     let exportGombDiv = createHTMLelement('div', ["mt-3", "border-top", "pt-3"]);
-    let exportGomb = gombGeneral("button", "Export to CSV", "file-text", "blue", null, ["w-100"]);
+    let exportGomb = gombGeneral("button", i18next.t('admin:users.export_csv'), "file-text", "blue", null, ["w-100"]);
     exportGomb.addEventListener("click", async function () {
         await exportUsers(getFilterValues());
     });
@@ -153,41 +154,41 @@ function newUserToModal() {
     let formGroup = createHTMLelement('div', ["form-group"]);
 
     let userDiv = document.createElement("div");
-    let userP = createHTMLelement('p', [], "Username");
-    let userInput = inputGeneral("text", "Username here...", null, "newUsernameInput", ["form-control"], false);
+    let userP = createHTMLelement('p', [], i18next.t('admin:users.username'));
+    let userInput = inputGeneral("text", i18next.t('admin:users.username_placeholder'), null, "newUsernameInput", ["form-control"], false);
 
     userDiv.appendChild(userP);
     userDiv.appendChild(userInput);
 
     let emailDiv = document.createElement("div");
-    let emailP = createHTMLelement('p', [], "E-mail address");
-    let emailInput = inputGeneral("text", "E-mail address here...", null, "newEmailInput", ["form-control"], false);
+    let emailP = createHTMLelement('p', [], i18next.t('admin:users.email'));
+    let emailInput = inputGeneral("text", i18next.t('admin:users.email_placeholder'), null, "newEmailInput", ["form-control"], false);
 
     emailDiv.appendChild(emailP);
     emailDiv.appendChild(emailInput);
 
     let passDiv = document.createElement("div");
-    let passP = createHTMLelement('p', [], "Password");
-    let passInput = inputGeneral("password", "Password here...", null, "newPasswordInput", ["form-control"], false);
+    let passP = createHTMLelement('p', [], i18next.t('admin:users.password'));
+    let passInput = inputGeneral("password", i18next.t('admin:users.password_placeholder'), null, "newPasswordInput", ["form-control"], false);
 
     passDiv.appendChild(passP);
     passDiv.appendChild(passInput);
 
     let roleDiv = document.createElement("div");
-    let roleP = createHTMLelement('p', [], "Roles:");
+    let roleP = createHTMLelement('p', [], i18next.t('admin:users.roles'));
     let select = document.createElement("select");
     select.classList.add("form-select");
     select.id = 'newRoleSelect';
     let opt1 = document.createElement("option");
     opt1.value = "user";
-    opt1.textContent = "User";
+    opt1.textContent = i18next.t('admin:common.user');
     opt1.selected = true;
     let opt2 = document.createElement("option");
     opt2.value = "MOD";
-    opt2.textContent = "Moderator";
+    opt2.textContent = i18next.t('admin:common.moderator');
     let opt3 = document.createElement("option");
     opt3.value = "ADMIN";
-    opt3.textContent = "Admin";
+    opt3.textContent = i18next.t('admin:common.admin');
     opt3.disabled = true;
 
     select.appendChild(opt1);
@@ -200,7 +201,7 @@ function newUserToModal() {
     let switchInput = inputGeneral("checkbox", null, null, "new2faInput", ["form-check-input"], false);
     switchInput.role = "switch";
 
-    let switchLabel = labelGeneral("new2faInput", "Two-factor authentication", ["form-check-label"]);
+    let switchLabel = labelGeneral("new2faInput", i18next.t('admin:users.two_factor'), ["form-check-label"]);
 
     switchDiv.appendChild(switchInput);
     switchDiv.appendChild(switchLabel);
@@ -259,15 +260,15 @@ async function editUserToModal(data, variables) {
     else {
         variables.objectURL = await getProfilePicture(pfproute);
         pfp.src = variables.objectURL;
-        deletePfpButton = gombGeneral("button", "Profilkép törlése", "trash-2", "red", null);
+        deletePfpButton = gombGeneral("button", i18next.t('admin:users.delete_profile_picture'), "trash-2", "red", null);
         deletePfpButton.addEventListener("click", function () {
             pfp.src = "../images/default.png";
             variables.deleteLast = true;
             variables.tempPfp = null;
         })
     }
-    pfp.alt = "Profile picture";
-    pfp.title = "Profile picture";
+    pfp.alt = i18next.t('admin:users.profile_picture');
+    pfp.title = i18next.t('admin:users.profile_picture');
     pfp.classList.add("img-fluid", "img-thumbnail", "rounded-circle", "h-75");
 
     let newPfpInput = inputGeneral("file", null, null, "newPfpInput", ["form-control", "d-none"], false);
@@ -283,7 +284,7 @@ async function editUserToModal(data, variables) {
     });
 
     let dropzoneText = document.createElement('p');
-    dropzoneText.innerText = "Kép feltöltéshez kattints ide, vagy húzz be egy képet!";
+    dropzoneText.innerText = i18next.t('admin:users.drop_image_text');
     dropzoneText.classList.add("text-center");
 
     dropzone.appendChild(pfp);
@@ -305,40 +306,40 @@ async function editUserToModal(data, variables) {
 
     /* INPUTOK */
     let idDiv = document.createElement("div");
-    let idP = createHTMLelement('p', [], "ID");
+    let idP = createHTMLelement('p', [], i18next.t('admin:users.btn_id'));
     let idInput = inputGeneral("number", null, user_id, "editIdInput", ["form-control"], true);
 
     idDiv.appendChild(idP);
     idDiv.appendChild(idInput);
 
     let userDiv = document.createElement("div");
-    let userP = createHTMLelement('p', [], "Username");
+    let userP = createHTMLelement('p', [], i18next.t('admin:users.username'));
     let userInput = inputGeneral("text", null, username, "editUsernameInput", ["form-control"], false);
 
     userDiv.appendChild(userP);
     userDiv.appendChild(userInput);
 
     let emailDiv = document.createElement("div");
-    let emailP = createHTMLelement('p', [], "E-mail address");
+    let emailP = createHTMLelement('p', [], i18next.t('admin:users.email'));
     let emailInput = inputGeneral("text", null, email, "editEmailInput", ["form-control"], false);
 
     emailDiv.appendChild(emailP);
     emailDiv.appendChild(emailInput);
 
     let roleDiv = document.createElement("div");
-    let roleP = createHTMLelement('p', [], "Roles:");
+    let roleP = createHTMLelement('p', [], i18next.t('admin:users.roles'));
     let select = document.createElement("select");
     select.classList.add("form-select");
     select.id = 'editRoleSelect';
     let opt1 = document.createElement("option");
     opt1.value = "user";
-    opt1.textContent = "User";
+    opt1.textContent = i18next.t('admin:common.user');
     let opt2 = document.createElement("option");
     opt2.value = "MOD";
-    opt2.textContent = "Moderator";
+    opt2.textContent = i18next.t('admin:common.moderator');
     let opt3 = document.createElement("option");
     opt3.value = "ADMIN";
-    opt3.textContent = "Admin";
+    opt3.textContent = i18next.t('admin:common.admin');
     opt3.disabled = true;
     switch (role) {
         case "MOD":
@@ -361,7 +362,7 @@ async function editUserToModal(data, variables) {
         switchInput.checked = true;
     }
 
-    let switchLabel = labelGeneral("edit2faInput", "Two-factor authentication", ["form-check-label"]);
+    let switchLabel = labelGeneral("edit2faInput", i18next.t('admin:users.two_factor'), ["form-check-label"]);
     switchDiv.appendChild(switchInput);
     switchDiv.appendChild(switchLabel);
 
@@ -405,8 +406,8 @@ async function viewUserToModal(data, variables) {
         variables.objectURL = await getProfilePicture(pfproute);
         pfp.src = variables.objectURL;
     }
-    pfp.alt = "Profile picture";
-    pfp.title = "Profile picture";
+    pfp.alt = i18next.t('admin:users.profile_picture');
+    pfp.title = i18next.t('admin:users.profile_picture');
     pfp.classList.add("img-fluid", "img-thumbnail", "rounded-circle", "h-75"
     );
 
@@ -422,41 +423,41 @@ async function viewUserToModal(data, variables) {
 
     /* INPUTOK */
     let idDiv = document.createElement("div");
-    let idP = createHTMLelement('p', [], "ID");
+    let idP = createHTMLelement('p', [], i18next.t('admin:users.btn_id'));
     let idInput = inputGeneral("number", null, user_id, "editIdInput", ["form-control"], true);
 
     idDiv.appendChild(idP);
     idDiv.appendChild(idInput);
 
     let userDiv = document.createElement("div");
-    let userP = createHTMLelement('p', [], "Username");
+    let userP = createHTMLelement('p', [], i18next.t('admin:users.username'));
     let userInput = inputGeneral("text", null, username, "editUsernameInput", ["form-control"], true);
 
     userDiv.appendChild(userP);
     userDiv.appendChild(userInput);
 
     let emailDiv = document.createElement("div");
-    let emailP = createHTMLelement('p', [], "E-mail address");
+    let emailP = createHTMLelement('p', [], i18next.t('admin:users.email'));
     let emailInput = inputGeneral("text", null, email, "editEmailInput", ["form-control"], true);
 
     emailDiv.appendChild(emailP);
     emailDiv.appendChild(emailInput);
 
     let roleDiv = document.createElement("div");
-    let roleP = createHTMLelement('p', [], "Roles:");
+    let roleP = createHTMLelement('p', [], i18next.t('admin:users.roles'));
     let select = document.createElement("select");
     select.classList.add("form-select");
     let opt1 = document.createElement("option");
     opt1.value = "1";
-    opt1.textContent = "User";
+    opt1.textContent = i18next.t('admin:common.user');
     opt1.disabled = true;
     let opt2 = document.createElement("option");
     opt2.value = "2";
-    opt2.textContent = "Moderator";
+    opt2.textContent = i18next.t('admin:common.moderator');
     opt2.disabled = true;
     let opt3 = document.createElement("option");
     opt3.value = "3";
-    opt3.textContent = "Admin";
+    opt3.textContent = i18next.t('admin:common.admin');
     opt3.disabled = true;
     switch (role) {
         case "ADMIN":
@@ -483,7 +484,7 @@ async function viewUserToModal(data, variables) {
         switchInput.checked = true;
     }
 
-    let switchLabel = labelGeneral("edit2faInput", "Two-factor authentication", ["form-check-label"]);
+    let switchLabel = labelGeneral("edit2faInput", i18next.t('admin:users.two_factor'), ["form-check-label"]);
 
     switchDiv.appendChild(switchInput);
     switchDiv.appendChild(switchLabel);
@@ -516,7 +517,7 @@ function tablazatGeneral(adatok, variables) {
     let tablazat = createHTMLelement('table', ["table", "table-striped", "table-hover"], null, 'usersTable');
     let thead = document.createElement('thead');
     let tr = document.createElement('tr');
-    let oszlopfok = ["Active", "ID", "Username", "E-mail", "Role", "Actions"];
+    let oszlopfok = [i18next.t('admin:users.table_active'), i18next.t('admin:users.table_id'), i18next.t('admin:users.table_username'), i18next.t('admin:users.table_email'), i18next.t('admin:users.table_role'), i18next.t('admin:users.table_actions')];
 
     for (let i = 0; i < oszlopfok.length; i++) {
         let th = createHTMLelement('th', [], oszlopfok[i]);
@@ -547,14 +548,14 @@ function tablazatGeneral(adatok, variables) {
         let modositoGombokDiv = createHTMLelement('div', ["d-flex", "justify-content-evenly"]);
         let editGomb, torloGomb;
         if (adatok[i].role != "ADMIN" && adatok[i].deleted_at == null) {
-            editGomb = gombGeneral("button", "Szerkesztés", "edit", "blue", null);
+            editGomb = gombGeneral("button", i18next.t('admin:users.btn_edit'), "edit", "blue", null);
             editGomb.addEventListener("click", async function () {
                 currentData = await getUser(adatok[i].user_id);
-                modalView("Felhasználó módosítása", "edit", await editUserToModal(currentData, variables), variables);
+                modalView(i18next.t('admin:users.modal_edit_title'), "edit", await editUserToModal(currentData, variables), variables);
                 variables.modal.show();
             })
 
-            torloGomb = gombGeneral("button", "Törlés", "trash-2", "red", null);
+            torloGomb = gombGeneral("button", i18next.t('admin:users.btn_delete'), "trash-2", "red", null);
             torloGomb.addEventListener("click", async function () {
                 alert(await userToInactive(adatok[i].user_id, adatok[i].role, adatok[i].deleted_at == null));
                 currentPage.page = 1;
@@ -564,10 +565,10 @@ function tablazatGeneral(adatok, variables) {
 
         }
         else {
-            editGomb = gombGeneral("button", "Megtekintés", "eye", "blue", null);
+            editGomb = gombGeneral("button", i18next.t('admin:users.btn_view'), "eye", "blue", null);
             editGomb.addEventListener("click", async function () {
                 currentData = await getUser(adatok[i].user_id);
-                modalView("Felhasználó megtekintése", "view", await viewUserToModal(currentData, variables), variables);
+                modalView(i18next.t('admin:users.modal_view_title'), "view", await viewUserToModal(currentData, variables), variables);
                 variables.modal.show();
             })
         }
@@ -603,10 +604,10 @@ function modalView(title, type, content, variables) {
         case "new":
             modalSize.classList.add("modal-dialog", "modal-md");
 
-            footertext.innerHTML = "Minden mezőbe kell valamit irni!";
+            footertext.innerHTML = i18next.t('admin:users.validation_required');
             footertext.classList.add("text-danger");
 
-            button = gombGeneral("button", "Létrehozás", "user-check", "blue", null);
+            button = gombGeneral("button", i18next.t('admin:users.btn_create'), "user-check", "blue", null);
             button.addEventListener('click', async function () {
                 let ures = false;
                 let inInput = {
@@ -634,10 +635,10 @@ function modalView(title, type, content, variables) {
         case "edit":
             modalSize.classList.add("modal-dialog", "modal-xl");
 
-            footertext.innerHTML = "Kilépés után a változtatásokat nem lehet visszavonni!";
+            footertext.innerHTML = i18next.t('admin:users.warning_after_exit');
             footertext.classList.add("text-danger");
 
-            button = gombGeneral("button", "Változtatások visszavonása", "refresh-ccw", "red", null);
+            button = gombGeneral("button", i18next.t('admin:users.btn_undo'), "refresh-ccw", "red", null);
             button.addEventListener("click", function () {
                 document.getElementById("editUsernameInput").value = currentData.username;
                 document.getElementById("editEmailInput").value = currentData.email;
@@ -646,7 +647,7 @@ function modalView(title, type, content, variables) {
             })
             footerButtons.appendChild(button);
 
-            button = gombGeneral("button", "Mentés", "save", "blue", null);
+            button = gombGeneral("button", i18next.t('admin:users.btn_save'), "save", "blue", null);
             button.addEventListener('click', async function () {
                 let valtozas = false;
 
@@ -689,7 +690,7 @@ function modalView(title, type, content, variables) {
         case "view":
             modalSize.classList.add("modal-dialog", "modal-xl");
 
-            button = gombGeneral("button", "Kilépés", null, "blue", null);
+            button = gombGeneral("button", i18next.t('admin:users.btn_exit'), null, "blue", null);
             button.addEventListener("click", function () {
                 variables.modal.hide();
             })

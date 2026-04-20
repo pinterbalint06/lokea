@@ -1,5 +1,6 @@
 import { createHTMLelement, inputGeneral, formatDate, gombGeneral, labelGeneral, lapozasGeneral } from "./utils/domUtils.js";
 import { getLogs, sortedLogs, exportLogs } from "./fetchs.js";
+import i18n from "./utils/i18next.js";
 
 export async function logsDisplayre() {
     currentPage.page = 1;
@@ -9,7 +10,7 @@ export async function logsDisplayre() {
     let col9div = createHTMLelement('div', ["col-9"]);
     let fejlec = createHTMLelement('div', ["d-flex", "justify-content-between"])
 
-    let cim = createHTMLelement('h2', ["h2"], "Logs");
+    let cim = createHTMLelement('h2', ["h2"], i18n.t('admin:logs.title'));
 
     fejlec.appendChild(cim);
     col9div.appendChild(fejlec);
@@ -22,7 +23,7 @@ export async function logsDisplayre() {
 
     let col3div = createHTMLelement('div', ["col-3"]);
     let kartya = createHTMLelement('div', ["card", "bg-light", "p-3"]);
-    let kiscim = createHTMLelement('h4', ["h4"], 'Sort');
+    let kiscim = createHTMLelement('h4', ["h4"], i18n.t('admin:common.sort'));
     let szuresDiv = szuresek();
 
     kartya.appendChild(kiscim);
@@ -44,7 +45,7 @@ function tablazatGeneral(adatok) {
 
     let thead = document.createElement('thead');
     let tr = document.createElement('tr');
-    let oszlopfok = ["User (victim)", "Activity", "Happened at"];
+    let oszlopfok = [i18n.t('admin:logs.user_victim'), i18n.t('admin:logs.activity-one'), i18n.t('admin:logs.happened_at')];
 
     for (let i = 0; i < oszlopfok.length; i++) {
         let th = createHTMLelement('th', [], oszlopfok[i]);
@@ -96,7 +97,7 @@ function szuresek() {
 
     let inputgroupdiv = createHTMLelement('div', ["input-group"]);
 
-    let keresoInput = inputGeneral("text", "Sort by name...", null, "keresoInput", ["form-control"], false);
+    let keresoInput = inputGeneral("text", i18n.t('admin:logs_sort.sort_by_name'), null, "keresoInput", ["form-control"], false);
     inputgroupdiv.appendChild(keresoInput);
     keresodiv.appendChild(inputgroupdiv);
     szuresDiv.appendChild(keresodiv);
@@ -104,7 +105,7 @@ function szuresek() {
     //activities
 
     let activityDiv = document.createElement('div');
-    let activityDivCim = createHTMLelement('h6', ["h6", "mt-3"], "Activities");
+    let activityDivCim = createHTMLelement('h6', ["h6", "mt-3"], i18n.t('admin:logs.activity-other'));
     let activities = ["Sign up", "Login", "User update", "Password update", "User delete", "Update profile picture", "Delete profile picture"];
     let activitiesName = ["Sign up", "Login", "User update", "Password update", "User delete", "Profile picture update", "Profile picture delete"];
     for (let i = 0; i < activities.length; i++) {
@@ -116,7 +117,7 @@ function szuresek() {
         checkbox.id = `activities${activities[i]}`;
         checkbox.name = "sort1";
         checkbox.value = activitiesName[i];
-        let label = labelGeneral(`activities${activities[i]}`, activities[i], ["form-check-label"]);
+        let label = labelGeneral(`activities${activities[i]}`, i18n.t(`common:common.${activities[i]}`), ["form-check-label"]);
         formcheck.appendChild(checkbox);
         formcheck.appendChild(label);
         activityDiv.appendChild(formcheck);
@@ -127,7 +128,7 @@ function szuresek() {
     //roles
 
     let roleDiv = document.createElement('div');
-    let roleDivCim = createHTMLelement('h6', ["h6", "mt-3"], "Role");
+    let roleDivCim = createHTMLelement('h6', ["h6", "mt-3"], i18n.t('admin:logs_sort.role'));
     let roles = ["Admin", "Moderator", "User"];
     let roleValues = ["Admin", "Mod", "User"];
     for (let i = 0; i < roles.length; i++) {
@@ -139,7 +140,7 @@ function szuresek() {
         checkbox.id = `role${roles[i]}`;
         checkbox.name = "sort2";
         checkbox.value = roleValues[i];
-        let label = labelGeneral(`role${roles[i]}`, roles[i], ["form-check-label"]);
+        let label = labelGeneral(`role${roles[i]}`, i18n.t(`admin:common.${roles[i].toLowerCase()}`), ["form-check-label"]);
         formcheck.appendChild(checkbox);
         formcheck.appendChild(label);
         roleDiv.appendChild(formcheck);
@@ -152,7 +153,7 @@ function szuresek() {
     let datesDiv = document.createElement('div');
     let datesHeader = createHTMLelement('div', ["d-flex", "justify-content-between", "align-items-center", "mt-3", "mb-2"]);
 
-    let datesDivCim = createHTMLelement('h6', ["h6", "m-0"], "Dates");
+    let datesDivCim = createHTMLelement('h6', ["h6", "m-0"], i18n.t('admin:logs_sort.dates'));
 
     let switchDiv = createHTMLelement('div', ["form-check", "form-switch"]);
     let dateSwitch = document.createElement('input');
@@ -163,14 +164,14 @@ function szuresek() {
     switchDiv.appendChild(dateSwitch);
     datesHeader.appendChild(datesDivCim);
     datesHeader.appendChild(switchDiv);
-    datesDiv.appendChild(datesHeader); 4
+    datesDiv.appendChild(datesHeader);
 
     let datePicker = document.createElement('div');
     datePicker.id = "datePickersWrapper";
     datePicker.style.opacity = "0.5";
 
-    datePicker.appendChild(createDatePicker("From:", "from"));
-    datePicker.appendChild(createDatePicker("To:", "to"));
+    datePicker.appendChild(createDatePicker(`${i18n.t("common:common.from")}:`, "from"));
+    datePicker.appendChild(createDatePicker(`${i18n.t("common:common.to")}:`, "to"));
     datesDiv.appendChild(datePicker);
 
     dateSwitch.addEventListener("change", function () {
@@ -183,7 +184,7 @@ function szuresek() {
 
     //reset gomb
 
-    let resetBtn = gombGeneral("button", "Reset", null, "red", null);
+    let resetBtn = gombGeneral("button", i18n.t('common:common.reset'), null, "red", null);
     resetBtn.addEventListener("click", async function () {
         document.getElementById("keresoInput").value = "";
         document.querySelectorAll('input[name="sort1"], input[name="sort2"]').forEach(cb => cb.checked = false);
@@ -210,7 +211,7 @@ function szuresek() {
 
     //szures gomb
 
-    let sortBtn = gombGeneral("button", "Sort", null, "green", null, ["text-center", "mt-2"]);
+    let sortBtn = gombGeneral("button", i18n.t('admin:logs_sort.sort'), null, "green", null, ["text-center", "mt-2"]);
     sortBtn.addEventListener("click", async function () {
         currentPage.page = 1;
         let data = await sortedLogs(getFilterValues());
@@ -218,7 +219,7 @@ function szuresek() {
     })
     szuresDiv.appendChild(sortBtn);
 
-    let exportBtn = gombGeneral("button", "Export Logs", "file-text", "blue", null, ["text-center", "mt-2"]);
+    let exportBtn = gombGeneral("button", i18n.t('admin:logs_sort.export_btn'), "file-text", "blue", null, ["text-center", "mt-2"]);
     exportBtn.addEventListener("click", async function () {
         await exportLogs(getFilterValues());
     });
@@ -256,7 +257,7 @@ function createDatePicker(labelStr, idPrefix) {
     label.innerText = labelStr;
     //megnezni
 
-    let dateInp = inputGeneral('date', null, new Date().toISOString().split('T')[0], `${idPrefix}Date`, ["form-control", "form-control-sm", "mb-2"], true);
+    let dateInp = inputGeneral('date', null, new Date().toISOString().split('T')[0], `${idPrefix}date`, ["form-control", "form-control-sm", "mb-2"], true);
 
     let slider = inputGeneral('range', null, idPrefix === "from" ? "32" : "96", null, ["form-range"], true);
     slider.min = "0";
@@ -306,4 +307,4 @@ function getFilterValues() {
     };
 }
 
-let currentPage = {page: 1};
+let currentPage = { page: 1 };

@@ -34,6 +34,16 @@ Chart.register(...registerables);
 
 //Endpoints - admin
 
+router.get('/getLanguage', (request, response) => {
+    try {
+        let language = request.session.userLanguage;
+        response.status(200).json({ language: request.session.userLanguage });
+    } catch (error) {
+        response.status(500).json({ error: error });
+    }
+
+});
+
 router.post("/signupFromAdmin",
     [
         body("username")

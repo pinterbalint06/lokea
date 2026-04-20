@@ -1,5 +1,6 @@
 import { getUserData, deleteProfile, deleteProfilePicture, uploadProfilePic, userSelfUpdate, updatePassword, updateDarkMode, getProfilePicture, updateAdminSettings } from "./fetchs.js";
 import { createHTMLelement, inputGeneral, gombGeneral, labelGeneral, makeSubtitle, createPreview } from "./utils/domUtils.js";
+import i18next from "./utils/i18next.js";
 
 export async function settingsDisplayre(adminSettings) {
     let hova = document.getElementById('content');
@@ -20,8 +21,8 @@ export async function settingsDisplayre(adminSettings) {
 
     let accordion = createHTMLelement('div', ['accordion'], null, 'settingsAccordion');
 
-    let personalSec = createSection('personal', 'Personal Settings', true);
-    let saveAllBtn = gombGeneral("button", "Save settings", null, "green", null, ['w-100', 'mt-4', 'py-3', 'fw-bold']);
+    let personalSec = createSection('personal', i18next.t('admin:settings.personal_settings'), true);
+    let saveAllBtn = gombGeneral("button", i18next.t('admin:settings.save_settings'), null, "green", null, ['w-100', 'mt-4', 'py-3', 'fw-bold']);
     saveAllBtn.addEventListener("click", async function () {
         try {
             await checkModification();
@@ -32,7 +33,7 @@ export async function settingsDisplayre(adminSettings) {
                     await deleteProfilePicture();
                 }
             }
-            alert("Beállítások mentve!");
+            alert(i18next.t('admin:settings.settings_saved'));
         } catch (error) {
             errordiv.innerHTML = `<p>${error.message}</p>`;
             errordiv.className = "alert alert-danger d-flex justify-content-between align-items-center";
@@ -43,7 +44,7 @@ export async function settingsDisplayre(adminSettings) {
         }
     });
 
-    let uiSec = createSection('ui', 'UI Settings');
+    let uiSec = createSection('ui', i18next.t('admin:settings.ui_settings'));
 
     let row = createHTMLelement('div', ['row']);
 
@@ -90,7 +91,7 @@ export async function settingsDisplayre(adminSettings) {
     pfpCol.appendChild(dropzone);
 
     if (data.filepath != null) {
-        let deletePfpButton = gombGeneral("button", "Delete profile picture", "trash-2", "red", null);
+        let deletePfpButton = gombGeneral("button", i18next.t('admin:settings.delete_profile_picture'), "trash-2", "red", null);
         deletePfpButton.addEventListener("click", () => {
             pfp.src = "../images/default.png";
             deleteLast = true;
@@ -101,29 +102,29 @@ export async function settingsDisplayre(adminSettings) {
     let dataCol = createHTMLelement('div', ["col-12", "col-md-8"]);
 
     let date = new Date(data.created_at);
-    dataCol.appendChild(makeSubtitle(`Registered: ${date.toLocaleString("hu-HU")}`));
-    dataCol.appendChild(makeSubtitle("Username"));
+    dataCol.appendChild(makeSubtitle(i18next.t('admin:settings.registered') + date.toLocaleString("hu-HU")));
+    dataCol.appendChild(makeSubtitle(i18next.t('admin:settings.username')));
     dataCol.appendChild(inputGeneral("text", "username", data.username, "usernameInput", ["form-control"], false));
-    dataCol.appendChild(makeSubtitle("E-mail address"));
+    dataCol.appendChild(makeSubtitle(i18next.t('admin:settings.email_address')));
     dataCol.appendChild(inputGeneral("text", "email", data.email, "emailInput", ["form-control"], false));
-    dataCol.appendChild(makeSubtitle("Security"));
+    dataCol.appendChild(makeSubtitle(i18next.t('admin:settings.security')));
     let twoFaDiv = createHTMLelement('div', ['form-check', 'form-switch', 'mb-3']);
     let twoFaInput = inputGeneral("checkbox", null, null, "2faInput", ["form-check-input"], false);
     twoFaInput.checked = data.is_2fa;
     let twoFaLabel = document.createElement('label');
     twoFaLabel.className = 'form-check-label';
-    twoFaLabel.innerText = "Two-factor authentication (2FA)";
+    twoFaLabel.innerText = i18next.t('admin:settings.two_factor_auth');
     twoFaDiv.appendChild(twoFaInput);
     twoFaDiv.appendChild(twoFaLabel);
     dataCol.appendChild(twoFaDiv);
 
     let buttonsDiv = createHTMLelement('div', ["d-flex", "gap-2", "my-3"]);
 
-    let changePassBtn = gombGeneral("button", "Change password", null, null, null, ["btn", "btn-purple", "rounded-pill"]);
+    let changePassBtn = gombGeneral("button", i18next.t('admin:settings.change_password'), null, null, null, ["btn", "btn-purple", "rounded-pill"]);
     changePassBtn.setAttribute('data-bs-toggle', 'collapse');
     changePassBtn.setAttribute('data-bs-target', '#passwordCollapse');
 
-    let deleteProfileBtn = gombGeneral("button", "Delete account", null, "red", null);
+    let deleteProfileBtn = gombGeneral("button", i18next.t('admin:settings.delete_account'), null, "red", null);
     deleteProfileBtn.addEventListener("click", async function () {
         if (await deleteProfile()) {
             window.location.href = "/main";
@@ -135,14 +136,14 @@ export async function settingsDisplayre(adminSettings) {
     let innerCard = createHTMLelement('div', ["d-flex", "flex-column", "border", "rounded", "p-3", "bg-light"]);
 
     let passGroup1 = createHTMLelement('div', ['mb-2']);
-    passGroup1.appendChild(labelGeneral('oldPassword', 'Old password:'));
+    passGroup1.appendChild(labelGeneral('oldPassword', i18next.t('admin:settings.old_password')));
     passGroup1.appendChild(inputGeneral('password', null, null, 'oldPassword', ["form-control"], false));
 
     let passGroup2 = createHTMLelement('div', ['mb-2']);
-    passGroup2.appendChild(labelGeneral('newPassword', 'New password:'));
+    passGroup2.appendChild(labelGeneral('newPassword', i18next.t('admin:settings.new_password')));
     passGroup2.appendChild(inputGeneral('password', null, null, 'newPassword', ["form-control"], false));
 
-    let savePassBtn = gombGeneral('button', "Save", null, "green", null, ["btn-sm"]);
+    let savePassBtn = gombGeneral('button', i18next.t('admin:settings.save'), null, "green", null, ["btn-sm"]);
     savePassBtn.onclick = jelszoValtoztat;
 
     innerCard.appendChild(passGroup1);
@@ -160,17 +161,17 @@ export async function settingsDisplayre(adminSettings) {
     personalSec.body.appendChild(row);
     personalSec.body.appendChild(saveAllBtn);
 
-    uiSec.body.appendChild(makeSubtitle("Select language:"));
+    uiSec.body.appendChild(makeSubtitle(i18next.t('admin:settings.select_language')));
     let langSelect = document.createElement('select');
     langSelect.id = 'languageSelect';
     langSelect.classList.add('form-select', 'mb-3');
-    let optHu = new Option("Magyar", "hu");
-    let optEn = new Option("English", "en");
+    let optHu = new Option(i18next.t('admin:settings.hungarian'), "hu");
+    let optEn = new Option(i18next.t('admin:settings.english'), "en");
     langSelect.add(optHu);
     langSelect.add(optEn);
     uiSec.body.appendChild(langSelect);
 
-    uiSec.body.appendChild(makeSubtitle("Dark mode"));
+    uiSec.body.appendChild(makeSubtitle(i18next.t('admin:settings.dark_mode')));
     let darkSwitchDiv = createHTMLelement('div', ['form-check', 'form-switch']);
     let darkInput = inputGeneral("checkbox", null, null, "darkMode", ["form-check-input"], false);
     darkInput.checked = (data.darkmode == 1);
@@ -179,46 +180,46 @@ export async function settingsDisplayre(adminSettings) {
         ejszakaimod();
     };
     let darkLabel = document.createElement('label');
-    darkLabel.innerText = "Enable dark mode";
+    darkLabel.innerText = i18next.t('admin:settings.enable_dark_mode');
     darkSwitchDiv.appendChild(darkInput);
     darkSwitchDiv.appendChild(darkLabel);
     uiSec.body.appendChild(darkSwitchDiv);
-    
-    let adminSec = createSection('admin', 'Admin Settings');
 
-    adminSec.body.appendChild(makeSubtitle("Darkmode for admin"));
+    let adminSec = createSection('admin', i18next.t('admin:settings.admin_settings'));
+
+    adminSec.body.appendChild(makeSubtitle(i18next.t('admin:settings.admin_darkmode')));
     let adminDarkDiv = createHTMLelement('div', ['form-check', 'form-switch', 'mb-3']);
     let adminDarkInput = inputGeneral("checkbox", null, null, "adminDarkMode", ["form-check-input"], false);
 
     adminDarkInput.checked = (adminSettings.darkmode == 1);
 
     let adminDarkLabel = document.createElement('label');
-    adminDarkLabel.innerText = "Enable dark mode for charts";
+    adminDarkLabel.innerText = i18next.t('admin:settings.enable_admin_dark_mode');
     adminDarkDiv.appendChild(adminDarkInput);
     adminDarkDiv.appendChild(adminDarkLabel);
     adminSec.body.appendChild(adminDarkDiv);
 
-    adminSec.body.appendChild(makeSubtitle("Default Statistic View"));
+    adminSec.body.appendChild(makeSubtitle(i18next.t('admin:settings.default_stats_view')));
     let chartSelect = document.createElement('select');
     chartSelect.id = 'adminChartSelect';
     chartSelect.classList.add('form-select', 'mb-3');
 
-    chartSelect.add(new Option("Napi aktivitás", "activity-day"));
-    chartSelect.add(new Option("Heti aktivitás", "activity-week"));
-    chartSelect.add(new Option("Heti regisztrációk", "registrations"));
-    chartSelect.add(new Option("Heti meccsek", "matches"));
+    chartSelect.add(new Option(i18next.t('admin:settings.daily_activity'), "activity-day"));
+    chartSelect.add(new Option(i18next.t('admin:settings.weekly_activity'), "activity-week"));
+    chartSelect.add(new Option(i18next.t('admin:settings.weekly_registrations'), "registrations"));
+    chartSelect.add(new Option(i18next.t('admin:settings.weekly_matches'), "matches"));
 
-    chartSelect.value = adminSettings.selectedChart || "Heti aktivitás";
+    chartSelect.value = adminSettings.selectedChart || i18next.t('admin:settings.weekly_activity');
     adminSec.body.appendChild(chartSelect);
 
-    let adminSaveBtn = gombGeneral("button", "Save admin settings", null, "green", null, ['w-100']);
+    let adminSaveBtn = gombGeneral("button", i18next.t('admin:settings.save_admin_settings'), null, "green", null, ['w-100']);
     adminSaveBtn.addEventListener("click", async function () {
         const isDark = adminDarkInput.checked ? 1 : 0;
         const chartVal = chartSelect.value === "" ? null : chartSelect.value;
 
         let response = await updateAdminSettings(isDark, chartVal);
         if (response && response.ok) {
-            alert("Admin beállítások mentve!");
+            alert(i18next.t('admin:settings.admin_settings_saved'));
             document.body.dataset.bsTheme = (adminDarkInput.checked) ? 'dark' : 'light';
             console.log(adminSettings)
             adminSettings.darkmode = adminDarkInput.checked ? 1 : 0;
@@ -316,7 +317,7 @@ async function saveModification(username, email, is_2fa) {
         }
     }
     else {
-        alert("Sikeres módositás!"); //atmeneti
+        alert(i18next.t('admin:settings.modification_success')); //atmeneti
     }
 }
 
@@ -327,13 +328,13 @@ async function jelszoValtoztat() {
     let newPass = document.getElementById('newPassword');
     let newAlert = null;
     if (oldPass.value == newPass.value) {
-        newAlert = createAlert('Az régi és az új jelszó nem lehet ugyanaz!', 'danger');
+        newAlert = createAlert(i18next.t('admin:settings.password_same_error'), 'danger');
     }
     else {
         if (validalvaJelszo(newPass.value)) {
             let response = await updatePassword(oldPass.value, newPass.value)
             if (response.ok) {
-                newAlert = createAlert('Sikeres jelszómódosítás!', 'success');
+                newAlert = createAlert(i18next.t('admin:settings.password_change_success'), 'success');
                 let bsCollapse = bootstrap.Collapse.getInstance(passwordCollapse) || new bootstrap.Collapse(passwordCollapse);
                 bsCollapse.hide();
                 oldPass.value = '';
@@ -353,7 +354,7 @@ async function jelszoValtoztat() {
             }
         }
         else {
-            newAlert = createAlert('Az új jelszónak tartalmaznia kell egy nagybetűt, egy számot, minimum 8 és maximum 50 karakter hosszú lehet!', 'danger');
+            newAlert = createAlert(i18next.t('admin:settings.password_requirements_error'), 'danger');
         }
     }
     if (newAlert) {

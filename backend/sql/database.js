@@ -45,7 +45,7 @@ async function newUser(username, email, password) {
 
 async function getUserByUsername(username) {
     try {
-        const query = 'SELECT users.username, users.password, users.user_id, users.role, users.deleted_at FROM users WHERE users.username = ?';
+        const query = 'SELECT users.username, users.password, users.user_id, users.role, users.deleted_at, users.language FROM users WHERE users.username = ?';
         const [result] = await pool.execute(query, [username]);
         return result;
     } catch (error) {
@@ -56,7 +56,7 @@ async function getUserByUsername(username) {
 
 async function getUserByEmail(email) {
     try {
-        const query = 'SELECT users.username, users.password, users.user_id, users.role, users.deleted_at FROM users WHERE users.email = ?';
+        const query = 'SELECT users.username, users.password, users.user_id, users.role, users.deleted_at, users.language FROM users WHERE users.email = ?';
         const [result] = await pool.execute(query, [email]);
         return result;
     } catch (error) {
