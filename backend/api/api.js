@@ -46,7 +46,7 @@ router.post("/signup",
             .isLength({ min: 5, max: 254 }).withMessage("Email max 254 karakter"),
 
         body("password")
-            .isLength({ min: 8, max: 60 }).withMessage("Jelszó hossza 8-50")
+            .isLength({ min: 8, max: 60 }).withMessage("Jelszó hossza 8-60 karakter")
             .matches(/\d/).withMessage("Kell benne szám")
             .matches(/[A-Z]/).withMessage("Kell benne nagybetű")
     ],
@@ -194,7 +194,7 @@ router.put('/updateUser', auth.checkAuth,
         body("email")
             .optional({ nullable: true })
             .isEmail().withMessage("Hibás email formátum")
-            .isLength({ min: 5, max: 254 }).withMessage("Email max 250 karakter!")
+            .isLength({ min: 5, max: 254 }).withMessage("Email max 254 karakter!")
     ], async (request, response) => {
         try {
             const errors = validationResult(request);
@@ -218,9 +218,9 @@ router.put('/updateUser', auth.checkAuth,
 router.put("/updatePassword", auth.checkAuth,
     [
         body("oldPass")
-            .isLength({ min: 8, max: 60 }).withMessage("A régi jelszó hossza nem 8-50 karakter!"),
+            .isLength({ min: 8, max: 60 }).withMessage("A régi jelszó hossza nem 8-60 karakter!"),
         body("newPass")
-            .isLength({ min: 8, max: 60 }).withMessage("Az új jelszó hossza nem 8-50 karakter!")
+            .isLength({ min: 8, max: 60 }).withMessage("Az új jelszó hossza nem 8-60 karakter!")
             .matches(/\d/).withMessage("A jelszóba kell minimum 1 szám!")
             .matches(/[A-Z]/).withMessage("A jelszóba kell minimum 1 nagybetű!")
     ],

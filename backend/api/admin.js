@@ -36,9 +36,9 @@ router.post("/signupFromAdmin", auth.checkAuth, auth.checkRole("ADMIN"),
             .isLength({ min: 1, max: 20 }).withMessage("Felhasználónév hossza nem megfelelő!"),
         body("email")
             .isEmail().withMessage("Hibás email formátum")
-            .isLength({ min: 5, max: 250 }).withMessage("Email max 250 karakter"),
+            .isLength({ min: 5, max: 254 }).withMessage("Email max 254 karakter"),
         body("password")
-            .isLength({ min: 8, max: 50 }).withMessage("Jelszó hossza 8-50")
+            .isLength({ min: 8, max: 60 }).withMessage("Jelszó hossza 8-60 karakter")
             .matches(/\d/).withMessage("Kell benne szám")
             .matches(/[A-Z]/).withMessage("Kell benne nagybetű"),
         body("is_2fa")
@@ -113,7 +113,7 @@ router.post('/updateUser', auth.checkAuth, auth.checkRole("ADMIN"),
             .isLength({ min: 1, max: 20 }).withMessage("Felhasználónév hossza nem megfelelő!"),
         body("email")
             .isEmail().withMessage("Hibás email formátum")
-            .isLength({ min: 5, max: 250 }).withMessage("Email max 250 karakter!"),
+            .isLength({ min: 5, max: 254 }).withMessage("Email max 254 karakter!"),
         body("deleted")
             .custom(value => value === true).withMessage("Inaktiv felhasználót nem frissithetsz!")
     ],
