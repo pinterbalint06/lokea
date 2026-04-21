@@ -11,17 +11,6 @@ let equirectangularViewer;
 // The engine
 let mapViewerEngine;
 
-const pictureImage = {
-    "url": "/images/equirectangular/Cathedral.webp",
-    width: 1920,
-    height: 960
-};
-
-const mapImage = {
-    "url": "/images/worldmap.webp",
-    "width": 3840,
-    "height": 1920
-};
 
 var gameMaps = [];
 var gameMapsIndex = -1;
@@ -81,12 +70,32 @@ function markerPosition() {
     return mapViewerEngine.getMarkerPosition(0);
 }
 
-function doesmarkerExist() {
-    return mapViewerEngine.doesMarkerExist(0);
+function doesmarkerExist(id) {
+    return mapViewerEngine.doesMarkerExist(id);
+}
+
+function doesLineExist() {
+    return mapViewerEngine.doesLineExist(0);
 }
 
 function removeMarker() {
     mapViewerEngine.removeMarker(0);
+}
+
+function removeLine() {
+    mapViewerEngine.removeLine(0);
+}
+
+function placeMarkerByUV(id, u, v, width, height, state) {
+    mapViewerEngine.placeMarkerByUV(id, u, v, width, height, state);
+}
+
+function connectMarker(id1, id2, lineId) {
+    mapViewerEngine.connectMarkers(id1, id2, lineId);
+}
+
+function removeEverything() {
+    mapViewerEngine.clearMarkersAndLines();
 }
 
 function setAutoRotate() {
@@ -123,6 +132,7 @@ function nextRound() {
 async function startGame() {
     try {
         const gameData = await fetchGameData('http://127.0.0.1:3000/api/game/get_game_info');
+
         const mapsData = await fetchGameData('http://127.0.0.1:3000/api/game/get_all_maps');
         console.log(gameData);
         console.log(mapsData);
@@ -138,18 +148,16 @@ async function startGame() {
 
         for (let i = 0; i < roundCount; i++) {
             console.log(`Starting round ${i + 1} of ${roundCount}`);
-            if (doesmarkerExist()) {
-                removeMarker();
-            }
             document.getElementById(mapCanvasId).style.maxWidth = "";
             document.getElementById(mapCanvasId).style.width = "";
             await createPoint();
             startRoundTimer(roundTime);
             await waitForGuess();
             await waitForNext();
+            removeEverything();
         }
-        
         console.log("Game over");
+        await finishGame();
     } catch (error) {
         console.error("Error starting game:", error);
     }
@@ -188,9 +196,7 @@ function nextMap() {
         .catch(function (e) {
             console.error("Failed to load game map:", e);
         });
-    if (doesmarkerExist()) {
-        removeMarker();
-    }
+    removeEverything();
 }
 
 let timerInterval = null;
@@ -215,7 +221,7 @@ function stopRoundTimer() {
 async function sendGuess() {
     stopRoundTimer();
     let sendData;
-    if (!doesmarkerExist()) {
+    if (!doesmarkerExist(0)) {
         sendData = { u: -1, v: -1 };
     }
     else {
@@ -223,28 +229,24 @@ async function sendGuess() {
     }
     sendData.timeLeft = timeLeft;
     sendData.map_i = gameMapsIndex;
-    try {
-        const response = await fetch('http://127.0.0.1:3000/api/game/session_guess', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json'
-            },
-            body: JSON.stringify(sendData)
-        });
-        const result = await response.json();
-        console.log(result);
-    } catch (error) {
-        console.error("Error sending guess:", error);
-    }
-    document.getElementById(mapCanvasId).style.maxWidth = "none";
-    document.getElementById(mapCanvasId).style.width = "100%";
-
+    console.log("Sending guess:", sendData);
+    const response = await postGameScore('http://127.0.0.1:3000/api/game/session_guess', sendData);
+    console.log("Guess response:", response);
+    showAnswer(response);
     if (resolveGuess) {
         resolveGuess();
         resolveGuess = null;
     }
 }
 
+function showAnswer(response) {
+    document.getElementById(mapCanvasId).style.maxWidth = "none";
+    document.getElementById(mapCanvasId).style.width = "100%";
+    placeMarkerByUV(1, response.pointu, response.pointv, 24.0, 32.0, "ready");
+    if (doesmarkerExist(0)) {
+        connectMarker(0, 1, 0);
+    }
+}
 
 async function fetchGameData(url) {
     let re;
@@ -260,6 +262,39 @@ async function fetchGameData(url) {
     return re;
 }
 
+async function postGameScore(url, data) {
+    let res = null;
+    try {
+        const response = await fetch(url, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify(data)
+        });
+        const result = await response.json();
+        res = result;
+    } catch (error) {
+        console.error("Error sending guess:", error);
+    }
+    return res;
+}
+
+async function finishGame() {
+    try {
+        const response = await fetch('/api/finish_game_session', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            }
+        });
+        const result = await response.json();
+        console.log("Finish game response:", result);
+    } catch (error) {
+        console.error("Error finishing game:", error);
+    }
+}
+
 window.mapFullScreen = mapFullScreen;
 window.markerPosition = markerPosition;
 window.pictureFullScreen = pictureFullScreen;
@@ -268,3 +303,4 @@ window.startGame = startGame;
 window.nextMap = nextMap;
 window.nextRound = nextRound;
 window.sendGuess = sendGuess;
+window.finishGame = finishGame;
