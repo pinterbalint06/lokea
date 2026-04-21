@@ -1,5 +1,5 @@
 const { createTestApp } = require("#mapcreatortest/helpers/setup-test.js");
-const { testInvalidIDs, testRequiresAuth, expectSuccessfulTransaction, expectRollback, expectErrorResponse, randomId, buildRequest, suppressConsoleErrors } = require("#mapcreatortest/helpers/helpers.js");
+const { testInvalidIDs, testRequiresAuth, expectSuccessfulTransaction, expectRollback, expectErrorResponse, randomId, buildRequest, suppressConsoleErrors } = require("#testhelpers/helpers.js");
 const { invalidTypeNumbers, negativeNumbers, tooBigDegrees, } = require("#mapcreatortest/helpers/test-data.js");
 
 const database = require("#sql/database.js");
