@@ -41,6 +41,7 @@ export class CommentManager {
         this.elements.deleteCommentBtn = document.getElementById("deleteCommentBtn");
         this.elements.commentSectionPlaceholder = document.getElementById("commentSectionPlaceholder");
         this.elements.sendCommentBtn = document.getElementById("sendCommentBtn");
+        this.elements.cancelCommentEditBtn = document.getElementById("cancelCommentEditBtn");
 
         this.elements.holdToDeleteCommentBtn = new HoldToUnlockButton(this.elements.deleteCommentBtn, 1500);
     }
@@ -75,6 +76,15 @@ export class CommentManager {
 
         this.elements.editCommentBtn.addEventListener("click", () => this.#handleEditComment());
 
+        this.elements.cancelCommentEditBtn.addEventListener("click", () => this.#handleCancelCommentEdit());
+
+        this.elements.commentText.addEventListener("keyup", (event) => {
+            if (event.key == "Escape") {
+                event.preventDefault();
+                this.#handleCancelCommentEdit();
+            }
+        });
+
         this.elements.holdToDeleteCommentBtn.addEventListener("confirm", () => {
             this.#handleDeleteComment()
         });
@@ -108,28 +118,42 @@ export class CommentManager {
         this.elements.commentSectionPlaceholder.classList.remove("d-none");
         this.elements.userCommentSection.classList.add("d-none");
         this.elements.commentForm.classList.add("d-none");
-        this.elements.commentForm.removeAttribute("data-edit-mode");
+        this.#setCommentFormMode(false);
     }
 
     #showNewCommentForm() {
         this.elements.commentSectionPlaceholder.classList.add("d-none");
         this.elements.userCommentSection.classList.add("d-none");
         this.elements.commentForm.classList.remove("d-none");
-        this.elements.commentForm.removeAttribute("data-edit-mode");
+        this.#setCommentFormMode(false);
     }
 
     #showEditCommentForm() {
         this.elements.commentSectionPlaceholder.classList.add("d-none");
         this.elements.userCommentSection.classList.add("d-none");
         this.elements.commentForm.classList.remove("d-none");
-        this.elements.commentForm.setAttribute("data-edit-mode", "true");
+        this.elements.commentText.focus();
+        this.elements.commentText.select();
+        this.#setCommentFormMode(true);
     }
 
     #showUserCommentSection() {
         this.elements.commentSectionPlaceholder.classList.add("d-none");
         this.elements.userCommentSection.classList.remove("d-none");
         this.elements.commentForm.classList.add("d-none");
-        this.elements.commentForm.removeAttribute("data-edit-mode");
+        this.#setCommentFormMode(false);
+    }
+
+    #setCommentFormMode(isEditMode) {
+        if (isEditMode) {
+            this.elements.commentForm.setAttribute("data-edit-mode", "true");
+            this.elements.sendCommentBtn.innerText = "Módosítás mentése";
+            this.elements.cancelCommentEditBtn.classList.remove("d-none");
+        } else {
+            this.elements.commentForm.removeAttribute("data-edit-mode");
+            this.elements.sendCommentBtn.innerText = "Hozzászólás küldése";
+            this.elements.cancelCommentEditBtn.classList.add("d-none");
+        }
     }
 
     #renderUserComment(comment) {
@@ -156,6 +180,22 @@ export class CommentManager {
         this.#showEditCommentForm();
 
         this.elements.commentForm.scrollIntoView({ behavior: "smooth" });
+    }
+
+    #handleCancelCommentEdit() {
+        const isEditMode = this.elements.commentForm.getAttribute("data-edit-mode") == "true";
+
+        if (isEditMode) {
+            if (!this.isUpdating) {
+                this.elements.commentForm.reset();
+                this.#showUserCommentSection();
+            } else {
+                this.bus.emit(EVENTS.TOAST_SHOW, {
+                    msg: "Már folyamatban van a komment mentése, kérlek várj!",
+                    type: "danger"
+                });
+            }
+        }
     }
 
     async #handleDeleteComment() {
@@ -333,6 +373,7 @@ export class CommentManager {
         if (!this.isUpdating) {
             this.isUpdating = true;
             this.elements.sendCommentBtn.disabled = true;
+            this.elements.cancelCommentEditBtn.disabled = true;
             const formData = new FormData(this.elements.commentForm);
             const commentText = formData.get("comment");
             const rating = formData.get("rating");
@@ -404,6 +445,7 @@ export class CommentManager {
             }
             this.isUpdating = false;
             this.elements.sendCommentBtn.disabled = false;
+            this.elements.cancelCommentEditBtn.disabled = false;
         } else {
             this.bus.emit(EVENTS.TOAST_SHOW, {
                 msg: "Már folyamatban van a komment mentése, kérlek várj!",

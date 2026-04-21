@@ -1,5 +1,5 @@
-const AppError = require("#utils/AppError.js");
-const { deleteFile } = require("#utils/fileUtils.js");
+const AppError = require("#utils/app-error.js");
+const { deleteFile } = require("#utils/file-utils.js");
 
 const validateRequest = (schema) => async (request, response, next) => {
     try {

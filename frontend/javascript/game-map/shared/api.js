@@ -57,7 +57,7 @@ export async function fetchGameMapComments(gameMapId, page = 1, signal = null) {
 }
 
 export async function postGameMapComment(gameMapId, formData, abortSignal = null) {
-    const response = await fetch(`/api/game-maps/${gameMapId}/comments`, {
+    const response = await fetch(`/api/game-maps/${gameMapId}/my-comment`, {
         method: "POST",
         body: formData,
         signal: abortSignal

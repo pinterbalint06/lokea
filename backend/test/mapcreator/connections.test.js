@@ -5,7 +5,7 @@ const { invalidTypeNumbers, negativeNumbers, tooBigDegrees, } = require("#mapcre
 const database = require("#sql/database.js");
 const { mockConnection } = database;
 
-const ERRORS = require("#utils/errorMessages.js");
+const ERRORS = require("#utils/error-messages.js");
 
 
 const requestWithSupertest = createTestApp();

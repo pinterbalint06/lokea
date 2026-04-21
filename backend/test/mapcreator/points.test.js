@@ -11,15 +11,15 @@ const {
     deleteImageAndLowResByMainPath,
     mockImageMetadata,
     mockImageProcessed
-} = require("#utils/imageProcessor.js");
+} = require("#utils/image-processor.js");
 
 const {
     deleteFile
-} = require("#utils/fileUtils.js");
+} = require("#utils/file-utils.js");
 
 const fs = require("fs/promises");
 const path = require("path");
-const ERRORS = require("#utils/errorMessages.js");
+const ERRORS = require("#utils/error-messages.js");
 
 
 const requestWithSupertest = createTestApp();

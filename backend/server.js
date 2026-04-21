@@ -6,8 +6,8 @@ const cors = require('cors');
 const database = require("./sql/database.js");
 const auth = require('./auth.js')
 const { idSchema } = require('./utils/schemas.js');
-const ERRORS = require('./utils/errorMessages.js');
-const AppError = require('#utils/AppError.js');
+const ERRORS = require('./utils/error-messages.js');
+const AppError = require('#utils/app-error.js');
 
 //!Beállítások
 const app = express();

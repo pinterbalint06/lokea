@@ -2,7 +2,7 @@ const { invalidIds, invalidIdsWithNulls } = require("#mapcreatortest/helpers/tes
 const { checkAuth } = require("#root/auth.js");
 
 const database = require("#sql/database.js");
-const ERRORS = require("#utils/errorMessages.js");
+const ERRORS = require("#utils/error-messages.js");
 const { mockConnection } = database;
 
 async function testInvalidIDs(requestCallback, expectedErrorMessage, withNulls = true) {

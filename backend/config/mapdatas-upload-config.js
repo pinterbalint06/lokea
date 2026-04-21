@@ -1,9 +1,15 @@
 const multer = require("multer");
 const fs = require("fs/promises");
 const crypto = require("crypto");
-const { TEMP_DIR, MAX_FILE_SIZE } = require("#config/mapStorage.js");
-const ERRORS = require("#utils/errorMessages.js");
-const AppError = require("#utils/AppError.js");
+const path = require("path");
+const ERRORS = require("#utils/error-messages.js");
+const AppError = require("#utils/app-error.js");
+
+// Storage configuration
+const TEMP_DIR = path.join(__dirname, "..", "temp");
+const UPLOAD_ROOT = path.join(__dirname, "..", "uploads");
+const UPLOAD_ROOT_MAP_DATA = path.join(__dirname, "..", "uploads", "mapdatas");
+const MAX_FILE_SIZE = 10 * 1024 * 1024; // 10 MB
 
 const ALLOWED_IMAGE_TYPES = {
     "image/jpeg": ".jpg",
@@ -37,10 +43,33 @@ const fileFilter = (request, file, callback) => {
     }
 };
 
+function isInsideRoot(targetPath) {
+    let isSafe = false;
+
+    if (typeof targetPath == "string" && targetPath.trim() !== "") {
+        const absoluteRoot = path.resolve(UPLOAD_ROOT_MAP_DATA);
+        const absoluteTarget = path.resolve(targetPath);
+
+        const isNotRoot = absoluteTarget != absoluteRoot;
+        const isInside = absoluteTarget.startsWith(absoluteRoot + path.sep);
+
+        isSafe = isNotRoot && isInside;
+    }
+
+    return isSafe;
+}
+
 const upload = multer({
     storage,
     limits: { fileSize: MAX_FILE_SIZE },
     fileFilter
 });
 
-module.exports = upload;
+module.exports = {
+    upload,
+    TEMP_DIR,
+    UPLOAD_ROOT,
+    UPLOAD_ROOT_MAP_DATA,
+    MAX_FILE_SIZE,
+    isInsideRoot
+};

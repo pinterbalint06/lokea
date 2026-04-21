@@ -3,7 +3,7 @@ const supertest = require("supertest");
 const mapCreationEndpoints = require("#mapcreator/mapcreator.js");
 const fs = require("fs/promises");
 const path = require("path");
-const { TEMP_DIR } = require("#config/mapStorage.js");
+const { TEMP_DIR } = require("#config/mapdatas-upload-config.js");
 
 function createTestApp() {
     const app = express();

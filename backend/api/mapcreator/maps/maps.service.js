@@ -1,12 +1,12 @@
 const database = require("#sql/database.js");
-const AppError = require("#utils/AppError.js");
-const ERRORS = require("#utils/errorMessages.js");
+const AppError = require("#utils/app-error.js");
+const ERRORS = require("#utils/error-messages.js");
 const fs = require("fs/promises");
 const path = require("path");
 const crypto = require("crypto");
-const { UPLOAD_ROOT_MAP_DATA, isInsideRoot } = require("#config/mapStorage.js");
-const { processImageMetadata, createWebpAndLowRes } = require("#utils/imageProcessor.js");
-const { deleteFile } = require("#utils/fileUtils.js");
+const { UPLOAD_ROOT_MAP_DATA, isInsideRoot } = require("#config/mapdatas-upload-config.js");
+const { processImageMetadata, createWebpAndLowRes } = require("#utils/image-processor.js");
+const { deleteFile } = require("#utils/file-utils.js");
 const { assertUserOwnsGameMap, assertUserOwnsMap, cleanupAfterError } = require("#mapcreator/shared/utils/mapcreator.utils.js");
 
 async function fetchMaps(userId, gameMapID) {

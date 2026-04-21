@@ -3,108 +3,39 @@ const router = express.Router();
 const multer = require("multer");
 const { validateRequest } = require("#utils/validation.js");
 const { checkAuth } = require("#root/auth.js");
-const AppError = require("#utils/AppError.js");
-const schemas = require("#gamemaps/gamemaps.schemas.js");
-const controller = require("#gamemaps/gamemaps.controller.js");
-const { isAllowedToGetMapImage, isAllowedToAccessPoint } = require("#gamemaps/gamemaps.middleware.js");
-const ERRORS = require("#utils/errorMessages.js");
-const upload = require("#mapcreator/shared/middlewares/uploadConfig.js"); // TODO: egyenlore a mapcreator uploadja van hasznalva van mert jo ide is lehet azt ki kene szervezni
-const { deleteFile } = require("#utils/fileUtils.js");
+const AppError = require("#utils/app-error.js");
+const ERRORS = require("#utils/error-messages.js");
+const { deleteFile } = require("#utils/file-utils.js");
+const gamemapRoutes = require("#gamemaps/gamemap/gamemap.routes.js");
+const imagesRoutes = require("#gamemaps/images/images.routes.js");
+const connectionsRoutes = require("#gamemaps/connections/connections.routes.js");
+const commentsRoutes = require("#gamemaps/comments/comments.routes.js");
+const coverImageRoutes = require("#gamemaps/cover-image/cover-image.routes.js");
+const schemas = require("#gamemaps/shared/schemas/gamemaps.schemas.js");
 
 router.use(checkAuth);
 
-//!Endpoints:
-//?GET /api/game-maps/points/:pointID/image
-router.get(
-    "/points/:pointID/image",
-    validateRequest(schemas.getPointImageSchema),
-    isAllowedToAccessPoint,
-    controller.getPointImage
+router.use("/", imagesRoutes); 
+
+router.use("/", connectionsRoutes);
+
+router.use(
+    "/:gameMapID/cover-image",
+    validateRequest(schemas.gameMapIDParamsOnlySchema),
+    coverImageRoutes
 );
 
-//?GET /api/game-maps/maps/:mapID/image
-router.get(
-    "/maps/:mapID/image",
-    validateRequest(schemas.getMapImageSchema),
-    isAllowedToGetMapImage,
-    controller.getMapImage);
-
-//?GET /api/game-maps/points/:pointID/connections
-router.get(
-    "/points/:pointID/connections",
-    validateRequest(schemas.getPointConnectionsSchema),
-    isAllowedToAccessPoint,
-    controller.getPointConnections);
-
-//?GET /api/game-maps/:gameMapID
-router.get(
+router.use(
     "/:gameMapID",
-    validateRequest(schemas.getGameMapDetailsSchema),
-    controller.getGameMapDetails);
+    validateRequest(schemas.gameMapIDParamsOnlySchema),
+    commentsRoutes
+);
 
-//?GET /api/game-maps/:gameMapID/cover-image
-router.get(
-    "/:gameMapID/cover-image",
-    validateRequest(schemas.getGameMapCoverImageSchema),
-    controller.getGameMapCoverImage);
-
-//?PUT /api/game-maps/:gameMapID/cover-image
-router.put(
-    "/:gameMapID/cover-image",
-    upload.single("coverImage"),
-    validateRequest(schemas.putGameMapCoverImageSchema),
-    controller.updateGameMapCoverImage);
-
-//?DELETE /api/game-maps/:gameMapID/cover-image
-router.delete(
-    "/:gameMapID/cover-image",
-    validateRequest(schemas.deleteGameMapCoverImageSchema),
-    controller.deleteGameMapCoverImage);
-
-//?PUT /api/game-maps/:gameMapID
-router.put(
+router.use(
     "/:gameMapID",
-    upload.none(),
-    validateRequest(schemas.updateGameMapSchema),
-    controller.updateGameMap);
-
-//?DELETE /api/game-maps/:gameMapID
-router.delete(
-    "/:gameMapID",
-    validateRequest(schemas.deleteGameMapSchema),
-    controller.deleteGameMap);
-
-//?GET /api/game-maps/:gameMapID/comments
-router.get(
-    "/:gameMapID/comments",
-    validateRequest(schemas.getGameMapCommentsSchema),
-    controller.getGameMapComments);
-
-//?POST /api/game-maps/:gameMapID/comments
-router.post(
-    "/:gameMapID/comments",
-    upload.none(),
-    validateRequest(schemas.postGameMapCommentsSchema),
-    controller.postGameMapComments);
-
-//?GET /api/game-maps/:gameMapID/my-comment
-router.get(
-    "/:gameMapID/my-comment",
-    validateRequest(schemas.getUserCommentSchema),
-    controller.getUserComment);
-
-//?PUT /api/game-maps/:gameMapID/my-comment
-router.put(
-    "/:gameMapID/my-comment",
-    upload.none(),
-    validateRequest(schemas.putUserCommentSchema),
-    controller.updateUserComment);
-
-//?DELETE /api/game-maps/:gameMapID/my-comment
-router.delete(
-    "/:gameMapID/my-comment",
-    validateRequest(schemas.deleteUserCommentSchema),
-    controller.deleteUserComment);
+    validateRequest(schemas.gameMapIDParamsOnlySchema),
+    gamemapRoutes
+);
 
 router.use(async (error, request, response, next) => {
     let statusCode = 500;
