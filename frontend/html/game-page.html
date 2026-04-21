@@ -4,41 +4,94 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="../bootstrap/css/bootstrap.min.css" />
+    <script src="../bootstrap/js/popper.min.js"></script>
+    <script src="../bootstrap/js/bootstrap.min.js"></script>
+    <link rel="stylesheet" href="../css/game-choosing.css">
     <link rel="stylesheet" href="../css/game-page.css">
     <script type="module" src="../javascript/game/game_page.js"></script>
-    <title>Játék</title> <!--A cím megváltoztatása a játék nevére -->
+    <title>Lokea</title>
 </head>
 
 <body>
-    <div class="">
-        <div class="">
-            <div class="">
-                <div>
-                    <div class="">
-                        <button onclick="pictureFullScreen();">Teljes képernyő</button>
-                        <button onclick="clearImage();">Clear</button>
-                        <button onclick="startGame();">Játék indítása</button>
-                    </div>
-                    <div class="">
-                        <label for="autoRotate">Automatikus forgatás:</label>
-                        <input type="checkbox" name="autoRotate" id="autoRotate">
-                    </div>
-                    <div class="">
-                        <button onclick="mapFullScreen();">Teljes képernyő</button>
-                        <button onclick="sendGuess();">Térképjelölő helye</button>
-                        <button id="nextMap">Következő</button>
-                        <p id="timer"></p>
-                        <button onclick="nextRound()">Következő kör</button>
+    <nav class="navbar navbar-expand-lg navbar-dark glass">
+        <div class="container-fluid">
+            <a class="navbar-brand" href="#">
+                <img src="../images/lokea.png" alt="Lokea logo" class="navPic">
+            </a>
+            <div class="dropdown">
+                <a href="#" class="d-block link-light text-decoration-none dropdown-toggle">
+                    <img src="../images/default.png" alt="profPic" class="rounded-circle border border-2 navPic">
+                </a>
+                <ul class="dropdown-menu dropdown-menu-end text-small">
+                    <li><a class="dropdown-item" href="#">Profile</a></li>
+                    <li><hr class="dropdown-divider"></li>
+                    <li><a class="dropdown-item text-danger" href="#">Sign out</a></li>
+                </ul>
+            </div>
+        </div>
+    </nav>
+
+    <div id="gameContainer">
+        <!-- Full-screen countdown (above everything) -->
+        <div id="countdownOverlay" class="countdown-overlay">
+            <span id="countdownNumber"></span>
+        </div>
+
+        <div class="d-flex" id="gameViewport">
+            <div id="pictureWrapper">
+                <canvas id="pictureCanvas"></canvas>
+
+                <div id="mapWrapper">
+                    <canvas id="mapCanvas"></canvas>
+                    <div id="mapControls">
+                        <button id="nextMap" class="map-btn" title="Következő térkép">
+                            <svg viewBox="0 0 24 24"><polygon points="5 3 19 12 5 21 5 3"/></svg>
+                        </button>
+                        <button class="map-btn" onclick="mapFullScreen()" title="Teljes képernyő">
+                            <svg viewBox="0 0 24 24"><polyline points="15 3 21 3 21 9"/><polyline points="9 21 3 21 3 15"/><line x1="21" y1="3" x2="14" y2="10"/><line x1="3" y1="21" x2="10" y2="14"/></svg>
+                        </button>
                     </div>
                 </div>
-            </div>
-            <div class="" id="pictureWrapper">
-                <div id="countdownOverlay" class="countdown-overlay">
-                    <span id="countdownNumber"></span>
+
+                <div id="sidebar">
+                    <button class="icon-btn" onclick="pictureFullScreen()" title="Teljes képernyő">
+                        <svg viewBox="0 0 24 24"><polyline points="15 3 21 3 21 9"/><polyline points="9 21 3 21 3 15"/><line x1="21" y1="3" x2="14" y2="10"/><line x1="3" y1="21" x2="10" y2="14"/></svg>
+                    </button>
+                    <label class="icon-btn" id="autoRotateBtn" title="Automatikus forgatás">
+                        <input type="checkbox" id="autoRotate" hidden>
+                        <svg viewBox="0 0 24 24"><polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 1 0 .49-5.36L1 10"/></svg>
+                    </label>
                 </div>
-                <canvas id="pictureCanvas" class="canvasborder"></canvas>
-                <canvas id="mapCanvas" class="canvasborder"></canvas>
+
+                <div id="timerDisplay">
+                    <span id="timer">--</span>
+                </div>
+
+                <div id="bottomBar">
+                    <button class="btn-guess" onclick="sendGuess()">
+                        <svg viewBox="0 0 24 24"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>
+                        Tipp leadása
+                    </button>
+                </div>
             </div>
+
+            <div id="guessPanel">
+                <div class="panel-content">
+                    <p class="panel-label">Pontszám</p>
+                    <h2 id="guessPanelScore">0</h2>
+                    <p id="guessPanelDistance"></p>
+                    <hr class="panel-divider">
+                    <p class="panel-label">Összesített pontszám</p>
+                    <h4 id="guessPanelTotal">0</h4>
+                    <button class="btn-next-round" onclick="nextRound()">Következő kör</button>
+                </div>
+            </div>
+        </div>
+
+        <div id="devControls">
+            <button onclick="startGame()">Start</button>
+            <button onclick="clearImage()">Clear</button>
         </div>
     </div>
 </body>

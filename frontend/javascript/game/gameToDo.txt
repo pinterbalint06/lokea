@@ -16,3 +16,13 @@ kesz--helyes terkepre kirajzolas
 --játékok befejezése
 --session_guess get vagy post???
 --127 kidurrantas
+--adott körre sorsolt kep elmentese
+--jobb oldali panelle kiirni a jatek nevet
+--jobb oldali panel teljes kinagyitasa a jatek vegen 
+--ido megcsinalasa  perc:másodpercre
+--toplista a játék végén
+--kommentelés, értékelés lehetősége a végén
+--visszalépés a főoldalra gomb
+--előző oldal frissítése belépéskor / visszalépéskor
+--reszponzivitás
+--tesztelések

@@ -35,7 +35,7 @@ function showCountdownStep(overlay, numberEl, steps, i, resolve) {
     } else {
         setTimeout(() => {
             overlay.classList.remove("active");
-            resolve();
+            setTimeout(resolve, 350); // wait for CSS fade-out transition
         }, 1000);
     }
 }
@@ -105,8 +105,9 @@ function removeEverything() {
 }
 
 function setAutoRotate() {
-    let isAutoRtoate = document.getElementById("autoRotate").checked;
-    equirectangularViewer.setAutoRotate(isAutoRtoate);
+    const isAutoRotate = document.getElementById("autoRotate").checked;
+    equirectangularViewer.setAutoRotate(isAutoRotate);
+    document.getElementById("autoRotateBtn").classList.toggle("active", isAutoRotate);
 }
 
 function pictureFullScreen() {
@@ -155,8 +156,9 @@ async function startGame() {
 
         for (let i = 0; i < roundCount; i++) {
             console.log(`Starting round ${i + 1} of ${roundCount}`);
-            document.getElementById(mapCanvasId).style.maxWidth = "";
-            document.getElementById(mapCanvasId).style.width = "";
+            document.getElementById(mapCanvasId).classList.remove("full");
+            document.getElementById("guessPanel").classList.remove("open");
+            equirectangularViewer.setZoom(0);
             await createPoint();
             startRoundTimer(roundTime);
             await waitForGuess();
@@ -179,8 +181,10 @@ async function createPoint() {
         equirectangularViewer.loadImage(
             `data:${point.image.mime_type};base64,${point.image.base64}`,
             point.image.width, point.image.height
-        ).then(() => console.log("Game image loaded:", point.point_id))
-            .catch(e => console.error("Failed to load game image:", e));
+        ).then(() => {
+            console.log("Game image loaded:", point.point_id);
+            equirectangularViewer.setZoom(0);
+        }).catch(e => console.error("Failed to load game image:", e));
     } catch (error) {
         console.error("Error creating point:", error);
     }
@@ -215,11 +219,13 @@ let timeLeft = 0;
 
 function startRoundTimer(seconds) {
     timeLeft = seconds;
+    const timerEl = document.getElementById("timer");
     timerInterval = setInterval(() => {
         timeLeft--;
-        document.getElementById("timer").textContent = timeLeft;
+        timerEl.textContent = timeLeft;
+        timerEl.classList.toggle("urgent", timeLeft <= 5 && timeLeft > 0);
         if (timeLeft <= 0) {
-            sendGuess(); // auto-submit when time runs out
+            sendGuess();
         }
     }, 1000);
 }
@@ -227,6 +233,7 @@ function startRoundTimer(seconds) {
 function stopRoundTimer() {
     clearInterval(timerInterval);
     timerInterval = null;
+    document.getElementById("timer").classList.remove("urgent");
 }
 
 async function sendGuess() {
@@ -257,12 +264,18 @@ function showAnswer(response) {
         gameMapsIndex = response.mapI;
         nextMap();
     }
-    document.getElementById(mapCanvasId).style.maxWidth = "none";
-    document.getElementById(mapCanvasId).style.width = "100%";
+    document.getElementById(mapCanvasId).classList.add("full");
     placeMarkerByUV(1, response.pointu, response.pointv, 24.0, 32.0, "ready");
     if (doesmarkerExist(0)) {
         connectMarker(0, 1, 0);
     }
+
+    const panel = document.getElementById("guessPanel");
+    document.getElementById("guessPanelScore").textContent = response.score ?? 0;
+    document.getElementById("guessPanelDistance").textContent =
+        response.distance != null ? `Távolság: ${response.distance} px` : "Rossz térkép vagy nincs jelölő";
+    document.getElementById("guessPanelTotal").textContent = response.totalScore ?? 0;
+    panel.classList.add("open");
 }
 
 async function fetchGameData(url) {

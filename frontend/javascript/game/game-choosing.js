@@ -128,7 +128,7 @@ function updateTimeValue() {
     let seconds = Number.parseInt(timeRange.value);
     timeValue.value = formatSecondsToMinutes(seconds);
     timeValue.textContent = formatSecondsToMinutes(seconds);
-};
+}
 
 
 function formatSecondsToMinutes(seconds) {
