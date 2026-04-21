@@ -28,9 +28,17 @@ export async function settingsDisplayre(adminSettings) {
             await checkModification();
             if (tempPfp != null) {
                 await uploadProfilePic(tempPfp);
+                let dropdownPfp = document.getElementById('dropdownPfp');
+                if (dropdownPfp) {
+                    dropdownPfp.src = await createPreview(tempPfp);
+                }
             } else {
                 if (deleteLast) {
                     await deleteProfilePicture();
+                    let dropdownPfp = document.getElementById('dropdownPfp');
+                    if (dropdownPfp) {
+                        dropdownPfp.src = "../images/default.png";
+                    }
                 }
             }
             alert(i18next.t('admin:settings.settings_saved'));
