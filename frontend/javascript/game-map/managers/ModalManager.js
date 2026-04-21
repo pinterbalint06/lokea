@@ -27,9 +27,13 @@ export class ModalManager {
     }
 
     #bindBusEvents() {
-        this.bus.on(EVENTS.UI_MODAL_REQUESTED, ({ modalType }) => {
+        this.bus.on(EVENTS.UI_MODAL_REQUESTED, ({ modalType, gameMapId, gameMapName }) => {
             if (modalType == "cover_image") {
                 this.#showCoverImageModal();
+            } else {
+                if (modalType == "delete_game_map") {
+                    this.#showDeleteGameMapModal(gameMapId, gameMapName);
+                }
             }
         });
     }
@@ -114,5 +118,41 @@ export class ModalManager {
             hideConfirmButton: true,
             isStatic: false
         });
+    }
+
+    #showDeleteGameMapModal(gameMapId, gameMapName) {
+        let desc = createElement("p");
+        desc.innerText = `Biztosan törölni szeretnéd ezt a pályát ${gameMapName ? `: ${gameMapName}` : ""}?`;
+
+        let warningIcon = createSVGIcon(ICONS.WARNING, {
+            height: "1.2em",
+            fill: "currentColor"
+        });
+
+        let warning = createElement("p", { class: "text-muted small mb-0" });
+        warning.appendChild(document.createTextNode("Ez a művelet nem vonható vissza. A pályához tartozó "));
+        let strong = createElement("strong");
+        strong.innerText = "összes térkép, pont, kapcsolat és kép is törlésre kerül";
+        warning.appendChild(strong);
+        warning.appendChild(document.createTextNode("."));
+
+        this.modal.show({
+            title: "Pálya törlése",
+            icon: warningIcon,
+            body: [desc, warning],
+            confirmText: "Pálya végleges törlése",
+            confirmBtnClass: "btn-danger",
+            dangerStyle: true,
+            holdToUnlock: 3000,
+            isStatic: true,
+            onEarlyClick: () => {
+                this.bus.emit(EVENTS.TOAST_SHOW, { msg: "Tartsd lenyomva a gombot a megerősítéshez" });
+            }
+        });
+
+        this.modal.addEventListener("confirm", () => {
+            this.bus.emit(EVENTS.UI_MODAL_CONFIRMED, { modalType: "delete_game_map" });
+            this.modal.hide();
+        }, { once: true });
     }
 }

@@ -2,6 +2,14 @@ const joi = require("#utils/joi.js");
 const { idSchema } = require("#utils/schemas.js");
 const ERRORS = require("#utils/errorMessages.js");
 
+const HUNGARIAN_TEXT_PATTERN = /^[a-zA-ZáéíóöőúüűÁÉÍÓÖŐÚÜŰ0-9 _-]+$/;
+
+function createParamsSchema(paramName, errorMessage) {
+    return joi.object({
+        [paramName]: idSchema(errorMessage)
+    });
+}
+
 const resolution = joi.string()
     .trim()
     .lowercase()
@@ -12,80 +20,86 @@ const resolution = joi.string()
         "any.only": ERRORS.COMMON.INVALID_RESOLUTION
     });
 
+const resolutionQuerySchema = joi.object({
+    resolution
+});
+
+const pointIDParamsSchema = createParamsSchema("pointID", ERRORS.POINT.INVALID_ID);
+const mapIDParamsSchema = createParamsSchema("mapID", ERRORS.MAP.INVALID_ID);
+const gameMapIDParamsSchema = createParamsSchema("gameMapID", ERRORS.GAMEMAP.INVALID_ID);
+
+const commentSchema = joi
+    .string()
+    .trim()
+    .min(1)
+    .max(255)
+    .pattern(HUNGARIAN_TEXT_PATTERN) // only hungarian letters, numbers, spaces, underscores and -
+    .messages({
+        "string.base": ERRORS.COMMENT.INVALID_CONTENT,
+        "string.empty": ERRORS.COMMENT.EMPTY_CONTENT,
+        "string.min": ERRORS.COMMENT.EMPTY_CONTENT,
+        "string.max": ERRORS.COMMENT.TOO_LONG,
+        "string.pattern.base": ERRORS.COMMENT.INVALID_CHARACTERS
+    });
+
+const ratingSchema = joi
+    .number()
+    .integer()
+    .min(1)
+    .max(5)
+    .required()
+    .messages({
+        "number.base": ERRORS.COMMENT.INVALID_RATING,
+        "number.integer": ERRORS.COMMENT.INVALID_RATING,
+        "number.min": ERRORS.COMMENT.TOO_LOW_RATING,
+        "number.max": ERRORS.COMMENT.TOO_HIGH_RATING,
+        "number.unsafe": ERRORS.COMMENT.INVALID_RATING,
+        "any.required": ERRORS.COMMENT.RATING_REQUIRED
+    });
+
+const commentBodySchema = joi.object({
+    comment: commentSchema,
+    rating: ratingSchema
+});
+
 const getPointImageSchema = {
-    params:
-        joi.object({
-            pointID: idSchema(ERRORS.POINT.INVALID_ID)
-        }),
-    query:
-        joi.object({
-            resolution
-        })
+    params: pointIDParamsSchema,
+    query: resolutionQuerySchema
 };
 
 const getMapImageSchema = {
-    params:
-        joi.object({
-            mapID: idSchema(ERRORS.MAP.INVALID_ID)
-        }),
-    query:
-        joi.object({
-            resolution
-        })
+    params: mapIDParamsSchema,
+    query: resolutionQuerySchema
 };
 
 
 const getPointConnectionsSchema = {
-    params:
-        joi.object({
-            pointID: idSchema(ERRORS.POINT.INVALID_ID)
-        })
+    params: pointIDParamsSchema
 };
 
 const getGameMapDetailsSchema = {
-    params:
-        joi.object({
-            gameMapID: idSchema(ERRORS.GAMEMAP.INVALID_ID)
-        })
+    params: gameMapIDParamsSchema
 };
 
 const getGameMapCoverImageSchema = {
-    params:
-        joi.object({
-            gameMapID: idSchema(ERRORS.GAMEMAP.INVALID_ID)
-        }),
-    query:
-        joi.object({
-            resolution
-        })
+    params: gameMapIDParamsSchema,
+    query: resolutionQuerySchema
 };
 
 const putGameMapCoverImageSchema = {
-    params:
-        joi.object({
-            gameMapID: idSchema(ERRORS.GAMEMAP.INVALID_ID)
-        })
+    params: gameMapIDParamsSchema
 };
 
 const deleteGameMapSchema = {
-    params:
-        joi.object({
-            gameMapID: idSchema(ERRORS.GAMEMAP.INVALID_ID)
-        })
+    params: gameMapIDParamsSchema
 };
 
 const deleteGameMapCoverImageSchema = {
-    params:
-        joi.object({
-            gameMapID: idSchema(ERRORS.GAMEMAP.INVALID_ID)
-        })
+    params: gameMapIDParamsSchema
 };
 
 const updateGameMapSchema = {
-    params:
-        joi.object({
-            gameMapID: idSchema(ERRORS.GAMEMAP.INVALID_ID)
-        }),
+    params: gameMapIDParamsSchema,
     body:
         joi.object({
             title: joi
@@ -93,7 +107,7 @@ const updateGameMapSchema = {
                 .trim()
                 .min(3)
                 .max(50)
-                .pattern(/^[a-zA-ZáéíóöőúüűÁÉÍÓÖŐÚÜŰ0-9 _-]+$/) // only hungarian letters, numbers, spaces, underscores and -
+                .pattern(HUNGARIAN_TEXT_PATTERN) // only hungarian letters, numbers, spaces, underscores and -
                 .messages({
                     "string.base": ERRORS.GAMEMAP.TITLE.INVALID_PATTERN,
                     "string.empty": ERRORS.GAMEMAP.TITLE.EMPTY,
@@ -106,7 +120,7 @@ const updateGameMapSchema = {
                 .trim()
                 .min(3)
                 .max(255)
-                .pattern(/^[a-zA-ZáéíóöőúüűÁÉÍÓÖŐÚÜŰ0-9 _-]+$/) // only hungarian letters, numbers, spaces, underscores and -
+                .pattern(HUNGARIAN_TEXT_PATTERN) // only hungarian letters, numbers, spaces, underscores and -
                 .messages({
                     "string.base": ERRORS.GAMEMAP.DESCRIPTION.INVALID_PATTERN,
                     "string.empty": ERRORS.GAMEMAP.DESCRIPTION.EMPTY,
@@ -121,10 +135,7 @@ const updateGameMapSchema = {
 };
 
 const getGameMapCommentsSchema = {
-    params:
-        joi.object({
-            gameMapID: idSchema(ERRORS.GAMEMAP.INVALID_ID)
-        }),
+    params: gameMapIDParamsSchema,
     query:
         joi.object({
             page: joi
@@ -141,87 +152,21 @@ const getGameMapCommentsSchema = {
 };
 
 const postGameMapCommentsSchema = {
-    params:
-        joi.object({
-            gameMapID: idSchema(ERRORS.GAMEMAP.INVALID_ID)
-        }),
-    body:
-        joi.object({
-            comment: joi
-                .string()
-                .trim()
-                .min(1)
-                .max(255)
-                .pattern(/^[a-zA-ZáéíóöőúüűÁÉÍÓÖŐÚÜŰ0-9 _-]+$/) // only hungarian letters, numbers, spaces, underscores and -
-                .messages({
-                    "string.base": ERRORS.COMMENT.INVALID_CONTENT,
-                    "string.empty": ERRORS.COMMENT.EMPTY_CONTENT,
-                    "string.min": ERRORS.COMMENT.EMPTY_CONTENT,
-                    "string.max": ERRORS.COMMENT.TOO_LONG,
-                    "string.pattern.base": ERRORS.COMMENT.INVALID_CHARACTERS
-                }),
-            rating: joi
-                .number()
-                .integer()
-                .min(1)
-                .max(5)
-                .required()
-                .messages({
-                    "number.base": ERRORS.COMMENT.INVALID_RATING,
-                    "number.integer": ERRORS.COMMENT.INVALID_RATING,
-                    "number.min": ERRORS.COMMENT.TOO_LOW_RATING,
-                    "number.max": ERRORS.COMMENT.TOO_HIGH_RATING,
-                    "number.unsafe": ERRORS.COMMENT.INVALID_RATING,
-                    "any.required": ERRORS.COMMENT.RATING_REQUIRED
-                })
-        })
+    params: gameMapIDParamsSchema,
+    body: commentBodySchema
 };
 
 const getUserCommentSchema = {
-    params: joi.object({
-        gameMapID: idSchema(ERRORS.GAMEMAP.INVALID_ID)
-    })
+    params: gameMapIDParamsSchema
 };
 
 const putUserCommentSchema = {
-    params: joi.object({
-        gameMapID: idSchema(ERRORS.GAMEMAP.INVALID_ID)
-    }),
-    body: joi.object({
-        comment: joi
-            .string()
-            .trim()
-            .min(1)
-            .max(255)
-            .pattern(/^[a-zA-ZáéíóöőúüűÁÉÍÓÖŐÚÜŰ0-9 _-]+$/) // only hungarian letters, numbers, spaces, underscores and -
-            .messages({
-                "string.base": ERRORS.COMMENT.INVALID_CONTENT,
-                "string.empty": ERRORS.COMMENT.EMPTY_CONTENT,
-                "string.min": ERRORS.COMMENT.EMPTY_CONTENT,
-                "string.max": ERRORS.COMMENT.TOO_LONG,
-                "string.pattern.base": ERRORS.COMMENT.INVALID_CHARACTERS
-            }),
-        rating: joi
-            .number()
-            .integer()
-            .min(1)
-            .max(5)
-            .required()
-            .messages({
-                "number.base": ERRORS.COMMENT.INVALID_RATING,
-                "number.integer": ERRORS.COMMENT.INVALID_RATING,
-                "number.min": ERRORS.COMMENT.TOO_LOW_RATING,
-                "number.max": ERRORS.COMMENT.TOO_HIGH_RATING,
-                "number.unsafe": ERRORS.COMMENT.INVALID_RATING,
-                "any.required": ERRORS.COMMENT.RATING_REQUIRED
-            })
-    })
+    params: gameMapIDParamsSchema,
+    body: commentBodySchema
 };
 
 const deleteUserCommentSchema = {
-    params: joi.object({
-        gameMapID: idSchema(ERRORS.GAMEMAP.INVALID_ID)
-    })
+    params: gameMapIDParamsSchema
 };
 
 module.exports = {

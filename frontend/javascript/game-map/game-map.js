@@ -36,6 +36,5 @@ async function init() {
 
 document.addEventListener("DOMContentLoaded", init);
 
-// TODO: palya torlese
 // TODO: gamemap backend szetbontasa, cover image, komemnteknek, stb??
 // TODO: backend tesztek megirasa

@@ -94,3 +94,14 @@ export async function deleteUserComment(gameMapId, abortSignal = null) {
         await handleResponseError(response);
     }
 }
+
+export async function deleteGameMap(gameMapId, abortSignal = null) {
+    const response = await fetch(`/api/game-maps/${gameMapId}`, {
+        method: "DELETE",
+        signal: abortSignal
+    });
+
+    if (!response.ok) {
+        await handleResponseError(response);
+    }
+}

@@ -1,6 +1,6 @@
 import { EVENTS } from "../shared/EventBus.js";
 import { getEditMapUrlFromLocation } from "../shared/utils.js";
-import { updateGameMapDetails } from "../shared/api.js";
+import { updateGameMapDetails, deleteGameMap } from "../shared/api.js";
 import {
     DETAILS_ALLOWED_PATTERN,
     TITLE_MIN_LENGTH,
@@ -44,6 +44,7 @@ export class EditManager {
         this.elements.descriptionDisplay = document.getElementById("descriptionDisplay");
         this.elements.descriptionInput = document.getElementById("descriptionInput");
         this.elements.editDeleteDiv = document.getElementById("editDeleteDiv");
+        this.elements.deleteGameMapButton = document.getElementById("deleteGameMapButton");
     }
 
     #bindUIEvents() {
@@ -57,6 +58,11 @@ export class EditManager {
 
         this.elements.editCoverImageButton.addEventListener("click", () => {
             this.bus.emit(EVENTS.UI_MODAL_REQUESTED, { modalType: "cover_image" });
+        });
+
+        this.elements.deleteGameMapButton.addEventListener("click", () => {
+            const state = this.store.getState();
+            this.bus.emit(EVENTS.UI_MODAL_REQUESTED, { modalType: "delete_game_map", gameMapId: state.gameMapId, gameMapName: state.gameMapDetails.title });
         });
 
         this.elements.cancelDetailsBtn.addEventListener("click", () => {
@@ -85,6 +91,22 @@ export class EditManager {
     #bindBusEvents() {
         this.bus.on(EVENTS.STATE_UPDATED, ({ state }) => {
             this.#updateUI(state.gameMapDetails);
+        });
+
+        this.bus.on(EVENTS.UI_MODAL_CONFIRMED, async ({ modalType }) => {
+            if (modalType == "delete_game_map") {
+                if (!this.isSavingDetails) {
+                    this.bus.emit(EVENTS.TOAST_SHOW, { msg: "Pálya törlése folyamatban...", autohide: false, spinner: true });
+                    try {
+                        await deleteGameMap(this.store.getState().gameMapId);
+                        window.location.href = "/game-maps";
+                    } catch (error) {
+                        this.bus.emit(EVENTS.TOAST_SHOW, { msg: error.message || "Nem sikerült törölni a pályát!", type: "danger" });
+                    }
+                } else {
+                    this.bus.emit(EVENTS.TOAST_SHOW, { msg: "Nem lehet törölni a pályát, amíg a részletek mentése folyamatban van!", type: "danger" });
+                }
+            }
         });
     }
 
