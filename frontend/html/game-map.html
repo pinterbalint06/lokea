@@ -188,7 +188,16 @@
                                 </div>
 
 
-                                <form id="commentForm" class="comment-form mt-3">
+                                <div id="commentSectionPlaceholder" class="mt-3 placeholder-glow">
+                                    <span class="placeholder col-3 mb-1 rounded d-block"></span>
+                                    <span class="placeholder col-12 rounded" style="height: 100px;"></span>
+                                    <div class="d-flex justify-content-between mt-3">
+                                        <span class="placeholder col-4 rounded d-block" style="height: 30px;"></span>
+                                        <span class="placeholder col-3 rounded-pill d-block" style="height: 38px;"></span>
+                                    </div>
+                                </div>
+
+                                <form id="commentForm" class="comment-form mt-3 d-none">
                                     <label for="commentText" class="form-label mb-1">Írj hozzászólást</label>
                                     <textarea id="commentText" name="comment" class="form-control uvegform" rows="4"
                                         maxlength="255" placeholder="A véleményed erről a pályáról..."></textarea>
@@ -214,7 +223,7 @@
                                             </div>
                                         </fieldset>
 
-                                        <button type="submit" class="btn uvegbutton rounded-pill px-4">
+                                        <button id="sendCommentBtn" type="submit" class="btn uvegbutton rounded-pill px-4">
                                             Hozzászólás küldése
                                         </button>
                                     </div>

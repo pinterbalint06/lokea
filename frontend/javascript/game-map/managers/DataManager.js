@@ -7,11 +7,18 @@ export class DataManager {
         this.appStore = appStore;
 
         this.eventBus.on(EVENTS.APP_INIT, ({ gameMapId }) => {
-            this.#init(gameMapId);
+            this.#fetchDetails(gameMapId);
+        });
+
+        this.eventBus.on(EVENTS.COMMENT_UPDATED, () => {
+            const state = this.appStore.getState();
+            if (state.gameMapId) {
+                this.#fetchDetails(state.gameMapId);
+            }
         });
     }
 
-    async #init(gameMapId) {
+    async #fetchDetails(gameMapId) {
         try {
             const gameMapDetails = await fetchGameMapDetails(gameMapId);
             this.appStore.setState({

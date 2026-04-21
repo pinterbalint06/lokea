@@ -36,8 +36,6 @@ async function init() {
 
 document.addEventListener("DOMContentLoaded", init);
 
-// TODO: form es my comment resznek placeholder toltesnel
-// TODO: a boritokepnel meg nem frissul a rating ha uj kommentet irunk csak ujratoltesnel
 // TODO: palya torlese
 // TODO: gamemap backend szetbontasa, cover image, komemnteknek, stb??
 // TODO: backend tesztek megirasa

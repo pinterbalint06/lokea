@@ -11,6 +11,7 @@ export class CommentManager {
 
         this.elements = {};
         this.isLoading = false;
+        this.isUpdating = false;
         this.abortController = null;
 
         this.currentPage = 0;
@@ -20,6 +21,7 @@ export class CommentManager {
         this.sentinel = null;
 
         this.#gatherElements();
+        this.#showPlaceholderSection();
         this.#renderCommentCount();
         this.#setupObserver();
         this.#bindEvents();
@@ -37,6 +39,8 @@ export class CommentManager {
         this.elements.userCommentText = document.getElementById("userCommentText");
         this.elements.editCommentBtn = document.getElementById("editCommentBtn");
         this.elements.deleteCommentBtn = document.getElementById("deleteCommentBtn");
+        this.elements.commentSectionPlaceholder = document.getElementById("commentSectionPlaceholder");
+        this.elements.sendCommentBtn = document.getElementById("sendCommentBtn");
 
         this.elements.holdToDeleteCommentBtn = new HoldToUnlockButton(this.elements.deleteCommentBtn, 1500);
     }
@@ -62,6 +66,7 @@ export class CommentManager {
 
     #bindEvents() {
         this.bus.on(EVENTS.APP_INIT, () => {
+            this.#showPlaceholderSection();
             this.#loadUserComment();
             this.#loadComments();
         });
@@ -99,20 +104,42 @@ export class CommentManager {
         }
     }
 
-    #renderUserComment(comment) {
-        this.elements.userCommentRating.style.setProperty("--rating", comment.rating);
-        this.elements.userCommentText.innerText = comment.comment_text || "";
+    #showPlaceholderSection() {
+        this.elements.commentSectionPlaceholder.classList.remove("d-none");
+        this.elements.userCommentSection.classList.add("d-none");
+        this.elements.commentForm.classList.add("d-none");
+        this.elements.commentForm.removeAttribute("data-edit-mode");
+    }
 
+    #showNewCommentForm() {
+        this.elements.commentSectionPlaceholder.classList.add("d-none");
+        this.elements.userCommentSection.classList.add("d-none");
+        this.elements.commentForm.classList.remove("d-none");
+        this.elements.commentForm.removeAttribute("data-edit-mode");
+    }
+
+    #showEditCommentForm() {
+        this.elements.commentSectionPlaceholder.classList.add("d-none");
+        this.elements.userCommentSection.classList.add("d-none");
+        this.elements.commentForm.classList.remove("d-none");
+        this.elements.commentForm.setAttribute("data-edit-mode", "true");
+    }
+
+    #showUserCommentSection() {
+        this.elements.commentSectionPlaceholder.classList.add("d-none");
         this.elements.userCommentSection.classList.remove("d-none");
         this.elements.commentForm.classList.add("d-none");
         this.elements.commentForm.removeAttribute("data-edit-mode");
     }
 
-    #hideUserComment() {
-        this.elements.userCommentSection.classList.add("d-none");
+    #renderUserComment(comment) {
+        this.elements.userCommentRating.style.setProperty("--rating", comment.rating);
+        this.elements.userCommentText.innerText = comment.comment_text || "";
+        this.#showUserCommentSection();
+    }
 
-        this.elements.commentForm.classList.remove("d-none");
-        this.elements.commentForm.removeAttribute("data-edit-mode");
+    #hideUserComment() {
+        this.#showNewCommentForm();
         this.elements.commentForm.reset();
     }
 
@@ -126,9 +153,7 @@ export class CommentManager {
             ratingInput.checked = true;
         }
 
-        this.elements.userCommentSection.classList.add("d-none");
-        this.elements.commentForm.classList.remove("d-none");
-        this.elements.commentForm.setAttribute("data-edit-mode", "true");
+        this.#showEditCommentForm();
 
         this.elements.commentForm.scrollIntoView({ behavior: "smooth" });
     }
@@ -144,6 +169,8 @@ export class CommentManager {
             this.currentPage = 0;
             this.totalCommentCount = null;
             this.#loadComments();
+
+            this.bus.emit(EVENTS.COMMENT_UPDATED);
 
             this.bus.emit(EVENTS.TOAST_SHOW, {
                 msg: "Hozzászólásod sikeresen törölve!",
@@ -303,50 +330,83 @@ export class CommentManager {
 
     async #handleCommentSubmit(event) {
         event.preventDefault();
+        if (!this.isUpdating) {
+            this.isUpdating = true;
+            this.elements.sendCommentBtn.disabled = true;
+            const formData = new FormData(this.elements.commentForm);
+            const commentText = formData.get("comment");
+            const rating = formData.get("rating");
 
-        const formData = new FormData(this.elements.commentForm);
-        const commentText = formData.get("comment");
-        const rating = formData.get("rating");
+            if (rating) {
+                try {
+                    if (commentText && commentText.trim()) {
+                        formData.set("comment", commentText.trim());
+                    } else {
+                        formData.delete("comment");
+                    }
 
-        if (rating) {
-            try {
-                if (commentText && commentText.trim()) {
-                    formData.set("comment", commentText.trim());
-                } else {
-                    formData.delete("comment");
+                    const gameMapId = this.store.getState().gameMapId;
+                    let commentWasUpdated = false;
+
+                    const isEditMode = this.elements.commentForm.getAttribute("data-edit-mode") == "true";
+                    if (isEditMode) {
+                        const currentRating = this.elements.userCommentRating.style.getPropertyValue("--rating");
+                        const currentCommentText = this.elements.userCommentText.innerText.trim();
+
+                        const draftRating = formData.get("rating");
+                        const draftCommentText = formData.get("comment");
+
+                        const hasChanges = draftRating != currentRating || draftCommentText != currentCommentText;
+
+                        if (hasChanges) {
+                            await updateUserComment(gameMapId, formData);
+                            commentWasUpdated = true;
+                        }
+                    } else {
+                        await postGameMapComment(gameMapId, formData);
+                        commentWasUpdated = true;
+                    }
+
+                    if (commentWasUpdated) {
+                        await this.#loadUserComment();
+
+                        this.elements.commentForm.reset();
+
+                        this.currentPage = 0;
+                        this.totalCommentCount = null;
+                        this.#loadComments();
+
+                        this.bus.emit(EVENTS.COMMENT_UPDATED);
+
+                        this.bus.emit(EVENTS.TOAST_SHOW, {
+                            msg: isEditMode ? "Hozzászólásod sikeresen frissítve!" : "Hozzászólásod sikeresen mentve!",
+                            type: "success"
+                        });
+                    } else {
+                        this.elements.commentForm.reset();
+                        this.#showUserCommentSection();
+
+                        this.bus.emit(EVENTS.TOAST_SHOW, {
+                            msg: "Nincs változás a hozzászólásban."
+                        });
+                    }
+                } catch (error) {
+                    this.bus.emit(EVENTS.TOAST_SHOW, {
+                        msg: error.message || "Hiba történt a hozzászólás elküldésekor.",
+                        type: "danger"
+                    });
                 }
-
-                const gameMapId = this.store.getState().gameMapId;
-
-                const isEditMode = this.elements.commentForm.getAttribute("data-edit-mode") == "true";
-                if (isEditMode) {
-                    await updateUserComment(gameMapId, formData); // TODO: ha frissites es nem valtozott ne kuldje el
-                } else {
-                    await postGameMapComment(gameMapId, formData);
-                }
-
-                await this.#loadUserComment();
-
-                this.elements.commentForm.reset();
-                this.elements.commentForm.removeAttribute("data-edit-mode");
-
-                this.currentPage = 0;
-                this.totalCommentCount = null;
-                this.#loadComments();
-
+            } else {
                 this.bus.emit(EVENTS.TOAST_SHOW, {
-                    msg: isEditMode ? "Hozzászólásod sikeresen frissítve!" : "Hozzászólásod sikeresen mentve!",
-                    type: "success"
-                });
-            } catch (error) {
-                this.bus.emit(EVENTS.TOAST_SHOW, {
-                    msg: error.message || "Hiba történt a hozzászólás elküldésekor.",
+                    msg: "Kérlek értékeld legalább 1 csillaggal!",
                     type: "danger"
                 });
             }
+            this.isUpdating = false;
+            this.elements.sendCommentBtn.disabled = false;
         } else {
             this.bus.emit(EVENTS.TOAST_SHOW, {
-                msg: "Kérlek értékeld legalább 1 csillaggal!",
+                msg: "Már folyamatban van a komment mentése, kérlek várj!",
                 type: "danger"
             });
         }
