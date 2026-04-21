@@ -68,6 +68,12 @@ router.put(
     validateRequest(schemas.updateGameMapSchema),
     controller.updateGameMap);
 
+//?DELETE /api/game-maps/:gameMapID
+router.delete(
+    "/:gameMapID",
+    validateRequest(schemas.deleteGameMapSchema),
+    controller.deleteGameMap);
+
 //?GET /api/game-maps/:gameMapID/comments
 router.get(
     "/:gameMapID/comments",

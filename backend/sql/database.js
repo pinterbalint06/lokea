@@ -830,6 +830,28 @@ async function deleteUserCommentOnGameMap(connection, gameMapId, userId) {
     return result.affectedRows > 0;
 }
 
+async function getAllImageIdsForGameMap(connection, gameMapId) {
+    const query = `
+        SELECT DISTINCT images.image_id
+        FROM game_maps
+            LEFT JOIN map ON (game_maps.game_maps_id = map.game_maps_id)
+            LEFT JOIN points ON (map.map_id = points.map_id)
+            INNER JOIN images ON (points.image_id = images.image_id OR map.image_id = images.image_id OR game_maps.cover_image_id = images.image_id)
+        WHERE game_maps.game_maps_id = ?
+    `;
+    const [rows] = await connection.execute(query, [gameMapId]);
+    return rows.length > 0 ? rows.map((row) => row.image_id) : [];
+}
+
+async function deleteGameMapById(connection, gameMapId) {
+    const query = `
+        DELETE FROM game_maps
+        WHERE game_maps.game_maps_id = ?
+    `;
+    const [result] = await connection.execute(query, [gameMapId]);
+    return result.affectedRows == 1;
+}
+
 //!Export
 module.exports = {
     // selectall,
@@ -893,5 +915,7 @@ module.exports = {
     insertGameMapComment,
     getUserCommentOnGameMap,
     updateUserCommentOnGameMap,
-    deleteUserCommentOnGameMap
+    deleteUserCommentOnGameMap,
+    getAllImageIdsForGameMap,
+    deleteGameMapById
 };

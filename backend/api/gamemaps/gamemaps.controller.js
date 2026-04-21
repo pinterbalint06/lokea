@@ -131,6 +131,19 @@ async function updateGameMap(request, response, next) {
     }
 }
 
+async function deleteGameMap(request, response, next) {
+    try {
+        const userId = request.session.userid;
+        const { gameMapID } = request.params;
+
+        await gamemapsService.deleteGameMap(userId, gameMapID);
+
+        response.status(204).send();
+    } catch (error) {
+        next(error);
+    }
+}
+
 async function getGameMapComments(request, response, next) {
     try {
         const { gameMapID } = request.params;
@@ -211,5 +224,6 @@ module.exports = {
     postGameMapComments,
     getUserComment,
     updateUserComment,
-    deleteUserComment
+    deleteUserComment,
+    deleteGameMap
 };

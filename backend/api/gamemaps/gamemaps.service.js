@@ -1,6 +1,7 @@
 const path = require("path");
 const crypto = require("crypto");
 const AppError = require("#utils/AppError.js");
+const fs = require("fs/promises");
 const database = require("#sql/database.js");
 const ERRORS = require("#utils/errorMessages.js");
 const { UPLOAD_ROOT_MAP_DATA, isInsideRoot } = require("#config/mapStorage.js");
@@ -85,6 +86,65 @@ async function getGameMapDetails(gameMapID, userId) {
         is_owner: isOwner,
         top_scores: topScores
     };
+}
+
+async function deleteGameMap(userId, gameMapID) {
+    let dbConnection;
+
+    try {
+        const gameMapDetails = await database.getGameMapDetails(gameMapID);
+        if (!gameMapDetails) {
+            throw new AppError(ERRORS.GAMEMAP.NOT_FOUND, 404);
+        }
+
+        await assertUserOwnsGameMap(userId, gameMapID);
+
+        dbConnection = await database.getConnection();
+        await dbConnection.beginTransaction();
+
+        let imageIdsToDelete = await database.getAllImageIdsForGameMap(dbConnection, gameMapID);
+
+        let successMapDeletion = await database.deleteGameMapById(dbConnection, gameMapID);
+        if (!successMapDeletion) {
+            throw new AppError(ERRORS.GAMEMAP.DELETE_FAILED, 500);
+        }
+
+        for (const imageId of imageIdsToDelete) {
+            let successImageDeletion = await database.deleteImageById(dbConnection, imageId);
+            if (!successImageDeletion) {
+                throw new AppError(ERRORS.MAP.IMAGE_DELETIONS_FAILED, 500);
+            }
+        }
+
+        await dbConnection.commit();
+
+        // :userId/:gameMapId/
+        let relativeDestDir = path.join(
+            userId.toString(),
+            gameMapID.toString(),
+        );
+
+        // backend/uploads/mapdatas/:userId/:gameMapId/
+        let targetPath = path.join(
+            UPLOAD_ROOT_MAP_DATA,
+            relativeDestDir
+        );
+
+        try {
+            if (isInsideRoot(targetPath)) {
+                await fs.rm(targetPath, { recursive: true, force: true });
+            }
+        } catch (err) {
+            console.error(`Error deleting directory ${targetPath}: ${err.message}`);
+        }
+    } catch (error) {
+        await cleanupAfterError(dbConnection);
+        throw error;
+    } finally {
+        if (dbConnection) {
+            dbConnection.release();
+        }
+    }
 }
 
 async function getGameMapCoverImagePath(gameMapID, resolution) {
@@ -379,5 +439,6 @@ module.exports = {
     postGameMapComment,
     getUserComment,
     updateUserComment,
-    deleteUserComment
+    deleteUserComment,
+    deleteGameMap
 };

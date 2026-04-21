@@ -21,6 +21,7 @@ const ERRORS = {
         NOT_FOUND: "A pálya nem létezik!",
         COVER_IMAGE_NOT_FOUND: "A borítókép nem létezik!",
         UPDATE_FAILED: "A pálya adatainak frissítése nem sikerült!",
+        DELETE_FAILED: "A pálya törlése nem sikerült!",
 
         TITLE: {
             INVALID_PATTERN: "A pálya címe csak betűket, számokat, szóközöket, kötőjeleket és alulvonásokat tartalmazhat!",
