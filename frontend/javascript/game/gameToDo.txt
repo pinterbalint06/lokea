@@ -1,0 +1,12 @@
+Teendők:
+kesz--adott kör elmentése a későbbi játékokhoz
+kesz--Teljes pontszám visszaadása
+--adott kör koordinátáinak visszaadása
+--térkép ellenőrzése
+--csalás ellenőrzés - idő
+--map id biztonságos e:
+--map növekedés
+--dizájn
+--gombok kinézete stb
+--auth
+--játékok befejezése, pontok visszaadása, osszpontszam tarolasa, visszaadasa

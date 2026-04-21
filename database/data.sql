@@ -21,10 +21,10 @@ INSERT INTO images (width, height, filepath) VALUES
 (1024, 512, 'points/testpoint2.webp'),
 (1024, 512, 'points/testpoint3.webp');
 
-INSERT INTO points (map_id, point_x, point_y, north_direction, image_id) VALUES 
-(1, 120, 140, 0, 2),
-(1, 420, 180, 90, 3),
-(1, 250, 350, 180, 4);
+INSERT INTO points (map_id, point_u, point_v, north_direction, image_id) VALUES
+(1, 0.0586, 0.1367, 0, 2),
+(1, 0.2051, 0.1758, 90, 3),
+(1, 0.1221, 0.3418, 180, 4);
 
 INSERT INTO point_connections (start_point_id, end_point_id, game_maps_id) VALUES 
 (1, 2, 1),

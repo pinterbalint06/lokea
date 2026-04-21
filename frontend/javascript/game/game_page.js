@@ -24,7 +24,7 @@ const mapImage = {
 };
 
 var gameMaps = [];
-var gameMapsIndex = 0;
+var gameMapsIndex = -1;
 
 document.addEventListener("DOMContentLoaded", function () {
     init();
@@ -60,6 +60,13 @@ function createCountdownTimer() {
 
 function init() {
     mapViewerEngine = new MapViewer(mapCanvasId);
+    mapViewerEngine.onClickHandler = (cursorX, cursorY) => {
+        if (mapViewerEngine.doesMarkerExist(0)) {
+            mapViewerEngine.moveMarker(0, cursorX, cursorY);
+        } else {
+            mapViewerEngine.placeMarker(0, cursorX, cursorY, 24.0, 32.0, "uploading");
+        }
+    }
     document.getElementById("autoRotate").addEventListener("change", setAutoRotate);
     equirectangularViewer = new EquirectangularViewer(pictureCanvasId);
 }
@@ -117,6 +124,8 @@ async function startGame() {
     try {
         const gameData = await fetchGameData('http://127.0.0.1:3000/api/game/get_game_info');
         const mapsData = await fetchGameData('http://127.0.0.1:3000/api/game/get_all_maps');
+        console.log(gameData);
+        console.log(mapsData);
 
         if (!gameData.success || !gameData.game) throw new Error("Failed to fetch game info");
         if (!mapsData.success || !mapsData.maps) throw new Error("Failed to fetch game maps");
@@ -128,14 +137,18 @@ async function startGame() {
         const roundTime = gameData.game.roundTime;
 
         for (let i = 0; i < roundCount; i++) {
+            console.log(`Starting round ${i + 1} of ${roundCount}`);
             if (doesmarkerExist()) {
                 removeMarker();
             }
+            document.getElementById(mapCanvasId).style.maxWidth = "";
+            document.getElementById(mapCanvasId).style.width = "";
             await createPoint();
             startRoundTimer(roundTime);
             await waitForGuess();
             await waitForNext();
         }
+        
         console.log("Game over");
     } catch (error) {
         console.error("Error starting game:", error);
@@ -160,15 +173,17 @@ async function createPoint() {
 }
 
 function nextMap() {
+    gameMapsIndex++;
+    console.log("Next map:" + gameMapsIndex);
+    console.log(gameMaps.length);
     if (gameMaps.length <= gameMapsIndex) {
         gameMapsIndex = 0;
     }
     const map = gameMaps[gameMapsIndex];
-    gameMapsIndex++;
     const imageDataUrl = `data:${map.image.mime_type};base64,${map.image.base64}`;
     mapViewerEngine.loadMap(imageDataUrl, map.image.width, map.image.height)
         .then(function () {
-            console.log("Game map loaded:", map.map_id);
+            console.log("Game map loaded:", map.mapI);
         })
         .catch(function (e) {
             console.error("Failed to load game map:", e);
@@ -201,12 +216,13 @@ async function sendGuess() {
     stopRoundTimer();
     let sendData;
     if (!doesmarkerExist()) {
-        sendData = { x: -1, y: -1 };
+        sendData = { u: -1, v: -1 };
     }
     else {
         sendData = markerPosition();
     }
     sendData.timeLeft = timeLeft;
+    sendData.map_i = gameMapsIndex;
     try {
         const response = await fetch('http://127.0.0.1:3000/api/game/session_guess', {
             method: 'POST',
@@ -220,6 +236,9 @@ async function sendGuess() {
     } catch (error) {
         console.error("Error sending guess:", error);
     }
+    document.getElementById(mapCanvasId).style.maxWidth = "none";
+    document.getElementById(mapCanvasId).style.width = "100%";
+
     if (resolveGuess) {
         resolveGuess();
         resolveGuess = null;

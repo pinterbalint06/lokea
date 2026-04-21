@@ -49,7 +49,7 @@ router.get('/get_game_info', async (request, response) => {
             success: true,
             game: {
                 title: game.gameTitle,
-                rounds: game.rounds,
+                rounds: game.roundsLeft,
                 roundTime: game.roundTime
             }
         });
@@ -83,10 +83,9 @@ router.get("/get_random_point", async (request, response) => {
 
         request.session.game.point = {
             pointId: point.point_id,
-            pointx: point.point_x,
-            pointy: point.point_y,
-            width: point.width,
-            height: point.height
+            pointu: point.point_u,
+            pointv: point.point_v,
+            mapId: point.map_id
         }
 
         point = {
@@ -116,14 +115,15 @@ router.get("/get_all_maps", async (request, response) => {
         const maps = await database.getAllMaps(sessionId);
 
         let mapObjects = [];
+        let mapIndex = [];
 
-        for (const map of maps) {
+        for (let i = 0; i < maps.length; i++) {
+            const map = maps[i];
             const imageFullPath = resolvePathInsideUploadRoot(map.filepath);
             const imageBuffer = await fs.readFile(imageFullPath);
             const mimeType = getMimeTypeFromPath(map.filepath);
-
+            mapIndex.push(map.map_id);
             mapObjects.push({
-                map_id: map.map_id,
                 title: map.title,
                 image: {
                     id: map.image_id,
@@ -135,9 +135,10 @@ router.get("/get_all_maps", async (request, response) => {
             });
         }
 
+        request.session.game.mapIndex = mapIndex;
+
         response.status(200).json({ success: true, maps: mapObjects });
     } catch (error) {
-        console.error("Error fetching all maps:", error);
         response.status(500).json({ success: false, message: "Error fetching all maps" });
     }
 });
@@ -147,9 +148,10 @@ router.post('/session_guess', async (request, response) => {
         //TODO: map ellenőrzése
         const sessionId = request.session?.game.activeSessionId || 1; //TODO: törlés amikor login kész lesz
         const game = request.session.game;
-        const guessx = parseFloat(request.body.x);
-        const guessy = parseFloat(request.body.y);
+        const guessu = parseFloat(request.body.u);
+        const guessv = parseFloat(request.body.v);
         const timeLeft = parseInt(request.body.timeLeft);
+        const mapI = game.mapIndex[parseInt(request.body.map_i)];
         const timePunishment = game.roundTime - 5;
         const minTimeMultiplier = 0.1;
         let score;
@@ -164,21 +166,26 @@ router.post('/session_guess', async (request, response) => {
             err.statusCode = 404;
             throw err;
         }
-        if (isNaN(guessx) || isNaN(guessy) || isNaN(timeLeft)) {
+        if (isNaN(guessu) || isNaN(guessv) || isNaN(timeLeft) || isNaN(mapI)) {
             const err = new Error("Invalid guess coordinates or time left");
             err.statusCode = 400;
             throw err;
         }
-        if (guessx < 0 || guessy < 0) {
+        if (guessu < 0 || guessv < 0) {
             score = 0;
-            reJson = { success: true, score: score, distance: null };
-            await database.saveGuess(sessionId, game.point.pointId, guessx, guessy, -1, 0, game.currentCycle);
-        } else {
-            const dx = (guessx - game.point.pointx) / 2048; //törlés ha át lesz állítva a koordináta rendszer
-            const dy = (guessy - game.point.pointy) / 1024; //törlés ha át lesz állítva a koordináta rendszer
-            const distance = Math.sqrt(dx * dx + dy * dy);
-            const pixelDx = dx * game.point.width;
-            const pixelDy = dy * game.point.height;
+            reJson = { success: true, score: score, distance: null, mapI: game.mapIndex.indexOf(game.point.mapId) };
+            await database.saveGuess(sessionId, game.point.pointId, mapI, guessu, guessv, -1, 0, game.currentCycle);
+        } else if (mapI !== game.point.mapId) {
+            score = 0;
+            reJson = { success: true, score: score, distance: null, mapI: game.mapIndex.indexOf(game.point.mapId) };
+            await database.saveGuess(sessionId, game.point.pointId, mapI, guessu, guessv, -1, 0, game.currentCycle);
+        } 
+        else {
+            const du = (guessu - game.point.pointu); 
+            const dv = (guessv - game.point.pointv);
+            const distance = Math.sqrt(du * du + dv * dv);
+            const pixelDx = du * game.point.width;
+            const pixelDy = dv * game.point.height;
             const pixelDistance = Math.round(Math.sqrt(pixelDx * pixelDx + pixelDy * pixelDy));
             if (timeLeft > timePunishment && timeLeft <= game.roundTime) {
                 score = Math.round(5000 * Math.exp(game.sharpness * (distance / Math.SQRT2)));
@@ -187,8 +194,13 @@ router.post('/session_guess', async (request, response) => {
             } else {
                 score = Math.round(5000 * Math.exp(game.sharpness * (distance / Math.SQRT2)) * (timeLeft / timePunishment));
             }
-            reJson = { success: true, score: score, distance: pixelDistance };
-            await database.saveGuess(sessionId, game.point.pointId, guessx, guessy, distance, score, game.currentCycle);
+            reJson = { success: true, score: score, distance: pixelDistance, mapI: game.mapIndex.indexOf(game.point.mapId) };
+            await database.saveGuess(sessionId, game.point.pointId, mapI, guessu, guessv, distance, score, game.currentCycle);
+            const totalScore = await database.totalScore(sessionId);
+            reJson.totalScore = totalScore;
+            reJson.pointu = game.point.pointu;
+            reJson.pointv = game.point.pointv;
+            await database.incrementCurrentRound(sessionId);
         }
 
         response.status(200).json(reJson);

@@ -314,7 +314,7 @@ router.get('/active_game_session', async (request, response) => {
                 gameMapId: activeSession.game_maps_id,
                 currentCycle: activeSession.current_cycle,
                 sharpness: activeSession.sharpness,
-                rounds: activeSession.rounds,
+                roundsLeft: activeSession.rounds_left,
                 roundTime: activeSession.time_per_round
             };
             responseData = {
