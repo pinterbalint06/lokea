@@ -45,7 +45,6 @@ router.get('/get_game_info', async (request, response) => {
             err.statusCode = 404;
             throw err;
         }
-        console.log("Game info requested for session:", game);
         response.status(200).json({
             success: true,
             game: {
@@ -153,25 +152,26 @@ router.post('/session_guess', async (request, response) => {
         //TODO: map ellenőrzése
         const sessionId = request.session?.game.activeSessionId || 1; //TODO: törlés amikor login kész lesz
         const game = request.session.game;
-        const guessu = parseFloat(request.body.u);
-        const guessv = parseFloat(request.body.v);
-        const timeLeft = parseInt(request.body.timeLeft);
-        const mapI = parseInt(request.body.map_i);
-        const mapOb = game.mapInfo[mapI];
-        const timePunishment = game.roundTime - 5;
-        const minTimeMultiplier = 0.1;
-        let score;
-        let reJson;
         if (!sessionId) {
             const err = new Error("No active game session found");
             err.statusCode = 404;
             throw err;
         }
-        if (!game || !game.point) {
+        if (!game || !game.point || !Array.isArray(game.mapInfo)) {
             const err = new Error("No active game or game point found");
             err.statusCode = 404;
             throw err;
         }
+        const guessu = parseFloat(request.body.u);
+        const guessv = parseFloat(request.body.v);
+        const timeLeft = parseInt(request.body.timeLeft);
+        const mapI = parseInt(request.body.map_i);
+        const mapObI = game.mapInfo.findIndex(m => m.mapId === game.point.mapId);
+        const mapOb = game.mapInfo[mapObI];
+        const timePunishment = game.roundTime - 5;
+        const minTimeMultiplier = 0.1;
+        let score;
+        let reJson;
         if (isNaN(guessu) || isNaN(guessv) || isNaN(timeLeft)) {
             const err = new Error("Invalid guess coordinates or time left");
             err.statusCode = 400;
@@ -184,19 +184,19 @@ router.post('/session_guess', async (request, response) => {
         }
         if (guessu < 0 || guessv < 0) {
             score = 0;
-            reJson = { success: true, score: score, distance: null, mapI: mapI };
+            reJson = { success: true, score: score, distance: null, mapI: mapObI };
             await database.saveGuess(sessionId, game.point.pointId, mapOb.mapId, guessu, guessv, -1, 0, game.currentCycle);
-        } else if (mapOb.mapId !== game.point.mapId) {
+        } else if (mapObI !== mapI) {
             score = 0;
-            reJson = { success: true, score: score, distance: null, mapI: mapI };
+            reJson = { success: true, score: score, distance: null, mapI: mapObI };
             await database.saveGuess(sessionId, game.point.pointId, mapOb.mapId, guessu, guessv, -1, 0, game.currentCycle);
         }
         else {
             const du = (guessu - game.point.pointu);
             const dv = (guessv - game.point.pointv);
             const distance = Math.sqrt(du * du + dv * dv);
-            const pixelDx = du * game.mapInfo.width;
-            const pixelDy = dv * game.mapInfo.height;
+            const pixelDx = du * mapOb.width;
+            const pixelDy = dv * mapOb.height;
             const pixelDistance = Math.round(Math.sqrt(pixelDx * pixelDx + pixelDy * pixelDy));
             if (timeLeft > timePunishment && timeLeft <= game.roundTime) {
                 score = Math.round(5000 * Math.exp(game.sharpness * (distance / Math.SQRT2)));

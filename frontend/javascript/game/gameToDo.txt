@@ -7,11 +7,12 @@ nem fontos már--map id biztonságos e
 kesz--map növekedés
 kesz--pontok visszaadása, osszpontszam tarolasa, visszaadasa
 kesz--térképre kirajzolni a pontokat, helyes megoldást
---helyes terkepre kirajzolas
+kesz--helyes terkepre kirajzolas
+--pontok kiirasa koronkent
 --csalás ellenőrzés - idő
 --dizájn
 --gombok kinézete stb
 --auth
 --játékok befejezése
---session_guess get vagy post?
+--session_guess get vagy post???
 --127 kidurrantas

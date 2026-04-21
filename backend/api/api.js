@@ -314,8 +314,9 @@ router.get('/active_game_session', async (request, response) => {
                 gameMapId: activeSession.game_maps_id,
                 currentCycle: activeSession.current_cycle,
                 sharpness: activeSession.sharpness,
-                roundsLeft: activeSession.rounds_left,
-                roundTime: activeSession.time_per_round
+                rounds: activeSession.rounds_left,
+                roundTime: activeSession.time_per_round,
+                gameTitle: activeSession.title
             };
             responseData = {
                 success: true,
@@ -363,7 +364,8 @@ router.post('/post_game_id', upload.none('file'), async (request, response) => {
             currentCycle: 1,
             sharpness: sharpness,
             rounds: rounds,
-            roundTime: roundTime
+            roundTime: roundTime,
+            gameTitle: gameTitle
         };
 
         response.status(200).json({ success: true, message: 'Game map ID saved in session' });

@@ -18,6 +18,9 @@ var gameMapsIndex = -1;
 document.addEventListener("DOMContentLoaded", function () {
     init();
     startGame();
+    document.getElementById("nextMap").addEventListener("click", function () {
+        cycleMaps();
+    });
 });
 
 function showCountdownStep(overlay, numberEl, steps, i, resolve) {
@@ -47,13 +50,16 @@ function createCountdownTimer() {
     });
 }
 
+let asd = true;
 function init() {
     mapViewerEngine = new MapViewer(mapCanvasId);
     mapViewerEngine.onClickHandler = (cursorX, cursorY) => {
-        if (mapViewerEngine.doesMarkerExist(0)) {
-            mapViewerEngine.moveMarker(0, cursorX, cursorY);
-        } else {
-            mapViewerEngine.placeMarker(0, cursorX, cursorY, 24.0, 32.0, "uploading");
+        if (asd) {
+            if (mapViewerEngine.doesMarkerExist(0)) {
+                mapViewerEngine.moveMarker(0, cursorX, cursorY);
+            } else {
+                mapViewerEngine.placeMarker(0, cursorX, cursorY, 24.0, 32.0, "uploading");
+            }
         }
     }
     document.getElementById("autoRotate").addEventListener("change", setAutoRotate);
@@ -123,6 +129,7 @@ function waitForNext() {
 }
 
 function nextRound() {
+    asd = true;
     if (resolveNext) {
         resolveNext();
         resolveNext = null;
@@ -141,7 +148,7 @@ async function startGame() {
         if (!mapsData.success || !mapsData.maps) throw new Error("Failed to fetch game maps");
 
         gameMaps = mapsData.maps;
-        nextMap();
+        cycleMaps();
 
         const roundCount = gameData.game.rounds;
         const roundTime = gameData.game.roundTime;
@@ -180,23 +187,27 @@ async function createPoint() {
     await createCountdownTimer();
 }
 
-function nextMap() {
+function cycleMaps() {
     gameMapsIndex++;
-    console.log("Next map:" + gameMapsIndex);
-    console.log(gameMaps.length);
     if (gameMaps.length <= gameMapsIndex) {
         gameMapsIndex = 0;
     }
+    nextMap();
+}
+
+function nextMap() {
     const map = gameMaps[gameMapsIndex];
+    console.log(map);
     const imageDataUrl = `data:${map.image.mime_type};base64,${map.image.base64}`;
     mapViewerEngine.loadMap(imageDataUrl, map.image.width, map.image.height)
         .then(function () {
-            console.log("Game map loaded:", map.mapI);
+            console.log("Game map loaded:", gameMapsIndex);
         })
         .catch(function (e) {
             console.error("Failed to load game map:", e);
         });
     removeEverything();
+
 }
 
 let timerInterval = null;
@@ -220,6 +231,7 @@ function stopRoundTimer() {
 
 async function sendGuess() {
     stopRoundTimer();
+    asd = false;
     let sendData;
     if (!doesmarkerExist(0)) {
         sendData = { u: -1, v: -1 };
@@ -231,8 +243,8 @@ async function sendGuess() {
     sendData.map_i = gameMapsIndex;
     console.log("Sending guess:", sendData);
     const response = await postGameScore('http://127.0.0.1:3000/api/game/session_guess', sendData);
-    console.log("Guess response:", response);
     showAnswer(response);
+    // showUserScore(response);
     if (resolveGuess) {
         resolveGuess();
         resolveGuess = null;
@@ -240,6 +252,11 @@ async function sendGuess() {
 }
 
 function showAnswer(response) {
+    console.log("Guess response:", response);
+    if (gameMapsIndex != response.mapI) {
+        gameMapsIndex = response.mapI;
+        nextMap();
+    }
     document.getElementById(mapCanvasId).style.maxWidth = "none";
     document.getElementById(mapCanvasId).style.width = "100%";
     placeMarkerByUV(1, response.pointu, response.pointv, 24.0, 32.0, "ready");
