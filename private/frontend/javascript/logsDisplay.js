@@ -1,37 +1,75 @@
-import { createHTMLelement, inputGeneral, formatDate, gombGeneral, labelGeneral, lapozasGeneral } from "./utils/domUtils.js";
+import { createHTMLelement, inputGeneral, formatDate, gombGeneral, labelGeneral, lapozasGeneral, createSection } from "./utils/domUtils.js";
 import { getLogs, sortedLogs, exportLogs } from "./fetchs.js";
 import i18n from "./utils/i18next.js";
 
 export async function logsDisplayre() {
     currentPage.page = 1;
     let display = document.getElementById('content');
+    display.innerHTML = "";
 
-    let row = createHTMLelement('div', ["row", "p-3"]);
-    let col9div = createHTMLelement('div', ["col-9"]);
-    let fejlec = createHTMLelement('div', ["d-flex", "justify-content-between"])
+    let row = createHTMLelement('div', ["row", "p-3", "g-4"]);
 
-    let cim = createHTMLelement('h2', ["h2"], i18n.t('admin:logs.title'));
+    let fejlecDiv = createHTMLelement('div', ["d-flex", "justify-content-between", "align-items-center"]);
+    let cim = createHTMLelement('h2', ["h2", "mb-0"], i18n.t('admin:logs.title'));
+    fejlecDiv.appendChild(cim);
 
-    fejlec.appendChild(cim);
-    col9div.appendChild(fejlec);
-
-    //tablazat
-    let tablazat = createHTMLelement('div', [], null, "logsDiv");
-    col9div.appendChild(tablazat);
-
-    //szures
-
-    let col3div = createHTMLelement('div', ["col-3"]);
-    let kartya = createHTMLelement('div', ["card", "bg-light", "p-3"]);
+    let szuresTartalom = szuresek();
+    let szuresCol = createHTMLelement('div', []);
+    
+    let kartya = createHTMLelement('div', ["card", "bg-light", "p-3", "shadow-sm"]);
     let kiscim = createHTMLelement('h4', ["h4"], i18n.t('admin:common.sort'));
-    let szuresDiv = szuresek();
+    
+    //tablazat
+    let tablazatCol = createHTMLelement('div', []);
+    let tablazatTartalom = createHTMLelement('div', [], null, "logsDiv");
+    tablazatCol.appendChild(tablazatTartalom);
 
-    kartya.appendChild(kiscim);
-    kartya.appendChild(szuresDiv);
-    col3div.appendChild(kartya);
+    let balOldal = createHTMLelement('div', ["col-lg-8"]);
+    let jobbOldal = createHTMLelement('div', ["col-lg-4"]);
 
-    row.appendChild(col9div);
-    row.appendChild(col3div);
+    const mediaQuery = window.matchMedia('(min-width: 992px)');
+
+    const handleLayoutChange = (e) => {
+        row.innerHTML = "";
+        szuresCol.innerHTML = "";
+
+        if (e.matches) {
+            kartya.innerHTML = "";
+            kartya.appendChild(kiscim);
+            kartya.appendChild(szuresTartalom);
+            szuresCol.appendChild(kartya);
+
+            balOldal.appendChild(fejlecDiv);
+            balOldal.appendChild(tablazatCol);
+            jobbOldal.appendChild(szuresCol);
+
+            row.appendChild(balOldal);
+            row.appendChild(jobbOldal);
+
+            tablazatCol.className = "mt-3";
+            szuresCol.className = "";
+        } else {
+            let accordionContainer = createHTMLelement('div', ['accordion'], null, 'settingsAccordion');
+            let { item, body } = createSection('filter', i18n.t('admin:common.sort'), false);
+            
+            body.appendChild(szuresTartalom);
+            accordionContainer.appendChild(item);
+            szuresCol.appendChild(accordionContainer);
+
+            szuresCol.className = "col-12 order-2 my-3";
+            tablazatCol.className = "col-12 order-3";
+
+            let fejlecWrap = createHTMLelement('div', ["col-12", "order-1", "mb-2"]);
+            fejlecWrap.appendChild(fejlecDiv);
+
+            row.appendChild(fejlecWrap);
+            row.appendChild(szuresCol);
+            row.appendChild(tablazatCol);
+        }
+    };
+
+    mediaQuery.addEventListener('change', handleLayoutChange);
+    handleLayoutChange(mediaQuery);
 
     display.appendChild(row);
 
@@ -257,7 +295,7 @@ function createDatePicker(labelStr, idPrefix) {
     label.innerText = labelStr;
     //megnezni
 
-    let dateInp = inputGeneral('date', null, new Date().toISOString().split('T')[0], `${idPrefix}date`, ["form-control", "form-control-sm", "mb-2"], true);
+    let dateInp = inputGeneral('date', null, new Date().toISOString().split('T')[0], `${idPrefix}Date`, ["form-control", "form-control-sm", "mb-2"], true);
 
     let slider = inputGeneral('range', null, idPrefix === "from" ? "32" : "96", null, ["form-range"], true);
     slider.min = "0";
@@ -290,12 +328,15 @@ function getFilterValues() {
     if (isDateEnabled) {
         let fromDateValue = document.getElementById("fromDate").value;
         let fromSliderValue = document.querySelector("#fromDate + input[type='range']").value;
+        console.log(fromDateValue, fromSliderValue);
         periodFrom = fromDateValue ? `${fromDateValue} ${getTimeFromSlider(fromSliderValue)}` : null;
 
         let toDateValue = document.getElementById("toDate").value;
         let toSliderValue = document.querySelector("#toDate + input[type='range']").value;
         periodTo = toDateValue ? `${toDateValue} ${getTimeFromSlider(toSliderValue)}` : null;
     }
+
+    
 
     return {
         username: document.getElementById("keresoInput").value,

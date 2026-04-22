@@ -147,6 +147,30 @@ export function lapozasGeneral(totalRecords, pageFunction, currentPage, ...args)
     return paginationDiv;
 }
 
+export function createSection(id, title, isOpen = false) {
+    let item = createHTMLelement('div', ['accordion-item', 'mb-3', 'border-0', 'shadow-sm']);
+
+    let header = createHTMLelement('h2', ['accordion-header']);
+
+    let button = gombGeneral('button', title, null, null, null, ['accordion-button']);
+    if (!isOpen) button.classList.add('collapsed');
+    button.setAttribute('data-bs-toggle', 'collapse');
+    button.setAttribute('data-bs-target', `#collapse-${id}`);
+
+    let collapse = createHTMLelement('div', ['accordion-collapse', 'collapse'], null, `collapse-${id}`);
+    if (isOpen) collapse.classList.add('show');
+    collapse.setAttribute('data-bs-parent', '#settingsAccordion');
+
+    let body = createHTMLelement('div', ['accordion-body']);
+
+    header.appendChild(button);
+    collapse.appendChild(body);
+    item.appendChild(header);
+    item.appendChild(collapse);
+
+    return { item, body };
+};
+
 export async function createPreview(file) {
 
     const img = new Image();

@@ -211,7 +211,7 @@ router.put('/userSelfUpdate',
         }
     })
 
-router.post('/userDarkModeUpdate',
+router.put('/userDarkMode',
     [
         body("darkmode").isBoolean().withMessage("Nem true/false értéket adtál meg!")
     ],
@@ -394,7 +394,18 @@ router.post('/addLog', async (request, response) => {
 router.get('/sortedLogs', async (request, response) => {
     try {
         let { username, periodFrom, periodTo, roles, activities, page } = request.query;
-        let logs = await database.sortedLogs(username, periodFrom, periodTo, roles, activities, page || 1);
+        const finalRoles = ensureArray(roles);
+        const finalActivities = ensureArray(activities);
+
+        let logs = await database.sortedLogs(
+            username,
+            periodFrom,
+            periodTo,
+            finalRoles,
+            finalActivities,
+            page || 1
+        );
+
         response.status(200).json({ logs: logs.rows, total: logs.total });
     } catch (error) {
         response.status(500).json({ error: error.message });
@@ -458,6 +469,24 @@ router.put('/updateAdminSettings', async (request, response) => {
         }
         else {
             response.status(200).json({ message: "Sikeres frissítés" });
+        }
+    } catch (error) {
+        console.error(error);
+        response.status(500).json({ message: "Hiba a frissítés során" });
+    }
+});
+
+router.put('/updateLanguage', async (request, response) => {
+    try {
+        const { language } = request.body;
+        const affectedRows = await database.updateLanguage(request.session.userid, language);
+
+        if (affectedRows === 0) {   
+            response.status(200).json({ message: "Nem történt változtatás", language: request.session.userLanguage });
+        }
+        else {
+            request.session.userLanguage = language;
+            response.status(200).json({ message: "Sikeres frissítés", language });
         }
     } catch (error) {
         console.error(error);
@@ -548,5 +577,10 @@ const createChartConfig = (labels, data, label, color) => ({
         }
     }
 });
+
+const ensureArray = (val) => {
+    if (!val) return [];
+    return Array.isArray(val) ? val : [val];
+};
 
 module.exports = router;

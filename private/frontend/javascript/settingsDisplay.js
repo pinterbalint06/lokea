@@ -1,5 +1,5 @@
-import { getUserData, deleteProfile, deleteProfilePicture, uploadProfilePic, userSelfUpdate, updatePassword, updateDarkMode, getProfilePicture, updateAdminSettings } from "./fetchs.js";
-import { createHTMLelement, inputGeneral, gombGeneral, labelGeneral, makeSubtitle, createPreview } from "./utils/domUtils.js";
+import { getUserData, deleteProfile, deleteProfilePicture, uploadProfilePic, userSelfUpdate, updatePassword, updateDarkMode, getProfilePicture, updateAdminSettings, updateLanguage } from "./fetchs.js";
+import { createHTMLelement, inputGeneral, gombGeneral, labelGeneral, makeSubtitle, createPreview, createSection } from "./utils/domUtils.js";
 import i18next from "./utils/i18next.js";
 
 export async function settingsDisplayre(adminSettings) {
@@ -177,12 +177,20 @@ export async function settingsDisplayre(adminSettings) {
     let optEn = new Option(i18next.t('admin:settings.english'), "en");
     langSelect.add(optHu);
     langSelect.add(optEn);
+    langSelect.value = i18next.resolvedLanguage;
+    langSelect.addEventListener("change", async function () {
+        let updatedLang = await updateLanguage(this.value);
+        if (updatedLang) {
+            i18next.changeLanguage(updatedLang);
+            settingsDisplayre(adminSettings);
+        }
+    });
     uiSec.body.appendChild(langSelect);
 
     uiSec.body.appendChild(makeSubtitle(i18next.t('admin:settings.dark_mode')));
     let darkSwitchDiv = createHTMLelement('div', ['form-check', 'form-switch']);
     let darkInput = inputGeneral("checkbox", null, null, "darkMode", ["form-check-input"], false);
-    darkInput.checked = (data.darkmode == 1);
+    darkInput.checked = (data.darkmode == 0);
     darkInput.onclick = async function () {
         await updateDarkMode(document.getElementById("darkMode").checked);
         ejszakaimod();
@@ -245,30 +253,6 @@ export async function settingsDisplayre(adminSettings) {
     hova.appendChild(errordiv);
     hova.appendChild(container);
 }
-
-function createSection(id, title, isOpen = false) {
-    let item = createHTMLelement('div', ['accordion-item', 'mb-3', 'border-0', 'shadow-sm']);
-
-    let header = createHTMLelement('h2', ['accordion-header']);
-
-    let button = gombGeneral('button', title, null, null, null, ['accordion-button']);
-    if (!isOpen) button.classList.add('collapsed');
-    button.setAttribute('data-bs-toggle', 'collapse');
-    button.setAttribute('data-bs-target', `#collapse-${id}`);
-
-    let collapse = createHTMLelement('div', ['accordion-collapse', 'collapse'], null, `collapse-${id}`);
-    if (isOpen) collapse.classList.add('show');
-    collapse.setAttribute('data-bs-parent', '#settingsAccordion');
-
-    let body = createHTMLelement('div', ['accordion-body']);
-
-    header.appendChild(button);
-    collapse.appendChild(body);
-    item.appendChild(header);
-    item.appendChild(collapse);
-
-    return { item, body };
-};
 
 async function checkModification() {
     let valtozas = false;

@@ -115,7 +115,7 @@ async function sortedUsers(mireKeresek, mit, status, adminChecked, modChecked, u
     }
 
     let roles = [];
-    
+
     if (adminChecked === 'true') roles.push('ADMIN');
     if (modChecked === 'true') roles.push('MOD');
     if (userChecked === 'true') roles.push('USER');
@@ -238,6 +238,27 @@ async function updateDarkMode(user_id, darkmode, selected_chart) {
     return affectedRows;
 }
 
+async function updateLanguage(user_id, language) {
+    let connection;
+    let affectedRows = 0;
+    try {
+        if (language) {
+            connection = await pool.getConnection();
+            await connection.beginTransaction();
+            const query = `UPDATE users SET users.language = ? WHERE users.user_id = ?`;
+            const [result] = await connection.execute(query, [language, user_id]);
+            await connection.commit();
+            affectedRows = result.affectedRows;
+            return affectedRows;
+        }
+    } catch (error) {
+        if (connection) await connection.rollback();
+        throw error;
+    } finally {
+        if (connection) connection.release();
+        
+    }
+}
 async function createAdminSettings(user_id) {
     let connection;
     try {
@@ -622,6 +643,7 @@ module.exports = {
     sortedUsers,
     updateUserByAdmin,
     updateDarkMode,
+    updateLanguage,
     createAdminSettings,
     getAdminSettings,
     updateAdminSettings,

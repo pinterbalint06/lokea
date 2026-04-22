@@ -212,7 +212,7 @@ export async function updatePassword(oldPass, newPass) {
 
 export async function updateDarkMode(is_dark) {
     try {
-        let response = await fetch("/api/admin/userDarkModeUpdate", {
+        let response = await fetch("/api/admin/userDarkMode", {
             method: "PUT",
             headers: {
                 "Content-Type": "application/json"
@@ -225,6 +225,29 @@ export async function updateDarkMode(is_dark) {
     } catch (error) {
         console.log("Hálózati vagy szerver hiba");
     }
+}
+
+export async function updateLanguage(language) {
+    let result = null;
+    try {
+        let response = await fetch("/api/admin/updateLanguage", {
+            method: "PUT",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ language })
+        });
+        let data = await response.json();
+
+        if (response.ok) {
+            console.log("Nyelv frissítve:", data.language);
+            result = data.language;
+        } else {
+            console.error("Szerver hiba:", data.message);
+        }
+    } catch (error) {
+        console.error("Hálózati hiba:", error);
+    }
+
+    return result;
 }
 
 export async function getAdminSettings() {
@@ -319,16 +342,20 @@ export async function exportUsers(filters) {
 export async function sortedLogs(variables) {
     let { username, periodFrom, periodTo, roles, activities, page } = variables;
     try {
-        const queryParams = new URLSearchParams({
-            username: username,
-            periodFrom: periodFrom,
-            periodTo: periodTo,
-            roles,
-            activities,
-            page: page || 1
-        }).toString();
+        const queryParams = new URLSearchParams();
+        if (username) queryParams.append('username', username);
+        if (periodFrom) queryParams.append('periodFrom', periodFrom);
+        if (periodTo) queryParams.append('periodTo', periodTo);
+        queryParams.append('page', page || 1);
 
-        let response = await fetch(`/api/admin/sortedLogs?${queryParams}`);
+        if (Array.isArray(roles)) {
+            roles.forEach(role => queryParams.append('roles', role));
+        }
+        if (Array.isArray(activities)) {
+            activities.forEach(act => queryParams.append('activities', act));
+        }
+
+        let response = await fetch(`/api/admin/sortedLogs?${queryParams.toString()}`);
 
         if (!response.ok) {
             throw new Error(`Server error: ${response.status}`);
