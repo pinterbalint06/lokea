@@ -136,5 +136,75 @@ describe("Game Maps API - /api/game-maps/", () => {
                 });
             });
         });
+
+        describe("GET /:gameMapID/my-comment", () => {
+            const defaults = {
+                id: randomId()
+            };
+
+            const comment = { rating: 4, comment_text: "Nice map!", username: "TestUser", created_at: "2024-01-01T12:00:00Z" };
+
+            const makeGetRequest = (overrides = {}) => buildRequest(
+                (id) => requestWithSupertest.get(`/api/game-maps/${encodeURIComponent(id)}/my-comment`),
+                overrides,
+                defaults
+            );
+
+            beforeEach(() => {
+                database.getUserCommentOnGameMap.mockResolvedValue(comment);
+            });
+
+            describe("Authorization (401, 403)", () => {
+                testRequiresAuth(() => makeGetRequest());
+            });
+
+            describe("Input validation (400, 413, 415, 422)", () => {
+                it("Should respond with 400 if the game map id is incorrect", async () => {
+                    await testInvalidIDs(
+                        (id) => makeGetRequest({ id }),
+                        ERRORS.GAMEMAP.INVALID_ID
+                    );
+                });
+            });
+
+            describe("Conflicts (404, 409)", () => {
+                it("Should respond with 404 if the user has not commented on the game map", async () => {
+                    database.hasUserCommentedOnGameMap.mockResolvedValueOnce(false);
+
+                    const response = await makeGetRequest();
+
+                    expectErrorResponse(response, 404, ERRORS.COMMENT.NOT_FOUND);
+                });
+            });
+
+            describe("Happy paths (200, 201, 204)", () => {
+                it("Should respond with 200 and return the user's comment", async () => {
+                    const response = await makeGetRequest();
+
+                    expect(response.statusCode).toBe(200);
+                    expect(response.body).toEqual(comment);
+                });
+            });
+
+            describe("Server errors (500)", () => {
+                suppressConsoleErrors();
+
+                it("Should respond with 500 if there is an unexpected database error during hasUserCommentedOnGameMap", async () => {
+                    database.hasUserCommentedOnGameMap.mockRejectedValueOnce(new Error("Database error"));
+
+                    const response = await makeGetRequest();
+
+                    expectErrorResponse(response, 500, ERRORS.COMMON.UNEXPECTED_ERROR);
+                });
+
+                it("Should respond with 500 if there is an unexpected database error during getUserCommentOnGameMap", async () => {
+                    database.getUserCommentOnGameMap.mockRejectedValueOnce(new Error("Database error"));
+
+                    const response = await makeGetRequest();
+
+                    expectErrorResponse(response, 500, ERRORS.COMMON.UNEXPECTED_ERROR);
+                });
+            });
+        });
     });
 });
