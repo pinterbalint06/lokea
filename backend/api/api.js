@@ -204,8 +204,7 @@ router.put('/updateUser', auth.checkAuth,
         body("email")
             .optional({ nullable: true })
             .isEmail().withMessage("Hibás email formátum")
-            .isLength({ min: 5, max: 254 }).withMessage("Email max 254 karakter!")
-            .isLength({ min: 5, max: 250 }).withMessage("Email max 250 karakter!"),
+            .isLength({ min: 5, max: 254 }).withMessage("Email max 254 karakter!"),
         body("is_2fa")
             .optional({ values: "null" })
             .isBoolean().withMessage("A 2FA értéke csak logikai (true/false) lehet!"),
@@ -213,7 +212,7 @@ router.put('/updateUser', auth.checkAuth,
         body("language")
             .optional({ values: "null" })
             .isString().withMessage("A nyelv formátuma érvénytelen!")
-            .isLength({ min: 2, max: 5 }).withMessage("A nyelv kódja 2-5 karakter lehet!"),
+            .isIn(['en', 'hu']).withMessage("A választható nyelvek: 'en' vagy 'hu'!"),
 
         body("darkmode")
             .optional({ values: "null" })
@@ -231,6 +230,7 @@ router.put('/updateUser', auth.checkAuth,
                 let { username, email, is_2fa, language, darkmode } = request.body;
                 let result = await database.updateUser(request.session.userid, username, email, is_2fa, language, darkmode);
                 if (result == 1) {
+                    if (language) request.session.userLanguage = language;
                     await database.addLog(request.session.userid, 'User update');
                     response.status(200).json({ message: "Sikeres frissités!" });
                     // await sendChangeEmail(email, username);

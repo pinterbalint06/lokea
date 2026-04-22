@@ -10,16 +10,38 @@ export async function dashboardDisplayre(selectedChart) {
     let data = await getDashboardInfo();
 
     let mainRow = createHTMLelement('div', ['row', 'g-4']);
+    let rightCol = createHTMLelement('div', ['col-lg-4', 'd-flex', 'flex-column', 'gap-4']);
+    
+    let kpi = createKpi(data.playerCount, data.activePlayerCount);
+    let chart = createChartBox(); 
+    let logs = createLogs(data.logsPreview);
 
-    mainRow.appendChild(createChartBox());
+    const mediaQuery = window.matchMedia('(min-width: 992px)');
+    const handleLayoutChange = (e) => {
+        if (e.matches) {
+            kpi.className = "card p-4 shadow-sm border-0";
+            chart.className = "col-lg-8";
+            logs.className = "card p-4 shadow-sm border-0";
 
-    let rightCol = createHTMLelement('div', ['col-lg-4']);
-    let rightStack = createHTMLelement('div', ['d-flex', 'flex-column', 'gap-4']);
-    rightStack.appendChild(createKpi(data.playerCount, data.activePlayerCount));
-    rightStack.appendChild(createLogs(data.logsPreview));
+            rightCol.appendChild(kpi);
+            rightCol.appendChild(logs);
+            
+            mainRow.innerHTML = "";
+            mainRow.appendChild(chart);
+            mainRow.appendChild(rightCol);
+        } else {
+            kpi.className = "col-12 mt-5";
+            chart.className = "col-12";
+            logs.className = "col-12";
 
-    rightCol.appendChild(rightStack);
-    mainRow.appendChild(rightCol);
+            mainRow.innerHTML = "";
+            mainRow.appendChild(kpi);
+            mainRow.appendChild(chart);
+            mainRow.appendChild(logs);
+        }
+    }
+    mediaQuery.addEventListener('change', handleLayoutChange);
+    handleLayoutChange(mediaQuery);
 
     display.appendChild(mainRow);
 
@@ -31,6 +53,7 @@ export async function dashboardDisplayre(selectedChart) {
         chartImg.style.maxHeight = "400px";
         chartContainer.appendChild(chartImg);
     }
+    
     await initSocket();
 }
 
@@ -67,7 +90,6 @@ function createChartBox() {
     card.appendChild(createHTMLelement('h6', ['text-muted', 'text-uppercase', 'small', 'fw-bold', 'mb-3'], i18next.t('admin:dashboard.weekly_activity')));
 
     let chartContainer = createHTMLelement('div', ['d-flex', 'justify-content-center', 'align-items-center', 'bg-light', 'rounded', 'h-100'], i18next.t('admin:dashboard.loading_chart'), "chart-container");
-    chartContainer.style.minHeight = "450px";
 
     card.appendChild(chartContainer);
     col.appendChild(card);

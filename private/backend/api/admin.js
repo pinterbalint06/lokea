@@ -391,9 +391,9 @@ router.post('/addLog', async (request, response) => {
     }
 })
 
-router.post('/sortedLogs', async (request, response) => {
+router.get('/sortedLogs', async (request, response) => {
     try {
-        let { username, periodFrom, periodTo, roles, activities, page } = request.body;
+        let { username, periodFrom, periodTo, roles, activities, page } = request.query;
         let logs = await database.sortedLogs(username, periodFrom, periodTo, roles, activities, page || 1);
         response.status(200).json({ logs: logs.rows, total: logs.total });
     } catch (error) {

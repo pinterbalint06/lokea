@@ -5,43 +5,35 @@ import i18next from "./utils/i18next.js";
 export async function usersDisplayre(variables) {
     currentPage.page = 1;
     let display = document.getElementById('content');
-    let row = createHTMLelement('row', ["row", "p-3"]);
+    display.innerHTML = "";
 
-    let col9div = createHTMLelement('div', ["col-9"]);
+    let row = createHTMLelement('div', ["row", "p-3", "g-4"]);
 
-    let fejlec = createHTMLelement('div', ["d-flex", "justify-content-between"]);
-
-    let cim = createHTMLelement('h2', ["h2"], i18next.t('admin:users.title'));
-
+    let fejlecDiv = createHTMLelement('div', ["d-flex", "justify-content-between", "align-items-center"]);
+    let cim = createHTMLelement('h2', ["h2", "mb-0"], i18next.t('admin:users.title'));
     let newUserGomb = gombGeneral("button", i18next.t('admin:users.create_new'), "user-plus", "green", null);
     newUserGomb.addEventListener("click", async function () {
         modalView(i18next.t('admin:users.create_new'), "new", newUserToModal(), variables);
-
         variables.modal.show();
     });
-
-    fejlec.appendChild(cim);
-    fejlec.appendChild(newUserGomb);
-    col9div.appendChild(fejlec);
+    fejlecDiv.appendChild(cim);
+    fejlecDiv.appendChild(newUserGomb);
 
     //szures
-
-    let col3div = createHTMLelement('div', ["col-3"]);
-    let kartya = createHTMLelement('div', ["card", "bg-light", "p-3"]);
+    let szuresCol = createHTMLelement('div', []);
+    let kartya = createHTMLelement('div', ["card", "bg-light", "p-3", "shadow-sm"]);
     let kiscim = createHTMLelement('h4', ["h4"], i18next.t('admin:users.sort'));
     let szuresDiv = createHTMLelement('div', ['mb-3']);
 
     //kereso
     let keresodiv = createHTMLelement('div', ["my-3"]);
-
     let inputgroupdiv = createHTMLelement('div', ["input-group"]);
-
     let keresoInput = inputGeneral("text", i18next.t('admin:users.search_placeholder'), null, "keresoInput", ["form-control"], false);
     keresoInput.addEventListener("input", async function () {
         currentPage.page = 1;
         let data = await sortedUser(getFilterValues());
         frissitUserTablazat(data.users, data.total, variables);
-    })
+    });
 
     let keresoSelect = document.createElement('select');
     keresoSelect.classList.add("form-select");
@@ -50,23 +42,20 @@ export async function usersDisplayre(variables) {
         currentPage.page = 1;
         let data = await sortedUser(getFilterValues());
         frissitUserTablazat(data.users, data.total, variables);
-    })
+    });
 
-    let option = document.createElement('option');
-    option.value = 'user_id';
-    option.selected = true;
-    option.innerText = 'ID';
-    keresoSelect.appendChild(option);
-
-    option = document.createElement('option');
-    option.value = 'username';
-    option.innerText = 'Username';
-    keresoSelect.appendChild(option);
-
-    option = document.createElement('option');
-    option.value = 'email';
-    option.innerText = 'E-mail';
-    keresoSelect.appendChild(option);
+    let options = [
+        { value: 'user_id', text: 'ID' },
+        { value: 'username', text: 'Username' },
+        { value: 'email', text: 'E-mail' }
+    ];
+    options.forEach(opt => {
+        let o = document.createElement('option');
+        o.value = opt.value;
+        o.innerText = opt.text;
+        if (opt.value === 'user_id') o.selected = true;
+        keresoSelect.appendChild(o);
+    });
 
     inputgroupdiv.appendChild(keresoInput);
     inputgroupdiv.appendChild(keresoSelect);
@@ -79,18 +68,16 @@ export async function usersDisplayre(variables) {
     for (let i = 0; i < statuszok.length; i++) {
         let formcheck = createHTMLelement('div', ["form-check"]);
         let radioButton = document.createElement('input');
-        radioButton.type = "radio"
+        radioButton.type = "radio";
         radioButton.classList.add("form-check-input");
         radioButton.id = `status${statuszok[i]}`;
         radioButton.name = "sort1";
-        if (i === 0) {
-            radioButton.checked = true;
-        }
+        if (i === 0) radioButton.checked = true;
         radioButton.addEventListener("change", async function () {
             currentPage.page = 1;
             let data = await sortedUser(getFilterValues());
             frissitUserTablazat(data.users, data.total, variables);
-        })
+        });
         let label = labelGeneral(`status${statuszok[i]}`, statuszok[i], ["form-check-label"]);
         formcheck.appendChild(radioButton);
         formcheck.appendChild(label);
@@ -101,20 +88,24 @@ export async function usersDisplayre(variables) {
 
     let roleDiv = document.createElement('div');
     let roleDivCim = createHTMLelement('h6', ["h6"], i18next.t('admin:users.role'));
-    let roleok = [i18next.t('admin:common.admin'), i18next.t('admin:common.moderator'), i18next.t('admin:common.user')];
-    for (let i = 0; i < roleok.length; i++) {
+    let roleFilters = [
+        { id: 'roleAdmin', label: i18next.t('admin:common.admin') },
+        { id: 'roleModerator', label: i18next.t('admin:common.moderator') },
+        { id: 'roleUser', label: i18next.t('admin:common.user') }
+    ];
+    for (let roleFilter of roleFilters) {
         let formcheck = createHTMLelement('div', ["form-check"]);
         let checkbox = document.createElement('input');
         checkbox.type = "checkbox";
         checkbox.classList.add("form-check-input");
-        checkbox.id = `role${roleok[i]}`;
+        checkbox.id = roleFilter.id;
         checkbox.name = "sort2";
         checkbox.addEventListener("change", async function () {
             currentPage.page = 1;
             let data = await sortedUser(getFilterValues());
             frissitUserTablazat(data.users, data.total, variables);
-        })
-        let label = labelGeneral(`role${roleok[i]}`, roleok[i], ["form-check-label"]);
+        });
+        let label = labelGeneral(roleFilter.id, roleFilter.label, ["form-check-label"]);
         formcheck.appendChild(checkbox);
         formcheck.appendChild(label);
         roleDiv.appendChild(formcheck);
@@ -127,23 +118,51 @@ export async function usersDisplayre(variables) {
     exportGomb.addEventListener("click", async function () {
         await exportUsers(getFilterValues());
     });
-
     exportGombDiv.appendChild(exportGomb);
     szuresDiv.appendChild(exportGombDiv);
 
     kartya.appendChild(kiscim);
     kartya.appendChild(szuresDiv);
-    col3div.appendChild(kartya);
+    szuresCol.appendChild(kartya);
 
     //tablazat
-    let tablazat = createHTMLelement('div', [], null, "usersTableDiv");
+    let tablazatCol = createHTMLelement('div', []);
+    let tablazatTartalom = createHTMLelement('div', ["table-responsive"], null, "usersTableDiv");
     let data = await osszesUser();
-    tablazat.appendChild(lapozasGeneral(data.total, paginate, currentPage, variables));
-    tablazat.appendChild(tablazatGeneral(data.users, variables));
-    col9div.appendChild(tablazat);
+    tablazatTartalom.appendChild(lapozasGeneral(data.total, paginate, currentPage, variables));
+    tablazatTartalom.appendChild(tablazatGeneral(data.users, variables));
+    tablazatCol.appendChild(tablazatTartalom);
 
-    row.appendChild(col9div);
-    row.appendChild(col3div);
+    let balOldal = createHTMLelement('div', ["col-lg-9"]);
+    let jobbOldal = createHTMLelement('div', ["col-lg-3"]);
+
+    const mediaQuery = window.matchMedia('(min-width: 992px)');
+    const handleLayoutChange = (e) => {
+        row.innerHTML = "";
+        if (e.matches) {
+            balOldal.appendChild(fejlecDiv);
+            balOldal.appendChild(tablazatCol);
+            jobbOldal.appendChild(szuresCol);
+
+            row.appendChild(balOldal);
+            row.appendChild(jobbOldal);
+
+            tablazatCol.className = "mt-3";
+            szuresCol.className = "";
+        } else {
+            szuresCol.className = "col-12 order-2 my-3";
+            tablazatCol.className = "col-12 order-3";
+
+            let fejlecWrap = createHTMLelement('div', ["col-12", "order-1", "mb-2"]);
+            fejlecWrap.appendChild(fejlecDiv);
+
+            row.appendChild(fejlecWrap);
+            row.appendChild(szuresCol);
+            row.appendChild(tablazatCol);
+        }
+    };
+    mediaQuery.addEventListener('change', handleLayoutChange);
+    handleLayoutChange(mediaQuery);
 
     display.appendChild(row);
 }
@@ -225,7 +244,6 @@ async function editUserToModal(data, variables) {
     let is_2fa = data.is_2fa;
     let pfproute = data.filepath;
 
-    // Alaphelyzetbe állítjuk a variables-t minden megnyitáskor
     variables.tempPfp = null;
     variables.deleteLast = false;
 
@@ -514,7 +532,7 @@ function frissitUserTablazat(data, userCount, variables) {
 }
 
 function tablazatGeneral(adatok, variables) {
-    let tablazat = createHTMLelement('table', ["table", "table-striped", "table-hover"], null, 'usersTable');
+    let tablazat = createHTMLelement('table', ["table", "table-sm", "table-striped", "table-hover"], null, 'usersTable');
     let thead = document.createElement('thead');
     let tr = document.createElement('tr');
     let oszlopfok = [i18next.t('admin:users.table_active'), i18next.t('admin:users.table_id'), i18next.t('admin:users.table_username'), i18next.t('admin:users.table_email'), i18next.t('admin:users.table_role'), i18next.t('admin:users.table_actions')];
@@ -546,31 +564,36 @@ function tablazatGeneral(adatok, variables) {
 
         let td = document.createElement('td');
         let modositoGombokDiv = createHTMLelement('div', ["d-flex", "justify-content-evenly"]);
-        let editGomb, torloGomb;
+        let editGomb, torloGomb, gombText;
         if (adatok[i].role != "ADMIN" && adatok[i].deleted_at == null) {
-            editGomb = gombGeneral("button", i18next.t('admin:users.btn_edit'), "edit", "blue", null);
+            editGomb = gombGeneral("button", null, "edit", "blue", null, ["d-flex", "flex-column", "flex-xl-row", "justify-content-center", "align-items-center", "ps-lg-2"]);
             editGomb.addEventListener("click", async function () {
                 currentData = await getUser(adatok[i].user_id);
                 modalView(i18next.t('admin:users.modal_edit_title'), "edit", await editUserToModal(currentData, variables), variables);
                 variables.modal.show();
             })
+            gombText = createHTMLelement('span', ["d-none", "d-md-block"], i18next.t('admin:users.btn_edit'));
+            editGomb.appendChild(gombText);
 
-            torloGomb = gombGeneral("button", i18next.t('admin:users.btn_delete'), "trash-2", "red", null);
+            torloGomb = gombGeneral("button", null, "trash-2", "red", null, ["d-flex", "flex-column", "flex-xl-row", "justify-content-center", "align-items-center", "ps-xl-2"]);
             torloGomb.addEventListener("click", async function () {
                 alert(await userToInactive(adatok[i].user_id, adatok[i].role, adatok[i].deleted_at == null));
                 currentPage.page = 1;
                 let data = await sortedUser(getFilterValues());
                 frissitUserTablazat(data.users, data.total, variables);
             });
-
+            gombText = createHTMLelement('span', ["d-none", "d-md-block"], i18next.t('admin:users.btn_delete'));
+            torloGomb.appendChild(gombText);
         }
         else {
-            editGomb = gombGeneral("button", i18next.t('admin:users.btn_view'), "eye", "blue", null);
+            editGomb = gombGeneral("button", null, "eye", "blue", null, ["d-flex", "flex-column", "flex-xl-row", "justify-content-center", "align-items-center", "ps-xl-2"]);
             editGomb.addEventListener("click", async function () {
                 currentData = await getUser(adatok[i].user_id);
                 modalView(i18next.t('admin:users.modal_view_title'), "view", await viewUserToModal(currentData, variables), variables);
                 variables.modal.show();
             })
+            gombText = createHTMLelement('span', ["d-none", "d-md-block"], i18next.t('admin:users.btn_view'));
+            editGomb.appendChild(gombText);
         }
 
         modositoGombokDiv.appendChild(editGomb);

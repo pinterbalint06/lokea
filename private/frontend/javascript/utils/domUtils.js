@@ -9,15 +9,13 @@ export function createHTMLelement(tag, classes = [], text = "", id = "") {
 export function gombGeneral(type, text, svg, color, id, classes = []) {
     let button = document.createElement('button');
     button.type = type;
-    if (svg == null) {
-        button.innerText = text;
-    }
-    else {
+    if (svg != null) {
         button.appendChild(svggeneral(svg, "buttonIcon"));
+    }
+    if (text != null) {
         let textNode = document.createTextNode(text);
         button.appendChild(textNode);
     }
-
     if (id != null) {
         button.id = id;
     }
@@ -142,7 +140,7 @@ export function lapozasGeneral(totalRecords, pageFunction, currentPage, ...args)
     });
 
     let pageInfo = createHTMLelement('span', ["align-self-center", "fw-bold"], `${currentPage.page} / ${maxPage}`);
-    
+
     paginationDiv.appendChild(prevBtn);
     paginationDiv.appendChild(pageInfo);
     paginationDiv.appendChild(nextBtn);

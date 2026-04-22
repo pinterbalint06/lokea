@@ -6,6 +6,7 @@ export async function nyelvSzinkronizalas() {
     try {
         let response = await fetch('/api/admin/getLanguage');
         let data = await response.json();
+        console.log(data)
 
         await initI18next(data.language);
 

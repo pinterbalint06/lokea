@@ -26,7 +26,7 @@ async function newUser(username, email, password) {
             throw new Error("Beszúrás sikertelen, nulla érintett sor.");
         }
         await connection.commit();
-        return { success: true };
+        return { success: true, insertId: result.insertId };
     } catch (error) {
         if (connection) {
             await connection.rollback();

@@ -115,9 +115,10 @@ async function sortedUsers(mireKeresek, mit, status, adminChecked, modChecked, u
     }
 
     let roles = [];
-    if (adminChecked) roles.push('ADMIN');
-    if (modChecked) roles.push('MOD');
-    if (userChecked) roles.push('USER');
+    
+    if (adminChecked === 'true') roles.push('ADMIN');
+    if (modChecked === 'true') roles.push('MOD');
+    if (userChecked === 'true') roles.push('USER');
 
     if (roles.length > 0) {
         const placeHolders = roles.map(() => '?').join(',');
