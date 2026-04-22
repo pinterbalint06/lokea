@@ -24,9 +24,13 @@ function randomId() {
 
 function buildRequest(baseRequest, overrides, defaults) {
     const finalValues = { ...defaults, ...overrides };
-    const { id, file, filename, fileFieldName, ...formDataFields } = finalValues;
+    const { id, file, filename, fileFieldName, query, ...formDataFields } = finalValues;
 
     let request = baseRequest(id);
+
+    if (query != undefined) {
+        request = request.query(query);
+    }
 
     for (const [key, value] of Object.entries(formDataFields)) {
         if (value != undefined) {

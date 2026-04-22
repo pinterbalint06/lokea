@@ -24,7 +24,7 @@ const validateRequest = (schema) => async (request, response, next) => {
             );
         }
         if (schema.query) {
-            request.query = await schema.query.validateAsync(
+            const validatedQuery = await schema.query.validateAsync(
                 request.query,
                 {
                     abortEarly: true,
@@ -32,6 +32,8 @@ const validateRequest = (schema) => async (request, response, next) => {
                     convert: true
                 }
             );
+            request.query = validatedQuery;
+            request.validatedQuery = validatedQuery;
         }
         next();
     } catch (error) {

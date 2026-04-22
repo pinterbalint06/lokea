@@ -1,4 +1,9 @@
-const { invalidIds, invalidIdsWithNulls } = require("../../helpers/test-data.js");
+const {
+    invalidIds,
+    invalidIdsWithNulls,
+    invalidTypeNumbers,
+    negativeNumbers
+} = require("../../helpers/test-data.js");
 
 const emptyTitles = [
     "",
@@ -63,23 +68,6 @@ const validTitles = [
     "a-b_c-d_e-f_g-h_i-j_"
 ];
 
-const invalidTypeNumbers = [
-    "",
-    "invalid",
-    true,
-    false,
-    NaN,
-    Infinity,
-    -Infinity,
-    12312313438576238462384823746284
-];
-
-const negativeNumbers = [
-    -0.0021,
-    -100,
-    -1231231231231231,
-    -12312
-];
 const tooBigUV = [
     1.0,
     123,

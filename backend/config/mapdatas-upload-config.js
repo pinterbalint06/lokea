@@ -5,8 +5,9 @@ const path = require("path");
 const ERRORS = require("#utils/error-messages.js");
 const AppError = require("#utils/app-error.js");
 
-// Storage configuration
-const TEMP_DIR = path.join(__dirname, "..", "temp");
+const TEMP_DIR = process.env.JEST_WORKER_ID
+    ? path.join(__dirname, "..", "temp", `test-${process.env.JEST_WORKER_ID}`)
+    : path.join(__dirname, "..", "temp");
 const UPLOAD_ROOT = path.join(__dirname, "..", "uploads");
 const UPLOAD_ROOT_MAP_DATA = path.join(__dirname, "..", "uploads", "mapdatas");
 const MAX_FILE_SIZE = 10 * 1024 * 1024; // 10 MB

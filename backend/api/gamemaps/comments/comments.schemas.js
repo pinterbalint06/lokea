@@ -1,5 +1,6 @@
 const joi = require("#utils/joi.js");
 const ERRORS = require("#utils/error-messages.js");
+const { gameMapIDParamsSchema } = require("#gamemaps/shared/schemas/gamemaps.schemas.js");
 
 const HUNGARIAN_TEXT_PATTERN = /^[a-zA-ZáéíóöőúüűÁÉÍÓÖŐÚÜŰ0-9 _-]+$/;
 
@@ -38,17 +39,21 @@ const commentBodySchema = joi.object({
 });
 
 const getGameMapCommentsSchema = {
+    params: gameMapIDParamsSchema,
     query:
         joi.object({
             page: joi
                 .number()
                 .integer()
                 .min(1)
+                .max(2147483647)
                 .default(1)
                 .messages({
                     "number.base": ERRORS.COMMON.INVALID_PAGE,
                     "number.integer": ERRORS.COMMON.INVALID_PAGE,
-                    "number.min": ERRORS.COMMON.INVALID_PAGE
+                    "number.min": ERRORS.COMMON.INVALID_PAGE,
+                    "number.unsafe": ERRORS.COMMON.INVALID_PAGE,
+                    "number.max": ERRORS.COMMON.INVALID_PAGE
                 })
         })
 };

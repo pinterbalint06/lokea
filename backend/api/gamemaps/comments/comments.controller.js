@@ -3,7 +3,7 @@ const commentsService = require("#gamemaps/comments/comments.service.js");
 async function getGameMapComments(request, response, next) {
     try {
         const { gameMapID } = request.params;
-        const { page } = request.query;
+        const { page } = request.validatedQuery;
 
         const commentsData = await commentsService.getGameMapComments(gameMapID, page);
 

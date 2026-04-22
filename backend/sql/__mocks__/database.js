@@ -40,7 +40,10 @@ const mockDatabase = {
     insertConnection: jest.fn(),
     arePointsInSameMap: jest.fn().mockResolvedValue(true),
     isConnectionCrossMap: jest.fn().mockResolvedValue(true),
-    updateConnectionDirections: jest.fn().mockResolvedValue(true)
+    updateConnectionDirections: jest.fn().mockResolvedValue(true),
+
+    getGameMapComments: jest.fn(),
+    getGameMapCommentCount: jest.fn()
 };
 
 module.exports = mockDatabase;
