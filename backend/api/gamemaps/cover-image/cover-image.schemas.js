@@ -5,6 +5,11 @@ const getGameMapCoverImageSchema = {
     query: resolutionQuerySchema
 };
 
+const gameMapIDParamSchema = {
+    params: gameMapIDParamsSchema
+};
+
 module.exports = {
-    getGameMapCoverImageSchema
+    getGameMapCoverImageSchema,
+    gameMapIDParamSchema
 };

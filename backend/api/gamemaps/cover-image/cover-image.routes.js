@@ -16,12 +16,14 @@ router.get(
 router.put(
     "/",
     upload.single("coverImage"),
+    validateRequest(schemas.gameMapIDParamSchema),
     controller.updateGameMapCoverImage
 );
 
 //?DELETE /api/game-maps/:gameMapID/cover-image
 router.delete(
     "/",
+    validateRequest(schemas.gameMapIDParamSchema),
     controller.deleteGameMapCoverImage
 );
 
