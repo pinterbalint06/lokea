@@ -388,7 +388,7 @@ describe("Game Maps API - /api/game-maps/", () => {
                 database.hasUserCommentedOnGameMap.mockResolvedValue(false);
             });
 
-            afterEach(() => {
+            afterAll(() => {
                 database.hasUserCommentedOnGameMap.mockResolvedValue(true);
             });
 
