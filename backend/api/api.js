@@ -314,7 +314,8 @@ router.get('/active_game_session', async (request, response) => {
                 gameMapId: activeSession.game_maps_id,
                 currentCycle: activeSession.current_cycle,
                 sharpness: activeSession.sharpness,
-                rounds: activeSession.rounds_left,
+                rounds: activeSession.rounds,
+                currentRound: activeSession.current_round,
                 roundTime: activeSession.time_per_round,
                 gameTitle: activeSession.title
             };
@@ -364,6 +365,7 @@ router.post('/post_game_id', upload.none('file'), async (request, response) => {
             currentCycle: 1,
             sharpness: sharpness,
             rounds: rounds,
+            currentRound: 0,
             roundTime: roundTime,
             gameTitle: gameTitle
         };

@@ -1,3 +1,9 @@
+import { formatSecondsToMinutes } from "./timer-conversion.js";
+
+window.addEventListener('pageshow', (event) => {
+    if (event.persisted) window.location.reload();
+});
+
 var loadedURLs = [];
 var cardLoadedTimes = 0;
 
@@ -130,12 +136,6 @@ function updateTimeValue() {
     timeValue.textContent = formatSecondsToMinutes(seconds);
 }
 
-
-function formatSecondsToMinutes(seconds) {
-    let minutesPart = Math.floor(seconds / 60).toString().padStart(2, "0");
-    let secondsPart = (seconds % 60).toString().padStart(2, "0");
-    return `${minutesPart}:${secondsPart}`;
-}
 
 async function postGameId(gamemapId) {
     const formData = new FormData(document.getElementById('settingsForm'));

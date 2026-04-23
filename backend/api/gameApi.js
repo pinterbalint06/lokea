@@ -46,6 +46,7 @@ router.get('/get_game_info', auth.checkGameSession, async (request, response) =>
             game: {
                 title: game.gameTitle,
                 rounds: game.rounds,
+                currentRound: game.currentRound,
                 roundTime: game.roundTime
             }
         });
@@ -121,6 +122,7 @@ router.get("/get_random_point", auth.checkGameSession, async (request, response)
         const imageBuffer = await fs.readFile(imageFullPath);
         const mimeType = getMimeTypeFromPath(point.filepath);
 
+        request.session.game.roundStartedAt = Date.now();
         request.session.game.point = {
             pointId: point.point_id,
             pointu: point.point_u,
@@ -163,10 +165,18 @@ router.post('/session_guess', auth.checkGameSession, async (request, response) =
         //TODO: map ellenőrzése
         const sessionId = request.session?.game.activeSessionId || 1; //TODO: törlés amikor login kész lesz
         const game = request.session.game;
+        const activePointId = await database.getCurrentPointId(sessionId);
+        if (!activePointId) {
+            const err = { message: "No active round" };
+            err.statusCode = 400;
+            throw err;
+        }
         const guessu = parseFloat(request.body.u);
         const guessv = parseFloat(request.body.v);
-        const timeLeft = parseInt(request.body.timeLeft);
         const mapI = parseInt(request.body.map_i);
+        const countdownSeconds = 3;
+        const elapsed = Math.floor((Date.now() - (game.roundStartedAt ?? 0)) / 1000) - countdownSeconds;
+        const timeLeft = Math.max(0, game.roundTime - elapsed);
         const mapObI = game.mapInfo.findIndex(m => m.mapId === game.point.mapId);
         const mapOb = game.mapInfo[mapObI];
         const timePunishment = game.roundTime - 5;
@@ -174,8 +184,8 @@ router.post('/session_guess', auth.checkGameSession, async (request, response) =
         let score;
         let reJson;
         let distance;
-        if (isNaN(guessu) || isNaN(guessv) || isNaN(timeLeft)) {
-            const err = new Error("Invalid guess coordinates or time left");
+        if (isNaN(guessu) || isNaN(guessv)) {
+            const err = new Error("Invalid guess coordinates");
             err.statusCode = 400;
             throw err;
         }
@@ -212,9 +222,12 @@ router.post('/session_guess', auth.checkGameSession, async (request, response) =
         await database.saveGuess(sessionId, game.point.pointId, mapOb.mapId, guessu, guessv, distance, score, game.currentCycle);
         const totalScore = await database.totalScore(sessionId);
         await database.incrementCurrentRound(sessionId);
+        game.currentRound += 1;
         reJson.totalScore = totalScore;
         reJson.pointu = game.point.pointu;
         reJson.pointv = game.point.pointv;
+        reJson.pointx = Math.round(game.point.pointu * mapOb.width);
+        reJson.pointy = Math.round(game.point.pointv * mapOb.height);
         await database.clearCurrentPoint(sessionId);
 
         response.status(200).json(reJson);

@@ -9,7 +9,7 @@ kesz--pontok visszaadása, osszpontszam tarolasa, visszaadasa
 kesz--térképre kirajzolni a pontokat, helyes megoldást
 kesz--helyes terkepre kirajzolas
 kesz--pontok kiirasa koronkent
---csalás ellenőrzés - idő
+kesz--csalás ellenőrzés - idő
 --dizájn
 --gombok kinézete stb
 kesz--auth
@@ -26,3 +26,5 @@ kesz--adott körre sorsolt kep elmentese
 --előző oldal frissítése belépéskor / visszalépéskor
 --reszponzivitás
 --tesztelések
+kesz--server oldali ellenorzesek
+

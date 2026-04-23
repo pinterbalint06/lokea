@@ -1,5 +1,6 @@
 import { MapViewer } from "../libs/viewer/MapViewer.js";
 import { EquirectangularViewer } from "../libs/viewer/EquirectangularViewer.js";
+import { formatSecondsToMinutes } from "./timer-conversion.js";
 
 const pictureCanvasId = "pictureCanvas";
 const mapCanvasId = "mapCanvas";
@@ -35,7 +36,7 @@ function showCountdownStep(overlay, numberEl, steps, i, resolve) {
     } else {
         setTimeout(() => {
             overlay.classList.remove("active");
-            setTimeout(resolve, 350); // wait for CSS fade-out transition
+            resolve();
         }, 1000);
     }
 }
@@ -44,7 +45,7 @@ function createCountdownTimer() {
     return new Promise(resolve => {
         const overlay = document.getElementById("countdownOverlay");
         const numberEl = document.getElementById("countdownNumber");
-        const steps = ["3", "2", "1", "Rajt!"];
+        const steps = ["3", "2", "1"];
         overlay.classList.add("active");
         showCountdownStep(overlay, numberEl, steps, 0, resolve);
     });
@@ -66,13 +67,11 @@ function init() {
     equirectangularViewer = new EquirectangularViewer(pictureCanvasId);
 }
 
-
 function mapFullScreen() {
     mapViewerEngine.toggleFullscreen();
 }
 
 function markerPosition() {
-    console.log(mapViewerEngine.getMarkerPosition(0));
     return mapViewerEngine.getMarkerPosition(0);
 }
 
@@ -82,14 +81,6 @@ function doesmarkerExist(id) {
 
 function doesLineExist() {
     return mapViewerEngine.doesLineExist(0);
-}
-
-function removeMarker() {
-    mapViewerEngine.removeMarker(0);
-}
-
-function removeLine() {
-    mapViewerEngine.removeLine(0);
 }
 
 function placeMarkerByUV(id, u, v, width, height, state) {
@@ -102,6 +93,10 @@ function connectMarker(id1, id2, lineId) {
 
 function removeEverything() {
     mapViewerEngine.clearMarkersAndLines();
+}
+
+function movetoMarker(x, y) {
+    mapViewerEngine.moveTo(x, y);
 }
 
 function setAutoRotate() {
@@ -131,6 +126,7 @@ function waitForNext() {
 
 function nextRound() {
     asd = true;
+    guessSent = false;
     if (resolveNext) {
         resolveNext();
         resolveNext = null;
@@ -152,12 +148,12 @@ async function startGame() {
         cycleMaps();
 
         const roundCount = gameData.game.rounds;
+        const currentRound = gameData.game.currentRound;
         const roundTime = gameData.game.roundTime;
 
-        for (let i = 0; i < roundCount; i++) {
+        for (let i = currentRound; i < roundCount; i++) {
             console.log(`Starting round ${i + 1} of ${roundCount}`);
-            document.getElementById(mapCanvasId).classList.remove("full");
-            document.getElementById("guessPanel").classList.remove("open");
+            resetGameState(roundTime);
             equirectangularViewer.setZoom(0);
             await createPoint();
             startRoundTimer(roundTime);
@@ -170,6 +166,12 @@ async function startGame() {
     } catch (error) {
         console.error("Error starting game:", error);
     }
+}
+
+function resetGameState(roundTime) {
+    document.getElementById(mapCanvasId).classList.remove("full");
+    document.getElementById("guessPanel").classList.remove("open");
+    const timerEl = document.getElementById("timer").textContent = formatSecondsToMinutes(roundTime);
 }
 
 async function createPoint() {
@@ -222,7 +224,7 @@ function startRoundTimer(seconds) {
     const timerEl = document.getElementById("timer");
     timerInterval = setInterval(() => {
         timeLeft--;
-        timerEl.textContent = timeLeft;
+        timerEl.textContent = formatSecondsToMinutes(timeLeft);
         timerEl.classList.toggle("urgent", timeLeft <= 5 && timeLeft > 0);
         if (timeLeft <= 0) {
             sendGuess();
@@ -236,25 +238,30 @@ function stopRoundTimer() {
     document.getElementById("timer").classList.remove("urgent");
 }
 
+let guessSent = false;
+
 async function sendGuess() {
-    stopRoundTimer();
-    asd = false;
-    let sendData;
-    if (!doesmarkerExist(0)) {
-        sendData = { u: -1, v: -1 };
-    }
-    else {
-        sendData = markerPosition();
-    }
-    sendData.timeLeft = timeLeft;
-    sendData.map_i = gameMapsIndex;
-    console.log("Sending guess:", sendData);
-    const response = await postGameScore('http://127.0.0.1:3000/api/game/session_guess', sendData);
-    showAnswer(response);
-    // showUserScore(response);
-    if (resolveGuess) {
-        resolveGuess();
-        resolveGuess = null;
+    if (!guessSent) {
+        guessSent = true;
+        stopRoundTimer();
+        asd = false;
+        let sendData;
+        if (!doesmarkerExist(0)) {
+            sendData = { u: -1, v: -1 };
+        }
+        else {
+            sendData = markerPosition();
+        }
+        sendData.map_i = gameMapsIndex;
+        console.log("Sending guess:", sendData);
+        const response = await postGameScore('http://127.0.0.1:3000/api/game/session_guess', sendData);
+        if (response.success) {
+            showAnswer(response);
+        };
+        if (resolveGuess) {
+            resolveGuess();
+            resolveGuess = null;
+        }
     }
 }
 
@@ -269,7 +276,7 @@ function showAnswer(response) {
     if (doesmarkerExist(0)) {
         connectMarker(0, 1, 0);
     }
-
+    movetoMarker(response.pointx, response.pointy);
     const panel = document.getElementById("guessPanel");
     document.getElementById("guessPanelScore").textContent = response.score ?? 0;
     document.getElementById("guessPanelDistance").textContent =
