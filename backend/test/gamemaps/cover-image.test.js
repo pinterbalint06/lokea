@@ -447,5 +447,154 @@ describe("Game Maps API - /api/game-maps/", () => {
                 });
             });
         });
+
+        describe("DELETE /:gameMapID/cover-image", () => {
+            const defaults = {
+                id: randomId()
+            };
+
+            const makeDeleteRequest = (overrides = {}) => buildRequest(
+                (id) => requestWithSupertest.delete(`/api/game-maps/${encodeURIComponent(id)}/cover-image`),
+                overrides,
+                defaults
+            );
+
+            let dbCoverImage;
+
+            beforeEach(() => {
+                dbCoverImage = {
+                    image_id: randomId(),
+                    filepath: "user1/gamemap1/cover.jpg"
+                };
+
+                database.getGameMapCoverImage.mockResolvedValue(dbCoverImage);
+                deleteImageAndLowResByMainPath.mockResolvedValue();
+            });
+
+            describe("Authorization (401, 403)", () => {
+                testRequiresAuth(() => makeDeleteRequest());
+
+                it("Should respond with 403 if it's not the user's game map", async () => {
+                    database.checkUserOwnsGameMap.mockResolvedValueOnce(false);
+
+                    const response = await makeDeleteRequest();
+
+                    expect(mockConnection.beginTransaction).not.toHaveBeenCalled();
+                    expectErrorResponse(response, 403, ERRORS.GAMEMAP.NO_ACCESS);
+                });
+            });
+
+            describe("Input validation (400, 413, 415, 422)", () => {
+                it("Should respond with 400 if the game map id is incorrect", async () => {
+                    await testInvalidIDs(
+                        (id) => makeDeleteRequest({ id }),
+                        ERRORS.GAMEMAP.INVALID_ID
+                    );
+                });
+            });
+
+            describe("Conflicts (404, 409)", () => {
+                it("Should respond with 404 if the game map has no cover image", async () => {
+                    database.getGameMapCoverImage.mockResolvedValueOnce(null);
+
+                    const response = await makeDeleteRequest();
+
+                    expect(mockConnection.beginTransaction).not.toHaveBeenCalled();
+                    expectErrorResponse(response, 404, ERRORS.GAMEMAP.COVER_IMAGE_NOT_FOUND);
+                });
+            });
+
+            describe("Happy paths (200, 201, 204)", () => {
+                it("Should respond with 204 and successfully delete the cover image from the database and the filesystem", async () => {
+                    const response = await makeDeleteRequest();
+
+                    expect(database.deleteImageById).toHaveBeenCalledWith(mockConnection, dbCoverImage.image_id);
+                    expect(deleteImageAndLowResByMainPath).toHaveBeenCalledWith(expect.stringContaining(path.normalize(dbCoverImage.filepath)));
+
+                    expectSuccessfulTransaction(mockConnection);
+                    expect(response.statusCode).toBe(204);
+                });
+
+                it("Should respond with 204 and successfully delete the cover image from the database without deleting files if filepath is pending", async () => {
+                    database.getGameMapCoverImage.mockResolvedValueOnce({ image_id: dbCoverImage.image_id, filepath: "pending" });
+
+                    const response = await makeDeleteRequest();
+
+                    expect(database.deleteImageById).toHaveBeenCalledWith(mockConnection, dbCoverImage.image_id);
+                    expect(deleteImageAndLowResByMainPath).not.toHaveBeenCalled();
+
+                    expectSuccessfulTransaction(mockConnection);
+                    expect(response.statusCode).toBe(204);
+                });
+
+                describe("Happy paths with deletion failure", () => {
+                    suppressConsoleErrors();
+
+                    it("Should respond with 204 even if filesystem deletion throws an error but should console.error it", async () => {
+                        const errorMsg = "Filesystem error";
+                        deleteImageAndLowResByMainPath.mockRejectedValueOnce(new Error(errorMsg));
+
+                        const response = await makeDeleteRequest();
+
+                        expect(database.deleteImageById).toHaveBeenCalledWith(mockConnection, dbCoverImage.image_id);
+                        expect(deleteImageAndLowResByMainPath).toHaveBeenCalled();
+                        expect(console.error).toHaveBeenCalledWith(
+                            expect.stringContaining("unsuccessful deletion"),
+                            expect.stringContaining(errorMsg)
+                        );
+
+                        expectSuccessfulTransaction(mockConnection);
+                        expect(response.statusCode).toBe(204);
+                    });
+                });
+            });
+
+            describe("Server errors (500)", () => {
+                suppressConsoleErrors();
+
+                it.each([
+                    { name: 'database.checkUserOwnsGameMap', databaseFunction: database.checkUserOwnsGameMap },
+                    { name: 'database.getGameMapCoverImage', databaseFunction: database.getGameMapCoverImage },
+                    { name: 'database.getConnection', databaseFunction: database.getConnection }
+                ])("Should respond with 500 if there is an unexpected database error during: $name", async ({ databaseFunction }) => {
+                    databaseFunction.mockRejectedValueOnce(new Error("Database error"));
+
+                    const response = await makeDeleteRequest();
+
+                    expect(mockConnection.beginTransaction).not.toHaveBeenCalled();
+                    expectErrorResponse(response, 500, ERRORS.COMMON.UNEXPECTED_ERROR);
+                });
+
+                it("Should respond with 500 and rollback if deleteImageById returns false", async () => {
+                    database.deleteImageById.mockResolvedValueOnce(false);
+
+                    const response = await makeDeleteRequest();
+
+                    expectRollback(mockConnection);
+                    expectErrorResponse(response, 500, ERRORS.GAMEMAP.COVER_IMAGE_DELETE_FAILED);
+                });
+
+                it("Should respond with 500 and rollback if there is an unexpected database error during deleteImageById", async () => {
+                    database.deleteImageById.mockRejectedValueOnce(new Error("Database error"));
+
+                    const response = await makeDeleteRequest();
+
+                    expectRollback(mockConnection);
+                    expectErrorResponse(response, 500, ERRORS.COMMON.UNEXPECTED_ERROR);
+                });
+
+                it("Should respond with 500 and rollback if there is an unexpected database error during commit", async () => {
+                    mockConnection.commit.mockRejectedValueOnce(new Error("Database error"));
+
+                    const response = await makeDeleteRequest();
+
+                    expect(mockConnection.beginTransaction).toHaveBeenCalled();
+                    expect(mockConnection.commit).toHaveBeenCalled();
+                    expect(mockConnection.rollback).toHaveBeenCalled();
+                    expect(mockConnection.release).toHaveBeenCalled();
+                    expectErrorResponse(response, 500, ERRORS.COMMON.UNEXPECTED_ERROR);
+                });
+            });
+        });
     });
 });
