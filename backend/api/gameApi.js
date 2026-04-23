@@ -1,6 +1,7 @@
 const express = require("express");
 const router = express.Router();
 const database = require("../sql/database.js");
+const auth = require("../auth.js");
 const fs = require("fs/promises");
 
 const path = require('path');
@@ -37,14 +38,9 @@ function resolvePathInsideUploadRoot(filePath) {
 
 //ENDPOINTS
 
-router.get('/get_game_info', async (request, response) => {
+router.get('/get_game_info', auth.checkGameSession, async (request, response) => {
     try {
         const game = request.session.game;
-        if (!game || !game.activeSessionId) {
-            const err = new Error("No active game session found");
-            err.statusCode = 404;
-            throw err;
-        }
         response.status(200).json({
             success: true,
             game: {
@@ -57,62 +53,15 @@ router.get('/get_game_info', async (request, response) => {
         if (error.statusCode) {
             response.status(error.statusCode).json({ success: false, message: error.message });
         } else {
-            response.status(500).json({ success: false, message: "Error fetching game info" });
+            response.status(500).json({ success: false, message: error.message });
         }
     }
 });
 
-router.get("/get_random_point", async (request, response) => {
+router.get("/get_all_maps", auth.checkGameSession, async (request, response) => {
+    const game = request.session.game;
     try {
-        const sessionId = request.session?.game.activeSessionId || 1; //TODO: törlés amikor login kész lesz
-        const gameMapId = request.session?.game.gameMapId || 1; //TODO: törlés amikor login kész lesz
-        if (!sessionId || !request.session.game) {
-            const err = new Error("No active game session found");
-            err.statusCode = 404;
-            throw err;
-        }
-        let point = await database.getRandomPoint(gameMapId, sessionId);
-        if (!point) {
-            await database.incrementCycle(sessionId);
-            point = await database.getRandomPoint(gameMapId, sessionId);
-            request.session.game.currentCycle += 1;
-        }
-        const imageFullPath = resolvePathInsideUploadRoot(point.filepath);
-        const imageBuffer = await fs.readFile(imageFullPath);
-        const mimeType = getMimeTypeFromPath(point.filepath);
-
-        request.session.game.point = {
-            pointId: point.point_id,
-            pointu: point.point_u,
-            pointv: point.point_v,
-            mapId: point.map_id
-        }
-
-        point = {
-            point_id: point.point_id,
-            north_direction: point.north_direction,
-            image: {
-                id: point.image_id,
-                mime_type: mimeType,
-                base64: imageBuffer.toString("base64"),
-                width: point.width,
-                height: point.height
-            }
-        };
-        response.status(200).json({ success: true, point: point });
-    } catch (error) {
-        if (error.statusCode) {
-            response.status(error.statusCode).json({ success: false, message: error.message });
-        } else {
-            response.status(500).json({ success: false, message: "Error fetching random point" });
-        }
-    }
-});
-
-router.get("/get_all_maps", async (request, response) => {
-    const sessionId = request.session?.activeSessionId || 1; //TODO: törlés amikor login kész lesz
-    try {
-        const maps = await database.getAllMaps(sessionId);
+        const maps = await database.getAllMaps(game.gameMapId);
 
         let mapObjects = [];
         let mapInfo = [];
@@ -143,25 +92,77 @@ router.get("/get_all_maps", async (request, response) => {
 
         response.status(200).json({ success: true, maps: mapObjects });
     } catch (error) {
-        response.status(500).json({ success: false, message: "Error fetching all maps" });
+        if (error.statusCode) {
+            response.status(error.statusCode).json({ success: false, message: error.message });
+        } else {
+            response.status(500).json({ success: false, message: "Error fetching maps" });
+        }
     }
 });
 
-router.post('/session_guess', async (request, response) => {
+router.get("/get_random_point", auth.checkGameSession, async (request, response) => {
+    try {
+        const sessionId = request.session?.game.activeSessionId;
+        const gameMapId = request.session?.game.gameMapId;
+        let point;
+        const currentPointId = await database.getCurrentPointId(sessionId);
+        if (currentPointId) {
+            point = await database.getPointById(currentPointId);
+        } else {
+            point = await database.getRandomPoint(gameMapId, sessionId);
+            if (!point) {
+                await database.incrementCycle(sessionId);
+                point = await database.getRandomPoint(gameMapId, sessionId);
+                request.session.game.currentCycle += 1;
+            }
+            await database.setCurrentPoint(sessionId, point.point_id);
+        }
+        const imageFullPath = resolvePathInsideUploadRoot(point.filepath);
+        const imageBuffer = await fs.readFile(imageFullPath);
+        const mimeType = getMimeTypeFromPath(point.filepath);
+
+        request.session.game.point = {
+            pointId: point.point_id,
+            pointu: point.point_u,
+            pointv: point.point_v,
+            north_direction: point.north_direction,
+            mapId: point.map_id,
+            image: {
+                id: point.image_id,
+                mimeTtype: mimeType,
+                base64: imageBuffer.toString("base64"),
+                width: point.width,
+                height: point.height
+            }
+        }
+
+        point = {
+            point_id: request.session.game.point.pointId, //kivenni ha nem kell a kliensnek 
+            north_direction: request.session.game.point.north_direction,
+            image: {
+                id: request.session.game.point.image.id,
+                mime_type: request.session.game.point.image.mimeTtype,
+                base64: request.session.game.point.image.base64,
+                width: request.session.game.point.image.width,
+                height: request.session.game.point.image.height
+            }
+        };
+        response.status(200).json({ success: true, point: point });
+    } catch (error) {
+        if (error.statusCode) {
+            response.status(error.statusCode).json({ success: false, message: error.message });
+        } else {
+            response.status(500).json({ success: false, message: "Error fetching random point" });
+        }
+    }
+});
+
+
+router.post('/session_guess', auth.checkGameSession, async (request, response) => {
     try {
         //TODO: map ellenőrzése
         const sessionId = request.session?.game.activeSessionId || 1; //TODO: törlés amikor login kész lesz
         const game = request.session.game;
-        if (!sessionId) {
-            const err = new Error("No active game session found");
-            err.statusCode = 404;
-            throw err;
-        }
-        if (!game || !game.point || !Array.isArray(game.mapInfo)) {
-            const err = new Error("No active game or game point found");
-            err.statusCode = 404;
-            throw err;
-        }
         const guessu = parseFloat(request.body.u);
         const guessv = parseFloat(request.body.v);
         const timeLeft = parseInt(request.body.timeLeft);
@@ -172,6 +173,7 @@ router.post('/session_guess', async (request, response) => {
         const minTimeMultiplier = 0.1;
         let score;
         let reJson;
+        let distance;
         if (isNaN(guessu) || isNaN(guessv) || isNaN(timeLeft)) {
             const err = new Error("Invalid guess coordinates or time left");
             err.statusCode = 400;
@@ -184,17 +186,17 @@ router.post('/session_guess', async (request, response) => {
         }
         if (guessu < 0 || guessv < 0) {
             score = 0;
+            distance = -1;
             reJson = { success: true, score: score, distance: null, mapI: mapObI };
-            await database.saveGuess(sessionId, game.point.pointId, mapOb.mapId, guessu, guessv, -1, 0, game.currentCycle);
         } else if (mapObI !== mapI) {
             score = 0;
+            distance = -1;
             reJson = { success: true, score: score, distance: null, mapI: mapObI };
-            await database.saveGuess(sessionId, game.point.pointId, mapOb.mapId, guessu, guessv, -1, 0, game.currentCycle);
         }
         else {
             const du = (guessu - game.point.pointu);
             const dv = (guessv - game.point.pointv);
-            const distance = Math.sqrt(du * du + dv * dv);
+            distance = Math.sqrt(du * du + dv * dv);
             const pixelDx = du * mapOb.width;
             const pixelDy = dv * mapOb.height;
             const pixelDistance = Math.round(Math.sqrt(pixelDx * pixelDx + pixelDy * pixelDy));
@@ -206,13 +208,14 @@ router.post('/session_guess', async (request, response) => {
                 score = Math.round(5000 * Math.exp(game.sharpness * (distance / Math.SQRT2)) * (timeLeft / timePunishment));
             }
             reJson = { success: true, score: score, distance: pixelDistance, mapI: mapI };
-            await database.saveGuess(sessionId, game.point.pointId, mapOb.mapId, guessu, guessv, distance, score, game.currentCycle);
-            await database.incrementCurrentRound(sessionId);
         }
+        await database.saveGuess(sessionId, game.point.pointId, mapOb.mapId, guessu, guessv, distance, score, game.currentCycle);
         const totalScore = await database.totalScore(sessionId);
+        await database.incrementCurrentRound(sessionId);
         reJson.totalScore = totalScore;
         reJson.pointu = game.point.pointu;
         reJson.pointv = game.point.pointv;
+        await database.clearCurrentPoint(sessionId);
 
         response.status(200).json(reJson);
     } catch (error) {

@@ -8,15 +8,15 @@ kesz--map növekedés
 kesz--pontok visszaadása, osszpontszam tarolasa, visszaadasa
 kesz--térképre kirajzolni a pontokat, helyes megoldást
 kesz--helyes terkepre kirajzolas
---pontok kiirasa koronkent
+kesz--pontok kiirasa koronkent
 --csalás ellenőrzés - idő
 --dizájn
 --gombok kinézete stb
---auth
+kesz--auth
 --játékok befejezése
---session_guess get vagy post???
+kesz--session_guess get vagy post???
 --127 kidurrantas
---adott körre sorsolt kep elmentese
+kesz--adott körre sorsolt kep elmentese
 --jobb oldali panelle kiirni a jatek nevet
 --jobb oldali panel teljes kinagyitasa a jatek vegen 
 --ido megcsinalasa  perc:másodpercre

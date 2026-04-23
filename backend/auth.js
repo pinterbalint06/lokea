@@ -2,26 +2,36 @@ const path = require('path');
 
 const checkAuth = (request, response, next) => {
     if (!request.session.userid) {
-        response.status(401).json({ message: "Bejelentkezés szükséges!" });
+        return response.status(401).json({ message: "Bejelentkezés szükséges!" });
     }
-    else {
-        next();
-    }
-
+    next();
 };
 
 const checkRole = (...roles) => {
     return (request, response, next) => {
+        if (!request.session.userid) {
+            return response.status(401).json({ message: "Bejelentkezés szükséges!" });
+        }
         if (!roles.includes(request.session.role)) {
-            response.status(404).sendFile(path.join(__dirname, '../frontend/html/notfound.html'));
+            return response.status(404).sendFile(path.join(__dirname, '../frontend/html/notfound.html'));
         }
-        else {
-            next();
-        }
+        next();
     };
+};
+
+const checkGameSession = (request, response, next) => {
+    // if (!request.session.userid) {
+    //     response.status(401).json({ message: "Bejelentkezés szükséges!" });
+    // }
+    if (!request.session.game?.activeSessionId) {
+        response.status(403).json({ message: "Nincs aktív játék munkamenet!" });
+    }
+    next();
+
 };
 
 module.exports = {
     checkAuth,
-    checkRole
+    checkRole,
+    checkGameSession,
 };

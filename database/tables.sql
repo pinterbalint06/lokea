@@ -120,6 +120,8 @@ CREATE TABLE game_sessions (
     rounds INT NOT NULL DEFAULT 5,
     sharpness FLOAT NOT NULL DEFAULT -3,
     time_per_round INT NOT NULL DEFAULT 30,
+    current_point_id INT NULL,
+    FOREIGN KEY (current_point_id) REFERENCES points(point_id),
     FOREIGN KEY (user_id) REFERENCES users(user_id) ON DELETE SET NULL,
     FOREIGN KEY (game_maps_id) REFERENCES game_maps(game_maps_id) ON DELETE CASCADE
 );

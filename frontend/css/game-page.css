@@ -1,4 +1,3 @@
-/* ── Page layout: fill viewport below navbar ─────────────────── */
 html,
 body {
     height: 100%;
@@ -23,7 +22,6 @@ body {
     flex-wrap: nowrap;
 }
 
-/* ── Panorama wrapper ─────────────────────────────────────────── */
 #pictureWrapper {
     position: relative;
     flex: 1;

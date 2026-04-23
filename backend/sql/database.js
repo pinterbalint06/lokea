@@ -350,16 +350,14 @@ async function getRandomPoint(gameMapId, gameSessionId) {
     return result[0];
 }
 
-async function getAllMaps(sessionId) {
+async function getAllMaps(gameMapId) {
     const query = `
         SELECT map.map_id, map.title, images.image_id, images.filepath, images.width, images.height
         FROM map
             INNER JOIN images ON map.image_id = images.image_id
-        WHERE map.game_maps_id = (
-            SELECT game_maps_id FROM game_sessions WHERE game_sessions.session_id = ?
-        );
+        WHERE map.game_maps_id = ?
     `;
-    const [result] = await pool.execute(query, [sessionId]);
+    const [result] = await pool.execute(query, [gameMapId]);
     return result;
 }
 
@@ -400,6 +398,35 @@ async function totalScore(sessionId) {
     `;
     const [result] = await pool.execute(query, [sessionId]);
     return result[0].total_score || 0;
+}
+
+async function getCurrentPointId(sessionId) {
+    const query = `SELECT current_point_id FROM game_sessions WHERE session_id = ?`;
+    const [result] = await pool.execute(query, [sessionId]);
+    return result[0]?.current_point_id ?? null;
+}
+
+async function getPointById(pointId) {
+    const query = `
+        SELECT points.point_id, points.point_u, points.point_v, points.north_direction,
+               images.image_id, images.filepath, images.width, images.height, map.map_id
+        FROM points
+            INNER JOIN images ON points.image_id = images.image_id
+            INNER JOIN map ON map.map_id = points.map_id
+        WHERE points.point_id = ?
+    `;
+    const [result] = await pool.execute(query, [pointId]);
+    return result[0];
+}
+
+async function setCurrentPoint(sessionId, pointId) {
+    const query = `UPDATE game_sessions SET current_point_id = ? WHERE session_id = ?`;
+    await pool.execute(query, [pointId, sessionId]);
+}
+
+async function clearCurrentPoint(sessionId) {
+    const query = `UPDATE game_sessions SET current_point_id = NULL WHERE session_id = ?`;
+    await pool.execute(query, [sessionId]);
 }
 
 //!Game map szerkesztéshez szükséges adatok lekérése
@@ -843,5 +870,9 @@ module.exports = {
     incrementCurrentRound,
     getGameTitleById,
     saveGuess,
-    totalScore
+    totalScore,
+    getCurrentPointId,
+    getPointById,
+    setCurrentPoint,
+    clearCurrentPoint
 };
