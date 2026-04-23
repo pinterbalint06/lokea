@@ -52,8 +52,8 @@ describe("Game Maps API - /api/game-maps/", () => {
 
             let sendFileSpy;
 
-            const makeGetRequest = (overrides = {}, query = "") => buildRequest(
-                (id) => requestWithSupertest.get(`/api/game-maps/${encodeURIComponent(id)}/cover-image${query}`),
+            const makeGetRequest = (overrides = {}) => buildRequest(
+                (id) => requestWithSupertest.get(`/api/game-maps/${encodeURIComponent(id)}/cover-image`),
                 overrides,
                 defaults
             );
