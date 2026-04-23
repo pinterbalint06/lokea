@@ -96,7 +96,7 @@ async function updateGameMapDetails(userId, gameMapID, title, description) {
 
         const updateSuccess = await database.updateGameMapDetails(dbConnection, gameMapID, titleDb, descriptionDb);
         if (!updateSuccess) {
-            throw new AppError(ERRORS.GAMEMAP.UPDATE_FAILED, 404);
+            throw new AppError(ERRORS.GAMEMAP.UPDATE_FAILED, 500);
         }
 
         await dbConnection.commit();
