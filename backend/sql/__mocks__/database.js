@@ -46,7 +46,8 @@ const mockDatabase = {
     getGameMapCommentCount: jest.fn(),
     hasUserCommentedOnGameMap: jest.fn().mockResolvedValue(true),
     getUserCommentOnGameMap: jest.fn(),
-    insertGameMapComment: jest.fn()
+    insertGameMapComment: jest.fn(),
+    updateUserCommentOnGameMap: jest.fn().mockResolvedValue(true)
 };
 
 module.exports = mockDatabase;
