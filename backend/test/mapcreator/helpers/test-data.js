@@ -2,7 +2,8 @@ const {
     invalidIds,
     invalidIdsWithNulls,
     invalidTypeNumbers,
-    negativeNumbers
+    negativeNumbers,
+    invalidCharForHungarian
 } = require("../../helpers/test-data.js");
 
 const emptyTitles = [
@@ -16,36 +17,6 @@ const tooLongTitles = [
     "This is exactly 21 ch",
     "Very long title exceeding limits",
     "Egy_Nagyon_Hosszu_Terkepnev_Ami_Tul_Hosszu"
-];
-
-const invalidCharTitles = [
-    "Hello World!",
-    "Q&A Session",
-    "Email@Address",
-    "Version 1.0",
-    "User, Name",
-    "A+B=C",
-    "(Parentheses)",
-    "El Niño",
-    "Façade",
-    "Gutenhello ß",
-    "Emoji 🚀",
-    "Line\nBreak",
-    "Térkép\u200Búj",
-    "Térkép\u00A02",
-    "Тérkép", // The "Т" is actually a Cyrillic letter (\u0422)
-    "Terkеp", // The "е" is actually a Cyrillic letter (\u0435)
-    "Title\b",
-    "Title\v2",
-    "[Draft] Térkép",
-    "{Térkép}",
-    "<Térkép>",
-    "Title | Subtitle",
-    "Térkép~2",
-    "`Térkép`",
-    "Térkép.5",
-    "Térkép: Budapest",
-    "Térkép; v2"
 ];
 
 const validTitles = [
@@ -90,7 +61,7 @@ module.exports = {
     invalidIdsWithNulls,
     emptyTitles,
     tooLongTitles,
-    invalidCharTitles,
+    invalidCharTitles: invalidCharForHungarian,
     validTitles,
     tooBigUV,
     invalidTypeNumbers,

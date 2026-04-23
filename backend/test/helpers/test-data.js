@@ -6,13 +6,17 @@ const tooBigNumbers = [
     1e308 // reaches max float limit
 ];
 
-const negativeNumbers = [
-    -0.0021, // negative decimal number
-    -100, // negative integer
-    -1231231231231231, // large negative integer
-    -12312, // negative integer
+const negativeIntegers = [
+    -100,
+    -12312,
     "-5", // negative number
     -1 // basic negative number
+];
+
+const negativeNumbers = [
+    ...negativeIntegers,
+    -0.0021, // negative decimal number
+    -1231231231231231 // large negative integer
 ];
 
 const invalidTypeNumbers = [
@@ -62,11 +66,43 @@ const invalidIdsWithNulls = [
     undefined // undefined value
 ];
 
+const invalidCharForHungarian = [
+    "Hello World!",
+    "Q&A Session",
+    "Email@Address",
+    "Version 1.0",
+    "User, Name",
+    "A+B=C",
+    "(Parentheses)",
+    "El Niño",
+    "Façade",
+    "Gutenhello ß",
+    "Emoji 🚀",
+    "Line\nBreak",
+    "Térkép\u200Búj",
+    "Térkép\u00A02",
+    "Тérkép", // The "Т" is actually a Cyrillic letter (\u0422)
+    "Terkеp", // The "е" is actually a Cyrillic letter (\u0435)
+    "Title\b",
+    "Title\v2",
+    "[Draft] Térkép",
+    "{Térkép}",
+    "<Térkép>",
+    "Title | Subtitle",
+    "Térkép~2",
+    "`Térkép`",
+    "Térkép.5",
+    "Térkép: Budapest",
+    "Térkép; v2"
+];
+
 module.exports = {
     tooBigNumbers,
     negativeNumbers,
     invalidTypeNumbers,
     invalidStringFormats,
     invalidIds,
-    invalidIdsWithNulls
+    invalidIdsWithNulls,
+    negativeIntegers,
+    invalidCharForHungarian
 };

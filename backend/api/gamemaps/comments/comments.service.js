@@ -27,9 +27,6 @@ async function getGameMapComments(gameMapID, page) {
 async function postGameMapComment(userId, gameMapID, comment, rating) {
     let dbConnection;
     try {
-        dbConnection = await database.getConnection();
-        await dbConnection.beginTransaction();
-
         const gameMapDetails = await database.getGameMapDetails(gameMapID);
         if (!gameMapDetails) {
             throw new AppError(ERRORS.GAMEMAP.NOT_FOUND, 404);
@@ -41,6 +38,9 @@ async function postGameMapComment(userId, gameMapID, comment, rating) {
         }
 
         const commentDb = comment ?? null;
+
+        dbConnection = await database.getConnection();
+        await dbConnection.beginTransaction();
 
         await database.insertGameMapComment(dbConnection, gameMapID, userId, commentDb, rating);
 

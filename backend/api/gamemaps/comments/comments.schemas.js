@@ -11,7 +11,7 @@ const commentSchema = joi
     .max(255)
     .pattern(HUNGARIAN_TEXT_PATTERN) // only hungarian letters, numbers, spaces, underscores and -
     .messages({
-        "string.base": ERRORS.COMMENT.INVALID_CONTENT,
+        "string.base": ERRORS.COMMENT.INVALID_CHARACTERS,
         "string.empty": ERRORS.COMMENT.EMPTY_CONTENT,
         "string.min": ERRORS.COMMENT.EMPTY_CONTENT,
         "string.max": ERRORS.COMMENT.TOO_LONG,
@@ -59,12 +59,16 @@ const getGameMapCommentsSchema = {
 };
 
 const postGameMapCommentsSchema = {
+    params: gameMapIDParamsSchema,
     body: commentBodySchema
 };
 
-const getUserCommentSchema = {};
+const getUserCommentSchema = {
+    params: gameMapIDParamsSchema
+};
 
 const putUserCommentSchema = {
+    params: gameMapIDParamsSchema,
     body: commentBodySchema
 };
 

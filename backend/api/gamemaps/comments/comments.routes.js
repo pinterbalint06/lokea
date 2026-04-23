@@ -19,20 +19,20 @@ router.get(
     controller.getUserComment
 );
 
-//?POST /api/game-maps/:gameMapID/my-comment
-router.post(
-    "/my-comment",
-    upload.none(),
-    validateRequest(schemas.postGameMapCommentsSchema),
-    controller.postGameMapComments
-);
-
 //?PUT /api/game-maps/:gameMapID/my-comment
 router.put(
     "/my-comment",
     upload.none(),
     validateRequest(schemas.putUserCommentSchema),
     controller.updateUserComment
+);
+
+//?POST /api/game-maps/:gameMapID/my-comment
+router.post(
+    "/my-comment",
+    upload.none(),
+    validateRequest(schemas.postGameMapCommentsSchema),
+    controller.postGameMapComments
 );
 
 //?DELETE /api/game-maps/:gameMapID/my-comment

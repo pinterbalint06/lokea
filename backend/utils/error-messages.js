@@ -116,7 +116,6 @@ const ERRORS = {
     },
 
     COMMENT: {
-        INVALID_CONTENT: "Helytelen hozzászólás tartalom!",
         TOO_LONG: "A hozzászólás maximum 255 karakter hosszú lehet!",
         EMPTY_CONTENT: "A hozzászólás nem lehet üres!",
         INVALID_CHARACTERS: "A hozzászólás csak betűket, számokat, szóközöket, kötőjeleket és alulvonásokat tartalmazhat!",

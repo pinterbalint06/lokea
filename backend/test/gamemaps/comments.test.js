@@ -5,9 +5,11 @@ const {
     testInvalidIDs,
     testRequiresAuth,
     expectErrorResponse,
-    suppressConsoleErrors
+    suppressConsoleErrors,
+    expectRollback,
+    expectSuccessfulTransaction
 } = require("#testhelpers/helpers.js");
-const { invalidTypeNumbers, invalidIds } = require("#testhelpers/test-data.js");
+const { invalidTypeNumbers, invalidIds, negativeNumbers, negativeIntegers, tooBigNumbers, invalidCharForHungarian } = require("#testhelpers/test-data.js");
 
 const ERRORS = require("#utils/error-messages.js");
 
@@ -202,6 +204,171 @@ describe("Game Maps API - /api/game-maps/", () => {
 
                     const response = await makeGetRequest();
 
+                    expectErrorResponse(response, 500, ERRORS.COMMON.UNEXPECTED_ERROR);
+                });
+            });
+        });
+
+        describe("POST /:gameMapID/my-comment", () => {
+            const defaults = {
+                id: randomId(),
+                rating: 4,
+                comment: "Nice map"
+            };
+
+            const makePostRequest = (overrides = {}) => buildRequest(
+                (id) => requestWithSupertest.post(`/api/game-maps/${encodeURIComponent(id)}/my-comment`),
+                overrides,
+                defaults
+            );
+
+            beforeEach(() => {
+                database.getGameMapDetails.mockResolvedValue({ creator_id: 1, creator_name: "TestUser", title: "Test Map", rating: 4.5, plays: 100, game_created: "2024-01-01T12:00:00Z", game_description: "A test map" });
+                database.hasUserCommentedOnGameMap.mockResolvedValue(false);
+            });
+
+            describe("Authorization (401, 403)", () => {
+                testRequiresAuth(() => makePostRequest());
+            });
+
+            describe("Input validation (400, 413, 415, 422)", () => {
+                it("Should respond with 400 if the game map id is incorrect", async () => {
+                    await testInvalidIDs(
+                        (id) => makePostRequest({ id }),
+                        ERRORS.GAMEMAP.INVALID_ID
+                    );
+                });
+
+                it("Should respond with 400 if the body is missing", async () => {
+                    const response = await makePostRequest({ rating: undefined, comment: undefined });
+
+                    expectErrorResponse(response, 400, ERRORS.COMMON.MISSING_DATA);
+                });
+
+                describe("Test rating", () => {
+                    it("Should respond with 400 if the rating is missing", async () => {
+                        const response = await makePostRequest({ rating: undefined });
+
+                        expectErrorResponse(response, 400, ERRORS.COMMENT.RATING_REQUIRED);
+                    });
+
+                    it.each([...negativeIntegers, 0])("Should respond with 400 if the rating is smaller than 1: %s", async (invalidRating) => {
+                        const response = await makePostRequest({ rating: invalidRating });
+
+                        expectErrorResponse(response, 400, ERRORS.COMMENT.TOO_LOW_RATING);
+                    });
+
+                    it.each([6, 7, 8, 341])("Should respond with 400 if the rating is bigger than 5: %s", async (invalidRating) => {
+                        const response = await makePostRequest({ rating: invalidRating });
+
+                        expectErrorResponse(response, 400, ERRORS.COMMENT.TOO_HIGH_RATING);
+                    });
+
+                    it.each([...tooBigNumbers, ...invalidTypeNumbers, 3.4, 2.123])("Should respond with 400 if the rating is invalid: %s", async (invalidRating) => {
+                        const response = await makePostRequest({ rating: invalidRating });
+
+                        expectErrorResponse(response, 400, ERRORS.COMMENT.INVALID_RATING);
+                    });
+                });
+
+                describe("Test comment", () => {
+                    it("Should respond with 400 if the comment is empty", async () => {
+                        const response = await makePostRequest({ comment: "" });
+
+                        expectErrorResponse(response, 400, ERRORS.COMMENT.EMPTY_CONTENT);
+                    });
+
+                    it("Should respond with 400 if the comment is too long", async () => {
+                        let tooLongComment = "";
+                        for (let i = 0; i < 256; i++) {
+                            tooLongComment += "a";
+                        }
+                        const response = await makePostRequest({ comment: tooLongComment });
+
+                        expectErrorResponse(response, 400, ERRORS.COMMENT.TOO_LONG);
+                    });
+
+                    it.each([...invalidCharForHungarian])("Should respond with 400 if the comment contains invalid characters: %s", async (invalidComment) => {
+                        const response = await makePostRequest({ comment: invalidComment });
+
+                        expectErrorResponse(response, 400, ERRORS.COMMENT.INVALID_CHARACTERS);
+                    });
+                });
+            });
+
+            describe("Conflicts (404, 409)", () => {
+                it("Should respond with 404 if the game map does not exist", async () => {
+                    database.getGameMapDetails.mockResolvedValueOnce(null);
+
+                    const response = await makePostRequest();
+
+                    expectErrorResponse(response, 404, ERRORS.GAMEMAP.NOT_FOUND);
+                });
+
+                it("Should respond with 409 if the user already commented", async () => {
+                    database.hasUserCommentedOnGameMap.mockResolvedValueOnce(true);
+
+                    const response = await makePostRequest();
+
+                    expectErrorResponse(response, 409, ERRORS.COMMENT.ALREADY_COMMENTED);
+                });
+            });
+
+            describe("Happy paths (200, 201, 204)", () => {
+                it("Should respond with 204 and create the comment", async () => {
+                    const response = await makePostRequest();
+
+                    expectSuccessfulTransaction(mockConnection);
+                    expect(database.insertGameMapComment).toHaveBeenCalledWith(mockConnection, defaults.id, expect.any(Number), defaults.comment, defaults.rating);
+
+                    expect(response.statusCode).toBe(204);
+                });
+
+                it("Should respond with 204 and create the comment with no comment text too", async () => {
+                    const response = await makePostRequest({ comment: undefined });
+
+                    expectSuccessfulTransaction(mockConnection);
+                    expect(database.insertGameMapComment).toHaveBeenCalledWith(mockConnection, defaults.id, expect.any(Number), null, defaults.rating);
+
+                    expect(response.statusCode).toBe(204);
+                });
+            });
+
+            describe("Server errors (500)", () => {
+                suppressConsoleErrors();
+
+                it.each([
+                    database.getConnection,
+                    mockConnection.beginTransaction,
+                    database.getGameMapDetails,
+                    database.hasUserCommentedOnGameMap
+                ])("Should respond with 500 if there is an unexpected database error during: %s", async (databaseFunction) => {
+                    databaseFunction.mockRejectedValueOnce(new Error("Database error"));
+
+                    const response = await makePostRequest();
+
+                    expectErrorResponse(response, 500, ERRORS.COMMON.UNEXPECTED_ERROR);
+                });
+
+                it("Should respond with 500 and rollback if there is an unexpected database error during insertGameMapComment", async () => {
+                    database.insertGameMapComment.mockRejectedValueOnce(new Error("Database error"));
+
+                    const response = await makePostRequest();
+
+                    expectRollback(mockConnection);
+                    expectErrorResponse(response, 500, ERRORS.COMMON.UNEXPECTED_ERROR);
+                });
+
+                it("Should respond with 500 and rollback if there is an unexpected database error during commit", async () => {
+                    mockConnection.commit.mockRejectedValueOnce(new Error("Database error"));
+
+                    const response = await makePostRequest();
+
+                    expect(database.getConnection).toHaveBeenCalled();
+                    expect(mockConnection.beginTransaction).toHaveBeenCalled();
+                    expect(mockConnection.commit).toHaveBeenCalled();
+                    expect(mockConnection.rollback).toHaveBeenCalled();
+                    expect(mockConnection.release).toHaveBeenCalled();
                     expectErrorResponse(response, 500, ERRORS.COMMON.UNEXPECTED_ERROR);
                 });
             });
