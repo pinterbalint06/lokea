@@ -72,7 +72,9 @@ const putUserCommentSchema = {
     body: commentBodySchema
 };
 
-const deleteUserCommentSchema = {};
+const deleteUserCommentSchema = {
+    params: gameMapIDParamsSchema
+};
 
 module.exports = {
     getGameMapCommentsSchema,

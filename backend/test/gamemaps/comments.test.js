@@ -388,6 +388,10 @@ describe("Game Maps API - /api/game-maps/", () => {
                 database.hasUserCommentedOnGameMap.mockResolvedValue(false);
             });
 
+            afterEach(() => {
+                database.hasUserCommentedOnGameMap.mockResolvedValue(true);
+            });
+
             describe("Authorization (401, 403)", () => {
                 testRequiresAuth(() => makePostRequest());
             });
@@ -504,7 +508,6 @@ describe("Game Maps API - /api/game-maps/", () => {
                     { name: 'database.getGameMapDetails', databaseFunction: database.getGameMapDetails },
                     { name: 'database.hasUserCommentedOnGameMap', databaseFunction: database.hasUserCommentedOnGameMap }
                 ])("Should respond with 500 if there is an unexpected database error during: $name", async ({ databaseFunction }) => {
-
                     databaseFunction.mockRejectedValueOnce(new Error("Database error"));
 
                     const response = await makePostRequest();
@@ -525,6 +528,101 @@ describe("Game Maps API - /api/game-maps/", () => {
                     mockConnection.commit.mockRejectedValueOnce(new Error("Database error"));
 
                     const response = await makePostRequest();
+
+                    expect(database.getConnection).toHaveBeenCalled();
+                    expect(mockConnection.beginTransaction).toHaveBeenCalled();
+                    expect(mockConnection.commit).toHaveBeenCalled();
+                    expect(mockConnection.rollback).toHaveBeenCalled();
+                    expect(mockConnection.release).toHaveBeenCalled();
+                    expectErrorResponse(response, 500, ERRORS.COMMON.UNEXPECTED_ERROR);
+                });
+            });
+        });
+
+        describe("DELETE /:gameMapID/my-comment", () => {
+            const defaults = {
+                id: randomId()
+            };
+
+            const makeDeleteRequest = (overrides = {}) => buildRequest(
+                (id) => requestWithSupertest.delete(`/api/game-maps/${encodeURIComponent(id)}/my-comment`),
+                overrides,
+                defaults
+            );
+
+            describe("Authorization (401, 403)", () => {
+                testRequiresAuth(() => makeDeleteRequest());
+            });
+
+            describe("Input validation (400, 413, 415, 422)", () => {
+                it("Should respond with 400 if the game map id is incorrect", async () => {
+                    await testInvalidIDs(
+                        (id) => makeDeleteRequest({ id }),
+                        ERRORS.GAMEMAP.INVALID_ID
+                    );
+                });
+            });
+
+            describe("Conflicts (404, 409)", () => {
+                it("Should respond with 404 if the user has not commented yet", async () => {
+                    database.hasUserCommentedOnGameMap.mockResolvedValueOnce(false);
+
+                    const response = await makeDeleteRequest();
+
+                    expect(mockConnection.beginTransaction).not.toHaveBeenCalled();
+                    expectErrorResponse(response, 404, ERRORS.COMMENT.NOT_FOUND);
+                });
+            });
+
+            describe("Happy paths (200, 201, 204)", () => {
+                it("Should respond with 204 and delete the comment", async () => {
+                    const response = await makeDeleteRequest();
+
+                    expectSuccessfulTransaction(mockConnection);
+                    expect(database.deleteUserCommentOnGameMap).toHaveBeenCalledWith(mockConnection, defaults.id, expect.any(Number));
+
+                    expect(response.statusCode).toBe(204);
+                });
+            });
+
+            describe("Server errors (500)", () => {
+                suppressConsoleErrors();
+
+                it.each([
+                    { name: 'database.getConnection', databaseFunction: database.getConnection },
+                    { name: 'mockConnection.beginTransaction', databaseFunction: mockConnection.beginTransaction },
+                    { name: 'database.hasUserCommentedOnGameMap', databaseFunction: database.hasUserCommentedOnGameMap }
+                ])("Should respond with 500 if there is an unexpected database error during: $name", async ({ databaseFunction }) => {
+                    databaseFunction.mockRejectedValueOnce(new Error("Database error"));
+
+                    const response = await makeDeleteRequest();
+
+                    expectErrorResponse(response, 500, ERRORS.COMMON.UNEXPECTED_ERROR);
+                });
+
+
+                it("Should respond with 500 and rollback if deleteUserCommentOnGameMap fails", async () => {
+                    database.deleteUserCommentOnGameMap.mockResolvedValueOnce(false);
+
+                    const response = await makeDeleteRequest();
+
+                    expectRollback(mockConnection);
+                    expectErrorResponse(response, 500, ERRORS.COMMENT.DELETE_FAILED);
+                });
+
+                it("Should respond with 500 and rollback if there is an unexpected database error during deleteUserCommentOnGameMap", async () => {
+                    database.deleteUserCommentOnGameMap.mockRejectedValueOnce(new Error("Database error"));
+
+                    const response = await makeDeleteRequest();
+
+                    expectRollback(mockConnection);
+                    expectErrorResponse(response, 500, ERRORS.COMMON.UNEXPECTED_ERROR);
+                });
+
+                it("Should respond with 500 and rollback if there is an unexpected database error during commit", async () => {
+                    mockConnection.commit.mockRejectedValueOnce(new Error("Database error"));
+
+                    const response = await makeDeleteRequest();
 
                     expect(database.getConnection).toHaveBeenCalled();
                     expect(mockConnection.beginTransaction).toHaveBeenCalled();
