@@ -52,7 +52,9 @@ const mockDatabase = {
     getGameMapCoverImage: jest.fn(),
     updateGameMapCoverImage: jest.fn().mockResolvedValue(true),
     getTopScoresForGameMap: jest.fn(),
-    updateGameMapDetails: jest.fn().mockResolvedValue(true)
+    updateGameMapDetails: jest.fn().mockResolvedValue(true),
+    getAllImageIdsForGameMap: jest.fn(),
+    deleteGameMapById: jest.fn().mockResolvedValue(true)
 };
 
 module.exports = mockDatabase;

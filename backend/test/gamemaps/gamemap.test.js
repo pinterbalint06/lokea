@@ -133,10 +133,6 @@ describe("Game Maps API - /api/game-maps/", () => {
                 defaults
             );
 
-            beforeEach(() => {
-                database.updateGameMapDetails.mockResolvedValue(true);
-            });
-
             describe("Authorization (401, 403)", () => {
                 testRequiresAuth(() => makePutRequest());
 
@@ -294,6 +290,181 @@ describe("Game Maps API - /api/game-maps/", () => {
                     mockConnection.commit.mockRejectedValueOnce(new Error("Database error"));
 
                     const response = await makePutRequest();
+
+                    expect(mockConnection.beginTransaction).toHaveBeenCalled();
+                    expect(mockConnection.commit).toHaveBeenCalled();
+                    expect(mockConnection.rollback).toHaveBeenCalled();
+                    expect(mockConnection.release).toHaveBeenCalled();
+                    expectErrorResponse(response, 500, ERRORS.COMMON.UNEXPECTED_ERROR);
+                });
+            });
+        });
+
+        describe("DELETE /:gameMapID", () => {
+            const defaults = {
+                id: randomId()
+            };
+
+            const makeDeleteRequest = (overrides = {}) => buildRequest(
+                (id) => requestWithSupertest.delete(`/api/game-maps/${encodeURIComponent(id)}`),
+                overrides,
+                defaults
+            );
+
+            let rmSpy;
+            const mockImageIds = [101, 102, 103];
+
+            beforeEach(() => {
+                rmSpy = jest.spyOn(fs, "rm").mockResolvedValue(undefined);
+
+                database.getGameMapDetails.mockResolvedValue({ id: defaults.id });
+                database.getAllImageIdsForGameMap.mockResolvedValue(mockImageIds);
+            });
+
+            afterEach(() => {
+                rmSpy.mockRestore();
+            });
+
+            describe("Authorization (401, 403)", () => {
+                testRequiresAuth(() => makeDeleteRequest());
+
+                it("Should respond with 403 if it's not the user's game map", async () => {
+                    database.checkUserOwnsGameMap.mockResolvedValueOnce(false);
+
+                    const response = await makeDeleteRequest();
+
+                    expect(mockConnection.beginTransaction).not.toHaveBeenCalled();
+                    expectErrorResponse(response, 403, ERRORS.GAMEMAP.NO_ACCESS);
+                });
+            });
+
+            describe("Input validation (400, 413, 415, 422)", () => {
+                it("Should respond with 400 if the game map id is incorrect", async () => {
+                    await testInvalidIDs(
+                        (id) => makeDeleteRequest({ id }),
+                        ERRORS.GAMEMAP.INVALID_ID
+                    );
+                });
+            });
+
+            describe("Conflicts (404, 409)", () => {
+                it("Should respond with 404 if the game map does not exist", async () => {
+                    database.getGameMapDetails.mockResolvedValueOnce(null);
+
+                    const response = await makeDeleteRequest();
+
+                    expect(mockConnection.beginTransaction).not.toHaveBeenCalled();
+                    expectErrorResponse(response, 404, ERRORS.GAMEMAP.NOT_FOUND);
+                });
+            });
+
+            describe("Happy paths (200, 201, 204)", () => {
+                it("Should respond with 204, delete the map from DB, delete all imageIds, and delete the game directory", async () => {
+                    const response = await makeDeleteRequest();
+
+                    expect(database.deleteGameMapById).toHaveBeenCalledWith(mockConnection, defaults.id);
+                    expect(database.deleteImageById).toHaveBeenCalledTimes(mockImageIds.length);
+                    for (const imageId of mockImageIds) {
+                        expect(database.deleteImageById).toHaveBeenCalledWith(mockConnection, imageId);
+                    }
+
+                    expect(fs.rm).toHaveBeenCalledWith(
+                        expect.stringContaining(defaults.id.toString()),
+                        { recursive: true, force: true }
+                    );
+
+                    expectSuccessfulTransaction(mockConnection);
+                    expect(response.statusCode).toBe(204);
+                });
+
+                it("Should respond with 204, even when the game map has no images", async () => {
+                    database.getAllImageIdsForGameMap.mockResolvedValueOnce([]);
+
+                    const response = await makeDeleteRequest();
+
+                    expect(database.deleteGameMapById).toHaveBeenCalledWith(mockConnection, defaults.id);
+                    expect(database.deleteImageById).not.toHaveBeenCalled();
+
+                    expect(fs.rm).toHaveBeenCalledWith(
+                        expect.stringContaining(defaults.id.toString()),
+                        { recursive: true, force: true }
+                    );
+
+                    expectSuccessfulTransaction(mockConnection);
+                    expect(response.statusCode).toBe(204);
+                });
+
+                describe("Happy path with deletion failure", () => {
+                    suppressConsoleErrors();
+
+                    it("Should respond with 204 even if directory deletion throws an error but should console.error it", async () => {
+                        const errorMsg = "Delete error";
+                        rmSpy.mockRejectedValueOnce(new Error(errorMsg));
+
+                        const response = await makeDeleteRequest();
+
+                        expect(database.deleteGameMapById).toHaveBeenCalledWith(mockConnection, defaults.id);
+                        expect(fs.rm).toHaveBeenCalled();
+                        expect(console.error).toHaveBeenCalledWith(
+                            expect.stringContaining("Error deleting directory")
+                        );
+
+                        expectSuccessfulTransaction(mockConnection);
+                        expect(response.statusCode).toBe(204);
+                    });
+                });
+            });
+
+            describe("Server errors (500)", () => {
+                suppressConsoleErrors();
+
+                it.each([
+                    { name: 'database.getGameMapDetails', databaseFunction: database.getGameMapDetails },
+                    { name: 'database.checkUserOwnsGameMap', databaseFunction: database.checkUserOwnsGameMap },
+                    { name: 'database.getConnection', databaseFunction: database.getConnection }
+                ])("Should respond with 500 if there is an unexpected database error during: $name", async ({ databaseFunction }) => {
+                    databaseFunction.mockRejectedValueOnce(new Error("Database error"));
+
+                    const response = await makeDeleteRequest();
+
+                    expect(mockConnection.beginTransaction).not.toHaveBeenCalled();
+                    expectErrorResponse(response, 500, ERRORS.COMMON.UNEXPECTED_ERROR);
+                });
+
+                it("Should respond with 500 and rollback if getAllImageIdsForGameMap throws an error", async () => {
+                    database.getAllImageIdsForGameMap.mockRejectedValueOnce(new Error("Database error"));
+
+                    const response = await makeDeleteRequest();
+
+                    expectRollback(mockConnection);
+                    expectErrorResponse(response, 500, ERRORS.COMMON.UNEXPECTED_ERROR);
+                });
+
+                it("Should respond with 500 and rollback if deleteGameMapById returns false", async () => {
+                    database.deleteGameMapById.mockResolvedValueOnce(false);
+
+                    const response = await makeDeleteRequest();
+
+                    expectRollback(mockConnection);
+                    expectErrorResponse(response, 500, ERRORS.GAMEMAP.DELETE_FAILED);
+                });
+
+                it("Should respond with 500 and rollback if deleteImageById returns false", async () => {
+                    database.deleteImageById
+                        .mockResolvedValueOnce(true)
+                        .mockResolvedValueOnce(false); // second one fails
+
+                    const response = await makeDeleteRequest();
+
+                    expect(database.deleteImageById).toHaveBeenCalledTimes(2);
+                    expectRollback(mockConnection);
+                    expectErrorResponse(response, 500, ERRORS.MAP.IMAGE_DELETIONS_FAILED);
+                });
+
+                it("Should respond with 500 and rollback if there is an unexpected database error during commit", async () => {
+                    mockConnection.commit.mockRejectedValueOnce(new Error("Database error"));
+
+                    const response = await makeDeleteRequest();
 
                     expect(mockConnection.beginTransaction).toHaveBeenCalled();
                     expect(mockConnection.commit).toHaveBeenCalled();
