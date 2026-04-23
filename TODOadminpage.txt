@@ -25,7 +25,7 @@ transactions oldal
 hibak amiket javitani kell:
 -stack trace
 -fetch.js -> tovabbdobja a hibat olyan helyeken, ahol kesobb nincs try-catch
--settings frissitesnel ha atlepek vissza dashboard-ra, undefined lesz a charthoz link
+-userSelfUpdate hiba - rolenál backend oldalon nincs kezelve a role
 
 kerdes:
 -compare attetele database.js-be

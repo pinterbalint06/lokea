@@ -109,7 +109,7 @@ router.get('/choose_game', (request, response) => {
 // });
 
 //!API endpoints
-const adminEndpoints = require('../private/backend/api/admin.js');
+const adminEndpoints = require('../private/backend/api/index.js');
 app.use('/api/admin', auth.checkAuth, auth.checkRole("ADMIN"), adminEndpoints);
 const endpoints = require('./api/api.js');
 app.use('/api', endpoints);

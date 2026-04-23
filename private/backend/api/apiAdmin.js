@@ -1,0 +1,122 @@
+const express = require('../../../backend/node_modules/express/index.js');
+const router = express.Router();
+const { body, validationResult } = require('../../../backend/node_modules/express-validator/lib/index.js');
+const sharp = require('../../../backend/node_modules/sharp/lib/index.js');
+const { Chart, registerables } = require('../../../backend/node_modules/chart.js');
+const { Canvas } = require('../../../backend/node_modules/skia-canvas');
+
+//?SQL
+const databaseAdmin = require('../sql/databaseAdmin.js');
+const databaseLogs = require('../sql/databaseLogs.js');
+
+Chart.register(...registerables);
+
+//API endpoints - GET
+
+router.get('/getLanguage', (request, response) => {
+    try {
+        let language = request.session.userLanguage;
+        response.status(200).json({ language: request.session.userLanguage });
+    } catch (error) {
+        response.status(500).json({ error: error });
+    }
+
+});
+
+router.get('/getDashboardInfo', async (request, response) => {
+    try {
+        let playerCount = await databaseAdmin.getUserCount();
+        let activePlayerCount = await databaseAdmin.getActiveUserCount();
+        let logsPreview = await databaseLogs.getLogs(5);
+
+        response.status(200).json({ playerCount, activePlayerCount, logsPreview: logsPreview.rows });
+    } catch (error) {
+        response.status(500).json({ error: error });
+    }
+});
+
+router.get('/chart/:type', async (request, response) => {
+    try {
+        let type = request.params.type;
+        let dbData, label, color, xKey, yKey;
+
+        switch (type) {
+            case 'activity-day':
+                dbData = await databaseAdmin.getUserActivityByDay();
+                label = 'Napi aktivitás';
+                xKey = 'datum';
+                yKey = 'felhasznalok_szama';
+                break;
+            case 'activity-week':
+                dbData = await databaseAdmin.getUserActivityByWeek();
+                label = 'Heti aktivitás';
+                xKey = 'het_megnevezes';
+                yKey = 'bejelentkezesek_szama';
+                break;
+            case 'registrations':
+                dbData = await databaseAdmin.getRegistrationByWeek();
+                label = 'Heti regisztrációk';
+                xKey = 'het_megnevezes';
+                yKey = 'regisztraciok_szama';
+                color = '#198754';
+                break;
+            case 'matches':
+                dbData = await databaseAdmin.getMatchCountByWeek();
+                label = 'Heti meccsek';
+                xKey = 'het_megnevezes';
+                yKey = 'meccsek_szama';
+                color = '#dc3545';
+                break;
+            default:
+                response.status(400).send("Érvénytelen grafikon típus");
+        }
+
+        const labels = dbData.map(row => row[xKey]);
+        const values = dbData.map(row => row[yKey]);
+
+        const canvas = new Canvas(1200, 600);
+        const ctx = canvas.getContext("2d");
+        const chart = new Chart(ctx, createChartConfig(labels, values, label, color));
+
+        const rawBuffer = await canvas.toBuffer('png');
+        const optimizedImage = await sharp(rawBuffer)
+            .toFormat('webp', { quality: 95 })
+            .toBuffer();
+
+        response.set('Content-Type', 'image/webp');
+        response.send(optimizedImage);
+
+        chart.destroy();
+
+    } catch (error) {
+        console.error(error);
+        response.status(500).send("Hiba a generáláskor");
+    }
+});
+
+const createChartConfig = (labels, data, label, color) => ({
+    type: 'line',
+    data: {
+        labels: labels,
+        datasets: [{
+            label: label,
+            data: data,
+            borderColor: color || '#0d6efd',
+            borderWidth: 5,
+            pointRadius: 6,
+            backgroundColor: 'rgba(13, 110, 253, 0.1)',
+            fill: true,
+            tension: 0.4
+        }]
+    },
+    options: {
+        devicePixelRatio: 1,
+        plugins: { legend: { labels: { font: { size: 18, weight: 'bold' } } } },
+        scales: {
+            x: { ticks: { font: { size: 16, weight: 'bold' } } },
+            y: { ticks: { font: { size: 16, weight: 'bold' }, beginAtZero: true } }
+        }
+    }
+});
+
+module.exports = router;
