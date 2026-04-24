@@ -39,16 +39,6 @@ void Engine::enableAlphaBlending()
     glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 }
 
-void Engine::setLightIntensity(float intensity)
-{
-    scene_->getLight()->setIntensity(intensity);
-}
-
-void Engine::setLightDirection(float x, float y, float z)
-{
-    scene_->getLight()->setDirection(x, y, z);
-}
-
 void Engine::setShadingMode(Shaders::SHADINGMODE shadingmode)
 {
     renderer_->setShadingMode(shadingmode);
@@ -58,16 +48,6 @@ void Engine::setFrustum(float filmW, float filmH, int imageW, int imageH, float 
 {
     renderer_->setImageDimensions(imageW, imageH);
     scene_->getCamera()->setPerspective(filmW, filmH, imageW, imageH, n, f);
-}
-
-void Engine::setLightColor(float r, float g, float b)
-{
-    scene_->getLight()->setColor(r, g, b);
-}
-
-void Engine::setAmbientLight(float ambientLightIntensity)
-{
-    scene_->setAmbientLight(ambientLightIntensity);
 }
 
 void Engine::setZoom(float amount)

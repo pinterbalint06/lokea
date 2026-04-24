@@ -14,7 +14,6 @@
 
 #include "core/scene/scene.h"
 #include "core/scene/camera/camera.h"
-#include "core/scene/distantLight.h"
 
 #include "core/resources/material.h"
 #include "core/resources/mesh.h"
@@ -45,8 +44,6 @@ Renderer::Renderer(const std::string &canvasID)
     noTexture_ = std::make_unique<Texture>();
 
     // setup UBOs
-    uboScene_ = std::make_unique<UniformBufferObject<SceneData>>(BindingSlots::UBO::SCENE_DATA);
-    uboDistantLight_ = std::make_unique<UniformBufferObject<DistantLightData>>(BindingSlots::UBO::DISTANT_LIGHT_DATA);
     uboCamera_ = std::make_unique<UniformBufferObject<CameraData>>(BindingSlots::UBO::CAMERA_DATA);
     uboMat_ = std::make_unique<UniformBufferObject<Materials::MaterialData>>(BindingSlots::UBO::MATERIAL_DATA);
     uboMesh_ = std::make_unique<UniformBufferObject<MeshData>>(BindingSlots::UBO::MESH_DATA);
@@ -68,10 +65,8 @@ Renderer::~Renderer()
 
 void Renderer::setupShader(std::unique_ptr<Shaders::Shader> &shader)
 {
-    shader->bindUniformBlock("SceneData", (int)BindingSlots::UBO::SCENE_DATA);
     shader->bindUniformBlock("MaterialData", (int)BindingSlots::UBO::MATERIAL_DATA);
     shader->bindUniformBlock("MeshData", (int)BindingSlots::UBO::MESH_DATA);
-    shader->bindUniformBlock("DistantLightData", (int)BindingSlots::UBO::DISTANT_LIGHT_DATA);
     shader->bindUniformBlock("CameraData", (int)BindingSlots::UBO::CAMERA_DATA);
 
     // have to use shader to set uniforms
@@ -136,13 +131,6 @@ void Renderer::updateSceneUBO(const Scene *scene)
     // camera
     Camera *mainCamera = scene->getCamera();
     updateCameraUBO(mainCamera);
-
-    // light
-    DistantLight *dLight = scene->getLight();
-    uboDistantLight_->update(dLight->getUBOData());
-
-    // scene
-    uboScene_->update(scene->getUBOData());
 }
 
 void Renderer::updateMaterialUBO(const Materials::Material meshMat)

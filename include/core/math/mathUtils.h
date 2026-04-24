@@ -4,34 +4,9 @@
 #include <cmath>
 #include <algorithm>
 
-#include "utils/pcgRand.h"
-
 namespace MathUtils
 {
-    constexpr float INV_PI = 0.318309886f;
     constexpr double TWO_PI = M_PI * 2.0;
-
-    inline float dotProduct(const float &x0, const float &y0, const float &x1, const float &y1)
-    {
-        return x0 * x1 + y0 * y1;
-    }
-
-    inline bool isSquareNumber(const int &n)
-    {
-        return n >= 0 && std::sqrt(n) == (int)std::sqrt(n);
-    }
-
-    inline float dotProduct3D(const float *vec0, const float *vec1)
-    {
-        return vec0[0] * vec1[0] + vec0[1] * vec1[1] + vec0[2] * vec1[2];
-    }
-
-    inline float quintic(const float &t)
-    {
-        //  6 * t^5 - 15 * t^4 + 10 * t^3 = t * t * t * (t * (t * 6 - 15) + 10);
-        // Horner's method
-        return t * t * t * (10.0f + t * ((-15.0f) + t * 6.0f));
-    }
 
     inline float interpolation(const float &a1, const float &a2, const float &d)
     {
@@ -147,11 +122,6 @@ namespace MathUtils
         matrix[1] = sine;
         matrix[4] = -sine;
         matrix[5] = cosine;
-    }
-
-    inline float sign(float val)
-    {
-        return static_cast<float>((val > 0.0f) - (val < 0.0f));
     }
 
     inline float normalizeAngleRadians(float angleInRadians)

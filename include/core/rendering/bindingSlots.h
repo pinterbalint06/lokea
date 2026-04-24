@@ -5,11 +5,9 @@ namespace BindingSlots
 {
     enum class UBO
     {
-        SCENE_DATA = 0,
-        MATERIAL_DATA = 1,
-        MESH_DATA = 2,
-        DISTANT_LIGHT_DATA = 3,
-        CAMERA_DATA = 4
+        MATERIAL_DATA = 0,
+        MESH_DATA = 1,
+        CAMERA_DATA = 2
     };
 
     enum class Texture

@@ -79,7 +79,7 @@ namespace Materials
     };
 
     /**
-     * @brief Defines surface properties for lighting calculations.
+     * @brief Defines surface properties for lighting calculations. TODO: rework material class
      */
     class Material
     {
@@ -105,24 +105,6 @@ namespace Materials
         void setSpecularity(float specularity);
         void setShininess(float shininess);
         void setTexture(Texture *tex);
-
-        /**
-         * @brief Predefined material resembling grass.
-         * @return Material A green, low-specularity material.
-         */
-        static Material Grass()
-        {
-            return Material(Color::fromRGB(65, 152, 10), 1.0f, 0.02f, 10.0f);
-        }
-
-        /**
-         * @brief Predefined material resembling dirt.
-         * @return Material A brown, low-specularity material.
-         */
-        static Material Dirt()
-        {
-            return Material(Color::fromRGB(155, 118, 83), 1.0f, 0.01f, 10.0f);
-        }
 
         /**
          * @brief Predefined material resembling purple error.

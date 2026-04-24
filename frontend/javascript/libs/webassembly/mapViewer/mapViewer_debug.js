@@ -3717,132 +3717,6 @@ function ___syscall_stat64(path, buf) {
 
 var __abort_js = () => abort("native code called abort()");
 
-var structRegistrations = {};
-
-var runDestructors = destructors => {
-  while (destructors.length) {
-    var ptr = destructors.pop();
-    var del = destructors.pop();
-    del(ptr);
-  }
-};
-
-/** @suppress {globalThis} */ function readPointer(pointer) {
-  return this.fromWireType(HEAPU32[_asan_js_check_index(HEAPU32, ((pointer) >> 2), ___asan_loadN)]);
-}
-
-var awaitingDependencies = {};
-
-var registeredTypes = {};
-
-var typeDependencies = {};
-
-var InternalError = class InternalError extends Error {
-  constructor(message) {
-    super(message);
-    this.name = "InternalError";
-  }
-};
-
-var throwInternalError = message => {
-  throw new InternalError(message);
-};
-
-var whenDependentTypesAreResolved = (myTypes, dependentTypes, getTypeConverters) => {
-  myTypes.forEach(type => typeDependencies[type] = dependentTypes);
-  function onComplete(typeConverters) {
-    var myTypeConverters = getTypeConverters(typeConverters);
-    if (myTypeConverters.length !== myTypes.length) {
-      throwInternalError("Mismatched type converter count");
-    }
-    for (var i = 0; i < myTypes.length; ++i) {
-      registerType(myTypes[i], myTypeConverters[i]);
-    }
-  }
-  var typeConverters = new Array(dependentTypes.length);
-  var unregisteredTypes = [];
-  var registered = 0;
-  for (let [i, dt] of dependentTypes.entries()) {
-    if (registeredTypes.hasOwnProperty(dt)) {
-      typeConverters[i] = registeredTypes[dt];
-    } else {
-      unregisteredTypes.push(dt);
-      if (!awaitingDependencies.hasOwnProperty(dt)) {
-        awaitingDependencies[dt] = [];
-      }
-      awaitingDependencies[dt].push(() => {
-        typeConverters[i] = registeredTypes[dt];
-        ++registered;
-        if (registered === unregisteredTypes.length) {
-          onComplete(typeConverters);
-        }
-      });
-    }
-  }
-  if (0 === unregisteredTypes.length) {
-    onComplete(typeConverters);
-  }
-};
-
-var __embind_finalize_value_object = structType => {
-  var reg = structRegistrations[structType];
-  delete structRegistrations[structType];
-  var rawConstructor = reg.rawConstructor;
-  var rawDestructor = reg.rawDestructor;
-  var fieldRecords = reg.fields;
-  var fieldTypes = fieldRecords.map(field => field.getterReturnType).concat(fieldRecords.map(field => field.setterArgumentType));
-  whenDependentTypesAreResolved([ structType ], fieldTypes, fieldTypes => {
-    var fields = {};
-    for (var [i, field] of fieldRecords.entries()) {
-      const getterReturnType = fieldTypes[i];
-      const getter = field.getter;
-      const getterContext = field.getterContext;
-      const setterArgumentType = fieldTypes[i + fieldRecords.length];
-      const setter = field.setter;
-      const setterContext = field.setterContext;
-      fields[field.fieldName] = {
-        read: ptr => getterReturnType.fromWireType(getter(getterContext, ptr)),
-        write: (ptr, o) => {
-          var destructors = [];
-          setter(setterContext, ptr, setterArgumentType.toWireType(destructors, o));
-          runDestructors(destructors);
-        },
-        optional: getterReturnType.optional
-      };
-    }
-    return [ {
-      name: reg.name,
-      fromWireType: ptr => {
-        var rv = {};
-        for (var i in fields) {
-          rv[i] = fields[i].read(ptr);
-        }
-        rawDestructor(ptr);
-        return rv;
-      },
-      toWireType: (destructors, o) => {
-        // todo: Here we have an opportunity for -O3 level "unsafe" optimizations:
-        // assume all fields are present without checking.
-        for (var fieldName in fields) {
-          if (!(fieldName in o) && !fields[fieldName].optional) {
-            throw new TypeError(`Missing field: "${fieldName}"`);
-          }
-        }
-        var ptr = rawConstructor();
-        for (fieldName in fields) {
-          fields[fieldName].write(ptr, o[fieldName]);
-        }
-        if (destructors !== null) {
-          destructors.push(rawDestructor, ptr);
-        }
-        return ptr;
-      },
-      readValueFromPointer: readPointer,
-      destructorFunction: rawDestructor
-    } ];
-  });
-};
-
 var AsciiToString = ptr => {
   var str = "";
   while (1) {
@@ -3851,6 +3725,12 @@ var AsciiToString = ptr => {
     str += String.fromCharCode(ch);
   }
 };
+
+var awaitingDependencies = {};
+
+var registeredTypes = {};
+
+var typeDependencies = {};
 
 var BindingError = class BindingError extends Error {
   constructor(message) {
@@ -4041,6 +3921,17 @@ var getBasestPointer = (class_, ptr) => {
 var getInheritedInstance = (class_, ptr) => {
   ptr = getBasestPointer(class_, ptr);
   return registeredInstances[ptr];
+};
+
+var InternalError = class InternalError extends Error {
+  constructor(message) {
+    super(message);
+    this.name = "InternalError";
+  }
+};
+
+var throwInternalError = message => {
+  throw new InternalError(message);
 };
 
 var makeClassHandle = (prototype, record) => {
@@ -4453,6 +4344,10 @@ var upcastPointer = (ptr, ptrClass, desiredClass) => {
   return ptr;
 }
 
+/** @suppress {globalThis} */ function readPointer(pointer) {
+  return this.fromWireType(HEAPU32[_asan_js_check_index(HEAPU32, ((pointer) >> 2), ___asan_loadN)]);
+}
+
 var init_RegisteredPointer = () => {
   Object.assign(RegisteredPointer.prototype, {
     getPointee(ptr) {
@@ -4571,6 +4466,42 @@ var throwUnboundTypeError = (message, types) => {
   throw new UnboundTypeError(`${message}: ` + unboundTypes.map(getTypeName).join([ ", " ]));
 };
 
+var whenDependentTypesAreResolved = (myTypes, dependentTypes, getTypeConverters) => {
+  myTypes.forEach(type => typeDependencies[type] = dependentTypes);
+  function onComplete(typeConverters) {
+    var myTypeConverters = getTypeConverters(typeConverters);
+    if (myTypeConverters.length !== myTypes.length) {
+      throwInternalError("Mismatched type converter count");
+    }
+    for (var i = 0; i < myTypes.length; ++i) {
+      registerType(myTypes[i], myTypeConverters[i]);
+    }
+  }
+  var typeConverters = new Array(dependentTypes.length);
+  var unregisteredTypes = [];
+  var registered = 0;
+  for (let [i, dt] of dependentTypes.entries()) {
+    if (registeredTypes.hasOwnProperty(dt)) {
+      typeConverters[i] = registeredTypes[dt];
+    } else {
+      unregisteredTypes.push(dt);
+      if (!awaitingDependencies.hasOwnProperty(dt)) {
+        awaitingDependencies[dt] = [];
+      }
+      awaitingDependencies[dt].push(() => {
+        typeConverters[i] = registeredTypes[dt];
+        ++registered;
+        if (registered === unregisteredTypes.length) {
+          onComplete(typeConverters);
+        }
+      });
+    }
+  }
+  if (0 === unregisteredTypes.length) {
+    onComplete(typeConverters);
+  }
+};
+
 var __embind_register_class = (rawType, rawPointerType, rawConstPointerType, baseClassRawType, getActualTypeSignature, getActualType, upcastSignature, upcast, downcastSignature, downcast, name, destructorSignature, rawDestructor) => {
   name = AsciiToString(name);
   getActualType = embind__requireFunction(getActualTypeSignature, getActualType);
@@ -4637,6 +4568,14 @@ var heap32VectorToArray = (count, firstElement) => {
     array.push(HEAPU32[_asan_js_check_index(HEAPU32, (((firstElement) + (i * 4)) >> 2), ___asan_loadN)]);
   }
   return array;
+};
+
+var runDestructors = destructors => {
+  while (destructors.length) {
+    var ptr = destructors.pop();
+    var del = destructors.pop();
+    del(ptr);
+  }
 };
 
 function usesDestructorStack(argTypes) {
@@ -5267,27 +5206,6 @@ var __embind_register_std_wstring = (rawType, charSize, name) => {
     destructorFunction(ptr) {
       _free(ptr);
     }
-  });
-};
-
-var __embind_register_value_object = (rawType, name, constructorSignature, rawConstructor, destructorSignature, rawDestructor) => {
-  structRegistrations[rawType] = {
-    name: AsciiToString(name),
-    rawConstructor: embind__requireFunction(constructorSignature, rawConstructor),
-    rawDestructor: embind__requireFunction(destructorSignature, rawDestructor),
-    fields: []
-  };
-};
-
-var __embind_register_value_object_field = (structType, fieldName, getterReturnType, getterSignature, getter, getterContext, setterArgumentType, setterSignature, setter, setterContext) => {
-  structRegistrations[structType].fields.push({
-    fieldName: AsciiToString(fieldName),
-    getterReturnType,
-    getter: embind__requireFunction(getterSignature, getter),
-    getterContext,
-    setterArgumentType,
-    setter: embind__requireFunction(setterSignature, setter),
-    setterContext
   });
 };
 
@@ -6951,195 +6869,195 @@ function checkIncomingModuleAPI() {
 }
 
 var ASM_CONSTS = {
-  306903104: () => {
+  306901024: () => {
     throw ("A böngésződ nem támogatja a WebGL-t!");
   },
-  306903155: () => {},
-  306903156: () => {},
-  306903157: () => {},
-  306903158: () => {},
-  306903159: () => {},
-  306903160: () => {},
-  306903161: () => {},
-  306903162: () => {},
-  306903163: () => {},
-  306903164: () => {},
-  306903165: () => {},
-  306903166: () => {},
-  306903167: () => {},
-  306903168: () => {},
-  306903169: () => {},
-  306903170: () => {},
-  306903171: () => {},
-  306903172: () => {},
-  306903173: () => {},
-  306903174: () => {},
-  306903175: () => {},
-  306903176: () => {},
-  306903177: () => {},
-  306903178: () => {},
-  306903179: () => {},
-  306903180: () => {},
-  306903181: () => {},
-  306903182: () => {},
-  306903183: () => {},
-  306903184: () => {},
-  306903185: () => {},
-  306903186: () => {},
-  306903187: () => {},
-  306903188: () => {},
-  306903189: () => {},
-  306903190: () => {},
-  306903191: () => {},
-  306903192: () => {},
-  306903193: () => {},
-  306903194: () => {},
-  306903195: () => {},
-  306903196: () => {},
-  306903197: () => {},
-  306903198: () => {},
-  306903199: () => {},
-  306903200: $0 => {
+  306901075: () => {},
+  306901076: () => {},
+  306901077: () => {},
+  306901078: () => {},
+  306901079: () => {},
+  306901080: () => {},
+  306901081: () => {},
+  306901082: () => {},
+  306901083: () => {},
+  306901084: () => {},
+  306901085: () => {},
+  306901086: () => {},
+  306901087: () => {},
+  306901088: () => {},
+  306901089: () => {},
+  306901090: () => {},
+  306901091: () => {},
+  306901092: () => {},
+  306901093: () => {},
+  306901094: () => {},
+  306901095: () => {},
+  306901096: () => {},
+  306901097: () => {},
+  306901098: () => {},
+  306901099: () => {},
+  306901100: () => {},
+  306901101: () => {},
+  306901102: () => {},
+  306901103: () => {},
+  306901104: () => {},
+  306901105: () => {},
+  306901106: () => {},
+  306901107: () => {},
+  306901108: () => {},
+  306901109: () => {},
+  306901110: () => {},
+  306901111: () => {},
+  306901112: () => {},
+  306901113: () => {},
+  306901114: () => {},
+  306901115: () => {},
+  306901116: () => {},
+  306901117: () => {},
+  306901118: () => {},
+  306901119: () => {},
+  306901120: $0 => {
     throw ("Sikertelen shader fordítás: " + UTF8ToString($0));
   },
-  306903264: () => {},
-  306903265: () => {},
-  306903266: () => {},
-  306903267: () => {},
-  306903268: () => {},
-  306903269: () => {},
-  306903270: () => {},
-  306903271: () => {},
-  306903272: () => {},
-  306903273: () => {},
-  306903274: () => {},
-  306903275: () => {},
-  306903276: () => {},
-  306903277: () => {},
-  306903278: () => {},
-  306903279: () => {},
-  306903280: () => {},
-  306903281: () => {},
-  306903282: () => {},
-  306903283: () => {},
-  306903284: () => {},
-  306903285: () => {},
-  306903286: () => {},
-  306903287: () => {},
-  306903288: () => {},
-  306903289: () => {},
-  306903290: () => {},
-  306903291: () => {},
-  306903292: () => {},
-  306903293: () => {},
-  306903294: () => {},
-  306903295: () => {},
-  306903296: $0 => {
+  306901184: () => {},
+  306901185: () => {},
+  306901186: () => {},
+  306901187: () => {},
+  306901188: () => {},
+  306901189: () => {},
+  306901190: () => {},
+  306901191: () => {},
+  306901192: () => {},
+  306901193: () => {},
+  306901194: () => {},
+  306901195: () => {},
+  306901196: () => {},
+  306901197: () => {},
+  306901198: () => {},
+  306901199: () => {},
+  306901200: () => {},
+  306901201: () => {},
+  306901202: () => {},
+  306901203: () => {},
+  306901204: () => {},
+  306901205: () => {},
+  306901206: () => {},
+  306901207: () => {},
+  306901208: () => {},
+  306901209: () => {},
+  306901210: () => {},
+  306901211: () => {},
+  306901212: () => {},
+  306901213: () => {},
+  306901214: () => {},
+  306901215: () => {},
+  306901216: $0 => {
     throw ("Sikertelen shader összekapcsolás: " + UTF8ToString($0));
   },
-  306903366: () => {},
-  306903367: () => {},
-  306903368: () => {},
-  306903369: () => {},
-  306903370: () => {},
-  306903371: () => {},
-  306903372: () => {},
-  306903373: () => {},
-  306903374: () => {},
-  306903375: () => {},
-  306903376: () => {},
-  306903377: () => {},
-  306903378: () => {},
-  306903379: () => {},
-  306903380: () => {},
-  306903381: () => {},
-  306903382: () => {},
-  306903383: () => {},
-  306903384: () => {},
-  306903385: () => {},
-  306903386: () => {},
-  306903387: () => {},
-  306903388: () => {},
-  306903389: () => {},
-  306903390: () => {},
-  306903391: () => {},
-  306903392: () => {},
-  306903393: () => {},
-  306903394: () => {},
-  306903395: () => {},
-  306903396: () => {},
-  306903397: () => {},
-  306903398: () => {},
-  306903399: () => {},
-  306903400: () => {},
-  306903401: () => {},
-  306903402: () => {},
-  306903403: () => {},
-  306903404: () => {},
-  306903405: () => {},
-  306903406: () => {},
-  306903407: () => {},
-  306903408: () => {},
-  306903409: () => {},
-  306903410: () => {},
-  306903411: () => {},
-  306903412: () => {},
-  306903413: () => {},
-  306903414: () => {},
-  306903415: () => {},
-  306903416: () => {},
-  306903417: () => {},
-  306903418: () => {},
-  306903419: () => {},
-  306903420: () => {},
-  306903421: () => {},
-  306903422: () => {},
-  306903423: () => {},
-  306903424: ($0, $1) => {
+  306901286: () => {},
+  306901287: () => {},
+  306901288: () => {},
+  306901289: () => {},
+  306901290: () => {},
+  306901291: () => {},
+  306901292: () => {},
+  306901293: () => {},
+  306901294: () => {},
+  306901295: () => {},
+  306901296: () => {},
+  306901297: () => {},
+  306901298: () => {},
+  306901299: () => {},
+  306901300: () => {},
+  306901301: () => {},
+  306901302: () => {},
+  306901303: () => {},
+  306901304: () => {},
+  306901305: () => {},
+  306901306: () => {},
+  306901307: () => {},
+  306901308: () => {},
+  306901309: () => {},
+  306901310: () => {},
+  306901311: () => {},
+  306901312: () => {},
+  306901313: () => {},
+  306901314: () => {},
+  306901315: () => {},
+  306901316: () => {},
+  306901317: () => {},
+  306901318: () => {},
+  306901319: () => {},
+  306901320: () => {},
+  306901321: () => {},
+  306901322: () => {},
+  306901323: () => {},
+  306901324: () => {},
+  306901325: () => {},
+  306901326: () => {},
+  306901327: () => {},
+  306901328: () => {},
+  306901329: () => {},
+  306901330: () => {},
+  306901331: () => {},
+  306901332: () => {},
+  306901333: () => {},
+  306901334: () => {},
+  306901335: () => {},
+  306901336: () => {},
+  306901337: () => {},
+  306901338: () => {},
+  306901339: () => {},
+  306901340: () => {},
+  306901341: () => {},
+  306901342: () => {},
+  306901343: () => {},
+  306901344: ($0, $1) => {
     let fps = document.getElementById(UTF8ToString($1));
     if (fps) {
       fps.innerText = $0;
     }
   },
-  306903514: () => {},
-  306903515: () => {},
-  306903516: () => {},
-  306903517: () => {},
-  306903518: () => {},
-  306903519: () => {},
-  306903520: () => {},
-  306903521: () => {},
-  306903522: () => {},
-  306903523: () => {},
-  306903524: () => {},
-  306903525: () => {},
-  306903526: () => {},
-  306903527: () => {},
-  306903528: () => {},
-  306903529: () => {},
-  306903530: () => {},
-  306903531: () => {},
-  306903532: () => {},
-  306903533: () => {},
-  306903534: () => {},
-  306903535: () => {},
-  306903536: () => {},
-  306903537: () => {},
-  306903538: () => {},
-  306903539: () => {},
-  306903540: () => {},
-  306903541: () => {},
-  306903542: () => {},
-  306903543: () => {},
-  306903544: () => {},
-  306903545: () => {},
-  306903546: () => {},
-  306903547: () => {},
-  306903548: () => {},
-  306903549: () => {},
-  306903550: () => {},
-  306903551: () => {},
-  306903552: $0 => {
+  306901434: () => {},
+  306901435: () => {},
+  306901436: () => {},
+  306901437: () => {},
+  306901438: () => {},
+  306901439: () => {},
+  306901440: () => {},
+  306901441: () => {},
+  306901442: () => {},
+  306901443: () => {},
+  306901444: () => {},
+  306901445: () => {},
+  306901446: () => {},
+  306901447: () => {},
+  306901448: () => {},
+  306901449: () => {},
+  306901450: () => {},
+  306901451: () => {},
+  306901452: () => {},
+  306901453: () => {},
+  306901454: () => {},
+  306901455: () => {},
+  306901456: () => {},
+  306901457: () => {},
+  306901458: () => {},
+  306901459: () => {},
+  306901460: () => {},
+  306901461: () => {},
+  306901462: () => {},
+  306901463: () => {},
+  306901464: () => {},
+  306901465: () => {},
+  306901466: () => {},
+  306901467: () => {},
+  306901468: () => {},
+  306901469: () => {},
+  306901470: () => {},
+  306901471: () => {},
+  306901472: $0 => {
     throw ("Sikertelen fájl beolvasás: " + UTF8ToString($0));
   }
 };
@@ -7273,7 +7191,6 @@ var wasmImports = {
   /** @export */ __syscall_openat: ___syscall_openat,
   /** @export */ __syscall_stat64: ___syscall_stat64,
   /** @export */ _abort_js: __abort_js,
-  /** @export */ _embind_finalize_value_object: __embind_finalize_value_object,
   /** @export */ _embind_register_bigint: __embind_register_bigint,
   /** @export */ _embind_register_bool: __embind_register_bool,
   /** @export */ _embind_register_class: __embind_register_class,
@@ -7286,8 +7203,6 @@ var wasmImports = {
   /** @export */ _embind_register_memory_view: __embind_register_memory_view,
   /** @export */ _embind_register_std_string: __embind_register_std_string,
   /** @export */ _embind_register_std_wstring: __embind_register_std_wstring,
-  /** @export */ _embind_register_value_object: __embind_register_value_object,
-  /** @export */ _embind_register_value_object_field: __embind_register_value_object_field,
   /** @export */ _embind_register_void: __embind_register_void,
   /** @export */ _emscripten_fs_load_embedded_files: __emscripten_fs_load_embedded_files,
   /** @export */ _emscripten_get_progname: __emscripten_get_progname,

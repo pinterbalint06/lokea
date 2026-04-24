@@ -37,12 +37,6 @@ struct Vec2
         y *= lengthInv;
     }
 
-    static inline Vec2 randVector(pcgRand &random)
-    {
-        float angle = random.randomFloat() * 2 * M_PI;
-        return Vec2(cosf(angle), sinf(angle));
-    }
-
     static inline float dotProduct(Vec2 &vec1, Vec2 &vec2)
     {
         return vec1.x * vec2.x + vec1.y * vec2.y;

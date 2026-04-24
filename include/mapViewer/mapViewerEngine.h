@@ -6,13 +6,13 @@
 #include <vector>
 
 #include "core/engine.h"
+#include "mapViewer/mapViewerSettings.h"
 
 // Forward declaration
 class Mesh;               // defined in "core/resources/mesh.h"
 class Vertex;             // defined in "core/resources/vertex.h"
 class MapMarker;          // defined in "mapViewer/mapMarker.h"
 class MapLine;            // defined in "mapViewer/mapLine.h"
-struct mapViewerSettings; // defined in "mapViewer/mapViewerSettings.h"
 namespace emscripten
 {
     class val;            // defined in <emscripten/emscripten.val>

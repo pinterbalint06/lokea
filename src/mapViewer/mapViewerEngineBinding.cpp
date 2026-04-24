@@ -2,16 +2,7 @@
 #include <emscripten/val.h>
 #include <string>
 
-#include "mapViewer/mapViewerSettings.h"
 #include "mapViewer/mapViewerEngine.h"
-
-EMSCRIPTEN_BINDINGS(mapViewerSettingsBinding)
-{
-    emscripten::value_object<MapViewerSettings>("MapViewerSettings")
-        .field("minZoom", &MapViewerSettings::minZoom)
-        .field("maxZoom", &MapViewerSettings::maxZoom)
-        .field("zoomSensitivity", &MapViewerSettings::zoomSensitivity);
-}
 
 EMSCRIPTEN_BINDINGS(mapViewerEngineBinding)
 {
@@ -24,8 +15,6 @@ EMSCRIPTEN_BINDINGS(mapViewerEngineBinding)
         .function("zoomMap", &MapViewerEngine::zoomMap)
         .function("render", &MapViewerEngine::render)
         .function("setCanvasSize", &MapViewerEngine::setCanvasSize)
-        .function("getSettings", &MapViewerEngine::getSettings)
-        .function("setSettings", &MapViewerEngine::setSettings)
         .function("addMarker", &MapViewerEngine::addMarker)
         .function("addMarkerByUV", &MapViewerEngine::addMarkerByUV)
         .function("placeMarkerByImageCoordinates", &MapViewerEngine::addMarkerByImageCoordinates)

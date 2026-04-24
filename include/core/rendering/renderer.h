@@ -12,13 +12,11 @@
 
 // Forward declarations
 class Scene;             // defined in "core/scene/scene.h"
-struct SceneData;        // defined in "core/scene/scene.h"
 class Camera;            // defined in "core/scene/camera.h"
 struct CameraData;       // defined in "core/scene/camera.h"
 class FPSCounter;        // defined in "utils/fpsCounter.h"
 class Mesh;              // defined in "core/resources/mesh.h"
 struct MeshData;         // defined in "core/resources/mesh.h"
-struct DistantLightData; // defined in "core/scene/distantLight.h"
 class Texture;           // defined in "core/resources/texture.h"
 namespace Materials
 {
@@ -35,8 +33,6 @@ private:
     std::map<Shaders::SHADINGMODE, std::unique_ptr<Shaders::Shader>> shaderPrograms_;
     std::unique_ptr<FPSCounter> fps_;
     std::unique_ptr<Texture> noTexture_;
-    std::unique_ptr<UniformBufferObject<SceneData>> uboScene_;
-    std::unique_ptr<UniformBufferObject<DistantLightData>> uboDistantLight_;
     std::unique_ptr<UniformBufferObject<CameraData>> uboCamera_;
     std::unique_ptr<UniformBufferObject<Materials::MaterialData>> uboMat_;
     std::unique_ptr<UniformBufferObject<MeshData>> uboMesh_;

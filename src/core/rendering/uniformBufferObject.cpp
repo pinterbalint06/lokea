@@ -5,7 +5,6 @@
 
 #include "core/scene/scene.h"
 #include "core/scene/camera/camera.h"
-#include "core/scene/distantLight.h"
 
 #include "core/resources/material.h"
 #include "core/resources/mesh.h"
@@ -43,8 +42,6 @@ void UniformBufferObject<UBODataStruct>::update(const UBODataStruct &data)
     glBindBuffer(GL_UNIFORM_BUFFER, 0);
 }
 
-template class UniformBufferObject<SceneData>;
-template class UniformBufferObject<DistantLightData>;
 template class UniformBufferObject<CameraData>;
 template class UniformBufferObject<Materials::MaterialData>;
 

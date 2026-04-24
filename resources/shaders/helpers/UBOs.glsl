@@ -3,10 +3,6 @@
 precision highp float;
 precision highp int;
 
-layout(std140) uniform SceneData {
-    float uAmbientLight;        // 4 bytes
-};
-
 layout(std140) uniform CameraData {
     mat4 uVP;                  // View-Projection Matrix
                                 // layout 4 vec4 so 16 * 4 = 64 bytes
@@ -24,15 +20,6 @@ layout(std140) uniform MaterialData {
     float uMatSpecularity; // 20-23
     float uMatShininess;   // 24-27
                            // 28-31
-};
-
-layout(std140) uniform DistantLightData {
-    vec3 uLightVec;          // Light Vector
-                             // at 0 bytes -> 16
-    vec3 uLightColor;        // Light Color
-                             // at 16 bytes -> 32
-    vec3 uLightColorPreCalc; // Light Color pre calc
-                             // at 32 bytes -> 48
 };
 
 layout(std140) uniform MeshData {
