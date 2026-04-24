@@ -322,8 +322,8 @@ async function postGameScore(url, data) {
         const responseData = await response.json();
         throw new Error(responseData.message || 'Hálózati hiba');
     }
-    const response = await response.json();
-    return response;
+    const result = await response.json();
+    return result;
 }
 
 async function finishGame() {
