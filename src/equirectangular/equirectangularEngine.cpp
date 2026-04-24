@@ -87,11 +87,6 @@ std::shared_ptr<Mesh> EquirectangularEngine::generateSphereSegment(int rings, in
             vert.z = z * radius;
             vert.w = 1.0f;
 
-            // normals pointing inwards for view from inside
-            vert.nx = -x;
-            vert.ny = -y;
-            vert.nz = -z;
-
             // store the local uvs so whole texture spans just this segment
             vert.u = uProgress;
             vert.v = vProgress;

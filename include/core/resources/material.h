@@ -10,11 +10,7 @@ namespace Materials
 {
     struct MaterialData
     {
-        float albedo[4];   ///< Base color of the material.
-        float diffuseness; ///< Diffuse reflection coefficient [0;1].
-        float specularity; ///< Specular reflection coefficient [0;1].
-        float shininess;   ///< Specular exponent (shininess factor) [1; infinity[.
-        float padding;
+        float color[4];   ///< Base color of the material.
     };
     /**
      * @brief Represents an RGB color with helper methods for gamma correction.
@@ -79,7 +75,7 @@ namespace Materials
     };
 
     /**
-     * @brief Defines surface properties for lighting calculations. TODO: rework material class
+     * @brief Stores color and texture for mesh
      */
     class Material
     {
@@ -88,22 +84,16 @@ namespace Materials
         Texture *texture_;
 
     public:
-        Material(Color albedo, float diffuseness, float specularity, float shininess);
+        Material(Color color);
 
         // getters
-        Color getAlbedo() const { return Color::fromsRGB(data_.albedo[0], data_.albedo[1], data_.albedo[2]); }
-        float getDiffuseness() const { return data_.diffuseness; }
-        float getSpecularity() const { return data_.specularity; }
-        float getShininess() const { return data_.shininess; }
+        Color getColor() const { return Color::fromsRGB(data_.color[0], data_.color[1], data_.color[2]); }
         Texture *getTexture() const { return texture_; }
 
         const MaterialData &getUBOData() const { return data_; }
 
         // setters
-        void setAlbedo(Color albedo);
-        void setDiffuseness(float diffuseness);
-        void setSpecularity(float specularity);
-        void setShininess(float shininess);
+        void setColor(Color color);
         void setTexture(Texture *tex);
 
         /**
@@ -112,7 +102,7 @@ namespace Materials
          */
         static Material Error()
         {
-            return Material(Color::fromRGB(255, 0, 255), 1.0f, 0.0f, 1.0f);
+            return Material(Color::fromRGB(255, 0, 255));
         }
     };
 };

@@ -39,11 +39,11 @@ MapMarker::MapMarker(int id, const std::string &textureUrl, float u, float v, fl
     for (int i = 0; i < MAX_MARKER_REPETITIONS; i++)
     {
         int markerRepetitionId = i * 4;
-        //                                             x        y     z     w     nx    ny    nz    u     v
-        vertices[markerRepetitionId + TOP_LEFT] = { -10.0f,  -10.0f, 0.0f, 1.0f, 0.0f, 0.0f, 1.0f, 0.0f, 0.0f };
-        vertices[markerRepetitionId + TOP_RIGHT] = { -10.0f,  -10.0f, 0.0f, 1.0f, 0.0f, 0.0f, 1.0f, 1.0f, 0.0f };
-        vertices[markerRepetitionId + BOTTOM_LEFT] = { -10.0f, -10.0f, 0.0f, 1.0f, 0.0f, 0.0f, 1.0f, 0.0f, 1.0f };
-        vertices[markerRepetitionId + BOTTOM_RIGHT] = { -10.0f, -10.0f, 0.0f, 1.0f, 0.0f, 0.0f, 1.0f, 1.0f, 1.0f };
+        //                                             x        y     z     w     u     v
+        vertices[markerRepetitionId + TOP_LEFT] = { -10.0f,  -10.0f, 0.0f, 1.0f, 0.0f, 0.0f };
+        vertices[markerRepetitionId + TOP_RIGHT] = { -10.0f,  -10.0f, 0.0f, 1.0f, 1.0f, 0.0f };
+        vertices[markerRepetitionId + BOTTOM_LEFT] = { -10.0f, -10.0f, 0.0f, 1.0f, 0.0f, 1.0f };
+        vertices[markerRepetitionId + BOTTOM_RIGHT] = { -10.0f, -10.0f, 0.0f, 1.0f, 1.0f, 1.0f };
     }
 
     uint32_t indices[6 * MAX_MARKER_REPETITIONS];

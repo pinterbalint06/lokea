@@ -16,10 +16,6 @@ layout(std140) uniform CameraData {
 
 layout(std140) uniform MaterialData {
     vec4 uMatAlbedo;       // 0-15
-    float uMatDiffuseness; // 16-19
-    float uMatSpecularity; // 20-23
-    float uMatShininess;   // 24-27
-                           // 28-31
 };
 
 layout(std140) uniform MeshData {

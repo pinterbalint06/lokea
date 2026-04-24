@@ -11,9 +11,6 @@ struct Vertex
     // Position
     float x, y, z, w;
 
-    // Normal
-    float nx, ny, nz;
-
     // texture coordinates
     float u, v;
 };

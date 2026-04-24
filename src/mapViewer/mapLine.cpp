@@ -37,11 +37,11 @@ MapLine::MapLine(int id, int startMarkerId, int endMarkerId, float thickness, ui
     for (int i = 0; i < MAX_LINE_REPETITIONS; i++)
     {
         int vIdx = i * 4;
-        //                                   x        y        z      w     nx    ny    nz    u     v
-        vertices[vIdx + LINE_TOP_LEFT] = { -10.0f, -10.0f, -0.005f,  1.0f, 0.0f, 0.0f, 1.0f, 0.0f, 0.0f };
-        vertices[vIdx + LINE_TOP_RIGHT] = { -10.0f, -10.0f, -0.005f, 1.0f, 0.0f, 0.0f, 1.0f, 0.0f, 0.0f };
-        vertices[vIdx + LINE_BOTTOM_LEFT] = { -10.0f, -10.0f, -0.005f, 1.0f, 0.0f, 0.0f, 1.0f, 0.0f, 0.0f };
-        vertices[vIdx + LINE_BOTTOM_RIGHT] = { -10.0f, -10.0f, -0.005f, 1.0f, 0.0f, 0.0f, 1.0f, 0.0f, 0.0f };
+        //                                   x        y        z      w     u     v
+        vertices[vIdx + LINE_TOP_LEFT] = { -10.0f, -10.0f, -0.005f,  1.0f, 0.0f, 0.0f };
+        vertices[vIdx + LINE_TOP_RIGHT] = { -10.0f, -10.0f, -0.005f, 1.0f, 0.0f, 0.0f };
+        vertices[vIdx + LINE_BOTTOM_LEFT] = { -10.0f, -10.0f, -0.005f, 1.0f, 0.0f, 0.0f };
+        vertices[vIdx + LINE_BOTTOM_RIGHT] = { -10.0f, -10.0f, -0.005f, 1.0f, 0.0f, 0.0f };
     }
 
     uint32_t indices[6 * MAX_LINE_REPETITIONS];
@@ -60,7 +60,7 @@ MapLine::MapLine(int id, int startMarkerId, int endMarkerId, float thickness, ui
     std::memcpy(getVertices(), vertices, sizeof(vertices));
     std::memcpy(getIndices(), indices, sizeof(indices));
 
-    Materials::Material lineMaterial = Materials::Material(Materials::Color::fromRGBA(r, g, b, a), 1.0f, 0.0f, 1.0f);
+    Materials::Material lineMaterial = Materials::Material(Materials::Color::fromRGBA(r, g, b, a));
     setMaterial(lineMaterial);
 }
 
@@ -131,6 +131,6 @@ void MapLine::updateLineGeometry(const std::vector<Vec2> &startPositions, const 
 void MapLine::setColor(uint8_t r, uint8_t g, uint8_t b, uint8_t a)
 {
     Materials::Material mat = getMaterial();
-    mat.setAlbedo(Materials::Color::fromRGBA(r, g, b, a));
+    mat.setColor(Materials::Color::fromRGBA(r, g, b, a));
     setMaterial(mat);
 }

@@ -5,35 +5,20 @@
 
 namespace Materials
 {
-    Material::Material(Color albedo, float diffuseness, float specularity, float shininess)
+    Material::Material(Color color)
     {
-        setAlbedo(albedo);
-        setDiffuseness(diffuseness);
-        setSpecularity(specularity);
-        setShininess(shininess);
+        setColor(color);
         setTexture(nullptr);
-        data_.padding = 0.0f;
     }
 
-    void Material::setAlbedo(Color albedo)
+    void Material::setColor(Color color)
     {
-        data_.albedo[0] = albedo.r;
-        data_.albedo[1] = albedo.g;
-        data_.albedo[2] = albedo.b;
-        data_.albedo[3] = albedo.a;
+        data_.color[0] = color.r;
+        data_.color[1] = color.g;
+        data_.color[2] = color.b;
+        data_.color[3] = color.a;
     }
-    void Material::setDiffuseness(float diffuseness)
-    {
-        data_.diffuseness = std::clamp(diffuseness, 0.0f, 1.0f);
-    }
-    void Material::setSpecularity(float specularity)
-    {
-        data_.specularity = std::clamp(specularity, 0.0f, 1.0f);
-    }
-    void Material::setShininess(float shininess)
-    {
-        data_.shininess = shininess;
-    }
+
     void Material::setTexture(Texture *tex)
     {
         texture_ = tex;
