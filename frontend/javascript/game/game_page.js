@@ -48,11 +48,11 @@ function createCountdownTimer() {
     });
 }
 
-let asd = true;
+let canPlaceMarker = true;
 function init() {
     mapViewerEngine = new MapViewer(mapCanvasId);
     mapViewerEngine.onClickHandler = (cursorX, cursorY) => {
-        if (asd) {
+        if (canPlaceMarker) {
             if (mapViewerEngine.doesMarkerExist(0)) {
                 mapViewerEngine.moveMarker(0, cursorX, cursorY);
             } else {
@@ -72,7 +72,7 @@ function markerPosition() {
     return mapViewerEngine.getMarkerPosition(0);
 }
 
-function doesmarkerExist(id) {
+function doesMarkerExist(id) {
     return mapViewerEngine.doesMarkerExist(id);
 }
 
@@ -122,7 +122,7 @@ function waitForNext() {
 }
 
 function nextRound() {
-    asd = true;
+    canPlaceMarker = true;
     guessSent = false;
     if (resolveNext) {
         resolveNext();
@@ -171,7 +171,8 @@ async function startGame() {
 function resetGameState(roundTime) {
     document.getElementById(mapCanvasId).classList.remove("full");
     document.getElementById("guessPanel").classList.remove("open");
-    const timerEl = document.getElementById("timer").textContent = formatSecondsToMinutes(roundTime);
+    document.getElementById('bottomRight').classList.remove('expanded');
+    document.getElementById("timer").textContent = formatSecondsToMinutes(roundTime);
 }
 
 async function createPoint() {
@@ -247,9 +248,10 @@ async function sendGuess() {
     if (!guessSent) {
         guessSent = true;
         stopRoundTimer();
-        asd = false;
+        document.getElementById('bottomRight').classList.add('expanded');
+        canPlaceMarker = false;
         let sendData;
-        if (!doesmarkerExist(0)) {
+        if (!doesMarkerExist(0)) {
             sendData = { u: -1, v: -1 };
         }
         else {
@@ -276,7 +278,7 @@ function showAnswer(response) {
     }
     document.getElementById(mapCanvasId).classList.add("full");
     placeMarkerByUV(1, response.pointu, response.pointv, 24.0, 32.0, "ready");
-    if (doesmarkerExist(0)) {
+    if (doesMarkerExist(0)) {
         connectMarker(0, 1, 0);
     }
     movetoMarker(response.pointx, response.pointy);
@@ -346,11 +348,9 @@ async function finishGame() {
 
 window.cycleMaps = cycleMaps;
 window.mapFullScreen = mapFullScreen;
-window.markerPosition = markerPosition;
 window.pictureFullScreen = pictureFullScreen;
 window.clearImage = clearImage;
 window.startGame = startGame;
-window.nextMap = nextMap;
 window.nextRound = nextRound;
 window.sendGuess = sendGuess;
 window.finishGame = finishGame;

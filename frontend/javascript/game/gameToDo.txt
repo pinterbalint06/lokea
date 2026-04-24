@@ -24,9 +24,10 @@ kesz--jobb oldali panel teljes kinagyitasa a jatek vegen
 kesz--ido megcsinalasa  perc:másodpercre
 kesz--visszalépés a főoldalra gomb
 kesz--előző oldal frissítése belépéskor / visszalépéskor
-!!!!--reszponzivitás
+kesz!!!!--reszponzivitás
 !!!!--tesztelések
 kesz--server oldali ellenorzesek
 kesz--adott kör kiirása
 kesz--térkép nevének kiirása
---css szebbre valo megcsinalasa
+kesz--css szebbre valo megcsinalasa
+!!!!--tranzakciokezeles

@@ -21,10 +21,14 @@ const checkRole = (...roles) => {
 
 const checkGameSession = (request, response, next) => {
     // if (!request.session.userid) {
-    //     response.status(401).json({ message: "Bejelentkezés szükséges!" });
+        // const error = new Error("Bejelentkezés szükséges!");
+        // error.statusCode = 401;
+        // throw error;
     // }
     if (!request.session.game?.activeSessionId) {
-        response.status(403).json({ message: "Nincs aktív játék munkamenet!" });
+        const error = new Error("Nincs aktív játék munkamenet!");
+        error.statusCode = 403;
+        throw error;
     }
     next();
 
