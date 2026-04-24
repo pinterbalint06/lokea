@@ -35,5 +35,3 @@ async function init() {
 }
 
 document.addEventListener("DOMContentLoaded", init);
-
-// TODO: backend tesztek megirasa
