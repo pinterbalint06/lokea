@@ -44,10 +44,13 @@
 
                 <div id="mapWrapper">
                     <canvas id="mapCanvas"></canvas>
+                    <button class="map-side-btn map-prev" onclick="cycleMaps(-1)" title="Előző térkép">
+                        <svg viewBox="0 0 24 24"><polyline points="15 18 9 12 15 6"/></svg>
+                    </button>
+                    <button class="map-side-btn map-next" onclick="cycleMaps(1)" title="Következő térkép">
+                        <svg viewBox="0 0 24 24"><polyline points="9 18 15 12 9 6"/></svg>
+                    </button>
                     <div id="mapControls">
-                        <button id="nextMap" class="map-btn" title="Következő térkép">
-                            <svg viewBox="0 0 24 24"><polygon points="5 3 19 12 5 21 5 3"/></svg>
-                        </button>
                         <button class="map-btn" onclick="mapFullScreen()" title="Teljes képernyő">
                             <svg viewBox="0 0 24 24"><polyline points="15 3 21 3 21 9"/><polyline points="9 21 3 21 3 15"/><line x1="21" y1="3" x2="14" y2="10"/><line x1="3" y1="21" x2="10" y2="14"/></svg>
                         </button>
@@ -69,15 +72,21 @@
                 </div>
 
                 <div id="bottomBar">
-                    <button class="btn-guess" onclick="sendGuess()">
-                        <svg viewBox="0 0 24 24"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>
-                        Tipp leadása
-                    </button>
+                    <div id="bottomRight">
+                        <div id="roundCounter">
+                            <span id="mapName">Térkép: <span id="mapTitle">-</span></span>
+                            <span id="roundCount">Kör: <span id="currentRound">-</span> / <span id="totalRounds">-</span></span>
+                        </div>
+                        <button class="btn-guess" onclick="sendGuess()">
+                            <svg viewBox="0 0 24 24"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>
+                            Tipp leadása
+                        </button>
+                    </div>
                 </div>
             </div>
 
             <div id="guessPanel">
-                <div class="panel-content">
+                <div class="panel-content" id="roundResultContent">
                     <p class="panel-label">Pontszám</p>
                     <h2 id="guessPanelScore">0</h2>
                     <p id="guessPanelDistance"></p>
@@ -85,6 +94,14 @@
                     <p class="panel-label">Összesített pontszám</p>
                     <h4 id="guessPanelTotal">0</h4>
                     <button class="btn-next-round" onclick="nextRound()">Következő kör</button>
+                </div>
+                <div id="gameOverContent">
+                    <div id="gameOverInner">
+                        <p class="panel-label">Játék vége</p>
+                        <h1 id="finalScore">0</h1>
+                        <p class="panel-label">Végső pontszám</p>
+                        <button class="btn-next-round" onclick="location.href='/choose_game'">Vissza a főoldalra</button>
+                    </div>
                 </div>
             </div>
         </div>

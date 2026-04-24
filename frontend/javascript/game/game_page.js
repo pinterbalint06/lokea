@@ -19,9 +19,6 @@ var gameMapsIndex = -1;
 document.addEventListener("DOMContentLoaded", function () {
     init();
     startGame();
-    document.getElementById("nextMap").addEventListener("click", function () {
-        cycleMaps();
-    });
 });
 
 function showCountdownStep(overlay, numberEl, steps, i, resolve) {
@@ -151,8 +148,11 @@ async function startGame() {
         const currentRound = gameData.game.currentRound;
         const roundTime = gameData.game.roundTime;
 
+        document.getElementById('totalRounds').textContent = roundCount;
+
         for (let i = currentRound; i < roundCount; i++) {
             console.log(`Starting round ${i + 1} of ${roundCount}`);
+            document.getElementById('currentRound').textContent = i + 1;
             resetGameState(roundTime);
             equirectangularViewer.setZoom(0);
             await createPoint();
@@ -193,10 +193,12 @@ async function createPoint() {
     await createCountdownTimer();
 }
 
-function cycleMaps() {
-    gameMapsIndex++;
-    if (gameMaps.length <= gameMapsIndex) {
+function cycleMaps(direction = 1) {
+    gameMapsIndex += direction;
+    if (gameMapsIndex >= gameMaps.length) {
         gameMapsIndex = 0;
+    } else if (gameMapsIndex < 0) {
+        gameMapsIndex = gameMaps.length - 1;
     }
     nextMap();
 }
@@ -212,6 +214,7 @@ function nextMap() {
         .catch(function (e) {
             console.error("Failed to load game map:", e);
         });
+    document.getElementById('mapTitle').textContent = map.title || '-';
     removeEverything();
 
 }
@@ -330,8 +333,18 @@ async function finishGame() {
     } catch (error) {
         console.error("Error finishing game:", error);
     }
+
+    const panel = document.getElementById('guessPanel');
+    document.getElementById('finalScore').textContent =
+        document.getElementById('guessPanelTotal').textContent || '0';
+
+    panel.classList.add('open');
+    requestAnimationFrame(() => requestAnimationFrame(() => {
+        panel.classList.add('game-over');
+    }));
 }
 
+window.cycleMaps = cycleMaps;
 window.mapFullScreen = mapFullScreen;
 window.markerPosition = markerPosition;
 window.pictureFullScreen = pictureFullScreen;

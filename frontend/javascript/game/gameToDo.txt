@@ -10,21 +10,23 @@ kesz--térképre kirajzolni a pontokat, helyes megoldást
 kesz--helyes terkepre kirajzolas
 kesz--pontok kiirasa koronkent
 kesz--csalás ellenőrzés - idő
---dizájn
---gombok kinézete stb
+felig kesz--dizájn
+felig kesz--gombok kinézete stb
 kesz--auth
---játékok befejezése
+!!!felig kesz--játékok befejezése
+    --toplista megcsinalasa
+    --kommentelés megcsinálása
 kesz--session_guess get vagy post???
---127 kidurrantas
+!!!!--127 kidurrantas
 kesz--adott körre sorsolt kep elmentese
---jobb oldali panelle kiirni a jatek nevet
---jobb oldali panel teljes kinagyitasa a jatek vegen 
---ido megcsinalasa  perc:másodpercre
---toplista a játék végén
---kommentelés, értékelés lehetősége a végén
---visszalépés a főoldalra gomb
---előző oldal frissítése belépéskor / visszalépéskor
---reszponzivitás
---tesztelések
+kesz--jobb oldali panelle kiirni a jatek nevet
+kesz--jobb oldali panel teljes kinagyitasa a jatek vegen 
+kesz--ido megcsinalasa  perc:másodpercre
+kesz--visszalépés a főoldalra gomb
+kesz--előző oldal frissítése belépéskor / visszalépéskor
+!!!!--reszponzivitás
+!!!!--tesztelések
 kesz--server oldali ellenorzesek
-
+kesz--adott kör kiirása
+kesz--térkép nevének kiirása
+--css szebbre valo megcsinalasa
