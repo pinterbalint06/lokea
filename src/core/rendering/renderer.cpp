@@ -70,8 +70,6 @@ void Renderer::setupShader(std::unique_ptr<Shaders::Shader> &shader)
 {
     shader->bindUniformBlock("SceneData", (int)BindingSlots::UBO::SCENE_DATA);
     shader->bindUniformBlock("MaterialData", (int)BindingSlots::UBO::MATERIAL_DATA);
-    shader->bindUniformBlock("PerlinData", (int)BindingSlots::UBO::PERLIN_DATA);
-    shader->bindUniformBlock("PerlinWarpData", (int)BindingSlots::UBO::PERLIN_WARP_DATA);
     shader->bindUniformBlock("MeshData", (int)BindingSlots::UBO::MESH_DATA);
     shader->bindUniformBlock("DistantLightData", (int)BindingSlots::UBO::DISTANT_LIGHT_DATA);
     shader->bindUniformBlock("CameraData", (int)BindingSlots::UBO::CAMERA_DATA);
@@ -79,10 +77,6 @@ void Renderer::setupShader(std::unique_ptr<Shaders::Shader> &shader)
     // have to use shader to set uniforms
     shader->use();
     shader->setUniformInt("uAlbedo", (int)BindingSlots::Texture::ALBEDO);
-    shader->setUniformInt("uNoisePermutationTable", (int)BindingSlots::Texture::NOISE_PERMUTATION_TABLE);
-    shader->setUniformInt("uNoiseGradients", (int)BindingSlots::Texture::NOISE_GRADIENTS);
-    shader->setUniformInt("uWarpPermutationTable", (int)BindingSlots::Texture::WARP_PERMUTATION_TABLE);
-    shader->setUniformInt("uWarpGradients", (int)BindingSlots::Texture::WARP_GRADIENTS);
     if (currShader_ != nullptr)
     {
         // if there was a shader in use revert to that

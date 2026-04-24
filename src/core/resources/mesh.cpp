@@ -105,7 +105,4 @@ void Mesh::resize(int vertexCount, int indexCount)
     indices_ = (uint32_t *)malloc(indexCount_ * sizeof(uint32_t));
 }
 
-void Mesh::prepareRender(Shaders::Shader *shader)
-{
-    shader->setUniformInt("uIsTerrain", 0);
-}
+void Mesh::prepareRender(Shaders::Shader *shader) {}

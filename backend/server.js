@@ -48,14 +48,8 @@ async function hasPermissionToEdit(request, gameMapID) {
 router.get('/', (request, response) => {
     response.sendFile(path.join(__dirname, '../frontend/html/index.html'));
 });
-router.get('/terrain', (request, response) => {
-    response.sendFile(path.join(__dirname, '../frontend/html/test-terrain.html'));
-});
 router.get('/equirectangular', (request, response) => {
     response.sendFile(path.join(__dirname, '../frontend/html/test-equirectangular.html'));
-});
-router.get('/webgl', (request, response) => {
-    response.sendFile(path.join(__dirname, '../frontend/html/test-webgl.html'));
 });
 router.get('/map', (request, response) => {
     response.sendFile(path.join(__dirname, '../frontend/html/test-map.html'));

@@ -24,16 +24,8 @@ Engine::Engine(std::string canvID)
 
     std::vector<std::string> helpers = {
         "shaders/helpers/UBOs.glsl",
-        "shaders/helpers/phongReflectionModel.glsl",
-        "shaders/helpers/perlinNoise.glsl" };
-    renderer_->addNewShader(Shaders::SHADINGMODE::PHONG, ShaderBuilder::createShader("shaders/phong/phong.vert", "shaders/phong/phong.frag", helpers));
-
+    };
     renderer_->setImageDimensions(1000.0f, 1000.0f);
-
-    // "shaders/perlinNoise.glsl" is not needed in gouraud or noshader
-    helpers.pop_back();
-
-    renderer_->addNewShader(Shaders::SHADINGMODE::GOURAUD, ShaderBuilder::createShader("shaders/gouraud/gouraud.vert", "shaders/gouraud/gouraud.frag", helpers));
     renderer_->addNewShader(Shaders::SHADINGMODE::NO_SHADING, ShaderBuilder::createShader("shaders/noShader/noShader.vert", "shaders/noShader/noShader.frag", helpers));
 }
 

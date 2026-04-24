@@ -10,8 +10,6 @@
 #include "core/resources/material.h"
 #include "core/resources/mesh.h"
 
-#include "utils/perlin.h"
-
 template <typename UBODataStruct>
 UniformBufferObject<UBODataStruct>::UniformBufferObject(BindingSlots::UBO bindingSlot)
 {
@@ -49,5 +47,5 @@ template class UniformBufferObject<SceneData>;
 template class UniformBufferObject<DistantLightData>;
 template class UniformBufferObject<CameraData>;
 template class UniformBufferObject<Materials::MaterialData>;
-template class UniformBufferObject<PerlinNoise::PerlinParameters>;
+
 template class UniformBufferObject<MeshData>;

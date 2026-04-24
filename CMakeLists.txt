@@ -18,9 +18,6 @@ file(GLOB_RECURSE ENGINE_CORE_FILES
     "src/utils/*.cpp"
 )
 
-file(GLOB_RECURSE TERRAIN_FILES
-    "src/terrain/*.cpp"
-)
 file(GLOB_RECURSE EQUI_FILES
     "src/equirectangular/*.cpp"
 )
@@ -85,22 +82,9 @@ set(DEBUG_LINK_FLAGS
     -fsanitize=address
 )
 
-# ---------------------------------------------------------
-# Test terrain
-# ---------------------------------------------------------
-
 # release
-add_executable(terrain ${ENGINE_CORE_FILES} ${TERRAIN_FILES} src/terrain/terrainBinding.cpp)
-target_link_options(terrain PUBLIC ${COMMON_WASM_FLAGS} ${RELEASE_LINK_FLAGS})
-target_compile_options(terrain PUBLIC ${RELEASE_COMPILE_FLAGS} ${COMMON_WASM_COMPILATION})
-
-# debug
-add_executable(terrain_debug ${ENGINE_CORE_FILES} ${TERRAIN_FILES} src/terrain/terrainBinding.cpp)
-target_link_options(terrain_debug PUBLIC ${COMMON_WASM_FLAGS} ${DEBUG_LINK_FLAGS})
-target_compile_options(terrain_debug PUBLIC ${DEBUG_COMPILE_FLAGS} ${COMMON_WASM_COMPILATION})
-
 # ---------------------------------------------------------
-# Test equirectangular
+# Equirectangular
 # ---------------------------------------------------------
 
 # release
@@ -122,7 +106,7 @@ target_link_options(equirectangular_debug PUBLIC
 target_compile_options(equirectangular_debug PUBLIC ${DEBUG_COMPILE_FLAGS} ${COMMON_WASM_COMPILATION})
 
 # ---------------------------------------------------------
-# Test map viewer
+# Map viewer
 # ---------------------------------------------------------
 
 # release
@@ -143,42 +127,7 @@ target_compile_options(mapViewer_debug PUBLIC ${DEBUG_COMPILE_FLAGS} ${COMMON_WA
 
 if (COPYFILES)
     # ---------------------------------------------------------
-    # Test terrain
-    # ---------------------------------------------------------
-    set(TERRAIN_TARGET_LOCATION "${WEBASSEMBLY_FOLDER_LOCATION}/terrain")
-
-    #release
-    add_custom_command(TARGET terrain POST_BUILD
-        COMMAND ${CMAKE_COMMAND} -E copy_if_different 
-            "${CMAKE_CURRENT_BINARY_DIR}/terrain.js"
-            "${TERRAIN_TARGET_LOCATION}/terrain.js"
-
-        COMMAND ${CMAKE_COMMAND} -E copy_if_different 
-            "${CMAKE_CURRENT_BINARY_DIR}/terrain.wasm"
-            "${TERRAIN_TARGET_LOCATION}/terrain.wasm"
-
-        COMMENT "Copy terrain to ${TERRAIN_TARGET_LOCATION}"
-    )
-    
-    #debug
-    add_custom_command(TARGET terrain_debug POST_BUILD
-        COMMAND ${CMAKE_COMMAND} -E copy_if_different 
-            "${CMAKE_CURRENT_BINARY_DIR}/terrain_debug.js"
-            "${TERRAIN_TARGET_LOCATION}/terrain_debug.js"
-
-        COMMAND ${CMAKE_COMMAND} -E copy_if_different 
-            "${CMAKE_CURRENT_BINARY_DIR}/terrain_debug.wasm"
-            "${TERRAIN_TARGET_LOCATION}/terrain_debug.wasm"
-
-        COMMAND ${CMAKE_COMMAND} -E copy_if_different 
-            "${CMAKE_CURRENT_BINARY_DIR}/terrain_debug.wasm.map"
-            "${TERRAIN_TARGET_LOCATION}/terrain_debug.wasm.map"
-
-        COMMENT "Copy terrain debug to ${TERRAIN_TARGET_LOCATION}"
-    )
-    
-    # ---------------------------------------------------------
-    # Test equirectangular
+    # Equirectangular
     # ---------------------------------------------------------
     set(EQUIRECTANGULAR_TARGET_LOCATION "${WEBASSEMBLY_FOLDER_LOCATION}/equirectangular")
 
@@ -213,7 +162,7 @@ if (COPYFILES)
     )
     
     # ---------------------------------------------------------
-    # Test map viewer
+    # Map viewer
     # ---------------------------------------------------------
     set(MAP_VIEWER_TARGET_LOCATION "${WEBASSEMBLY_FOLDER_LOCATION}/mapViewer")
 
