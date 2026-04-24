@@ -232,6 +232,12 @@ body {
     border-color: rgba(180, 100, 255, 0.4);
 }
 
+.icon-btn:disabled {
+    opacity: 0.35;
+    cursor: not-allowed;
+    pointer-events: none;
+}
+
 .icon-btn svg {
     width: 17px;
     height: 17px;
@@ -376,6 +382,14 @@ body {
 
 .btn-guess:active {
     transform: translateY(0);
+}
+
+.btn-guess:disabled {
+    opacity: 0.38;
+    cursor: not-allowed;
+    pointer-events: none;
+    box-shadow: none;
+    transform: none;
 }
 
 #guessPanel {
@@ -534,6 +548,46 @@ body {
     animation: fadeUp 0.4s 0.66s ease both;
 }
 
+.error-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(10, 5, 16, 0.97);
+    z-index: 1001;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.35s ease;
+}
+
+.error-overlay.active {
+    opacity: 1;
+    pointer-events: auto;
+}
+
+#errorBox {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 1.25rem;
+    padding: 2.5rem 3rem;
+    width: 90%;
+    max-width: 380px;
+    background: rgba(30, 15, 40, 0.85);
+    border: 1px solid rgba(230, 57, 70, 0.25);
+    border-radius: 16px;
+    box-shadow: 0 0 60px rgba(230, 57, 70, 0.12);
+    animation: fadeUp 0.4s ease both;
+}
+
+#errorMessage {
+    font-size: 0.95rem;
+    color: rgba(255, 255, 255, 0.7);
+    text-align: center;
+    margin: 0;
+}
+
 .countdown-overlay {
     position: fixed;
     inset: 0;
@@ -562,61 +616,36 @@ body {
     animation: countdownPop 0.9s ease forwards;
 }
 
-#devControls {
-    display: none;
-}
-
 @media (max-width: 992px) {
     #gameViewport {
         flex-direction: column;
         flex-wrap: nowrap;
     }
 
-    #pictureWrapper {
-        flex: 1;
-        display: flex;
-        flex-direction: column;
-        width: 100%;
-        height: auto;
-        min-height: 0;
-    }
-
-    #pictureCanvas {
-        flex: 1;
-        height: auto;
-        min-height: 0;
-    }
-
     #mapWrapper {
-        position: relative;
-        bottom: auto;
-        right: auto;
-        width: 100%;
-        min-width: unset;
-        height: 30%;
-        padding-top: 0;
-        min-height: unset;
-        border-radius: 0;
-        border-top: 1px solid rgba(255, 255, 255, 0.08);
-        box-shadow: 0 -4px 20px rgba(0, 0, 0, 0.4);
-        transition: height 0.4s cubic-bezier(0.22, 1, 0.36, 1);
-        z-index: 5;
+        width: 50%;
+        min-width: 240px;
+        padding-top: 25%;
+        max-height: calc(100% - 88px);
     }
 
-    #mapWrapper:not(:has(#mapCanvas.full)):hover,
-    #mapWrapper.expanded:not(:has(#mapCanvas.full)) {
-        height: 40%;
-        width: 100%;
-        padding-top: 0;
+    #mapWrapper:not(:has(#mapCanvas.full)):hover {
+        width: 68%;
+        padding-top: 34%;
     }
 
     #mapWrapper:has(#mapCanvas.full) {
-        position: fixed;
-        inset: 0;
+        position: absolute;
+        bottom: 0;
+        right: 0;
         width: 100%;
         height: 100%;
+        max-height: none;
         padding-top: 0;
-        z-index: 100;
+        border-radius: 0;
+        border: none;
+        box-shadow: none;
+        z-index: 10;
     }
 
     .map-side-btn {
@@ -629,19 +658,17 @@ body {
         opacity: 1;
     }
 
-    #bottomBar {
-        bottom: 30%;
-        transition: bottom 0.4s cubic-bezier(0.22, 1, 0.36, 1);
+    #pictureFullScreenBtn {
+        display: none;
     }
 
-    #mapWrapper:not(:has(#mapCanvas.full)):hover ~ #bottomBar,
-    #mapWrapper.expanded:not(:has(#mapCanvas.full)) ~ #bottomBar {
-        bottom: 40%;
+    #mapControls .map-btn {
+        display: none;
     }
 
     #bottomRight {
-        width: calc(100% - 24px);
-        min-width: unset;
+        width: 50%;
+        min-width: 240px;
     }
 
     #mapName {
@@ -653,22 +680,32 @@ body {
     }
 
     #guessPanel {
-        flex: 0 0 0%;
+        flex: 0 0 auto;
         width: 100%;
+        height: 0;
+        min-height: 0;
+        opacity: 0;
         border-left: none;
         border-top: 1px solid rgba(180, 100, 255, 0.1);
+        transition: height 0.42s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.2s ease;
     }
 
     #guessPanel.open {
-        flex-basis: 44%;
+        flex-basis: auto;
+        height: 50%;
+        opacity: 1;
+        transition: height 0.45s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.3s ease 0.1s;
     }
 
     #guessPanel.game-over {
         position: fixed;
         inset: 0;
         flex: none;
-        z-index: 100;
+        height: 100%;
+        opacity: 1;
         border-top: none;
+        z-index: 100;
+        animation: gameover-slide-up 0.55s cubic-bezier(0.4, 0, 0.2, 1) both;
     }
 
     #guessPanelScore {
@@ -689,10 +726,26 @@ body {
     }
 }
 
+@media (max-width: 600px) {
+    #mapWrapper {
+        width: 72%;
+        min-width: unset;
+        padding-top: 36%;
+    }
+
+    #mapWrapper:not(:has(#mapCanvas.full)):hover {
+        width: 92%;
+        padding-top: 46%;
+    }
+
+    #bottomRight {
+        width: 72%;
+        min-width: unset;
+    }
+}
+
 @media (max-width: 480px) {
     #bottomRight {
-        min-width: unset;
-        width: calc(100% - 24px);
         gap: 10px;
     }
 
@@ -718,10 +771,6 @@ body {
     .btn-guess {
         padding: 10px 14px;
         font-size: 13px;
-    }
-
-    #guessPanel.open {
-        flex-basis: 48%;
     }
 }
 
@@ -780,5 +829,15 @@ body {
 
     to {
         opacity: 0.5;
+    }
+}
+
+@keyframes gameover-slide-up {
+    from {
+        transform: translateY(100%);
+    }
+
+    to {
+        transform: translateY(0);
     }
 }

@@ -20,6 +20,15 @@ body {
     max-width: 90%;
 }
 
+.sortDiv {
+    flex: 1;
+}
+
+.sortDiv .btnStyle {
+    flex: 1;
+    white-space: nowrap;
+}
+
 .btnStyle {
     border-radius: 50px;
     padding: 10px 25px;
@@ -320,6 +329,17 @@ body {
 }
 
 @media (max-width: 576px) {
+    .sortDiv {
+        width: 100%;
+        flex: none;
+    }
+
+    .sortDiv .btnStyle {
+        font-size: 0.82rem;
+        padding: 8px 8px;
+    }
+
+
     .modal-box {
         width: calc(100% - 24px);
         padding: 22px 16px;

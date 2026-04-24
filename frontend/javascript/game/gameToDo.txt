@@ -10,8 +10,8 @@ kesz--térképre kirajzolni a pontokat, helyes megoldást
 kesz--helyes terkepre kirajzolas
 kesz--pontok kiirasa koronkent
 kesz--csalás ellenőrzés - idő
-felig kesz--dizájn
-felig kesz--gombok kinézete stb
+kesz--dizájn
+kesz--gombok kinézete stb
 kesz--auth
 !!!felig kesz--játékok befejezése
     --toplista megcsinalasa
@@ -31,3 +31,6 @@ kesz--adott kör kiirása
 kesz--térkép nevének kiirása
 kesz--css szebbre valo megcsinalasa
 !!!!--tranzakciokezeles
+kesz--reszponziv javitas
+
+kesz--rendezés fix

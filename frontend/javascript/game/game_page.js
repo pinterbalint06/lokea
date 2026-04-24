@@ -13,42 +13,24 @@ let equirectangularViewer;
 let mapViewerEngine;
 
 
-var gameMaps = [];
-var gameMapsIndex = -1;
+let gameMaps = [];
+let gameMapsIndex = -1;
+
+let canPlaceMarker = true;
+
+let resolveGuess = null;
+let resolveNext = null;
+
+let timerInterval = null;
+let timeLeft = 0;
+
+let guessSent = false;
 
 document.addEventListener("DOMContentLoaded", function () {
     init();
     startGame();
 });
 
-function showCountdownStep(overlay, numberEl, steps, i, resolve) {
-    numberEl.textContent = steps[i];
-    numberEl.style.animation = "none";
-    numberEl.offsetHeight; // reflow to restart animation
-    numberEl.style.animation = "";
-
-    i++;
-    if (i < steps.length) {
-        setTimeout(() => showCountdownStep(overlay, numberEl, steps, i, resolve), 1000);
-    } else {
-        setTimeout(() => {
-            overlay.classList.remove("active");
-            resolve();
-        }, 1000);
-    }
-}
-
-function createCountdownTimer() {
-    return new Promise(resolve => {
-        const overlay = document.getElementById("countdownOverlay");
-        const numberEl = document.getElementById("countdownNumber");
-        const steps = ["3", "2", "1"];
-        overlay.classList.add("active");
-        showCountdownStep(overlay, numberEl, steps, 0, resolve);
-    });
-}
-
-let canPlaceMarker = true;
 function init() {
     mapViewerEngine = new MapViewer(mapCanvasId);
     mapViewerEngine.onClickHandler = (cursorX, cursorY) => {
@@ -110,8 +92,38 @@ function clearImage() {
     equirectangularViewer.clearImage();
 }
 
-let resolveGuess = null;
-let resolveNext = null;
+function showCountdownStep(overlay, numberEl, steps, i, resolve) {
+    numberEl.textContent = steps[i];
+    numberEl.style.animation = "none";
+    numberEl.offsetHeight; // reflow to restart animation
+    numberEl.style.animation = "";
+
+    i++;
+    if (i < steps.length) {
+        setTimeout(() => showCountdownStep(overlay, numberEl, steps, i, resolve), 1000);
+    } else {
+        setTimeout(() => {
+            overlay.classList.remove("active");
+            resolve();
+        }, 1000);
+    }
+}
+
+function createCountdownTimer() {
+    return new Promise(resolve => {
+        const overlay = document.getElementById("countdownOverlay");
+        const numberEl = document.getElementById("countdownNumber");
+        const steps = ["3", "2", "1"];
+        overlay.classList.add("active");
+        showCountdownStep(overlay, numberEl, steps, 0, resolve);
+    });
+}
+
+function showError(message) {
+    stopRoundTimer();
+    document.getElementById('errorMessage').textContent = message || 'Váratlan hiba történt.';
+    document.getElementById('errorOverlay').classList.add('active');
+}
 
 function waitForGuess() {
     return new Promise(resolve => { resolveGuess = resolve; });
@@ -132,14 +144,11 @@ function nextRound() {
 
 async function startGame() {
     try {
-        const gameData = await fetchGameData('http://127.0.0.1:3000/api/game/get_game_info');
+        const gameData = await fetchGameData('/api/game/get_game_info');
 
-        const mapsData = await fetchGameData('http://127.0.0.1:3000/api/game/get_all_maps');
+        const mapsData = await fetchGameData('/api/game/get_all_maps');
         console.log(gameData);
         console.log(mapsData);
-
-        if (!gameData.success || !gameData.game) throw new Error("Failed to fetch game info");
-        if (!mapsData.success || !mapsData.maps) throw new Error("Failed to fetch game maps");
 
         gameMaps = mapsData.maps;
         cycleMaps();
@@ -152,32 +161,37 @@ async function startGame() {
 
         for (let i = currentRound; i < roundCount; i++) {
             console.log(`Starting round ${i + 1} of ${roundCount}`);
-            document.getElementById('currentRound').textContent = i + 1;
-            resetGameState(roundTime);
-            equirectangularViewer.setZoom(0);
+            const isLastRound = i === roundCount - 1;
+            resetGameState(roundTime, i);
             await createPoint();
             startRoundTimer(roundTime);
             await waitForGuess();
+            if (isLastRound) {
+                document.getElementById('nextRoundBtn').textContent = 'Eredmények';
+            }
             await waitForNext();
             removeEverything();
         }
         console.log("Game over");
         await finishGame();
     } catch (error) {
-        console.error("Error starting game:", error);
+        showError('Nem sikerült csatlakozni a játékhoz: ' + error.message);
     }
 }
 
-function resetGameState(roundTime) {
+function resetGameState(roundTime, round) {
     document.getElementById(mapCanvasId).classList.remove("full");
     document.getElementById("guessPanel").classList.remove("open");
     document.getElementById('bottomRight').classList.remove('expanded');
+    document.getElementById('currentRound').textContent = round + 1;
+    document.getElementById("guessBtn").disabled = false;
+    document.getElementById("pictureFullScreenBtn").disabled = false;
     document.getElementById("timer").textContent = formatSecondsToMinutes(roundTime);
 }
 
 async function createPoint() {
     try {
-        const pointData = await fetchGameData('http://127.0.0.1:3000/api/game/get_random_point')
+        const pointData = await fetchGameData('/api/game/get_random_point')
         console.log(pointData);
         if (!pointData.success || !pointData.point) throw new Error("Failed to fetch random point");
         const point = pointData.point;
@@ -220,9 +234,6 @@ function nextMap() {
 
 }
 
-let timerInterval = null;
-let timeLeft = 0;
-
 function startRoundTimer(seconds) {
     timeLeft = seconds;
     const timerEl = document.getElementById("timer");
@@ -242,13 +253,13 @@ function stopRoundTimer() {
     document.getElementById("timer").classList.remove("urgent");
 }
 
-let guessSent = false;
-
 async function sendGuess() {
     if (!guessSent) {
         guessSent = true;
         stopRoundTimer();
         document.getElementById('bottomRight').classList.add('expanded');
+        document.getElementById("guessBtn").disabled = true;
+        document.getElementById("pictureFullScreenBtn").disabled = true;
         canPlaceMarker = false;
         let sendData;
         if (!doesMarkerExist(0)) {
@@ -259,13 +270,15 @@ async function sendGuess() {
         }
         sendData.map_i = gameMapsIndex;
         console.log("Sending guess:", sendData);
-        const response = await postGameScore('http://127.0.0.1:3000/api/game/session_guess', sendData);
-        if (response.success) {
+        try {
+            const response = await postGameScore('/api/game/session_guess', sendData);
             showAnswer(response);
-        };
-        if (resolveGuess) {
-            resolveGuess();
-            resolveGuess = null;
+            if (resolveGuess) {
+                resolveGuess();
+                resolveGuess = null;
+            }
+        } catch (error) {
+            showError('Nem sikerült elküldeni a tippet: ' + error.message);
         }
     }
 }
@@ -284,42 +297,33 @@ function showAnswer(response) {
     movetoMarker(response.pointx, response.pointy);
     const panel = document.getElementById("guessPanel");
     document.getElementById("guessPanelScore").textContent = response.score ?? 0;
-    document.getElementById("guessPanelDistance").textContent =
-        response.distance != null ? `Távolság: ${response.distance} px` : "Rossz térkép vagy nincs jelölő";
+    document.getElementById("guessPanelDistance").textContent = response.distance != null ? `Távolság: ${response.distance} px` : "Rossz térkép vagy nincs jelölő";
     document.getElementById("guessPanelTotal").textContent = response.totalScore ?? 0;
     panel.classList.add("open");
 }
 
 async function fetchGameData(url) {
-    let re;
-    try {
-        const response = await fetch(url);
-        if (!response.ok) {
-            throw new Error('Hiba a játék adatok lekérésekor: ' + response.statusText);
-        }
-        re = await response.json();
-    } catch (error) {
-        re = { message: error.message };
+    const response = await fetch(url);
+    if (!response.ok) {
+        const responseData = await response.json();
+        throw new Error(responseData.message || 'Hálózati hiba');
     }
-    return re;
+    const data = await response.json();
+    return data;
 }
 
 async function postGameScore(url, data) {
-    let res = null;
-    try {
-        const response = await fetch(url, {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json'
-            },
-            body: JSON.stringify(data)
-        });
-        const result = await response.json();
-        res = result;
-    } catch (error) {
-        console.error("Error sending guess:", error);
+    const response = await fetch(url, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(data)
+    });
+    if (!response.ok) {
+        const responseData = await response.json();
+        throw new Error(responseData.message || 'Hálózati hiba');
     }
-    return res;
+    const response = await response.json();
+    return response;
 }
 
 async function finishGame() {
@@ -330,16 +334,18 @@ async function finishGame() {
                 'Content-Type': 'application/json'
             }
         });
+        if (!response.ok) {
+            const responseData = await response.json();
+            throw new Error(responseData.message || 'Hálózati hiba');
+        }
         const result = await response.json();
         console.log("Finish game response:", result);
     } catch (error) {
-        console.error("Error finishing game:", error);
+        showError("Hiba a játék befejezésekor: " + error.message);
     }
 
     const panel = document.getElementById('guessPanel');
-    document.getElementById('finalScore').textContent =
-        document.getElementById('guessPanelTotal').textContent || '0';
-
+    document.getElementById('finalScore').textContent = document.getElementById('guessPanelTotal').textContent || '0';
     panel.classList.add('open');
     requestAnimationFrame(() => requestAnimationFrame(() => {
         panel.classList.add('game-over');
@@ -349,8 +355,6 @@ async function finishGame() {
 window.cycleMaps = cycleMaps;
 window.mapFullScreen = mapFullScreen;
 window.pictureFullScreen = pictureFullScreen;
-window.clearImage = clearImage;
-window.startGame = startGame;
 window.nextRound = nextRound;
 window.sendGuess = sendGuess;
 window.finishGame = finishGame;

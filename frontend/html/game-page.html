@@ -37,6 +37,14 @@
             <span id="countdownNumber"></span>
         </div>
 
+        <div id="errorOverlay" class="error-overlay">
+            <div id="errorBox">
+                <p class="panel-label">Hiba</p>
+                <p id="errorMessage"></p>
+                <button class="btn-next-round" onclick="location.href='/choose_game'">Vissza a főoldalra</button>
+            </div>
+        </div>
+
         <div class="d-flex" id="gameViewport">
             <div id="pictureWrapper">
                 <canvas id="pictureCanvas"></canvas>
@@ -57,7 +65,7 @@
                 </div>
 
                 <div id="sidebar">
-                    <button class="icon-btn" onclick="pictureFullScreen()" title="Teljes képernyő">
+                    <button class="icon-btn" id="pictureFullScreenBtn" onclick="pictureFullScreen()" title="Teljes képernyő">
                         <svg viewBox="0 0 24 24"><polyline points="15 3 21 3 21 9"/><polyline points="9 21 3 21 3 15"/><line x1="21" y1="3" x2="14" y2="10"/><line x1="3" y1="21" x2="10" y2="14"/></svg>
                     </button>
                     <label class="icon-btn" id="autoRotateBtn" title="Automatikus forgatás">
@@ -76,7 +84,7 @@
                             <span id="mapName">Térkép: <span id="mapTitle">-</span></span>
                             <span id="roundCount">Kör: <span id="currentRound">-</span> / <span id="totalRounds">-</span></span>
                         </div>
-                        <button class="btn-guess" onclick="sendGuess()">
+                        <button class="btn-guess" id="guessBtn" onclick="sendGuess()">
                             <svg viewBox="0 0 24 24"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>
                             Tipp leadása
                         </button>
@@ -92,7 +100,7 @@
                     <hr class="panel-divider">
                     <p class="panel-label">Összesített pontszám</p>
                     <h4 id="guessPanelTotal">0</h4>
-                    <button class="btn-next-round" onclick="nextRound()">Következő kör</button>
+                    <button class="btn-next-round" id="nextRoundBtn" onclick="nextRound()">Következő kör</button>
                 </div>
                 <div id="gameOverContent">
                     <div id="gameOverInner">
@@ -103,11 +111,6 @@
                     </div>
                 </div>
             </div>
-        </div>
-
-        <div id="devControls">
-            <button onclick="startGame()">Start</button>
-            <button onclick="clearImage()">Clear</button>
         </div>
     </div>
 </body>
