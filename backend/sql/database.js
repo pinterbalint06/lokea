@@ -291,7 +291,7 @@ async function getGameTitleById(gameMapId) {
         WHERE game_maps.game_maps_id = ?
     `;
     const [result] = await pool.execute(query, [gameMapId]);
-    return result[0].title;
+    return result.length > 0 ? result[0].title : null;
 }
 
 async function insertGameSession(userId, rounds, roundTime, gameMapId, sharpness) {
@@ -364,22 +364,22 @@ async function incrementCycle(sessionId) {
     return result;
 }
 
-async function incrementCurrentRound(sessionId) {
+async function incrementCurrentRound(connection, sessionId) {
     const query = `
         UPDATE game_sessions
         SET current_round = current_round + 1
         WHERE session_id = ?
     `;
-    const [result] = await pool.execute(query, [sessionId]);
+    const [result] = await connection.execute(query, [sessionId]);
     return result;
 }
 
-async function saveGuess(sessionId, pointId, mapId, guessu, guessv, distanceError, score, cycle) {
+async function saveGuess(connection, sessionId, pointId, mapId, guessu, guessv, distanceError, score, cycle) {
     const query = `
         INSERT INTO session_guesses (session_id, point_id, map_id, guessed_u, guessed_v, distance_error, points_awarded, cycle)
         VALUES (?, ?, ?, ?, ?, ?, ?, ?)
     `;
-    const [result] = await pool.execute(query, [sessionId, pointId, mapId, guessu, guessv, distanceError, score, cycle]);
+    const [result] = await connection.execute(query, [sessionId, pointId, mapId, guessu, guessv, distanceError, score, cycle]);
     return result.insertId;
 }
 
@@ -417,9 +417,9 @@ async function setCurrentPoint(sessionId, pointId) {
     await pool.execute(query, [pointId, sessionId]);
 }
 
-async function clearCurrentPoint(sessionId) {
+async function clearCurrentPoint(connection, sessionId) {
     const query = `UPDATE game_sessions SET current_point_id = NULL WHERE session_id = ?`;
-    await pool.execute(query, [sessionId]);
+    await connection.execute(query, [sessionId]);
 }
 
 //!Game map szerkesztéshez szükséges adatok lekérése

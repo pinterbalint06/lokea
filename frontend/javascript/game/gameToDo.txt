@@ -17,7 +17,7 @@ kesz--auth
     --toplista megcsinalasa
     --kommentelés megcsinálása
 kesz--session_guess get vagy post???
-!!!!--127 kidurrantas
+kesz!!!!--127 kidurrantas
 kesz--adott körre sorsolt kep elmentese
 kesz--jobb oldali panelle kiirni a jatek nevet
 kesz--jobb oldali panel teljes kinagyitasa a jatek vegen 
@@ -32,5 +32,8 @@ kesz--térkép nevének kiirása
 kesz--css szebbre valo megcsinalasa
 !!!!--tranzakciokezeles
 kesz--reszponziv javitas
+--svg-k helyes használata
+kesz--checkauth mindenhova
+    --login hiba jo helyre vigyen
 
 kesz--rendezés fix

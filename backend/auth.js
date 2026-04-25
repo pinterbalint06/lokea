@@ -19,6 +19,23 @@ const checkRole = (...roles) => {
     };
 };
 
+const checkAuthPage = (request, response, next) => {
+    if (!request.session.userid) {
+        return response.redirect('/login_page');
+    }
+    next();
+};
+
+const checkGameSessionPage = (request, response, next) => {
+    if (!request.session.userid) {
+        return response.redirect('/login_page');
+    }
+    if (!request.session.game?.activeSessionId) {
+        return response.redirect('/choose_game');
+    }
+    next();
+};
+
 const checkGameSession = (request, response, next) => {
     // if (!request.session.userid) {
     //     return response.status(401).json({ success: false, message: "Bejelentkezés szükséges!" });
@@ -31,6 +48,8 @@ const checkGameSession = (request, response, next) => {
 
 module.exports = {
     checkAuth,
+    checkAuthPage,
     checkRole,
     checkGameSession,
+    checkGameSessionPage,
 };

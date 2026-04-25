@@ -328,7 +328,7 @@ async function postGameScore(url, data) {
 
 async function finishGame() {
     try {
-        const response = await fetch('/api/finish_game_session', {
+        const response = await fetch('/api/game/finish_game_session', {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json'
