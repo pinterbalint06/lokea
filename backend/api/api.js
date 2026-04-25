@@ -43,10 +43,10 @@ router.post("/signup",
             .isLength({ min: 1, max: 20 }).withMessage("Felhasználónév hossza nem megfelelő!"),
         body("email")
             .isEmail().withMessage("Hibás email formátum")
-            .isLength({ min: 5, max: 250 }).withMessage("Email max 250 karakter"),
+            .isLength({ min: 5, max: 254 }).withMessage("Email max 254 karakter"),
 
         body("password")
-            .isLength({ min: 8, max: 50 }).withMessage("Jelszó hossza 8-50")
+            .isLength({ min: 8, max: 60 }).withMessage("Jelszó hossza 8-60 karakter")
             .matches(/\d/).withMessage("Kell benne szám")
             .matches(/[A-Z]/).withMessage("Kell benne nagybetű")
     ],
@@ -56,7 +56,7 @@ router.post("/signup",
             if (!errors.isEmpty()) {
                 response.status(400).json({
                     success: false,
-                    error: errors.array()
+                    message: errors.array()
                 });
             }
             else {
@@ -66,18 +66,18 @@ router.post("/signup",
                 if (insert.success) {
                     response.status(201).json({
                         success: true,
-                        message: "Sikeres regisztráció"
+                        message: "Sikeres regisztráció!"
                     });
                 }
                 else {
-                    response.status(500).json({
+                    response.status(409).json({
                         success: false,
-                        message: insert.error
+                        message: "A felhasználó létezik!"
                     })
                 }
             }
         } catch (error) {
-            response.status(500).json({ error: error });
+            response.status(500).json({ error: error.message });
         }
     }
 );
@@ -85,9 +85,9 @@ router.post("/signup",
 router.post("/login",
     [
         body("username")
-            .isLength({ min: 1, max: 250 }).withMessage("Felhasználónév/email hossza nem megfelelő!"),
+            .isLength({ min: 1, max: 254 }).withMessage("Felhasználónév/email hossza nem megfelelő!"),
         body("password")
-            .isLength({ min: 8, max: 50 }).withMessage("Jelszó hossza nem megfelelő!")
+            .isLength({ min: 8, max: 60 }).withMessage("Jelszó hossza nem megfelelő!")
     ],
     async (request, response) => {
         try {
@@ -95,11 +95,11 @@ router.post("/login",
             if (!errors.isEmpty()) {
                 response.status(400).json({
                     success: false,
-                    error: errors.array()
+                    message: errors.array()
                 });
             }
             else {
-                const { username, password } = request.body;
+                const { username, password, remember } = request.body;
                 let rows;
                 if (validator.isEmail(username)) {
                     rows = await database.getUserByEmail(username);
@@ -118,22 +118,25 @@ router.post("/login",
                     }
                     else {
                         let sesRole = rows[0].role;
-
-                        if (sesRole.role === 'ADMIN') {
-                            request.session.cookie.maxAge = 15 * 60 * 1000;
+                        if (remember) {
+                            if (sesRole === 'ADMIN') {
+                                request.session.cookie.maxAge = 15 * 60 * 1000;
+                            }
+                            else {
+                                request.session.cookie.maxAge = 2 * 60 * 60 * 1000;
+                            }
                         }
                         else {
-                            request.session.cookie.maxAge = 2 * 60 * 60 * 1000;
+                            request.session.cookie.expires = false;
                         }
-
                         request.session.userid = rows[0].user_id;
                         request.session.role = sesRole;
-                        response.status(200).json({ message: "Sikeres bejelentkezés", role: sesRole });
+                        response.status(200).json({ message: "Sikeres bejelentkezés", role: sesRole, username: rows[0].username });
                     }
                 }
             }
         } catch (error) {
-            response.status(500).json({ message: error })
+            response.status(500).json({ message: "Hiba a bejelentkezés során!" });
         }
     });
 
@@ -148,7 +151,116 @@ router.post('/signout', auth.checkAuth, (request, response) => {
         }
     });
 });
+
+router.get('/loginRole', async (request, response) => {
+    let login = false;
+    try {
+        if (!request.session.userid) {
+            response.status(200).json({ login })
+        }
+        else {
+            login = true;
+            let user = await database.getUserNameProfile(request.session.userid);
+            if (request.session.role == "ADMIN") {
+                response.status(200).json({ login, adminLink: "/admin", user: user[0] });
+            }
+            else {
+                response.status(200).json({ login, user: user[0] });
+            }
+        }
+    } catch (error) {
+        response.status(500).json({ login, error: error });
+    }
+})
+
 //Endpoints - settings
+
+router.get('/getUserData', auth.checkAuth, async (request, response) => {
+    try {
+        let users = await database.getUser(request.session.userid);
+        response.status(200).json({ users: users[0] });
+    } catch (error) {
+        response.status(500).json({ error: error });
+    }
+})
+
+router.put('/updateUser', auth.checkAuth,
+    [
+        body("username")
+            .optional({ nullable: true })
+            .not().isEmail().withMessage("Felhasználónév nem lehet email cim!")
+            .matches(/^[a-zA-Z0-9áéíóöőúüűÁÉÍÓÖŐÚÜŰ_-]+$/).withMessage('A felhasználónév csak betűket, számokat, - vagy _ karaktert, és ékezetes betűket tartalmazhat.')
+            .isLength({ min: 1, max: 20 }).withMessage("Felhasználónév hossza nem megfelelő!"),
+        body("email")
+            .optional({ nullable: true })
+            .isEmail().withMessage("Hibás email formátum")
+            .isLength({ min: 5, max: 254 }).withMessage("Email max 254 karakter!")
+    ], async (request, response) => {
+        try {
+            const errors = validationResult(request);
+            if (!errors.isEmpty()) {
+                response.status(400).json({
+                    success: false,
+                    error: errors.array()
+                });
+            }
+            else {
+                let { username, email, is_2fa, language, darkmode } = request.body;
+                await database.updateUser(request.session.userid, username, email, is_2fa, language, darkmode);
+                response.status(200).json({ message: "Sikeres frissités!" });
+            }
+
+        } catch (error) {
+            response.status(500).json({ error: error });
+        }
+    })
+
+router.put("/updatePassword", auth.checkAuth,
+    [
+        body("oldPass")
+            .isLength({ min: 8, max: 60 }).withMessage("A régi jelszó hossza nem 8-60 karakter!"),
+        body("newPass")
+            .isLength({ min: 8, max: 60 }).withMessage("Az új jelszó hossza nem 8-60 karakter!")
+            .matches(/\d/).withMessage("A jelszóba kell minimum 1 szám!")
+            .matches(/[A-Z]/).withMessage("A jelszóba kell minimum 1 nagybetű!")
+    ],
+    async (request, response) => {
+        try {
+            const errors = validationResult(request);
+            if (!errors.isEmpty()) {
+                response.status(400).json({
+                    success: false,
+                    error: errors.array()
+                });
+            }
+            else {
+                let { oldPass, newPass } = request.body;
+                await database.updatePassword(request.session.userid, oldPass, newPass);
+                response.status(200).json({ message: "Sikeres frissités!" });
+            }
+
+        } catch (error) {
+            response.status(500).json({ error: error });
+        }
+    })
+
+router.post("/inactiveUser", auth.checkAuth, async (request, response) => {
+    try {
+        await database.userToInactive(request.session.userid);
+        request.session.destroy(error => {
+            if (error) {
+                response.status(500).json({ success: false, error: error });
+            }
+            else {
+                response.clearCookie('geo.sid');
+                response.status(200).json({ success: true, message: "Sikeres frissités!" });
+            }
+        });
+
+    } catch (error) {
+        response.status(500).json({ error: error });
+    }
+})
 
 router.post('/updateProfilePic', auth.checkAuth, upload.single('profilePic'), async (request, response) => {
     let originalFile;
@@ -174,14 +286,15 @@ router.post('/updateProfilePic', auth.checkAuth, upload.single('profilePic'), as
 
             let { width, height } = metadata;
             let finalUrl = `${newFileName}`;
-
-            let lastPfp = await database.uploadProfilePic(finalUrl, width, height, request.body.user_id);
+            let lastPfp = await database.uploadProfilePic(finalUrl, width, height, request.session.userid);
 
             await fs.unlink(originalFile).catch(() => { });
 
             if (lastPfp) {
-                let lastPfpPath = path.join(__dirname, '..', lastPfp);
-                await fs.unlink(lastPfpPath).catch(() => { });
+                let lastPfpPath = path.join(__dirname, '..', 'uploads', lastPfp);
+                await fs.unlink(lastPfpPath).catch((err) => {
+                    console.error("Régi kép törlése sikertelen:", err.path);
+                });
             }
             response.status(201).json({ success: true, message: "Profilkép frissítve!" });
         }
@@ -192,18 +305,18 @@ router.post('/updateProfilePic', auth.checkAuth, upload.single('profilePic'), as
         if (newFilePath) {
             await fs.unlink(newFilePath).catch(() => { });
         }
-        response.status(500).json({ error: error.message, details: error.stack });
+        response.status(500).json({ error: error.message });
     }
 })
 
-router.post('/deleteProfilePic', auth.checkAuth, async (request, response) => {
+router.delete('/deleteProfilePic', auth.checkAuth, async (request, response) => {
     try {
-        let lastPfp = await database.deleteProfilePic(request.body.user_id);
+        let lastPfp = await database.deleteProfilePic(request.session.userid);
         if (!lastPfp) {
             response.status(200).json({ success: true, message: "A profilkép már alapértelmezett volt." });
         }
         else {
-            let lastPfpPath = path.join(__dirname, '..', lastPfp);
+            let lastPfpPath = path.join(__dirname, '..', 'uploads', lastPfp);
             try {
                 await fs.unlink(lastPfpPath);
             } catch (error) {

@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html lang="hu">
+
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Regisztráció</title>
+    <!--!Bootstrap-->
+    <link rel="stylesheet" href="../bootstrap/css/bootstrap.min.css" />
+    <!--?Popper: dropdowns, popovers, tooltips-->
+    <script src="../bootstrap/js/popper.min.js"></script>
+    <script src="../bootstrap/js/bootstrap.min.js"></script>
+    <!--!CSS-->
+    <link rel="stylesheet" href="../css/reglog.css" />
+    <!--!JavaScript-->
+    <script type="module" src="../javascript/register.js"></script>
+</head>
+
+<body>
+    <div class="container-fluid d-flex justify-content-center align-items-center vh-100">
+        <div class="card registercard w-50 p-5">
+            <div class="row">
+                <div class="col-lg-6 col-md-12 d-flex flex-column justify-content-center">
+                    <div>
+                        <h4 class="h4 text-center mb-3" id="regTitle">Regisztrálj még ma!</h4>
+                        <form id="registerForm">
+                            <div class="input-container">
+                                <input type="text" id="regUser" placeholder=" " required>
+                                <label for="regUser">Felhasználónév</label>
+                                <div class="input-requirement" id="user-req">
+                                    <ul>
+                                        <li>Min. 1, max. 20 karakter (betűk, számok, _, -)</li>
+                                    </ul>
+                                </div>
+                            </div>
+                            <div class="input-container">
+                                <input type="text" id="regEmail" placeholder=" " required>
+                                <label for="regEmail">E-mail cím</label>
+                            </div>
+                            <div class="input-container">
+                                <input type="password" id="regPass" placeholder=" " required>
+                                <label for="regPass">Jelszó</label>
+                                <div class="input-requirement" id="pass-req">
+                                    <ul>
+                                        <li>Min. 8, max. 50 karakter</li>
+                                        <li>legalább 1 nagybetű és 1 szám</li>
+                                    </ul>
+                                </div>
+                            </div>
+                            <div>
+                                <input type="checkbox" id="twofactorCheckbox">
+                                <label for="twofactorCheckbox">Két lépcsős azonosítás</label>
+                            </div>
+                            <div class="form-group mt-2 d-flex justify-content-evenly" id="buttons">
+                                <button type="button" class="btn btn-primary" id="regButton">Regisztrálás</button>
+                            </div>
+                        </form>
+                    </div>
+
+                </div>
+                <div class="col-lg-6 col-md-12 d-flex flex-column justify-content-center">
+                    <img src="../images/kedvcsinalo.png" class="img-fluid" title="Kedvcsináló">
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="modal fade" id="modalReg" tabindex="-1" aria-labelledby="exampleModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-md modalReg">
+            <div class="modal-content">
+                <div class="modal-body">
+                    <div class="d-flex flex-column align-items-center">
+                        <div class="reg-container" id="regModalContainer">
+                            <img src="../images/logo_o.png" alt="" class="logo">
+                            <svg class="progress-svg">
+                                <use class="progress-circle" href="../images/icons/sprite.svg#circle-border"></use>
+                            </svg>
+                            <svg class="check-svg">
+                                <use class="mark" href="../images/icons/sprite.svg#checkmark"></use>
+                            </svg>
+                        </div>
+                        <h4 class="h4 text-center" id="regModalTitle">Regisztrálás...</h4>
+                        <h6 class="h6 text-center" id="regModalText"></h6>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</body>
+
+</html>

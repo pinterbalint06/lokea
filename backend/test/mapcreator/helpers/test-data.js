@@ -47,6 +47,7 @@ const tooBigUV = [
 ];
 
 const tooBigDegrees = [
+    360,
     360.1,
     361,
     720,

@@ -67,7 +67,7 @@ const ERRORS = {
         COORDINATES_UPDATE_FAILED: "A pont koordinátáinak frissítése nem sikerült!",
         IMAGE_PATH_UPDATE_FAILED: "A pont útvonalának frissítése nem sikerült!",
         OLD_IMAGE_DELETION_FAILED: "A régi kép törlése nem sikerült!",
-        IMAGE_DELETETION_FAILED: "A kép törlése nem sikerült!",
+        IMAGE_DELETION_FAILED: "A kép törlése nem sikerült!",
         DELETE_FAILED: "A pont törlése nem sikerült!",
         NORTH_DIRECTION_UPDATE_FAILED: "A pont északirányának frissítése nem sikerült!",
 
