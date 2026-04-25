@@ -15,10 +15,13 @@ Chart.register(...registerables);
 
 router.get('/getLanguage', (request, response) => {
     try {
+        if (!request.session) {
+            throw new Error("Session hiányzik");
+        }
         let language = request.session.userLanguage;
         response.status(200).json({ language: request.session.userLanguage });
     } catch (error) {
-        response.status(500).json({ error: error });
+        response.status(500).json({ error: "Hiba a nyelv lekérdezésekor" });
     }
 
 });
@@ -31,7 +34,7 @@ router.get('/getDashboardInfo', async (request, response) => {
 
         response.status(200).json({ playerCount, activePlayerCount, logsPreview: logsPreview.rows });
     } catch (error) {
-        response.status(500).json({ error: error });
+        response.status(500).json({ error: "Hiba a dashboard információk lekérdezésekor" });
     }
 });
 
@@ -68,7 +71,7 @@ router.get('/chart/:type', async (request, response) => {
                 color = '#dc3545';
                 break;
             default:
-                response.status(400).send("Érvénytelen grafikon típus");
+                return response.status(400).json({ error: "Érvénytelen grafikon típus" });
         }
 
         const labels = dbData.map(row => row[xKey]);
@@ -90,7 +93,7 @@ router.get('/chart/:type', async (request, response) => {
 
     } catch (error) {
         console.error(error);
-        response.status(500).send("Hiba a generáláskor");
+        response.status(500).json({ error: "Hiba a grafikon generálása során" });
     }
 });
 
