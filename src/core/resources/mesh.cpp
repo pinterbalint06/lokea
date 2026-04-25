@@ -13,7 +13,6 @@ Mesh::Mesh(int vertexCount, int indexCount) : material_(Materials::Material::Err
 {
     vertexCount_ = vertexCount;
     indexCount_ = indexCount;
-    normalCount_ = vertexCount_;
     vertices_ = (Vertex *)malloc(vertexCount_ * sizeof(Vertex));
     indices_ = (uint32_t *)malloc(indexCount_ * sizeof(uint32_t));
     MathUtils::setIdentity(meshData_.modelMatrix);

@@ -68,6 +68,7 @@ void MapViewerEngine::createMapPlane()
         Texture *mapTexture = new Texture();
         TextureOptions options = TextureStyle::Default;
         options.wrapT = GL_CLAMP_TO_EDGE;
+        mapTexture->setOptions(options);
         mat.setTexture(mapTexture);
         mapPlane_->setMaterial(mat);
 
@@ -91,11 +92,11 @@ void MapViewerEngine::updateSingleMarker(MapMarker *mapMarker)
         float u = mapMarker->getU();
         float v = mapMarker->getV();
 
-        float distanctToLeftEdge = minMapU - u;
-        int startOffset = std::floor(distanctToLeftEdge);
+        float distanceToLeftEdge = minMapU - u;
+        int startOffset = std::floor(distanceToLeftEdge);
 
-        float distanctToRightEdge = minMapU + uRange - u;
-        int endOffset = std::ceil(distanctToRightEdge);
+        float distanceToRightEdge = minMapU + uRange - u;
+        int endOffset = std::ceil(distanceToRightEdge);
 
         for (int offset = startOffset; offset <= endOffset; offset++)
         {
@@ -766,41 +767,6 @@ void MapViewerEngine::setCanvasSize(int width, int height)
     else
     {
         emscripten_console_error("Plane was destroyed!");
-    }
-}
-
-void MapViewerEngine::UVToPlaneRelativeCoordinates(float u, float v, float &planeX, float &planeY)
-{
-    if (mapPlane_)
-    {
-        Vertex* mapVertices = mapPlane_->getVertices();
-
-        float minMapU = mapVertices[TOP_LEFT].u;
-        float minMapV = mapVertices[TOP_LEFT].v;
-        // ranges
-        float uRange = mapVertices[TOP_RIGHT].u - minMapU;
-        float vRange = mapVertices[BOTTOM_LEFT].v - minMapV;
-
-        // calculate which map to project to
-        // it is put on the closest to the view center
-        float currentCenterU = (mapVertices[TOP_LEFT].u + mapVertices[TOP_RIGHT].u) * 0.5f;
-
-        float distanceToCenter = currentCenterU - u;
-
-        float closestMapStart = std::round(distanceToCenter);
-        float wrappedU = u + closestMapStart;
-
-        // normalize to [0;1]
-        float inRangeRelativeU = (wrappedU - minMapU) / uRange;
-        float inRangeRelativeV = (v - minMapV) / vRange;
-
-        // the plane starts at -1 and ends at 1
-        // we have to turn the rangeRelative [0;1] coordinate to [-1;1]
-        // [0;1] * 2 => [0;2]
-        // [0;2] - 1 => [-1;1]
-        // also flip the y axis by subtracting it from 1
-        planeX = (inRangeRelativeU * 2.0f) - 1.0f;
-        planeY = 1.0f - (inRangeRelativeV * 2.0f);
     }
 }
 

@@ -11,7 +11,7 @@ class Mesh;   // defined in "core/resources/mesh.h"
 class Scene
 {
 private:
-    Camera *cam_;
+    std::unique_ptr<Camera> cam_;
     std::vector<std::shared_ptr<Mesh>> meshes_;
 
 public:
@@ -19,7 +19,7 @@ public:
     ~Scene();
 
     // getters
-    Camera *getCamera() const { return cam_; }
+    Camera *getCamera() const { return cam_.get(); }
     int getMeshCount() const { return meshes_.size(); }
     std::shared_ptr<Mesh> getMesh(int index) const { return meshes_.size() > index && index >= 0 ? meshes_[index] : nullptr; }
 

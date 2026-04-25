@@ -44,12 +44,6 @@ void Engine::setShadingMode(Shaders::SHADINGMODE shadingmode)
     renderer_->setShadingMode(shadingmode);
 }
 
-void Engine::setFrustum(float filmW, float filmH, int imageW, int imageH, float n, float f)
-{
-    renderer_->setImageDimensions(imageW, imageH);
-    scene_->getCamera()->setPerspective(filmW, filmH, imageW, imageH, n, f);
-}
-
 void Engine::setZoom(float amount)
 {
     scene_->getCamera()->setZoom(amount);
@@ -159,8 +153,7 @@ void Engine::loadTextureFromUrl(const std::string &url, int meshIndex, emscripte
         Texture *texture = mesh->getMaterial().getTexture();
         if (texture == nullptr)
         {
-            Texture *texture = new Texture();
-
+            texture = new Texture();
             texture->loadFromUrl(url, onSuccess, onError);
 
             Materials::Material newTexMat = mesh->getMaterial();

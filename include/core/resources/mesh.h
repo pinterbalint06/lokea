@@ -35,7 +35,6 @@ private:
 
     int vertexCount_;
     int indexCount_;
-    int normalCount_;
 
     Materials::Material material_;
 

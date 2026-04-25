@@ -117,11 +117,6 @@ void Camera::updateViewMatrix()
         float rotMatr[16] = { 0 };
         float translation[16] = { 0 };
 
-        float sinY = sinf(yaw_);
-        float cosY = cosf(yaw_);
-        float sinX = sinf(pitch_);
-        float cosX = cosf(pitch_);
-
         MathUtils::setRotationY(yRotMatr, yaw_);
         MathUtils::setRotationX(xRotMatr, pitch_);
 
@@ -163,22 +158,6 @@ void Camera::setProjectionMode(PROJECTIONTYPE mode)
 
         recalculateCanvasBoundaries();
     }
-}
-
-void Camera::setPerspective(float filmW, float filmH, int imageW, int imageH, float n, float f)
-{
-    filmW_ = filmW;
-    filmH_ = filmH;
-    imageW_ = imageW;
-    imageH_ = imageH;
-    setProjectionMode(PROJECTIONTYPE::PERSPECTIVE);
-}
-
-void Camera::setOrthographic(int imageW, int imageH, float n, float f)
-{
-    imageW_ = imageW;
-    imageH_ = imageH;
-    setProjectionMode(PROJECTIONTYPE::ORTHOGRAPHIC);
 }
 
 void Camera::setImageDimensions(int imageW, int imageH)

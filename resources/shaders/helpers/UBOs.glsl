@@ -17,7 +17,7 @@ layout(std140) uniform CameraData {
 layout(std140) uniform MaterialData {
     vec4 uMatAlbedo;       // 0-15
 };
-
+// TODO: egyszerusites folytatasa
 layout(std140) uniform MeshData {
     mat4 uM;
 };

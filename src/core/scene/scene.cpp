@@ -5,12 +5,11 @@
 
 Scene::Scene()
 {
-    cam_ = new Camera();
+    cam_ = std::make_unique<Camera>();
 }
 
 Scene::~Scene()
 {
-    delete cam_;
 }
 
 void Scene::addMesh(std::shared_ptr<Mesh> mesh)

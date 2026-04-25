@@ -30,7 +30,6 @@ public:
 
 
     void setShadingMode(Shaders::SHADINGMODE shadingmode);
-    void setFrustum(float filmW, float filmH, int imageW, int imageH, float n, float f);
     void setZoom(float amount);
     void zoom(float amount);
     void setCanvasSize(int width, int height);

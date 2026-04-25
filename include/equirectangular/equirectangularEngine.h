@@ -24,7 +24,7 @@ enum EQUIRECTANGULARMODE
 class EquirectangularEngine : public Engine
 {
 private:
-    int currentRequestID;
+    int currentRequestId_;
     std::vector<std::shared_ptr<Arrow>> arrows_;
 
     std::shared_ptr<Mesh> generateSphereSegment(int rings, int segments, float radius,

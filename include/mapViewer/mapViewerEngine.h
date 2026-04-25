@@ -44,7 +44,6 @@ private:
     void zoomMapUV(float zoomAmount, float zoomHereU, float zoomHereV);
     int getMarkerIndexById(int id);
     int getLineIndexById(int id);
-    void UVToPlaneRelativeCoordinates(float u, float v, float &planeX, float &planeY);
     void updateAllLines();
 
 public:

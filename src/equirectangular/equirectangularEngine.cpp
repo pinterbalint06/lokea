@@ -31,7 +31,7 @@ extern "C"
         emscripten::EM_VAL onSuccessHandle,
         emscripten::EM_VAL onErrorHandle,
         int requestID,
-        int *currentRequestID);
+        int *currentRequestId);
 }
 
 std::shared_ptr<Mesh> EquirectangularEngine::generateSphereSegment(int rings, int segments, float radius,
@@ -127,16 +127,23 @@ void EquirectangularEngine::generateSphere()
     int segs = EQUIRECTANGULAR_SETTINGS.sphereSegmentCount;
     float rad = EQUIRECTANGULAR_SETTINGS.sphereRadius;
 
-    const int tiles = currMode_;
-    const float rec = 1.0f / (float)tiles;
+    const int tileCountPerAxis = currMode_;
+    const float tileUvSpan = 1.0f / static_cast<float>(tileCountPerAxis);
     int i = 0;
 
     clearScene();
-    for (int x = 0; x < tiles; x++)
+    for (int x = 0; x < tileCountPerAxis; x++)
     {
-        for (int y = 0; y < tiles; y++)
+        for (int y = 0; y < tileCountPerAxis; y++)
         {
-            std::shared_ptr<Mesh> sphereSegment = generateSphereSegment(rings / tiles, segs / tiles, rad, rec * x, rec * (x + 1), rec * y, rec * (y + 1));
+            std::shared_ptr<Mesh> sphereSegment = generateSphereSegment(
+                rings / tileCountPerAxis,
+                segs / tileCountPerAxis,
+                rad,
+                tileUvSpan * x,
+                tileUvSpan * (x + 1),
+                tileUvSpan * y,
+                tileUvSpan * (y + 1));
             Materials::Material defaultMat = Materials::Material::Error();
             defaultMat.setTexture(imageTiles_[i].get());
             sphereSegment->setMaterial(defaultMat);
@@ -151,7 +158,7 @@ EquirectangularEngine::EquirectangularEngine(const std::string &canvasID) : Engi
     setShadingMode(Shaders::SHADINGMODE::NO_SHADING);
     enableAlphaBlending();
 
-    currentRequestID = 0;
+    currentRequestId_ = 0;
     const int maxTextures = 16;
     imageTiles_.reserve(maxTextures);
     for (int i = 0; i < maxTextures; i++)
@@ -165,7 +172,7 @@ EquirectangularEngine::EquirectangularEngine(const std::string &canvasID) : Engi
 
 EquirectangularEngine::~EquirectangularEngine()
 {
-    currentRequestID++;
+    currentRequestId_++;
 }
 
 void EquirectangularEngine::changeImageMode(EQUIRECTANGULARMODE mode)
@@ -186,7 +193,7 @@ void EquirectangularEngine::uploadTiles(const std::string &url, int ctx, emscrip
     {
         textureIds.set(i, imageTiles_[i]->getTextureIndex());
     }
-    equirectangularFromURL(url.c_str(), ctx, tiles, textureIds.as_handle(), onSuccess.as_handle(), onError.as_handle(), currentRequestID, &currentRequestID);
+    equirectangularFromURL(url.c_str(), ctx, tiles, textureIds.as_handle(), onSuccess.as_handle(), onError.as_handle(), currentRequestId_, &currentRequestId_);
 }
 
 void EquirectangularEngine::loadEquirectangularImage(const std::string &url, int width, int height, emscripten::val onSuccess, emscripten::val onError)
@@ -195,7 +202,7 @@ void EquirectangularEngine::loadEquirectangularImage(const std::string &url, int
 
     if (ctx > 0)
     {
-        currentRequestID++;
+        currentRequestId_++;
         GLint maxTextureSize = 0;
         glGetIntegerv(GL_MAX_TEXTURE_SIZE, &maxTextureSize);
         if (maxTextureSize < width / 4 || maxTextureSize < height / 4)
@@ -207,12 +214,12 @@ void EquirectangularEngine::loadEquirectangularImage(const std::string &url, int
         }
         else
         {
+            EQUIRECTANGULARMODE nextMode = EQUIRECTANGULARMODE::FULL;
             if (maxTextureSize >= width && maxTextureSize >= height)
             {
             #ifdef DEBUG
                 emscripten_console_log("full");
             #endif
-                changeImageMode(EQUIRECTANGULARMODE::FULL);
             }
             else
             {
@@ -221,16 +228,18 @@ void EquirectangularEngine::loadEquirectangularImage(const std::string &url, int
                 #ifdef DEBUG
                     emscripten_console_log("2x2");
                 #endif
-                    changeImageMode(EQUIRECTANGULARMODE::SPLIT_2X2);
+                    nextMode = EQUIRECTANGULARMODE::SPLIT_2X2;
                 }
                 else
                 {
                 #ifdef DEBUG
                     emscripten_console_log("4x4");
                 #endif
-                    changeImageMode(EQUIRECTANGULARMODE::SPLIT_4X4);
+                    nextMode = EQUIRECTANGULARMODE::SPLIT_4X4;
                 }
             }
+
+            changeImageMode(nextMode);
             uploadTiles(url, ctx, onSuccess, onError);
         }
     }
@@ -239,7 +248,7 @@ void EquirectangularEngine::loadEquirectangularImage(const std::string &url, int
 
 void EquirectangularEngine::clearImage()
 {
-    currentRequestID++;
+    currentRequestId_++;
     changeImageMode(EQUIRECTANGULARMODE::FULL);
 
     for (int i = 0; i < imageTiles_.size(); i++)

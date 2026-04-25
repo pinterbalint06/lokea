@@ -229,22 +229,6 @@ public:
     void updateViewProjectionMatrix();
 
     /**
-     * @brief Sets the camera's properties and calls recalculateCanvasBoundaries().
-     *
-     * @param focal   The focal length of the camera lens.
-     * @param filmW   The width of the film/sensor.
-     * @param filmH   The height of the film/sensor.
-     * @param imageW  The width of the output image in pixels.
-     * @param imageH  The height of the output image in pixels.
-     * @param n       The near clipping plane distance.
-     * @param f       The far clipping plane distance.
-     */
-    void setPerspective(float filmW, float filmH,
-                        int imageW, int imageH, float n, float f);
-
-    void setOrthographic(int imageW, int imageH, float n, float f);
-
-    /**
      * @brief Sets the camera's image dimensions and calls recalculateCanvasBoundaries().
      *
      * @param imageW  The width of the output image in pixels.
