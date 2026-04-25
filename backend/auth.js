@@ -37,9 +37,9 @@ const checkGameSessionPage = (request, response, next) => {
 };
 
 const checkGameSession = (request, response, next) => {
-    // if (!request.session.userid) {
-    //     return response.status(401).json({ success: false, message: "Bejelentkezés szükséges!" });
-    // }
+    if (!request.session.userid) {
+        return response.status(401).json({ success: false, message: "Bejelentkezés szükséges!" });
+    }
     if (!request.session.game?.activeSessionId) {
         return response.status(403).json({ success: false, message: "Nincs aktív játék munkamenet!" });
     }

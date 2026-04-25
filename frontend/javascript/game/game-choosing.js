@@ -146,7 +146,8 @@ async function postGameId(gamemapId) {
             body: formData 
         });
         if (!response.ok) {
-            throw new Error('Hiba a játék indításakor: ' + response.message);
+            const errorData = await response.json();
+            throw new Error('Hiba a játék indításakor: ' + errorData.message);
         }
         window.location.href = 'game';
     } catch (error) {

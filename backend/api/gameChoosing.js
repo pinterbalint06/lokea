@@ -96,8 +96,12 @@ router.post('/post_game_id', upload.none(), async (request, response) => {
         return response.status(400).json({ success: false, message: 'Invalid gameMapId' });
     }
     try {
+        const existing = await database.selectLatestActiveGameSession(userId);
+        if (existing) {
+            return response.status(409).json({ success: false, message: 'Van már aktív játék munkamenet' });
+        }
         const activeSession = await database.insertGameSession(userId, rounds, roundTime, gameMapId, sharpness);
-        const gameTitle = await database.getGameTitleById(gameMapId);
+        const gameTitle = await database.getGameTitleById(gameMapId) ?? 'N/A';
         request.session.game = {
             activeSessionId: activeSession,
             gameMapId: gameMapId,
