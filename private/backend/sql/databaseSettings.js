@@ -55,35 +55,16 @@ async function updateAdminSettings(user_id, darkmode, selected_chart) {
     return result.affectedRows;
 }
 
-async function updateDarkMode(user_id, darkmode, selected_chart) {
+async function updateDarkMode(user_id, darkmode) {
     let connection;
     let affectedRows = 0;
 
     try {
         connection = await pool.getConnection();
-
-        let updateFields = [];
-        let queryParams = [];
-
-        if (darkmode !== null && darkmode !== undefined) {
-            updateFields.push("darkmode = ?");
-            queryParams.push(darkmode);
-        }
-
-        if (selected_chart !== null && selected_chart !== undefined) {
-            updateFields.push("selected_chart = ?");
-            queryParams.push(selected_chart);
-        }
-
-        if (updateFields.length > 0) {
-            const query = `UPDATE admin_settings SET ${updateFields.join(", ")} WHERE admin_id = ?`;
-            queryParams.push(user_id);
-
-            await connection.beginTransaction();
-            const [result] = await connection.execute(query, queryParams);
-            await connection.commit();
-            affectedRows = result.affectedRows;
-        }
+        const query = `UPDATE admin_settings SET darkmode = ? WHERE admin_id = ?`;
+        const [result] = await connection.execute(query, [darkmode, user_id]);
+        await connection.commit();
+        affectedRows = result.affectedRows;
     } catch (error) {
         if (connection) await connection.rollback();
         throw error;
@@ -112,7 +93,7 @@ async function updateLanguage(user_id, language) {
         throw error;
     } finally {
         if (connection) connection.release();
-        
+
     }
 }
 

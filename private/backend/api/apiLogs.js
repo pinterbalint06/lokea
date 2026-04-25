@@ -12,7 +12,8 @@ router.get('/getLogs', async (request, response) => {
         let logs = await databaseLogs.getLogs();
         response.status(200).json({ message: "Sikeres lekérés", logs: logs.rows, total: logs.total });
     } catch (error) {
-        response.status(500).json({ error: error });
+        console.error(error);
+        response.status(500).json({ error: "Hiba a lekérdezés során" });
     }
 });
 

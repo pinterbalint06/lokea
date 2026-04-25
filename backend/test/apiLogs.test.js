@@ -63,7 +63,8 @@ describe('Admin Logs API Átfogó Tesztek', () => {
 
         it('HIBA - 500, ha az adatbázis összeomlik', async () => {
             db.getLogs.mockRejectedValue(new Error("DB hiba"));
-            await request(app).get('/api/admin/getLogs').expect(500);
+            const res = await request(app).get('/api/admin/getLogs').expect(500);
+            expect(res.body.error).toBe("Hiba a lekérdezés során");
         });
     });
 
