@@ -19,11 +19,11 @@ body {
 }
 
 .flex1 {
-  flex: 1;
+    flex: 1;
 }
 
-.flex1 > div {
-  flex: 1 1 0;
+.flex1>div {
+    flex: 1 1 0;
 }
 
 .center {
@@ -40,10 +40,11 @@ body {
 
 .perlinParam label,
 .perlinParam output,
-.perlinParam input  {
+.perlinParam input {
     width: 33%;
 }
-.perlinParam select  {
+
+.perlinParam select {
     width: 66%;
 }
 
@@ -159,7 +160,9 @@ input[type="color"] {
     background-color: #121212;
 }
 
-select, input[type="text"], output {
+select,
+input[type="text"],
+output {
     background-color: #2c2c2c;
     color: #E0E0E0;
     border: 1px solid #444444;
@@ -167,13 +170,14 @@ select, input[type="text"], output {
     border-radius: 3px;
 }
 
-.col > button {
+.col>button {
     width: fit-content;
     padding: 0.5rem 1rem;
 }
 
 canvas {
     touch-action: none;
+    display: block;
 }
 
 .canvasborder {
@@ -182,4 +186,8 @@ canvas {
 
 .canvasborder:fullscreen {
     border: none;
+}
+
+.canvasframe {
+    border: solid gray 2px;
 }

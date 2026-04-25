@@ -12,6 +12,7 @@ namespace Materials
         setSpecularity(specularity);
         setShininess(shininess);
         setTexture(nullptr);
+        data_.padding = 0.0f;
     }
 
     void Material::setAlbedo(Color albedo)
@@ -19,6 +20,7 @@ namespace Materials
         data_.albedo[0] = albedo.r;
         data_.albedo[1] = albedo.g;
         data_.albedo[2] = albedo.b;
+        data_.albedo[3] = albedo.a;
     }
     void Material::setDiffuseness(float diffuseness)
     {

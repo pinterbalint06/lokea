@@ -28,7 +28,7 @@ void main() {
     if(uUseTexture == 1) {
         baseColor = texture(uAlbedo, vTexCoords);
     } else {
-        baseColor = vec4(uMatAlbedo, 1.0);
+        baseColor = uMatAlbedo;
     }
     vec3 phongResult = phongReflectionModel(normal, vPosition.xyz, uCamPos, uLightVec, uLightColorPreCalc, uLightColor, uAmbientLight, baseColor.rgb, uMatDiffuseness, uMatSpecularity, uMatShininess);
     outColor = vec4(phongResult, baseColor.a);

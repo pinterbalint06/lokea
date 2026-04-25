@@ -42,6 +42,7 @@ CREATE TABLE game_maps (
 
 CREATE TABLE map (
     map_id int AUTO_INCREMENT PRIMARY KEY NOT NULL,
+    title varchar(20) NOT NULL,
     game_maps_id int,
     image_id int,
     foreign key (game_maps_id) references game_maps(game_maps_id) ON DELETE CASCADE,
@@ -51,11 +52,16 @@ CREATE TABLE map (
 CREATE TABLE points (
     point_id int AUTO_INCREMENT PRIMARY KEY NOT NULL,
     map_id int,
-    point_x int NOT NULL,
-    point_y int NOT NULL,
+    point_u float NOT NULL,
+    point_v float NOT NULL,
+    north_direction DECIMAL(5,2) NOT NULL DEFAULT 0.00,
     image_id int,
-    foreign key (map_id) references map(map_id) ON DELETE SET NULL,
-    foreign key (image_id) references images(image_id) ON DELETE SET NULL
+    foreign key (map_id) references map(map_id) ON DELETE CASCADE,
+    foreign key (image_id) references images(image_id) ON DELETE SET NULL,
+    UNIQUE KEY unique_point_coordinates_per_map (map_id, point_u, point_v),
+    CONSTRAINT check_point_u_range CHECK (point_u >= 0 AND point_u < 1),
+    CONSTRAINT check_point_v_range CHECK (point_v >= 0 AND point_v < 1),
+    CONSTRAINT check_north_direction CHECK (north_direction >= 0 AND north_direction < 360)
 );
 
 CREATE TABLE scores (
@@ -84,4 +90,23 @@ CREATE TABLE log (
     foreign key (user_id) references users(user_id) ON DELETE CASCADE
 );
 
+CREATE TABLE point_connections (
+    connection_id int AUTO_INCREMENT PRIMARY KEY NOT NULL,
+    start_point_id int NOT NULL,
+    end_point_id int NOT NULL,
+    game_maps_id int NOT NULL,
 
+    direction_start_to_end DECIMAL(5,2) DEFAULT NULL,
+    direction_end_to_start DECIMAL(5,2) DEFAULT NULL,
+
+    FOREIGN KEY (start_point_id) REFERENCES points(point_id) ON DELETE CASCADE,
+    FOREIGN KEY (end_point_id) REFERENCES points(point_id) ON DELETE CASCADE,
+    FOREIGN KEY (game_maps_id) REFERENCES game_maps(game_maps_id) ON DELETE CASCADE,
+
+    CONSTRAINT check_different_points CHECK (start_point_id != end_point_id),
+    CONSTRAINT unique_connection UNIQUE (game_maps_id, start_point_id, end_point_id),
+    CONSTRAINT check_point_order CHECK (start_point_id < end_point_id),
+
+    CONSTRAINT check_direction_s2e CHECK (direction_start_to_end >= 0 AND direction_start_to_end < 360),
+    CONSTRAINT check_direction_e2s CHECK (direction_end_to_start >= 0 AND direction_end_to_start < 360)
+);

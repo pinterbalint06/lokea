@@ -10,18 +10,18 @@ namespace Materials
 {
     struct MaterialData
     {
-        float albedo[3];   ///< Base color of the material.
+        float albedo[4];   ///< Base color of the material.
         float diffuseness; ///< Diffuse reflection coefficient [0;1].
         float specularity; ///< Specular reflection coefficient [0;1].
         float shininess;   ///< Specular exponent (shininess factor) [1; infinity[.
-        float pad2[2];
+        float padding;
     };
     /**
      * @brief Represents an RGB color with helper methods for gamma correction.
      */
     struct Color
     {
-        float r, g, b; ///< Red, Green, Blue components in range [0, 1].
+        float r, g, b, a; ///< Red, Green, Blue components in range [0, 1].
 
         /**
          * @brief Creates a Color object from 0-1 float sRGB values.
@@ -36,6 +36,7 @@ namespace Materials
             returnColor.r = r;
             returnColor.g = g;
             returnColor.b = b;
+            returnColor.a = 1.0f;
             return returnColor;
         }
 
@@ -53,6 +54,26 @@ namespace Materials
             returnColor.r = std::pow(r / 255.0f, 2.2f);
             returnColor.g = std::pow(g / 255.0f, 2.2f);
             returnColor.b = std::pow(b / 255.0f, 2.2f);
+            returnColor.a = 1.0f;
+            return returnColor;
+        }
+
+        /**
+         * @brief Creates a Color object from 0-255 integer RGB values.
+         * Applies gamma correction (power of 2.2).
+         * @param r Red component (0-255).
+         * @param g Green component (0-255).
+         * @param b Blue component (0-255).
+         * @param a Alpha component (0-255).
+         * @return Color The normalized and gamma-corrected color.
+         */
+        static Color fromRGBA(float r, float g, float b, float a)
+        {
+            Color returnColor;
+            returnColor.r = std::pow(r / 255.0f, 2.2f);
+            returnColor.g = std::pow(g / 255.0f, 2.2f);
+            returnColor.b = std::pow(b / 255.0f, 2.2f);
+            returnColor.a = a / 255.0f;
             return returnColor;
         }
     };

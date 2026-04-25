@@ -41,6 +41,12 @@ Engine::~Engine()
 {
 }
 
+void Engine::enableAlphaBlending()
+{
+    glEnable(GL_BLEND);
+    glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+}
+
 void Engine::setLightIntensity(float intensity)
 {
     scene_->getLight()->setIntensity(intensity);
@@ -105,15 +111,35 @@ void Engine::rotateCamera(float dPitch, float dYaw)
     scene_->getCamera()->rotate(dPitch, dYaw);
 }
 
+void Engine::setPitch(float pitch)
+{
+    scene_->getCamera()->setPitch(pitch);
+}
+
+void Engine::setYaw(float yaw)
+{
+    scene_->getCamera()->setYaw(yaw);
+}
+
 void Engine::setCameraRotation(float pitch, float yaw)
 {
     scene_->getCamera()->setRotation(pitch, yaw);
 }
 
+void Engine::setCameraPosition(float x, float y, float z)
+{
+    scene_->getCamera()->setPosition(x, y, z);
+}
+
+void Engine::resetCameraPosition()
+{
+    scene_->getCamera()->setPosition(0.0f, 0.0f, 0.0f);
+}
+
 uint8_t *Engine::initTexture(int width, int height, int meshIndex)
 {
     uint8_t *retPtr = nullptr;
-    Mesh *mesh = scene_->getMesh(meshIndex);
+    std::shared_ptr<Mesh> mesh = scene_->getMesh(meshIndex);
     if (mesh != nullptr)
     {
         deleteTexture(meshIndex);
@@ -128,7 +154,7 @@ uint8_t *Engine::initTexture(int width, int height, int meshIndex)
 
 void Engine::uploadTextureToGPU(int meshIndex)
 {
-    Mesh *mesh = scene_->getMesh(meshIndex);
+    std::shared_ptr<Mesh> mesh = scene_->getMesh(meshIndex);
     if (mesh != nullptr)
     {
         if (mesh->getMaterial().getTexture() != nullptr)
@@ -140,7 +166,7 @@ void Engine::uploadTextureToGPU(int meshIndex)
 
 void Engine::deleteTexture(int meshIndex)
 {
-    Mesh *mesh = scene_->getMesh(meshIndex);
+    std::shared_ptr<Mesh> mesh = scene_->getMesh(meshIndex);
     if (mesh != nullptr)
     {
         if (mesh->getMaterial().getTexture() != nullptr)
@@ -155,7 +181,7 @@ void Engine::deleteTexture(int meshIndex)
 
 void Engine::loadTextureFromUrl(const std::string &url, int meshIndex, emscripten::val onSuccess, emscripten::val onError)
 {
-    Mesh *mesh = scene_->getMesh(meshIndex);
+    std::shared_ptr<Mesh> mesh = scene_->getMesh(meshIndex);
     if (mesh != nullptr)
     {
         Texture *texture = mesh->getMaterial().getTexture();

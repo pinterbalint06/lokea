@@ -2,6 +2,7 @@
 #define SCENE_H
 
 #include <vector>
+#include <memory>
 
 #include "core/scene/distantLight.h"
 
@@ -22,7 +23,7 @@ private:
     DistantLight *light_;
     SceneData data_;
     float ambientLight_;
-    std::vector<Mesh *> meshes_;
+    std::vector<std::shared_ptr<Mesh>> meshes_;
 
 public:
     Scene();
@@ -33,14 +34,15 @@ public:
     DistantLight *getLight() const { return light_; }
     float getAmbientLight() const { return data_.ambientLight; }
     int getMeshCount() const { return meshes_.size(); }
-    Mesh *getMesh(int index) const { return meshes_.size() > index && index >= 0 ? meshes_[index] : nullptr; }
+    std::shared_ptr<Mesh> getMesh(int index) const { return meshes_.size() > index && index >= 0 ? meshes_[index] : nullptr; }
     const SceneData &getUBOData() const { return data_; }
 
     // setter
     void setAmbientLight(float ambientLightIntensity);
 
-    void addMesh(Mesh *mesh);
+    void addMesh(std::shared_ptr<Mesh> mesh);
     void removeMesh(int index);
+    void removeMesh(std::shared_ptr<Mesh> mesh);
     void clearMeshes();
 };
 

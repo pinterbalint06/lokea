@@ -1,0 +1,379 @@
+@import url('./variables.css');
+@import url('./base.css');
+@import url('./custom-select.css');
+@import url('./drag-and-drop-uploader.css');
+@import url('./hold-to-unlock-button.css');
+@import url('./degree-input.css');
+
+html,
+body {
+    margin: 0;
+    padding: 0;
+    height: 100%;
+    width: 100%;
+    overflow: hidden;
+}
+
+.map-name-container {
+    display: flex;
+    align-items: center;
+    flex: 1;
+    min-width: 0;
+}
+
+.map-name-text {
+    word-break: break-word;
+    flex: 1;
+    min-width: 0;
+}
+
+.map-name-input {
+    flex: 1;
+    min-width: 0;
+    background: var(--surface-glass-input) !important;
+    border: 2px solid var(--accent-focus) !important;
+    color: var(--text-main) !important;
+    font-size: 0.9rem;
+    font-weight: 500;
+    box-shadow: 0 0 8px var(--accent-glow) !important;
+}
+
+.map-name-input:focus {
+    outline: none;
+    border-color: var(--accent-main) !important;
+    box-shadow: 0 0 12px var(--accent-glow) !important;
+}
+
+.map-name-input::selection {
+    background: var(--accent-main);
+    color: var(--color-white);
+}
+
+.navPic {
+    height: 45px;
+    width: auto;
+}
+
+body {
+    display: flex;
+    flex-direction: column;
+    color: var(--text-main);
+}
+
+.text-main {
+    color: var(--text-main);
+}
+
+.lilagradiensbg {
+    background: var(--bg-radial-main);
+}
+
+main {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    position: relative;
+    overflow: hidden;
+}
+
+#mapCanvas {
+    display: block;
+    width: 100%;
+    height: 100%;
+    flex: 1;
+    touch-action: none;
+    z-index: 0;
+}
+
+.form-check-input:checked {
+    background-color: var(--accent-main) !important;
+    border-color: var(--accent-main) !important;
+}
+
+.form-check-input:focus {
+    outline: none;
+    border-color: var(--accent-focus) !important;
+    box-shadow: 0 0 0 0.25rem var(--accent-glow) !important;
+}
+
+.form-switch .form-check-input:focus {
+    --bs-form-switch-bg: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='-4 -4 8 8'%3e%3ccircle r='3' fill='%23ffffff' stroke='%23000000' stroke-opacity='0.12'/%3e%3c/svg%3e");
+}
+
+.form-check-input:disabled {
+    opacity: 0.6;
+}
+
+#upload-overlay {
+    background: var(--bg-radial-overlay);
+    backdrop-filter: blur(5px);
+}
+
+#equirectangularPreview {
+    display: block;
+    border: solid 1px var(--surface-glass-border);
+}
+
+.floating-button {
+    width: 60px;
+    height: 60px;
+    padding: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border: none;
+    box-shadow: var(--shadow-fab);
+    transition: transform var(--transition-fast);
+}
+
+.floating-button:hover {
+    transform: scale(1.05);
+}
+
+.floating-button-primary {
+    background: var(--accent-gradient);
+}
+
+.floating-button-success {
+    background: var(--success-gradient);
+}
+
+.fab-btn:disabled {
+    filter: opacity(0.5);
+    cursor: not-allowed;
+    background-color: var(--color-disabled-bg) !important;
+    background: none !important;
+    border: 1px solid var(--color-disabled-border) !important;
+}
+
+#ujPontCollapse {
+    top: 0;
+    bottom: 0;
+    right: 0;
+}
+
+#beallitasokCollapse {
+    top: 0;
+    bottom: 0;
+    left: 0;
+}
+
+#ujPontCollapse .card,
+#beallitasokCollapse .card {
+    background: transparent;
+    border: none;
+    color: var(--text-main);
+}
+
+.number-input-width {
+    width: 4.5em !important;
+}
+
+.successColor {
+    background-color: var(--state-success) !important;
+    border-color: var(--state-success) !important;
+    backdrop-filter: blur(12px);
+}
+
+.dangerColor {
+    background-color: var(--state-danger) !important;
+    border-color: var(--state-danger) !important;
+    backdrop-filter: blur(12px);
+}
+
+.successColor:disabled {
+    opacity: 0.5;
+}
+
+#loading {
+    z-index: 10000;
+}
+
+#equirectangularWrapper {
+    min-height: 33vh;
+}
+
+#collapseCard,
+#beallitasokCard {
+    width: 33vw;
+}
+
+.accordion-item {
+    background-color: transparent;
+    border: 1px solid var(--surface-glass-border);
+    overflow: hidden;
+}
+
+.accordion-button {
+    background-color: var(--color-overlay-light);
+    color: var(--text-main);
+    transition: all var(--transition-soft);
+    font-weight: 500;
+}
+
+.accordion-button:focus {
+    box-shadow: none;
+    border-color: var(--accent-focus);
+}
+
+.accordion-button:not(.collapsed) {
+    background-color: var(--surface-glass);
+    color: var(--color-white);
+    box-shadow: 0 0 15px var(--accent-glow);
+    border-bottom: 1px solid var(--surface-glass-border);
+}
+
+.accordion-button::after {
+    background-image: none;
+    background-color: var(--text-main);
+    mask-image: url("../images/map-creator-icons.svg#icon-chevron");
+    transition: transform var(--transition-soft);
+}
+
+.accordion-button:not(.collapsed)::after {
+    background-image: none;
+    background-color: var(--text-main);
+    mask-image: url("../images/map-creator-icons.svg#icon-chevron");
+}
+
+.accordion-body {
+    background-color: var(--color-overlay-lighter);
+    color: var(--text-main);
+    border-top: none;
+}
+
+.glass-range::-webkit-slider-thumb {
+    background: var(--accent-main);
+}
+
+.glass-range::-moz-range-thumb {
+    background: var(--accent-main);
+}
+
+.glass-range::-webkit-slider-thumb:active {
+    background-color: var(--accent-glow);
+}
+
+.glass-range::-moz-range-thumb:active {
+    background-color: var(--accent-glow);
+}
+
+.glass-range:focus::-webkit-slider-thumb {
+    box-shadow: 0 0 0 0.04rem var(--color-white), 0 0 0 0.2rem var(--accent-soft);
+}
+
+.glass-range:focus::-moz-range-thumb {
+    box-shadow: 0 0 0 0.04rem var(--color-white), 0 0 0 0.2rem var(--accent-soft);
+}
+
+.glass-range::-webkit-slider-runnable-track {
+    background-color: var(--surface-glass-border);
+}
+
+.glass-range::-moz-range-track {
+    background-color: var(--surface-glass-border);
+}
+
+#kapcsolatokWrapper {
+    max-height: 30vh;
+    overflow-y: auto;
+}
+
+.kapcsolat-kartya {
+    background: var(--surface-glass-soft) !important;
+    border: 1px solid transparent;
+    transition: all 0.2s ease;
+}
+
+.kapcsolat-kartya:hover {
+    background: var(--surface-glass-soft-hover) !important;
+    border-color: var(--accent-glow);
+    transform: translateX(0.5rem);
+}
+
+.point-badge {
+    background: var(--badge-gradient);
+    font-weight: 600;
+    border: var(--badge-border);
+}
+
+#equirectangularFullscreen {
+    cursor: pointer;
+}
+
+.uvegbutton-outline {
+    background-color: transparent;
+    border-color: var(--accent-soft);
+    color: var(--text-main);
+    transition: all var(--transition-fast);
+}
+
+.uvegbutton-outline:hover {
+    background-color: var(--accent-main);
+    border-color: var(--accent-focus);
+    color: var(--text-main);
+    box-shadow: 0 0 15px var(--accent-glow);
+}
+
+.uvegbutton-outline:focus {
+    box-shadow: 0 0 0 0.2rem var(--accent-glow);
+}
+
+.uvegbutton-outline:disabled {
+    filter: opacity(0.5);
+    cursor: not-allowed !important;
+    box-shadow: none;
+}
+
+.btn-delete {
+    width: 32px;
+    height: 32px;
+}
+
+.pointer {
+    cursor: pointer;
+}
+
+@media (max-width: 992px) {
+    #toastPlace {
+        top: 4.5rem !important;
+        left: 50% !important;
+        right: auto !important;
+        bottom: auto !important;
+        transform: translateX(-50%);
+        margin-top: 0 !important;
+        margin-left: 0 !important;
+        margin-right: 0 !important;
+        width: min(92vw, 420px);
+    }
+
+    #toastPlace .toast {
+        width: 100%;
+    }
+
+    #ujPontCollapse,
+    #beallitasokCollapse {
+        top: auto;
+        bottom: 0;
+        left: 0;
+        right: 0;
+
+        width: 100%;
+
+        margin: 0 !important;
+
+        border-bottom-left-radius: 0;
+        border-bottom-right-radius: 0;
+    }
+
+    #ujPontCollapse .card,
+    #beallitasokCollapse .card {
+        height: 40vh;
+        max-height: 40vh;
+        min-height: 40vh;
+        width: 100vw;
+        overflow-y: auto;
+        border-bottom-left-radius: 0 !important;
+        border-bottom-right-radius: 0 !important;
+    }
+}
