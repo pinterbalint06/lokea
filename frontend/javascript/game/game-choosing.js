@@ -50,7 +50,7 @@ document.addEventListener("DOMContentLoaded", function () {
 });
 
 async function loadGameMaps(sort) {
-    const gameMaps = await fetchURL('/api/game_maps?sort=' + sort + '&offset=' + (cardLoadedTimes * 20));
+    const gameMaps = await fetchURL('/api/choose-game/game_maps?sort=' + sort + '&offset=' + (cardLoadedTimes * 20));
     console.log(gameMaps.results);
     let gameMapsContainer = document.getElementById('game_maps_container');
     if (gameMaps.success) {
@@ -141,7 +141,7 @@ async function postGameId(gamemapId) {
     const formData = new FormData(document.getElementById('settingsForm'));
     formData.append('gameMapId', gamemapId);
     try {
-        const response = await fetch('/api/post_game_id', {
+        const response = await fetch('/api/choose-game/post_game_id', {
             method: 'POST',
             body: formData 
         });
@@ -171,7 +171,7 @@ async function fetchURL(url) {
 
 async function getCoverImage(cover_image_id) {
     try {
-        const response = await fetch('/api/get_cover_image/' + cover_image_id, {
+        const response = await fetch('/api/choose-game/get_cover_image/' + cover_image_id, {
             method: 'GET',
             headers: {
                 'Content-Type': 'application/json'
@@ -202,7 +202,7 @@ function setupContinueGameModal() {
 }
 
 async function checkAndShowContinueModal() {
-    const activeGameSession = await fetchURL('/api/active_game_session');
+    const activeGameSession = await fetchURL('/api/choose-game/active_game_session');
     if (activeGameSession.success && activeGameSession.hasActiveSession) {
         const continueModal = document.getElementById('continueGameModal');
         const continueModalDescription = document.getElementById('continue-modal-desc');

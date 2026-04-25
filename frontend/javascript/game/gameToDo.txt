@@ -35,5 +35,7 @@ kesz--reszponziv javitas
 --svg-k helyes használata
 kesz--checkauth mindenhova
     --login hiba jo helyre vigyen
+--palyak kedvencre tetele
 
 kesz--rendezés fix
+--esetleg modal alaphelyzetbe allitasa

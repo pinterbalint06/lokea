@@ -1,6 +1,6 @@
 const express = require("express");
 const router = express.Router();
-const database = require("../sql/database.js");
+const database = require("../../sql/database.js");
 const path = require('path');
 const multer = require('multer');
 const { checkAuth } = require("#root/auth.js");
@@ -35,7 +35,7 @@ router.get('/game_maps',  async (request, response) => {
 
 router.get('/get_cover_image/:cover_image_id', async (request, response) => {
     try {
-        let uploads = path.join(__dirname, '../uploads');
+        let uploads = path.join(__dirname, '../../uploads');
         let fileRes;
         if (!request.params || !request.params.cover_image_id) {
             fileRes = 'cover_images/image-not-found.jpg';

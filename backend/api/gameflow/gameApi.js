@@ -1,10 +1,10 @@
 const express = require("express");
 const router = express.Router();
-const database = require("../sql/database.js");
-const { checkGameSession } = require("../auth.js");
+const database = require("../../sql/database.js");
+const { checkGameSession } = require("../../auth.js");
 const fs = require("fs/promises");
 const path = require('path');
-const AppError = require("../utils/AppError.js");
+const AppError = require("../../utils/AppError.js");
 
 router.use(checkGameSession);
 

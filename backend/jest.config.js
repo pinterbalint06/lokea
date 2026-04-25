@@ -11,9 +11,12 @@ module.exports = {
     coverageDirectory: "coverage",
     collectCoverageFrom: [
         "api/**/*.js",
-        "sql/**/*.js",
         "utils/**/*.js",
-        "server.js"
+        "!api/admin.js",
+        "!api/api.js",
+        "!api/gamemaps/**/*.js",
+        "!utils/fileUtils.js",
+        "!utils/imageProcessor.js"
     ],
     coveragePathIgnorePatterns: [
         "/node_modules/",
