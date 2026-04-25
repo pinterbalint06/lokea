@@ -168,7 +168,7 @@ function szuresek() {
     let roleDiv = document.createElement('div');
     let roleDivCim = createHTMLelement('h6', ["h6", "mt-3"], i18n.t('admin:logs_sort.role'));
     let roles = ["Admin", "Moderator", "User"];
-    let roleValues = ["Admin", "Mod", "User"];
+    let roleValues = ["ADMIN", "MOD", "user"];
     for (let i = 0; i < roles.length; i++) {
         let formcheck = document.createElement('div');
         formcheck.classList.add("form-check");
