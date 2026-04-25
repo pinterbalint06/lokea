@@ -227,7 +227,7 @@ async function deletePoint(userId, pointID) {
         if (oldImageInfo && oldImageInfo.image_id) {
             let successImageDeletion = await database.deleteImageById(dbConnection, oldImageInfo.image_id);
             if (!successImageDeletion) {
-                throw new AppError(ERRORS.POINT.IMAGE_DELETETION_FAILED, 500);
+                throw new AppError(ERRORS.POINT.IMAGE_DELETION_FAILED, 500);
             }
         }
 

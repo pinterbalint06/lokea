@@ -7,6 +7,8 @@ const database = require("./sql/database.js");
 const auth = require('./auth.js')
 const { idSchema } = require('./utils/schemas.js');
 const ERRORS = require('./utils/errorMessages.js');
+const { assertUserOwnsGameMap } = require('./api/mapcreator/shared/utils/mapcreator.utils.js');
+const AppError = require('#utils/AppError.js');
 
 //!Beállítások
 const app = express();
@@ -33,14 +35,6 @@ app.use(session({
         maxAge: 60 * 60 * 1000
     }
 }));
-
-
-async function hasPermissionToEdit(request, gameMapID) {
-    const userId = request.session.userid;
-    const isTheirs = await database.checkUserOwnsGameMap(userId, gameMapID);
-    return isTheirs;
-}
-
 
 //!Routing
 //?Főoldal:
@@ -72,19 +66,20 @@ router.get('/maps/:gameMapId/edit',
                 }
             );
 
-            let hasPermission = await hasPermissionToEdit(request, gameMapId);
-            if (hasPermission) {
-                response.sendFile(path.join(__dirname, '../frontend/html/map-creator.html'));
-            } else {
-                response.status(403).send();
-            }
+            await assertUserOwnsGameMap(request.session.userid, gameMapId);
+
+            response.sendFile(path.join(__dirname, '../frontend/html/map-creator.html'));
         } catch (error) {
             if (error.isJoi) {
                 // TODO: valami oldal ennek
                 response.status(400).json({ error: error.details[0].message });
             } else {
-                console.error(error);
-                response.status(500).send();
+                if (error instanceof AppError) {
+                    response.status(error.statusCode).send();
+                } else {
+                    console.error(error);
+                    response.status(500).send();
+                }
             }
         }
     }

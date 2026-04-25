@@ -291,7 +291,7 @@ describe("Map Creator API - /api/map-creator/", () => {
             });
 
             describe("Happy paths (200, 201, 204)", () => {
-                it("Should respond with 200 and only change coordinates and north direction if those were provided", async () => {
+                it("Should respond with 204 and only change coordinates and north direction if those were provided", async () => {
                     const response = await makePutRequest({ file: undefined, fileFieldName: undefined, filename: undefined });
 
                     expect(mockConnection.beginTransaction).toHaveBeenCalled();
@@ -304,7 +304,7 @@ describe("Map Creator API - /api/map-creator/", () => {
                     expect(response.statusCode).toBe(204);
                 });
 
-                it("Should respond with 200 and only change coordinates if that is different", async () => {
+                it("Should respond with 204 and only change coordinates if that is different", async () => {
                     const response = await makePutRequest({ file: undefined, fileFieldName: undefined, filename: undefined, northDirection: northDirectionDB });
 
                     expect(mockConnection.beginTransaction).toHaveBeenCalled();
@@ -317,7 +317,7 @@ describe("Map Creator API - /api/map-creator/", () => {
                     expect(response.statusCode).toBe(204);
                 });
 
-                it("Should respond with 200 and only change north direction if that is different", async () => {
+                it("Should respond with 204 and only change north direction if that is different", async () => {
                     const response = await makePutRequest({ file: undefined, fileFieldName: undefined, filename: undefined, u: uDB, v: vDB });
 
                     expect(mockConnection.beginTransaction).toHaveBeenCalled();
@@ -330,7 +330,7 @@ describe("Map Creator API - /api/map-creator/", () => {
                     expect(response.statusCode).toBe(204);
                 });
 
-                it("Should respond with 200 and still update coordinates even if only u is different", async () => {
+                it("Should respond with 204 and still update coordinates even if only u is different", async () => {
                     const response = await makePutRequest({ file: undefined, fileFieldName: undefined, filename: undefined, u: uDB, northDirection: northDirectionDB });
 
                     expect(mockConnection.beginTransaction).toHaveBeenCalled();
@@ -343,7 +343,7 @@ describe("Map Creator API - /api/map-creator/", () => {
                     expect(response.statusCode).toBe(204);
                 });
 
-                it("Should respond with 200 and still update coordinates even if only v is different", async () => {
+                it("Should respond with 204 and still update coordinates even if only v is different", async () => {
                     const response = await makePutRequest({ file: undefined, fileFieldName: undefined, filename: undefined, v: vDB, northDirection: northDirectionDB });
 
                     expect(mockConnection.beginTransaction).toHaveBeenCalled();
@@ -356,7 +356,7 @@ describe("Map Creator API - /api/map-creator/", () => {
                     expect(response.statusCode).toBe(204);
                 });
 
-                it("Should respond with 200 even if everything matched db and no updates were done", async () => {
+                it("Should respond with 204 even if everything matched db and no updates were done", async () => {
                     const response = await makePutRequest({ file: undefined, fileFieldName: undefined, filename: undefined, v: vDB, u: uDB, northDirection: northDirectionDB });
 
                     expect(mockConnection.beginTransaction).toHaveBeenCalled();
@@ -369,12 +369,48 @@ describe("Map Creator API - /api/map-creator/", () => {
                     expect(response.statusCode).toBe(204);
                 });
 
-                it("Should respond with 200 and handle everything correctly with correct given data", async () => {
+                it("Should respond with 204 and handle everything correctly with correct given data", async () => {
                     const response = await makePutRequest();
 
                     expect(database.getPointOnMapByCoordinates).toHaveBeenCalledWith(mockConnection, mapId, defaults.u, defaults.v);
                     expect(database.updatePointCoordinates).toHaveBeenCalledWith(mockConnection, defaults.id, defaults.u, defaults.v);
                     expect(database.updatePointNorthDirection).toHaveBeenCalledWith(mockConnection, defaults.id, defaults.northDirection);
+
+                    expect(database.getPointImage).toHaveBeenCalledWith(defaults.id);
+                    expect(processImageMetadata).toHaveBeenCalled();
+                    expect(database.insertImage).toHaveBeenCalledWith(mockConnection, mockImageMetadata.width, mockImageMetadata.height, imageStatusForPath);
+                    const outputDir = path.join(
+                        gameMapId.toString(),
+                        mapId.toString(),
+                        "point_images",
+                        defaults.id.toString()
+                    );
+                    expect(createWebpAndLowRes).toHaveBeenCalledWith({
+                        inputFilePath: expect.any(String),
+                        outputDirPath: expect.stringContaining(outputDir),
+                        baseName: expect.stringContaining(`${defaults.id}_`)
+                    });
+
+                    expect(database.updateImagePath).toHaveBeenCalledWith(mockConnection, newImageIdDB, expect.stringContaining(mockImageProcessed.targetFileName));
+                    expect(database.updatePointImage).toHaveBeenCalledWith(mockConnection, defaults.id, newImageIdDB);
+                    expect(database.deleteImageById).toHaveBeenCalledWith(mockConnection, imageIdDB);
+                    let expectedPath = path.join(dbImageFilePath);
+                    expect(deleteImageAndLowResByMainPath).toHaveBeenCalledWith(expect.stringContaining(expectedPath));
+                    expect(deleteFile).toHaveBeenCalledWith(expect.any(String)); // temp uploaded file
+
+                    expectSuccessfulTransaction(mockConnection);
+
+                    expect(response.statusCode).toBe(204);
+                });
+
+                it("Should respond with 204 and round the north direction to two decimals", async () => {
+                    const northDirection = 123.456789;
+                    const northDirectionRounded = Number(northDirection.toFixed(2));
+                    const response = await makePutRequest({ northDirection: northDirection });
+
+                    expect(database.getPointOnMapByCoordinates).toHaveBeenCalledWith(mockConnection, mapId, defaults.u, defaults.v);
+                    expect(database.updatePointCoordinates).toHaveBeenCalledWith(mockConnection, defaults.id, defaults.u, defaults.v);
+                    expect(database.updatePointNorthDirection).toHaveBeenCalledWith(mockConnection, defaults.id, northDirectionRounded);
 
                     expect(database.getPointImage).toHaveBeenCalledWith(defaults.id);
                     expect(processImageMetadata).toHaveBeenCalled();
@@ -718,6 +754,23 @@ describe("Map Creator API - /api/map-creator/", () => {
                     expect(response.body).toHaveProperty("pointId", pointId);
                     expect(deleteFile).toHaveBeenCalled();
                 });
+
+                it("Should respond with 201 and round the north direction to two decimals", async () => {
+                    const northDirection = 123.456789;
+                    const northDirectionRounded = Number(northDirection.toFixed(2));
+                    const response = await makePostRequest({ northDirection: northDirection });
+
+                    expect(mockConnection.beginTransaction).toHaveBeenCalled();
+                    expect(database.getPointOnMapByCoordinates).toHaveBeenCalledWith(mockConnection, defaults.id, defaults.u, defaults.v);
+                    expect(database.insertImage).toHaveBeenCalledWith(mockConnection, mockImageMetadata.width, mockImageMetadata.height, imageStatusForPath);
+                    expect(database.insertPoint).toHaveBeenCalledWith(mockConnection, defaults.id, defaults.u, defaults.v, northDirectionRounded, imageId);
+                    expect(database.updateImagePath).toHaveBeenCalledWith(mockConnection, imageId, expect.any(String));
+                    expectSuccessfulTransaction(mockConnection);
+
+                    expect(response.statusCode).toBe(201);
+                    expect(response.body).toHaveProperty("pointId", pointId);
+                    expect(deleteFile).toHaveBeenCalled();
+                });
             });
 
             describe("Server errors (500)", () => {
@@ -1009,7 +1062,7 @@ describe("Map Creator API - /api/map-creator/", () => {
                     const response = await makeDeleteRequest();
 
                     expectRollback(mockConnection);
-                    expectErrorResponse(response, 500, ERRORS.POINT.IMAGE_DELETETION_FAILED);
+                    expectErrorResponse(response, 500, ERRORS.POINT.IMAGE_DELETION_FAILED);
                 });
 
                 it("Should respond with 500 and rollback if deletePointById failed", async () => {

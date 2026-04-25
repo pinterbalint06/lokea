@@ -101,7 +101,7 @@ const invalidTypeNumbers = [
 ];
 
 const negativeNumbers = [
-    -0.0021,
+    -0.21,
     -100,
     -1231231231231231,
     -12312
@@ -114,6 +114,7 @@ const tooBigUV = [
 ];
 
 const tooBigDegrees = [
+    360,
     360.1,
     361,
     720,

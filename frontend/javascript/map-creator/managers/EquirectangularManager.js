@@ -15,6 +15,7 @@ export class EquirectangularManager {
         this.fovSyncID = null;
         this.abortController = null;
         this.activeLoadGeneration = 0;
+        this.activeUploadGeneration = 0;
 
         this.#bindBusEvents();
     }
@@ -141,6 +142,18 @@ export class EquirectangularManager {
     }
 
     async #handleEquirectangularLoad(file) {
+        this.activeUploadGeneration++;
+        const uploadGeneration = this.activeUploadGeneration;
+        const uploadToastId = `uploading${uploadGeneration}`;
+
+        this.bus.emit(EVENTS.TOAST_SHOW, {
+            msg: "Kép betöltése",
+            id: uploadToastId,
+            autohide: false,
+            closable: false,
+            spinner: true
+        });
+
         this.equirectangularViewer.clearImage();
         this.store.setState({
             activePoint: { pendingEquirectangularFile: file },
@@ -165,6 +178,7 @@ export class EquirectangularManager {
             this.bus.emit(EVENTS.TOAST_SHOW, { msg: error.message, type: "danger" });
         } finally {
             this.store.setState({ isBusy: { equirectangular: false } });
+            this.bus.emit(EVENTS.TOAST_HIDE_ID, { id: uploadToastId });
             if (imgData) {
                 if (imgData.url) {
                     URL.revokeObjectURL(imgData.url);
