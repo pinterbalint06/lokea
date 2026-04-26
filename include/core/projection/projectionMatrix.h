@@ -1,6 +1,8 @@
 #ifndef PROJECTION_MATRIX_H
 #define PROJECTION_MATRIX_H
 
+#include "core/math/matrix.h"
+
 class ProjectionMatrix
 {
 public:
@@ -22,12 +24,12 @@ public:
     float getTopClippingPlane() const { return top_; }
     float getBottomClippingPlane() const { return bottom_; }
 
-    const float *getProjectionMatrix() { updateMatrix(); return matrix_; }
+    const Mat4 &getProjectionMatrix() { updateMatrix(); return matrix_; }
 protected:
     float left_, right_;
     float bottom_, top_;
     float near_, far_;
-    float matrix_[16];
+    Mat4 matrix_;
     bool dirty_;
 
     ProjectionMatrix(float near, float far);

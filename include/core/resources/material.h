@@ -2,6 +2,7 @@
 #define MATERIAL_H
 
 #include <cmath>
+#include <memory>
 
 // Forward declaration
 class Texture; // defined in "core/resources/texture.h"
@@ -81,20 +82,20 @@ namespace Materials
     {
     private:
         MaterialData data_; ///< The UBO to be uploaded.
-        Texture *texture_;
+        std::shared_ptr<Texture> texture_;
 
     public:
         Material(Color color);
 
         // getters
         Color getColor() const { return Color::fromsRGB(data_.color[0], data_.color[1], data_.color[2]); }
-        Texture *getTexture() const { return texture_; }
+        std::shared_ptr<Texture> getTexture() const { return texture_; }
 
         const MaterialData &getUBOData() const { return data_; }
 
         // setters
         void setColor(Color color);
-        void setTexture(Texture *tex);
+        void setTexture(std::shared_ptr<Texture> tex);
 
         /**
          * @brief Predefined material resembling purple error.

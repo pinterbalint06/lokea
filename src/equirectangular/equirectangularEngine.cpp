@@ -38,7 +38,7 @@ std::shared_ptr<Mesh> EquirectangularEngine::generateSphereSegment(int rings, in
                                                    float uMin, float uMax, float vMin, float vMax)
 {
     std::shared_ptr<Mesh> mesh = std::make_shared<Mesh>((rings + 1) * (segments + 1), rings * segments * 6);
-    Vertex *vertices = mesh->getVertices();
+    std::vector<Vertex> &vertices = mesh->getVertices();
 
     int count = 0;
     // latitutes, vertical
@@ -95,7 +95,7 @@ std::shared_ptr<Mesh> EquirectangularEngine::generateSphereSegment(int rings, in
         }
     }
 
-    uint32_t *indices = mesh->getIndices();
+    std::vector<uint32_t> &indices = mesh->getIndices();
     count = 0;
     for (int lat = 0; lat < rings; lat++)
     {
@@ -145,7 +145,7 @@ void EquirectangularEngine::generateSphere()
                 tileUvSpan * y,
                 tileUvSpan * (y + 1));
             Materials::Material defaultMat = Materials::Material::Error();
-            defaultMat.setTexture(imageTiles_[i].get());
+            defaultMat.setTexture(imageTiles_[i]);
             sphereSegment->setMaterial(defaultMat);
             addMesh(sphereSegment);
             i++;

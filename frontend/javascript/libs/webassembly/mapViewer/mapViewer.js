@@ -2068,19 +2068,19 @@ m.FS_createLazyFile = (...a) => Yb(...a);
   ma(a);
 });
 "run out err callMain abort wasmExports HEAPF32 HEAPF64 HEAP8 HEAPU8 HEAP16 HEAPU16 HEAP32 HEAPU32 HEAP64 HEAPU64 writeStackCookie checkStackCookie INT53_MAX INT53_MIN bigintToI53Checked stackSave stackRestore createNamedFunction ptrToString exitJS getHeapMax growMemory ENV ERRNO_CODES strError DNS Protocols Sockets timers warnOnce readEmAsmArgsArray readEmAsmArgs runEmAsmFunction jstoi_q getExecutableName handleException keepRuntimeAlive callUserCallback maybeExit asyncLoad alignMemory mmapAlloc wasmTable wasmMemory getUniqueRunDependency noExitRuntime freeTableIndexes functionsInTableMap setValue getValue PATH PATH_FS UTF8Decoder UTF8ArrayToString stringToUTF8Array stringToUTF8 lengthBytesUTF8 intArrayFromString AsciiToString UTF16Decoder UTF16ToString stringToUTF16 lengthBytesUTF16 UTF32ToString stringToUTF32 lengthBytesUTF32 JSEvents specialHTMLTargets maybeCStringToJsString findEventTarget findCanvasEventTarget currentFullscreenStrategy restoreOldWindowedStyle UNWIND_CACHE ExitStatus getEnvStrings doReadv doWritev initRandomFill randomFill emSetImmediate emClearImmediate_deps emClearImmediate promiseMap uncaughtExceptionCount exceptionLast exceptionCaught ExceptionInfo Browser requestFullscreen requestFullScreen setCanvasSize getUserMedia createContext getPreloadedImageData__data wget MONTH_DAYS_REGULAR MONTH_DAYS_LEAP MONTH_DAYS_REGULAR_CUMULATIVE MONTH_DAYS_LEAP_CUMULATIVE SYSCALLS preloadPlugins FS_createPreloadedFile FS_modeStringToFlags FS_getMode FS_stdin_getChar_buffer FS_stdin_getChar FS_readFile FS FS_root FS_mounts FS_devices FS_streams FS_nextInode FS_nameTable FS_currentPath FS_initialized FS_ignorePermissions FS_filesystems FS_syncFSRequests FS_lookupPath FS_getPath FS_hashName FS_hashAddNode FS_hashRemoveNode FS_lookupNode FS_createNode FS_destroyNode FS_isRoot FS_isMountpoint FS_isFile FS_isDir FS_isLink FS_isChrdev FS_isBlkdev FS_isFIFO FS_isSocket FS_flagsToPermissionString FS_nodePermissions FS_mayLookup FS_mayCreate FS_mayDelete FS_mayOpen FS_checkOpExists FS_nextfd FS_getStreamChecked FS_getStream FS_createStream FS_closeStream FS_dupStream FS_doSetAttr FS_chrdev_stream_ops FS_major FS_minor FS_makedev FS_registerDevice FS_getDevice FS_getMounts FS_syncfs FS_mount FS_unmount FS_lookup FS_mknod FS_statfs FS_statfsStream FS_statfsNode FS_create FS_mkdir FS_mkdev FS_symlink FS_rename FS_rmdir FS_readdir FS_readlink FS_stat FS_fstat FS_lstat FS_doChmod FS_chmod FS_lchmod FS_fchmod FS_doChown FS_chown FS_lchown FS_fchown FS_doTruncate FS_truncate FS_ftruncate FS_utime FS_open FS_close FS_isClosed FS_llseek FS_read FS_write FS_mmap FS_msync FS_ioctl FS_writeFile FS_cwd FS_chdir FS_createDefaultDirectories FS_createDefaultDevices FS_createSpecialDirectories FS_createStandardStreams FS_staticInit FS_init FS_quit FS_findObject FS_analyzePath FS_createFile FS_forceLoadFile FS_absolutePath FS_createFolder FS_createLink FS_joinPath FS_mmapAlloc FS_standardizePath MEMFS TTY PIPEFS SOCKFS tempFixedLengthArray miniTempWebGLFloatBuffers miniTempWebGLIntBuffers heapObjectForWebGLType toTypedArrayIndex GL computeUnpackAlignedImageSize colorChannelsInGlTextureFormat emscriptenWebGLGetTexPixelData webglGetUniformLocation webglPrepareUniformLocationsBeforeFirstUse webglGetLeftBracePos AL GLUT EGL GLEW IDBStore SDL SDL_gfx print printErr jstoi_s InternalError BindingError throwInternalError throwBindingError registeredTypes awaitingDependencies typeDependencies tupleRegistrations structRegistrations sharedRegisterType whenDependentTypesAreResolved getTypeName getFunctionName heap32VectorToArray requireRegisteredType usesDestructorStack checkArgCount getRequiredArgCount createJsInvoker UnboundTypeError EmValType EmValOptionalType throwUnboundTypeError ensureOverloadTable exposePublicSymbol replacePublicSymbol embindRepr registeredInstances getBasestPointer getInheritedInstance registeredPointers registerType integerReadValueFromPointer floatReadValueFromPointer assertIntegerRange readPointer runDestructors craftInvokerFunction embind__requireFunction genericPointerToWireType constNoSmartPtrRawPointerToWireType nonConstNoSmartPtrRawPointerToWireType init_RegisteredPointer RegisteredPointer RegisteredPointer_fromWireType runDestructor releaseClassHandle finalizationRegistry detachFinalizer_deps detachFinalizer attachFinalizer makeClassHandle init_ClassHandle ClassHandle throwInstanceAlreadyDeleted deletionQueue flushPendingDeletes delayFunction RegisteredClass shallowCopyInternalPointer downcastPointer upcastPointer validateThis char_0 char_9 makeLegalFunctionName emval_freelist emval_handles emval_symbols getStringOrSymbol Emval emval_returnValue emval_lookupTypes emval_methodCallers emval_addMethodCaller handleError".split(" ").forEach(ma);
-var Md = {93264:() => {
+var Md = {93184:() => {
   throw "A böngésződ nem támogatja a WebGL-t!";
-}, 93315:a => {
+}, 93235:a => {
   throw "Sikertelen shader fordítás: " + N(a);
-}, 93379:a => {
+}, 93299:a => {
   throw "Sikertelen shader összekapcsolás: " + N(a);
-}, 93449:(a, b) => {
+}, 93369:(a, b) => {
   if (b = document.getElementById(N(b))) {
     b.innerText = a;
   }
-}, 93539:a => {
+}, 93459:a => {
   throw "Sikertelen fájl beolvasás: " + N(a);
-}}, Lc = v("___getTypeName"), Nd = v("_malloc"), Mc = v("_free"), ia = v("_emscripten_stack_get_end"), Od = v("__emscripten_timeout"), wb = v("_strerror"), Pd = v("_emscripten_stack_init"), sd = v("_emscripten_stack_get_current"), wa = v("wasmMemory"), Ic = v("wasmTable"), Qd = {__cxa_throw:(a, b, c) => {
+}}, Lc = v("___getTypeName"), ia = v("_emscripten_stack_get_end"), Nd = v("__emscripten_timeout"), Od = v("_malloc"), wb = v("_strerror"), Mc = v("_free"), Pd = v("_emscripten_stack_init"), sd = v("_emscripten_stack_get_current"), wa = v("wasmMemory"), Ic = v("wasmTable"), Qd = {__cxa_throw:(a, b, c) => {
   a = new Fa(a);
   u[a.l + 16 >> 2] = 0;
   u[a.l + 4 >> 2] = b;
@@ -2406,7 +2406,7 @@ var Md = {93264:() => {
       throw new S("Cannot pass non-string to std::string");
     }
     var f = e ? Sa(d) : d.length;
-    var g = Nd(4 + f + 1), h = g + 4;
+    var g = Od(4 + f + 1), h = g + 4;
     u[g >> 2] = f;
     e ? cd(d, h, f + 1) : C.set(d, h);
     null !== c && c.push(Mc, g);
@@ -2431,7 +2431,7 @@ var Md = {93264:() => {
     if ("string" != typeof h) {
       throw new S(`Cannot pass non-string to C++ string type ${c}`);
     }
-    var l = f(h), n = Nd(4 + l + b);
+    var l = f(h), n = Od(4 + l + b);
     u[n >> 2] = l / b;
     e(h, n + 4, l + b);
     null !== g && g.push(Mc, n);
@@ -2508,7 +2508,7 @@ var Md = {93264:() => {
   var c = setTimeout(() => {
     p(a in rd);
     delete rd[a];
-    td(() => Od(a, performance.now()));
+    td(() => Nd(a, performance.now()));
   }, b);
   rd[a] = {id:c, Qb:b};
   return 0;
@@ -3004,18 +3004,18 @@ ya = await (async function() {
   a = ya = a.instance.exports;
   p("undefined" != typeof a.__getTypeName, "missing Wasm export: __getTypeName");
   Lc = xa("__getTypeName", 1);
-  p("undefined" != typeof a.malloc, "missing Wasm export: malloc");
-  Nd = xa("malloc", 1);
-  p("undefined" != typeof a.free, "missing Wasm export: free");
-  Mc = xa("free", 1);
   p("undefined" != typeof a.fflush, "missing Wasm export: fflush");
   p("undefined" != typeof a.emscripten_stack_get_end, "missing Wasm export: emscripten_stack_get_end");
   ia = a.emscripten_stack_get_end;
   p("undefined" != typeof a.emscripten_stack_get_base, "missing Wasm export: emscripten_stack_get_base");
   p("undefined" != typeof a._emscripten_timeout, "missing Wasm export: _emscripten_timeout");
-  Od = xa("_emscripten_timeout", 2);
+  Nd = xa("_emscripten_timeout", 2);
+  p("undefined" != typeof a.malloc, "missing Wasm export: malloc");
+  Od = xa("malloc", 1);
   p("undefined" != typeof a.strerror, "missing Wasm export: strerror");
   wb = xa("strerror", 1);
+  p("undefined" != typeof a.free, "missing Wasm export: free");
+  Mc = xa("free", 1);
   p("undefined" != typeof a.emscripten_stack_init, "missing Wasm export: emscripten_stack_init");
   Pd = a.emscripten_stack_init;
   p("undefined" != typeof a.emscripten_stack_get_free, "missing Wasm export: emscripten_stack_get_free");

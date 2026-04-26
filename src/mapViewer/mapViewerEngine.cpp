@@ -7,6 +7,8 @@
 #include <algorithm>
 #include <cmath>
 #include <GLES3/gl3.h>
+#include <memory>
+#include <vector>
 
 #include "core/rendering/shader.h"
 
@@ -61,11 +63,11 @@ void MapViewerEngine::createMapPlane()
         };
 
         mapPlane_ = std::make_shared<Mesh>(sizeof(vertices) / sizeof(Vertex), sizeof(indices) / sizeof(uint32_t));
-        std::memcpy(mapPlane_->getVertices(), vertices, sizeof(vertices));
-        std::memcpy(mapPlane_->getIndices(), indices, sizeof(indices));
+        mapPlane_->getVertices().assign(vertices, vertices + (sizeof(vertices) / sizeof(Vertex)));
+        mapPlane_->getIndices().assign(indices, indices + (sizeof(indices) / sizeof(uint32_t)));
 
         Materials::Material mat = Materials::Material::Error();
-        Texture *mapTexture = new Texture();
+        std::shared_ptr<Texture> mapTexture = std::make_shared<Texture>();
         TextureOptions options = TextureStyle::Default;
         options.wrapT = GL_CLAMP_TO_EDGE;
         mapTexture->setOptions(options);
@@ -83,7 +85,7 @@ void MapViewerEngine::updateSingleMarker(MapMarker *mapMarker)
     {
         std::vector<Vec2> positions;
 
-        Vertex* mapVertices = mapPlane_->getVertices();
+        std::vector<Vertex> &mapVertices = mapPlane_->getVertices();
         float minMapU = mapVertices[TOP_LEFT].u;
         float minMapV = mapVertices[TOP_LEFT].v;
         float uRange = mapVertices[TOP_RIGHT].u - minMapU;
@@ -394,11 +396,11 @@ emscripten::val MapViewerEngine::getCenterOffsetByImageCoords(float imageX, floa
         float targetU = imageX / mapWidth_;
         float targetV = imageY / mapHeight_;
 
-        Vertex *vertices = mapPlane_->getVertices();
+        std::vector<Vertex> &mapPlaneVertices = mapPlane_->getVertices();
 
         // curruent center UV coords
-        float currentCenterU = (vertices[TOP_LEFT].u + vertices[TOP_RIGHT].u) * 0.5f;
-        float currentCenterV = (vertices[TOP_LEFT].v + vertices[BOTTOM_LEFT].v) * 0.5f;
+        float currentCenterU = (mapPlaneVertices[TOP_LEFT].u + mapPlaneVertices[TOP_RIGHT].u) * 0.5f;
+        float currentCenterV = (mapPlaneVertices[TOP_LEFT].v + mapPlaneVertices[BOTTOM_LEFT].v) * 0.5f;
 
         // find the closest repeating map on the U axis to prevent jumping
         float distanceToCenterU = currentCenterU - targetU;
@@ -532,10 +534,10 @@ void MapViewerEngine::recalculateUVPerPixel()
 {
     if (mapPlane_ != nullptr && width_ > 0 && height_ > 0)
     {
-        Vertex *vertices = mapPlane_->getVertices();
+        std::vector<Vertex> &mapPlaneVertices = mapPlane_->getVertices();
 
-        float uRange = vertices[TOP_RIGHT].u - vertices[TOP_LEFT].u;
-        float vRange = vertices[BOTTOM_LEFT].v - vertices[TOP_LEFT].v;
+        float uRange = mapPlaneVertices[TOP_RIGHT].u - mapPlaneVertices[TOP_LEFT].u;
+        float vRange = mapPlaneVertices[BOTTOM_LEFT].v - mapPlaneVertices[TOP_LEFT].v;
 
         uPerPixel_ = uRange / (float)width_;
         vPerPixel_ = vRange / (float)height_;
@@ -546,13 +548,13 @@ void MapViewerEngine::limitVCoordinates()
 {
     if (mapPlane_ != nullptr)
     {
-        Vertex *vertices = mapPlane_->getVertices();
+        std::vector<Vertex> &mapPlaneVertices = mapPlane_->getVertices();
         int vertexCount = mapPlane_->getVertexCount();
 
         // top vertices (0, 1) have minV
-        float minV = vertices[TOP_LEFT].v;
+        float minV = mapPlaneVertices[TOP_LEFT].v;
         // bottom vertices (2, 3) have maxV
-        float maxV = vertices[BOTTOM_LEFT].v;
+        float maxV = mapPlaneVertices[BOTTOM_LEFT].v;
 
         float vOffset = 0.0f;
 
@@ -575,7 +577,7 @@ void MapViewerEngine::limitVCoordinates()
         {
             for (int i = 0; i < vertexCount; i++)
             {
-                vertices[i].v += vOffset;
+                mapPlaneVertices[i].v += vOffset;
             }
         }
         recalculateUVPerPixel();
@@ -590,7 +592,7 @@ void MapViewerEngine::moveMap(float deltaX, float deltaY)
 {
     if (mapPlane_ != nullptr)
     {
-        Vertex *vertices = mapPlane_->getVertices();
+        std::vector<Vertex> &mapPlaneVertices = mapPlane_->getVertices();
         int vertexCount = mapPlane_->getVertexCount();
 
         float dX = deltaX * uPerPixel_;
@@ -598,8 +600,8 @@ void MapViewerEngine::moveMap(float deltaX, float deltaY)
 
         for (int i = 0; i < vertexCount; i++)
         {
-            vertices[i].u += dX;
-            vertices[i].v += dY;
+            mapPlaneVertices[i].u += dX;
+            mapPlaneVertices[i].v += dY;
         }
         limitVCoordinates();
         mapPlane_->setUpOpenGL();
@@ -615,7 +617,7 @@ void MapViewerEngine::zoomMapUV(float zoomAmount, float zoomHereU, float zoomHer
 {
     if (mapPlane_ != nullptr)
     {
-        Vertex *vertices = mapPlane_->getVertices();
+        std::vector<Vertex> &mapPlaneVertices = mapPlane_->getVertices();
         int vertexCount = mapPlane_->getVertexCount();
 
         float oldZoomLevel = zoomLevel_;
@@ -629,8 +631,8 @@ void MapViewerEngine::zoomMapUV(float zoomAmount, float zoomHereU, float zoomHer
             for (int i = 0; i < vertexCount; i++)
             {
                 // translate vertice to top left apply zoom and retranslate by center
-                vertices[i].u = (vertices[i].u - zoomHereU) * zoomFactor + zoomHereU;
-                vertices[i].v = (vertices[i].v - zoomHereV) * zoomFactor + zoomHereV;
+                mapPlaneVertices[i].u = (mapPlaneVertices[i].u - zoomHereU) * zoomFactor + zoomHereU;
+                mapPlaneVertices[i].v = (mapPlaneVertices[i].v - zoomHereV) * zoomFactor + zoomHereV;
             }
 
             limitVCoordinates();
@@ -648,19 +650,19 @@ void MapViewerEngine::getUVAtScreenPosition(float screenX, float screenY, float 
 {
     if (mapPlane_ != nullptr)
     {
-        Vertex *vertices = mapPlane_->getVertices();
+        std::vector<Vertex> &mapPlaneVertices = mapPlane_->getVertices();
 
         // calculate currently visible uv range
-        float currentRangeU = vertices[TOP_RIGHT].u - vertices[TOP_LEFT].u;
-        float currentRangeV = vertices[BOTTOM_LEFT].v - vertices[TOP_LEFT].v;
+        float currentRangeU = mapPlaneVertices[TOP_RIGHT].u - mapPlaneVertices[TOP_LEFT].u;
+        float currentRangeV = mapPlaneVertices[BOTTOM_LEFT].v - mapPlaneVertices[TOP_LEFT].v;
 
         // convert screen xy to uv coordinates
         float screenRatioX = screenX / (float)width_;
         float screenRatioY = screenY / (float)height_;
 
         // add vertices[TOP_LEFT].uv so it starts at the correct place and scale by the currently visible uv range
-        u = vertices[TOP_LEFT].u + (screenRatioX * currentRangeU);
-        v = vertices[TOP_LEFT].v + (screenRatioY * currentRangeV);
+        u = mapPlaneVertices[TOP_LEFT].u + (screenRatioX * currentRangeU);
+        v = mapPlaneVertices[TOP_LEFT].v + (screenRatioY * currentRangeV);
     }
     else
     {
@@ -681,10 +683,10 @@ void MapViewerEngine::zoomMapToCenter(float zoomAmount)
 {
     if (mapPlane_ != nullptr)
     {
-        Vertex *vertices = mapPlane_->getVertices();
+        std::vector<Vertex> &mapPlaneVertices = mapPlane_->getVertices();
 
-        float currentScreenCenterU = (vertices[TOP_LEFT].u + vertices[BOTTOM_RIGHT].u) * 0.5f;
-        float currentScreenCenterV = (vertices[TOP_LEFT].v + vertices[BOTTOM_RIGHT].v) * 0.5f;
+        float currentScreenCenterU = (mapPlaneVertices[TOP_LEFT].u + mapPlaneVertices[BOTTOM_RIGHT].u) * 0.5f;
+        float currentScreenCenterV = (mapPlaneVertices[TOP_LEFT].v + mapPlaneVertices[BOTTOM_RIGHT].v) * 0.5f;
 
         zoomMapUV(zoomAmount, currentScreenCenterU, currentScreenCenterV);
     }
@@ -698,7 +700,11 @@ void MapViewerEngine::loadMap(const std::string & url, int mapWidth, int mapHeig
 {
     if (mapPlane_ != nullptr)
     {
-        loadTextureFromUrl(url, 0, onSuccess, onError);
+        std::shared_ptr<Texture> texture = mapPlane_->getMaterial().getTexture();
+        if (texture != nullptr)
+        {
+            texture->loadFromUrl(url, onSuccess, onError);
+        }
         mapWidth_ = mapWidth;
         mapHeight_ = mapHeight;
         fitMapHorizontally();
@@ -719,16 +725,16 @@ void MapViewerEngine::loadMap(const std::string & url, int mapWidth, int mapHeig
 
 void MapViewerEngine::fitMapHorizontally()
 {
-    Vertex *vertices = mapPlane_->getVertices();
+    std::vector<Vertex> &mapPlaneVertices = mapPlane_->getVertices();
 
     float mapAspectRatio = (float)mapWidth_ / mapHeight_;
     float screenAspectRatio = ((float)width_ / height_) / mapAspectRatio;
 
     // first we calculate the center of the horizontal axis
-    float currentCenterU = (vertices[TOP_LEFT].u + vertices[TOP_RIGHT].u) * 0.5f;
+    float currentCenterU = (mapPlaneVertices[TOP_LEFT].u + mapPlaneVertices[TOP_RIGHT].u) * 0.5f;
 
     // we keep the current height
-    float currentMapHeightV = vertices[BOTTOM_LEFT].v - vertices[TOP_LEFT].v;
+    float currentMapHeightV = mapPlaneVertices[BOTTOM_LEFT].v - mapPlaneVertices[TOP_LEFT].v;
 
     // change width according to aspect ratio
     float newMapWidthU = currentMapHeightV * screenAspectRatio;
@@ -737,12 +743,12 @@ void MapViewerEngine::fitMapHorizontally()
     float halfWidth = newMapWidthU * 0.5f;
 
     // old center - new half width = left boundary of the new view
-    vertices[TOP_LEFT].u = currentCenterU - halfWidth;
-    vertices[BOTTOM_LEFT].u = currentCenterU - halfWidth;
+    mapPlaneVertices[TOP_LEFT].u = currentCenterU - halfWidth;
+    mapPlaneVertices[BOTTOM_LEFT].u = currentCenterU - halfWidth;
 
     // old center + new half width = right boundary of the new view
-    vertices[TOP_RIGHT].u = currentCenterU + halfWidth;
-    vertices[BOTTOM_RIGHT].u = currentCenterU + halfWidth;
+    mapPlaneVertices[TOP_RIGHT].u = currentCenterU + halfWidth;
+    mapPlaneVertices[BOTTOM_RIGHT].u = currentCenterU + halfWidth;
 
     recalculateUVPerPixel();
 }
@@ -818,11 +824,11 @@ void MapViewerEngine::updateSingleLine(MapLine *line)
         float uEnd = endMarker->getU();
         float vEnd = endMarker->getV();
 
-        Vertex* mapVertices = mapPlane_->getVertices();
-        float minMapU = mapVertices[TOP_LEFT].u;
-        float minMapV = mapVertices[TOP_LEFT].v;
-        float uRange = mapVertices[TOP_RIGHT].u - minMapU;
-        float vRange = mapVertices[BOTTOM_LEFT].v - minMapV;
+        std::vector<Vertex> &mapPlaneVertices = mapPlane_->getVertices();
+        float minMapU = mapPlaneVertices[TOP_LEFT].u;
+        float minMapV = mapPlaneVertices[TOP_LEFT].v;
+        float uRange = mapPlaneVertices[TOP_RIGHT].u - minMapU;
+        float vRange = mapPlaneVertices[BOTTOM_LEFT].v - minMapV;
 
         std::vector<Vec2> startPositions;
         std::vector<Vec2> endPositions;

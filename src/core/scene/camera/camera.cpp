@@ -17,7 +17,7 @@ Camera::Camera()
 {
     currentProjectionType_ = PROJECTIONTYPE::PERSPECTIVE;
     projectionMatrix_ = std::make_unique<PerspectiveProjectionMatrix>(0.1f, 1000.0f);
-    MathUtils::setIdentity(viewMatrix_);
+    viewMatrix_ = Mat4::identity();
     data_.camPos[0] = 0;
     data_.camPos[1] = 0;
     data_.camPos[2] = 0;
@@ -34,8 +34,8 @@ Camera::Camera()
 
     yaw_ = 0.0f;
     pitch_ = 0.0f;
-    newView_ = true;
-    newViewProj_ = true;
+    isViewMatrixDirty_ = true;
+    isViewProjMatrixDirty_ = true;
 }
 
 Camera::~Camera()
@@ -71,26 +71,26 @@ void Camera::setPosition(float x, float y, float z)
     data_.camPos[0] = x;
     data_.camPos[1] = y;
     data_.camPos[2] = z;
-    newView_ = true;
+    isViewMatrixDirty_ = true;
 }
 
 void Camera::setRotation(float pitch, float yaw)
 {
     pitch_ = pitch;
     yaw_ = MathUtils::normalizeAngleRadians(yaw);
-    newView_ = true;
+    isViewMatrixDirty_ = true;
 }
 
 void Camera::setPitch(float pitch)
 {
     pitch_ = pitch;
-    newView_ = true;
+    isViewMatrixDirty_ = true;
 }
 
 void Camera::setYaw(float yaw)
 {
     yaw_ = MathUtils::normalizeAngleRadians(yaw);
-    newView_ = true;
+    isViewMatrixDirty_ = true;
 }
 
 void Camera::rotate(float dPitch, float dYaw)
@@ -105,39 +105,34 @@ void Camera::rotate(float dPitch, float dYaw)
     // normalize to [0;2pi[
     yaw_ = MathUtils::normalizeAngleRadians(yaw_);
 
-    newView_ = true;
+    isViewMatrixDirty_ = true;
 }
 
 void Camera::updateViewMatrix()
 {
-    if (newView_)
+    if (isViewMatrixDirty_)
     {
-        float yRotMatr[16] = { 0 };
-        float xRotMatr[16] = { 0 };
-        float rotMatr[16] = { 0 };
-        float translation[16] = { 0 };
-
-        MathUtils::setRotationY(yRotMatr, yaw_);
-        MathUtils::setRotationX(xRotMatr, pitch_);
+        Mat4 yRotMatr = Mat4::rotationY(yaw_);
+        Mat4 xRotMatr = Mat4::rotationX(pitch_);
 
         // order: Z Y X
-        MathUtils::multiplyMatrix(yRotMatr, xRotMatr, rotMatr);
+        Mat4 rotMatr = yRotMatr * xRotMatr;
 
         // translation matrix
-        MathUtils::setTranslation(translation, -data_.camPos[0], -data_.camPos[1], -data_.camPos[2]);
+        Mat4 translation = Mat4::translation(-data_.camPos[0], -data_.camPos[1], -data_.camPos[2]);
 
-        MathUtils::multiplyMatrix(translation, rotMatr, viewMatrix_);
-        newView_ = false;
-        newViewProj_ = true;
+        viewMatrix_ = translation * rotMatr;
+        isViewMatrixDirty_ = false;
+        isViewProjMatrixDirty_ = true;
     }
 }
 
 void Camera::updateViewProjectionMatrix()
 {
-    if (newViewProj_)
+    if (isViewProjMatrixDirty_)
     {
-        MathUtils::multiplyMatrix(viewMatrix_, projectionMatrix_->getProjectionMatrix(), data_.VP);
-        newViewProj_ = false;
+        data_.VP = viewMatrix_ * projectionMatrix_->getProjectionMatrix();
+        isViewProjMatrixDirty_ = false;
     }
 }
 
@@ -219,5 +214,5 @@ void Camera::recalculateCanvasBoundaries()
     projectionMatrix_->setLeftClippingPlane(-right);
 
     // update perspective projection matrix
-    newViewProj_ = true;
+    isViewProjMatrixDirty_ = true;
 }

@@ -1,7 +1,5 @@
 #include "core/projection/projectionMatrix.h"
 
-#include "core/math/mathUtils.h"
-
 ProjectionMatrix::ProjectionMatrix(float near, float far)
 {
     left_ = -1.0f;
@@ -13,5 +11,5 @@ ProjectionMatrix::ProjectionMatrix(float near, float far)
     near_ = near;
     far_ = far;
     dirty_ = true;
-    MathUtils::setIdentity(matrix_);
+    matrix_ = Mat4::identity();
 }

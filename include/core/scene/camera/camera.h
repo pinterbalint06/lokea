@@ -8,6 +8,7 @@
 #include "core/scene/camera/cameraConfig.h"
 
 #include "core/math/mathUtils.h"
+#include "core/math/matrix.h"
 
 // Forward declarations
 struct Vec3; // defined in "core/math/vector.h"
@@ -20,7 +21,7 @@ enum class PROJECTIONTYPE
 
 struct CameraData
 {
-    float VP[16]; // 0 -> 64
+    Mat4 VP; // 0 -> 64
     /// @brief The coordinates of the camera's position in 3D space.
     float camPos[3]; // 64 -> 76
     float pad;       // 76 -> 80
@@ -35,7 +36,7 @@ private:
      * This matrix defines the transformation from world space to camera (view) space.
      * It is a 4x4 matrix stored in a contiguous float array in row-major order.
      */
-    float viewMatrix_[16];
+    Mat4 viewMatrix_;
 
     PROJECTIONTYPE currentProjectionType_;
 
@@ -54,10 +55,10 @@ private:
     float pitch_;
 
     /// @brief Indicates whether the camera view has to be updated
-    bool newView_;
+    bool isViewMatrixDirty_;
 
     /// @brief Indicates whether the camera view projeciton has to be updated
-    bool newViewProj_;
+    bool isViewProjMatrixDirty_;
 
     float zoomFactor_;
 

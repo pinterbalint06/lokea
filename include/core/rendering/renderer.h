@@ -43,7 +43,7 @@ private:
 
     void updateCameraUBO(Camera *camera);
     void updateSceneUBO(const Scene *scene);
-    void updateMaterialUBO(const Materials::Material meshMat);
+    void updateMaterialUBO(const Materials::Material &meshMat);
     void updateMeshUBO(Mesh *mesh);
 
 public:

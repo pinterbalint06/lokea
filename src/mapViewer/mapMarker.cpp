@@ -2,6 +2,7 @@
 #include <cstring>
 #include <cmath>
 #include <vector>
+#include <memory>
 #include <GLES3/gl3.h>
 
 #include "core/math/vector.h"
@@ -59,10 +60,10 @@ MapMarker::MapMarker(int id, const std::string &textureUrl, float u, float v, fl
         indices[indicesIndex++] = markerRepetitionId + BOTTOM_LEFT;
     }
 
-    std::memcpy(getVertices(), vertices, sizeof(vertices));
-    std::memcpy(getIndices(), indices, sizeof(indices));
+    getVertices().assign(vertices, vertices + (sizeof(vertices) / sizeof(Vertex)));
+    getIndices().assign(indices, indices + (sizeof(indices) / sizeof(uint32_t)));
 
-    Texture *texture = new Texture(true, true);
+    std::shared_ptr<Texture> texture = std::make_shared<Texture>(true, true);
     TextureOptions textureOptions;
     textureOptions.wrapS = GL_CLAMP_TO_EDGE;
     textureOptions.wrapT = GL_CLAMP_TO_EDGE;
@@ -79,23 +80,21 @@ MapMarker::MapMarker(int id, const std::string &textureUrl, float u, float v, fl
 
 MapMarker::~MapMarker()
 {
-    Texture *texture = getMaterial().getTexture();
-    if (texture)
-    {
-        delete texture;
-    }
 }
 
 void MapMarker::changeTexture(const std::string &textureUrl)
 {
-    Texture *texture = getMaterial().getTexture();
-    texture->clear();
-    texture->loadFromUrl(textureUrl);
+    std::shared_ptr<Texture> texture = getMaterial().getTexture();
+    if (texture)
+    {
+        texture->clear();
+        texture->loadFromUrl(textureUrl);
+    }
 }
 
 void MapMarker::updateRenderPosition(const std::vector<Vec2> &positions, float screenWidth, float screenHeight, float totalMapWidth, float totalMapHeight, float mapRatioPerPixelX, float mapRatioPerPixelY)
 {
-    Vertex* vertices = getVertices();
+    std::vector<Vertex> &vertices = getVertices();
 
     float markerWidthInScreenPixels;
     float markerHeightInScreenPixels;
@@ -240,15 +239,17 @@ bool MapMarker::doesPointOverlapRepetition(float pointX, float pointY, int repet
     cornerIndices[2] = BOTTOM_LEFT;
     cornerIndices[3] = BOTTOM_RIGHT;
 
-    float minX = vertices_[offset + cornerIndices[0]].x;
-    float maxX = vertices_[offset + cornerIndices[0]].x;
-    float minY = vertices_[offset + cornerIndices[0]].y;
-    float maxY = vertices_[offset + cornerIndices[0]].y;
+    std::vector<Vertex> &vertices = getVertices();   
+
+    float minX = vertices[offset + cornerIndices[0]].x;
+    float maxX = vertices[offset + cornerIndices[0]].x;
+    float minY = vertices[offset + cornerIndices[0]].y;
+    float maxY = vertices[offset + cornerIndices[0]].y;
 
     for (int i = 1; i < 4; i++)
     {
-        float vX = vertices_[offset + cornerIndices[i]].x;
-        float vY = vertices_[offset + cornerIndices[i]].y;
+        float vX = vertices[offset + cornerIndices[i]].x;
+        float vY = vertices[offset + cornerIndices[i]].y;
 
         if (vX < minX)
         {

@@ -1,5 +1,3 @@
-#include <algorithm>
-
 #include "core/resources/material.h"
 #include "core/resources/texture.h"
 
@@ -19,7 +17,7 @@ namespace Materials
         data_.color[3] = color.a;
     }
 
-    void Material::setTexture(Texture *tex)
+    void Material::setTexture(std::shared_ptr<Texture> tex)
     {
         texture_ = tex;
     }

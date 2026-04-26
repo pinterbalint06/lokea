@@ -3,9 +3,12 @@
 
 #include <cstdint>
 #include <GLES3/gl3.h>
+#include <memory>
+#include <vector>
 
 #include "core/resources/material.h"
 #include "core/resources/vertex.h"
+#include "core/math/matrix.h"
 
 // Forward declarations
 namespace Shaders
@@ -20,7 +23,7 @@ class Vertex; // defined in "core/resources/vertex.h"
 
 struct MeshData
 {
-    float modelMatrix[16]; // 16 bytes
+    Mat4 modelMatrix;
 };
 
 class Mesh
@@ -33,18 +36,12 @@ private:
     // vertax array object
     GLuint vao_;
 
-    int vertexCount_;
-    int indexCount_;
-
     Materials::Material material_;
 
 protected:
-    Vertex *vertices_;
-    uint32_t *indices_;
+    std::vector<Vertex> vertices_;
+    std::vector<uint32_t> indices_;
     MeshData meshData_;
-
-    void cleanup();
-    void resize(int vertexCount, int indexCount);
 
 public:
     Mesh(int vertexCount, int indexCount);
@@ -53,14 +50,16 @@ public:
     GLuint setUpOpenGL();
 
     // getters
-    int getVertexCount() const { return vertexCount_; }
-    int getIndexCount() const { return indexCount_; }
-    Vertex *getVertices() const { return vertices_; }
-    uint32_t *getIndices() const { return indices_; }
+    int getVertexCount() const { return static_cast<int>(vertices_.size()); }
+    int getIndexCount() const { return static_cast<int>(indices_.size()); }
+    std::vector<Vertex> &getVertices() { return vertices_; }
+    const std::vector<Vertex> &getVertices() const { return vertices_; }
+    std::vector<uint32_t> &getIndices() { return indices_; }
+    const std::vector<uint32_t> &getIndices() const { return indices_; }
     Materials::Material getMaterial() const { return material_; }
     GLuint getVAO() const { return vao_; }
-    float *getModelMatrix() { return meshData_.modelMatrix; }
-    const float *getModelMatrix() const { return meshData_.modelMatrix; }
+    Mat4 &getModelMatrix() { return meshData_.modelMatrix; }
+    const Mat4 &getModelMatrix() const { return meshData_.modelMatrix; }
     const MeshData &getUBOData() const { return meshData_; }
 
     // setters

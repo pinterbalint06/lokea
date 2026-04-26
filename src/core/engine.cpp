@@ -1,16 +1,11 @@
 #include <string>
 #include <vector>
 #include <memory>
-#include <emscripten/val.h>
 #include <emscripten/html5.h>
 
 #include "core/rendering/renderer.h"
 
 #include "core/scene/scene.h"
-
-#include "core/resources/mesh.h"
-#include "core/resources/texture.h"
-#include "core/resources/material.h"
 
 #include "core/engine.h"
 
@@ -100,74 +95,4 @@ void Engine::setCameraPosition(float x, float y, float z)
 void Engine::resetCameraPosition()
 {
     scene_->getCamera()->setPosition(0.0f, 0.0f, 0.0f);
-}
-
-uint8_t *Engine::initTexture(int width, int height, int meshIndex)
-{
-    uint8_t *retPtr = nullptr;
-    std::shared_ptr<Mesh> mesh = scene_->getMesh(meshIndex);
-    if (mesh != nullptr)
-    {
-        deleteTexture(meshIndex);
-        Texture *texture = new Texture(width, height);
-        Materials::Material newTexMat = mesh->getMaterial();
-        newTexMat.setTexture(texture);
-        mesh->setMaterial(newTexMat);
-        retPtr = texture->getImgData();
-    }
-    return retPtr;
-}
-
-void Engine::uploadTextureToGPU(int meshIndex)
-{
-    std::shared_ptr<Mesh> mesh = scene_->getMesh(meshIndex);
-    if (mesh != nullptr)
-    {
-        if (mesh->getMaterial().getTexture() != nullptr)
-        {
-            mesh->getMaterial().getTexture()->uploadToGPU();
-        }
-    }
-}
-
-void Engine::deleteTexture(int meshIndex)
-{
-    std::shared_ptr<Mesh> mesh = scene_->getMesh(meshIndex);
-    if (mesh != nullptr)
-    {
-        if (mesh->getMaterial().getTexture() != nullptr)
-        {
-            delete mesh->getMaterial().getTexture();
-            Materials::Material newTexMat = mesh->getMaterial();
-            newTexMat.setTexture(nullptr);
-            mesh->setMaterial(newTexMat);
-        }
-    }
-}
-
-void Engine::loadTextureFromUrl(const std::string &url, int meshIndex, emscripten::val onSuccess, emscripten::val onError)
-{
-    std::shared_ptr<Mesh> mesh = scene_->getMesh(meshIndex);
-    if (mesh != nullptr)
-    {
-        Texture *texture = mesh->getMaterial().getTexture();
-        if (texture == nullptr)
-        {
-            texture = new Texture();
-            texture->loadFromUrl(url, onSuccess, onError);
-
-            Materials::Material newTexMat = mesh->getMaterial();
-            newTexMat.setTexture(texture);
-            mesh->setMaterial(newTexMat);
-        }
-        else
-        {
-            texture->loadFromUrl(url, onSuccess, onError);
-        }
-    }
-}
-
-void Engine::loadTextureFromUrl(const std::string &url, int meshIndex)
-{
-    loadTextureFromUrl(url, meshIndex, emscripten::val::undefined(), emscripten::val::undefined());
 }

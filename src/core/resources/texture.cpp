@@ -19,7 +19,6 @@ Texture::Texture(bool invisiblePlaceholder, bool hasAlpha)
     textureGL_ = 0;
     invisiblePlaceholder_ = invisiblePlaceholder;
     hasAlpha_ = hasAlpha;
-    imgData_ = nullptr;
     options_ = TextureStyle::Default;
     initGL();
 }
@@ -33,7 +32,7 @@ Texture::Texture(int width, int height, bool invisiblePlaceholder, bool hasAlpha
     hasAlpha_ = hasAlpha;
 
     int channels = hasAlpha_ ? 4 : 3;
-    imgData_ = (uint8_t *)malloc(width_ * height_ * channels * sizeof(uint8_t));
+    imgData_.resize(width_ * height_ * channels);
 
     options_ = TextureStyle::Default;
     initGL();
@@ -41,10 +40,6 @@ Texture::Texture(int width, int height, bool invisiblePlaceholder, bool hasAlpha
 
 Texture::~Texture()
 {
-    if (imgData_)
-    {
-        free(imgData_);
-    }
     if (textureGL_ != 0)
     {
         glDeleteTextures(1, &textureGL_);
@@ -126,11 +121,7 @@ void Texture::loadFromUrl(const std::string &url)
 
 void Texture::loadFromUrl(const std::string &url, emscripten::val onSuccess, emscripten::val onError)
 {
-    if (imgData_)
-    {
-        free(imgData_);
-        imgData_ = nullptr;
-    }
+    imgData_.clear();
     width_ = 0;
     height_ = 0;
 
@@ -146,7 +137,7 @@ void Texture::uploadToGPU()
     glBindTexture(GL_TEXTURE_2D, textureGL_);
 
     GLuint format = hasAlpha_ ? GL_RGBA : GL_RGB;
-    glTexImage2D(GL_TEXTURE_2D, 0, format, width_, height_, 0, format, GL_UNSIGNED_BYTE, imgData_);
+    glTexImage2D(GL_TEXTURE_2D, 0, format, width_, height_, 0, format, GL_UNSIGNED_BYTE, imgData_.data());
 
     if (needsMipmaps())
     {
@@ -164,11 +155,7 @@ void Texture::bind(int location)
 
 void Texture::clear()
 {
-    if (imgData_)
-    {
-        free(imgData_);
-        imgData_ = nullptr;
-    }
+    imgData_.clear();
     width_ = 0;
     height_ = 0;
 

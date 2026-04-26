@@ -1,6 +1,7 @@
 #include <vector>
 #include <cmath>
 #include <cstring>
+#include <memory>
 #include <GLES3/gl3.h>
 
 #include "core/math/vector.h"
@@ -57,8 +58,8 @@ MapLine::MapLine(int id, int startMarkerId, int endMarkerId, float thickness, ui
         indices[iIdx + 5] = vIdx + LINE_BOTTOM_LEFT;
     }
 
-    std::memcpy(getVertices(), vertices, sizeof(vertices));
-    std::memcpy(getIndices(), indices, sizeof(indices));
+    getVertices().assign(vertices, vertices + (sizeof(vertices) / sizeof(Vertex)));
+    getIndices().assign(indices, indices + (sizeof(indices) / sizeof(uint32_t)));
 
     Materials::Material lineMaterial = Materials::Material(Materials::Color::fromRGBA(r, g, b, a));
     setMaterial(lineMaterial);
@@ -70,7 +71,7 @@ MapLine::~MapLine()
 
 void MapLine::updateLineGeometry(const std::vector<Vec2> &startPositions, const std::vector<Vec2> &endPositions, float screenWidth, float screenHeight)
 {
-    Vertex* vertices = getVertices();
+    std::vector<Vertex> &vertices = getVertices();
 
     // thickness relative to screensize
     float halfThicknessX = thickness_ / screenWidth;

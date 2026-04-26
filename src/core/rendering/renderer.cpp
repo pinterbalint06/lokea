@@ -133,13 +133,14 @@ void Renderer::updateSceneUBO(const Scene *scene)
     updateCameraUBO(mainCamera);
 }
 
-void Renderer::updateMaterialUBO(const Materials::Material meshMat)
+void Renderer::updateMaterialUBO(const Materials::Material &meshMat)
 {
     int useTexture = 0;
 
-    if (meshMat.getTexture() != nullptr)
+    std::shared_ptr<Texture> texture = meshMat.getTexture();
+    if (texture != nullptr)
     {
-        meshMat.getTexture()->bind((int)BindingSlots::Texture::ALBEDO);
+        texture->bind((int)BindingSlots::Texture::ALBEDO);
         useTexture = 1;
     }
     else

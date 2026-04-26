@@ -1,6 +1,6 @@
 #include <cmath>
-#include <cstring>
 #include <GLES3/gl3.h>
+#include <memory>
 
 #include "core/math/vector.h"
 #include "core/math/mathUtils.h"
@@ -65,8 +65,8 @@ void Arrow::generateVertices()
         generatedVertices[i + 6] = outerVertex;
     }
 
-    std::memcpy(getVertices(), generatedVertices, sizeof(generatedVertices));
-    std::memcpy(getIndices(), ARROW_INDICES, sizeof(ARROW_INDICES));
+    getVertices().assign(generatedVertices, generatedVertices + (sizeof(generatedVertices) / sizeof(Vertex)));
+    getIndices().assign(ARROW_INDICES, ARROW_INDICES + (sizeof(ARROW_INDICES) / sizeof(uint32_t)));
 }
 
 void Arrow::createModelMatrix()
@@ -80,29 +80,21 @@ void Arrow::createModelMatrix()
     const float posY = height;
     const float posZ = -std::cos(yaw_) * radius;
 
-    float scaleMat[16];
-    MathUtils::setScale(scaleMat, scale, scale, scale);
+    Mat4 scaleMat = Mat4::scale(scale, scale, scale);
+    Mat4 yRotMat = Mat4::rotationY(-yaw_);
+    Mat4 tempMat = scaleMat * yRotMat;
+    Mat4 transMat = Mat4::translation(posX, posY, posZ);
 
-    float yRotMat[16];
-    MathUtils::setRotationY(yRotMat, -yaw_);
-
-    float tempMat[16];
-    MathUtils::setIdentity(tempMat);
-
-    MathUtils::multiplyMatrix(scaleMat, yRotMat, tempMat);
-
-    float transMat[16];
-    MathUtils::setTranslation(transMat, posX, posY, posZ);
-
-    MathUtils::multiplyMatrix(tempMat, transMat, getModelMatrix());
+    Mat4 &modelMatrix = getModelMatrix();
+    modelMatrix = tempMat * transMat;
 }
 
-Texture* Arrow::createArrowTexture()
+std::shared_ptr<Texture> Arrow::createArrowTexture()
 {
     const int textureWidth = 1;
     const int textureHeight = 2;
-    Texture* arrowTexture = new Texture(textureWidth, textureHeight, false, true);
-    uint8_t* pixels = arrowTexture->getImgData();
+    std::shared_ptr<Texture> arrowTexture = std::make_shared<Texture>(textureWidth, textureHeight, false, true);
+    std::vector<uint8_t> &pixels = arrowTexture->getImgData();
 
     int pixelIndex = 0;
 
@@ -140,19 +132,12 @@ Arrow::Arrow(int id, float yaw) : Mesh(12, 24)
 {
     id_ = id;
     yaw_ = yaw;
-    arrowTexture_ = nullptr;
-
     generateMesh();
     createMaterial();
 }
 
 Arrow::~Arrow()
 {
-    if (arrowTexture_ != nullptr)
-    {
-        delete arrowTexture_;
-        arrowTexture_ = nullptr;
-    }
 }
 
 void Arrow::setYaw(float newYaw)
@@ -176,8 +161,7 @@ void Arrow::createMaterial()
 {
     Materials::Material defaultMat = Materials::Material::Error();
 
-    arrowTexture_ = createArrowTexture();
-    defaultMat.setTexture(arrowTexture_);
+    defaultMat.setTexture(createArrowTexture());
 
     setMaterial(defaultMat);
 }

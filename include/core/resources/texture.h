@@ -3,6 +3,7 @@
 
 #include <cstdint>
 #include <string>
+#include <vector>
 #include <GLES3/gl3.h>
 #include <emscripten/val.h>
 
@@ -26,7 +27,7 @@ class Texture
 private:
     int width_;
     int height_;
-    uint8_t *imgData_;
+    std::vector<uint8_t> imgData_;
     GLuint textureGL_;
     bool invisiblePlaceholder_;
     TextureOptions options_;
@@ -45,7 +46,8 @@ public:
     int getWidth() { return width_; }
     int getHeight() { return height_; }
 
-    uint8_t *getImgData() { return imgData_; }
+    std::vector<uint8_t> &getImgData() { return imgData_; }
+    const std::vector<uint8_t> &getImgData() const { return imgData_; }
     GLuint getTextureIndex() const { return textureGL_; }
 
     void setOptions(TextureOptions options);
