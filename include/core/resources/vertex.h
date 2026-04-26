@@ -9,7 +9,7 @@
 struct Vertex
 {
     // Position
-    float x, y, z, w;
+    float x, y, z;
 
     // texture coordinates
     float u, v;

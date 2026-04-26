@@ -39,28 +39,24 @@ MapLine::MapLine(int id, int startMarkerId, int endMarkerId, float thickness, ui
     vertices[LINE_TOP_LEFT].x = unitStartX;
     vertices[LINE_TOP_LEFT].y = unitTopY;
     vertices[LINE_TOP_LEFT].z = -0.005f;
-    vertices[LINE_TOP_LEFT].w = 1.0f;
     vertices[LINE_TOP_LEFT].u = 0.0f;
     vertices[LINE_TOP_LEFT].v = 0.0f;
 
     vertices[LINE_TOP_RIGHT].x = unitEndX;
     vertices[LINE_TOP_RIGHT].y = unitTopY;
     vertices[LINE_TOP_RIGHT].z = -0.005f;
-    vertices[LINE_TOP_RIGHT].w = 1.0f;
     vertices[LINE_TOP_RIGHT].u = 0.0f;
     vertices[LINE_TOP_RIGHT].v = 0.0f;
 
     vertices[LINE_BOTTOM_LEFT].x = unitStartX;
     vertices[LINE_BOTTOM_LEFT].y = unitBottomY;
     vertices[LINE_BOTTOM_LEFT].z = -0.005f;
-    vertices[LINE_BOTTOM_LEFT].w = 1.0f;
     vertices[LINE_BOTTOM_LEFT].u = 0.0f;
     vertices[LINE_BOTTOM_LEFT].v = 0.0f;
 
     vertices[LINE_BOTTOM_RIGHT].x = unitEndX;
     vertices[LINE_BOTTOM_RIGHT].y = unitBottomY;
     vertices[LINE_BOTTOM_RIGHT].z = -0.005f;
-    vertices[LINE_BOTTOM_RIGHT].w = 1.0f;
     vertices[LINE_BOTTOM_RIGHT].u = 0.0f;
     vertices[LINE_BOTTOM_RIGHT].v = 0.0f;
 
@@ -79,35 +75,39 @@ void MapLine::updateLineGeometry(const std::vector<Vec2> &startPositions, const 
 {
     if (startPositions.size() > 0 && endPositions.size() > 0)
     {
-        Vec2 clipSpaceDifference = endPositions[0] - startPositions[0];
+        const Vec2 clipDifference = endPositions[0] - startPositions[0];
 
         // clip space -> pixel conversion:
-        // clip space is [0;1] so length is 2
+        // clip space is [-1;1] so length is 2
         // 1 clip space is half the screen's pixels
-        float clipPerPixelX = 2.0f / screenWidth;
-        float clipPerPixelY = 2.0f / screenHeight;
+        const float pixelsPerClipX = screenWidth / 2.0f;
+        const float pixelsPerClipY = screenHeight / 2.0f;
 
-        float pixelDifferenceX = clipSpaceDifference.x * clipPerPixelX;
-        float pixelDifferenceY = clipSpaceDifference.y * clipPerPixelY;
+        const float pixelDifferenceX = clipDifference.x * pixelsPerClipX;
+        const float pixelDifferenceY = clipDifference.y * pixelsPerClipY;
 
-        float lengthInPixels = std::sqrt((pixelDifferenceX * pixelDifferenceX) + (pixelDifferenceY * pixelDifferenceY));
+        const float lengthInPixels = std::sqrt(
+            (pixelDifferenceX * pixelDifferenceX) +
+            (pixelDifferenceY * pixelDifferenceY));
 
         if (lengthInPixels > 0.0001f)
         {
-            float angleRadians = std::atan2(pixelDifferenceY, pixelDifferenceX);
+            const float angleRadians = std::atan2(pixelDifferenceY, pixelDifferenceX);
 
-            Mat4 scaleToPixels = Mat4::scale(lengthInPixels, thickness_, 1.0f);
+            const Mat4 scaleToPixels = Mat4::scale(lengthInPixels, thickness_, 1.0f);
+            const Mat4 rotation = Mat4::rotationZ(angleRadians);
 
-            Mat4 rotation = Mat4::rotationZ(angleRadians);
+            const float clipPerPixelX = 2.0f / screenWidth;
+            const float clipPerPixelY = 2.0f / screenHeight;
 
-            Mat4 scaleToClipSpace = Mat4::scale(clipPerPixelX, clipPerPixelY, 1.0f);
+            const Mat4 scaleToClipSpace = Mat4::scale(clipPerPixelX, clipPerPixelY, 1.0f);
 
             meshData_.modelMatrix = scaleToPixels * rotation * scaleToClipSpace;
         }
-    }
 
-    setInstances(startPositions);
-    setUpOpenGL();
+        setInstances(startPositions);
+        setUpOpenGL();
+    }
 }
 
 void MapLine::setColor(uint8_t r, uint8_t g, uint8_t b, uint8_t a)

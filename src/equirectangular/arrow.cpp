@@ -12,13 +12,13 @@
 #include "equirectangular/arrow.h"
 
 constexpr Vertex INNER_ARROW_VERTICES[6] = {
-    // x       y      z       w       u     v
-    {-0.625f,  0.0f,  0.375f, 1.0f, 0.0f, 0.0f}, // 0: lower left
-    {-0.625f,  0.0f,  0.125f, 1.0f, 0.0f, 0.0f}, // 1: upper front left
-    { 0.0f,    0.0f, -0.375f, 1.0f, 0.0f, 0.0f}, // 2: top
-    { 0.625f,  0.0f,  0.125f, 1.0f, 0.0f, 0.0f}, // 3: upper front right
-    { 0.625f,  0.0f,  0.375f, 1.0f, 0.0f, 0.0f}, // 4: lower right
-    { 0.0f,    0.0f, -0.125f, 1.0f, 0.0f, 0.0f}  // 5: inner top
+    // x       y      z        u     v
+    {-0.625f,  0.0f,  0.375f, 0.0f, 0.0f}, // 0: lower left
+    {-0.625f,  0.0f,  0.125f, 0.0f, 0.0f}, // 1: upper front left
+    { 0.0f,    0.0f, -0.375f, 0.0f, 0.0f}, // 2: top
+    { 0.625f,  0.0f,  0.125f, 0.0f, 0.0f}, // 3: upper front right
+    { 0.625f,  0.0f,  0.375f, 0.0f, 0.0f}, // 4: lower right
+    { 0.0f,    0.0f, -0.125f, 0.0f, 0.0f}  // 5: inner top
 };
 
 constexpr uint32_t ARROW_INDICES[] = {

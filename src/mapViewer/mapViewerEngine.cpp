@@ -51,11 +51,11 @@ void MapViewerEngine::createMapPlane()
         startU = -off;
         endU = 1.0f + off;
         Vertex vertices[4];
-        //                        x      y      z     w     u     v
-        vertices[TOP_LEFT] = { -1.0f, 1.0f, -0.01f, 1.0f, startU, 0.0f };
-        vertices[TOP_RIGHT] = { 1.0f, 1.0f, -0.01f, 1.0f, endU, 0.0f };
-        vertices[BOTTOM_LEFT] = { -1.0f, -1.0f, -0.01f, 1.0f, startU, 1.0f };
-        vertices[BOTTOM_RIGHT] = { 1.0f, -1.0f, -0.01f, 1.0f, endU, 1.0f };
+        //                        x      y      z      u      v
+        vertices[TOP_LEFT] = { -1.0f, 1.0f, -0.01f, startU, 0.0f };
+        vertices[TOP_RIGHT] = { 1.0f, 1.0f, -0.01f, endU, 0.0f };
+        vertices[BOTTOM_LEFT] = { -1.0f, -1.0f, -0.01f, startU, 1.0f };
+        vertices[BOTTOM_RIGHT] = { 1.0f, -1.0f, -0.01f, endU, 1.0f };
 
         constexpr uint32_t indices[] = {
             TOP_RIGHT, BOTTOM_LEFT, TOP_LEFT,

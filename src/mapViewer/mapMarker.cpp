@@ -41,25 +41,25 @@ MapMarker::MapMarker(int id, const std::string &textureUrl, float u, float v, fl
 
     vertices[TOP_LEFT].x = unitLeftX;
     vertices[TOP_LEFT].y = unitTopY;
-    vertices[TOP_LEFT].w = 1.0f;
+    vertices[TOP_LEFT].z = 0.0f;
     vertices[TOP_LEFT].u = 0.0f;
     vertices[TOP_LEFT].v = 0.0f;
 
     vertices[TOP_RIGHT].x = unitRightX;
     vertices[TOP_RIGHT].y = unitTopY;
-    vertices[TOP_RIGHT].w = 1.0f;
+    vertices[TOP_RIGHT].z = 0.0f;
     vertices[TOP_RIGHT].u = 1.0f;
     vertices[TOP_RIGHT].v = 0.0f;
 
     vertices[BOTTOM_LEFT].x = unitLeftX;
     vertices[BOTTOM_LEFT].y = unitBottomY;
-    vertices[BOTTOM_LEFT].w = 1.0f;
+    vertices[BOTTOM_LEFT].z = 0.0f;
     vertices[BOTTOM_LEFT].u = 0.0f;
     vertices[BOTTOM_LEFT].v = 1.0f;
 
     vertices[BOTTOM_RIGHT].x = unitRightX;
     vertices[BOTTOM_RIGHT].y = unitBottomY;
-    vertices[BOTTOM_RIGHT].w = 1.0f;
+    vertices[BOTTOM_RIGHT].z = 0.0f;
     vertices[BOTTOM_RIGHT].u = 1.0f;
     vertices[BOTTOM_RIGHT].v = 1.0f;
 
@@ -159,8 +159,8 @@ bool MapMarker::doesPointOverlapRepetition(float pointX, float pointY, int repet
             float unitVertexX = vertices[cornerIndices[i]].x;
             float unitVertexY = vertices[cornerIndices[i]].y;
 
-            Vec4 unitVertex(unitVertexX, unitVertexY, 0.0f, 1.0f);
-            Vec4 transformedVertex = meshData_.modelMatrix * unitVertex;
+            Vec3 unitVertex(unitVertexX, unitVertexY, 0.0f);
+            Vec3 transformedVertex = meshData_.modelMatrix * unitVertex;
 
             float finalScreenPositionX = transformedVertex.x + instanceOffset.x;
             float finalScreenPositionY = transformedVertex.y + instanceOffset.y;

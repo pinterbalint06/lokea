@@ -26,7 +26,7 @@ struct MeshData
 {
     Mat4 modelMatrix;
 };
-// TODO: c++-bol el lehet tavolitani w-t
+
 class Mesh
 {
 private:
