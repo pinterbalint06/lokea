@@ -38,7 +38,7 @@
         "i18next-fs-backend": "^2.6.4",
         "i18next-http-middleware": "^3.9.3",
         "jest": "^30.3.0",
-        "joi": "^18.1.1",
+        "joi": "^18.1.2",
         "multer": "^2.0.2",
         "mysql2": "^3.16.1",
         "nodemailer": "^8.0.4",
@@ -47,23 +47,5 @@
         "socket.io": "^4.8.3",
         "supertest": "^7.2.2",
         "validator": "^13.15.26"
-    },
-    "jest": {
-        "rootDir": "../",
-        "roots": [
-            "<rootDir>/backend",
-            "<rootDir>/private/backend"
-        ],
-        "collectCoverageFrom": [
-            "<rootDir>/backend/**/*.js",
-            "<rootDir>/private/backend/**/*.js",
-            "!**/node_modules/**"
-        ],
-        "coverageDirectory": "<rootDir>/backend/coverage",
-        "moduleNameMapper": {
-            "^#sql/(.*)$": "<rootDir>/private/backend/sql/$1",
-            "^#utils/(.*)$": "<rootDir>/include/utils/$1",
-            "^#root/(.*)$": "<rootDir>/$1"
-        }
     }
 }

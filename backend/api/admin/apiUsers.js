@@ -1,17 +1,17 @@
-const express = require('../../../backend/node_modules/express/index.js');
+const express = require('express');
 const router = express.Router();
 const fs = require('fs/promises');
-const bcrypt = require('../../../backend/node_modules/bcrypt/bcrypt.js');
-const { body, query, validationResult } = require('../../../backend/node_modules/express-validator/lib/index.js');
-const sharp = require('../../../backend/node_modules/sharp/lib/index.js');
-const { sendWelcomeEmail, sendChangeEmail, sendDeleteEmail } = require('../../../backend/mails.js');
+const bcrypt = require('bcrypt');
+const { body, query, validationResult } = require('express-validator');
+const sharp = require('sharp');
+const { sendWelcomeEmail, sendChangeEmail, sendDeleteEmail } = require('../../utils/mails.js');
 
 //?SQL
-const databaseUsers = require('../sql/databaseUsers.js');
-const databaseLogs = require('../sql/databaseLogs.js');
+const databaseUsers = require('../../sql/admin/databaseUsers.js');
+const databaseLogs = require('../../sql/admin/databaseLogs.js');
 
 //!Multer
-const multer = require('../../../backend/node_modules/multer/index.js'); //?npm install multer
+const multer = require('multer'); //?npm install multer
 const path = require('path');
 const TARGET_UPLOADS_DIR = path.resolve(process.cwd(), 'uploads');
 
@@ -270,7 +270,7 @@ router.put('/updateProfilePicFromAdmin', upload.single('profilePic'), async (req
     let newFilePath;
     try {
         if (!request.file) {
-            response.status(400).json({ message: "Nincs kép!" });
+            return response.status(400).json({ message: "Nincs kép!" });
         }
         else {
             let user_id = request.body.user_id;

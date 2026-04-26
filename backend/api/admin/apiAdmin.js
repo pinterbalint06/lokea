@@ -1,13 +1,13 @@
-const express = require('../../../backend/node_modules/express/index.js');
+const express = require('express'); //?npm install express
+const { body, validationResult } = require('express-validator');
+const sharp = require('sharp');
+const { Chart, registerables } = require('chart.js');
+const { Canvas } = require('skia-canvas');
 const router = express.Router();
-const { body, validationResult } = require('../../../backend/node_modules/express-validator/lib/index.js');
-const sharp = require('../../../backend/node_modules/sharp/lib/index.js');
-const { Chart, registerables } = require('../../../backend/node_modules/chart.js');
-const { Canvas } = require('../../../backend/node_modules/skia-canvas');
 
 //?SQL
-const databaseAdmin = require('../sql/databaseAdmin.js');
-const databaseLogs = require('../sql/databaseLogs.js');
+const databaseAdmin = require('../../sql/admin/databaseAdmin.js');
+const databaseLogs = require('../../sql/admin/databaseLogs.js');
 
 Chart.register(...registerables);
 

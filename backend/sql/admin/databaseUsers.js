@@ -1,15 +1,5 @@
-const mysql = require('../../../backend/node_modules/mysql2/promise');
-const bcrypt = require('../../../backend/node_modules/bcrypt');
-
-const pool = mysql.createPool({
-    host: '127.0.0.1',
-    user: 'root',
-    password: '',
-    database: 'bigprojekt_db',
-    waitForConnections: true,
-    connectionLimit: 10,
-    queueLimit: 0
-});
+const pool = require('../connection.js');
+const bcrypt = require('bcrypt');
 
 //!SQL Queries
 

@@ -1,7 +1,7 @@
 const express = require("express");
 const router = express.Router();
 const { validateRequest } = require("#utils/validation.js");
-const { checkAuth } = require("#root/auth.js");
+const { checkAuth } = require("#utils/auth.js");
 const AppError = require("#utils/AppError.js");
 const schemas = require("#gamemaps/gamemaps.schemas.js");
 const controller = require("#gamemaps/gamemaps.controller.js");

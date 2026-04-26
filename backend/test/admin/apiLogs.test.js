@@ -1,11 +1,11 @@
 const request = require('supertest');
 const express = require('express');
-const db = require('../../private/backend/sql/databaseLogs.js');
-const auth = require('../../private/backend/auth.js');
+const db = require('../../sql/admin/databaseLogs.js');
+const auth = require('../../utils/auth.js');
 
-jest.mock('../../private/backend/sql/databaseLogs.js');
+jest.mock('../../sql/admin/databaseLogs.js');
 
-jest.mock('../../private/backend/auth.js', () => ({
+jest.mock('../../utils/auth.js', () => ({
     checkAuth: (req, res, next) => {
         if (req.headers.unauthenticated) {
             return res.status(401).json({ message: "Bejelentkezés szükséges!" });
@@ -13,6 +13,7 @@ jest.mock('../../private/backend/auth.js', () => ({
         if (!req.session) req.session = {};
         req.session.userid = 99;
         req.session.role = "ADMIN";
+        req.session.userLanguage = "en";
         next();
     },
     checkRole: (...roles) => (req, res, next) => {
@@ -31,7 +32,7 @@ app.use((req, res, next) => {
     next();
 });
 
-app.use('/api/admin', auth.checkAuth, auth.checkRole("ADMIN"), require('../../private/backend/api/index.js'));
+app.use('/api/admin', auth.checkAuth, auth.checkRole("ADMIN"), require('../../api/admin/index.js'));
 
 describe('Admin Logs API Átfogó Tesztek', () => {
 

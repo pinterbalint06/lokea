@@ -1,4 +1,4 @@
-const express = require('../../../backend/node_modules/express/index.js');
+const express = require('express');
 const router = express.Router();
 
 const adminRoutes = require('./apiAdmin.js');

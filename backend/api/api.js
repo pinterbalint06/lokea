@@ -1,13 +1,13 @@
 const express = require('express');
 const router = express.Router();
 const database = require('../sql/database.js');
-const auth = require('../auth.js')
+const auth = require('../utils/auth.js')
 const fs = require('fs/promises');
 const bcrypt = require('bcrypt');
 const validator = require('validator');
 const { body, check, validationResult } = require("express-validator");
 const sharp = require('sharp');
-const { sendWelcomeEmail, sendDeleteEmail, sendChangeEmail, sendPasswordChangeEmail } = require('../mails.js')
+const { sendWelcomeEmail, sendDeleteEmail, sendChangeEmail, sendPasswordChangeEmail } = require('../utils/mails.js')
 
 //!Multer
 const multer = require('multer'); //?npm install multer

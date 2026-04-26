@@ -1,9 +1,9 @@
-const express = require('../../../backend/node_modules/express/index.js');
+const express = require('express');
 const router = express.Router();
-const { body, query, validationResult } = require('../../../backend/node_modules/express-validator/lib/index.js');
+const { body, query, validationResult } = require('express-validator');
 
 //?SQL
-const databaseLogs = require('../sql/databaseLogs.js');
+const databaseLogs = require('../../sql/admin/databaseLogs.js');
 
 //API endpoints
 

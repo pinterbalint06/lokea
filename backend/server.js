@@ -4,7 +4,7 @@ const session = require('express-session'); //?npm install express-session
 const path = require('path');
 const cors = require('cors');
 const database = require("./sql/database.js");
-const auth = require('./auth.js')
+const auth = require('./utils/auth.js')
 const { Server } = require("socket.io");
 const http = require('http');
 const nodemailer = require("nodemailer");
@@ -146,7 +146,7 @@ router.get('/choose_game', (request, response) => {
 // });
 
 //!API endpoints
-const adminEndpoints = require('../private/backend/api/index.js');
+const adminEndpoints = require('./api/admin/index.js');
 app.use('/api/admin', auth.checkAuth, auth.checkRole("ADMIN"), adminEndpoints);
 const endpoints = require('./api/api.js');
 app.use('/api', endpoints);

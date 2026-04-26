@@ -1,7 +1,6 @@
 const pool = require('./connection.js');
 const bcrypt = require('bcrypt');
 
-
 //!SQL Queries
 
 async function newUser(username, email, password) {
@@ -731,7 +730,6 @@ module.exports = {
     deletePointById,
     deleteMapById,
     deleteConnectionById,
-    getUsers,
     getUser,
     getUserNameProfile,
     updateUser,

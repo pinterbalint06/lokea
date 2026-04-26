@@ -1,12 +1,12 @@
 const request = require('supertest');
 const express = require('express');
-const db = require('../../private/backend/sql/databaseSettings.js');
-const auth = require('../../private/backend/auth.js');
+const db = require('../../sql/admin/databaseSettings.js');
+const auth = require('../../utils/auth.js');
 
-jest.mock('../../private/backend/sql/databaseSettings.js');
-jest.mock('../../private/backend/sql/databaseLogs.js');
+jest.mock('../../sql/admin/databaseSettings.js');
+jest.mock('../../sql/admin/databaseLogs.js');
 
-jest.mock('../../private/backend/auth.js', () => ({
+jest.mock('../../utils/auth.js', () => ({
     checkAuth: (req, res, next) => {
         if (req.headers.unauthenticated) {
             return res.status(401).json({ message: "Bejelentkezés szükséges!" });
@@ -25,8 +25,6 @@ jest.mock('../../private/backend/auth.js', () => ({
     }
 }));
 
-
-
 const app = express();
 app.use(express.json());
 
@@ -35,7 +33,7 @@ app.use((req, res, next) => {
     next();
 });
 
-app.use('/api/admin', auth.checkAuth, auth.checkRole("ADMIN"), require('../../private/backend/api/index.js'));
+app.use('/api/admin', auth.checkAuth, auth.checkRole("ADMIN"), require('../../api/admin/index.js'));
 
 describe('Admin Settings API-tesztek', () => {
 

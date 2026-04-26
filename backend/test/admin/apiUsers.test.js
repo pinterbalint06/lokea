@@ -2,16 +2,23 @@ const request = require('supertest');
 const express = require('express');
 const path = require('path');
 const fs = require('fs/promises');
-const db = require('../../private/backend/sql/databaseUsers.js');
-const dbLogs = require('../../private/backend/sql/databaseLogs.js');
-const auth = require('../../private/backend/auth.js');
+const db = require('../../sql/admin/databaseUsers.js');
+const dbLogs = require('../../sql/admin/databaseLogs.js');
+const auth = require('../../utils/auth.js');
 const multer = require('multer');
 const sharp = require('sharp');
 
-jest.mock('../../../backend/node_modules/multer/index.js', () => {
+jest.mock('multer', () => {
     const multerMock = jest.fn(() => ({
         single: jest.fn(() => (req, res, next) => {
-            req.file = { path: 'test-temp.jpg', originalname: 'test.jpg' };
+            if (!req.body) req.body = {};
+            req.body.user_id = req.body.user_id || 123;
+
+            if (req.headers['simulate-no-file']) {
+                req.file = undefined;
+            } else {
+                req.file = { path: 'test-temp.jpg', originalname: 'test.jpg' };
+            }
             next();
         })
     }));
@@ -19,7 +26,7 @@ jest.mock('../../../backend/node_modules/multer/index.js', () => {
     return multerMock;
 });
 
-jest.mock('../../../backend/node_modules/sharp/lib/index.js', () => {
+jest.mock('sharp', () => {
     const sharpMock = jest.fn(() => ({
         resize: jest.fn().mockReturnThis(),
         toFormat: jest.fn().mockReturnThis(),
@@ -28,11 +35,11 @@ jest.mock('../../../backend/node_modules/sharp/lib/index.js', () => {
     sharpMock.cache = jest.fn();
     return sharpMock;
 });
-jest.mock('../../private/backend/sql/databaseUsers.js');
-jest.mock('../../private/backend/sql/databaseLogs.js');
+jest.mock('../../sql/admin/databaseUsers.js');
+jest.mock('../../sql/admin/databaseLogs.js');
 jest.mock('fs/promises');
 
-jest.mock('../../private/backend/auth.js', () => ({
+jest.mock('../../utils/auth.js', () => ({
     checkAuth: (req, res, next) => {
         if (req.headers.unauthenticated) {
             return res.status(401).json({ message: "Bejelentkezés szükséges!" });
@@ -53,12 +60,13 @@ jest.mock('../../private/backend/auth.js', () => ({
 
 const app = express();
 app.use(express.json());
+
 app.use((req, res, next) => {
     if (!req.session) req.session = {};
     next();
 });
 
-app.use('/api/admin', auth.checkAuth, auth.checkRole("ADMIN"), require('../../private/backend/api/apiUsers.js'));
+app.use('/api/admin', auth.checkAuth, auth.checkRole("ADMIN"), require('../../api/admin/index.js'));
 
 describe('Admin Users API-tesztek', () => {
     beforeEach(() => {
@@ -228,7 +236,7 @@ describe('Admin Users API-tesztek', () => {
         it('HIBA - 400, ha érvénytelen body paraméter', async () => {
             const res = await request(app)
                 .post('/api/admin/signupFromAdmin')
-                .send({ username: '', email: 'invalid', password: 'short', role: 'invalid', is_2fa: 'notbool' })
+                .send({ username: '', email: 'invalid', password: 'short', role: 'invalid' })
                 .expect(400);
             expect(res.body.errors.length).toBeGreaterThan(0);
         });
@@ -237,7 +245,7 @@ describe('Admin Users API-tesztek', () => {
             db.newUserFromAdmin.mockResolvedValue({ success: true, insertId: 100 });
             const res = await request(app)
                 .post('/api/admin/signupFromAdmin')
-                .send({ username: 'NewUser', email: 'newuser@example.com', password: 'StrongPassword123', role: 'USER', is_2fa: false })
+                .send({ username: 'NewUser', email: 'newuser@example.com', password: 'StrongPassword123', role: 'user' })
                 .expect(201);
             expect(res.body.success).toBe(true);
             expect(res.body.message).toBe("Sikeres regisztráció!");
@@ -247,7 +255,7 @@ describe('Admin Users API-tesztek', () => {
             db.newUserFromAdmin.mockResolvedValue({ success: false });
             const res = await request(app)
                 .post('/api/admin/signupFromAdmin')
-                .send({ username: 'NewUser', email: 'newuser@example.com', password: 'StrongPassword123', role: 'USER', is_2fa: false })
+                .send({ username: 'NewUser', email: 'newuser@example.com', password: 'StrongPassword123', role: 'user' })
                 .expect(500);
             expect(res.body.error).toBe("Hiba a regisztráció során!");
         });
@@ -256,7 +264,7 @@ describe('Admin Users API-tesztek', () => {
             db.newUserFromAdmin.mockRejectedValue(new Error('Database error'));
             const res = await request(app)
                 .post('/api/admin/signupFromAdmin')
-                .send({ username: 'NewUser', email: 'newuser@example.com', password: 'StrongPassword123', role: 'USER', is_2fa: false })
+                .send({ username: 'NewUser', email: 'newuser@example.com', password: 'StrongPassword123', role: 'user' })
                 .expect(500);
             expect(res.body.error).toBe("Hiba a regisztráció során!");
         });
@@ -333,7 +341,7 @@ describe('Admin Users API-tesztek', () => {
             db.updateUserByAdmin.mockResolvedValue(1);
             await request(app)
                 .put('/api/admin/updateUserFromAdmin')
-                .send({ user_id: 1, username: 'UpdatedUser', email: 'updateduser@example.com', role: 'USER', is_2fa: false })
+                .send({ user_id: 1, username: 'UpdatedUser', email: 'updateduser@example.com', role: 'user' })
                 .expect(204);
         });
 
@@ -341,7 +349,7 @@ describe('Admin Users API-tesztek', () => {
             db.updateUserByAdmin.mockRejectedValue(new Error('Database error'));
             const res = await request(app)
                 .put('/api/admin/updateUserFromAdmin')
-                .send({ user_id: 1, username: 'UpdatedUser', email: 'updateduser@example.com', role: 'USER', is_2fa: false })
+                .send({ user_id: 1, username: 'UpdatedUser', email: 'updateduser@example.com', role: 'user' })
                 .expect(500);
             expect(res.body.error).toBe('Hiba a felhasználó frissítésekor!');
         });
@@ -367,14 +375,14 @@ describe('Admin Users API-tesztek', () => {
                 .put('/api/admin/userSelfUpdate')
                 .send({ username: '', email: 'invalid' })
                 .expect(400);
-            expect(res.body.error.length).toBeGreaterThan(0);
+            expect(res.body.errors.length).toBeGreaterThan(0);
         });
 
         it('SIKER - 204, saját adatainak frissítése', async () => {
             db.updateUserByAdmin.mockResolvedValue(1);
             await request(app)
                 .put('/api/admin/userSelfUpdate')
-                .send({ username: 'UpdatedUser', email: 'updateduser@example.com', is_2fa: true })
+                .send({ username: 'UpdatedUser', email: 'updateduser@example.com' })
                 .expect(204);
         });
 
@@ -382,7 +390,7 @@ describe('Admin Users API-tesztek', () => {
             db.updateUserByAdmin.mockRejectedValue(new Error('Database error'));
             const res = await request(app)
                 .put('/api/admin/userSelfUpdate')
-                .send({ username: 'UpdatedUser', email: 'updateduser@example.com', is_2fa: true })
+                .send({ username: 'UpdatedUser', email: 'updateduser@example.com' })
                 .expect(500);
             expect(res.body.error).toBe('Hiba a felhasználó frissítésekor!');
         });
@@ -406,6 +414,7 @@ describe('Admin Users API-tesztek', () => {
         it('HIBA 400 - nincs kép feltöltve', async () => {
             const res = await request(app)
                 .put('/api/admin/updateProfilePicFromAdmin')
+                .set('simulate-no-file', 'true')
                 .field('user_id', 123)
                 .expect(400);
             expect(res.body.message).toBe('Nincs kép!');
@@ -431,14 +440,16 @@ describe('Admin Users API-tesztek', () => {
         });
 
         it('HIBA 500 - Sharp feldolgozási hiba, törli a feltöltött fájlt', async () => {
-            sharp.mockImplementation(() => {
+            sharp.mockImplementationOnce(() => {
                 throw new Error('Sharp processing failed');
             });
+
             const res = await request(app)
                 .put('/api/admin/updateProfilePicFromAdmin')
                 .attach('profilePic', Buffer.from('fake-image'), 'test.jpg')
                 .field('user_id', 123)
                 .expect(500);
+
             expect(fs.unlink).toHaveBeenCalled();
             expect(res.body.error).toBe("Hiba a profilkép frissítésekor!");
         });
@@ -464,14 +475,14 @@ describe('Admin Users API-tesztek', () => {
                 .delete('/api/admin/userToInactive')
                 .send({ role: 'ADMIN', deleted: false })
                 .expect(400);
-            expect(res.body.error.length).toBeGreaterThan(0);
+            expect(res.body.errors.length).toBeGreaterThan(0);
         });
 
         it('SIKER - 204, felhasználó inaktívvá tétele', async () => {
             db.userToInactive.mockResolvedValue(1);
             await request(app)
                 .delete('/api/admin/userToInactive')
-                .send({ userId: 1, role: 'USER', deleted: true })
+                .send({ userId: 1, role: 'user', deleted: true })
                 .expect(204);
         });
 
@@ -479,7 +490,7 @@ describe('Admin Users API-tesztek', () => {
             db.userToInactive.mockRejectedValue(new Error('Database error'));
             const res = await request(app)
                 .delete('/api/admin/userToInactive')
-                .send({ userId: 1, role: 'USER', deleted: true })
+                .send({ userId: 1, role: 'user', deleted: true })
                 .expect(500);
             expect(res.body.error).toBe("Hiba a felhasználó inaktiválásakor!");
         });
