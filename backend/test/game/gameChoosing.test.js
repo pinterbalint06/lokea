@@ -214,6 +214,56 @@ describe("Game Choosing API - /api/choose-game/", () => {
                 expect(response.statusCode).toBe(400);
                 expect(response.body.message).toBe("Invalid gameMapId");
             });
+
+            it("Should respond with 400 if difficulty is invalid", async () => {
+                const response = await requestWithSupertest
+                    .post("/api/choose-game/post_game_id")
+                    .send({ ...validBody, difficulty: "unknown" });
+
+                expect(response.statusCode).toBe(400);
+                expect(response.body.success).toBe(false);
+            });
+
+            it.each([
+                [{ ...validBody, rounds: "abc" }, "rounds is not a number"],
+                [{ ...validBody, rounds: 0 }, "rounds is below minimum"],
+                [{ ...validBody, rounds: 101 }, "rounds is above maximum"],
+                [{ difficulty: "normal", gameMapId: 100, roundTime: 60 }, "rounds is missing"],
+            ])("Should respond with 400 for invalid rounds (%s)", async (body) => {
+                const response = await requestWithSupertest
+                    .post("/api/choose-game/post_game_id")
+                    .send(body);
+
+                expect(response.statusCode).toBe(400);
+                expect(response.body.success).toBe(false);
+            });
+
+            it.each([
+                [{ ...validBody, roundTime: "abc" }, "roundTime is not a number"],
+                [{ ...validBody, roundTime: 0 }, "roundTime is below minimum"],
+                [{ ...validBody, roundTime: 301 }, "roundTime is above maximum"],
+                [{ difficulty: "normal", gameMapId: 100, rounds: 5 }, "roundTime is missing"],
+            ])("Should respond with 400 for invalid roundTime (%s)", async (body) => {
+                const response = await requestWithSupertest
+                    .post("/api/choose-game/post_game_id")
+                    .send(body);
+
+                expect(response.statusCode).toBe(400);
+                expect(response.body.success).toBe(false);
+            });
+        });
+
+        describe("Not found (404)", () => {
+            it("Should respond with 404 if the game map does not exist", async () => {
+                database.getGameTitleById.mockResolvedValueOnce(null);
+
+                const response = await requestWithSupertest
+                    .post("/api/choose-game/post_game_id")
+                    .send(validBody);
+
+                expect(response.statusCode).toBe(404);
+                expect(response.body.success).toBe(false);
+            });
         });
 
         describe("Conflicts (409)", () => {
@@ -258,25 +308,6 @@ describe("Game Choosing API - /api/choose-game/", () => {
                 expect(database.insertGameSession).toHaveBeenCalledWith(1, 5, 60, 100, -5);
             });
 
-            it("Should use sharpness -3 for unknown difficulty", async () => {
-                const response = await requestWithSupertest
-                    .post("/api/choose-game/post_game_id")
-                    .send({ ...validBody, difficulty: "unknown" });
-
-                expect(response.statusCode).toBe(200);
-                expect(database.insertGameSession).toHaveBeenCalledWith(1, 5, 60, 100, -3);
-            });
-
-            it("Should use 'N/A' as game title if getGameTitleById returns null", async () => {
-                database.getGameTitleById.mockResolvedValueOnce(null);
-
-                const response = await requestWithSupertest
-                    .post("/api/choose-game/post_game_id")
-                    .send(validBody);
-
-                expect(response.statusCode).toBe(200);
-                expect(response.body.success).toBe(true);
-            });
         });
 
         describe("Server errors (500)", () => {

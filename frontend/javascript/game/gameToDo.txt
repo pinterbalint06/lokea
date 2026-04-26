@@ -25,17 +25,19 @@ kesz--ido megcsinalasa  perc:másodpercre
 kesz--visszalépés a főoldalra gomb
 kesz--előző oldal frissítése belépéskor / visszalépéskor
 kesz!!!!--reszponzivitás
-!!!!--tesztelések
+kesz!!!!--tesztelések
 kesz--server oldali ellenorzesek
 kesz--adott kör kiirása
 kesz--térkép nevének kiirása
 kesz--css szebbre valo megcsinalasa
-!!!!--tranzakciokezeles
+kesz!!!!--tranzakciokezeles
 kesz--reszponziv javitas
---svg-k helyes használata
+!!!!--svg-k helyes használata
 kesz--checkauth mindenhova
     --login hiba jo helyre vigyen
---palyak kedvencre tetele
+--mapi, rounds, roundtime vizsgalata
+--térképváltoztatás csak ha van több
 
+!!!!--palyak kedvencre tetele
 kesz--rendezés fix
---esetleg modal alaphelyzetbe allitasa
+!!!!--esetleg modal alaphelyzetbe allitasa

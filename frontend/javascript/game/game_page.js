@@ -196,7 +196,7 @@ async function createPoint() {
         if (!pointData.success || !pointData.point) throw new Error("Failed to fetch random point");
         const point = pointData.point;
         equirectangularViewer.loadImage(
-            `data:${point.image.mime_type};base64,${point.image.base64}`,
+            `data:${point.image.mimeType};base64,${point.image.base64}`,
             point.image.width, point.image.height
         ).then(() => {
             console.log("Game image loaded:", point.point_id);
@@ -221,7 +221,7 @@ function cycleMaps(direction = 1) {
 function nextMap() {
     const map = gameMaps[gameMapsIndex];
     console.log(map);
-    const imageDataUrl = `data:${map.image.mime_type};base64,${map.image.base64}`;
+    const imageDataUrl = `data:${map.image.mimeType};base64,${map.image.base64}`;
     mapViewerEngine.loadMap(imageDataUrl, map.image.width, map.image.height)
         .then(function () {
             console.log("Game map loaded:", gameMapsIndex);

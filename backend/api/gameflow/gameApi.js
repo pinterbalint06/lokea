@@ -7,7 +7,7 @@ const path = require('path');
 const AppError = require("../../utils/AppError.js");
 
 router.use(checkGameSession);
-
+//TODO: képek visszadásának átdolgozása majd a lowhighres szerint
 function getMimeTypeFromPath(filePath) {
     const extension = path.extname(filePath).toLowerCase();
     let result = "application/octet-stream";
@@ -65,7 +65,7 @@ router.get("/get_all_maps", async (request, response) => {
                 title: map.title,
                 image: {
                     id: map.image_id,
-                    mime_type: mimeType,
+                    mimeType: mimeType,
                     base64: imageBuffer.toString("base64"),
                     width: map.width,
                     height: map.height
@@ -117,7 +117,7 @@ router.get("/get_random_point", async (request, response) => {
             mapId: point.map_id,
             image: {
                 id: point.image_id,
-                mimeTtype: mimeType,
+                mimeType: mimeType,
                 base64: imageBuffer.toString("base64"),
                 width: point.width,
                 height: point.height
@@ -128,7 +128,7 @@ router.get("/get_random_point", async (request, response) => {
             north_direction: request.session.game.point.north_direction,
             image: {
                 id: request.session.game.point.image.id,
-                mime_type: request.session.game.point.image.mimeTtype,
+                mimeType: request.session.game.point.image.mimeType,
                 base64: request.session.game.point.image.base64,
                 width: request.session.game.point.image.width,
                 height: request.session.game.point.image.height

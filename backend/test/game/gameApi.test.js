@@ -94,7 +94,7 @@ describe("Game API - /api/game/", () => {
                 expect(response.body.maps).toHaveLength(1);
                 expect(response.body.maps[0].title).toBe("Test Map");
                 expect(response.body.maps[0].image.base64).toBe(Buffer.from("fake-image-data").toString("base64"));
-                expect(response.body.maps[0].image.mime_type).toBe("image/webp");
+                expect(response.body.maps[0].image.mimeType).toBe("image/webp");
                 expect(database.getAllMaps).toHaveBeenCalledWith(100);
             });
 

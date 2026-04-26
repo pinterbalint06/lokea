@@ -25,8 +25,3 @@ INSERT INTO points (map_id, point_u, point_v, north_direction, image_id) VALUES
 (1, 0.0586, 0.1367, 0, 2),
 (1, 0.2051, 0.1758, 90, 3),
 (1, 0.1221, 0.3418, 180, 4);
-
-INSERT INTO point_connections (start_point_id, end_point_id, game_maps_id) VALUES 
-(1, 2, 1),
-(2, 3, 1),
-(3, 1, 1);

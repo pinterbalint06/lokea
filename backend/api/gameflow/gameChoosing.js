@@ -34,6 +34,7 @@ router.get('/game_maps',  async (request, response) => {
 });
 
 router.get('/get_cover_image/:cover_image_id', async (request, response) => {
+    //TODO: képek visszadásának átdolgozása majd a lowhighres szerint
     try {
         let uploads = path.join(__dirname, '../../uploads');
         let fileRes;
@@ -90,18 +91,31 @@ router.post('/post_game_id', upload.none(), async (request, response) => {
     const roundTime = parseInt(request.body.roundTime);
     const userId = request.session?.userid;
     const allowedDifficulties = { easy: -1.5, normal: -3, hard: -5 };
-    const sharpness = allowedDifficulties[difficulty] ?? -3;
 
     if (!Number.isInteger(gameMapId) || gameMapId <= 0) {
         return response.status(400).json({ success: false, message: 'Invalid gameMapId' });
     }
+    if (!Number.isInteger(rounds) || rounds < 1 || rounds > 100) {
+        return response.status(400).json({ success: false, message: 'Invalid rounds (1–100)' });
+    }
+    if (!Number.isInteger(roundTime) || roundTime < 1 || roundTime > 300) {
+        return response.status(400).json({ success: false, message: 'Invalid roundTime (1–300)' });
+    }
+    if (!Object.hasOwn(allowedDifficulties, difficulty)) {
+        return response.status(400).json({ success: false, message: 'Invalid difficulty' });
+    }
+    const sharpness = allowedDifficulties[difficulty];
+
     try {
+        const gameTitle = await database.getGameTitleById(gameMapId);
+        if (!gameTitle) {
+            return response.status(404).json({ success: false, message: 'Game map not found' });
+        }
         const existing = await database.selectLatestActiveGameSession(userId);
         if (existing) {
             return response.status(409).json({ success: false, message: 'Van már aktív játék munkamenet' });
         }
         const activeSession = await database.insertGameSession(userId, rounds, roundTime, gameMapId, sharpness);
-        const gameTitle = await database.getGameTitleById(gameMapId) ?? 'N/A';
         request.session.game = {
             activeSessionId: activeSession,
             gameMapId: gameMapId,
