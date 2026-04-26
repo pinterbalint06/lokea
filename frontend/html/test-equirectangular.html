@@ -5,32 +5,95 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Test equirectangular image</title>
-    <link rel="stylesheet" href="../css/test.css">
-    <script type="module" src="../javascript/test-equirectangular.js"></script>
+    <link rel="stylesheet" href="/css/variables.css">
+    <link rel="stylesheet" href="/css/test.css">
+    <link rel="stylesheet" href="/css/test-equirectangular.css">
+    <script type="module" src="/javascript/test-equirectangular.js"></script>
 </head>
 
 <body>
-    <div class="row w100 around wrapreverse">
-        <div class="col wrap gap">
-            <div class="col center">
-                <div>
-                    <p>FPS: <span id="fps"></span></p>
-                    <div>
-                        <label for="kepek">Képek: </label>
-                        <select name="kepek" id="kepek">
-                        </select>
-                    </div>
-                    <div class="row center">
-                        <button onclick="fullScreen();">Teljes képernyő</button>
-                    </div>
-                    <div class="row center">
-                        <label for="autoRotate">Automatikus forgatás:</label>
-                        <input type="checkbox" name="autoRotate" id="autoRotate">
-                    </div>
+    <div class="row w100 around wrapreverse gap">
+        <div class="col debug-panel uveg">
+            <h2>360°-os képnézegető teszt</h2>
+            <hr class="glass-divider w100">
+
+            <div class="col">
+                <h3>Állapot</h3>
+                <p>FPS: <span id="fps" class="debug-value">0</span></p>
+                <p>Kép északiránya: <span id="debugImageNorthText" class="debug-value">0.00</span>°</p>
+                <p>Irány (Relatív): <span id="debugHeadingText" class="debug-value">0.00</span>°</p>
+                <p>Yaw (Abszolút): <span id="debugYawText" class="debug-value">0.00</span>°</p>
+                <p>Pitch: <span id="debugPitchText" class="debug-value">0.00</span>°</p>
+                <p>Zoom: <span id="debugZoomText" class="debug-value">1.00</span></p>
+                <p>Animáció: <strong id="debugAnimationStatusText">Nincs</strong></p>
+            </div>
+
+            <hr class="glass-divider w100">
+
+            <div class="col">
+                <h3>Képek</h3>
+                <div class="control-group">
+                    <select name="mapSelect" id="mapSelect" class="uvegform"></select>
                 </div>
             </div>
+
+            <hr class="glass-divider w100">
+
             <div class="col">
-                <canvas id="canvas" class="canvasborder"></canvas>
+                <h3>Beállítások</h3>
+
+                <div class="control-group">
+                    <label for="autoRotateCheckbox">Automatikus forgatás</label>
+                    <input type="checkbox" name="autoRotateCheckbox" id="autoRotateCheckbox">
+                </div>
+
+                <div class="control-group">
+                    <label for="inputHeading">Irány (°)</label>
+                    <input type="number" id="inputHeading" value="0" step="10" class="uvegform">
+                    <button id="buttonSetHeading" class="btn-outline-secondary test-btn">Beállítás</button>
+                </div>
+
+                <div class="control-group">
+                    <label for="inputYaw">Yaw (°)</label>
+                    <input type="number" id="inputYaw" value="0" step="10" class="uvegform">
+                    <button id="buttonSetYaw" class="btn-outline-secondary test-btn">Beállítás</button>
+                </div>
+
+                <div class="control-group">
+                    <label for="inputPitch">Pitch (°)</label>
+                    <input type="number" id="inputPitch" value="0" step="5" class="uvegform">
+                    <button id="buttonSetPitch" class="btn-outline-secondary test-btn">Beállítás</button>
+                </div>
+
+                <div class="control-group">
+                    <label for="inputZoom">Zoom [0.0;1.0]</label>
+                    <input type="number" id="inputZoom" value="1.0" min="0" max="1" step="0.05" class="uvegform">
+                    <button id="buttonSetZoom" class="btn-outline-secondary test-btn">Beállítás</button>
+                </div>
+            </div>
+
+            <hr class="glass-divider w100">
+
+            <div class="col">
+                <h3>Animáció tesztelése</h3>
+                <div class="control-group">
+                    <label for="inputAnimationYaw">Cél yaw (°)</label>
+                    <input type="number" id="inputAnimationYaw" value="90" step="10" class="uvegform">
+                    <button id="buttonTestAnimation" class="btn-outline-secondary test-btn">Indítás</button>
+                </div>
+            </div>
+
+            <hr class="glass-divider w100">
+
+            <div class="row center gap">
+                <button id="buttonFullScreen" class="uvegbutton test-btn">Teljes képernyő</button>
+                <button id="buttonClearImage" class="btn-outline-secondary test-btn">Kép törlése</button>
+            </div>
+        </div>
+
+        <div class="col flex1">
+            <div class="canvasframe">
+                <canvas id="canvas"></canvas>
             </div>
         </div>
     </div>

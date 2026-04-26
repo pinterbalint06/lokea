@@ -3,6 +3,7 @@ const express = require('express'); //?npm install express
 const session = require('express-session'); //?npm install express-session
 const path = require('path');
 const cors = require('cors');
+const database = require("./sql/database.js");
 const auth = require('./auth.js')
 const { Server } = require("socket.io");
 const http = require('http');
@@ -11,6 +12,10 @@ const { Chart, registerables } = require('chart.js');
 const i18next = require('i18next');
 const i18n_Backend = require('i18next-fs-backend');
 const i18n_Middleware = require('i18next-http-middleware');
+const { idSchema } = require('./utils/schemas.js');
+const ERRORS = require('./utils/errorMessages.js');
+const { assertUserOwnsGameMap } = require('./api/mapcreator/shared/utils/mapcreator.utils.js');
+const AppError = require('#utils/AppError.js');
 
 //!Beállítások
 const app = express();
@@ -98,6 +103,38 @@ router.get('/webgl', (request, response) => {
 router.get('/map', (request, response) => {
     response.sendFile(path.join(__dirname, '../frontend/html/test-map.html'));
 });
+router.get('/maps/:gameMapId/edit',
+    auth.checkAuth,
+    async (request, response) => {
+        try {
+            const gameMapId = await idSchema(ERRORS.GAMEMAP.INVALID_ID).validateAsync(
+                request.params.gameMapId,
+                {
+                    abortEarly: true,
+                    stripUnknown: true,
+                    convert: true
+                }
+            );
+
+            await assertUserOwnsGameMap(request.session.userid, gameMapId);
+
+            response.sendFile(path.join(__dirname, '../frontend/html/map-creator.html'));
+        } catch (error) {
+            if (error.isJoi) {
+                // TODO: valami oldal ennek
+                response.status(400).json({ error: error.details[0].message });
+            } else {
+                if (error instanceof AppError) {
+                    response.status(error.statusCode).send();
+                } else {
+                    console.error(error);
+                    response.status(500).send();
+                }
+            }
+        }
+    }
+);
+
 router.get('/admin', auth.checkRole("ADMIN"), (request, response) => {
     response.sendFile(path.join(__dirname, '../private/frontend/html/admin.html'));
 });
@@ -113,6 +150,12 @@ const adminEndpoints = require('../private/backend/api/index.js');
 app.use('/api/admin', auth.checkAuth, auth.checkRole("ADMIN"), adminEndpoints);
 const endpoints = require('./api/api.js');
 app.use('/api', endpoints);
+//!Map Creation API endpoints
+const mapCreationEndpoints = require('./api/mapcreator/mapcreator.js');
+app.use('/api/map-creator', mapCreationEndpoints);
+//!game maps API endpoints
+const gameMapsEndpoints = require('./api/gamemaps/gamemaps.routes.js');
+app.use('/api/game-maps', gameMapsEndpoints);
 app.use('/', router);
 
 //Socket.io

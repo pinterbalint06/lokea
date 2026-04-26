@@ -1,0 +1,50 @@
+@import url('./variables.css');
+
+.btn-hold-to-unlock {
+    position: relative;
+    overflow: hidden;
+    background-color: transparent !important;
+    color: var(--state-danger) !important;
+    border: 1px solid var(--state-danger) !important;
+    transition: color var(--transition-soft), box-shadow var(--transition-soft);
+    z-index: 1;
+    cursor: not-allowed;
+    user-select: none;
+}
+
+.btn-hold-to-unlock::before {
+    content: "";
+    position: absolute;
+    top: 0;
+    left: 0;
+    height: 100%;
+    width: 0%;
+    background: linear-gradient(90deg, #ffb703, var(--state-danger));
+    z-index: -1;
+    transition: width var(--transition-fast) ease-out;
+}
+
+.btn-hold-to-unlock.filling::before {
+    width: 100%;
+    transition: width var(--hold-duration, 2000ms) linear;
+}
+
+.btn-hold-to-unlock.unlocked {
+    color: var(--text-main) !important;
+    background-color: var(--state-danger) !important;
+    cursor: pointer;
+    box-shadow: 0 0 15px var(--state-danger);
+}
+
+.btn-hold-to-unlock.unlocked::before {
+    width: 100%;
+    background: var(--state-danger);
+    transition: none;
+}
+
+.btn-hold-to-unlock:hover,
+.btn-hold-to-unlock:focus {
+    box-shadow: 0 0 14px rgba(217, 4, 41, 0.18), 0 6px 18px rgba(0, 0, 0, 0.35);
+    transform: translateY(-2px);
+    cursor: pointer;
+}

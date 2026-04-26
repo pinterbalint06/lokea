@@ -1,0 +1,66 @@
+.uveg {
+    background: var(--surface-glass) !important;
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    border: 1px solid var(--surface-glass-border) !important;
+    box-shadow: var(--shadow-strong);
+    color: var(--text-main);
+}
+
+.uvegform {
+    background-color: var(--surface-glass-input) !important;
+    border: 1px solid var(--surface-glass-border) !important;
+    color: var(--text-main) !important;
+    transition: var(--transition-fast);
+}
+
+.uvegform:focus {
+    box-shadow: 0 0 0 0.2rem var(--accent-glow) !important;
+    border-color: var(--accent-focus) !important;
+    outline: none;
+}
+
+.uvegbutton {
+    background-color: var(--accent-main);
+    border-color: var(--accent-main);
+    color: var(--text-main);
+    transition: all var(--transition-soft);
+}
+
+.uvegbutton:hover {
+    background-color: var(--accent-focus);
+    border-color: var(--accent-focus);
+    color: var(--text-main);
+    box-shadow: 0 0 15px var(--accent-glow);
+}
+
+.uvegbutton:disabled {
+    filter: opacity(0.5);
+    cursor: not-allowed;
+    background-color: var(--color-disabled-bg) !important;
+    border-color: var(--color-disabled-border) !important;
+    box-shadow: none !important;
+}
+
+.btn-outline-secondary {
+    background: transparent;
+    color: var(--secondary-main);
+    border-color: var(--secondary-border);
+    transition: all var(--transition-soft);
+}
+
+.btn-outline-secondary:hover,
+.btn-outline-secondary:focus {
+    background: var(--secondary-soft);
+    color: var(--secondary-contrast-text);
+    border-color: var(--secondary-focus);
+    box-shadow: 0 0 8px var(--secondary-focus);
+}
+
+.btn-outline-secondary:disabled {
+    color: rgba(255, 255, 255, 0.45);
+    border-color: rgba(255, 255, 255, 0.08);
+    cursor: not-allowed;
+    background: transparent;
+    box-shadow: none !important;
+}

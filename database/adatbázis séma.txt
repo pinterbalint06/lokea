@@ -31,7 +31,7 @@ Egyed táblák:
 - images: _image_id_, width, height, filepath
 - game_maps: _game_maps_id_, title, game_created
 - map: _map_id_
-- points: _point_id_, point_x, point_y
+- points: _point_id_, point_u, point_u
 - scores: _score_id_, score, score_time
 
 Kapcsolat táblák:
@@ -55,5 +55,5 @@ a 3. lépésben felírt kapcsolótáblák mindegyike beépül a fő táblákba.
 - images: _image_id_, width, height, filepath
 - game_maps: _game_maps_id_, creator_id, title, game_created
 - map: _map_id_, game_maps_id, image_id
-- points: _point_id_, map_id, point_x, point_y, image_id
+- points: _point_id_, map_id, point_u, point_u, image_id
 - scores: _score_id_, user_id, game_maps_id, score, score_time

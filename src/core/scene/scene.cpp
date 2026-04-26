@@ -19,10 +19,6 @@ Scene::~Scene()
 {
     delete light_;
     delete cam_;
-    for (int i = 0; i < meshes_.size(); i++)
-    {
-        delete meshes_[i];
-    }
 }
 
 void Scene::setAmbientLight(float ambientLightIntensity)
@@ -30,7 +26,7 @@ void Scene::setAmbientLight(float ambientLightIntensity)
     data_.ambientLight = ambientLightIntensity;
 }
 
-void Scene::addMesh(Mesh *mesh)
+void Scene::addMesh(std::shared_ptr<Mesh> mesh)
 {
     mesh->setUpOpenGL();
     meshes_.push_back(mesh);
@@ -41,11 +37,12 @@ void Scene::removeMesh(int index)
     meshes_.erase(meshes_.begin() + index);
 }
 
+void Scene::removeMesh(std::shared_ptr<Mesh> mesh)
+{
+    std::erase(meshes_, mesh);
+}
+
 void Scene::clearMeshes()
 {
-    for (int i = 0; i < meshes_.size(); i++)
-    {
-        delete meshes_[i];
-    }
     meshes_.clear();
 }

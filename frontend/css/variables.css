@@ -1,0 +1,44 @@
+:root {
+    --color-white: #ffffff;
+    --color-muted: #e0e0e0;
+    --color-overlay-light: rgba(0, 0, 0, 0.2);
+    --color-overlay-lighter: rgba(0, 0, 0, 0.15);
+    --color-overlay-dark: rgba(0, 0, 0, 0.3);
+    --color-disabled-bg: #333333;
+    --color-disabled-border: #555555;
+
+    --accent-main: rgb(123, 44, 191, 0.8);
+    --accent-focus: rgb(157, 78, 221, 0.6);
+    --accent-glow: rgba(140, 52, 216, 0.75);
+    --accent-soft: rgba(168, 129, 202, 0.8);
+
+    --surface-glass: rgba(57, 45, 75, 0.75);
+    --surface-glass-border: rgba(180, 100, 255, 0.2);
+    --surface-glass-input: var(--color-overlay-dark);
+    --surface-glass-soft: rgba(255, 255, 255, 0.05);
+    --surface-glass-soft-hover: rgba(255, 255, 255, 0.1);
+    --surface-dropzone: rgba(255, 255, 255, 0.03);
+
+    --text-main: var(--color-white);
+
+    --state-success: rgb(42, 157, 143, 0.8);
+    --state-danger: rgb(217, 4, 41, 0.8);
+
+    --shadow-strong: 0px 7px 28px 1px rgba(0, 0, 0, 0.5);
+    --shadow-fab: 0px 0px 40px -4px rgba(0, 0, 0, 0.68);
+    --shadow-accent-soft: 0 0 20px rgba(123, 44, 191, 0.2);
+    --transition-fast: 0.2s linear;
+    --transition-soft: 0.3s ease;
+    --accent-gradient: linear-gradient(135deg, #7b2cbf, #ff00cc);
+    --success-gradient: linear-gradient(135deg, var(--state-success), #6C5CE7);
+    --badge-gradient: linear-gradient(135deg, #7b2cbf, #9d4edd);
+    --badge-border: 1px solid rgba(255, 255, 255, 0.2);
+    --bg-radial-main: radial-gradient(circle at 50% -20%, #3a1c71 0%, #0d0614 100%);
+    --bg-radial-overlay: radial-gradient(circle at 50% -20%, #29133e 0%, #0a0510 100%);
+    
+    --secondary-main: #6C757D;
+    --secondary-focus: #5A6268;
+    --secondary-soft: rgba(108,117,125,0.12);
+    --secondary-border: rgba(108,117,125,0.22);
+    --secondary-contrast-text: #FFFFFF;
+}

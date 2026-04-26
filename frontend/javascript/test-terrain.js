@@ -185,7 +185,7 @@ window.xyForgas = rotateCamera;
 
 // movement logic
 function mozgas(iranyZ, iranyX) {
-    let yForog = terrainEngine.getYaw();
+    let yForog = terrainEngine.yaw;
 
     let eloreX = Math.sin(yForog);
     let eloreZ = Math.cos(yForog);
@@ -461,8 +461,8 @@ window.setTexturaMeret = function () {
 window.teszt = function () {
     // how much time it would take to render a cubemap
     // store current rotation
-    let tempX = terrainEngine.getPitch() * (180 / Math.PI);
-    let tempY = terrainEngine.getYaw() * (180 / Math.PI);
+    let tempX = terrainEngine.pitch * (180 / Math.PI);
+    let tempY = terrainEngine.yaw * (180 / Math.PI);
     let most = performance.now();
 
     // down

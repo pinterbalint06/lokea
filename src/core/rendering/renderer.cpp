@@ -198,8 +198,8 @@ void Renderer::render(const Scene *scene)
 
         for (int i = 0; i < scene->getMeshCount(); i++)
         {
-            Mesh *currMesh = scene->getMesh(i);
-            updateMeshUBO(currMesh);
+            std::shared_ptr<Mesh> currMesh = scene->getMesh(i);
+            updateMeshUBO(currMesh.get());
 
             // bind current mesh
             glBindVertexArray(currMesh->getVAO());

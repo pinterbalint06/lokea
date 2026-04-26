@@ -1,0 +1,16 @@
+@import url('./variables.css');
+
+.dropzone {
+    background: var(--surface-dropzone);
+    border-color: var(--surface-glass-border);
+    color: var(--color-muted);
+    box-shadow: var(--shadow-accent-soft);
+}
+
+.dropfocus {
+    border-color: var(--accent-glow) !important;
+}
+
+.border-dashed {
+    border-style: dashed !important;
+}

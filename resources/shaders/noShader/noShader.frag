@@ -16,7 +16,7 @@ void main() {
     if(uUseTexture == 1) {
         baseColor = texture(uAlbedo, vTex);
     } else {
-        baseColor = vec4(uMatAlbedo, 1.0);
+        baseColor = uMatAlbedo;
     }
     outColor = baseColor;
 }

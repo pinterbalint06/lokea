@@ -1,0 +1,357 @@
+<!DOCTYPE html>
+<html lang="hu" data-bs-theme="dark">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Lokea</title>
+    <link href="/bootstrap/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="/css/map-creator.css">
+    <script type="module" src="/javascript/map-creator/map-creator.js"></script>
+</head>
+
+<body class="lilagradiensbg">
+    <nav class="navbar navbar-expand-lg uveg sticky-top">
+        <div class="container-fluid justify-content-between">
+            <a class="navbar-brand" href="#">
+                <img src="/images/lokea.png" alt="Lokea logo" class="navPic">
+            </a>
+        </div>
+    </nav>
+    <main>
+        <div id="upload-overlay"
+            class="d-flex justify-content-center align-items-center w-100 h-100 position-absolute bg-body z-2 d-none">
+            <div id="drop-zone" class="p-5"></div>
+        </div>
+        <div id="loading"
+            class="d-flex justify-content-center align-items-center w-100 h-100 position-absolute lilagradiensbg">
+            <div class="spinner-border" style="width: 4rem; height: 4rem;">
+            </div>
+        </div>
+        <div id="mapSelector" class="position-absolute top-0 start-50 translate-middle-x mt-3 z-1">
+            <div class="d-flex align-items-center uveg border shadow-sm rounded-pill px-3 py-2 gap-2">
+                <svg viewBox="0 0 119.4 122.88" style="height: 1.5em; fill: white;">
+                    <use href="/images/map-creator-icons.svg#icon-map"></use>
+                </svg>
+
+                <div id="customSelect" class="custom-select">
+                </div>
+
+                <div class="vr mx-1"></div>
+
+                <button id="addNewMapBtn"
+                    class="btn btn-sm btn-link text-decoration-none p-0 d-flex align-items-center">
+                    <span class="me-1 fw-semibold text-white">Új</span>
+                </button>
+            </div>
+        </div>
+        <canvas id="mapCanvas"></canvas>
+        <div id="floatingButtonDiv" class="position-absolute bottom-0 end-0 m-3 z-1 d-flex flex-column gap-3">
+            <button id="saveMapButton" class="btn uvegbutton rounded-circle floating-button floating-button-success"
+                disabled title="Térkép mentése">
+                <svg style="height: 1em; fill: white;" viewBox="0 0 512 511.52">
+                    <use href="/images/map-creator-icons.svg#icon-save-floppy"></use>
+                </svg>
+            </button>
+
+            <button id="settingsBtn" class="btn uvegbutton rounded-circle floating-button floating-button-primary"
+                title="Beállítások">
+                <svg style="height: 1.5em; fill: white;" viewBox="0 0 122.881 122.88">
+                    <use href="/images/map-creator-icons.svg#icon-settings-cog"></use>
+                </svg>
+            </button>
+
+            <button id="plusBtn" class="btn uvegbutton rounded-circle floating-button floating-button-primary"
+                title="Új pont hozzáadása">
+                <svg style="height: 1.5em; fill: white;" viewBox="0 0 122.875 122.648">
+                    <use href="/images/map-creator-icons.svg#icon-plus"></use>
+                </svg>
+            </button>
+        </div>
+        <div id="toastPlace" class="toast-container position-absolute bottom-0 start-50 translate-middle-x mb-4">
+        </div>
+
+        <div class="collapse collapse-horizontal uveg position-absolute ms-2 z-3 mt-2 mb-5 rounded shadow"
+            id="beallitasokCollapse">
+            <div class="card h-100" id="beallitasokCard">
+                <div class="card-header d-flex justify-content-between flex-shrink-0 border-0">
+                    <h5 class="card-title m-0 mt-1">Beállítások</h5>
+                    <button id="closeBeallitasok" type="button" class="btn-close" data-bs-toggle="collapse"
+                        data-bs-target="#beallitasokCollapse"></button>
+                </div>
+                <div class="card-body d-flex flex-column align-items-start overflow-auto p-0">
+                    <div class="accordion accordion-flush w-100" id="beallitasokAccordion">
+                        <div class="accordion-item">
+                            <h2 class="accordion-header">
+                                <button class="accordion-button" data-bs-toggle="collapse"
+                                    data-bs-target="#nezetiBeallitasok" aria-expanded="true"
+                                    aria-controls="nezetiBeallitasok">
+                                    Nézeti beállítások
+                                </button>
+                            </h2>
+                            <div id="nezetiBeallitasok" class="accordion-collapse collapse show">
+                                <div class="accordion-body d-flex flex-column gap-3 p-3">
+                                    <div class="form-check form-switch w-100">
+                                        <input class="form-check-input" type="checkbox" role="switch" id="fovToggle"
+                                            checked>
+                                        <label class="form-check-label ms-2" for="fovToggle">Látótér
+                                            megjelenítése</label>
+                                    </div>
+
+                                    <div class="w-100">
+                                        <label class="form-label mb-1" for="fovWidthRange">Látótér szélesség</label>
+                                        <div class="d-flex align-items-center gap-2">
+                                            <input type="range" class="form-range glass-range flex-grow-1" min="10"
+                                                max="1000" step="10" id="fovWidthRange" value="100">
+                                            <input
+                                                class="form-control uvegform p-1 hide-arrows text-center number-input-width"
+                                                type="number" id="fovWidthNumber" min="10" max="1000" value="100">
+                                        </div>
+                                    </div>
+
+                                    <div class="w-100">
+                                        <label class="form-label mb-1" for="fovHeightRange">Látótér magasság</label>
+                                        <div class="d-flex align-items-center gap-2">
+                                            <input type="range" class="form-range glass-range flex-grow-1" min="10"
+                                                max="1000" step="10" id="fovHeightRange" value="100">
+                                            <input
+                                                class="form-control uvegform p-1 hide-arrows text-center number-input-width"
+                                                type="number" id="fovHeightNumber" min="10" max="1000" value="100">
+                                        </div>
+                                    </div>
+
+                                    <div class="w-100 border-top border-secondary border-opacity-25 pt-3 mt-1">
+                                        <h6 class="h6 text-uppercase text-body-secondary mb-2">Kapcsolatok</h6>
+                                        <div class="form-check form-switch w-100">
+                                            <input class="form-check-input" type="checkbox" role="switch"
+                                                id="allConnectionsWhenNotActiveToggle" checked>
+                                            <label class="form-check-label ms-2"
+                                                for="allConnectionsWhenNotActiveToggle">
+                                                Összes kapcsolat kijelölés nélküli megjelenítése
+                                            </label>
+                                        </div>
+                                        <div class="form-check form-switch w-100 mb-2">
+                                            <input class="form-check-input" type="checkbox" role="switch"
+                                                id="offMapConnectionsToggle" checked>
+                                            <label class="form-check-label ms-2" for="offMapConnectionsToggle">
+                                                Térképen átívelő kapcsolatok megjelenítése
+                                            </label>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="collapse collapse-horizontal uveg position-absolute me-2 z-3 mt-2 mb-5 rounded shadow"
+            id="ujPontCollapse">
+            <div class="card h-100" id="collapseCard">
+                <div class="card-header d-flex justify-content-between flex-shrink-0">
+                    <h5 class="card-title">Pont szerkesztése</h5>
+                    <button id="closeCollapse" type="button" class="btn-close"></button>
+                </div>
+                <div class="card-body d-flex flex-column align-items-start overflow-auto p-0">
+                    <div class="accordion accordion-flush w-100" id="pontokAccordion">
+                        <div class="accordion-item">
+                            <h2 class="accordion-header">
+                                <button class="accordion-button collapsed" data-bs-toggle="collapse"
+                                    data-bs-target="#koordinatak" aria-expanded="false" aria-controls="koordinatak">
+                                    Pont adatai
+                                </button>
+                            </h2>
+                            <div id="koordinatak" class="accordion-collapse collapse">
+                                <div class="accordion-body d-flex flex-column gap-2">
+                                    <div class="rounded uveg d-inline-flex align-items-center p-2 flex-grow-0">
+                                        <svg style="height: 2em;" class="text-body" fill="currentColor"
+                                            viewBox="0 0 122.88 122.88">
+                                            <use href="/images/map-creator-icons.svg#icon-crosshair"></use>
+                                        </svg>
+                                        <div class="d-inline-flex flex-column flex-grow-1 ms-2">
+                                            <h6 class="h6 text-uppercase text-body-secondary m-0">Koordináták</h6>
+                                            <div
+                                                class="d-flex flex-wrap align-items-center gap-2 w-auto flex-grow-1 justify-content-around">
+                                                <div class="d-flex gap-1 justify-content-center align-items-center">
+                                                    <label class="form-label m-0" for="coordinateX">X: </label>
+                                                    <input class="form-control uvegform p-1" type="number"
+                                                        id="coordinateX">
+                                                </div>
+                                                <div class="d-flex gap-1 justify-content-center align-items-center">
+                                                    <label class="form-label m-0" for="coordinateY">Y: </label>
+                                                    <input class="form-control uvegform p-1" type="number"
+                                                        id="coordinateY">
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="rounded uveg d-inline-flex align-items-center p-2 flex-grow-0 gap-2">
+                                        <svg style="height: 2em;" class="text-body" fill="currentColor"
+                                            viewBox="0 0 122.88 122.88">
+                                            <use href="/images/map-creator-icons.svg#icon-compass"></use>
+                                        </svg>
+                                        <div id="northDirectionWrapper"></div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="accordion-item">
+                            <h2 class="accordion-header">
+                                <button class="accordion-button collapsed" data-bs-toggle="collapse"
+                                    data-bs-target="#kepFeltoltes" aria-expanded="false" aria-controls="kepFeltoltes">
+                                    Kép feltöltése
+                                </button>
+                            </h2>
+                            <div id="kepFeltoltes" class="accordion-collapse collapse">
+                                <div class="accordion-body">
+                                    <div id="drop-zone-equirectangular" class="p-2 w-auto"></div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="accordion-item">
+                            <h2 class="accordion-header">
+                                <button class="accordion-button collapsed" data-bs-toggle="collapse"
+                                    data-bs-target="#elonezet" aria-expanded="false" aria-controls="elonezet">
+                                    Kép előnézete
+                                </button>
+                            </h2>
+                            <div id="elonezet" class="accordion-collapse collapse">
+                                <div class="accordion-body">
+                                    <div id="equirectangularWrapper"
+                                        class="w-100 flex-grow-1 position-relative my-2 border border-dark rounded">
+                                        <canvas id="equirectangularPreview"
+                                            class="w-100 h-100 position-absolute top-0 start-0 rounded"></canvas>
+                                        <svg id="equirectangularFullscreen"
+                                            class="text-body position-absolute top-0 end-0 m-2" style="height: 1.5em;"
+                                            fill="currentColor" viewBox="0 0 122.88 122.88">
+                                            <use href="/images/map-creator-icons.svg#icon-fullscreen"></use>
+                                        </svg>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="accordion-item">
+                            <h2 class="accordion-header">
+                                <button class="accordion-button collapsed" data-bs-toggle="collapse"
+                                    data-bs-target="#pontokOsszekapcsolasa" aria-expanded="false"
+                                    aria-controls="pontokOsszekapcsolasa">
+                                    Pontok összekapcsolása
+                                </button>
+                            </h2>
+                            <div id="pontokOsszekapcsolasa" class="accordion-collapse collapse">
+                                <div class="accordion-body d-flex flex-column gap-3 p-2">
+                                    <div class="d-flex flex-column gap-2 rounded p-3 uveg">
+                                        <div class="d-flex gap-2 align-items-center">
+                                            <svg class="text-body" style="height: 1em;" fill="currentColor"
+                                                viewBox="0 0 112.55 122.88">
+                                                <use href="/images/map-creator-icons.svg#icon-chain"></use>
+                                            </svg>
+                                            <h6 class="h6 text-uppercase text-body-secondary m-0">
+                                                Új kapcsolat
+                                            </h6>
+                                        </div>
+
+                                        <button id="kapcsolatLetrehozasaBtn"
+                                            class="btn btn-sm successColor w-100 rounded-pill d-flex align-items-center justify-content-center gap-2"
+                                            disabled>
+                                            <svg style="height: 1em; fill: white;" viewBox="0 0 122.875 122.648">
+                                                <use href="/images/map-creator-icons.svg#icon-plus"></use>
+                                            </svg>
+                                            Kapcsolat létrehozása
+                                        </button>
+                                    </div>
+
+                                    <div class="d-flex flex-column gap-2 rounded p-3 uveg">
+                                        <div class="d-flex gap-2 align-items-center">
+                                            <svg class="text-body" style="height: 1em;" fill="currentColor"
+                                                viewBox="0 0 112.55 122.88">
+                                                <use href="/images/map-creator-icons.svg#icon-chain"></use>
+                                            </svg>
+                                            <h6 class="h6 text-uppercase text-body-secondary m-0">
+                                                Meglévő kapcsolatok
+                                            </h6>
+                                        </div>
+                                        <div id="kapcsolatokWrapper"
+                                            class="d-flex flex-column gap-2 max-height-connections">
+                                            <div id="nincsenekKapcsolatok"
+                                                class="dangerColor m-0 py-2 px-3 rounded-2 small text-center">
+                                                Nincsenek kapcsolatok
+                                            </div>
+                                            <div id="kapcsolatokLista" class="p-2">
+
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div
+                    class="card-footer d-flex flex-wrap justify-content-between align-items-center w-100 flex-shrink-0">
+                    <button id="deletePointBtn"
+                        class="btn btn-outline-danger btn-sm rounded-pill d-flex align-items-center gap-1 px-3">
+                        <svg style="height: 1em; fill: currentColor;" viewBox="0 0 456 511.82">
+                            <use href="/images/map-creator-icons.svg#icon-trash"></use>
+                        </svg>
+                        Pont törlése
+                    </button>
+
+                    <button id="savePointButton" class="btn successColor rounded-pill px-3" disabled>Pont
+                        mentése</button>
+                </div>
+            </div>
+        </div>
+        <div id="modal-wrapper"></div>
+    </main>
+
+    <template id="connection-card-template">
+        <div
+            class="kapcsolat-kartya uveg d-flex align-items-center justify-content-between p-2 rounded mb-2 flex-wrap pointer">
+            <div class="d-flex align-items-center gap-2 flex-grow-1 flex-wrap">
+                <span class="start-point badge point-badge rounded-pill pointer">
+                    <span class="opacity-50 small me-1">ID</span>
+                    <span class="start-id"></span>
+                </span>
+
+                <svg class="text-white opacity-50" style="height: 1em; width: 1em;" fill="currentColor">
+                    <use href="/images/map-creator-icons.svg#icon-width-arrow"></use>
+                </svg>
+
+                <span class="end-point badge point-badge rounded-pill pointer">
+                    <span class="opacity-50 small me-1">ID</span>
+                    <span class="end-id"></span>
+                </span>
+            </div>
+            <button
+                class="btn-delete-connection btn-delete btn-hold-to-unlock d-inline-flex align-items-center justify-content-center rounded-circle p-0 flex-shrink-0"
+                title="Kapcsolat törlése">
+                <svg style="height: 1em; width: 1em; fill: currentColor;" viewBox="0 0 456 511.82">
+                    <use href="/images/map-creator-icons.svg#icon-trash"></use>
+                </svg>
+            </button>
+            <div class="connection-direction-wrapper w-100 mt-2 d-none">
+                <div class="w-100 border-top border-secondary border-opacity-25 pt-2 mt-1">
+                    <h6 class="h6 text-uppercase small text-body-secondary mb-2 mt-3">Irány (Másik térkép felé)</h6>
+                    <div class="d-flex align-items-center gap-2">
+                        <svg style="height: 1.5em;" class="text-body" fill="currentColor" viewBox="0 0 122.88 122.88">
+                            <use href="/images/map-creator-icons.svg#icon-compass"></use>
+                        </svg>
+                        <div class="direction-toward-other-wrapper"></div>
+                    </div>
+                    <h6 class="h6 text-uppercase small text-body-secondary mb-2">Irány (Jelenlegi pont felé)</h6>
+                    <div class="d-flex align-items-center gap-2">
+                        <svg style="height: 1.5em;" class="text-body" fill="currentColor" viewBox="0 0 122.88 122.88">
+                            <use href="/images/map-creator-icons.svg#icon-compass"></use>
+                        </svg>
+                        <div class="direction-toward-current-wrapper"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </template>
+    <script src="/bootstrap/js/bootstrap.min.js"></script>
+</body>
+
+</html>

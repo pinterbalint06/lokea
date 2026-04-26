@@ -24,6 +24,13 @@ function init() {
         "canvasWidth": jsCanvasSzelesseg,
         "canvasHeight": jsCanvasMagassag
     });
+    mapViewerEngine.onClickHandler = (cursorX, cursorY) => {
+        if (mapViewerEngine.doesMarkerExist(1)) {
+            mapViewerEngine.moveMarker(1, cursorX, cursorY);
+        } else {
+            mapViewerEngine.placeMarker(1, cursorX, cursorY, 24.0, 32.0, "uploading");
+        }
+    };
     mapViewerEngine.loadMap(image.url, image.width, image.height)
         .then(function () {
             console.log("image loaded");
@@ -40,7 +47,7 @@ function fullScreen() {
 }
 
 function markerPosition() {
-    console.log(mapViewerEngine.getMarkerPosition());
+    console.log(mapViewerEngine.getMarkerPosition(1));
 }
 
 window.fullScreen = fullScreen;
