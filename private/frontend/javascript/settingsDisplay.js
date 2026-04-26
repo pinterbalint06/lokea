@@ -13,8 +13,7 @@ export async function settingsDisplayre(adminSettings) {
     let data = await getUserData();
     currentSettings = {
         username: data.username,
-        email: data.email,
-        is_2fa: data.is_2fa
+        email: data.email
     }
 
     let container = createHTMLelement('div', ['container', 'p-4']);
@@ -116,15 +115,6 @@ export async function settingsDisplayre(adminSettings) {
     dataCol.appendChild(makeSubtitle(i18next.t('admin:settings.email_address')));
     dataCol.appendChild(inputGeneral("text", "email", data.email, "emailInput", ["form-control"], false));
     dataCol.appendChild(makeSubtitle(i18next.t('admin:settings.security')));
-    let twoFaDiv = createHTMLelement('div', ['form-check', 'form-switch', 'mb-3']);
-    let twoFaInput = inputGeneral("checkbox", null, null, "2faInput", ["form-check-input"], false);
-    twoFaInput.checked = data.is_2fa;
-    let twoFaLabel = document.createElement('label');
-    twoFaLabel.className = 'form-check-label';
-    twoFaLabel.innerText = i18next.t('admin:settings.two_factor_auth');
-    twoFaDiv.appendChild(twoFaInput);
-    twoFaDiv.appendChild(twoFaLabel);
-    dataCol.appendChild(twoFaDiv);
 
     let buttonsDiv = createHTMLelement('div', ["d-flex", "gap-2", "my-3"]);
 
@@ -258,8 +248,7 @@ async function checkModification() {
     let valtozas = false;
     let inInput = {
         username: document.getElementById('usernameInput').value,
-        email: document.getElementById('emailInput').value,
-        is_2fa: document.getElementById('2faInput').checked
+        email: document.getElementById('emailInput').value
     }
     Object.keys(inInput).forEach(key => {
         if (inInput[key] == currentSettings[key]) {
@@ -280,15 +269,15 @@ async function checkModification() {
             siker = false;
         }
         if (siker) {
-            await saveModification(inInput.username, inInput.email, inInput.is_2fa);
+            await saveModification(inInput.username, inInput.email);
         }
     }
 }
 
-async function saveModification(username, email, is_2fa) {
+async function saveModification(username, email) {
     let errordiv = document.getElementById('errorLocation');
     errordiv.innerHTML = "";
-    let response = await userSelfUpdate(username, email, is_2fa);
+    let response = await userSelfUpdate(username, email);
     if (!response.ok) {
         let data = await response.json();
         errordiv.classList.remove('d-none');

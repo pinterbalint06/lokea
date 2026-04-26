@@ -113,13 +113,11 @@ router.post("/login",
                 }
                 if (rows.length === 0 || rows[0].deleted_at != null) {
                     response.status(401).json({ message: "Hibás email vagy jelszó" });
-                    response.status(401).json({ message: "Hibás email vagy jelszó" });
                 }
                 else {
                     let sPass = rows[0].password;
                     let egyezes = await bcrypt.compare(password, sPass);
                     if (!egyezes) {
-                        response.status(401).json({ message: "Hibás email vagy jelszó" });
                         response.status(401).json({ message: "Hibás email vagy jelszó" });
                     }
                     else {
@@ -204,10 +202,6 @@ router.put('/updateUser', auth.checkAuth,
             .optional({ nullable: true })
             .isEmail().withMessage("Hibás email formátum")
             .isLength({ min: 5, max: 254 }).withMessage("Email max 254 karakter!"),
-        body("is_2fa")
-            .optional({ values: "null" })
-            .isBoolean().withMessage("A 2FA értéke csak logikai (true/false) lehet!"),
-
         body("language")
             .optional({ values: "null" })
             .isString().withMessage("A nyelv formátuma érvénytelen!")
@@ -226,8 +220,8 @@ router.put('/updateUser', auth.checkAuth,
                 });
             }
             else {
-                let { username, email, is_2fa, language, darkmode } = request.body;
-                let result = await database.updateUser(request.session.userid, username, email, is_2fa, language, darkmode);
+                let { username, email, language, darkmode } = request.body;
+                let result = await database.updateUser(request.session.userid, username, email, language, darkmode);
                 if (result == 1) {
                     if (language) request.session.userLanguage = language;
                     await database.addLog(request.session.userid, 'User update');

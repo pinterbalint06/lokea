@@ -217,20 +217,10 @@ function newUserToModal() {
     roleDiv.appendChild(roleP);
     roleDiv.appendChild(select);
 
-    let switchDiv = createHTMLelement('div', ["form-check", "form-switch", "mt-3"]);
-    let switchInput = inputGeneral("checkbox", null, null, "new2faInput", ["form-check-input"], false);
-    switchInput.role = "switch";
-
-    let switchLabel = labelGeneral("new2faInput", i18next.t('admin:users.two_factor'), ["form-check-label"]);
-
-    switchDiv.appendChild(switchInput);
-    switchDiv.appendChild(switchLabel);
-
     formGroup.appendChild(userDiv);
     formGroup.appendChild(emailDiv);
     formGroup.appendChild(passDiv);
     formGroup.appendChild(roleDiv);
-    formGroup.appendChild(switchDiv);
 
     form.appendChild(formGroup);
 
@@ -242,7 +232,6 @@ async function editUserToModal(data, variables) {
     let username = data.username;
     let email = data.email;
     let role = data.role;
-    let is_2fa = data.is_2fa;
     let pfproute = data.filepath;
 
     variables.tempPfp = null;
@@ -374,23 +363,11 @@ async function editUserToModal(data, variables) {
     roleDiv.appendChild(roleP);
     roleDiv.appendChild(select);
 
-    let switchDiv = createHTMLelement('div', ["form-check", "form-switch", "mt-3"]);
-    let switchInput = inputGeneral("checkbox", null, null, "edit2faInput", ["form-check-input"], false);
-    switchInput.role = "switch";
-    if (is_2fa) {
-        switchInput.checked = true;
-    }
-
-    let switchLabel = labelGeneral("edit2faInput", i18next.t('admin:users.two_factor'), ["form-check-label"]);
-    switchDiv.appendChild(switchInput);
-    switchDiv.appendChild(switchLabel);
-
     /* ÖSSZEÉPITÉS */
     formGroup.appendChild(idDiv);
     formGroup.appendChild(userDiv);
     formGroup.appendChild(emailDiv);
     formGroup.appendChild(roleDiv);
-    formGroup.appendChild(switchDiv);
 
     form.appendChild(formGroup);
     colRight.appendChild(form);
@@ -408,7 +385,6 @@ async function viewUserToModal(data, variables) {
     let username = data.username;
     let email = data.email;
     let role = data.role;
-    let is_2fa = data.is_2fa;
     let pfproute = data.filepath;
     let container = createHTMLelement('div', ["container-fluid"]);
 
@@ -496,24 +472,11 @@ async function viewUserToModal(data, variables) {
     roleDiv.appendChild(roleP);
     roleDiv.appendChild(select);
 
-    let switchDiv = createHTMLelement('div', ["form-check", "form-switch", "mt-3"]);
-    let switchInput = inputGeneral("checkbox", null, null, "edit2faInput", ["form-check-input"], false);
-    switchInput.role = "switch";
-    if (is_2fa) {
-        switchInput.checked = true;
-    }
-
-    let switchLabel = labelGeneral("edit2faInput", i18next.t('admin:users.two_factor'), ["form-check-label"]);
-
-    switchDiv.appendChild(switchInput);
-    switchDiv.appendChild(switchLabel);
-
     /* ÖSSZEÉPITÉS */
     formGroup.appendChild(idDiv);
     formGroup.appendChild(userDiv);
     formGroup.appendChild(emailDiv);
     formGroup.appendChild(roleDiv);
-    formGroup.appendChild(switchDiv);
 
     form.appendChild(formGroup);
     colRight.appendChild(form);
@@ -638,8 +601,7 @@ function modalView(title, type, content, variables) {
                     username: document.getElementById("newUsernameInput").value,
                     email: document.getElementById("newEmailInput").value,
                     password: document.getElementById("newPasswordInput").value,
-                    role: document.getElementById("newRoleSelect").value,
-                    is_2fa: document.getElementById("new2faInput").checked
+                    role: document.getElementById("newRoleSelect").value
                 }
                 Object.keys(inInput).forEach(key => {
                     if (inInput[key] == "") {
@@ -647,7 +609,7 @@ function modalView(title, type, content, variables) {
                     }
                 });
                 if (!ures) {
-                    await newUser(inInput.username, inInput.email, inInput.password, inInput.role, inInput.is_2fa);
+                    await newUser(inInput.username, inInput.email, inInput.password, inInput.role);
                     currentPage.page = 1;
                     let data = await sortedUser(getFilterValues());
                     frissitUserTablazat(data.users, data.total, variables);
@@ -667,15 +629,12 @@ function modalView(title, type, content, variables) {
                 document.getElementById("editUsernameInput").value = currentData.username;
                 document.getElementById("editEmailInput").value = currentData.email;
                 document.getElementById("editRoleSelect").value = currentData.role;
-                document.getElementById("edit2faInput").checked = currentData.is_2fa;
             })
             footerButtons.appendChild(button);
 
             button = gombGeneral("button", i18next.t('admin:users.btn_save'), "save", "blue", null);
             button.addEventListener('click', async function () {
                 let valtozas = false;
-
-                // 1. Profilkép kezelése
                 if (variables.deleteLast) {
                     await deleteProfilePicture(currentData.user_id);
                     valtozas = true;
@@ -684,12 +643,10 @@ function modalView(title, type, content, variables) {
                     valtozas = true;
                 }
 
-                // 2. Szöveges adatok ellenőrzése (marad az eredeti logikád)
                 let inInput = {
                     username: document.getElementById("editUsernameInput").value,
                     email: document.getElementById("editEmailInput").value,
-                    role: document.getElementById("editRoleSelect").value,
-                    is_2fa: document.getElementById("edit2faInput").checked,
+                    role: document.getElementById("editRoleSelect").value
                 }
 
                 Object.keys(inInput).forEach(key => {
@@ -699,8 +656,7 @@ function modalView(title, type, content, variables) {
                 });
 
                 if (valtozas) {
-                    // Frissítjük a szöveges adatokat is
-                    let siker = await userUpdate(currentData.user_id, inInput.username, inInput.email, inInput.role, inInput.is_2fa);
+                    let siker = await userUpdate(currentData.user_id, inInput.username, inInput.email, inInput.role);
                     if (siker) {
                         currentPage.page = 1;
                         let data = await sortedUser(getFilterValues());

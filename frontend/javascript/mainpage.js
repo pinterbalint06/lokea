@@ -406,18 +406,11 @@ async function showSettingsModal() {
     div.appendChild(buttonsDiv);
     div.appendChild(collapseDiv);
 
-
-    div.appendChild(makeSubtitle("Két lépcsős azonosítás"));
-    let checkbox = inputGeneral("checkbox", null, null, "is2faInput", null, false);
-    checkbox.checked = data.is_2fa;
-    div.appendChild(checkbox);
-
     document.getElementById('darkMode').checked = (data.darkmode == 1);
 
     currentSettings = {
         username: data.username,
         email: data.email,
-        is_2fa: data.is_2fa,
         language: data.language,
         darkmode: document.getElementById('darkMode').checked
     };
@@ -501,7 +494,6 @@ async function checkModification() {
     let inInput = {
         username: document.getElementById('usernameInput').value,
         email: document.getElementById('emailInput').value,
-        is_2fa: document.getElementById('is2faInput').checked,
         language: document.getElementById('languageSelect').value,
         darkmode: document.getElementById('darkMode').checked
     }
@@ -530,20 +522,20 @@ async function checkModification() {
             throw new Error(errors.join("\n"));
         }
 
-        await saveModification(inInput.username, inInput.email, inInput.is_2fa, inInput.language, inInput.darkmode);
+        await saveModification(inInput.username, inInput.email, inInput.language, inInput.darkmode);
     }
 }
 
-async function saveModification(username, email, is_2fa, language, darkmode) {
+async function saveModification(username, email, language, darkmode) {
     try {
-        console.log(username, email, is_2fa, language, darkmode)
+        console.log(username, email,  language, darkmode)
         let response = await fetch("/api/updateUser", {
             method: "PUT",
             headers: {
                 "Content-Type": "application/json"
             },
             body: JSON.stringify({
-                username, email, is_2fa, language, darkmode
+                username, email, language, darkmode
             })
         })
         let data = await response.json();

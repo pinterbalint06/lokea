@@ -80,7 +80,7 @@ async function sortedUsers(mireKeresek, mit, status, adminChecked, modChecked, u
 
 async function getUser(user_id) {
     try {
-        const query = 'SELECT users.user_id, users.username, users.email, users.role, users.is_2fa, users.darkmode, users.created_at, images.filepath FROM users LEFT JOIN images ON (images.image_id = users.pfp) WHERE users.user_id = ?';
+        const query = 'SELECT users.user_id, users.username, users.email, users.role, users.darkmode, users.created_at, images.filepath FROM users LEFT JOIN images ON (images.image_id = users.pfp) WHERE users.user_id = ?';
         const [result] = await pool.execute(query, [user_id]);
         return result;
     } catch (error) {
@@ -111,7 +111,7 @@ async function getOldPicturePath(user_id) {
     }
 }
 
-async function newUserFromAdmin(username, email, password, role, is_2fa) {
+async function newUserFromAdmin(username, email, password, role) {
     let success = false;
     let error;
     const queryUserExistsCheck = 'SELECT email, username FROM users WHERE username = ? OR email = ?';
@@ -121,8 +121,8 @@ async function newUserFromAdmin(username, email, password, role, is_2fa) {
         try {
             connection = await pool.getConnection();
             await connection.beginTransaction();
-            const queryInsertNewUser = 'INSERT INTO users (username, email, password, role, is_2fa) VALUES (?, ?, ?, ?, ?)';
-            [result] = await connection.execute(queryInsertNewUser, [username, email, password, role, is_2fa]);
+            const queryInsertNewUser = 'INSERT INTO users (username, email, password, role) VALUES (?, ?, ?, ?, ?)';
+            [result] = await connection.execute(queryInsertNewUser, [username, email, password, role]);
             if (result.affectedRows == 1) {
                 success = true;
                 await connection.commit();
@@ -186,7 +186,7 @@ async function uploadProfilePic(filepath, width, height, user_id) {
     }
 }
 
-async function updateUserByAdmin(user_id, username, email, role = null, is_2fa = null) {
+async function updateUserByAdmin(user_id, username, email, role = null) {
     let connection;
     let affectedRows = 0;
     try {
@@ -211,10 +211,6 @@ async function updateUserByAdmin(user_id, username, email, role = null, is_2fa =
             if (role != null) {
                 updates.push('role = ?');
                 params.push(role);
-            }
-            if (is_2fa != null) {
-                updates.push('is_2fa = ?');
-                params.push(is_2fa);
             }
 
             if (updates.length === 0) {

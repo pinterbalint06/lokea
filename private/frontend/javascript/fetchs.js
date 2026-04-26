@@ -128,7 +128,7 @@ export async function kijelentkezes() {
     }
 }
 
-export async function newUser(username, email, password, role, is_2fa) {
+export async function newUser(username, email, password, role) {
     try {
         let response = await fetch("/api/admin/signupFromAdmin", {
             method: "POST",
@@ -139,8 +139,7 @@ export async function newUser(username, email, password, role, is_2fa) {
                 username,
                 email,
                 password,
-                role,
-                is_2fa
+                role
             })
         });
 
@@ -152,7 +151,7 @@ export async function newUser(username, email, password, role, is_2fa) {
     }
 }
 
-export async function userUpdate(user_id, username, email, role, is_2fa) {
+export async function userUpdate(user_id, username, email, role) {
     try {
         let response = await fetch("/api/admin/updateUserFromAdmin", {
             method: "PUT",
@@ -163,8 +162,7 @@ export async function userUpdate(user_id, username, email, role, is_2fa) {
                 user_id,
                 username,
                 email,
-                role,
-                is_2fa
+                role
             })
         });
         return response.ok;
@@ -173,7 +171,7 @@ export async function userUpdate(user_id, username, email, role, is_2fa) {
     }
 }
 
-export async function userSelfUpdate(username, email, is_2fa) {
+export async function userSelfUpdate(username, email) {
     try {
         let response = await fetch("/api/admin/userSelfUpdate", {
             method: "PUT",
@@ -182,8 +180,7 @@ export async function userSelfUpdate(username, email, is_2fa) {
             },
             body: JSON.stringify({
                 username,
-                email,
-                is_2fa
+                email
             })
         });
         return response;

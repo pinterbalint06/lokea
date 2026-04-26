@@ -8,14 +8,13 @@ document.addEventListener("DOMContentLoaded", function () {
         let username = document.getElementById('regUser');
         let email = document.getElementById('regEmail');
         let jelszo = document.getElementById('regPass');
-        let is2fa = document.getElementById('twofactorCheckbox');
         if (validalvaReg(username, email, jelszo)) {
-            await regisztracioAnimacio(username, email, jelszo, is2fa);
+            await regisztracioAnimacio(username, email, jelszo);
         }
     });
 })
 
-async function regisztracio(username, email, password, is2fa) {
+async function regisztracio(username, email, password) {
     try {
         let response = await fetch("/api/signup", {
             method: "POST",
@@ -25,8 +24,7 @@ async function regisztracio(username, email, password, is2fa) {
             body: JSON.stringify({
                 username: username.value,
                 email: email.value,
-                password: password.value,
-                is2fa: is2fa.checked
+                password: password.value
             })
         });
 
@@ -36,7 +34,7 @@ async function regisztracio(username, email, password, is2fa) {
     }
 }
 
-async function regisztracioAnimacio(username, email, password, is2fa) {
+async function regisztracioAnimacio(username, email, password) {
     let container = document.getElementById('regModalContainer');
     let title = document.getElementById('regModalTitle');
     let modalText = document.getElementById('regModalText');
@@ -50,7 +48,7 @@ async function regisztracioAnimacio(username, email, password, is2fa) {
     container.classList.add('spinning');
 
     try {
-        let response = await regisztracio(username, email, password, is2fa);
+        let response = await regisztracio(username, email, password);
         let data = await response.json();
         let message = data.message;
         setTimeout(() => {

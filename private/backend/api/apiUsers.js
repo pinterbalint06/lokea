@@ -48,7 +48,8 @@ router.get('/sortedUsers', [
         .isIn(['user_id', 'username', 'email']).withMessage("A keresési típus nem megfelelő!"),
     query('mit')
         .optional({ values: 'null' })
-        .isLength({ min: 1, max: 254 }).withMessage("A keresési érték hossza nem megfelelő!"),
+        .matches(/^[A-Za-zÁÉÍÓÖŐÚÜŰáéíóöőúüű0-9@._-]*$/).withMessage("A keresési érték csak betűket, számokat, -, _, @ vagy . karaktert tartalmazhat!")
+        .isLength({ max: 254 }).withMessage("A keresési érték hossza nem megfelelő!"),
     query('status')
         .isIn(['statusActive', 'statusDeleted', 'statusAny']).withMessage("A státusz nem megfelelő!"),
     query('adminChecked')
@@ -108,7 +109,7 @@ router.post("/signupFromAdmin",
     [
         body("username")
             .not().isEmail().withMessage("Felhasználónév nem lehet email cim!")
-            .matches(/^[a-zA-Z0-9áéíóöőúüűÁÉÍÓÖŐÚÜŰ_-]+$/).withMessage('A felhasználónév csak betűket, számokat, - vagy _ karaktert, és ékezetes betűket tartalmazhat.')
+            .matches(/^[a-zA-Z0-9áéíóöőúüűÁÉÍÓÖŐÚÜŰ_-]*$/).withMessage('A felhasználónév csak betűket, számokat, - vagy _ karaktert, és ékezetes betűket tartalmazhat.')
             .isLength({ min: 1, max: 20 }).withMessage("Felhasználónév hossza nem megfelelő!"),
         body("email")
             .isEmail().withMessage("Hibás email formátum")
@@ -117,14 +118,14 @@ router.post("/signupFromAdmin",
             .isLength({ min: 8, max: 50 }).withMessage("Jelszó hossza 8-50")
             .matches(/\d/).withMessage("Kell benne szám")
             .matches(/[A-Z]/).withMessage("Kell benne nagybetű"),
-        body("is_2fa")
-            .isBoolean().withMessage("Nem kapott értéket a kétlépcsős azonosítás!")
+        body("role")
+            .isIn(['user', 'MOD']).withMessage("A szerepkör nem megfelelő!"),
     ], validate,
     async (request, response) => {
         try {
-            const { username, email, password, role, is_2fa } = request.body;
+            const { username, email, password, role } = request.body;
             const hashedPassword = await bcrypt.hash(password, 10);
-            let insert = await databaseUsers.newUserFromAdmin(username, email, hashedPassword, role, is_2fa);
+            let insert = await databaseUsers.newUserFromAdmin(username, email, hashedPassword, role);
             if (insert.success) {
                 let userid = insert.insertId;
                 await databaseLogs.addLog(userid, 'Sign up (A)');
@@ -150,7 +151,8 @@ router.post('/exportUsers',
             .isIn(['user_id', 'username', 'email']).withMessage("A keresési típus nem megfelelő!"),
         body('mit')
             .optional({ values: 'null' })
-            .isLength({ min: 1, max: 254 }).withMessage("A keresési érték hossza nem megfelelő!"),
+            .matches(/^[a-zA-Z0-9áéíóöőúüűÁÉÍÓÖŐÚÜŰ_-]*$/).withMessage("A keresési érték csak betűket, számokat, -, _, @ vagy . karaktert tartalmazhat!")
+            .isLength({ max: 254 }).withMessage("A keresési érték hossza nem megfelelő!"),
         body('status')
             .isIn(['statusActive', 'statusDeleted', 'statusAny']).withMessage("A státusz nem megfelelő!"),
         body('adminChecked')
@@ -191,14 +193,17 @@ router.put('/updateUserFromAdmin',
             .isInt({ min: 1 }).withMessage("A user ID nem megfelelő!")
             .toInt(),
         body("username")
+            .optional({ values: 'null' })
             .not().isEmail().withMessage("Felhasználónév nem lehet email cim!")
             .matches(/^[a-zA-Z0-9áéíóöőúüűÁÉÍÓÖŐÚÜŰ_-]+$/).withMessage('A felhasználónév csak betűket, számokat, - vagy _ karaktert, és ékezetes betűket tartalmazhat.')
             .isLength({ min: 1, max: 20 }).withMessage("Felhasználónév hossza nem megfelelő!"),
         body("email")
+            .optional({ values: 'null' })
             .isEmail().withMessage("Hibás email formátum")
             .isLength({ min: 5, max: 250 }).withMessage("Email max 250 karakter!"),
         body("role")
-            .isIn(['USER', 'MODERATOR', 'ADMIN']).withMessage("A szerepkör nem megfelelő!"),
+            .optional({ values: 'null' })
+            .isIn(['user', 'MOD', 'ADMIN']).withMessage("A szerepkör nem megfelelő!"),
     ], validate,
     async (request, response) => {
         try {
@@ -210,12 +215,12 @@ router.put('/updateUserFromAdmin',
                 });
             }
             else {
-                let { user_id, username, email, role, is_2fa } = request.body;
+                let { user_id, username, email, role } = request.body;
                 if (role == "ADMIN" && request.session.role != "LORD") {
                     response.status(403).json({ message: "Nincs jogosultságod ehhez!" });
                 }
                 else {
-                    let success = await databaseUsers.updateUserByAdmin(user_id, username, email, role, is_2fa);
+                    let success = await databaseUsers.updateUserByAdmin(user_id, username, email, role);
                     if (success == 1) {
                         await databaseLogs.addLog(request.session.userid, 'User update (A)', user_id);
                         // await sendChangeEmail(email, username);
@@ -234,16 +239,18 @@ router.put('/updateUserFromAdmin',
 router.put('/userSelfUpdate',
     [
         body("username")
+            .optional({ values: 'null' })
             .not().isEmail().withMessage("Felhasználónév nem lehet email cim!")
             .matches(/^[a-zA-Z0-9áéíóöőúüűÁÉÍÓÖŐÚÜŰ_-]+$/).withMessage('A felhasználónév csak betűket, számokat, - vagy _ karaktert, és ékezetes betűket tartalmazhat.')
             .isLength({ min: 1, max: 20 }).withMessage("Felhasználónév hossza nem megfelelő!"),
         body("email")
+            .optional({ values: 'null' })
             .isEmail().withMessage("Hibás email formátum")
             .isLength({ min: 5, max: 250 }).withMessage("Email max 250 karakter!")
     ], validate,
     async (request, response) => {
         try {
-            let { username, email, is_2fa } = request.body;
+            let { username, email } = request.body;
             let success = await databaseUsers.updateUserByAdmin(request.session.userid, username, email);
             if (success == 1) {
                 await databaseLogs.addLog(request.session.userid, 'User update');
@@ -307,7 +314,8 @@ router.put('/updateProfilePicFromAdmin', upload.single('profilePic'), async (req
 router.delete('/userToInactive',
     [
         body("role")
-            .not().matches("ADMIN").withMessage("Nem frissithetsz admin-t!"),
+            .not().matches("ADMIN").withMessage("Nem frissithetsz admin-t!")
+            .isIn(['user', 'MOD']).withMessage("A szerepkör nem megfelelő!"),
         body("deleted")
             .custom(value => value === true).withMessage("Inaktiv felhasználót nem frissithetsz!")
     ], validate,

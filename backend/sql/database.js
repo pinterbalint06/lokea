@@ -84,7 +84,7 @@ async function getUserNameProfile(user_id) {
 
 }
 
-async function updateUser(user_id, username, email, is_2fa, language, darkmode) {
+async function updateUser(user_id, username, email, language, darkmode) {
     let query = 'UPDATE users ';
     let updates = [];
     let params = [];
@@ -97,10 +97,6 @@ async function updateUser(user_id, username, email, is_2fa, language, darkmode) 
     if (email != null) {
         updates.push('users.email = ?');
         params.push(email);
-    }
-    if (is_2fa != null) {
-        updates.push('users.is_2fa = ?');
-        params.push(is_2fa);
     }
     if (language != null) {
         updates.push('users.language = ?');
