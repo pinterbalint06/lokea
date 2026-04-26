@@ -68,7 +68,7 @@ public:
     const std::vector<Vertex> &getVertices() const { return vertices_; }
     std::vector<uint32_t> &getIndices() { return indices_; }
     const std::vector<uint32_t> &getIndices() const { return indices_; }
-    Materials::Material getMaterial() const { return material_; }
+    Materials::Material &getMaterial() { return material_; }
     GLuint getVAO() const { return vao_; }
     Mat4 &getModelMatrix() { return meshData_.modelMatrix; }
     const Mat4 &getModelMatrix() const { return meshData_.modelMatrix; }
@@ -77,8 +77,6 @@ public:
     // setters
     void setMaterial(Materials::Material material) { material_ = material; }
     void setInstances(const std::vector<Vec2> &instances) { instanceOffsets_ = instances; }
-
-    virtual void prepareRender(Shaders::Shader *shader);
 
     Mesh(const Mesh &) = delete;
     Mesh &operator=(const Mesh &) = delete;

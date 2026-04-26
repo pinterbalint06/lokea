@@ -22,6 +22,7 @@ public:
     int getId() const { return id_; }
     int getStartMarkerId() const { return startMarkerId_; }
     int getEndMarkerId() const { return endMarkerId_; }
+    void rewriteEndpointMarkerId(int oldMarkerId, int newMarkerId);
 
     void setColor(uint8_t r, uint8_t g, uint8_t b, uint8_t a);
 

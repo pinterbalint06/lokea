@@ -1,5 +1,4 @@
 #include <string>
-#include <cmath>
 #include <vector>
 #include <memory>
 #include <GLES3/gl3.h>

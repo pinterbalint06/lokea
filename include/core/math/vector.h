@@ -32,12 +32,16 @@ struct Vec2
 
     void normalize()
     {
-        float lengthInv = 1.0f / length();
-        x *= lengthInv;
-        y *= lengthInv;
+        float len = length();
+        if (len > 0.00001f)
+        {
+            float lengthInv = 1.0f / len;
+            x *= lengthInv;
+            y *= lengthInv;
+        }
     }
 
-    static inline float dotProduct(Vec2 &vec1, Vec2 &vec2)
+    static inline float dotProduct(const Vec2 &vec1, const Vec2 &vec2)
     {
         return vec1.x * vec2.x + vec1.y * vec2.y;
     }

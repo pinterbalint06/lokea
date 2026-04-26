@@ -137,5 +137,3 @@ void Mesh::updateInstanceBuffer()
         glEnableVertexAttribArray(2);
     }
 }
-
-void Mesh::prepareRender(Shaders::Shader *shader) {}

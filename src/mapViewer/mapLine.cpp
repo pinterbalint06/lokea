@@ -1,6 +1,5 @@
 #include <vector>
 #include <cmath>
-#include <cstring>
 #include <memory>
 #include <GLES3/gl3.h>
 
@@ -115,4 +114,19 @@ void MapLine::setColor(uint8_t r, uint8_t g, uint8_t b, uint8_t a)
     Materials::Material mat = getMaterial();
     mat.setColor(Materials::Color::fromRGBA(r, g, b, a));
     setMaterial(mat);
+}
+
+void MapLine::rewriteEndpointMarkerId(int oldMarkerId, int newMarkerId)
+{
+    if (startMarkerId_ == oldMarkerId)
+    {
+        startMarkerId_ = newMarkerId;
+    }
+    else
+    {
+        if (endMarkerId_ == oldMarkerId)
+        {
+            endMarkerId_ = newMarkerId;
+        }
+    }
 }

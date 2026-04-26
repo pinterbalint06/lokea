@@ -2,7 +2,6 @@
 #include <emscripten/html5.h>
 #include <emscripten/console.h>
 #include <string>
-#include <cstring>
 #include <vector>
 #include <algorithm>
 #include <cmath>
@@ -41,15 +40,12 @@ void MapViewerEngine::createMapPlane()
 {
     if (mapPlane_ == nullptr)
     {
-        float startU = 0.0f;
-        float endU = 1.0f;
-
         // squeeze the texture onto the plane according to aspect ratio
         // the image will be stretched to the canvas size and appear correctly
         float aspectRatio = (float)width_ / (float)height_;
         float off = (aspectRatio - 1.0f) * 0.5f;
-        startU = -off;
-        endU = 1.0f + off;
+        float startU = -off;
+        float endU = 1.0f + off;
         Vertex vertices[4];
         //                        x      y      z      u      v
         vertices[TOP_LEFT] = { -1.0f, 1.0f, -0.01f, startU, 0.0f };
@@ -307,6 +303,7 @@ void MapViewerEngine::removeMarker(int id)
     int index = getMarkerIndexById(id);
     if (isMapLoaded_ && index != -1)
     {
+        removeLinesConnectedToMarker(id);
         removeMesh(markers_[index]);
         markers_.erase(markers_.begin() + index);
     }
@@ -352,7 +349,18 @@ void MapViewerEngine::changeMarkerId(int oldId, int newId)
     int index = getMarkerIndexById(oldId);
     if (isMapLoaded_ && index != -1)
     {
-        markers_[index]->setId(newId);
+        if (oldId != newId)
+        {
+            if (!doesMarkerExist(newId))
+            {
+                markers_[index]->setId(newId);
+                rewriteLineEndpointMarkerIds(oldId, newId);
+            }
+            else
+            {
+                emscripten_console_error("Point with given id already exists!");
+            }
+        }
     }
     else
     {
@@ -884,6 +892,26 @@ void MapViewerEngine::updateLinesWithMarker(int markerId)
     else
     {
         emscripten_console_error("Marker with given ID doesn't exist");
+    }
+}
+
+void MapViewerEngine::removeLinesConnectedToMarker(int markerId)
+{
+    for (int i = 0; i < lines_.size(); i++)
+    {
+        if (lines_[i]->getStartMarkerId() == markerId || lines_[i]->getEndMarkerId() == markerId)
+        {
+            removeMesh(lines_[i]);
+            lines_.erase(lines_.begin() + i);
+        }
+    }
+}
+
+void MapViewerEngine::rewriteLineEndpointMarkerIds(int oldMarkerId, int newMarkerId)
+{
+    for (int i = 0; i < lines_.size(); i++)
+    {
+        lines_[i]->rewriteEndpointMarkerId(oldMarkerId, newMarkerId);
     }
 }
 

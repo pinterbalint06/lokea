@@ -36,6 +36,8 @@ private:
     void updateSingleMarker(MapMarker *markerPlane);
     void updateSingleLine(MapLine *line);
     void updateLinesWithMarker(int markerId);
+    void removeLinesConnectedToMarker(int markerId);
+    void rewriteLineEndpointMarkerIds(int oldMarkerId, int newMarkerId);
     void updateAllMarkers();
     void recalculateUVPerPixel();
     void limitVCoordinates();
@@ -50,15 +52,7 @@ public:
     MapViewerEngine(const std::string &canvasID, int width, int height);
     ~MapViewerEngine();
 
-    MapViewerSettings &getSettings() { return settings_; }
     float getZoomLevel() const { return zoomLevel_; }
-
-    void setSettings(MapViewerSettings newSettings)
-    {
-        settings_ = newSettings;
-        // call zoom with no change to recalculate zoom
-        zoomMapUV(0.0f, 0.0f, 0.0f);
-    }
 
     void moveMap(float deltaX, float deltaY);
     void loadMap(const std::string &url, int mapWidth, int mapHeight, emscripten::val onSuccess, emscripten::val onError);

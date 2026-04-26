@@ -164,8 +164,6 @@ void Renderer::updateMeshUBO(Mesh *mesh)
 
     // update material
     updateMaterialUBO(mesh->getMaterial());
-
-    mesh->prepareRender(currShader_);
 }
 
 void Renderer::render(const Scene *scene)
