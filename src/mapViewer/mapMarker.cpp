@@ -1,5 +1,4 @@
 #include <string>
-#include <cstring>
 #include <cmath>
 #include <vector>
 #include <memory>
@@ -14,8 +13,6 @@
 
 #include "mapViewer/mapMarker.h"
 
-constexpr int MAX_MARKER_REPETITIONS = 10;
-
 enum VertexIndex
 {
     TOP_LEFT = 0,
@@ -24,7 +21,7 @@ enum VertexIndex
     BOTTOM_RIGHT = 3
 };
 
-MapMarker::MapMarker(int id, const std::string &textureUrl, float u, float v, float width, float height) : Mesh(4 * MAX_MARKER_REPETITIONS, 6 * MAX_MARKER_REPETITIONS)
+MapMarker::MapMarker(int id, const std::string &textureUrl, float u, float v, float width, float height) : Mesh(4, 6)
 {
     id_ = id;
     u_ = u;
@@ -35,33 +32,40 @@ MapMarker::MapMarker(int id, const std::string &textureUrl, float u, float v, fl
     fixedToMap_ = false;
     rotation_ = 0.0f;
 
-    Vertex vertices[4 * MAX_MARKER_REPETITIONS];
+    std::vector<Vertex> &vertices = getVertices();
 
-    for (int i = 0; i < MAX_MARKER_REPETITIONS; i++)
-    {
-        int markerRepetitionId = i * 4;
-        //                                             x        y     z     w     u     v
-        vertices[markerRepetitionId + TOP_LEFT] = { -10.0f,  -10.0f, 0.0f, 1.0f, 0.0f, 0.0f };
-        vertices[markerRepetitionId + TOP_RIGHT] = { -10.0f,  -10.0f, 0.0f, 1.0f, 1.0f, 0.0f };
-        vertices[markerRepetitionId + BOTTOM_LEFT] = { -10.0f, -10.0f, 0.0f, 1.0f, 0.0f, 1.0f };
-        vertices[markerRepetitionId + BOTTOM_RIGHT] = { -10.0f, -10.0f, 0.0f, 1.0f, 1.0f, 1.0f };
-    }
+    float unitLeftX = -0.5f;
+    float unitRightX = 0.5f;
+    float unitTopY = 1.0f;
+    float unitBottomY = 0.0f;
 
-    uint32_t indices[6 * MAX_MARKER_REPETITIONS];
-    int indicesIndex = 0;
-    for (int i = 0; i < MAX_MARKER_REPETITIONS; i++)
-    {
-        int markerRepetitionId = i * 4;
-        indices[indicesIndex++] = markerRepetitionId + TOP_RIGHT;
-        indices[indicesIndex++] = markerRepetitionId + BOTTOM_LEFT;
-        indices[indicesIndex++] = markerRepetitionId + TOP_LEFT;
-        indices[indicesIndex++] = markerRepetitionId + TOP_RIGHT;
-        indices[indicesIndex++] = markerRepetitionId + BOTTOM_RIGHT;
-        indices[indicesIndex++] = markerRepetitionId + BOTTOM_LEFT;
-    }
+    vertices[TOP_LEFT].x = unitLeftX;
+    vertices[TOP_LEFT].y = unitTopY;
+    vertices[TOP_LEFT].w = 1.0f;
+    vertices[TOP_LEFT].u = 0.0f;
+    vertices[TOP_LEFT].v = 0.0f;
 
-    getVertices().assign(vertices, vertices + (sizeof(vertices) / sizeof(Vertex)));
-    getIndices().assign(indices, indices + (sizeof(indices) / sizeof(uint32_t)));
+    vertices[TOP_RIGHT].x = unitRightX;
+    vertices[TOP_RIGHT].y = unitTopY;
+    vertices[TOP_RIGHT].w = 1.0f;
+    vertices[TOP_RIGHT].u = 1.0f;
+    vertices[TOP_RIGHT].v = 0.0f;
+
+    vertices[BOTTOM_LEFT].x = unitLeftX;
+    vertices[BOTTOM_LEFT].y = unitBottomY;
+    vertices[BOTTOM_LEFT].w = 1.0f;
+    vertices[BOTTOM_LEFT].u = 0.0f;
+    vertices[BOTTOM_LEFT].v = 1.0f;
+
+    vertices[BOTTOM_RIGHT].x = unitRightX;
+    vertices[BOTTOM_RIGHT].y = unitBottomY;
+    vertices[BOTTOM_RIGHT].w = 1.0f;
+    vertices[BOTTOM_RIGHT].u = 1.0f;
+    vertices[BOTTOM_RIGHT].v = 1.0f;
+
+
+    std::vector<uint32_t> &indices = getIndices();
+    indices = { TOP_RIGHT, BOTTOM_LEFT, TOP_LEFT, TOP_RIGHT, BOTTOM_RIGHT, BOTTOM_LEFT };
 
     std::shared_ptr<Texture> texture = std::make_shared<Texture>(true, true);
     TextureOptions textureOptions;
@@ -94,192 +98,124 @@ void MapMarker::changeTexture(const std::string &textureUrl)
 
 void MapMarker::updateRenderPosition(const std::vector<Vec2> &positions, float screenWidth, float screenHeight, float totalMapWidth, float totalMapHeight, float mapRatioPerPixelX, float mapRatioPerPixelY)
 {
-    std::vector<Vertex> &vertices = getVertices();
+    float markerWidthPixels;
+    float markerHeightPixels;
 
-    float markerWidthInScreenPixels;
-    float markerHeightInScreenPixels;
-
-    bool isMapValid = (totalMapWidth > 0.0f && totalMapHeight > 0.0f);
+    bool isMapDimensionsValid = (totalMapWidth > 0.0f && totalMapHeight > 0.0f);
     bool isZoomValid = (mapRatioPerPixelX > 0.0f && mapRatioPerPixelY > 0.0f);
 
-    if (fixedToMap_ && isMapValid && isZoomValid)
+    if (fixedToMap_ && isMapDimensionsValid && isZoomValid)
     {
-        float markerWidthU = width_ / totalMapWidth;
-        float markerHeightU = height_ / totalMapHeight;
+        float markerWidthInUV = width_ / totalMapWidth;
+        float markerHeightInUV = height_ / totalMapHeight;
 
-        markerWidthInScreenPixels = markerWidthU / mapRatioPerPixelX;
-        markerHeightInScreenPixels = markerHeightU / mapRatioPerPixelY;
+        markerWidthPixels = markerWidthInUV / mapRatioPerPixelX;
+        markerHeightPixels = markerHeightInUV / mapRatioPerPixelY;
     }
     else
     {
-        markerWidthInScreenPixels = width_;
-        markerHeightInScreenPixels = height_;
+        markerWidthPixels = width_;
+        markerHeightPixels = height_;
     }
 
-    float normalizedHalfWidth = markerWidthInScreenPixels / screenWidth;
-    float normalizedFullHeight = (markerHeightInScreenPixels / screenHeight) * 2.0f;
+    float clipSpacePerPixelX = 2.0f / screenWidth;
+    float clipSpacePerPixelY = 2.0f / screenHeight;
 
-    float cosine = 1.0f;
-    float sine = 0.0f;
+    Mat4 scaleToPixelDimensions = Mat4::scale(markerWidthPixels, markerHeightPixels, 1.0f);
 
-    if (rotation_ != 0.0f)
-    {
-        cosine = cos(rotation_);
-        sine = sin(rotation_);
-    }
+    Mat4 applyRotation = Mat4::rotationZ(rotation_);
 
-    float planePerPixelX = 2.0f / screenWidth;
-    float planePerPixelY = 2.0f / screenHeight;
+    Mat4 scaleToClipSpace = Mat4::scale(clipSpacePerPixelX, clipSpacePerPixelY, 1.0f);
 
-    for (int i = 0; i < MAX_MARKER_REPETITIONS; i++)
-    {
-        int markerRepetitionId = i * 4;
+    meshData_.modelMatrix = scaleToClipSpace * applyRotation * scaleToPixelDimensions;
 
-        if (i < positions.size())
-        {
-            float planeX = positions[i].x;
-            float planeY = positions[i].y;
-
-            // left side is -half and right side is +half so it is centered along the x axis
-            // and add the whole height to the top so the bottom starts at the given coordinates
-            if (rotation_ != 0.0f)
-            {
-                float halfWidthPx = markerWidthInScreenPixels * 0.5f;
-                float fullHeightPx = markerHeightInScreenPixels;
-
-                // rotation formula: 
-                // x' = x*cos - y*sin
-                // y' = x*sin + y*cos
-                float topLeftX = (-halfWidthPx * cosine) - (fullHeightPx * sine);
-                float topLeftY = (-halfWidthPx * sine) + (fullHeightPx * cosine);
-
-                // both half width and height is positive so it is standard rotation formula (+w, +h)
-                float topRightX = (halfWidthPx * cosine) - (fullHeightPx * sine);
-                float topRightY = (halfWidthPx * sine) + (fullHeightPx * cosine);
-
-                // we only add the height to top so here y is 0
-                // bottom left (-w, 0) is -normalizedHalfWidth
-                float bottomLeftX = -halfWidthPx * cosine;
-                float bottomLeftY = -halfWidthPx * sine;
-
-                // bottom right (+w, 0)
-                float bottomRightX = halfWidthPx * cosine;
-                float bottomRightY = halfWidthPx * sine;
-
-                // left is -normalizedHalfWidth so it is -widthCosine (-w, +h)
-                // x' = -x*cos - y*sin 
-                float topLeftPlaneOffsetX = topLeftX * planePerPixelX;
-                float topLeftPlaneOffsetY = topLeftY * planePerPixelY;
-
-                vertices[markerRepetitionId + TOP_LEFT].x = planeX + topLeftPlaneOffsetX;
-                vertices[markerRepetitionId + TOP_LEFT].y = planeY + topLeftPlaneOffsetY;
-
-                float topRightPlaneOffsetX = topRightX * planePerPixelX;
-                float topRightPlaneOffsetY = topRightY * planePerPixelY;
-
-                vertices[markerRepetitionId + TOP_RIGHT].x = planeX + topRightPlaneOffsetX;
-                vertices[markerRepetitionId + TOP_RIGHT].y = planeY + topRightPlaneOffsetY;
-
-                float bottomLeftPlaneOffsetX = bottomLeftX * planePerPixelX;
-                float bottomLeftPlaneOffsetY = bottomLeftY * planePerPixelY;
-
-                vertices[markerRepetitionId + BOTTOM_LEFT].x = planeX + bottomLeftPlaneOffsetX;
-                vertices[markerRepetitionId + BOTTOM_LEFT].y = planeY + bottomLeftPlaneOffsetY;
-
-                float bottomRightPlaneOffsetX = bottomRightX * planePerPixelX;
-                float bottomRightPlaneOffsetY = bottomRightY * planePerPixelY;
-
-                vertices[markerRepetitionId + BOTTOM_RIGHT].x = planeX + bottomRightPlaneOffsetX;
-                vertices[markerRepetitionId + BOTTOM_RIGHT].y = planeY + bottomRightPlaneOffsetY;
-            }
-            else
-            {
-                // center x around calculated coordinate
-                float leftX = planeX - normalizedHalfWidth;
-                float rightX = planeX + normalizedHalfWidth;
-
-                vertices[markerRepetitionId + TOP_LEFT].x = leftX;
-                vertices[markerRepetitionId + TOP_RIGHT].x = rightX;
-                vertices[markerRepetitionId + BOTTOM_LEFT].x = leftX;
-                vertices[markerRepetitionId + BOTTOM_RIGHT].x = rightX;
-
-                // put the bottom to the given coordinate
-                // so the markers bottom middle point marks the point
-                float topY = planeY + normalizedFullHeight;
-                float bottomY = planeY;
-
-                vertices[markerRepetitionId + TOP_LEFT].y = topY;
-                vertices[markerRepetitionId + TOP_RIGHT].y = topY;
-                vertices[markerRepetitionId + BOTTOM_LEFT].y = bottomY;
-                vertices[markerRepetitionId + BOTTOM_RIGHT].y = bottomY;
-            }
-        }
-        else
-        {
-            // hide unused offscreen
-            for (int j = 0; j < 4; ++j)
-            {
-                vertices[markerRepetitionId + j].x = -10.0f;
-                vertices[markerRepetitionId + j].y = -10.0f;
-            }
-        }
-    }
-
-    // update gpu
+    setInstances(positions);
     setUpOpenGL();
 }
 
 bool MapMarker::doesPointOverlapRepetition(float pointX, float pointY, int repetitionIndex)
 {
-    int offset = repetitionIndex * 4;
+    bool overlaps = false;
+    int repetitionCount = instanceOffsets_.size();
 
-    int cornerIndices[4];
-    cornerIndices[0] = TOP_LEFT;
-    cornerIndices[1] = TOP_RIGHT;
-    cornerIndices[2] = BOTTOM_LEFT;
-    cornerIndices[3] = BOTTOM_RIGHT;
-
-    std::vector<Vertex> &vertices = getVertices();   
-
-    float minX = vertices[offset + cornerIndices[0]].x;
-    float maxX = vertices[offset + cornerIndices[0]].x;
-    float minY = vertices[offset + cornerIndices[0]].y;
-    float maxY = vertices[offset + cornerIndices[0]].y;
-
-    for (int i = 1; i < 4; i++)
+    if (repetitionIndex >= 0 && repetitionIndex < repetitionCount)
     {
-        float vX = vertices[offset + cornerIndices[i]].x;
-        float vY = vertices[offset + cornerIndices[i]].y;
+        int cornerIndices[4];
+        cornerIndices[0] = TOP_LEFT;
+        cornerIndices[1] = TOP_RIGHT;
+        cornerIndices[2] = BOTTOM_LEFT;
+        cornerIndices[3] = BOTTOM_RIGHT;
 
-        if (vX < minX)
+        std::vector<Vertex> &vertices = getVertices();
+        const Vec2 &instanceOffset = instanceOffsets_[repetitionIndex];
+
+        float boundingBoxMinX = 0.0f;
+        float boundingBoxMaxX = 0.0f;
+        float boundingBoxMinY = 0.0f;
+        float boundingBoxMaxY = 0.0f;
+
+        for (int i = 0; i < 4; i++)
         {
-            minX = vX;
-        }
-        if (vX > maxX)
-        {
-            maxX = vX;
+            float unitVertexX = vertices[cornerIndices[i]].x;
+            float unitVertexY = vertices[cornerIndices[i]].y;
+
+            Vec4 unitVertex(unitVertexX, unitVertexY, 0.0f, 1.0f);
+            Vec4 transformedVertex = meshData_.modelMatrix * unitVertex;
+
+            float finalScreenPositionX = transformedVertex.x + instanceOffset.x;
+            float finalScreenPositionY = transformedVertex.y + instanceOffset.y;
+
+            if (i == 0)
+            {
+                boundingBoxMinX = finalScreenPositionX;
+                boundingBoxMaxX = finalScreenPositionX;
+                boundingBoxMinY = finalScreenPositionY;
+                boundingBoxMaxY = finalScreenPositionY;
+            }
+            else
+            {
+                if (finalScreenPositionX < boundingBoxMinX)
+                {
+                    boundingBoxMinX = finalScreenPositionX;
+                }
+                else
+                {
+                    if (finalScreenPositionX > boundingBoxMaxX)
+                    {
+                        boundingBoxMaxX = finalScreenPositionX;
+                    }
+                }
+
+                if (finalScreenPositionY < boundingBoxMinY)
+                {
+                    boundingBoxMinY = finalScreenPositionY;
+                }
+                else
+                {
+                    if (finalScreenPositionY > boundingBoxMaxY)
+                    {
+                        boundingBoxMaxY = finalScreenPositionY;
+                    }
+                }
+            }
         }
 
-        if (vY < minY)
-        {
-            minY = vY;
-        }
-        if (vY > maxY)
-        {
-            maxY = vY;
-        }
+        bool isInsideHorizontalLimits = (pointX >= boundingBoxMinX && pointX <= boundingBoxMaxX);
+        bool isInsideVerticalLimits = (pointY >= boundingBoxMinY && pointY <= boundingBoxMaxY);
+
+        overlaps = (isInsideHorizontalLimits && isInsideVerticalLimits);
     }
 
-    // if pointX in [minX;maxX] and y in [minY;maxY] then the point overlaps the marker (rectangle)
-    return (pointX >= minX && pointX <= maxX && pointY >= minY && pointY <= maxY);
+    return overlaps;
 }
 
 bool MapMarker::doesPointOverlap(float pointX, float pointY)
 {
+    int repetitionCount = static_cast<int>(instanceOffsets_.size());
     int i = 0;
-    while (i < MAX_MARKER_REPETITIONS && !doesPointOverlapRepetition(pointX, pointY, i))
+    while (i < repetitionCount && !doesPointOverlapRepetition(pointX, pointY, i))
     {
         i++;
     }
-    return i < MAX_MARKER_REPETITIONS;
+    return i < repetitionCount;
 }

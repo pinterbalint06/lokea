@@ -6,6 +6,7 @@
 #include <memory>
 #include <vector>
 
+#include "core/math/vector.h"
 #include "core/resources/material.h"
 #include "core/resources/vertex.h"
 #include "core/math/matrix.h"
@@ -25,7 +26,8 @@ struct MeshData
 {
     Mat4 modelMatrix;
 };
-
+// TODO: megcsinalni a 0 meretes cuccot
+// TODO: c++-bol el lehet tavolitani w-t
 class Mesh
 {
 private:
@@ -35,12 +37,21 @@ private:
     GLuint ebo_;
     // vertax array object
     GLuint vao_;
+    GLuint instanceVbo_;
+    int vertexBufferSizeBytes_;
+    int instanceBufferSizeBytes_;
+    bool staticBuffersInitialized_;
 
     Materials::Material material_;
+
+    void initializeStaticBuffers();
+    void updateVertexBuffer();
+    void updateInstanceBuffer();
 
 protected:
     std::vector<Vertex> vertices_;
     std::vector<uint32_t> indices_;
+    std::vector<Vec2> instanceOffsets_;
     MeshData meshData_;
 
 public:
@@ -52,6 +63,8 @@ public:
     // getters
     int getVertexCount() const { return static_cast<int>(vertices_.size()); }
     int getIndexCount() const { return static_cast<int>(indices_.size()); }
+    int getInstanceCount() const { return static_cast<int>(instanceOffsets_.size()); }
+
     std::vector<Vertex> &getVertices() { return vertices_; }
     const std::vector<Vertex> &getVertices() const { return vertices_; }
     std::vector<uint32_t> &getIndices() { return indices_; }
@@ -64,6 +77,7 @@ public:
 
     // setters
     void setMaterial(Materials::Material material) { material_ = material; }
+    void setInstances(const std::vector<Vec2> &instances) { instanceOffsets_ = instances; }
 
     virtual void prepareRender(Shaders::Shader *shader);
 

@@ -187,8 +187,15 @@ void Renderer::render(const Scene *scene)
             // bind current mesh
             glBindVertexArray(currMesh->getVAO());
 
-            // draw mesh
-            glDrawElements(GL_TRIANGLES, currMesh->getIndexCount(), GL_UNSIGNED_INT, 0);
+            int instanceCount = currMesh->getInstanceCount();
+            if (instanceCount > 0)
+            {
+                glDrawElementsInstanced(GL_TRIANGLES, currMesh->getIndexCount(), GL_UNSIGNED_INT, 0, instanceCount);
+            }
+            else
+            {
+                glDrawElements(GL_TRIANGLES, currMesh->getIndexCount(), GL_UNSIGNED_INT, 0);
+            }
         }
         // unbind mesh
         glBindVertexArray(0);
