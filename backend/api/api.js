@@ -45,7 +45,6 @@ router.post("/signup",
         body("email")
             .isEmail().withMessage("Hibás email formátum")
             .isLength({ min: 5, max: 254 }).withMessage("Email max 254 karakter"),
-
         body("password")
             .isLength({ min: 8, max: 60 }).withMessage("Jelszó hossza 8-60 karakter")
             .matches(/\d/).withMessage("Kell benne szám")

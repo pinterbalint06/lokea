@@ -18,7 +18,7 @@ export async function nyelvSzinkronizalas() {
 
 export async function osszesUser() {
     try {
-        let response = await fetch("/api/admin/users");
+        let response = await fetch("/api/admin/getUsers");
         let data = await response.json();
         return { users: data.users, total: data.total };
     } catch (error) {
@@ -29,7 +29,7 @@ export async function osszesUser() {
 
 export async function getUser(id) {
     try {
-        let response = await fetch(`/api/admin/user?id=${id}`);
+        let response = await fetch(`/api/admin/getUser?id=${id}`);
         let data = await response.json();
         return data.users[0];
     } catch (error) {

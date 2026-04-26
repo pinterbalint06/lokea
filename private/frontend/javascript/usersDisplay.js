@@ -65,12 +65,13 @@ export async function usersDisplayre(variables) {
     let statusDiv = document.createElement('div');
     let statusDivCim = createHTMLelement('h6', ["h6"], i18next.t('admin:users.user_status'));
     let statuszok = [i18next.t('admin:users.any'), i18next.t('admin:users.active'), i18next.t('admin:users.deleted')];
+    let statusValues = ['Any', 'Active', 'Deleted'];
     for (let i = 0; i < statuszok.length; i++) {
         let formcheck = createHTMLelement('div', ["form-check"]);
         let radioButton = document.createElement('input');
         radioButton.type = "radio";
         radioButton.classList.add("form-check-input");
-        radioButton.id = `status${statuszok[i]}`;
+        radioButton.id = `status${statusValues[i]}`;
         radioButton.name = "sort1";
         if (i === 0) radioButton.checked = true;
         radioButton.addEventListener("change", async function () {
@@ -78,7 +79,7 @@ export async function usersDisplayre(variables) {
             let data = await sortedUser(getFilterValues());
             frissitUserTablazat(data.users, data.total, variables);
         });
-        let label = labelGeneral(`status${statuszok[i]}`, statuszok[i], ["form-check-label"]);
+        let label = labelGeneral(`status${statusValues[i]}`, statuszok[i], ["form-check-label"]);
         formcheck.appendChild(radioButton);
         formcheck.appendChild(label);
         statusDiv.appendChild(formcheck);

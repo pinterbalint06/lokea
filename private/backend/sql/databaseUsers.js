@@ -186,7 +186,7 @@ async function uploadProfilePic(filepath, width, height, user_id) {
     }
 }
 
-async function updateUserByAdmin(user_id, username, email, role, is_2fa) {
+async function updateUserByAdmin(user_id, username, email, role = null, is_2fa = null) {
     let connection;
     let affectedRows = 0;
     try {
