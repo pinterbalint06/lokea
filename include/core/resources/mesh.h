@@ -26,7 +26,6 @@ struct MeshData
 {
     Mat4 modelMatrix;
 };
-// TODO: megcsinalni a 0 meretes cuccot
 // TODO: c++-bol el lehet tavolitani w-t
 class Mesh
 {

@@ -755,8 +755,8 @@ void MapViewerEngine::fitMapHorizontally()
 
 void MapViewerEngine::setCanvasSize(int width, int height)
 {
-    width_ = width;
-    height_ = height;
+    width_ = std::max(1, width);
+    height_ = std::max(1, height);
 
     std::string canvID = "#" + canvas_;
     emscripten_set_canvas_element_size(canvID.c_str(), width_, height_);

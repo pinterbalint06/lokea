@@ -61,10 +61,12 @@ void Engine::setProjectionType(int type)
 
 void Engine::setCanvasSize(int width, int height)
 {
-    scene_->getCamera()->setImageDimensions(width, height);
+    int finalWidth = std::max(1, width);
+    int finalHeight = std::max(1, height);
+    scene_->getCamera()->setImageDimensions(finalWidth, finalHeight);
     std::string canvID = "#" + canvas_;
-    emscripten_set_canvas_element_size(canvID.c_str(), width, height);
-    renderer_->setImageDimensions(width, height);
+    emscripten_set_canvas_element_size(canvID.c_str(), finalWidth, finalHeight);
+    renderer_->setImageDimensions(finalWidth, finalHeight);
 }
 
 void Engine::rotateCamera(float dPitch, float dYaw)
