@@ -512,6 +512,9 @@ MapViewerEngine::MapViewerEngine(const std::string &canvasID, int width, int hei
     setZoom(5.0f / 23.0f); // calculated default zoom so the camera shows only the plane and nothing else
     // it is calculated from the camera's getOrthoHeight interpolation = 2 so top is 1
 
+    uPerPixel_ = 0.0f;
+    vPerPixel_ = 0.0f;
+
     mapWidth_ = -1.0f;
     mapHeight_ = -1.0f;
     isMapLoaded_ = false;
