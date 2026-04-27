@@ -146,7 +146,7 @@ export class ModalManager {
             holdToUnlock: 3000,
             isStatic: true,
             onEarlyClick: () => {
-                this.bus.emit(EVENTS.TOAST_SHOW, { msg: "Tartsd lenyomva a gombot a megerősítéshez" });
+                this.bus.emit(EVENTS.TOAST_SHOW, { msg: "Tartsd lenyomva a gombot a megerősítéshez", type: "warning" });
             }
         });
 

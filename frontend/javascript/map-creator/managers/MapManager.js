@@ -99,7 +99,7 @@ export class MapManager {
     async #saveMap(idToSave) {
         this.store.setState({ isBusy: { map: "Térkép mentése folyamatban, kérlek várj!" } });
 
-        this.bus.emit(EVENTS.TOAST_SHOW, { id: `savingMap${idToSave}`, msg: "Térkép mentése folyamatban", closable: false, autohide: false, spinner: true });
+        this.bus.emit(EVENTS.TOAST_SHOW, { id: `savingMap${idToSave}`, msg: "Térkép mentése folyamatban", type: "info", closable: false, autohide: false, spinner: true });
         try {
             let currentMap = this.maps[idToSave];
 
@@ -180,7 +180,7 @@ export class MapManager {
 
             this.bus.emit(EVENTS.MAP_SWITCHED, { mapId });
             let randomIdForToast = Math.floor(Math.random() * 100000);
-            this.bus.emit(EVENTS.TOAST_SHOW, { id: `mapSwitching${mapId}-${randomIdForToast}`, msg: "Váltás: " + mapData.name, closable: false, autohide: false });
+            this.bus.emit(EVENTS.TOAST_SHOW, { id: `mapSwitching${mapId}-${randomIdForToast}`, msg: "Váltás: " + mapData.name, type: "info", closable: false, autohide: false });
 
             this.activeLoadGeneration++
             const loadGeneration = this.activeLoadGeneration;
@@ -236,7 +236,7 @@ export class MapManager {
     }
 
     async #renameMap(mapId, newTitle) {
-        this.bus.emit(EVENTS.TOAST_SHOW, { msg: "Térkép átnevezése folyamatban", id: `renamingMap${mapId}`, closable: false, autohide: false, spinner: true });
+        this.bus.emit(EVENTS.TOAST_SHOW, { msg: "Térkép átnevezése folyamatban", type: "info", id: `renamingMap${mapId}`, closable: false, autohide: false, spinner: true });
         try {
             if (!this.maps[mapId]) {
                 throw new Error("A térkép nem található!");
@@ -279,7 +279,7 @@ export class MapManager {
             try {
                 this.store.setState({ isBusy: { map: "Térkép törlése folyamatban, kérlek várj!" } });
 
-                this.bus.emit(EVENTS.TOAST_SHOW, { id: `deletingMap${mapId}`, msg: "Térkép törlése folyamatban", closable: false, autohide: false, spinner: true });
+                this.bus.emit(EVENTS.TOAST_SHOW, { id: `deletingMap${mapId}`, msg: "Térkép törlése folyamatban", type: "info", closable: false, autohide: false, spinner: true });
                 if (mapId != CONSTANTS.TEMP_ID) {
                     if (mapId) {
                         await deleteMapApi(mapId);

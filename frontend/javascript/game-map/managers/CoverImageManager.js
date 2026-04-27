@@ -124,6 +124,7 @@ export class CoverImageManager {
             const randomToastId = Math.random().toString();
             this.bus.emit(EVENTS.TOAST_SHOW, {
                 msg: "Borítókép törlése",
+                type: "info",
                 id: randomToastId,
                 autohide: false,
                 spinner: true

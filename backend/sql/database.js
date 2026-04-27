@@ -18,6 +18,13 @@ const pool = mysql.createPool({
 //     return rows;
 // }
 
+function isIdUpdateSuccessful(result) {
+    const match = result?.info?.match(/Rows matched:\s*(\d+)/);
+    const rowsMatched = match ? parseInt(match[1]) : 0;
+
+    return rowsMatched == 1;
+}
+
 async function newUser(username, email, password) {
     let success = false;
     let error;
@@ -499,7 +506,7 @@ async function updateImagePath(connection, imageId, filepath) {
         WHERE image_id = ?
     `;
     const [result] = await connection.execute(query, [filepath, imageId]);
-    return result.affectedRows == 1;
+    return isIdUpdateSuccessful(result);
 }
 
 async function getMapImage(mapId) {
@@ -698,7 +705,7 @@ async function updatePointCoordinates(connection, pointId, u, v) {
         WHERE points.point_id = ?
     `;
     const [result] = await connection.execute(query, [u, v, pointId]);
-    return result.affectedRows == 1;
+    return isIdUpdateSuccessful(result);
 }
 
 async function updatePointNorthDirection(connection, pointId, northDirection) {
@@ -708,7 +715,7 @@ async function updatePointNorthDirection(connection, pointId, northDirection) {
         WHERE points.point_id = ?
     `;
     const [result] = await connection.execute(query, [northDirection, pointId]);
-    return result.affectedRows == 1;
+    return isIdUpdateSuccessful(result);
 }
 
 async function updatePointImage(connection, pointId, imageId) {
@@ -718,7 +725,7 @@ async function updatePointImage(connection, pointId, imageId) {
         WHERE points.point_id = ?
     `;
     const [result] = await connection.execute(query, [imageId, pointId]);
-    return result.affectedRows == 1;
+    return isIdUpdateSuccessful(result);
 }
 
 async function updateMapTitle(connection, mapId, title) {
@@ -728,7 +735,7 @@ async function updateMapTitle(connection, mapId, title) {
         WHERE map.map_id = ?
     `;
     const [result] = await connection.execute(query, [title, mapId]);
-    return result.affectedRows == 1;
+    return isIdUpdateSuccessful(result);
 }
 
 async function deleteImageById(connection, imageId) {
@@ -812,7 +819,7 @@ async function updateConnectionDirections(connection, connectionId, dirStartToEn
         WHERE connection_id = ?
     `;
     const [result] = await connection.execute(query, [dirStartToEnd, dirEndToStart, connectionId]);
-    return result.affectedRows == 1;
+    return isIdUpdateSuccessful(result);
 }
 
 async function isConnectionCrossMap(connection, connectionId) {
@@ -833,7 +840,7 @@ async function getGameMapDetails(gameMapID) {
     const query = `
         SELECT
             game_maps.creator_id,
-            users.username AS creator_name,
+            COALESCE(users.username, 'Ismeretlen felhasználó') AS creator_name,
             game_maps.title,
             COALESCE(
                 (
@@ -851,7 +858,7 @@ async function getGameMapDetails(gameMapID) {
             game_maps.game_created,
             game_maps.game_description
         FROM game_maps
-            INNER JOIN users ON (game_maps.creator_id = users.user_id)
+            LEFT JOIN users ON (game_maps.creator_id = users.user_id)
         WHERE game_maps.game_maps_id = ?
     `;
     const [rows] = await pool.execute(query, [gameMapID, gameMapID, gameMapID]);
@@ -861,11 +868,11 @@ async function getGameMapDetails(gameMapID) {
 async function getTopScoresForGameMap(gameMapID) {
     const query = `
         SELECT 
-            users.username,
+            COALESCE(users.username, 'Ismeretlen felhasználó') AS username,
             scores.score,
             scores.score_time
         FROM scores
-            INNER JOIN users ON (scores.user_id = users.user_id)
+            LEFT JOIN users ON (scores.user_id = users.user_id)
         WHERE scores.game_maps_id = ?
         ORDER BY scores.score DESC
         LIMIT 5
@@ -902,7 +909,7 @@ async function updateGameMapCoverImage(connection, gameMapId, imageId) {
         WHERE game_maps.game_maps_id = ?
     `;
     const [result] = await connection.execute(query, [imageId, gameMapId]);
-    return result.affectedRows == 1;
+    return isIdUpdateSuccessful(result);
 }
 
 async function updateGameMapDetails(connection, gameMapId, title, description) {
@@ -913,7 +920,7 @@ async function updateGameMapDetails(connection, gameMapId, title, description) {
         WHERE game_maps.game_maps_id = ?
     `;
     const [result] = await connection.execute(query, [title, description, gameMapId]);
-    return result.affectedRows == 1;
+    return isIdUpdateSuccessful(result);
 }
 
 async function getGameMapComments(gameMapId, page) {
@@ -921,12 +928,12 @@ async function getGameMapComments(gameMapId, page) {
     const offset = (safePage - 1) * 50;
     const query = `
         SELECT 
-            users.username,
+            COALESCE(users.username, 'Ismeretlen felhasználó') AS username,
             game_maps_comments.rating,
             game_maps_comments.comment_text,
             game_maps_comments.created_at
         FROM game_maps_comments
-            INNER JOIN users ON (game_maps_comments.user_id = users.user_id)
+            LEFT JOIN users ON (game_maps_comments.user_id = users.user_id)
         WHERE game_maps_comments.game_maps_id = ?
         ORDER BY game_maps_comments.created_at DESC
         LIMIT 50 OFFSET ${offset}
@@ -983,7 +990,15 @@ async function updateUserCommentOnGameMap(connection, gameMapId, userId, comment
         WHERE game_maps_comments.game_maps_id = ? AND game_maps_comments.user_id = ?
     `;
     const [result] = await connection.execute(query, [commentText, rating, gameMapId, userId]);
-    return result.affectedRows > 0;
+    console.log(result.info);
+    console.log(result);
+
+    const match = result.info.match(/Rows matched:\s*(\d+)/);
+    console.log(match);
+    const rowsMatched = match ? parseInt(match[1]) : 0;
+    console.log('Rows matched:', rowsMatched);
+
+    return isIdUpdateSuccessful(result);
 }
 
 async function deleteUserCommentOnGameMap(connection, gameMapId, userId) {
@@ -992,7 +1007,7 @@ async function deleteUserCommentOnGameMap(connection, gameMapId, userId) {
         WHERE game_maps_comments.game_maps_id = ? AND game_maps_comments.user_id = ?
     `;
     const [result] = await connection.execute(query, [gameMapId, userId]);
-    return result.affectedRows > 0;
+    return result.affectedRows == 1;
 }
 
 async function getAllImageIdsForGameMap(connection, gameMapId) {

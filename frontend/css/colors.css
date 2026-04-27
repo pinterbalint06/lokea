@@ -10,6 +10,18 @@
     backdrop-filter: blur(12px);
 }
 
+.warningColor {
+    background-color: var(--state-warning) !important;
+    border-color: var(--state-warning) !important;
+    backdrop-filter: blur(12px);
+}
+
+.infoColor {
+    background-color: var(--state-info) !important;
+    border-color: var(--state-info) !important;
+    backdrop-filter: blur(12px);
+}
+
 .successColor:disabled {
     opacity: 0.5;
 }

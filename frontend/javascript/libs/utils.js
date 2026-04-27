@@ -15,6 +15,12 @@ export function showToast(container, message, type = "", isClosable, options = {
         case "danger":
             typeClass = "dangerColor";
             break;
+        case "warning":
+            typeClass = "warningColor";
+            break;
+        case "info":
+            typeClass = "infoColor";
+            break;
         default:
             typeClass = "uveg";
             break;

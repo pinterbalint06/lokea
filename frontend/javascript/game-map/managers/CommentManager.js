@@ -362,7 +362,7 @@ export class CommentManager {
         children.push(ratingWrapper);
 
         const commentText = createElement("p", { class: "comment-text mb-0 mt-2" });
-        commentText.innerText = comment.comment_text;
+        commentText.innerText = comment.comment_text || "";
         children.push(commentText);
 
         return createElement("article", { class: "comment-card" }, children);
@@ -428,7 +428,8 @@ export class CommentManager {
                         this.#showUserCommentSection();
 
                         this.bus.emit(EVENTS.TOAST_SHOW, {
-                            msg: "Nincs változás a hozzászólásban."
+                            msg: "Nincs változás a hozzászólásban.",
+                            type: "info"
                         });
                     }
                 } catch (error) {
