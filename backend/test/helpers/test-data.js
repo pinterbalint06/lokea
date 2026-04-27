@@ -15,7 +15,7 @@ const negativeIntegers = [
 
 const negativeNumbers = [
     ...negativeIntegers,
-    -0.0021, // negative decimal number
+    -0.21, // negative decimal number
     -1231231231231231 // large negative integer
 ];
 

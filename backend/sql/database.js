@@ -990,14 +990,7 @@ async function updateUserCommentOnGameMap(connection, gameMapId, userId, comment
         WHERE game_maps_comments.game_maps_id = ? AND game_maps_comments.user_id = ?
     `;
     const [result] = await connection.execute(query, [commentText, rating, gameMapId, userId]);
-    console.log(result.info);
-    console.log(result);
-
-    const match = result.info.match(/Rows matched:\s*(\d+)/);
-    console.log(match);
-    const rowsMatched = match ? parseInt(match[1]) : 0;
-    console.log('Rows matched:', rowsMatched);
-
+    
     return isIdUpdateSuccessful(result);
 }
 
