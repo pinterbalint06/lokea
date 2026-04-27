@@ -267,7 +267,6 @@ async function sendGuess() {
     if (!guessSent) {
         guessSent = true;
         stopRoundTimer();
-        document.getElementById('bottomRight').classList.add('expanded');
         document.getElementById("guessBtn").disabled = true;
         document.getElementById("pictureFullScreenBtn").disabled = true;
         canPlaceMarker = false;
@@ -299,17 +298,24 @@ function showAnswer(response) {
         gameMapsIndex = response.mapI;
         nextMap();
     }
-    document.getElementById(mapCanvasId).classList.add("full");
-    placeMarkerByUV(1, response.pointu, response.pointv, 24.0, 32.0, "ready");
-    if (doesMarkerExist(0)) {
-        connectMarker(0, 1, 0);
-    }
-    movetoMarker(response.pointx, response.pointy);
+
     const panel = document.getElementById("guessPanel");
     document.getElementById("guessPanelScore").textContent = response.score ?? 0;
     document.getElementById("guessPanelDistance").textContent = response.distance != null ? `Távolság: ${response.distance} px` : "Rossz térkép vagy nincs jelölő";
     document.getElementById("guessPanelTotal").textContent = response.totalScore ?? 0;
     panel.classList.add("open");
+
+    setTimeout(() => {
+        document.getElementById(mapCanvasId).classList.add("full");
+        document.getElementById('bottomRight').classList.add('expanded');
+        placeMarkerByUV(1, response.pointu, response.pointv, 24.0, 32.0, "ready");
+        if (doesMarkerExist(0)) {
+            connectMarker(0, 1, 0);
+        }
+        setTimeout(() => {
+            movetoMarker(response.pointx, response.pointy);
+        }, 500);
+    }, 320);
 }
 
 async function fetchGameData(url) {

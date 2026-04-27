@@ -29,7 +29,7 @@ kesz!!!!--tesztelések
 kesz--server oldali ellenorzesek
 kesz--adott kör kiirása
 kesz--térkép nevének kiirása
-kesz--css szebbre valo megcsinalasa
+kesz--css szebbre valo megcsinalasareview_palya_oldal_ag
 kesz!!!!--tranzakciokezeles
 kesz--reszponziv javitas
 !!!!--svg-k helyes használata
@@ -41,6 +41,8 @@ kesz--térképváltoztatás csak ha van több
 --végpontok átnevezése
 kesz--idő visszaadasa
 kesz--ido resetnel jora
+--vegso panel a finish_game_sessionbol kapja az adatokat
+--ne induljon uj jatek f5nel ha vege a kornek
 
 !!!!--palyak kedvencre tetele
 kesz--rendezés fix
