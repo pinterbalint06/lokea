@@ -2,6 +2,8 @@ const request = require('supertest');
 const express = require('express');
 const db = require('../../sql/admin/databaseLogs.js');
 const auth = require('../../utils/auth.js');
+const enTranslations = require('../../locales/en/admin.json');
+const huTranslations = require('../../locales/hu/admin.json');
 
 jest.mock('../../sql/admin/databaseLogs.js');
 
@@ -28,7 +30,18 @@ const app = express();
 app.use(express.json());
 
 app.use((req, res, next) => {
-    if (!req.session) req.session = {};
+    if (!req.session) req.session = { userLanguage: 'en' };
+    req.t = (key) => {
+        const lang = req.session.userLanguage || 'en';
+        const translations = lang === 'en' ? enTranslations : huTranslations;
+        const [namespace, ...keys] = key.split(':');
+        const keyPath = keys.join(':');
+
+        if (namespace !== 'admin') return key;
+        const result = keyPath.split('.').reduce((obj, k) => obj && obj[k] !== undefined ? obj[k] : undefined, translations);
+        return result || key;
+    };
+
     next();
 });
 
@@ -58,14 +71,14 @@ describe('Admin Logs API Átfogó Tesztek', () => {
         it('SIKER - 200, alapértelmezett adatok lekérése', async () => {
             db.getLogs.mockResolvedValue({ total: 2, rows: [{}, {}] });
             const res = await request(app).get('/api/admin/getLogs').expect(200);
-            expect(res.body.message).toBe("Sikeres lekérés");
+            expect(res.body.message).toBe(enTranslations.logsApi.fetch_success);
             expect(res.body.logs).toHaveLength(2);
         });
 
         it('HIBA - 500, ha az adatbázis összeomlik', async () => {
             db.getLogs.mockRejectedValue(new Error("DB hiba"));
             const res = await request(app).get('/api/admin/getLogs').expect(500);
-            expect(res.body.error).toBe("Hiba a lekérdezés során");
+            expect(res.body.error).toBe(enTranslations.logsApi.fetch_error);
         });
     });
 
@@ -177,7 +190,7 @@ describe('Admin Logs API Átfogó Tesztek', () => {
         it('HIBA - 500, ha hiba történik az exportálás során', async () => {
             db.sortedLogs.mockRejectedValue(new Error("Export failure"));
             const res = await request(app).post('/api/admin/exportLogs').send({}).expect(500);
-            expect(res.body.error).toBe("Export error");
+            expect(res.body.error).toBe(enTranslations.logsApi.export_error);
         });
     });
 });

@@ -1,7 +1,0 @@
-      "collectCoverageFrom": [
-      "coverageDirectory": "G:\\sulomulo\\gatya\\lokea\\backend\\coverage",
-      "rootDir": "G:\\sulomulo\\gatya\\lokea",
-      "roots": [
-    "collectCoverageFrom": [
-    "coverageDirectory": "G:\\sulomulo\\gatya\\lokea\\backend\\coverage",
-    "rootDir": "G:\\sulomulo\\gatya\\lokea",

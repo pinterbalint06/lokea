@@ -1,35 +1,12 @@
 TODO - egész
 -reszponzivitás, sötétmód
--nagynézetben sidebar, kisnézetben navbar
--email rendszer egyedi linkek
--forditás
--oldal nyelv egységesités
+-forditás response.error/message-re
 
 TODO - dashboard (main)
 -check: diagram nulla adattal mit csinal
 
-TODO - settings
--rendezés, javitás
--minden fetch -> fetch.js, ott csak fetch legyen
--settings+users -> validálás
-
-TODO - devlog
--suneditor beepitese
-
-TODO - feature flags
--esetleges játékmódok tiltása
-
-test tools oldal
-transactions oldal
 
 hibak amiket javitani kell:
--stack trace
 -fetch.js -> tovabbdobja a hibat olyan helyeken, ahol kesobb nincs try-catch
--userSelfUpdate hiba - rolenál backend oldalon nincs kezelve a role
-
-kerdes:
--compare attetele database.js-be
--kell test tools?
--kell transactions?
--filesba mit kene? 
--kell 2fa? 
+-teszt: update, replace, insert, delete nel vizsgalat, hogy meg lett e hivva a commit, roleback, begintransaction
+-teszt: megnezni, hogy tenyleg azt adja e vissza, amit kell, nem sor hosszusagot nezni

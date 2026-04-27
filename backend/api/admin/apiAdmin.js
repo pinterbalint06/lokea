@@ -16,12 +16,12 @@ Chart.register(...registerables);
 router.get('/getLanguage', (request, response) => {
     try {
         if (!request.session) {
-            throw new Error("Session hiányzik");
+            throw new Error("Session is missing");
         }
         let language = request.session.userLanguage;
         response.status(200).json({ language: request.session.userLanguage });
     } catch (error) {
-        response.status(500).json({ error: "Hiba a nyelv lekérdezésekor" });
+        response.status(500).json({ error: request.t('admin:adminApi.language_fetch_error') });
     }
 
 });
@@ -34,7 +34,7 @@ router.get('/getDashboardInfo', async (request, response) => {
 
         response.status(200).json({ playerCount, activePlayerCount, logsPreview: logsPreview.rows });
     } catch (error) {
-        response.status(500).json({ error: "Hiba a dashboard információk lekérdezésekor" });
+        response.status(500).json({ error: request.t('admin:adminApi.dashboard_info_error') });
     }
 });
 
@@ -46,32 +46,32 @@ router.get('/chart/:type', async (request, response) => {
         switch (type) {
             case 'activity-day':
                 dbData = await databaseAdmin.getUserActivityByDay();
-                label = 'Napi aktivitás';
+                label = request.t('admin:adminApi.chart_daily_activity');
                 xKey = 'datum';
                 yKey = 'felhasznalok_szama';
                 break;
             case 'activity-week':
                 dbData = await databaseAdmin.getUserActivityByWeek();
-                label = 'Heti aktivitás';
+                label = request.t('admin:adminApi.chart_weekly_activity');
                 xKey = 'het_megnevezes';
                 yKey = 'bejelentkezesek_szama';
                 break;
             case 'registrations':
                 dbData = await databaseAdmin.getRegistrationByWeek();
-                label = 'Heti regisztrációk';
+                label = request.t('admin:adminApi.chart_weekly_registrations');
                 xKey = 'het_megnevezes';
                 yKey = 'regisztraciok_szama';
                 color = '#198754';
                 break;
             case 'matches':
                 dbData = await databaseAdmin.getMatchCountByWeek();
-                label = 'Heti meccsek';
+                label = request.t('admin:adminApi.chart_weekly_matches');
                 xKey = 'het_megnevezes';
                 yKey = 'meccsek_szama';
                 color = '#dc3545';
                 break;
             default:
-                return response.status(400).json({ error: "Érvénytelen grafikon típus" });
+                return response.status(400).json({ error: request.t('admin:adminApi.chart_invalid_type') });
         }
 
         const labels = dbData.map(row => row[xKey]);
@@ -93,7 +93,7 @@ router.get('/chart/:type', async (request, response) => {
 
     } catch (error) {
         console.error(error);
-        response.status(500).json({ error: "Hiba a grafikon generálása során" });
+        response.status(500).json({ error: request.t('admin:adminApi.chart_generation_error') });
     }
 });
 

@@ -10,10 +10,10 @@ const databaseLogs = require('../../sql/admin/databaseLogs.js');
 router.get('/getLogs', async (request, response) => {
     try {
         let logs = await databaseLogs.getLogs();
-        response.status(200).json({ message: "Sikeres lekérés", logs: logs.rows, total: logs.total });
+        response.status(200).json({ message: request.t('admin:logsApi.fetch_success'), logs: logs.rows, total: logs.total });
     } catch (error) {
         console.error(error);
-        response.status(500).json({ error: "Hiba a lekérdezés során" });
+        response.status(500).json({ error: request.t('admin:logsApi.fetch_error') });
     }
 });
 
@@ -35,7 +35,7 @@ router.get('/sortedLogs',
                     req.query.periodFrom &&
                     new Date(value) < new Date(req.query.periodFrom)
                 ) {
-                    throw new Error('periodTo cannot be earlier than periodFrom');
+                    throw new Error(req.t('admin:logsApi.validation_period_to_invalid'));
                 }
                 return true;
             }),
@@ -131,7 +131,7 @@ router.post('/exportLogs',
             .isISO8601()
             .custom((value, { req }) => {
                 if (value && req.body.periodFrom && new Date(value) < new Date(req.body.periodFrom)) {
-                    throw new Error('periodTo invalid');
+                    throw new Error(req.t('admin:logsApi.validation_period_to_invalid'));
                 }
                 return true;
             }),
@@ -160,7 +160,7 @@ router.post('/exportLogs',
             );
 
             if (logs.total === 0) {
-                response.status(404).json({ error: "No logs found for export." });
+                response.status(404).json({ error: request.t('admin:logsApi.export_not_found') });
             }
             else {
                 let csvContent = "\uFEFFUser;Victim;Activity;Date\n";
@@ -182,7 +182,7 @@ router.post('/exportLogs',
         }
         catch (error) {
             console.error('Log export error:', error);
-            response.status(500).json({ error: 'Export error' });
+            response.status(500).json({ error: request.t('admin:logsApi.export_error') });
         }
     });
 

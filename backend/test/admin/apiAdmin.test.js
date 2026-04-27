@@ -3,6 +3,8 @@ const express = require('express');
 const db = require('../../sql/admin/databaseAdmin.js');
 const dbLogs = require('../../sql/admin/databaseLogs.js');
 const auth = require('../../utils/auth.js');
+const enTranslations = require('../../locales/en/admin.json');
+const huTranslations = require('../../locales/hu/admin.json');
 
 jest.mock('../../sql/admin/databaseAdmin.js');
 jest.mock('../../sql/admin/databaseLogs.js');
@@ -30,7 +32,18 @@ const app = express();
 app.use(express.json());
 
 app.use((req, res, next) => {
-    if (!req.session) req.session = {};
+    if (!req.session) req.session = { userLanguage: 'en' };
+    req.t = (key) => {
+        const lang = req.session.userLanguage || 'en';
+        const translations = lang === 'en' ? enTranslations : huTranslations;
+        const [namespace, ...keys] = key.split(':');
+        const keyPath = keys.join(':');
+
+        if (namespace !== 'admin') return key;
+        const result = keyPath.split('.').reduce((obj, k) => obj && obj[k] !== undefined ? obj[k] : undefined, translations);
+        return result || key;
+    };
+
     next();
 });
 
@@ -99,7 +112,7 @@ describe('Admin API-tesztek', () => {
                 .get('/api/admin/getDashboardInfo')
                 .set('forceerror', 'true')
                 .expect(500);
-            expect(res.body.error).toBe("Hiba a dashboard információk lekérdezésekor");
+            expect(res.body.error).toBe(enTranslations.adminApi.dashboard_info_error);
         });
     });
 
@@ -122,7 +135,7 @@ describe('Admin API-tesztek', () => {
             const res = await request(app)
                 .get('/api/admin/chart/invalid-type')
                 .expect(400);
-            expect(res.body.error).toBe("Érvénytelen grafikon típus");
+            expect(res.body.error).toBe(enTranslations.adminApi.chart_invalid_type);
         });
 
         it('SIKER - 200, helyes típus', async () => {
@@ -143,7 +156,7 @@ describe('Admin API-tesztek', () => {
                 .get('/api/admin/chart/activity-day')
                 .set('forceerror', 'true')
                 .expect(500);
-            expect(res.body.error).toBe("Hiba a grafikon generálása során");
+            expect(res.body.error).toBe(enTranslations.adminApi.chart_generation_error);
         });
     });
 });

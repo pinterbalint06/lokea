@@ -13,6 +13,7 @@ const databaseLogs = require('../../sql/admin/databaseLogs.js');
 //!Multer
 const multer = require('multer'); //?npm install multer
 const path = require('path');
+const { error } = require('console');
 const TARGET_UPLOADS_DIR = path.resolve(process.cwd(), 'uploads');
 
 const storage = multer.diskStorage({
@@ -36,30 +37,30 @@ const upload = multer({
 router.get('/getUsers', async (request, response) => {
     try {
         let users = await databaseUsers.getUsers();
-        response.status(200).json({ users: users.rows, total: users.total });
+        response.status(200).json({ users: users.rows, total: users.total, message: request.t('admin:usersApi.fetch_success') });
     } catch (error) {
-        response.status(500).json({ error: "Hiba történt a felhasználók lekérése során!" });
+        response.status(500).json({ error: request.t('admin:usersApi.fetch_all_error') });
     }
 })
 
 router.get('/sortedUsers', [
     query('mireKeresek')
         .optional({ values: 'null' })
-        .isIn(['user_id', 'username', 'email']).withMessage("A keresési típus nem megfelelő!"),
+        .isIn(['user_id', 'username', 'email']).withMessage((value, { req }) => req.t('admin:usersApi.validation_search_type_invalid')),
     query('mit')
         .optional({ values: 'null' })
-        .matches(/^[A-Za-zÁÉÍÓÖŐÚÜŰáéíóöőúüű0-9@._-]*$/).withMessage("A keresési érték csak betűket, számokat, -, _, @ vagy . karaktert tartalmazhat!")
-        .isLength({ max: 254 }).withMessage("A keresési érték hossza nem megfelelő!"),
+        .matches(/^[A-Za-zÁÉÍÓÖŐÚÜŰáéíóöőúüű0-9@._-]*$/).withMessage((value, { req }) => req.t('admin:usersApi.validation_search_value_invalid_chars'))
+        .isLength({ max: 254 }).withMessage((value, { req }) => req.t('admin:usersApi.validation_search_value_length')),
     query('status')
-        .isIn(['statusActive', 'statusDeleted', 'statusAny']).withMessage("A státusz nem megfelelő!"),
+        .isIn(['statusActive', 'statusDeleted', 'statusAny']).withMessage((value, { req }) => req.t('admin:usersApi.validation_status_invalid')),
     query('adminChecked')
-        .isBoolean().withMessage("A adminChecked paraméter nem boolean!"),
+        .isBoolean().withMessage((value, { req }) => req.t('admin:usersApi.validation_admin_checked_boolean')),
     query('modChecked')
-        .isBoolean().withMessage("A modChecked paraméter nem boolean!"),
+        .isBoolean().withMessage((value, { req }) => req.t('admin:usersApi.validation_mod_checked_boolean')),
     query('userChecked')
-        .isBoolean().withMessage("A userChecked paraméter nem boolean!"),
+        .isBoolean().withMessage((value, { req }) => req.t('admin:usersApi.validation_user_checked_boolean')),
     query('page')
-        .isInt({ min: 1 }).withMessage("Az oldalszám nem megfelelő!")
+        .isInt({ min: 1 }).withMessage((value, { req }) => req.t('admin:usersApi.validation_page_number_invalid'))
         .toInt(),
     validate
 ], async (request, response) => {
@@ -76,30 +77,30 @@ router.get('/sortedUsers', [
             page
         );
 
-        response.status(200).json({ users: users.rows, total: users.total });
+        response.status(200).json({ users: users.rows, total: users.total, message: request.t('admin:usersApi.fetch_success') });
     } catch (error) {
-        response.status(500).json({ error: "Hiba történt a szűrt felhasználók lekérése során!" });
+        response.status(500).json({ error: request.t('admin:usersApi.fetch_sorted_error') });
     }
 });
 
 router.get('/getUser',
     [
         query('id')
-            .isInt({ min: 1 }).withMessage("A user ID nem megfelelő!")
+            .isInt({ min: 1 }).withMessage((value, { req }) => req.t('admin:usersApi.validation_user_id_invalid'))
             .toInt()
     ], validate,
     async (request, response) => {
         try {
             let params = request.query.id;
             let users = await databaseUsers.getUser(params);
-            if (users && users.length === 0) {
-                response.status(404).json({ message: "Nincs ilyen felhasználó!" });
+            if (!users || users.length === 0) {
+                response.status(404).json({ error: request.t('admin:usersApi.not_found') });
             }
             else {
-                response.status(200).json({ message: "Sikeres lekérés", users: users });
+                response.status(200).json({ message: request.t('admin:usersApi.fetch_success'), users: users });
             }
         } catch (error) {
-            response.status(500).json({ error: "Hiba történt a felhasználó lekérése során!" });
+            response.status(500).json({ error: request.t('admin:usersApi.fetch_one_error') });
         }
     })
 
@@ -108,18 +109,18 @@ router.get('/getUser',
 router.post("/signupFromAdmin",
     [
         body("username")
-            .not().isEmail().withMessage("Felhasználónév nem lehet email cim!")
-            .matches(/^[a-zA-Z0-9áéíóöőúüűÁÉÍÓÖŐÚÜŰ_-]*$/).withMessage('A felhasználónév csak betűket, számokat, - vagy _ karaktert, és ékezetes betűket tartalmazhat.')
-            .isLength({ min: 1, max: 20 }).withMessage("Felhasználónév hossza nem megfelelő!"),
+            .not().isEmail().withMessage((value, { req }) => req.t('admin:usersApi.validation_username_no_email'))
+            .matches(/^[a-zA-Z0-9áéíóöőúüűÁÉÍÓÖŐÚÜŰ_-]*$/).withMessage((value, { req }) => req.t('admin:usersApi.validation_username_invalid_chars'))
+            .isLength({ min: 1, max: 20 }).withMessage((value, { req }) => req.t('admin:usersApi.validation_username_length')),
         body("email")
-            .isEmail().withMessage("Hibás email formátum")
-            .isLength({ min: 5, max: 250 }).withMessage("Email max 250 karakter"),
+            .isEmail().withMessage((value, { req }) => req.t('admin:usersApi.validation_email_format'))
+            .isLength({ min: 5, max: 250 }).withMessage((value, { req }) => req.t('admin:usersApi.validation_email_length')),
         body("password")
-            .isLength({ min: 8, max: 50 }).withMessage("Jelszó hossza 8-50")
-            .matches(/\d/).withMessage("Kell benne szám")
-            .matches(/[A-Z]/).withMessage("Kell benne nagybetű"),
+            .isLength({ min: 8, max: 50 }).withMessage((value, { req }) => req.t('admin:usersApi.validation_password_length'))
+            .matches(/\d/).withMessage((value, { req }) => req.t('admin:usersApi.validation_password_digit'))
+            .matches(/[A-Z]/).withMessage((value, { req }) => req.t('admin:usersApi.validation_password_uppercase')),
         body("role")
-            .isIn(['user', 'MOD']).withMessage("A szerepkör nem megfelelő!"),
+            .isIn(['user', 'MOD']).withMessage((value, { req }) => req.t('admin:usersApi.validation_role_invalid')),
     ], validate,
     async (request, response) => {
         try {
@@ -127,19 +128,18 @@ router.post("/signupFromAdmin",
             const hashedPassword = await bcrypt.hash(password, 10);
             let insert = await databaseUsers.newUserFromAdmin(username, email, hashedPassword, role);
             if (insert.success) {
-                let userid = insert.insertId;
-                await databaseLogs.addLog(userid, 'Sign up (A)');
+                await databaseLogs.addLog(insert.insertId, 'Sign up (A)');
                 // await sendWelcomeEmail(email, username);
                 response.status(201).json({
                     success: true,
-                    message: "Sikeres regisztráció!"
+                    message: request.t('admin:usersApi.signup_success')
                 });
             }
             else {
-                throw new Error("Sikertelen regisztráció!");
+                throw new Error(request.t('admin:usersApi.signup_failed_generic'));
             }
         } catch (error) {
-            response.status(500).json({ error: "Hiba a regisztráció során!" });
+            response.status(500).json({ error: request.t('admin:usersApi.signup_error') });
         }
     }
 );
@@ -148,19 +148,19 @@ router.post('/exportUsers',
     [
         body('mireKeresek')
             .optional({ values: 'null' })
-            .isIn(['user_id', 'username', 'email']).withMessage("A keresési típus nem megfelelő!"),
+            .isIn(['user_id', 'username', 'email']).withMessage((value, { req }) => req.t('admin:usersApi.validation_search_type_invalid')),
         body('mit')
             .optional({ values: 'null' })
-            .matches(/^[a-zA-Z0-9áéíóöőúüűÁÉÍÓÖŐÚÜŰ_-]*$/).withMessage("A keresési érték csak betűket, számokat, -, _, @ vagy . karaktert tartalmazhat!")
-            .isLength({ max: 254 }).withMessage("A keresési érték hossza nem megfelelő!"),
+            .matches(/^[a-zA-Z0-9áéíóöőúüűÁÉÍÓÖŐÚÜŰ_-]*$/).withMessage((value, { req }) => req.t('admin:usersApi.validation_search_value_invalid_chars'))
+            .isLength({ max: 254 }).withMessage((value, { req }) => req.t('admin:usersApi.validation_search_value_length')),
         body('status')
-            .isIn(['statusActive', 'statusDeleted', 'statusAny']).withMessage("A státusz nem megfelelő!"),
+            .isIn(['statusActive', 'statusDeleted', 'statusAny']).withMessage((value, { req }) => req.t('admin:usersApi.validation_status_invalid')),
         body('adminChecked')
-            .isBoolean().withMessage("A adminChecked paraméter nem boolean!"),
+            .isBoolean().withMessage((value, { req }) => req.t('admin:usersApi.validation_admin_checked_boolean')),
         body('modChecked')
-            .isBoolean().withMessage("A modChecked paraméter nem boolean!"),
+            .isBoolean().withMessage((value, { req }) => req.t('admin:usersApi.validation_mod_checked_boolean')),
         body('userChecked')
-            .isBoolean().withMessage("A userChecked paraméter nem boolean!"),
+            .isBoolean().withMessage((value, { req }) => req.t('admin:usersApi.validation_user_checked_boolean')),
     ], validate,
     async (request, response) => {
         try {
@@ -181,7 +181,7 @@ router.post('/exportUsers',
 
         } catch (error) {
             console.log(error.message)
-            return response.status(500).json({ error: "Hiba az exportálás során!" });
+            return response.status(500).json({ error: request.t('admin:usersApi.export_error') });
         }
     });
 
@@ -190,20 +190,20 @@ router.post('/exportUsers',
 router.put('/updateUserFromAdmin',
     [
         body("user_id")
-            .isInt({ min: 1 }).withMessage("A user ID nem megfelelő!")
+            .isInt({ min: 1 }).withMessage((value, { req }) => req.t('admin:usersApi.validation_user_id_invalid'))
             .toInt(),
         body("username")
             .optional({ values: 'null' })
-            .not().isEmail().withMessage("Felhasználónév nem lehet email cim!")
-            .matches(/^[a-zA-Z0-9áéíóöőúüűÁÉÍÓÖŐÚÜŰ_-]+$/).withMessage('A felhasználónév csak betűket, számokat, - vagy _ karaktert, és ékezetes betűket tartalmazhat.')
-            .isLength({ min: 1, max: 20 }).withMessage("Felhasználónév hossza nem megfelelő!"),
+            .not().isEmail().withMessage((value, { req }) => req.t('admin:usersApi.validation_username_no_email'))
+            .matches(/^[a-zA-Z0-9áéíóöőúüűÁÉÍÓÖŐÚÜŰ_-]+$/).withMessage((value, { req }) => req.t('admin:usersApi.validation_username_invalid_chars'))
+            .isLength({ min: 1, max: 20 }).withMessage((value, { req }) => req.t('admin:usersApi.validation_username_length')),
         body("email")
             .optional({ values: 'null' })
-            .isEmail().withMessage("Hibás email formátum")
-            .isLength({ min: 5, max: 250 }).withMessage("Email max 250 karakter!"),
+            .isEmail().withMessage((value, { req }) => req.t('admin:usersApi.validation_email_format'))
+            .isLength({ min: 5, max: 250 }).withMessage((value, { req }) => req.t('admin:usersApi.validation_email_length')),
         body("role")
             .optional({ values: 'null' })
-            .isIn(['user', 'MOD', 'ADMIN']).withMessage("A szerepkör nem megfelelő!"),
+            .isIn(['user', 'MOD', 'ADMIN']).withMessage((value, { req }) => req.t('admin:usersApi.validation_role_invalid')),
     ], validate,
     async (request, response) => {
         try {
@@ -217,22 +217,22 @@ router.put('/updateUserFromAdmin',
             else {
                 let { user_id, username, email, role } = request.body;
                 if (role == "ADMIN" && request.session.role != "LORD") {
-                    response.status(403).json({ message: "Nincs jogosultságod ehhez!" });
+                    response.status(403).json({ error: request.t('admin:usersApi.permission_denied') });
                 }
                 else {
                     let success = await databaseUsers.updateUserByAdmin(user_id, username, email, role);
                     if (success == 1) {
                         await databaseLogs.addLog(request.session.userid, 'User update (A)', user_id);
                         // await sendChangeEmail(email, username);
-                        response.status(204).json({ message: "Sikeres felhasználófrissités!" });
+                        response.status(200).json({ message: request.t('admin:usersApi.update_success') });
                     }
                     else {
-                        response.status(404).json({ message: "Nincs ilyen felhasználó, vagy a felhasználó inaktiv már!" });
+                        response.status(404).json({ error: request.t('admin:usersApi.update_not_found_or_inactive') });
                     }
                 }
             }
         } catch (error) {
-            response.status(500).json({ error: "Hiba a felhasználó frissítésekor!" });
+            response.status(500).json({ error: request.t('admin:usersApi.update_error') });
         }
     })
 
@@ -240,13 +240,13 @@ router.put('/userSelfUpdate',
     [
         body("username")
             .optional({ values: 'null' })
-            .not().isEmail().withMessage("Felhasználónév nem lehet email cim!")
-            .matches(/^[a-zA-Z0-9áéíóöőúüűÁÉÍÓÖŐÚÜŰ_-]+$/).withMessage('A felhasználónév csak betűket, számokat, - vagy _ karaktert, és ékezetes betűket tartalmazhat.')
-            .isLength({ min: 1, max: 20 }).withMessage("Felhasználónév hossza nem megfelelő!"),
+            .not().isEmail().withMessage((value, { req }) => req.t('admin:usersApi.validation_username_no_email'))
+            .matches(/^[a-zA-Z0-9áéíóöőúüűÁÉÍÓÖŐÚÜŰ_-]+$/).withMessage((value, { req }) => req.t('admin:usersApi.validation_username_invalid_chars'))
+            .isLength({ min: 1, max: 20 }).withMessage((value, { req }) => req.t('admin:usersApi.validation_username_length')),
         body("email")
             .optional({ values: 'null' })
-            .isEmail().withMessage("Hibás email formátum")
-            .isLength({ min: 5, max: 250 }).withMessage("Email max 250 karakter!")
+            .isEmail().withMessage((value, { req }) => req.t('admin:usersApi.validation_email_format'))
+            .isLength({ min: 5, max: 250 }).withMessage((value, { req }) => req.t('admin:usersApi.validation_email_length'))
     ], validate,
     async (request, response) => {
         try {
@@ -255,13 +255,13 @@ router.put('/userSelfUpdate',
             if (success == 1) {
                 await databaseLogs.addLog(request.session.userid, 'User update');
                 // await sendChangeEmail(email, username);
-                response.status(204).json({ message: "Sikeres felhasználófrissités!" });
+                response.status(200).json({ message: request.t('admin:usersApi.update_success') });
             }
             else {
-                response.status(404).json({ error: "Nincs ilyen felhasználó, vagy a felhasználó inaktiv már!" });
+                response.status(404).json({ error: request.t('admin:usersApi.update_not_found_or_inactive') });
             }
         } catch (error) {
-            response.status(500).json({ error: "Hiba a felhasználó frissítésekor!" });
+            response.status(500).json({ error: request.t('admin:usersApi.update_error') });
         }
     })
 
@@ -270,7 +270,7 @@ router.put('/updateProfilePicFromAdmin', upload.single('profilePic'), async (req
     let newFilePath;
     try {
         if (!request.file) {
-            return response.status(400).json({ message: "Nincs kép!" });
+            return response.status(400).json({ error: request.t('admin:usersApi.no_image_provided') });
         }
         else {
             let user_id = request.body.user_id;
@@ -299,13 +299,13 @@ router.put('/updateProfilePicFromAdmin', upload.single('profilePic'), async (req
             }
 
             await databaseLogs.addLog(request.session.userid, 'Profile picture update (A)', user_id);
-            response.status(201).json({ success: true, message: "Profilkép frissítve!" });
+            response.status(201).json({ success: true, message: request.t('admin:usersApi.profile_pic_update_success') });
 
         }
     } catch (error) {
         if (originalFile) await fs.unlink(originalFile).catch(() => { });
         if (newFilePath) await fs.unlink(newFilePath).catch(() => { });
-        response.status(500).json({ error: "Hiba a profilkép frissítésekor!" });
+        response.status(500).json({ error: request.t('admin:usersApi.profile_pic_update_error') });
     }
 });
 
@@ -314,25 +314,25 @@ router.put('/updateProfilePicFromAdmin', upload.single('profilePic'), async (req
 router.delete('/userToInactive',
     [
         body("role")
-            .not().matches("ADMIN").withMessage("Nem frissithetsz admin-t!")
-            .isIn(['user', 'MOD']).withMessage("A szerepkör nem megfelelő!"),
+            .not().matches("ADMIN").withMessage((value, { req }) => req.t('admin:usersApi.validation_cannot_update_admin'))
+            .isIn(['user', 'MOD']).withMessage((value, { req }) => req.t('admin:usersApi.validation_role_invalid')),
         body("deleted")
-            .custom(value => value === true).withMessage("Inaktiv felhasználót nem frissithetsz!")
+            .custom((value, { req }) => value === true ? Promise.reject(req.t('admin:usersApi.validation_cannot_update_inactive')) : true)
     ], validate,
     async (request, response) => {
         try {
             let { userId } = request.body;
             let sorok = await databaseUsers.userToInactive(userId);
             if (sorok === 0) {
-                response.status(200).json({ message: "A felhasználó már inaktiv volt!" })
+                response.status(200).json({ message: request.t('admin:usersApi.deactivate_already_inactive') })
             }
             else {
                 await databaseLogs.addLog(request.session.userid, 'User delete (A)', userId);
                 // await sendDeleteEmail(email, username);
-                response.status(204).end();
+                response.status(200).json({ message: request.t('admin:usersApi.update_success') });
             }
         } catch (error) {
-            response.status(500).json({ error: "Hiba a felhasználó inaktiválásakor!" });
+            response.status(500).json({ error: request.t('admin:usersApi.deactivate_error') });
         }
     })
 
@@ -341,18 +341,18 @@ router.delete('/deleteProfilePicFromAdmin', async (request, response) => {
         let user_id = request.body.user_id;
         let lastPfp = await databaseUsers.deleteProfilePic(user_id);
 
-        if (!lastPfp) {
-            response.status(200).json({ success: true, message: "A profilkép már alapértelmezett volt." });
+        if (!lastPfp) { // If lastPfp is null or empty, it means there was no custom profile picture to delete
+            response.status(200).json({ success: true, message: request.t('admin:usersApi.profile_pic_already_default') });
         }
         else {
             let lastPfpPath = path.join(TARGET_UPLOADS_DIR, lastPfp);
             await fs.unlink(lastPfpPath).catch(() => { });
 
             await databaseLogs.addLog(request.session.userid, 'Profile picture delete (A)', user_id);
-            response.status(201).json({ success: true, message: "Profilkép törölve!" });
+            response.status(201).json({ success: true, message: request.t('admin:usersApi.profile_pic_delete_success') });
         }
     } catch (error) {
-        response.status(500).json({ error: "Hiba a profilkép törlésekor!" });
+        response.status(500).json({ error: request.t('admin:usersApi.profile_pic_delete_error') });
     }
 });
 

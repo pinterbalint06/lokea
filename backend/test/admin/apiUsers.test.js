@@ -7,6 +7,8 @@ const dbLogs = require('../../sql/admin/databaseLogs.js');
 const auth = require('../../utils/auth.js');
 const multer = require('multer');
 const sharp = require('sharp');
+const enTranslations = require('../../locales/en/admin.json');
+const huTranslations = require('../../locales/hu/admin.json');
 
 jest.mock('multer', () => {
     const multerMock = jest.fn(() => ({
@@ -62,7 +64,18 @@ const app = express();
 app.use(express.json());
 
 app.use((req, res, next) => {
-    if (!req.session) req.session = {};
+    if (!req.session) req.session = { userLanguage: 'en' };
+    req.t = (key) => {
+        const lang = req.session.userLanguage || 'en';
+        const translations = lang === 'en' ? enTranslations : huTranslations;
+        const [namespace, ...keys] = key.split(':');
+        const keyPath = keys.join(':');
+
+        if (namespace !== 'admin') return key;
+        const result = keyPath.split('.').reduce((obj, k) => obj && obj[k] !== undefined ? obj[k] : undefined, translations);
+        return result || key;
+    };
+
     next();
 });
 
@@ -108,7 +121,7 @@ describe('Admin Users API-tesztek', () => {
         it('HIBA - 500, adatbázis hiba', async () => {
             db.getUsers.mockRejectedValue(new Error('Database error'));
             const res = await request(app).get('/api/admin/getUsers').expect(500);
-            expect(res.body.error).toBe("Hiba történt a felhasználók lekérése során!");
+            expect(res.body.error).toBe(enTranslations.usersApi.fetch_all_error);
         });
     });
 
@@ -132,7 +145,7 @@ describe('Admin Users API-tesztek', () => {
                 .get('/api/admin/sortedUsers')
                 .query({ mireKeresek: 'invalid', mit: 'a', status: 'statusAny', adminChecked: true, modChecked: true, userChecked: true, page: -1 })
                 .expect(400);
-            expect(res.body.errors.some(e => e.msg === "Az oldalszám nem megfelelő!")).toBe(true);
+            expect(res.body.errors.some(e => e.msg === enTranslations.usersApi.validation_page_number_invalid)).toBe(true);
         });
 
         it('SIKER - 200, szűrt felhasználók lekérése', async () => {
@@ -163,7 +176,7 @@ describe('Admin Users API-tesztek', () => {
                 .get('/api/admin/sortedUsers')
                 .query({ mireKeresek: 'username', mit: 'User', status: 'statusAny', adminChecked: 'true', modChecked: 'true', userChecked: 'true', page: 1 })
                 .expect(500);
-            expect(res.body.error).toBe("Hiba történt a szűrt felhasználók lekérése során!");
+            expect(res.body.error).toBe(enTranslations.usersApi.fetch_sorted_error);
         });
     });
 
@@ -187,7 +200,7 @@ describe('Admin Users API-tesztek', () => {
                 .get('/api/admin/getUser')
                 .query({ id: 'invalid' })
                 .expect(400);
-            expect(res.body.errors[0].msg).toBe("A user ID nem megfelelő!");
+            expect(res.body.errors[0].msg).toBe(enTranslations.usersApi.validation_user_id_invalid);
         });
 
         it('HIBA - 404, ha nincs ilyen felhasználó', async () => {
@@ -196,6 +209,7 @@ describe('Admin Users API-tesztek', () => {
                 .get('/api/admin/getUser')
                 .query({ id: 1 })
                 .expect(404);
+            expect(res.body.error).toBe(enTranslations.usersApi.not_found);
         });
 
         it('SIKER - 200, felhasználó lekérése', async () => {
@@ -214,7 +228,7 @@ describe('Admin Users API-tesztek', () => {
                 .get('/api/admin/getUser')
                 .query({ id: 1 })
                 .expect(500);
-            expect(res.body.error).toBe("Hiba történt a felhasználó lekérése során!");
+            expect(res.body.error).toBe(enTranslations.usersApi.fetch_one_error);
         });
     });
 
@@ -248,7 +262,7 @@ describe('Admin Users API-tesztek', () => {
                 .send({ username: 'NewUser', email: 'newuser@example.com', password: 'StrongPassword123', role: 'user' })
                 .expect(201);
             expect(res.body.success).toBe(true);
-            expect(res.body.message).toBe("Sikeres regisztráció!");
+            expect(res.body.message).toBe(enTranslations.usersApi.signup_success);
         });
 
         it('HIBA - 500, sikertelen regisztráció', async () => {
@@ -257,7 +271,7 @@ describe('Admin Users API-tesztek', () => {
                 .post('/api/admin/signupFromAdmin')
                 .send({ username: 'NewUser', email: 'newuser@example.com', password: 'StrongPassword123', role: 'user' })
                 .expect(500);
-            expect(res.body.error).toBe("Hiba a regisztráció során!");
+            expect(res.body.error).toBe(enTranslations.usersApi.signup_error);
         });
 
         it('HIBA - 500, adatbázis hiba', async () => {
@@ -266,7 +280,7 @@ describe('Admin Users API-tesztek', () => {
                 .post('/api/admin/signupFromAdmin')
                 .send({ username: 'NewUser', email: 'newuser@example.com', password: 'StrongPassword123', role: 'user' })
                 .expect(500);
-            expect(res.body.error).toBe("Hiba a regisztráció során!");
+            expect(res.body.error).toBe(enTranslations.usersApi.signup_error);
         });
     });
 
@@ -310,7 +324,7 @@ describe('Admin Users API-tesztek', () => {
                 .post('/api/admin/exportUsers')
                 .send({ mireKeresek: 'username', mit: 'a', status: 'statusAny', adminChecked: true, modChecked: true, userChecked: true })
                 .expect(500);
-            expect(res.body.error).toBe('Hiba az exportálás során!');
+            expect(res.body.error).toBe(enTranslations.usersApi.export_error);
         });
     });
 
@@ -351,7 +365,7 @@ describe('Admin Users API-tesztek', () => {
                 .put('/api/admin/updateUserFromAdmin')
                 .send({ user_id: 1, username: 'UpdatedUser', email: 'updateduser@example.com', role: 'user' })
                 .expect(500);
-            expect(res.body.error).toBe('Hiba a felhasználó frissítésekor!');
+            expect(res.body.error).toBe(enTranslations.usersApi.update_error);
         });
     });
 
@@ -392,7 +406,7 @@ describe('Admin Users API-tesztek', () => {
                 .put('/api/admin/userSelfUpdate')
                 .send({ username: 'UpdatedUser', email: 'updateduser@example.com' })
                 .expect(500);
-            expect(res.body.error).toBe('Hiba a felhasználó frissítésekor!');
+            expect(res.body.error).toBe(enTranslations.usersApi.update_error);
         });
     });
 
@@ -417,7 +431,7 @@ describe('Admin Users API-tesztek', () => {
                 .set('simulate-no-file', 'true')
                 .field('user_id', 123)
                 .expect(400);
-            expect(res.body.message).toBe('Nincs kép!');
+            expect(res.body.error).toBe(enTranslations.usersApi.no_image_provided);
         });
 
         it('SIKER 201 - sikeresen frissíti a profilképet', async () => {
@@ -451,7 +465,7 @@ describe('Admin Users API-tesztek', () => {
                 .expect(500);
 
             expect(fs.unlink).toHaveBeenCalled();
-            expect(res.body.error).toBe("Hiba a profilkép frissítésekor!");
+            expect(res.body.error).toBe(enTranslations.usersApi.profile_pic_update_error);
         });
     });
 
@@ -492,7 +506,7 @@ describe('Admin Users API-tesztek', () => {
                 .delete('/api/admin/userToInactive')
                 .send({ userId: 1, role: 'user', deleted: true })
                 .expect(500);
-            expect(res.body.error).toBe("Hiba a felhasználó inaktiválásakor!");
+            expect(res.body.error).toBe(enTranslations.usersApi.deactivate_error);
         });
     });
 
@@ -527,7 +541,7 @@ describe('Admin Users API-tesztek', () => {
                 .delete('/api/admin/deleteProfilePicFromAdmin')
                 .send({ user_id: 123 })
                 .expect(200);
-            expect(res.body.message).toContain('alapértelmezett');
+            expect(res.body.message).toEqual(enTranslations.usersApi.profile_pic_already_default);
         });
 
         it('HIBA 500 - adatbázis hiba', async () => {
@@ -536,7 +550,7 @@ describe('Admin Users API-tesztek', () => {
                 .delete('/api/admin/deleteProfilePicFromAdmin')
                 .send({ user_id: 123 })
                 .expect(500);
-            expect(res.body.error).toBe('Hiba a profilkép törlésekor!');
+            expect(res.body.error).toBe(enTranslations.usersApi.profile_pic_delete_error);
         });
     });
 });

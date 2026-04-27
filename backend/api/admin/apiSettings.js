@@ -25,7 +25,7 @@ router.get('/getAdminSettings', async (request, response) => {
         }
     } catch (error) {
         console.error(error);
-        response.status(500).json({ message: "Hiba a lekérdezés során" });
+        response.status(500).json({ error: request.t('admin:settingsApi.fetch_error') });
     }
 });
 
@@ -33,8 +33,8 @@ router.get('/getAdminSettings', async (request, response) => {
 
 router.put('/updateAdminSettings',
     [
-        body("darkmode").isBoolean().withMessage("Nem true/false értéket adtál meg!"),
-        body("selected_chart").isIn(["activity-day", "activity-week", "weekly_registrations", "weekly-matches"]).withMessage("Érvénytelen chart típus!")
+        body("darkmode").isBoolean().withMessage((value, { req }) => req.t("admin:settingsApi.validation_darkmode_boolean")),
+        body("selected_chart").isIn(["activity-day", "activity-week", "weekly_registrations", "weekly-matches"]).withMessage((value, { req }) => req.t("admin:settingsApi.validation_chart_type_invalid"))
     ],
     validate,
     async (request, response) => {
@@ -44,20 +44,20 @@ router.put('/updateAdminSettings',
             const affectedRows = await databaseSettings.updateAdminSettings(request.session.userid, darkmode, selected_chart);
 
             if (affectedRows === 0) {
-                response.status(200).json({ message: "Nem történt változtatás" });
+                response.status(200).json({ message: request.t('admin:settingsApi.update_no_change') });
             }
             else {
-                response.status(200).json({ message: "Sikeres frissítés" });
+                response.status(200).json({ message: request.t('admin:settingsApi.update_success') });
             }
         } catch (error) {
             console.error(error);
-            response.status(500).json({ message: "Hiba a frissítés során" });
+            response.status(500).json({ error: request.t('admin:settingsApi.update_error') });
         }
     });
 
 router.put('/userDarkMode',
     [
-        body("darkmode").isBoolean().withMessage("Nem true/false értéket adtál meg!")
+        body("darkmode").isBoolean().withMessage((value, { req }) => req.t("admin:settingsApi.validation_darkmode_boolean"))
     ],
     validate,
     async (request, response) => {
@@ -66,19 +66,19 @@ router.put('/userDarkMode',
             let success = await databaseSettings.updateDarkMode(request.session.userid, darkmode);
             if (success == 1) {
                 await databaseLogs.addLog(request.session.userid, 'User update');
-                response.status(200).json({ message: "Sikeres felhasználófrissítés!" });
+                response.status(200).json({ message: request.t('admin:settingsApi.user_update_success') });
             }
             else {
-                response.status(200).json({ message: "Nem történt változtatás!" });
+                response.status(200).json({ message: request.t('admin:settingsApi.update_no_change') });
             }
         } catch (error) {
             console.error(error);
-            response.status(500).json({ error: "Hiba a frissítés során" });
+            response.status(500).json({ error: request.t('admin:settingsApi.update_error') });
         }
     })
 
 router.put('/updateLanguage', [
-    body("language").isIn(["en", "hu"]).withMessage("Érvénytelen nyelv!")
+    body("language").isIn(["en", "hu"]).withMessage((value, { req }) => req.t("admin:settingsApi.validation_language_invalid"))
 ], validate,
     async (request, response) => {
         try {
@@ -86,16 +86,16 @@ router.put('/updateLanguage', [
             const affectedRows = await databaseSettings.updateLanguage(request.session.userid, language);
 
             if (affectedRows === 0) {
-                response.status(200).json({ message: "Nem történt változtatás!", language: request.session.userLanguage });
+                response.status(200).json({ message: request.t('admin:settingsApi.update_no_change'), language: request.session.userLanguage });
             }
             else {
                 request.session.userLanguage = language;
                 await databaseLogs.addLog(request.session.userid, 'User update');
-                response.status(200).json({ message: "Sikeres frissítés!", language });
+                response.status(200).json({ message: request.t('admin:settingsApi.update_success'), language });
             }
         } catch (error) {
             console.error(error);
-            response.status(500).json({ message: "Hiba a frissítés során" });
+            response.status(500).json({ error: request.t('admin:settingsApi.update_error') });
         }
     });
 
@@ -112,4 +112,3 @@ function validate(req, res, next) {
 }
 
 module.exports = router;
-
