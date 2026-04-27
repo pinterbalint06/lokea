@@ -10,6 +10,11 @@ struct EquirectangularEngineConfig
     float shadowYOffset = -0.025f;
     float shadowOutlineWidth = 0.01f;
 
+    // click detection bounds
+    float directArrowClickMinY = -0.632f;
+    float directArrowClickMaxY = -0.565f;
+    float horizonClickMaxAbsoluteY = 0.6f;
+
     // closest arrow detection
     float directClickDotProductThreshold = 0.9f;
     float horizonClickDotProductThreshold = 0.995f;

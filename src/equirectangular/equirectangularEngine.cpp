@@ -40,62 +40,52 @@ std::shared_ptr<Mesh> EquirectangularEngine::generateSphereSegment(int rings, in
     std::shared_ptr<Mesh> mesh = std::make_shared<Mesh>((rings + 1) * (segments + 1), rings * segments * 6);
     std::vector<Vertex> &vertices = mesh->getVertices();
 
-    int count = 0;
-    // latitutes, vertical
+    int vertexIndex = 0;
+    // latitudes, horizontal
     for (int lat = 0; lat <= rings; lat++)
     {
-        // the latitude progress on the sphere in this loop ranges [0;1]
-        float vProgress = (float)lat / rings;
+        // 0.0 to 1.0
+        float latitudeProgress = static_cast<float>(lat) / rings;
 
-        // remap [0;1] to [vMin; vMax] by linearly interpolating
-        // also
-        // 0 <= vMin <= 1
-        // 0 <= vMax <= 1
-        float vGlobal = MathUtils::interpolation(vMin, vMax, vProgress);
+        // [0.0; 1.0] to the [vMin; vMax]
+        float mappedLatitude = MathUtils::interpolation(vMin, vMax, latitudeProgress);
 
-        // multiplied by pi spherical coordinates theta ranges [0;PI]
-        // where 0 is north pole
-        // PI/2 is equator
-        // PI is south pole
-        float theta = vGlobal * M_PI;
-        float sinTheta = sin(theta);
-        float cosTheta = cos(theta);
+        // [0; PI].
+        // 0 north pole, pi/2 equator, and pi south pole.
+        float polarAngle = mappedLatitude * M_PI;
 
-        // longitudes, horizontal
+        // longitudes, vertical
         for (int lon = 0; lon <= segments; lon++)
         {
-            // the longitude progress on the sphere in this loop ranges [0;1]
-            float uProgress = (float)lon / segments;
+            // 0.0 to 1.0
+            float longitudeProgress = static_cast<float>(lon) / segments;
 
-            // remap [0;1] to [uMin; uMax] by linearly interpolating
-            float uGlobal = MathUtils::interpolation(uMin, uMax, uProgress);
+            // [0.0; 1.0] to the [uMin; uMax]
+            float mappedLongitude = MathUtils::interpolation(uMin, uMax, longitudeProgress);
 
-            // multiplied by 2*pi spherical coordinates phi ranges [0;2*PI]
-            // full circle
-            float phi = uGlobal * 2.0f * M_PI;
-            float sinPhi = sin(phi);
-            float cosPhi = cos(phi);
+            // [0; 2*PI].
+            // a full circle around the y axis
+            float azimuthalAngle = mappedLongitude * MathUtils::TWO_PI;
 
-            // spherical coordinates to cartesian coordinates
-            float x = cosPhi * sinTheta;
-            float y = cosTheta;
-            float z = sinPhi * sinTheta;
+            // convert spherical coordinates to cartesian (x, y, z) coordinates
+            Vec3 position = MathUtils::sphericalToCartesian(polarAngle, azimuthalAngle, radius);
 
             Vertex vert;
-            vert.x = x * radius;
-            vert.y = y * radius;
-            vert.z = z * radius;
+            vert.x = position.x;
+            vert.y = position.y;
+            vert.z = position.z;
 
-            // store the local uvs so whole texture spans just this segment
-            vert.u = uProgress;
-            vert.v = vProgress;
+            // store UVs
+            vert.u = longitudeProgress;
+            vert.v = latitudeProgress;
 
-            vertices[count++] = vert;
+            vertices[vertexIndex++] = vert;
         }
     }
 
     std::vector<uint32_t> &indices = mesh->getIndices();
-    count = 0;
+    int indexCount = 0;
+
     for (int lat = 0; lat < rings; lat++)
     {
         for (int lon = 0; lon < segments; lon++)
@@ -103,17 +93,20 @@ std::shared_ptr<Mesh> EquirectangularEngine::generateSphereSegment(int rings, in
             // 1d array indexing latitudes are stored in blocks
             // so lat * (segments + 1) + long
             //          the rings size + place in the ring
-            int first = (lat * (segments + 1)) + lon;
+            int currentVertexIndex = (lat * (segments + 1)) + lon;
+
             // second is one ring below first
-            int second = first + segments + 1;
+            int nextRowVertexIndex = currentVertexIndex + segments + 1;
 
-            indices[count++] = first;
-            indices[count++] = second;
-            indices[count++] = first + 1;
+            // first triangle of the quad
+            indices[indexCount++] = currentVertexIndex;
+            indices[indexCount++] = nextRowVertexIndex;
+            indices[indexCount++] = currentVertexIndex + 1;
 
-            indices[count++] = second;
-            indices[count++] = second + 1;
-            indices[count++] = first + 1;
+            // second triangle of the quad
+            indices[indexCount++] = nextRowVertexIndex;
+            indices[indexCount++] = nextRowVertexIndex + 1;
+            indices[indexCount++] = currentVertexIndex + 1;
         }
     }
 
@@ -244,7 +237,6 @@ void EquirectangularEngine::loadEquirectangularImage(const std::string &url, int
     }
 }
 
-
 void EquirectangularEngine::clearImage()
 {
     currentRequestId_++;
@@ -331,8 +323,10 @@ void EquirectangularEngine::changeArrowDirection(int id, float yaw)
 
 bool EquirectangularEngine::isValidClick(const Vec3 &clickDirection, bool isSingleClick, bool &outIsDirectArrowClick)
 {
-    outIsDirectArrowClick = (clickDirection.y <= -0.565f && clickDirection.y >= -0.632f);
-    bool isHorizonClick = (std::abs(clickDirection.y) <= 0.6f);
+    outIsDirectArrowClick = (clickDirection.y <= EQUIRECTANGULAR_SETTINGS.directArrowClickMaxY &&
+                             clickDirection.y >= EQUIRECTANGULAR_SETTINGS.directArrowClickMinY);
+
+    bool isHorizonClick = (std::abs(clickDirection.y) <= EQUIRECTANGULAR_SETTINGS.horizonClickMaxAbsoluteY);
 
     return isSingleClick ? outIsDirectArrowClick : (outIsDirectArrowClick || isHorizonClick);
 }
