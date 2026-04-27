@@ -9,6 +9,13 @@ const bcrypt = require('bcrypt');
 //     return rows;
 // }
 
+function isIdUpdateSuccessful(result) {
+    const match = result?.info?.match(/Rows matched:\s*(\d+)/);
+    const rowsMatched = match ? parseInt(match[1]) : 0;
+
+    return rowsMatched == 1;
+}
+
 async function newUser(username, email, password) {
     let success = false;
     let error;
@@ -490,7 +497,7 @@ async function updateImagePath(connection, imageId, filepath) {
         WHERE image_id = ?
     `;
     const [result] = await connection.execute(query, [filepath, imageId]);
-    return result.affectedRows == 1;
+    return isIdUpdateSuccessful(result);
 }
 
 async function getMapImage(mapId) {
@@ -689,7 +696,7 @@ async function updatePointCoordinates(connection, pointId, u, v) {
         WHERE points.point_id = ?
     `;
     const [result] = await connection.execute(query, [u, v, pointId]);
-    return result.affectedRows == 1;
+    return isIdUpdateSuccessful(result);
 }
 
 async function updatePointNorthDirection(connection, pointId, northDirection) {
@@ -699,7 +706,7 @@ async function updatePointNorthDirection(connection, pointId, northDirection) {
         WHERE points.point_id = ?
     `;
     const [result] = await connection.execute(query, [northDirection, pointId]);
-    return result.affectedRows == 1;
+    return isIdUpdateSuccessful(result);
 }
 
 async function updatePointImage(connection, pointId, imageId) {
@@ -709,7 +716,7 @@ async function updatePointImage(connection, pointId, imageId) {
         WHERE points.point_id = ?
     `;
     const [result] = await connection.execute(query, [imageId, pointId]);
-    return result.affectedRows == 1;
+    return isIdUpdateSuccessful(result);
 }
 
 async function updateMapTitle(connection, mapId, title) {
@@ -719,7 +726,7 @@ async function updateMapTitle(connection, mapId, title) {
         WHERE map.map_id = ?
     `;
     const [result] = await connection.execute(query, [title, mapId]);
-    return result.affectedRows == 1;
+    return isIdUpdateSuccessful(result);
 }
 
 async function deleteImageById(connection, imageId) {
@@ -803,7 +810,7 @@ async function updateConnectionDirections(connection, connectionId, dirStartToEn
         WHERE connection_id = ?
     `;
     const [result] = await connection.execute(query, [dirStartToEnd, dirEndToStart, connectionId]);
-    return result.affectedRows == 1;
+    return isIdUpdateSuccessful(result);
 }
 
 async function isConnectionCrossMap(connection, connectionId) {
@@ -818,6 +825,195 @@ async function isConnectionCrossMap(connection, connectionId) {
     `;
     const [rows] = await connection.execute(query, [connectionId]);
     return rows[0].start_map_id != rows[0].end_map_id;
+}
+
+async function getGameMapDetails(gameMapID) {
+    const query = `
+        SELECT
+            game_maps.creator_id,
+            COALESCE(users.username, 'Ismeretlen felhasználó') AS creator_name,
+            game_maps.title,
+            COALESCE(
+                (
+                    SELECT ROUND(AVG(game_maps_comments.rating), 1)
+                    FROM game_maps_comments
+                    WHERE game_maps_comments.game_maps_id = ?
+                ),
+                0
+            ) AS rating,
+            (
+                SELECT COUNT(*)
+                FROM scores
+                WHERE scores.game_maps_id = ?
+            ) AS plays,
+            game_maps.game_created,
+            game_maps.game_description
+        FROM game_maps
+            LEFT JOIN users ON (game_maps.creator_id = users.user_id)
+        WHERE game_maps.game_maps_id = ?
+    `;
+    const [rows] = await pool.execute(query, [gameMapID, gameMapID, gameMapID]);
+    return rows.length > 0 ? rows[0] : null;
+}
+
+async function getTopScoresForGameMap(gameMapID) {
+    const query = `
+        SELECT 
+            COALESCE(users.username, 'Ismeretlen felhasználó') AS username,
+            scores.score,
+            scores.score_time
+        FROM scores
+            LEFT JOIN users ON (scores.user_id = users.user_id)
+        WHERE scores.game_maps_id = ?
+        ORDER BY scores.score DESC
+        LIMIT 5
+    `;
+    const [rows] = await pool.execute(query, [gameMapID]);
+    return rows;
+}
+
+async function doesGameMapExist(gameMapId) {
+    const query = `
+        SELECT COUNT(*) as count
+        FROM game_maps
+        WHERE game_maps.game_maps_id = ?
+    `;
+    const [rows] = await pool.execute(query, [gameMapId]);
+    return rows[0].count > 0;
+}
+
+async function getGameMapCoverImage(gameMapId) {
+    const query = `
+        SELECT images.image_id, images.filepath, images.width, images.height
+        FROM game_maps
+            INNER JOIN images ON (game_maps.cover_image_id = images.image_id)
+        WHERE game_maps.game_maps_id = ?
+    `;
+    const [rows] = await pool.execute(query, [gameMapId]);
+    return rows.length > 0 ? rows[0] : null;
+}
+
+async function updateGameMapCoverImage(connection, gameMapId, imageId) {
+    const query = `
+        UPDATE game_maps
+        SET game_maps.cover_image_id = ?
+        WHERE game_maps.game_maps_id = ?
+    `;
+    const [result] = await connection.execute(query, [imageId, gameMapId]);
+    return isIdUpdateSuccessful(result);
+}
+
+async function updateGameMapDetails(connection, gameMapId, title, description) {
+    const query = `
+        UPDATE game_maps
+        SET game_maps.title = COALESCE(?, game_maps.title),
+            game_maps.game_description = COALESCE(?, game_maps.game_description)
+        WHERE game_maps.game_maps_id = ?
+    `;
+    const [result] = await connection.execute(query, [title, description, gameMapId]);
+    return isIdUpdateSuccessful(result);
+}
+
+async function getGameMapComments(gameMapId, page) {
+    const safePage = Number.isInteger(Number(page)) && page > 0 ? page : 1;
+    const offset = (safePage - 1) * 50;
+    const query = `
+        SELECT 
+            COALESCE(users.username, 'Ismeretlen felhasználó') AS username,
+            game_maps_comments.rating,
+            game_maps_comments.comment_text,
+            game_maps_comments.created_at
+        FROM game_maps_comments
+            LEFT JOIN users ON (game_maps_comments.user_id = users.user_id)
+        WHERE game_maps_comments.game_maps_id = ?
+        ORDER BY game_maps_comments.created_at DESC
+        LIMIT 50 OFFSET ${offset}
+    `;
+    const [rows] = await pool.execute(query, [gameMapId]);
+    return rows;
+}
+
+async function getGameMapCommentCount(gameMapId) {
+    const query = `
+        SELECT 
+            COUNT(*) AS comment_count
+        FROM game_maps_comments
+        WHERE game_maps_comments.game_maps_id = ?
+    `;
+    const [rows] = await pool.execute(query, [gameMapId]);
+    return rows[0].comment_count;
+}
+
+async function hasUserCommentedOnGameMap(gameMapId, userId) {
+    const query = `
+        SELECT COUNT(*) AS comment_count
+        FROM game_maps_comments
+        WHERE game_maps_comments.game_maps_id = ?
+          AND game_maps_comments.user_id = ?
+    `;
+    const [rows] = await pool.execute(query, [gameMapId, userId]);
+    return rows[0].comment_count > 0;
+}
+
+async function insertGameMapComment(connection, gameMapId, userId, commentText, rating) {
+    const query = `
+        INSERT INTO game_maps_comments (game_maps_id, user_id, comment_text, rating)
+        VALUES (?, ?, ?, ?)
+    `;
+    const [result] = await connection.execute(query, [gameMapId, userId, commentText, rating]);
+    return result.insertId;
+}
+
+async function getUserCommentOnGameMap(gameMapId, userId) {
+    const query = `
+        SELECT game_maps_comments.comment_id, game_maps_comments.comment_text, game_maps_comments.rating, game_maps_comments.created_at
+        FROM game_maps_comments
+        WHERE game_maps_id = ? AND user_id = ?
+    `;
+    const [rows] = await pool.execute(query, [gameMapId, userId]);
+    return rows[0] || null;
+}
+
+async function updateUserCommentOnGameMap(connection, gameMapId, userId, commentText, rating) {
+    const query = `
+        UPDATE game_maps_comments
+        SET game_maps_comments.comment_text = ?, game_maps_comments.rating = ?
+        WHERE game_maps_comments.game_maps_id = ? AND game_maps_comments.user_id = ?
+    `;
+    const [result] = await connection.execute(query, [commentText, rating, gameMapId, userId]);
+    
+    return isIdUpdateSuccessful(result);
+}
+
+async function deleteUserCommentOnGameMap(connection, gameMapId, userId) {
+    const query = `
+        DELETE FROM game_maps_comments
+        WHERE game_maps_comments.game_maps_id = ? AND game_maps_comments.user_id = ?
+    `;
+    const [result] = await connection.execute(query, [gameMapId, userId]);
+    return result.affectedRows == 1;
+}
+
+async function getAllImageIdsForGameMap(connection, gameMapId) {
+    const query = `
+        SELECT DISTINCT images.image_id
+        FROM game_maps
+            LEFT JOIN map ON (game_maps.game_maps_id = map.game_maps_id)
+            LEFT JOIN points ON (map.map_id = points.map_id)
+            INNER JOIN images ON (points.image_id = images.image_id OR map.image_id = images.image_id OR game_maps.cover_image_id = images.image_id)
+        WHERE game_maps.game_maps_id = ?
+    `;
+    const [rows] = await connection.execute(query, [gameMapId]);
+    return rows.length > 0 ? rows.map((row) => row.image_id) : [];
+}
+
+async function deleteGameMapById(connection, gameMapId) {
+    const query = `
+        DELETE FROM game_maps
+        WHERE game_maps.game_maps_id = ?
+    `;
+    const [result] = await connection.execute(query, [gameMapId]);
+    return result.affectedRows == 1;
 }
 
 //!Export
@@ -873,5 +1069,20 @@ module.exports = {
     getAllImageIdsForMap,
     arePointsInSameMap,
     updateConnectionDirections,
-    isConnectionCrossMap
+    isConnectionCrossMap,
+    getGameMapDetails,
+    getTopScoresForGameMap,
+    doesGameMapExist,
+    getGameMapCoverImage,
+    updateGameMapCoverImage,
+    updateGameMapDetails,
+    getGameMapComments,
+    getGameMapCommentCount,
+    hasUserCommentedOnGameMap,
+    insertGameMapComment,
+    getUserCommentOnGameMap,
+    updateUserCommentOnGameMap,
+    deleteUserCommentOnGameMap,
+    getAllImageIdsForGameMap,
+    deleteGameMapById
 };

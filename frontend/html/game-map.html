@@ -1,0 +1,288 @@
+<!DOCTYPE html>
+<html lang="hu" data-bs-theme="dark">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Lokea</title>
+    <link href="/bootstrap/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="/css/game-map.css">
+    <script type="module" src="/javascript/game-map/game-map.js"></script>
+</head>
+
+<body class="lilagradiensbg">
+    <nav class="navbar navbar-expand-lg uveg sticky-top">
+        <div class="container-fluid justify-content-between">
+            <a class="navbar-brand" href="#">
+                <img src="/images/lokea.png" alt="Lokea logo" class="navPic">
+            </a>
+        </div>
+    </nav>
+
+    <main class="py-3">
+        <div class="container-fluid">
+            <section id="gameMapPage" class="game-map-page mx-auto rounded-4 p-3">
+                <div class="row g-4">
+                    <div class="col-12 col-xl-5">
+                        <div class="d-flex flex-column gap-3">
+                            <div class="cover-image-wrapper uveg rounded-4 overflow-hidden position-relative">
+                                <button id="editCoverImageButton" type="button"
+                                    class="btn btn-outline-light btn-sm rounded-pill px-3 cover-edit-button d-none">
+                                    Borítókép szerkesztése
+                                </button>
+                                <div id="coverPlaceholder"
+                                    class="placeholder position-absolute top-0 start-0 w-100 h-100 cover-placeholder">
+                                </div>
+
+                                <!-- 16:9es svg, placeholdernek -->
+                                <img id="coverImage" class="cover-image position-relative"
+                                    src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 9'%3E%3C/svg%3E"
+                                    alt="A pálya borítóképe">
+                                <div class="cover-overlay p-3 z-2">
+                                    <div class="d-flex align-items-center gap-2 flex-wrap">
+                                        <span class="small text-uppercase opacity-75">Értékelés</span>
+                                        <div id="displayRatingStars" class="rating-stars"></div>
+                                        <span id="displayRatingValue" class="small fw-semibold placeholder-glow"><span
+                                                class="placeholder col-8 rounded"></span></span>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="stats-container">
+                                <article class="stat-card uveg rounded-3 p-3">
+                                    <p class="stat-label mb-1">Létrehozva</p>
+                                    <p id="createdAtValue" class="stat-value mb-0 placeholder-glow"><span
+                                            class="placeholder col-8 rounded"></span></p>
+                                </article>
+                                <article class="stat-card uveg rounded-3 p-3">
+                                    <p class="stat-label mb-1">Játékok száma</p>
+                                    <p id="playsValue" class="stat-value mb-0 placeholder-glow"><span
+                                            class="placeholder col-4 rounded"></span></p>
+                                </article>
+                            </div>
+
+                            <section id="leaderboardPanel" class="uveg rounded-4 p-3">
+                                <h2 class="section-title mb-3">Rangsor</h2>
+                                <div id="leaderboardList" class="leaderboard-list" aria-live="polite">
+                                    <article class="score-item placeholder-glow" aria-hidden="true">
+                                        <span class="score-rank placeholder"></span>
+                                        <div class="score-main">
+                                            <p class="score-name mb-1"><span class="placeholder col-7 rounded"></span>
+                                            </p>
+                                            <small class="score-time d-block"><span
+                                                    class="placeholder col-5 rounded"></span></small>
+                                        </div>
+                                        <span
+                                            class="placeholder rounded-pill d-inline-block score-value-placeholder"></span>
+                                    </article>
+                                    <article class="score-item placeholder-glow" aria-hidden="true">
+                                        <span class="score-rank placeholder"></span>
+                                        <div class="score-main">
+                                            <p class="score-name mb-1"><span class="placeholder col-8 rounded"></span>
+                                            </p>
+                                            <small class="score-time d-block"><span
+                                                    class="placeholder col-4 rounded"></span></small>
+                                        </div>
+                                        <span
+                                            class="placeholder rounded-pill d-inline-block score-value-placeholder"></span>
+                                    </article>
+                                    <article class="score-item placeholder-glow" aria-hidden="true">
+                                        <span class="score-rank placeholder"></span>
+                                        <div class="score-main">
+                                            <p class="score-name mb-1"><span class="placeholder col-6 rounded"></span>
+                                            </p>
+                                            <small class="score-time d-block"><span
+                                                    class="placeholder col-5 rounded"></span></small>
+                                        </div>
+                                        <span
+                                            class="placeholder rounded-pill d-inline-block score-value-placeholder"></span>
+                                    </article>
+                                    <article class="score-item placeholder-glow" aria-hidden="true">
+                                        <span class="score-rank placeholder"></span>
+                                        <div class="score-main">
+                                            <p class="score-name mb-1"><span class="placeholder col-7 rounded"></span>
+                                            </p>
+                                            <small class="score-time d-block"><span
+                                                    class="placeholder col-6 rounded"></span></small>
+                                        </div>
+                                        <span
+                                            class="placeholder rounded-pill d-inline-block score-value-placeholder"></span>
+                                    </article>
+                                    <article class="score-item placeholder-glow" aria-hidden="true">
+                                        <span class="score-rank placeholder"></span>
+                                        <div class="score-main">
+                                            <p class="score-name mb-1"><span class="placeholder col-8 rounded"></span>
+                                            </p>
+                                            <small class="score-time d-block"><span
+                                                    class="placeholder col-4 rounded"></span></small>
+                                        </div>
+                                        <span
+                                            class="placeholder rounded-pill d-inline-block score-value-placeholder"></span>
+                                    </article>
+                                </div>
+                            </section>
+                        </div>
+                    </div>
+
+                    <div class="col-12 col-xl-7">
+                        <div class="d-flex flex-column gap-3">
+                            <section class="uveg rounded-4 p-3 gap-3 d-flex flex-column">
+                                <div class="d-flex flex-wrap justify-content-between align-items-start gap-2">
+                                    <div class="flex-grow-1">
+                                        <h1 id="titleDisplay" class="game-title m-0 placeholder-glow">
+                                            <span class="placeholder col-6 rounded"></span>
+                                        </h1>
+                                        <input id="titleInput" type="text" class="form-control uvegform d-none mt-1"
+                                            maxlength="50" placeholder="Adj meg egy címet...">
+                                        <p class="game-creator mb-0 mt-1 placeholder-glow">
+                                            Készítő: <span id="creatorValue" class="game-creator-value">
+                                                <span class="placeholder col-4 rounded"></span>
+                                            </span>
+                                        </p>
+                                    </div>
+                                    <button id="enterEditModeBtn"
+                                        class="btn btn-outline-secondary btn-sm rounded-pill px-3 d-none">
+                                        Cím és leírás szerkesztése
+                                    </button>
+                                </div>
+
+                                <div>
+                                    <h2 class="section-title mb-2">Leírás</h2>
+                                    <p id="descriptionDisplay" class="description-text mb-0 placeholder-glow">
+                                        <span class="placeholder col-12 rounded"></span>
+                                        <span class="placeholder col-9 rounded"></span>
+                                        <span class="placeholder col-8 rounded"></span>
+                                    </p>
+                                    <textarea id="descriptionInput" class="form-control uvegform d-none mt-2" rows="4"
+                                        maxlength="255" placeholder="Írj rövid leírást a pályáról..."></textarea>
+
+                                    <div id="detailsEditActions" class="d-flex flex-wrap gap-2 mt-3 d-none">
+                                        <button id="saveDetailsBtn" type="button"
+                                            class="btn uvegbutton rounded-pill px-3">
+                                            Változások mentése
+                                        </button>
+                                        <button id="cancelDetailsBtn" type="button"
+                                            class="btn btn-outline-secondary rounded-pill px-3">
+                                            Mégse
+                                        </button>
+                                    </div>
+                                </div>
+                                <div id="editDeleteDiv" class="d-flex flex-wrap gap-2 d-none">
+                                    <a id="editMapButton" class="btn btn-outline-secondary rounded-pill px-4">
+                                        Pálya szerkesztése
+                                    </a>
+                                    <button id="deleteGameMapButton" type="button"
+                                        class="btn btn-outline-danger rounded-pill px-4">
+                                        Pálya törlése
+                                    </button>
+                                </div>
+                            </section>
+
+                            <section class="uveg rounded-4 p-3 comments-section">
+                                <div class="d-flex justify-content-between align-items-center gap-2 flex-wrap">
+                                    <h2 class="section-title mb-0">Hozzászólások</h2>
+                                    <span id="commentsCountBadge"
+                                        class="badge rounded-pill text-bg-secondary placeholder-glow">
+                                        <span class="placeholder rounded px-3"></span>
+                                    </span>
+                                </div>
+
+
+                                <div id="commentSectionPlaceholder" class="mt-3 placeholder-glow">
+                                    <span class="placeholder col-3 mb-1 rounded d-block"></span>
+                                    <span class="placeholder col-12 rounded" style="height: 100px;"></span>
+                                    <div class="d-flex justify-content-between mt-3">
+                                        <span class="placeholder col-4 rounded d-block" style="height: 30px;"></span>
+                                        <span class="placeholder col-3 rounded-pill d-block" style="height: 38px;"></span>
+                                    </div>
+                                </div>
+
+                                <form id="commentForm" class="comment-form mt-3 d-none">
+                                    <label for="commentText" class="form-label mb-1">Írj hozzászólást</label>
+                                    <textarea id="commentText" name="comment" class="form-control uvegform" rows="4"
+                                        maxlength="255" placeholder="A véleményed erről a pályáról..."></textarea>
+
+                                    <div class="d-flex flex-wrap justify-content-between align-items-end gap-3 mt-3">
+                                        <fieldset class="rating-input-group">
+                                            <legend class="small mb-2">Értékelés</legend>
+                                            <div class="rating-input">
+                                                <input type="radio" id="csillag5" name="rating" value="5">
+                                                <label for="csillag5" aria-label="5 csillag">&#9733;</label>
+
+                                                <input type="radio" id="csillag4" name="rating" value="4">
+                                                <label for="csillag4" aria-label="4 csillag">&#9733;</label>
+
+                                                <input type="radio" id="csillag3" name="rating" value="3">
+                                                <label for="csillag3" aria-label="3 csillag">&#9733;</label>
+
+                                                <input type="radio" id="csillag2" name="rating" value="2">
+                                                <label for="csillag2" aria-label="2 csillag">&#9733;</label>
+
+                                                <input type="radio" id="csillag1" name="rating" value="1">
+                                                <label for="csillag1" aria-label="1 csillag">&#9733;</label>
+                                            </div>
+                                        </fieldset>
+
+                                        <div class="d-flex flex-wrap gap-2">
+                                            <button id="cancelCommentEditBtn" type="button"
+                                                class="btn btn-outline-secondary rounded-pill px-4 d-none">
+                                                Mégse
+                                            </button>
+                                            <button id="sendCommentBtn" type="submit" class="btn uvegbutton rounded-pill px-4">
+                                                Hozzászólás küldése
+                                            </button>
+                                        </div>
+                                    </div>
+                                </form>
+
+                                <div id="userCommentSection" class="user-comment-card uveg rounded-4 p-3 mt-3 d-none">
+                                    <div class="d-flex justify-content-between align-items-start gap-2 flex-wrap">
+                                        <div>
+                                            <span class="small text-uppercase opacity-75 fw-semibold">A te
+                                                értékelésed</span>
+                                            <div id="userCommentRating" class="rating-stars mt-1" style="--rating: 0;">
+                                            </div>
+                                        </div>
+                                        <div class="d-flex gap-2 text-nowrap">
+                                            <button id="editCommentBtn" type="button"
+                                                class="btn btn-outline-secondary btn-sm rounded-pill px-3">
+                                                Szerkesztés
+                                            </button>
+                                            <button id="deleteCommentBtn" type="button"
+                                                class="btn btn-outline-danger btn-sm rounded-pill px-3">
+                                                Törlés
+                                            </button>
+                                        </div>
+                                    </div>
+                                    <p id="userCommentText" class="comment-text mb-0 mt-3"></p>
+                                </div>
+
+                                <hr class="my-4">
+
+                                <div id="commentsList" class="comments-list mt-3">
+                                    <div class="text-center p-3 opacity-50">
+                                        <div class="spinner-border spinner-border-sm"></div>
+                                        <span class="ms-2">Hozzászólások betöltése...</span>
+                                    </div>
+                                </div>
+                            </section>
+                        </div>
+                    </div>
+                </div>
+            </section>
+        </div>
+
+        <div id="toastPlace" class="toast-container position-fixed bottom-0 start-50 translate-middle-x mb-4"></div>
+        <div id="modal-wrapper"></div>
+        <button id="playMapButton" type="button"
+            class="btn uvegbutton rounded-circle floating-button floating-button-primary" aria-label="Játék indítása">
+            <svg viewBox="0 0 119.4 122.88" class="play-map-icon">
+                <use href="/images/game-map-icons.svg#icon-start"></use>
+            </svg>
+        </button>
+    </main>
+
+    <script src="/bootstrap/js/bootstrap.min.js"></script>
+</body>
+
+</html>

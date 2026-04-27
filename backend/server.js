@@ -8,9 +8,9 @@ const auth = require('./auth.js')
 const { Server } = require("socket.io");
 const http = require('http');
 const { idSchema } = require('./utils/schemas.js');
-const ERRORS = require('./utils/errorMessages.js');
+const ERRORS = require('./utils/error-messages.js');
 const { assertUserOwnsGameMap } = require('./api/mapcreator/shared/utils/mapcreator.utils.js');
-const AppError = require('#utils/AppError.js');
+const AppError = require('#utils/app-error.js');
 
 //!Beállítások
 const app = express();
@@ -67,7 +67,7 @@ router.get('/webgl', (request, response) => {
 router.get('/map', (request, response) => {
     response.sendFile(path.join(__dirname, '../frontend/html/test-map.html'));
 });
-router.get('/maps/:gameMapId/edit',
+router.get('/game-maps/:gameMapId/edit',
     auth.checkAuth,
     async (request, response) => {
         try {
@@ -105,6 +105,38 @@ router.get('/admin', auth.checkRole("ADMIN"), (request, response) => {
 router.get('/choose_game', (request, response) => {
     response.sendFile(path.join(__dirname, '../frontend/html/game-choosing.html'));
 });
+router.get(
+    '/game-maps/:gameMapId',
+    auth.checkAuth,
+    async (request, response) => {
+        try {
+            await idSchema(ERRORS.GAMEMAP.INVALID_ID).validateAsync(request.params.gameMapId, {
+                abortEarly: true,
+                stripUnknown: true,
+                convert: true
+            });
+
+            const doesGameMapExist = await database.doesGameMapExist(request.params.gameMapId);
+            if (!doesGameMapExist) {
+                throw new AppError(ERRORS.GAMEMAP.NOT_FOUND, 404);
+            }
+
+            response.sendFile(path.join(__dirname, '../frontend/html/game-map.html'));
+        } catch (error) {
+            if (error.isJoi) {
+                // TODO: valami oldal ennek
+                response.status(400).json({ error: error.details[0].message });
+            } else {
+                if (error instanceof AppError && error.statusCode == 404) {
+                    response.status(404).sendFile(path.join(__dirname, '../frontend/html/notfound.html'));
+                } else {
+                    console.error(error);
+                    response.status(500).send();
+                }
+            }
+        }
+    }
+);
 router.use((request, response) => {
     response.status(404).sendFile(path.join(__dirname, '../frontend/html/notfound.html'));
 });

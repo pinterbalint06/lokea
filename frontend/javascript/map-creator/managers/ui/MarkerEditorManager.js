@@ -154,7 +154,7 @@ export class MarkerEditorManager {
                 if (this.store.doesActivePointHaveUnsavedChanges()) {
                     this.bus.emit(EVENTS.UI_POINT_SAVE_REQUESTED);
                 } else {
-                    this.bus.emit(EVENTS.TOAST_SHOW, { msg: "A pont nem változott!" });
+                    this.bus.emit(EVENTS.TOAST_SHOW, { msg: "A pont nem változott!", type: "info" });
                 }
             } else {
                 this.bus.emit(EVENTS.TOAST_SHOW, { msg: lockReason, type: "danger" });

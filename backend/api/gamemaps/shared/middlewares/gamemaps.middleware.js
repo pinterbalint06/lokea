@@ -1,5 +1,5 @@
-const ERRORS = require("#utils/errorMessages.js");
-const AppError = require("#utils/AppError.js")
+const ERRORS = require("#utils/error-messages.js");
+const AppError = require("#utils/app-error.js");
 
 async function isAllowedToGetMapImage(request, response, next) {
     try {

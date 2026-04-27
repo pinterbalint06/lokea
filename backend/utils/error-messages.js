@@ -8,13 +8,36 @@ const ERRORS = {
         UNEXPECTED_ERROR: "Váratlan hiba történt!",
         INVALID_RESOLUTION: "Helytelen felbontás!",
         FILE_NOT_FOUND: "A fájl nem létezik vagy helytelen!",
-        INVALID_IMAGE_TYPE: "Érvénytelen fájltípus! Csak JPG, PNG, WEBP és GIF képek engedélyezettek!"
+        INVALID_IMAGE_TYPE: "Érvénytelen fájltípus! Csak JPG, PNG, WEBP és GIF képek engedélyezettek!",
+        INVALID_PAGE: "Helytelen oldalszám!",
     },
 
     GAMEMAP: {
         INVALID_ID: "Helytelen pálya ID!",
 
-        NO_ACCESS: "Nincs hozzáférése ehhez a pályához!"
+        NO_ACCESS: "Nincs hozzáférése ehhez a pályához!",
+        COVER_IMAGE_UPDATE_FAILED: "A borítókép frissítése nem sikerült!",
+        COVER_IMAGE_DELETE_FAILED: "A borítókép törlése nem sikerült!",
+        NOT_FOUND: "A pálya nem létezik!",
+        COVER_IMAGE_NOT_FOUND: "A borítókép nem létezik!",
+        UPDATE_FAILED: "A pálya adatainak frissítése nem sikerült!",
+        DELETE_FAILED: "A pálya törlése nem sikerült!",
+
+        TITLE: {
+            INVALID_PATTERN: "A pálya címe csak betűket, számokat, szóközöket, kötőjeleket és alulvonásokat tartalmazhat!",
+            TOO_LONG: "A pálya címe maximum 50 karakter hosszú lehet!",
+            TOO_SHORT: "A pálya címének legalább 3 karakter hosszúnak kell lennie!",
+            EMPTY: "A pálya címe nem lehet üres!"
+        },
+
+        DESCRIPTION: {
+            INVALID_PATTERN: "A pálya leírása csak betűket, számokat, szóközöket, kötőjeleket és alulvonásokat tartalmazhat!",
+            TOO_LONG: "A pálya leírása maximum 255 karakter hosszú lehet!",
+            TOO_SHORT: "A pálya leírásának legalább 3 karakter hosszúnak kell lennie!",
+            EMPTY: "A pálya leírása nem lehet üres!"
+        },
+
+        ATLEAST_TITLE_OR_DESCRIPTION: "Vagy az új címet, vagy az új leírást kötelező megadni!"
     },
 
     MAP: {
@@ -90,6 +113,21 @@ const ERRORS = {
         END_TO_START_MAX: "A végpontból kezdőpontba iránynak 360 foknál kisebbnek kell lennie!",
 
         ATLEAST_ONE_DIRECTION: "Nem adott meg módosítandó irányt!"
+    },
+
+    COMMENT: {
+        TOO_LONG: "A hozzászólás maximum 255 karakter hosszú lehet!",
+        EMPTY_CONTENT: "A hozzászólás nem lehet üres!",
+        INVALID_CHARACTERS: "A hozzászólás csak betűket, számokat, szóközöket, kötőjeleket és alulvonásokat tartalmazhat!",
+        ALREADY_COMMENTED: "Ehhez a pályához már írtál hozzászólást!",
+        NOT_FOUND: "Még nem értékelted ezt a pályát!",
+        UPDATE_FAILED: "Nem sikerült frissíteni a hozzászólást!",
+        DELETE_FAILED: "Nem sikerült törölni a hozzászólást!",
+
+        INVALID_RATING: "Helytelen értékelés!",
+        TOO_LOW_RATING: "Az értékelésnek legalább 1-nek kell lennie!",
+        TOO_HIGH_RATING: "Az értékelésnek legfeljebb 5-nek kell lennie!",
+        RATING_REQUIRED: "Az értékelés megadása kötelező!"
     }
 };
 

@@ -1,7 +1,7 @@
 const fs = require("fs/promises");
 const path = require("path");
 const sharp = require("sharp");
-const { HIGH_QUALITY, LOW_QUALITY, LOW_RES_WIDTH, LOW_RES_SUFFIX } = require("#config/imageConfig.js");
+const { HIGH_QUALITY, LOW_QUALITY, LOW_RES_WIDTH, LOW_RES_SUFFIX } = require("#config/image-config.js");
 
 sharp.cache(false);
 

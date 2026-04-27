@@ -1,17 +1,14 @@
+const AppError = require("#utils/app-error.js");
 const database = require("#sql/database.js");
-const path = require("path");
-
-function resolveImagePath(filePath, resolution) {
-    let finalFilePath = filePath;
-    if (resolution == "low") {
-        const imagePath = path.parse(filePath);
-        finalFilePath = path.join(imagePath.dir, imagePath.name + "_low_res" + imagePath.ext);
-    }
-    return finalFilePath;
-}
+const ERRORS = require("#utils/error-messages.js");
+const { resolveImagePath } = require("#gamemaps/shared/utils/image-utils.js");
 
 async function getPointImageDetails(pointID, resolution) {
     const imageData = await database.getPointImage(pointID);
+    if (!imageData) {
+        throw new AppError(ERRORS.COMMON.FILE_NOT_FOUND, 404);
+    }
+
     const imagePath = resolveImagePath(imageData.filepath, resolution);
 
     return {
@@ -24,6 +21,10 @@ async function getPointImageDetails(pointID, resolution) {
 
 async function getMapImageDetails(mapID, resolution) {
     const imageData = await database.getMapImage(mapID);
+    if (!imageData) {
+        throw new AppError(ERRORS.COMMON.FILE_NOT_FOUND, 404);
+    }
+
     const imagePath = resolveImagePath(imageData.filepath, resolution);
 
     return {
@@ -33,12 +34,7 @@ async function getMapImageDetails(mapID, resolution) {
     };
 }
 
-async function getPointConnections(pointID) {
-    return await database.getConnectionsByPointId(pointID);
-}
-
 module.exports = {
     getPointImageDetails,
-    getMapImageDetails,
-    getPointConnections
+    getMapImageDetails
 };

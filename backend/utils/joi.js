@@ -1,5 +1,5 @@
 const joi = require("joi");
-const ERRORS = require("#utils/errorMessages.js");
+const ERRORS = require("#utils/error-messages.js");
 
 const extendedJoi = joi.extend((joi) => ({
     type: "object",
