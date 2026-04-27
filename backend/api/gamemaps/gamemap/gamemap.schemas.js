@@ -8,10 +8,6 @@ const getGameMapDetailsSchema = {
     params: gameMapIDParamsSchema
 };
 
-const gameMapIDParamsOnlySchema = {
-    params: gameMapIDParamsSchema
-};
-
 const deleteGameMapSchema = {
     params: gameMapIDParamsSchema
 };
@@ -54,8 +50,6 @@ const updateGameMapSchema = {
 
 module.exports = {
     getGameMapDetailsSchema,
-    gameMapIDParamsOnlySchema,
     deleteGameMapSchema,
-    updateGameMapSchema,
-    gameMapIDParamsSchema
+    updateGameMapSchema
 };

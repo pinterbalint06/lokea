@@ -293,11 +293,12 @@ export class ConnectionManager {
                     this.bus.emit(EVENTS.TOAST_SHOW, {
                         id: CONSTANTS.CONNECTION_TOAST_ID,
                         msg: "Kattints a végpontra!",
+                        type: "info",
                         autohide: false,
                         callback: () => {
                             this.#cancelConnectingMode();
                             if (currentUnsavedConnections == this.store.getState().activePoint.unsavedConnections.length) {
-                                this.bus.emit(EVENTS.TOAST_SHOW, { msg: "Kapcsolat létrehozás megszakítva!" });
+                                this.bus.emit(EVENTS.TOAST_SHOW, { msg: "Kapcsolat létrehozás megszakítva!", type: "info" });
                             }
                         }
                     });
@@ -345,7 +346,7 @@ export class ConnectionManager {
 
     async #saveConnections() {
         this.store.setState({ isBusy: { connection: "Kapcsolatok mentése folyamatban, kérlek várj!" } });
-        this.bus.emit(EVENTS.TOAST_SHOW, { msg: "Kapcsolatok mentése", id: "savingConnections", closable: false, autohide: false, spinner: true });
+        this.bus.emit(EVENTS.TOAST_SHOW, { msg: "Kapcsolatok mentése", type: "info", id: "savingConnections", closable: false, autohide: false, spinner: true });
 
         try {
             const state = this.store.getState();
@@ -433,7 +434,7 @@ export class ConnectionManager {
 
     async #loadConnections() {
         try {
-            this.bus.emit(EVENTS.TOAST_SHOW, { msg: "Kapcsolatok betöltése", id: "loadingConnections", closable: false, autohide: false, spinner: true });
+            this.bus.emit(EVENTS.TOAST_SHOW, { msg: "Kapcsolatok betöltése", type: "info", id: "loadingConnections", closable: false, autohide: false, spinner: true });
             const gameMapID = this.store.getState().gameMapId;
             let connections = await fetchConnections(gameMapID);
 
@@ -621,7 +622,7 @@ export class ConnectionManager {
 
     async #deleteConnection(connectionId) {
         this.store.setState({ isBusy: { connection: "Kapcsolat törlése folyamatban, kérlek várj!" } });
-        this.bus.emit(EVENTS.TOAST_SHOW, { msg: "Kapcsolat törlése", id: "deletingConnection", closable: false, autohide: false, spinner: true });
+        this.bus.emit(EVENTS.TOAST_SHOW, { msg: "Kapcsolat törlése", type: "info", id: "deletingConnection", closable: false, autohide: false, spinner: true });
 
         try {
             await deleteConnection(connectionId);

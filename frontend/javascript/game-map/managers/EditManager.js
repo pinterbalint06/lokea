@@ -96,7 +96,7 @@ export class EditManager {
         this.bus.on(EVENTS.UI_MODAL_CONFIRMED, async ({ modalType }) => {
             if (modalType == "delete_game_map") {
                 if (!this.isSavingDetails) {
-                    this.bus.emit(EVENTS.TOAST_SHOW, { msg: "Pálya törlése folyamatban...", autohide: false, spinner: true });
+                    this.bus.emit(EVENTS.TOAST_SHOW, { msg: "Pálya törlése folyamatban...", type: "info", autohide: false, spinner: true });
                     try {
                         await deleteGameMap(this.store.getState().gameMapId);
                         window.location.href = "/game-maps";
@@ -189,6 +189,7 @@ export class EditManager {
 
                     this.bus.emit(EVENTS.TOAST_SHOW, {
                         msg: "Pályaadatok mentése",
+                        type: "info",
                         id: loadingToastId,
                         autohide: false,
                         spinner: true

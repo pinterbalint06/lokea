@@ -5,8 +5,11 @@ const path = require('path');
 const cors = require('cors');
 const database = require("./sql/database.js");
 const auth = require('./auth.js')
+const { Server } = require("socket.io");
+const http = require('http');
 const { idSchema } = require('./utils/schemas.js');
 const ERRORS = require('./utils/error-messages.js');
+const { assertUserOwnsGameMap } = require('./api/mapcreator/shared/utils/mapcreator.utils.js');
 const AppError = require('#utils/app-error.js');
 
 //!Beállítások
@@ -15,13 +18,17 @@ const router = express.Router();
 
 const ip = '127.0.0.1';
 const port = 3000;
+const server = http.createServer(app);
+const onlineUsers = new Map(); 
+const io = new Server(server);
 
 app.use(cors());
 app.use(express.json()); //?Middleware JSON
 app.set('trust proxy', 1); //?Middleware Proxy
 
+
 //!Session beállítása:
-app.use(session({
+const sessionMiddleware = session({
     name: 'geo.sid',
     secret: "sijufhiu78fz87843",
     resave: false,
@@ -33,20 +40,20 @@ app.use(session({
         secure: false,
         maxAge: 60 * 60 * 1000
     }
-}));
-
-
-async function hasPermissionToEdit(request, gameMapID) {
-    const userId = request.session.userid;
-    const isTheirs = await database.checkUserOwnsGameMap(userId, gameMapID);
-    return isTheirs;
-}
-
+});
+app.use(sessionMiddleware);
+io.engine.use(sessionMiddleware);
 
 //!Routing
 //?Főoldal:
 router.get('/', (request, response) => {
-    response.sendFile(path.join(__dirname, '../frontend/html/index.html'));
+    response.sendFile(path.join(__dirname, '../frontend/html/main.html'));
+});
+router.get('/main', (request, response) => {
+    response.sendFile(path.join(__dirname, '../frontend/html/main.html'));
+});
+router.get('/register_page', (request, response) => {
+    response.sendFile(path.join(__dirname, '../frontend/html/register.html'));
 });
 router.get('/equirectangular', (request, response) => {
     response.sendFile(path.join(__dirname, '../frontend/html/test-equirectangular.html'));
@@ -67,27 +74,25 @@ router.get('/game-maps/:gameMapId/edit',
                 }
             );
 
-            let hasPermission = await hasPermissionToEdit(request, gameMapId);
-            if (hasPermission) {
-                response.sendFile(path.join(__dirname, '../frontend/html/map-creator.html'));
-            } else {
-                response.status(403).send();
-            }
+            await assertUserOwnsGameMap(request.session.userid, gameMapId);
+
+            response.sendFile(path.join(__dirname, '../frontend/html/map-creator.html'));
         } catch (error) {
             if (error.isJoi) {
                 // TODO: valami oldal ennek
                 response.status(400).json({ error: error.details[0].message });
             } else {
-                console.error(error);
-                response.status(500).send();
+                if (error instanceof AppError) {
+                    response.status(error.statusCode).send();
+                } else {
+                    console.error(error);
+                    response.status(500).send();
+                }
             }
         }
     }
 );
 
-router.get('/login_page', (request, response) => {
-    response.sendFile(path.join(__dirname, '../frontend/html/login.html'));
-});
 router.get('/admin', auth.checkRole("ADMIN"), (request, response) => {
     response.sendFile(path.join(__dirname, '../frontend/html/admin.html'));
 });
@@ -144,9 +149,42 @@ const gameMapsEndpoints = require('./api/gamemaps/gamemaps.routes.js');
 app.use('/api/game-maps', gameMapsEndpoints);
 app.use('/', router);
 
+//Socket.io
+
+io.on("connection", (socket) => {
+    const session = socket.request.session;
+    const userId = session ? session.userid : null;
+
+    socket.emit("totalOnline", onlineUsers.size);
+
+    if (userId) {
+        if (!onlineUsers.has(userId)) {
+            onlineUsers.set(userId, new Set());
+            onlineUsers.get(userId).add(socket.id);
+            
+            io.emit("totalOnline", onlineUsers.size);
+        } else {
+            onlineUsers.get(userId).add(socket.id);
+        }
+    }
+
+    socket.on("disconnect", () => {
+        if (userId && onlineUsers.has(userId)) {
+            const userSockets = onlineUsers.get(userId);
+            userSockets.delete(socket.id);
+
+            if (userSockets.size === 0) {
+                onlineUsers.delete(userId);
+            }
+
+            io.emit("totalOnline", onlineUsers.size);
+        }
+    });
+});
+
 
 //!Szerver futtatása
-app.listen(port, ip, () => {
+server.listen(port, ip, () => {
     console.log(`Szerver elérhetősége: http://${ip}:${port}`);
 });
 

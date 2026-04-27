@@ -42,7 +42,14 @@ async function postGameMapComment(userId, gameMapID, comment, rating) {
         dbConnection = await database.getConnection();
         await dbConnection.beginTransaction();
 
-        await database.insertGameMapComment(dbConnection, gameMapID, userId, commentDb, rating);
+        try {
+            await database.insertGameMapComment(dbConnection, gameMapID, userId, commentDb, rating);
+        } catch (error) {
+            if (error && (error.code == "ER_DUP_ENTRY" || error.errno == 1062)) {
+                throw new AppError(ERRORS.COMMENT.ALREADY_COMMENTED, 409);
+            }
+            throw error;
+        }
 
         await dbConnection.commit();
     } catch (error) {

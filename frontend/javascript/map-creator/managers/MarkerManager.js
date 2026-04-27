@@ -213,19 +213,30 @@ export class MarkerManager {
         });
 
         this.bus.on(EVENTS.UI_POINT_CENTER_VIEW, ({ targetPointId, targetMapId }) => {
-            this.pendingCenterMarker = {
-                pointId: targetPointId,
-                mapId: targetMapId
-            };
-            if (targetMapId == this.store.getState().activeMapId) {
-                this.#centerPendingMarker();
-            } else {
-                const lockReason = this.store.isAppLocked();
-                if (!lockReason) {
-                    this.bus.emit(EVENTS.UI_SWITCH_MAP_REQUEST, { mapId: targetMapId });
+            const hasSamePendingCenterRequest = this.pendingCenterMarker
+                && this.pendingCenterMarker.pointId == targetPointId
+                && this.pendingCenterMarker.mapId == targetMapId;
+
+            if (!hasSamePendingCenterRequest) {
+                this.pendingCenterMarker = {
+                    pointId: targetPointId,
+                    mapId: targetMapId
+                };
+                if (targetMapId == this.store.getState().activeMapId) {
+                    const hasTargetNow = this.mapViewer.doesMarkerExist(targetPointId)
+                        || !!this.markersCache[targetPointId];
+
+                    if (hasTargetNow) {
+                        this.#centerPendingMarker();
+                    }
                 } else {
-                    this.pendingCenterMarker = null;
-                    this.bus.emit(EVENTS.TOAST_SHOW, { msg: lockReason, type: "danger" });
+                    const lockReason = this.store.isAppLocked();
+                    if (!lockReason) {
+                        this.bus.emit(EVENTS.UI_SWITCH_MAP_REQUEST, { mapId: targetMapId });
+                    } else {
+                        this.pendingCenterMarker = null;
+                        this.bus.emit(EVENTS.TOAST_SHOW, { msg: lockReason, type: "danger" });
+                    }
                 }
             }
         });
@@ -289,7 +300,7 @@ export class MarkerManager {
 
     async #loadPoints(mapId) {
         try {
-            this.bus.emit(EVENTS.TOAST_SHOW, { id: "loadingPoints", msg: "Pontok betöltése", closable: false, autohide: false, spinner: true });
+            this.bus.emit(EVENTS.TOAST_SHOW, { id: "loadingPoints", msg: "Pontok betöltése", type: "info", closable: false, autohide: false, spinner: true });
             let points = await fetchPoints(mapId);
             if (mapId == this.store.getState().activeMapId) {
                 this.markersCache = {};
@@ -315,7 +326,7 @@ export class MarkerManager {
     async #savePoint(pointToSave) {
         this.store.setState({ isBusy: { point: "Pont mentése folyamatban, kérlek várj!" } });
 
-        this.bus.emit(EVENTS.TOAST_SHOW, { msg: "Pont mentése", id: "savingPoint", closable: false, autohide: false, spinner: true });
+        this.bus.emit(EVENTS.TOAST_SHOW, { msg: "Pont mentése", type: "info", id: "savingPoint", closable: false, autohide: false, spinner: true });
         try {
             let position = this.#getPointPosition(pointToSave);
             let isNewPoint = pointToSave == CONSTANTS.TEMP_ID;

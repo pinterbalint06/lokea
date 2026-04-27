@@ -23,6 +23,8 @@
 
     --state-success: rgb(42, 157, 143, 0.8);
     --state-danger: rgb(217, 4, 41, 0.8);
+    --state-warning: rgb(242, 153, 74, 0.8);
+    --state-info: rgb(123, 44, 191, 0.8);
     --state-danger-rgb: 217, 4, 41;
     --text-danger: #ff8ca0;
 

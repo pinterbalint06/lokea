@@ -21,7 +21,8 @@ const titleSchema = joi
 const degreeSchema = joi
     .number()
     .min(0)
-    .less(360);
+    .less(360)
+    .precision(2);
 
 const uvCoordinateSchema = joi
     .number()
