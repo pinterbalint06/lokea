@@ -4,47 +4,23 @@ const db = require('../../sql/admin/databaseSettings.js');
 const auth = require('../../utils/auth.js');
 const enTranslations = require('../../locales/en/admin.json');
 const huTranslations = require('../../locales/hu/admin.json');
+const { mockI18nMiddleware, testRequiresAdminOrAuth } = require('./helpers/helpers.js');
 
 jest.mock('../../sql/admin/databaseSettings.js');
 jest.mock('../../sql/admin/databaseLogs.js');
 
-jest.mock('../../utils/auth.js', () => ({
-    checkAuth: (req, res, next) => {
-        if (req.headers.unauthenticated) {
-            return res.status(401).json({ message: "Bejelentkezés szükséges!" });
-        }
-        if (!req.session) req.session = {};
-        req.session.userid = 99;
-        req.session.role = "ADMIN";
-        req.session.userLanguage = "en";
-        next();
-    },
-    checkRole: (...roles) => (req, res, next) => {
-        if (req.headers.notadmin) {
-            return res.status(404).send("Not Found HTML");
-        }
-        next();
-    }
-}));
+jest.mock('../../utils/auth.js', () => {
+    const helpers = require('./helpers/helpers.js');
+    return {
+        checkAuth: helpers.mockCheckAuth,
+        checkRole: helpers.mockCheckRole
+    };
+});
 
 const app = express();
 app.use(express.json());
 
-app.use((req, res, next) => {
-    if (!req.session) req.session = { userLanguage: 'en' };
-    req.t = (key) => {
-        const lang = req.session.userLanguage || 'en';
-        const translations = lang === 'en' ? enTranslations : huTranslations;
-        const [namespace, ...keys] = key.split(':');
-        const keyPath = keys.join(':');
-
-        if (namespace !== 'admin') return key;
-        const result = keyPath.split('.').reduce((obj, k) => obj && obj[k] !== undefined ? obj[k] : undefined, translations);
-        return result || key;
-    };
-
-    next();
-});
+app.use(mockI18nMiddleware);
 
 app.use('/api/admin', auth.checkAuth, auth.checkRole("ADMIN"), require('../../api/admin/index.js'));
 
@@ -55,19 +31,7 @@ describe('Admin Settings API-tesztek', () => {
     });
 
     describe('Végpont: GET /getAdminSettings', () => {
-        it('HIBA - 401, ha nincs bejelentkezve', async () => {
-            await request(app)
-                .get('/api/admin/getAdminSettings')
-                .set('unauthenticated', 'true')
-                .expect(401);
-        });
-
-        it('HIBA - 404, ha nem admin', async () => {
-            await request(app)
-                .get('/api/admin/getAdminSettings')
-                .set('notadmin', 'true')
-                .expect(404);
-        });
+        testRequiresAdminOrAuth(() => request(app).get('/api/admin/getAdminSettings'));
 
         it('SIKER - 200, admin beállítások lekérése', async () => {
             db.getAdminSettings.mockResolvedValue({ darkmode: 1, selectedChart: "activity-day" });
@@ -90,20 +54,7 @@ describe('Admin Settings API-tesztek', () => {
         });
     });
     describe('Végpont: PUT /updateAdminSettings', () => {
-        it('HIBA - 401, ha nincs bejelentkezve', async () => {
-            await request(app)
-                .put('/api/admin/updateAdminSettings')
-                .set('unauthenticated', 'true')
-                .send({ darkmode: true, selected_chart: "activity-day" })
-                .expect(401);
-        });
-        it('HIBA - 404, ha nem admin', async () => {
-            await request(app)
-                .put('/api/admin/updateAdminSettings')
-                .set('notadmin', 'true')
-                .send({ darkmode: true, selected_chart: "activity-day" })
-                .expect(404);
-        });
+        testRequiresAdminOrAuth(() => request(app).put('/api/admin/updateAdminSettings'));
 
         it('HIBA - 400, ha a darkmode értéke nem true/false', async () => {
             await request(app)
@@ -160,20 +111,7 @@ describe('Admin Settings API-tesztek', () => {
         });
     });
     describe('Végpont: PUT /userDarkMode', () => {
-        it('HIBA - 401, ha nincs bejelentkezve', async () => {
-            await request(app)
-                .put('/api/admin/userDarkMode')
-                .set('unauthenticated', 'true')
-                .send({ darkmode: true })
-                .expect(401);
-        });
-        it('HIBA - 404, ha nem admin', async () => {
-            await request(app)
-                .put('/api/admin/userDarkMode')
-                .set('notadmin', 'true')
-                .send({ darkmode: true })
-                .expect(404);
-        });
+        testRequiresAdminOrAuth(() => request(app).put('/api/admin/userDarkMode'));
 
         it('HIBA - 400, ha a darkmode értéke nem true/false', async () => {
             await request(app)
@@ -210,20 +148,7 @@ describe('Admin Settings API-tesztek', () => {
         });
     });
     describe('Végpont: PUT /updateLanguage', () => {
-        it('HIBA - 401, ha nincs bejelentkezve', async () => {
-            await request(app)
-                .put('/api/admin/updateLanguage')
-                .set('unauthenticated', 'true')
-                .send({ language: "en" })
-                .expect(401);
-        });
-        it('HIBA - 404, ha nem admin', async () => {
-            await request(app)
-                .put('/api/admin/updateLanguage')
-                .set('notadmin', 'true')
-                .send({ language: "en" })
-                .expect(404);
-        });
+        testRequiresAdminOrAuth(() => request(app).put('/api/admin/updateLanguage'));
 
         it('HIBA - 400, ha a language értéke nem "en" vagy "hu"', async () => {
             await request(app)
@@ -238,7 +163,7 @@ describe('Admin Settings API-tesztek', () => {
                 .put('/api/admin/updateLanguage')
                 .send({ language: "hu" })
                 .expect(200);
-            expect(res.body.message).toBe(enTranslations.settingsApi.update_success);
+            expect(res.body.message).toBe(huTranslations.settingsApi.update_success);
             expect(res.body.language).toBe("hu");
         });
 

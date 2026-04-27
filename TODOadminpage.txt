@@ -8,5 +8,4 @@ TODO - dashboard (main)
 
 hibak amiket javitani kell:
 -fetch.js -> tovabbdobja a hibat olyan helyeken, ahol kesobb nincs try-catch
--teszt: update, replace, insert, delete nel vizsgalat, hogy meg lett e hivva a commit, roleback, begintransaction
--teszt: megnezni, hogy tenyleg azt adja e vissza, amit kell, nem sor hosszusagot nezni
+-grafikon cachebol tolt be

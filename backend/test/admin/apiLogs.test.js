@@ -4,46 +4,22 @@ const db = require('../../sql/admin/databaseLogs.js');
 const auth = require('../../utils/auth.js');
 const enTranslations = require('../../locales/en/admin.json');
 const huTranslations = require('../../locales/hu/admin.json');
+const { mockI18nMiddleware, testRequiresAdminOrAuth } = require('./helpers/helpers.js');
 
 jest.mock('../../sql/admin/databaseLogs.js');
 
-jest.mock('../../utils/auth.js', () => ({
-    checkAuth: (req, res, next) => {
-        if (req.headers.unauthenticated) {
-            return res.status(401).json({ message: "Bejelentkezés szükséges!" });
-        }
-        if (!req.session) req.session = {};
-        req.session.userid = 99;
-        req.session.role = "ADMIN";
-        req.session.userLanguage = "en";
-        next();
-    },
-    checkRole: (...roles) => (req, res, next) => {
-        if (req.headers.notadmin) {
-            return res.status(404).send("Not Found HTML");
-        }
-        next();
-    }
-}));
+jest.mock('../../utils/auth.js', () => {
+    const helpers = require('./helpers/helpers.js');
+    return {
+        checkAuth: helpers.mockCheckAuth,
+        checkRole: helpers.mockCheckRole
+    };
+});
 
 const app = express();
 app.use(express.json());
 
-app.use((req, res, next) => {
-    if (!req.session) req.session = { userLanguage: 'en' };
-    req.t = (key) => {
-        const lang = req.session.userLanguage || 'en';
-        const translations = lang === 'en' ? enTranslations : huTranslations;
-        const [namespace, ...keys] = key.split(':');
-        const keyPath = keys.join(':');
-
-        if (namespace !== 'admin') return key;
-        const result = keyPath.split('.').reduce((obj, k) => obj && obj[k] !== undefined ? obj[k] : undefined, translations);
-        return result || key;
-    };
-
-    next();
-});
+app.use(mockI18nMiddleware);
 
 app.use('/api/admin', auth.checkAuth, auth.checkRole("ADMIN"), require('../../api/admin/index.js'));
 
@@ -54,19 +30,7 @@ describe('Admin Logs API Átfogó Tesztek', () => {
     });
 
     describe('Végpont: GET /getLogs', () => {
-        it('HIBA - 401, ha nincs bejelentkezve', async () => {
-            await request(app)
-                .get('/api/admin/getLogs')
-                .set('unauthenticated', 'true')
-                .expect(401);
-        });
-
-        it('HIBA - 404, ha nem admin', async () => {
-            await request(app)
-                .get('/api/admin/getLogs')
-                .set('notadmin', 'true')
-                .expect(404);
-        });
+        testRequiresAdminOrAuth(() => request(app).get('/api/admin/getLogs'));
 
         it('SIKER - 200, alapértelmezett adatok lekérése', async () => {
             db.getLogs.mockResolvedValue({ total: 2, rows: [{}, {}] });
@@ -83,19 +47,7 @@ describe('Admin Logs API Átfogó Tesztek', () => {
     });
 
     describe('Végpont: GET /sortedLogs', () => {
-        it('HIBA - 401, ha nincs bejelentkezve', async () => {
-            await request(app)
-                .get('/api/admin/sortedLogs')
-                .set('unauthenticated', 'true')
-                .expect(401);
-        });
-
-        it('HIBA - 404, ha nem admin', async () => {
-            await request(app)
-                .get('/api/admin/sortedLogs')
-                .set('notadmin', 'true')
-                .expect(404);
-        });
+        testRequiresAdminOrAuth(() => request(app).get('/api/admin/sortedLogs'));
 
         it('HIBA - 400, ha a dátum intervallum hibás', async () => {
             await request(app)
@@ -130,13 +82,7 @@ describe('Admin Logs API Átfogó Tesztek', () => {
     });
 
     describe('Végpont: POST /addLog', () => {
-        it('HIBA - 401, ha nincs bejelentkezve', async () => {
-            await request(app)
-                .post('/api/admin/addLog')
-                .set('unauthenticated', 'true')
-                .send({ activity: 'VALID_ACTIVITY' })
-                .expect(401);
-        });
+        testRequiresAdminOrAuth(() => request(app).post('/api/admin/addLog'));
 
         it('HIBA - 400, ha az activity hiányzik vagy rövid', async () => {
             await request(app).post('/api/admin/addLog').send({ activity: 'a' }).expect(400);
@@ -162,12 +108,7 @@ describe('Admin Logs API Átfogó Tesztek', () => {
     });
 
     describe('Végpont: POST /exportLogs', () => {
-        it('HIBA - 401, ha nincs bejelentkezve', async () => {
-            await request(app)
-                .post('/api/admin/exportLogs')
-                .set('unauthenticated', 'true')
-                .expect(401);
-        });
+        testRequiresAdminOrAuth(() => request(app).post('/api/admin/exportLogs'));
 
         it('HIBA - 404, ha nincs exportálható adat', async () => {
             db.sortedLogs.mockResolvedValue({ total: 0, rows: [] });

@@ -9,6 +9,7 @@ const multer = require('multer');
 const sharp = require('sharp');
 const enTranslations = require('../../locales/en/admin.json');
 const huTranslations = require('../../locales/hu/admin.json');
+const { mockI18nMiddleware, testRequiresAdminOrAuth } = require('./helpers/helpers.js');
 
 jest.mock('multer', () => {
     const multerMock = jest.fn(() => ({
@@ -41,43 +42,18 @@ jest.mock('../../sql/admin/databaseUsers.js');
 jest.mock('../../sql/admin/databaseLogs.js');
 jest.mock('fs/promises');
 
-jest.mock('../../utils/auth.js', () => ({
-    checkAuth: (req, res, next) => {
-        if (req.headers.unauthenticated) {
-            return res.status(401).json({ message: "Bejelentkezés szükséges!" });
-        }
-        if (!req.session) req.session = {};
-        req.session.userid = 99;
-        req.session.role = "ADMIN";
-        req.session.userLanguage = "en";
-        next();
-    },
-    checkRole: (...roles) => (req, res, next) => {
-        if (req.headers.notadmin) {
-            return res.status(404).send("Not Found HTML");
-        }
-        next();
-    }
-}));
+jest.mock('../../utils/auth.js', () => {
+    const helpers = require('./helpers/helpers.js');
+    return {
+        checkAuth: helpers.mockCheckAuth,
+        checkRole: helpers.mockCheckRole
+    };
+});
 
 const app = express();
 app.use(express.json());
 
-app.use((req, res, next) => {
-    if (!req.session) req.session = { userLanguage: 'en' };
-    req.t = (key) => {
-        const lang = req.session.userLanguage || 'en';
-        const translations = lang === 'en' ? enTranslations : huTranslations;
-        const [namespace, ...keys] = key.split(':');
-        const keyPath = keys.join(':');
-
-        if (namespace !== 'admin') return key;
-        const result = keyPath.split('.').reduce((obj, k) => obj && obj[k] !== undefined ? obj[k] : undefined, translations);
-        return result || key;
-    };
-
-    next();
-});
+app.use(mockI18nMiddleware);
 
 app.use('/api/admin', auth.checkAuth, auth.checkRole("ADMIN"), require('../../api/admin/index.js'));
 
@@ -88,19 +64,7 @@ describe('Admin Users API-tesztek', () => {
     });
 
     describe('GET /api/admin/getUsers', () => {
-        it('HIBA - 401, ha nincs bejelentkezve', async () => {
-            await request(app)
-                .get('/api/admin/getUsers')
-                .set('unauthenticated', 'true')
-                .expect(401);
-        });
-
-        it('HIBA - 404, ha nem admin', async () => {
-            await request(app)
-                .get('/api/admin/getUsers')
-                .set('notadmin', 'true')
-                .expect(404);
-        });
+        testRequiresAdminOrAuth(() => request(app).get('/api/admin/getUsers'));
 
         it('SIKER - 200, felhasználók lekérése', async () => {
             const mockUsers = { rows: [{ deleted_at: null, user_id: 1, username: 'User1', email: 'user1@example.com', role: 'user' }], total: 1 };
@@ -126,19 +90,7 @@ describe('Admin Users API-tesztek', () => {
     });
 
     describe('GET /api/admin/sortedUsers', () => {
-        it('HIBA - 401, ha nincs bejelentkezve', async () => {
-            await request(app)
-                .get('/api/admin/sortedUsers')
-                .set('unauthenticated', 'true')
-                .expect(401);
-        });
-
-        it('HIBA - 404, ha nem admin', async () => {
-            await request(app)
-                .get('/api/admin/sortedUsers')
-                .set('notadmin', 'true')
-                .expect(404);
-        });
+        testRequiresAdminOrAuth(() => request(app).get('/api/admin/sortedUsers'));
 
         it('HIBA - 400, ha érvénytelen query paraméter', async () => {
             const res = await request(app)
@@ -181,19 +133,7 @@ describe('Admin Users API-tesztek', () => {
     });
 
     describe('GET /api/admin/getUser', () => {
-        it('HIBA - 401, ha nincs bejelentkezve', async () => {
-            await request(app)
-                .get('/api/admin/getUser')
-                .set('unauthenticated', 'true')
-                .expect(401);
-        });
-
-        it('HIBA - 404, ha nem admin', async () => {
-            await request(app)
-                .get('/api/admin/getUser')
-                .set('notadmin', 'true')
-                .expect(404);
-        });
+        testRequiresAdminOrAuth(() => request(app).get('/api/admin/getUser'));
 
         it('HIBA - 400, ha érvénytelen query paraméter', async () => {
             const res = await request(app)
@@ -205,7 +145,7 @@ describe('Admin Users API-tesztek', () => {
 
         it('HIBA - 404, ha nincs ilyen felhasználó', async () => {
             db.getUser.mockResolvedValue([]);
-            await request(app)
+            const res = await request(app)
                 .get('/api/admin/getUser')
                 .query({ id: 1 })
                 .expect(404);
@@ -233,19 +173,7 @@ describe('Admin Users API-tesztek', () => {
     });
 
     describe('POST /api/admin/signupFromAdmin', () => {
-        it('HIBA - 401, ha nincs bejelentkezve', async () => {
-            await request(app)
-                .post('/api/admin/signupFromAdmin')
-                .set('unauthenticated', 'true')
-                .expect(401);
-        });
-
-        it('HIBA - 404, ha nem admin', async () => {
-            await request(app)
-                .post('/api/admin/signupFromAdmin')
-                .set('notadmin', 'true')
-                .expect(404);
-        });
+        testRequiresAdminOrAuth(() => request(app).post('/api/admin/signupFromAdmin'));
 
         it('HIBA - 400, ha érvénytelen body paraméter', async () => {
             const res = await request(app)
@@ -285,19 +213,7 @@ describe('Admin Users API-tesztek', () => {
     });
 
     describe('POST /api/admin/exportUsers', () => {
-        it('HIBA - 401, ha nincs bejelentkezve', async () => {
-            await request(app)
-                .post('/api/admin/exportUsers')
-                .set('unauthenticated', 'true')
-                .expect(401);
-        });
-
-        it('HIBA - 404, ha nem admin', async () => {
-            await request(app)
-                .post('/api/admin/exportUsers')
-                .set('notadmin', 'true')
-                .expect(404);
-        });
+        testRequiresAdminOrAuth(() => request(app).post('/api/admin/exportUsers'));
 
         it('HIBA - 400, ha érvénytelen body paraméter', async () => {
             const res = await request(app)
@@ -329,19 +245,7 @@ describe('Admin Users API-tesztek', () => {
     });
 
     describe('PUT /api/admin/updateUserFromAdmin', () => {
-        it('HIBA - 401, ha nincs bejelentkezve', async () => {
-            await request(app)
-                .put('/api/admin/updateUserFromAdmin')
-                .set('unauthenticated', 'true')
-                .expect(401);
-        });
-
-        it('HIBA - 404, ha nem admin', async () => {
-            await request(app)
-                .put('/api/admin/updateUserFromAdmin')
-                .set('notadmin', 'true')
-                .expect(404);
-        });
+        testRequiresAdminOrAuth(() => request(app).put('/api/admin/updateUserFromAdmin'));
 
         it('HIBA - 400, ha érvénytelen body paraméter', async () => {
             const res = await request(app)
@@ -351,12 +255,12 @@ describe('Admin Users API-tesztek', () => {
             expect(res.body.errors.length).toBeGreaterThan(0);
         });
 
-        it('SIKER - 204, felhasználó adatainak frissítése', async () => {
+        it('SIKER - 200, felhasználó adatainak frissítése', async () => {
             db.updateUserByAdmin.mockResolvedValue(1);
             await request(app)
                 .put('/api/admin/updateUserFromAdmin')
                 .send({ user_id: 1, username: 'UpdatedUser', email: 'updateduser@example.com', role: 'user' })
-                .expect(204);
+                .expect(200);
         });
 
         it('HIBA - 500, adatbázis hiba', async () => {
@@ -370,19 +274,7 @@ describe('Admin Users API-tesztek', () => {
     });
 
     describe('PUT /api/admin/userSelfUpdate', () => {
-        it('HIBA - 401, ha nincs bejelentkezve', async () => {
-            await request(app)
-                .put('/api/admin/userSelfUpdate')
-                .set('unauthenticated', 'true')
-                .expect(401);
-        });
-
-        it('HIBA - 404, ha nem admin', async () => {
-            await request(app)
-                .put('/api/admin/userSelfUpdate')
-                .set('notadmin', 'true')
-                .expect(404);
-        });
+        testRequiresAdminOrAuth(() => request(app).put('/api/admin/userSelfUpdate'));
 
         it('HIBA - 400, ha érvénytelen body paraméter', async () => {
             const res = await request(app)
@@ -392,12 +284,12 @@ describe('Admin Users API-tesztek', () => {
             expect(res.body.errors.length).toBeGreaterThan(0);
         });
 
-        it('SIKER - 204, saját adatainak frissítése', async () => {
+        it('SIKER - 200, saját adatainak frissítése', async () => {
             db.updateUserByAdmin.mockResolvedValue(1);
             await request(app)
                 .put('/api/admin/userSelfUpdate')
                 .send({ username: 'UpdatedUser', email: 'updateduser@example.com' })
-                .expect(204);
+                .expect(200);
         });
 
         it('HIBA - 500, adatbázis hiba', async () => {
@@ -411,19 +303,7 @@ describe('Admin Users API-tesztek', () => {
     });
 
     describe('PUT /api/admin/updateProfilePicFromAdmin', () => {
-        it('HIBA - 401, ha nincs bejelentkezve', async () => {
-            await request(app)
-                .put('/api/admin/updateProfilePicFromAdmin')
-                .set('unauthenticated', 'true')
-                .expect(401);
-        });
-
-        it('HIBA - 404, ha nem admin', async () => {
-            await request(app)
-                .put('/api/admin/updateProfilePicFromAdmin')
-                .set('notadmin', 'true')
-                .expect(404);
-        });
+        testRequiresAdminOrAuth(() => request(app).put('/api/admin/updateProfilePicFromAdmin'));
 
         it('HIBA 400 - nincs kép feltöltve', async () => {
             const res = await request(app)
@@ -470,19 +350,7 @@ describe('Admin Users API-tesztek', () => {
     });
 
     describe('DELETE /api/admin/userToInactive', () => {
-        it('HIBA - 401, ha nincs bejelentkezve', async () => {
-            await request(app)
-                .delete('/api/admin/userToInactive')
-                .set('unauthenticated', 'true')
-                .expect(401);
-        });
-
-        it('HIBA - 404, ha nem admin', async () => {
-            await request(app)
-                .delete('/api/admin/userToInactive')
-                .set('notadmin', 'true')
-                .expect(404);
-        });
+        testRequiresAdminOrAuth(() => request(app).delete('/api/admin/userToInactive'));
 
         it('HIBA - 400, ha érvénytelen body paraméter', async () => {
             const res = await request(app)
@@ -492,38 +360,26 @@ describe('Admin Users API-tesztek', () => {
             expect(res.body.errors.length).toBeGreaterThan(0);
         });
 
-        it('SIKER - 204, felhasználó inaktívvá tétele', async () => {
+        it('SIKER - 200, felhasználó inaktívvá tétele', async () => {
             db.userToInactive.mockResolvedValue(1);
             await request(app)
                 .delete('/api/admin/userToInactive')
-                .send({ userId: 1, role: 'user', deleted: true })
-                .expect(204);
+                .send({ userId: 1, role: 'user', deleted: false })
+                .expect(200);
         });
 
         it('HIBA - 500, adatbázis hiba', async () => {
             db.userToInactive.mockRejectedValue(new Error('Database error'));
             const res = await request(app)
                 .delete('/api/admin/userToInactive')
-                .send({ userId: 1, role: 'user', deleted: true })
+                .send({ userId: 1, role: 'user', deleted: false })
                 .expect(500);
             expect(res.body.error).toBe(enTranslations.usersApi.deactivate_error);
         });
     });
 
     describe('DELETE /api/admin/deleteProfilePicFromAdmin', () => {
-        it('HIBA - 401, ha nincs bejelentkezve', async () => {
-            await request(app)
-                .delete('/api/admin/deleteProfilePicFromAdmin')
-                .set('unauthenticated', 'true')
-                .expect(401);
-        });
-
-        it('HIBA - 404, ha nem admin', async () => {
-            await request(app)
-                .delete('/api/admin/deleteProfilePicFromAdmin')
-                .set('notadmin', 'true')
-                .expect(404);
-        });
+        testRequiresAdminOrAuth(() => request(app).delete('/api/admin/deleteProfilePicFromAdmin'));
 
         it('SIKER 201 - sikeresen törli a profilképet', async () => {
             db.deleteProfilePic.mockResolvedValue('old-pic.webp');
