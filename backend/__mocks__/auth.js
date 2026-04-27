@@ -18,7 +18,7 @@ const defaultGameSession = () => ({
             mapId: 1,
             image: {
                 id: 1,
-                mimeTtype: "image/jpeg",
+                mimeType: "image/jpeg",
                 base64: "dGVzdA==",
                 width: 800,
                 height: 600

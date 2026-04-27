@@ -6,7 +6,7 @@ const fs = require("fs/promises");
 const path = require('path');
 const AppError = require("../../utils/AppError.js");
 
-router.use(checkGameSession);
+// router.use(checkGameSession);
 //TODO: képek visszadásának átdolgozása majd a lowhighres szerint
 function getMimeTypeFromPath(filePath) {
     const extension = path.extname(filePath).toLowerCase();
@@ -41,7 +41,7 @@ router.get('/get_game_info', async (request, response) => {
                 title: game.gameTitle,
                 rounds: game.rounds,
                 currentRound: game.currentRound,
-                roundTime: game.roundTime
+                roundTime: game.roundTime // törlés has nem kell
             }
         });
     } catch (error) {
@@ -102,6 +102,7 @@ router.get("/get_random_point", async (request, response) => {
         if (!point) {
             throw new AppError("No points available", 500);
         }
+        
         await database.setCurrentPoint(sessionId, point.point_id);
         const imageFullPath = resolvePathInsideUploadRoot(point.filepath);
         const imageBuffer = await fs.readFile(imageFullPath);
@@ -109,6 +110,10 @@ router.get("/get_random_point", async (request, response) => {
         if (!request.session.game.roundStartedAt) {
             request.session.game.roundStartedAt = Date.now();
         }
+        const countdownSeconds = 3;
+        const roundEndAt = request.session.game.roundStartedAt + (countdownSeconds + request.session.game.roundTime) * 1000;
+        const timeLeft = Math.max(0, Math.ceil((roundEndAt - Date.now()) / 1000));
+        console.log("Fetched point", point.point_id, "for session", sessionId, "with time left:", timeLeft);
         request.session.game.point = {
             pointId: point.point_id,
             pointu: point.point_u,
@@ -132,6 +137,10 @@ router.get("/get_random_point", async (request, response) => {
                 base64: request.session.game.point.image.base64,
                 width: request.session.game.point.image.width,
                 height: request.session.game.point.image.height
+            },
+            game: {
+                timeLeft,
+                roundEndAt
             }
         };
         response.status(200).json({ success: true, point: point });
@@ -177,8 +186,9 @@ router.post('/session_guess', async (request, response) => {
         }
 
         const countdownSeconds = 3;
-        const elapsed = Math.floor((Date.now() - (game.roundStartedAt ?? 0)) / 1000) - countdownSeconds;
-        const timeLeft = Math.max(0, game.roundTime - elapsed);
+        const roundEndAt = (game.roundStartedAt ?? 0) + (countdownSeconds + game.roundTime) * 1000;
+        const timeLeft = Math.max(0, Math.ceil((roundEndAt - Date.now()) / 1000));
+        console.log("Processing guess for session", sessionId, "with time left:", timeLeft);
         const timePunishment = game.roundTime - 5;
         const minTimeMultiplier = 0.1;
         let score;
@@ -227,6 +237,7 @@ router.post('/session_guess', async (request, response) => {
             if (conn) conn.release();
         }
         const totalScore = await database.totalScore(sessionId);
+        delete request.session.game.roundStartedAt;
         reJson.totalScore = totalScore;
         reJson.pointu = game.point.pointu;
         reJson.pointv = game.point.pointv;

@@ -75,7 +75,7 @@ describe("Game Choosing API - /api/choose-game/", () => {
     });
 
     describe("GET /get_cover_image/:cover_image_id", () => {
-        const uploadsPath = require("path").join(__dirname, "../../api/../uploads");
+        const uploadsPath = require("path").join(__dirname, "../../uploads");
 
         describe("Happy paths (200)", () => {
             it("Should send the file at the path returned by the database", async () => {

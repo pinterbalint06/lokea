@@ -121,7 +121,7 @@ CREATE TABLE game_sessions (
     sharpness FLOAT NOT NULL DEFAULT -3,
     time_per_round INT NOT NULL DEFAULT 30,
     current_point_id INT NULL,
-    FOREIGN KEY (current_point_id) REFERENCES points(point_id),
+    FOREIGN KEY (current_point_id) REFERENCES points(point_id) ON DELETE SET NULL,
     FOREIGN KEY (user_id) REFERENCES users(user_id) ON DELETE SET NULL,
     FOREIGN KEY (game_maps_id) REFERENCES game_maps(game_maps_id) ON DELETE CASCADE
 );
@@ -130,6 +130,7 @@ CREATE TABLE session_guesses (
     guess_id INT AUTO_INCREMENT PRIMARY KEY,
     session_id INT NOT NULL,
     point_id INT,
+    round INT NOT NULL,
     map_id INT NOT NULL,
     guessed_u float NOT NULL,
     guessed_v float NOT NULL,
@@ -137,6 +138,19 @@ CREATE TABLE session_guesses (
     points_awarded INT NOT NULL,
     guessed_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     cycle INT NOT NULL,
+    foreign key (map_id) references map(map_id) ON DELETE CASCADE,
     FOREIGN KEY (session_id) REFERENCES game_sessions(session_id) ON DELETE CASCADE,
     FOREIGN KEY (point_id) REFERENCES points(point_id) ON DELETE SET NULL
 );
+
+SET GLOBAL event_scheduler = ON;
+
+CREATE EVENT expire_abandoned_sessions
+ON SCHEDULE EVERY 1 HOUR
+DO
+    UPDATE game_sessions
+    SET finished_at = CURRENT_TIMESTAMP
+    WHERE finished_at IS NULL
+      AND started_at < DATE_SUB(NOW(), INTERVAL 2 HOUR);
+
+

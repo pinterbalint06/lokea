@@ -31,7 +31,7 @@ document.addEventListener("DOMContentLoaded", function () {
     startGame();
 });
 
-function init() {
+async function init() {
     mapViewerEngine = new MapViewer(mapCanvasId);
     mapViewerEngine.onClickHandler = (cursorX, cursorY) => {
         if (canPlaceMarker) {
@@ -44,6 +44,7 @@ function init() {
     }
     document.getElementById("autoRotate").addEventListener("change", setAutoRotate);
     equirectangularViewer = new EquirectangularViewer(pictureCanvasId);
+    await equirectangularViewer.ready();
 }
 
 function mapFullScreen() {
@@ -144,14 +145,27 @@ function nextRound() {
 
 async function startGame() {
     try {
-        const gameData = await fetchGameData('/api/game/get_game_info');
+        const [gameData, mapsData] = await Promise.all([
+            fetchGameData('/api/game/get_game_info'),
+            fetchGameData('/api/game/get_all_maps')
+        ]);
 
-        const mapsData = await fetchGameData('/api/game/get_all_maps');
         console.log(gameData);
         console.log(mapsData);
 
+        if (!Array.isArray(mapsData.maps) || mapsData.maps.length === 0) {
+            canPlaceMarker = false;
+            throw new Error("Nincsenek elérhető térképek a játékhoz.");
+        }
+        if (!gameData.game || typeof gameData.game.rounds !== 'number' || typeof gameData.game.roundTime !== 'number') {
+            throw new Error("Érvénytelen játékadatok érkeztek a szervertől.");
+        }
         gameMaps = mapsData.maps;
         cycleMaps();
+        if (gameMaps.length > 1) {
+            document.getElementById('mapPrevBtn').addEventListener('click', () => cycleMaps(-1));
+            document.getElementById('mapNextBtn').addEventListener('click', () => cycleMaps(1));
+        }
 
         const roundCount = gameData.game.rounds;
         const currentRound = gameData.game.currentRound;
@@ -163,8 +177,7 @@ async function startGame() {
             console.log(`Starting round ${i + 1} of ${roundCount}`);
             const isLastRound = i === roundCount - 1;
             resetGameState(roundTime, i);
-            await createPoint();
-            startRoundTimer(roundTime);
+            await createPoint(roundTime);
             await waitForGuess();
             if (isLastRound) {
                 document.getElementById('nextRoundBtn').textContent = 'Eredmények';
@@ -179,33 +192,34 @@ async function startGame() {
     }
 }
 
-function resetGameState(roundTime, round) {
+function resetGameState(roundTime, currentRound) {
     document.getElementById(mapCanvasId).classList.remove("full");
     document.getElementById("guessPanel").classList.remove("open");
     document.getElementById('bottomRight').classList.remove('expanded');
-    document.getElementById('currentRound').textContent = round + 1;
+    document.getElementById('currentRound').textContent = currentRound + 1;
     document.getElementById("guessBtn").disabled = false;
     document.getElementById("pictureFullScreenBtn").disabled = false;
-    document.getElementById("timer").textContent = formatSecondsToMinutes(roundTime);
 }
 
-async function createPoint() {
+async function createPoint(roundTime) {
     try {
         const pointData = await fetchGameData('/api/game/get_random_point')
-        console.log(pointData);
         if (!pointData.success || !pointData.point) throw new Error("Failed to fetch random point");
         const point = pointData.point;
+        document.getElementById("timer").textContent = formatSecondsToMinutes(point.game.timeLeft - 3);
         equirectangularViewer.loadImage(
             `data:${point.image.mimeType};base64,${point.image.base64}`,
             point.image.width, point.image.height
-        ).then(() => {
-            console.log("Game image loaded:", point.point_id);
-            equirectangularViewer.setZoom(0);
-        }).catch(e => console.error("Failed to load game image:", e));
+        );
+        equirectangularViewer.setZoom(0);
+        if (point.game.timeLeft >= roundTime) {
+            await createCountdownTimer();
+        }
+        startRoundTimer(point.game.roundEndAt);
     } catch (error) {
         console.error("Error creating point:", error);
     }
-    await createCountdownTimer();
+
 }
 
 function cycleMaps(direction = 1) {
@@ -223,9 +237,6 @@ function nextMap() {
     console.log(map);
     const imageDataUrl = `data:${map.image.mimeType};base64,${map.image.base64}`;
     mapViewerEngine.loadMap(imageDataUrl, map.image.width, map.image.height)
-        .then(function () {
-            console.log("Game map loaded:", gameMapsIndex);
-        })
         .catch(function (e) {
             console.error("Failed to load game map:", e);
         });
@@ -234,17 +245,16 @@ function nextMap() {
 
 }
 
-function startRoundTimer(seconds) {
-    timeLeft = seconds;
+function startRoundTimer(roundEndAt) {
     const timerEl = document.getElementById("timer");
     timerInterval = setInterval(() => {
-        timeLeft--;
-        timerEl.textContent = formatSecondsToMinutes(timeLeft);
-        timerEl.classList.toggle("urgent", timeLeft <= 5 && timeLeft > 0);
-        if (timeLeft <= 0) {
+        const remaining = Math.ceil((roundEndAt - Date.now()) / 1000);
+        timerEl.textContent = formatSecondsToMinutes(remaining);
+        timerEl.classList.toggle("urgent", remaining <= 5 && remaining > 0);
+        if (remaining <= 0) {
             sendGuess();
         }
-    }, 1000);
+    }, 200);
 }
 
 function stopRoundTimer() {
@@ -352,7 +362,6 @@ async function finishGame() {
     }));
 }
 
-window.cycleMaps = cycleMaps;
 window.mapFullScreen = mapFullScreen;
 window.pictureFullScreen = pictureFullScreen;
 window.nextRound = nextRound;

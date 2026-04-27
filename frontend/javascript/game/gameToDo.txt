@@ -35,8 +35,12 @@ kesz--reszponziv javitas
 !!!!--svg-k helyes használata
 kesz--checkauth mindenhova
     --login hiba jo helyre vigyen
---mapi, rounds, roundtime vizsgalata
---térképváltoztatás csak ha van több
+kesz--mapi, rounds, roundtime vizsgalata
+kesz--térképváltoztatás csak ha van több
+--adatbázis átírás miatt tipp kört is beküldeni
+--végpontok átnevezése
+kesz--idő visszaadasa
+kesz--ido resetnel jora
 
 !!!!--palyak kedvencre tetele
 kesz--rendezés fix

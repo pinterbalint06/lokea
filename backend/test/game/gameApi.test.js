@@ -190,16 +190,18 @@ describe("Game API - /api/game/", () => {
             });
 
             it("Should set roundStartedAt in session if it was not already set", async () => {
+                const session = {
+                    userid: 1,
+                    game: {
+                        activeSessionId: 1,
+                        gameMapId: 100,
+                        currentCycle: 1,
+                        roundStartedAt: null
+                    }
+                };
+
                 checkGameSession.mockImplementationOnce((request, response, next) => {
-                    request.session = {
-                        userid: 1,
-                        game: {
-                            activeSessionId: 1,
-                            gameMapId: 100,
-                            currentCycle: 1,
-                            roundStartedAt: null
-                        }
-                    };
+                    request.session = session;
                     next();
                 });
                 database.getCurrentPointId.mockResolvedValueOnce(null);
@@ -208,6 +210,7 @@ describe("Game API - /api/game/", () => {
                 const response = await requestWithSupertest.get("/api/game/get_random_point");
 
                 expect(response.statusCode).toBe(200);
+                expect(session.game.roundStartedAt).toBeTruthy();
             });
         });
 

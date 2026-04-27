@@ -3,13 +3,14 @@ const router = express.Router();
 const database = require("../../sql/database.js");
 const path = require('path');
 const multer = require('multer');
+const AppError = require("../../utils/AppError.js");
 const { checkAuth } = require("#root/auth.js");
 
-router.use(checkAuth);
+// router.use(checkAuth);
 
 const upload = multer();
 
-router.get('/game_maps',  async (request, response) => {
+router.get('/game_maps', async (request, response) => {
     try {
         const sort = String(request.query.sort || 'created').toLowerCase();
         const offset = parseInt(request.query.offset) || 0;
@@ -21,15 +22,15 @@ router.get('/game_maps',  async (request, response) => {
             });
         }
 
-        const user_id = request.session?.userid;
-        const palyak = await database.getGameMaps(sort, user_id, offset);
+        const userId = request.session?.userid || 1; //TODO: törlés ha van login
+        const palyak = await database.getGameMaps(sort, userId, offset);
 
         response.status(200).json({
             success: true,
             results: palyak
         });
     } catch (error) {
-        response.status(500).json({ success: false, message: 'Error fetching game maps' });
+        response.status(500).json({ success: false, message: 'Error fetching game maps' + error.message });
     }
 });
 
@@ -57,9 +58,8 @@ router.get('/get_cover_image/:cover_image_id', async (request, response) => {
 
 router.get('/active_game_session', async (request, response) => {
     try {
-        const userId = request.session?.userid;
+        const userId = request.session?.userid || 1; //TODO: törlés ha van login
         const activeSession = await database.selectLatestActiveGameSession(userId);
-
         if (!activeSession) {
             response.status(200).json({ success: true, hasActiveSession: false });
         } else {
@@ -80,7 +80,7 @@ router.get('/active_game_session', async (request, response) => {
             });
         }
     } catch (error) {
-        response.status(500).json({ success: false, message: 'Error checking active session' });
+        response.status(500).json({ success: false, message: 'Error checking active session' + error.message });
     }
 });
 
@@ -89,31 +89,26 @@ router.post('/post_game_id', upload.none(), async (request, response) => {
     const gameMapId = parseInt(request.body.gameMapId);
     const rounds = parseInt(request.body.rounds);
     const roundTime = parseInt(request.body.roundTime);
-    const userId = request.session?.userid;
+    const userId = request.session?.userid || 1; //TODO: törlés ha van login
     const allowedDifficulties = { easy: -1.5, normal: -3, hard: -5 };
-
-    if (!Number.isInteger(gameMapId) || gameMapId <= 0) {
-        return response.status(400).json({ success: false, message: 'Invalid gameMapId' });
-    }
-    if (!Number.isInteger(rounds) || rounds < 1 || rounds > 100) {
-        return response.status(400).json({ success: false, message: 'Invalid rounds (1–100)' });
-    }
-    if (!Number.isInteger(roundTime) || roundTime < 1 || roundTime > 300) {
-        return response.status(400).json({ success: false, message: 'Invalid roundTime (1–300)' });
-    }
-    if (!Object.hasOwn(allowedDifficulties, difficulty)) {
-        return response.status(400).json({ success: false, message: 'Invalid difficulty' });
-    }
     const sharpness = allowedDifficulties[difficulty];
 
     try {
+        if (!Number.isInteger(gameMapId) || gameMapId <= 0) {
+            throw new AppError('Invalid gameMapId', 400);
+        }
+        if (!Number.isInteger(rounds) || rounds < 1 || rounds > 100) {
+            throw new AppError('Invalid rounds (1–100)', 400);
+        }
+        if (!Number.isInteger(roundTime) || roundTime < 1 || roundTime > 300) {
+            throw new AppError('Invalid roundTime (1–300)', 400);
+        }
+        if (!Object.hasOwn(allowedDifficulties, difficulty)) {
+            throw new AppError('Invalid difficulty', 400);
+        }
         const gameTitle = await database.getGameTitleById(gameMapId);
         if (!gameTitle) {
-            return response.status(404).json({ success: false, message: 'Game map not found' });
-        }
-        const existing = await database.selectLatestActiveGameSession(userId);
-        if (existing) {
-            return response.status(409).json({ success: false, message: 'Van már aktív játék munkamenet' });
+            throw new AppError('Game map not found', 404);
         }
         const activeSession = await database.insertGameSession(userId, rounds, roundTime, gameMapId, sharpness);
         request.session.game = {
@@ -128,8 +123,11 @@ router.post('/post_game_id', upload.none(), async (request, response) => {
         };
         response.status(200).json({ success: true, message: 'Game map ID saved in session' });
     } catch (error) {
-        const status = error.statusCode ?? 500;
-        response.status(status).json({ success: false, message: error.message });
+        if (error.statusCode) {
+            response.status(400).json({ success: false, message: error.message });
+        } else {
+            response.status(500).json({ success: false, message: "Error posting game" });
+        }
     }
 });
 
