@@ -17,6 +17,5 @@ EMSCRIPTEN_BINDINGS(engineBinding)
         .property("yaw", &Engine::getYaw, &Engine::setYaw)
         .property("pitch", &Engine::getPitch, &Engine::setPitch)
         .function("setCanvasSize", &Engine::setCanvasSize)
-        .function("setProjectionType", emscripten::select_overload<void(int)>(&Engine::setProjectionType))
         .property("zoom", &Engine::getZoom, &Engine::setZoom);
 }

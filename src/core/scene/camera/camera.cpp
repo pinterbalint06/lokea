@@ -213,6 +213,6 @@ void Camera::recalculateCanvasBoundaries()
     projectionMatrix_->setBottomClippingPlane(-top);
     projectionMatrix_->setLeftClippingPlane(-right);
 
-    // update perspective projection matrix
+    // update view projection matrix
     isViewProjMatrixDirty_ = true;
 }

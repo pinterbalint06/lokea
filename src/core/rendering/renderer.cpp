@@ -48,7 +48,7 @@ Renderer::Renderer(const std::string &canvasID)
     uboMat_ = std::make_unique<UniformBufferObject<Materials::MaterialData>>(BindingSlots::UBO::MATERIAL_DATA);
     uboMesh_ = std::make_unique<UniformBufferObject<MeshData>>(BindingSlots::UBO::MESH_DATA);
 
-    currShader_ = nullptr;
+    currShader_.reset();
 
     glEnable(GL_DEPTH_TEST);
 
@@ -63,7 +63,7 @@ Renderer::~Renderer()
     }
 }
 
-void Renderer::setupShader(std::unique_ptr<Shaders::Shader> &shader)
+void Renderer::setupShader(std::shared_ptr<Shaders::Shader> &shader)
 {
     shader->bindUniformBlock("MaterialData", (int)BindingSlots::UBO::MATERIAL_DATA);
     shader->bindUniformBlock("MeshData", (int)BindingSlots::UBO::MESH_DATA);
@@ -72,20 +72,20 @@ void Renderer::setupShader(std::unique_ptr<Shaders::Shader> &shader)
     // have to use shader to set uniforms
     shader->use();
     shader->setUniformInt("uAlbedo", (int)BindingSlots::Texture::ALBEDO);
-    if (currShader_ != nullptr)
+    if (currShader_)
     {
         // if there was a shader in use revert to that
         currShader_->use();
     }
 }
 
-void Renderer::addNewShader(Shaders::SHADINGMODE mode, std::unique_ptr<Shaders::Shader> shader)
+void Renderer::addNewShader(Shaders::SHADINGMODE mode, std::shared_ptr<Shaders::Shader> shader)
 {
-    shaderPrograms_[mode] = std::move(shader);
+    shaderPrograms_[mode] = shader;
     setupShader(shaderPrograms_[mode]);
 
     // if no shader is in use then use this one
-    if (currShader_ == nullptr)
+    if (!currShader_)
     {
         setShadingMode(mode);
     }
@@ -96,7 +96,7 @@ void Renderer::setShadingMode(Shaders::SHADINGMODE shadingMode)
     if (shaderPrograms_.contains(shadingMode))
     {
         currShadingMode_ = shadingMode;
-        currShader_ = shaderPrograms_[shadingMode].get();
+        currShader_ = shaderPrograms_[shadingMode];
         currShader_->use();
         lastUseTexture_ = -1;
     }
@@ -168,7 +168,7 @@ void Renderer::updateMeshUBO(Mesh *mesh)
 
 void Renderer::render(const Scene *scene)
 {
-    if (currShader_ != nullptr)
+    if (currShader_)
     {
         fps_->update();
         // clear buffers

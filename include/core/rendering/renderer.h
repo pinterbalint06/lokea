@@ -29,8 +29,8 @@ class Renderer
 private:
     int ctx_;
     Shaders::SHADINGMODE currShadingMode_;
-    Shaders::Shader *currShader_;
-    std::map<Shaders::SHADINGMODE, std::unique_ptr<Shaders::Shader>> shaderPrograms_;
+    std::shared_ptr<Shaders::Shader> currShader_;
+    std::map<Shaders::SHADINGMODE, std::shared_ptr<Shaders::Shader>> shaderPrograms_;
     std::unique_ptr<FPSCounter> fps_;
     std::unique_ptr<Texture> noTexture_;
     std::unique_ptr<UniformBufferObject<CameraData>> uboCamera_;
@@ -39,7 +39,7 @@ private:
     float rBuffer_, gBuffer_, bBuffer_;
     int lastUseTexture_;
 
-    void setupShader(std::unique_ptr<Shaders::Shader> &shader);
+    void setupShader(std::shared_ptr<Shaders::Shader> &shader);
 
     void updateCameraUBO(Camera *camera);
     void updateSceneUBO(const Scene *scene);
@@ -54,7 +54,7 @@ public:
     void setDefaultColor(uint8_t r, uint8_t g, uint8_t b);
 
     void setImageDimensions(int imageW, int imageH);
-    void addNewShader(Shaders::SHADINGMODE mode, std::unique_ptr<Shaders::Shader> shader);
+    void addNewShader(Shaders::SHADINGMODE mode, std::shared_ptr<Shaders::Shader> shader);
     void render(const Scene *scene);
 };
 

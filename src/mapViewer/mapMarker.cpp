@@ -126,7 +126,7 @@ void MapMarker::updateRenderPosition(const std::vector<Vec2> &positions, float s
 
     Mat4 scaleToClipSpace = Mat4::scale(clipSpacePerPixelX, clipSpacePerPixelY, 1.0f);
 
-    meshData_.modelMatrix = scaleToClipSpace * applyRotation * scaleToPixelDimensions;
+    meshData_.modelMatrix = scaleToPixelDimensions * applyRotation * scaleToClipSpace;
 
     setInstances(positions);
     setUpOpenGL();
@@ -148,6 +148,10 @@ bool MapMarker::doesPointOverlapRepetition(float pointX, float pointY, int repet
         std::vector<Vertex> &vertices = getVertices();
         const Vec2 &instanceOffset = instanceOffsets_[repetitionIndex];
 
+        Vec2 rightAxis(meshData_.modelMatrix[0], meshData_.modelMatrix[1]);
+        Vec2 upAxis(meshData_.modelMatrix[4], meshData_.modelMatrix[5]);
+        Vec2 translation(meshData_.modelMatrix[12], meshData_.modelMatrix[13]);
+
         float boundingBoxMinX = 0.0f;
         float boundingBoxMaxX = 0.0f;
         float boundingBoxMinY = 0.0f;
@@ -158,11 +162,11 @@ bool MapMarker::doesPointOverlapRepetition(float pointX, float pointY, int repet
             float unitVertexX = vertices[cornerIndices[i]].x;
             float unitVertexY = vertices[cornerIndices[i]].y;
 
-            Vec3 unitVertex(unitVertexX, unitVertexY, 0.0f);
-            Vec3 transformedVertex = meshData_.modelMatrix * unitVertex;
+            float transformedX = (unitVertexX * rightAxis.x) + (unitVertexY * upAxis.x) + translation.x;
+            float transformedY = (unitVertexX * rightAxis.y) + (unitVertexY * upAxis.y) + translation.y;
 
-            float finalScreenPositionX = transformedVertex.x + instanceOffset.x;
-            float finalScreenPositionY = transformedVertex.y + instanceOffset.y;
+            float finalScreenPositionX = transformedX + instanceOffset.x;
+            float finalScreenPositionY = transformedY + instanceOffset.y;
 
             if (i == 0)
             {

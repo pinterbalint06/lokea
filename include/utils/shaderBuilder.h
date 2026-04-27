@@ -13,7 +13,7 @@ namespace Shaders
 
 namespace ShaderBuilder
 {
-    std::unique_ptr<Shaders::Shader> createShader(const char *pathToVertex, const char *pathToFragment, const std::vector<std::string> &helperPaths);
+    std::shared_ptr<Shaders::Shader> createShader(const char *pathToVertex, const char *pathToFragment, const std::vector<std::string> &helperPaths);
 }
 
 #endif

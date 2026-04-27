@@ -37,7 +37,7 @@ namespace
 
 namespace ShaderBuilder
 {
-    std::unique_ptr<Shaders::Shader> createShader(const char *pathToVertex, const char *pathToFragment, const std::vector<std::string> &helperPaths)
+    std::shared_ptr<Shaders::Shader> createShader(const char *pathToVertex, const char *pathToFragment, const std::vector<std::string> &helperPaths)
     {
         // read files
         std::string vCode = FileUtils::readFile(pathToVertex);
@@ -48,6 +48,6 @@ namespace ShaderBuilder
         insertHelpers(vCode, helpers);
         insertHelpers(fCode, helpers);
 
-        return std::make_unique<Shaders::Shader>(vCode, fCode);
+        return std::make_shared<Shaders::Shader>(vCode, fCode);
     }
 }
