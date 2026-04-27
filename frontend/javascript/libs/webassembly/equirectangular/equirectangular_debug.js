@@ -6096,14 +6096,16 @@ async function _equirectangularFromURL(url, ctxId, tiles, textureIdsHandle, onSu
                   if (tileCount == 1) {
                     glContext.generateMipmap(glContext.TEXTURE_2D);
                   }
-                  // if there is more than one tile we enable linear interpolation
-                  // to prevent misalignment of the textures across tiles
-                  let minFilter = tileCount == 1 ? glContext.LINEAR_MIPMAP_LINEAR : glContext.LINEAR;
-                  let magFilter = tileCount == 1 ? glContext.LINEAR : glContext.NEAREST;
+                  // if there is only one tile we disable linear interpolation
+                  // to prevent misalignment of the texture with linear interpolation on one tile
+                  let minFilter = tileCount == 1 ? glContext.LINEAR : glContext.LINEAR_MIPMAP_LINEAR;
+                  let magFilter = tileCount == 1 ? glContext.NEAREST : glContext.LINEAR;
                   glContext.texParameteri(glContext.TEXTURE_2D, glContext.TEXTURE_MIN_FILTER, minFilter);
                   glContext.texParameteri(glContext.TEXTURE_2D, glContext.TEXTURE_MAG_FILTER, magFilter);
                   glContext.texParameteri(glContext.TEXTURE_2D, glContext.TEXTURE_WRAP_S, glContext.CLAMP_TO_EDGE);
                   glContext.texParameteri(glContext.TEXTURE_2D, glContext.TEXTURE_WRAP_T, glContext.CLAMP_TO_EDGE);
+                  bitmapTiles[i].close();
+                  bitmapTiles[i] = null;
                 }
                 glContext.bindTexture(glContext.TEXTURE_2D, null);
                 if (typeof onSuccess == "function") {

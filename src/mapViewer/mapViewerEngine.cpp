@@ -7,7 +7,6 @@
 #include <cmath>
 #include <GLES3/gl3.h>
 #include <memory>
-#include <vector>
 
 #include "core/rendering/shader.h"
 

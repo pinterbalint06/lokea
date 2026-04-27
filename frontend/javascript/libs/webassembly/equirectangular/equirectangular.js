@@ -2761,11 +2761,13 @@ var Qd = {91584:() => {
                   b.bindTexture(b.TEXTURE_2D, x[c]);
                   b.texImage2D(b.TEXTURE_2D, 0, b.RGBA, b.RGBA, b.UNSIGNED_BYTE, d[c]);
                   1 == n && b.generateMipmap(b.TEXTURE_2D);
-                  let L = 1 == n ? b.LINEAR : b.NEAREST;
-                  b.texParameteri(b.TEXTURE_2D, b.TEXTURE_MIN_FILTER, 1 == n ? b.LINEAR_MIPMAP_LINEAR : b.LINEAR);
+                  let L = 1 == n ? b.NEAREST : b.LINEAR;
+                  b.texParameteri(b.TEXTURE_2D, b.TEXTURE_MIN_FILTER, 1 == n ? b.LINEAR : b.LINEAR_MIPMAP_LINEAR);
                   b.texParameteri(b.TEXTURE_2D, b.TEXTURE_MAG_FILTER, L);
                   b.texParameteri(b.TEXTURE_2D, b.TEXTURE_WRAP_S, b.CLAMP_TO_EDGE);
                   b.texParameteri(b.TEXTURE_2D, b.TEXTURE_WRAP_T, b.CLAMP_TO_EDGE);
+                  d[c].close();
+                  d[c] = null;
                 }
                 b.bindTexture(b.TEXTURE_2D, null);
                 "function" == typeof e && e();
