@@ -1,47 +1,69 @@
 const express = require("express");
 const router = express.Router();
+const multer = require("multer");
 const { validateRequest } = require("#utils/validation.js");
 const { checkAuth } = require("#root/auth.js");
-const AppError = require("#utils/AppError.js");
-const schemas = require("#gamemaps/gamemaps.schemas.js");
-const controller = require("#gamemaps/gamemaps.controller.js");
-const { isAllowedToGetMapImage, isAllowedToAccessPoint } = require("#gamemaps/gamemaps.middleware.js");
-const ERRORS = require("#utils/errorMessages.js");
+const AppError = require("#utils/app-error.js");
+const ERRORS = require("#utils/error-messages.js");
+const { deleteFile } = require("#utils/file-utils.js");
+const gamemapRoutes = require("#gamemaps/gamemap/gamemap.routes.js");
+const imagesRoutes = require("#gamemaps/images/images.routes.js");
+const connectionsRoutes = require("#gamemaps/connections/connections.routes.js");
+const commentsRoutes = require("#gamemaps/comments/comments.routes.js");
+const coverImageRoutes = require("#gamemaps/cover-image/cover-image.routes.js");
+const schemas = require("#gamemaps/shared/schemas/gamemaps.schemas.js");
 
 router.use(checkAuth);
 
-//!Endpoints:
-//?GET /api/game-maps/points/:pointID/image
-router.get(
-    "/points/:pointID/image",
-    validateRequest(schemas.getPointImageSchema),
-    isAllowedToAccessPoint,
-    controller.getPointImage
+router.use("/", imagesRoutes); 
+
+router.use("/", connectionsRoutes);
+
+router.use(
+    "/:gameMapID/cover-image",
+    validateRequest(schemas.gameMapIDParamsOnlySchema),
+    coverImageRoutes
 );
 
-//?GET /api/game-maps/maps/:mapID/image
-router.get(
-    "/maps/:mapID/image",
-    validateRequest(schemas.getMapImageSchema),
-    isAllowedToGetMapImage,
-    controller.getMapImage);
+router.use(
+    "/:gameMapID",
+    validateRequest(schemas.gameMapIDParamsOnlySchema),
+    commentsRoutes
+);
 
-//?GET /api/game-maps/points/:pointID/connections
-router.get(
-    "/points/:pointID/connections",
-    validateRequest(schemas.getPointConnectionsSchema),
-    isAllowedToAccessPoint,
-    controller.getPointConnections);
+router.use(
+    "/:gameMapID",
+    validateRequest(schemas.gameMapIDParamsOnlySchema),
+    gamemapRoutes
+);
 
 router.use(async (error, request, response, next) => {
     let statusCode = 500;
     let errorMessage = ERRORS.COMMON.UNEXPECTED_ERROR;
 
-    if (error instanceof AppError) {
-        statusCode = error.statusCode;
-        errorMessage = error.message;
+    if (error instanceof multer.MulterError) {
+        if (request.file && request.file.path) {
+            try {
+                await deleteFile(request.file.path);
+            } catch (deleteErr) {
+                console.error("Error deleting temporary uploaded file:", deleteErr);
+            }
+        }
+
+        if (error.code == "LIMIT_FILE_SIZE") {
+            statusCode = 413;
+            errorMessage = ERRORS.COMMON.FILE_TOO_LARGE;
+        } else {
+            statusCode = 400;
+            errorMessage = ERRORS.COMMON.FILE_UPLOAD_ERROR;
+        }
     } else {
-        console.error("Unexpected error in map creator endpoints:", error);
+        if (error instanceof AppError) {
+            statusCode = error.statusCode;
+            errorMessage = error.message;
+        } else {
+            console.error("Unexpected error in map creator endpoints:", error);
+        }
     }
 
     if (!response.headersSent) {

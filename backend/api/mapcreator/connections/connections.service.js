@@ -1,6 +1,6 @@
-const ERRORS = require("#utils/errorMessages.js");
+const ERRORS = require("#utils/error-messages.js");
 const database = require("#sql/database.js");
-const AppError = require("#utils/AppError.js");
+const AppError = require("#utils/app-error.js");
 const { cleanupAfterError, assertUserOwnsGameMap, assertUserOwnsConnection } = require("#mapcreator/shared/utils/mapcreator.utils.js");
 
 async function fetchConnections(userId, gameMapID) {

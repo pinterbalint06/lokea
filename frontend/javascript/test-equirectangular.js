@@ -267,15 +267,14 @@ document.addEventListener("DOMContentLoaded", init);
 
 // PELDA a progressziv betoltessel
 /**
-    await equirectangularViewer.animateDirection(degreeToRadian(270), (markLoaded) => {
-        return loadPointEquirectangularLowThenHigh({
+    loadPointEquirectangularLowThenHigh({
             pointId: 104,
             isCurrent: () => {},
             loadToViewer: async (imgData) => {
                 await equirectangularViewer.loadImage(imgData.url, imgData.width, imgData.height, degreeToRadian(imgData.northDirection));
             },
             onLowReady: () => {
-                // elozo nyilak eltavolitasa
+                elozo nyilak eltavolitasa
                 equirectangularViewer.clearArrows();
 
                 itt lehet for loopal a kapcsolatokat
@@ -289,5 +288,4 @@ document.addEventListener("DOMContentLoaded", init);
                 markLoaded();
             }
         });
-    });
  */

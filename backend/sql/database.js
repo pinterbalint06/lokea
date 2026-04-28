@@ -1,14 +1,6 @@
-const mysql = require('mysql2/promise');
+const pool = require('./connection.js');
+const bcrypt = require('bcrypt');
 
-const pool = mysql.createPool({
-    host: '127.0.0.1',
-    user: 'root',
-    // password: 'rootpassword',
-    database: 'bigprojekt_db',
-    waitForConnections: true,
-    connectionLimit: 10,
-    queueLimit: 0
-});
 
 //!SQL Queries
 // async function selectall() {
@@ -17,28 +9,46 @@ const pool = mysql.createPool({
 //     return rows;
 // }
 
+function isIdUpdateSuccessful(result) {
+    const match = result?.info?.match(/Rows matched:\s*(\d+)/);
+    const rowsMatched = match ? parseInt(match[1]) : 0;
+
+    return rowsMatched == 1;
+}
+
 async function newUser(username, email, password) {
     let success = false;
     let error;
-    const queryUserExistsCheck = 'SELECT email, username FROM users WHERE username LIKE ? OR email LIKE ?';
+    const queryUserExistsCheck = 'SELECT email, username FROM users WHERE username = ? OR email = ?';
     let [result] = await pool.execute(queryUserExistsCheck, [username, email]);
     if (result.length == 0) {
+        let connection;
         try {
+            connection = await pool.getConnection();
+            await connection.beginTransaction();
             const queryInsertNewUser = 'INSERT INTO users (username, email, password) VALUES (?, ?, ?)';
-            [result] = await pool.execute(queryInsertNewUser, [username, email, password]);
+            [result] = await connection.execute(queryInsertNewUser, [username, email, password]);
             if (result.affectedRows == 1) {
                 success = true;
+                await connection.commit();
             }
             else {
-                error = "Failed insert";
+                throw new Error("Insert failed");
             }
-        } catch (fault) {
+        }
+        catch (fault) {
+            if (connection) {
+                await connection.rollback();
+            }
             if (fault.code == 'ER_DUP_ENTRY') {
                 error = "User exists";
             }
             else {
                 error = "Failed insert";
             }
+        }
+        finally {
+            if (connection) connection.release();
         }
     }
     else {
@@ -51,25 +61,36 @@ async function newUser(username, email, password) {
 async function newUserFromAdmin(username, email, password, role, is_2fa) {
     let success = false;
     let error;
-    const queryUserExistsCheck = 'SELECT email, username FROM users WHERE username LIKE ? OR email LIKE ?';
+    const queryUserExistsCheck = 'SELECT email, username FROM users WHERE username = ? OR email = ?';
     let [result] = await pool.execute(queryUserExistsCheck, [username, email]);
     if (result.length == 0) {
+        let connection;
         try {
+            connection = await pool.getConnection();
+            await connection.beginTransaction();
             const queryInsertNewUser = 'INSERT INTO users (username, email, password, role, is_2fa) VALUES (?, ?, ?, ?, ?)';
-            [result] = await pool.execute(queryInsertNewUser, [username, email, password, role, is_2fa]);
+            [result] = await connection.execute(queryInsertNewUser, [username, email, password, role, is_2fa]);
             if (result.affectedRows == 1) {
                 success = true;
+                await connection.commit();
             }
             else {
-                error = "Failed insert";
+                throw new Error("Insert failed");
             }
-        } catch (fault) {
+        }
+        catch (fault) {
+            if (connection) {
+                await connection.rollback();
+            }
             if (fault.code == 'ER_DUP_ENTRY') {
                 error = "User exists";
             }
             else {
                 error = "Failed insert";
             }
+        }
+        finally {
+            if (connection) connection.release();
         }
     }
     else {
@@ -80,13 +101,13 @@ async function newUserFromAdmin(username, email, password, role, is_2fa) {
 }
 
 async function getUserByUsername(username) {
-    const query = 'SELECT users.password, users.user_id, users.role, users.deleted_at FROM users WHERE users.username = ?';
+    const query = 'SELECT users.username, users.password, users.user_id, users.role, users.deleted_at FROM users WHERE users.username = ?';
     const [result] = await pool.execute(query, [username]);
     return result;
 }
 
 async function getUserByEmail(email) {
-    const query = 'SELECT users.password, users.user_id, users.role, users.deleted_at FROM users WHERE users.email = ?';
+    const query = 'SELECT users.username, users.password, users.user_id, users.role, users.deleted_at FROM users WHERE users.email = ?';
     const [result] = await pool.execute(query, [email]);
     return result;
 }
@@ -98,7 +119,13 @@ async function getUsers() {
 }
 
 async function getUser(id) {
-    const query = 'SELECT users.user_id, users.username, users.email, users.role, users.is_2fa, images.filepath FROM users LEFT JOIN images ON (images.image_id = users.pfp) WHERE users.user_id = ?';
+    const query = 'SELECT users.user_id, users.username, users.email, users.role, users.is_2fa, users.darkmode, users.language, users.created_at, images.filepath FROM users LEFT JOIN images ON (images.image_id = users.pfp) WHERE users.user_id = ?';
+    const [result] = await pool.execute(query, [id]);
+    return result;
+}
+
+async function getUserNameProfile(id) {
+    const query = 'SELECT users.username, users.darkmode, images.filepath FROM users LEFT JOIN images ON (images.image_id = users.pfp) WHERE users.user_id = ?';
     const [result] = await pool.execute(query, [id]);
     return result;
 }
@@ -154,10 +181,68 @@ async function sortedUsers(mireKeresek, mit, status, adminChecked, modChecked, u
     return rows;
 }
 
-async function updateUser(user_id, username, email, role, is_2fa) {
+async function updateUser(user_id, username, email, is_2fa, language, darkmode) {
     let query = 'UPDATE users ';
     let updates = [];
     let params = [];
+    let rows;
+
+    if (username != null) {
+        updates.push('users.username = ?');
+        params.push(username);
+    }
+    if (email != null) {
+        updates.push('users.email = ?');
+        params.push(email);
+    }
+    // if (pfp != null) {
+    //     updates.push('users.pfp = ?');
+    //     params.push(pfp);
+    // }
+    if (is_2fa != null) {
+        updates.push('users.is_2fa = ?');
+        params.push(is_2fa);
+    }
+    if (language != null) {
+        updates.push('users.language = ?');
+        params.push(language);
+    }
+    if (darkmode != null) {
+        updates.push('users.darkmode = ?');
+        params.push(darkmode);
+    }
+
+    if (updates.length === 0) {
+        throw new Error('Nincs frissítendő mező');
+    }
+    else {
+        query += ' SET ' + updates.join(' , ');
+        query += ` WHERE users.user_id = ?`;
+        params.push(user_id);
+        let connection;
+        try {
+            connection = await pool.getConnection();
+            await connection.beginTransaction();
+            [rows] = await connection.execute(query, params);
+            await connection.commit();
+        } catch (error) {
+            if (connection) {
+                await connection.rollback();
+            }
+            throw error;
+        }
+        finally {
+            if (connection) connection.release();
+        }
+    }
+    return rows.affectedRows;
+}
+
+async function updateUserByAdmin(user_id, username, email, role, is_2fa) {
+    let query = 'UPDATE users ';
+    let updates = [];
+    let params = [];
+    let rows;
 
     if (username != null) {
         updates.push('users.username = ?');
@@ -183,17 +268,79 @@ async function updateUser(user_id, username, email, role, is_2fa) {
     if (updates.length === 0) {
         throw new Error('Nincs frissítendő mező');
     }
-    query += ' SET ' + updates.join(' , ');
-    query += ` WHERE users.user_id = ?`;
-    params.push(user_id);
+    else {
+        query += ' SET ' + updates.join(' , ');
+        query += ` WHERE users.user_id = ?`;
+        params.push(user_id);
+        let connection;
 
-    const [rows] = await pool.execute(query, params);
+        try {
+            connection = await pool.getConnection();
+            await connection.beginTransaction();
+            [rows] = await connection.execute(query, params);
+            await connection.commit();
+        } catch (error) {
+            if (connection) {
+                await connection.rollback();
+            }
+        }
+        finally {
+            if (connection) connection.release();
+        }
+    }
     return rows.affectedRows;
 }
 
+async function updatePassword(userid, oldPass, newPass) {
+    try {
+        const query = 'SELECT users.password FROM users WHERE users.user_id = ?';
+        const [result] = await pool.execute(query, [userid]);
+        let egyezes = await bcrypt.compare(oldPass, result[0].password);
+        if (egyezes) {
+            let connection;
+            try {
+                const hashedPassword = await bcrypt.hash(newPass, 10);
+                connection = await pool.getConnection();
+                await connection.beginTransaction();
+                const query = 'UPDATE users SET password = ? WHERE user_id = ?';
+                await connection.execute(query, [hashedPassword, userid]);
+                await connection.commit();
+            } catch (error) {
+                if (connection) {
+                    await connection.rollback();
+                }
+                throw new Error('Hiba az adatbázissal való kommunikálás során!');
+            }
+            finally {
+                if (connection) connection.release();
+            }
+        }
+        else {
+            throw new Error('Nem ez a régi jelszavad!');
+        }
+    } catch (error) {
+        console.error(error);
+        throw error;
+    }
+}
+
 async function userToInactive(userId) {
-    const query = 'UPDATE users SET deleted_at = CURRENT_TIMESTAMP WHERE user_id = ? AND deleted_at IS NULL';
-    const [result] = await pool.execute(query, [userId]);
+    let connection;
+    let result;
+    try {
+        connection = await pool.getConnection();
+        await connection.beginTransaction();
+        const query = 'UPDATE users SET deleted_at = CURRENT_TIMESTAMP WHERE user_id = ? AND deleted_at IS NULL';
+        [result] = await connection.execute(query, [userId]);
+        await connection.commit();
+    } catch (error) {
+        if (connection) {
+            await connection.rollback();
+        }
+    }
+    finally {
+        if (connection) connection.release();
+    }
     return result.affectedRows;
 }
 
@@ -205,19 +352,29 @@ async function uploadProfilePic(filepath, width, height, user_id) {
 
     let oldFilePath = oldImageData[0] ? oldImageData[0].filepath : null;
     let oldImageId = oldImageData[0] ? oldImageData[0].image_id : null;
-
-    //Új profilkép adatainak feltöltése + users táblában az pfp frissitése
-    const queryInsertNewPic = 'INSERT INTO images (filepath, width, height) VALUES (?, ?, ?)';
-    let [id] = await pool.execute(queryInsertNewPic, [filepath, width, height]);
-    const queryUpdatePfpId = 'UPDATE users SET pfp = ? WHERE user_id = ?';
-    await pool.execute(queryUpdatePfpId, [id.insertId, user_id]);
-
-    //Ha volt előtte egy másik profilkép, törli
-    if (oldImageId != null) {
-        const queryDeleteOldPic = 'DELETE FROM images WHERE image_id = ?';
-        await pool.execute(queryDeleteOldPic, [oldImageId]);
+    let connection;
+    let result;
+    try {
+        connection = await pool.getConnection();
+        await connection.beginTransaction();
+        const queryInsertNewPic = 'INSERT INTO images (filepath, width, height) VALUES (?, ?, ?)';
+        [result] = await connection.execute(queryInsertNewPic, [filepath, width, height]);
+        const queryUpdatePfpId = 'UPDATE users SET pfp = ? WHERE user_id = ?';
+        [result] = await connection.execute(queryUpdatePfpId, [result.insertId, user_id])
+        if (oldImageId != null) {
+            const queryDeleteOldPic = 'DELETE FROM images WHERE image_id = ?';
+            await connection.execute(queryDeleteOldPic, [oldImageId]);
+        }
+        await connection.commit();
+    } catch (error) {
+        if (connection) {
+            await connection.rollback();
+        }
+        console.error(error);
     }
-
+    finally {
+        if (connection) connection.release();
+    }
     //Visszaadja a régi kép elérési útvonalát, hogy törlésre kerülhessen. Amennyiben nem volt, null értéket ad vissza.
     return oldFilePath;
 }
@@ -230,15 +387,21 @@ async function deleteProfilePic(user_id) {
 
     let oldFilePath = oldImageData[0] ? oldImageData[0].filepath : null;
     let oldImageId = oldImageData[0] ? oldImageData[0].image_id : null;
-
-    //Users táblában az adott felhasználónak a pfp-t NULL-ra állitja
-    const queryUpdatePfpId = 'UPDATE users SET pfp = NULL WHERE user_id = ?';
-    await pool.execute(queryUpdatePfpId, [user_id]);
-
-    //Törlés az images táblából
-    const queryDeleteOldPic = 'DELETE FROM images WHERE image_id = ?';
-    await pool.execute(queryDeleteOldPic, [oldImageId]);
-
+    let connection;
+    try {
+        connection = await pool.getConnection();
+        await connection.beginTransaction();
+        const queryDeleteOldPic = 'DELETE FROM images WHERE image_id = ?';
+        await connection.execute(queryDeleteOldPic, [oldImageId]);
+        await connection.commit();
+    } catch (error) {
+        if (connection) {
+            await connection.rollback();
+        }
+    }
+    finally {
+        if (connection) connection.release();
+    }
     //Visszaadja a régi kép elérési útvonalát a törléshez.
     return oldFilePath;
 }
@@ -474,7 +637,7 @@ async function updateImagePath(connection, imageId, filepath) {
         WHERE image_id = ?
     `;
     const [result] = await connection.execute(query, [filepath, imageId]);
-    return result.affectedRows == 1;
+    return isIdUpdateSuccessful(result);
 }
 
 async function getMapImage(mapId) {
@@ -673,7 +836,7 @@ async function updatePointCoordinates(connection, pointId, u, v) {
         WHERE points.point_id = ?
     `;
     const [result] = await connection.execute(query, [u, v, pointId]);
-    return result.affectedRows == 1;
+    return isIdUpdateSuccessful(result);
 }
 
 async function updatePointNorthDirection(connection, pointId, northDirection) {
@@ -683,7 +846,7 @@ async function updatePointNorthDirection(connection, pointId, northDirection) {
         WHERE points.point_id = ?
     `;
     const [result] = await connection.execute(query, [northDirection, pointId]);
-    return result.affectedRows == 1;
+    return isIdUpdateSuccessful(result);
 }
 
 async function updatePointImage(connection, pointId, imageId) {
@@ -693,7 +856,7 @@ async function updatePointImage(connection, pointId, imageId) {
         WHERE points.point_id = ?
     `;
     const [result] = await connection.execute(query, [imageId, pointId]);
-    return result.affectedRows == 1;
+    return isIdUpdateSuccessful(result);
 }
 
 async function updateMapTitle(connection, mapId, title) {
@@ -703,7 +866,7 @@ async function updateMapTitle(connection, mapId, title) {
         WHERE map.map_id = ?
     `;
     const [result] = await connection.execute(query, [title, mapId]);
-    return result.affectedRows == 1;
+    return isIdUpdateSuccessful(result);
 }
 
 async function deleteImageById(connection, imageId) {
@@ -787,7 +950,7 @@ async function updateConnectionDirections(connection, connectionId, dirStartToEn
         WHERE connection_id = ?
     `;
     const [result] = await connection.execute(query, [dirStartToEnd, dirEndToStart, connectionId]);
-    return result.affectedRows == 1;
+    return isIdUpdateSuccessful(result);
 }
 
 async function isConnectionCrossMap(connection, connectionId) {
@@ -802,6 +965,195 @@ async function isConnectionCrossMap(connection, connectionId) {
     `;
     const [rows] = await connection.execute(query, [connectionId]);
     return rows[0].start_map_id != rows[0].end_map_id;
+}
+
+async function getGameMapDetails(gameMapID) {
+    const query = `
+        SELECT
+            game_maps.creator_id,
+            COALESCE(users.username, 'Ismeretlen felhasználó') AS creator_name,
+            game_maps.title,
+            COALESCE(
+                (
+                    SELECT ROUND(AVG(game_maps_comments.rating), 1)
+                    FROM game_maps_comments
+                    WHERE game_maps_comments.game_maps_id = ?
+                ),
+                0
+            ) AS rating,
+            (
+                SELECT COUNT(*)
+                FROM scores
+                WHERE scores.game_maps_id = ?
+            ) AS plays,
+            game_maps.game_created,
+            game_maps.game_description
+        FROM game_maps
+            LEFT JOIN users ON (game_maps.creator_id = users.user_id)
+        WHERE game_maps.game_maps_id = ?
+    `;
+    const [rows] = await pool.execute(query, [gameMapID, gameMapID, gameMapID]);
+    return rows.length > 0 ? rows[0] : null;
+}
+
+async function getTopScoresForGameMap(gameMapID) {
+    const query = `
+        SELECT 
+            COALESCE(users.username, 'Ismeretlen felhasználó') AS username,
+            scores.score,
+            scores.score_time
+        FROM scores
+            LEFT JOIN users ON (scores.user_id = users.user_id)
+        WHERE scores.game_maps_id = ?
+        ORDER BY scores.score DESC
+        LIMIT 5
+    `;
+    const [rows] = await pool.execute(query, [gameMapID]);
+    return rows;
+}
+
+async function doesGameMapExist(gameMapId) {
+    const query = `
+        SELECT COUNT(*) as count
+        FROM game_maps
+        WHERE game_maps.game_maps_id = ?
+    `;
+    const [rows] = await pool.execute(query, [gameMapId]);
+    return rows[0].count > 0;
+}
+
+async function getGameMapCoverImage(gameMapId) {
+    const query = `
+        SELECT images.image_id, images.filepath, images.width, images.height
+        FROM game_maps
+            INNER JOIN images ON (game_maps.cover_image_id = images.image_id)
+        WHERE game_maps.game_maps_id = ?
+    `;
+    const [rows] = await pool.execute(query, [gameMapId]);
+    return rows.length > 0 ? rows[0] : null;
+}
+
+async function updateGameMapCoverImage(connection, gameMapId, imageId) {
+    const query = `
+        UPDATE game_maps
+        SET game_maps.cover_image_id = ?
+        WHERE game_maps.game_maps_id = ?
+    `;
+    const [result] = await connection.execute(query, [imageId, gameMapId]);
+    return isIdUpdateSuccessful(result);
+}
+
+async function updateGameMapDetails(connection, gameMapId, title, description) {
+    const query = `
+        UPDATE game_maps
+        SET game_maps.title = COALESCE(?, game_maps.title),
+            game_maps.game_description = COALESCE(?, game_maps.game_description)
+        WHERE game_maps.game_maps_id = ?
+    `;
+    const [result] = await connection.execute(query, [title, description, gameMapId]);
+    return isIdUpdateSuccessful(result);
+}
+
+async function getGameMapComments(gameMapId, page) {
+    const safePage = Number.isInteger(Number(page)) && page > 0 ? page : 1;
+    const offset = (safePage - 1) * 50;
+    const query = `
+        SELECT 
+            COALESCE(users.username, 'Ismeretlen felhasználó') AS username,
+            game_maps_comments.rating,
+            game_maps_comments.comment_text,
+            game_maps_comments.created_at
+        FROM game_maps_comments
+            LEFT JOIN users ON (game_maps_comments.user_id = users.user_id)
+        WHERE game_maps_comments.game_maps_id = ?
+        ORDER BY game_maps_comments.created_at DESC
+        LIMIT 50 OFFSET ${offset}
+    `;
+    const [rows] = await pool.execute(query, [gameMapId]);
+    return rows;
+}
+
+async function getGameMapCommentCount(gameMapId) {
+    const query = `
+        SELECT 
+            COUNT(*) AS comment_count
+        FROM game_maps_comments
+        WHERE game_maps_comments.game_maps_id = ?
+    `;
+    const [rows] = await pool.execute(query, [gameMapId]);
+    return rows[0].comment_count;
+}
+
+async function hasUserCommentedOnGameMap(gameMapId, userId) {
+    const query = `
+        SELECT COUNT(*) AS comment_count
+        FROM game_maps_comments
+        WHERE game_maps_comments.game_maps_id = ?
+          AND game_maps_comments.user_id = ?
+    `;
+    const [rows] = await pool.execute(query, [gameMapId, userId]);
+    return rows[0].comment_count > 0;
+}
+
+async function insertGameMapComment(connection, gameMapId, userId, commentText, rating) {
+    const query = `
+        INSERT INTO game_maps_comments (game_maps_id, user_id, comment_text, rating)
+        VALUES (?, ?, ?, ?)
+    `;
+    const [result] = await connection.execute(query, [gameMapId, userId, commentText, rating]);
+    return result.insertId;
+}
+
+async function getUserCommentOnGameMap(gameMapId, userId) {
+    const query = `
+        SELECT game_maps_comments.comment_id, game_maps_comments.comment_text, game_maps_comments.rating, game_maps_comments.created_at
+        FROM game_maps_comments
+        WHERE game_maps_id = ? AND user_id = ?
+    `;
+    const [rows] = await pool.execute(query, [gameMapId, userId]);
+    return rows[0] || null;
+}
+
+async function updateUserCommentOnGameMap(connection, gameMapId, userId, commentText, rating) {
+    const query = `
+        UPDATE game_maps_comments
+        SET game_maps_comments.comment_text = ?, game_maps_comments.rating = ?
+        WHERE game_maps_comments.game_maps_id = ? AND game_maps_comments.user_id = ?
+    `;
+    const [result] = await connection.execute(query, [commentText, rating, gameMapId, userId]);
+    
+    return isIdUpdateSuccessful(result);
+}
+
+async function deleteUserCommentOnGameMap(connection, gameMapId, userId) {
+    const query = `
+        DELETE FROM game_maps_comments
+        WHERE game_maps_comments.game_maps_id = ? AND game_maps_comments.user_id = ?
+    `;
+    const [result] = await connection.execute(query, [gameMapId, userId]);
+    return result.affectedRows == 1;
+}
+
+async function getAllImageIdsForGameMap(connection, gameMapId) {
+    const query = `
+        SELECT DISTINCT images.image_id
+        FROM game_maps
+            LEFT JOIN map ON (game_maps.game_maps_id = map.game_maps_id)
+            LEFT JOIN points ON (map.map_id = points.map_id)
+            INNER JOIN images ON (points.image_id = images.image_id OR map.image_id = images.image_id OR game_maps.cover_image_id = images.image_id)
+        WHERE game_maps.game_maps_id = ?
+    `;
+    const [rows] = await connection.execute(query, [gameMapId]);
+    return rows.length > 0 ? rows.map((row) => row.image_id) : [];
+}
+
+async function deleteGameMapById(connection, gameMapId) {
+    const query = `
+        DELETE FROM game_maps
+        WHERE game_maps.game_maps_id = ?
+    `;
+    const [result] = await connection.execute(query, [gameMapId]);
+    return result.affectedRows == 1;
 }
 
 //!Export
@@ -842,8 +1194,11 @@ module.exports = {
     deleteConnectionById,
     getUsers,
     getUser,
+    getUserNameProfile,
     sortedUsers,
     updateUser,
+    updateUserByAdmin,
+    updatePassword,
     userToInactive,
     uploadProfilePic,
     deleteProfilePic,
@@ -854,6 +1209,22 @@ module.exports = {
     getAllImageIdsForMap,
     arePointsInSameMap,
     updateConnectionDirections,
+    isConnectionCrossMap,
+    getGameMapDetails,
+    getTopScoresForGameMap,
+    doesGameMapExist,
+    getGameMapCoverImage,
+    updateGameMapCoverImage,
+    updateGameMapDetails,
+    getGameMapComments,
+    getGameMapCommentCount,
+    hasUserCommentedOnGameMap,
+    insertGameMapComment,
+    getUserCommentOnGameMap,
+    updateUserCommentOnGameMap,
+    deleteUserCommentOnGameMap,
+    getAllImageIdsForGameMap,
+    deleteGameMapById,
     isConnectionCrossMap,
     getImagePath,
     insertGameSession,

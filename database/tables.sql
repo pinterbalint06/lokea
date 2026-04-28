@@ -19,6 +19,8 @@ CREATE TABLE users (
     role VARCHAR(5) DEFAULT 'user',
     pfp INT DEFAULT NULL,
     is_2fa BOOLEAN DEFAULT 0,
+    language VARCHAR(5) DEFAULT 'hu',
+    darkmode BOOLEAN DEFAULT 0,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     deleted_at TIMESTAMP NULL,
     foreign key (pfp) references images(image_id) ON DELETE SET NULL
@@ -27,15 +29,25 @@ CREATE TABLE users (
 CREATE TABLE game_maps (
     game_maps_id int AUTO_INCREMENT PRIMARY KEY NOT NULL,
     creator_id int,
-    title varchar(50) NOT NULL,
+    title varchar(50) NOT NULL DEFAULT 'Névtelen pálya',
     cover_image_id int,
-    rating float DEFAULT 0,
-    rating_count int DEFAULT 0,
-    plays int DEFAULT 0,
-    game_description varchar(255) DEFAULT 'Nem található leírás',
+    game_description varchar(255) NOT NULL DEFAULT 'Nem található leírás',
     game_created TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     foreign key (creator_id) references users(user_id) ON DELETE SET NULL,
     foreign key (cover_image_id) references images(image_id) ON DELETE SET NULL
+);
+
+CREATE TABLE game_maps_comments (
+    comment_id int AUTO_INCREMENT PRIMARY KEY NOT NULL,
+    game_maps_id int,
+    user_id int,
+    comment_text varchar(255) DEFAULT NULL,
+    rating int NOT NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    foreign key (game_maps_id) references game_maps(game_maps_id) ON DELETE CASCADE,
+    foreign key (user_id) references users(user_id) ON DELETE SET NULL,
+    CONSTRAINT unique_comment_per_user_per_map UNIQUE (game_maps_id, user_id),
+    CONSTRAINT check_rating_range CHECK (rating >= 1 AND rating <= 5)
 );
 
 CREATE TABLE map (
@@ -52,14 +64,14 @@ CREATE TABLE points (
     map_id int,
     point_u float NOT NULL,
     point_v float NOT NULL,
-    north_direction float NOT NULL DEFAULT 0,
+    north_direction DECIMAL(5,2) NOT NULL DEFAULT 0.00,
     image_id int,
     foreign key (map_id) references map(map_id) ON DELETE CASCADE,
     foreign key (image_id) references images(image_id) ON DELETE SET NULL,
     UNIQUE KEY unique_point_coordinates_per_map (map_id, point_u, point_v),
     CONSTRAINT check_point_u_range CHECK (point_u >= 0 AND point_u < 1),
     CONSTRAINT check_point_v_range CHECK (point_v >= 0 AND point_v < 1),
-    CONSTRAINT check_north_direction CHECK (north_direction >= 0 AND north_direction <= 359)
+    CONSTRAINT check_north_direction CHECK (north_direction >= 0 AND north_direction < 360)
 );
 
 CREATE TABLE scores (
@@ -94,8 +106,8 @@ CREATE TABLE point_connections (
     end_point_id int NOT NULL,
     game_maps_id int NOT NULL,
 
-    direction_start_to_end float DEFAULT NULL,
-    direction_end_to_start float DEFAULT NULL,
+    direction_start_to_end DECIMAL(5,2) DEFAULT NULL,
+    direction_end_to_start DECIMAL(5,2) DEFAULT NULL,
 
     FOREIGN KEY (start_point_id) REFERENCES points(point_id) ON DELETE CASCADE,
     FOREIGN KEY (end_point_id) REFERENCES points(point_id) ON DELETE CASCADE,

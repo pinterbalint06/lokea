@@ -1,0 +1,38 @@
+.rating-stars,
+.stars {
+    --rating: 0;
+    --rating-fill-step: 20%;
+    display: inline-block;
+    position: relative;
+    color: #7f709a;
+    line-height: 1;
+}
+
+.rating-stars {
+    font-size: 1rem;
+    letter-spacing: 0.05em;
+}
+
+.stars {
+    font-size: 18px;
+    font-family: Times;
+    --rating-fill-step: 10%;
+}
+
+.rating-stars::before,
+.stars::before {
+    content: "★★★★★";
+    display: block;
+}
+
+.rating-stars::after,
+.stars::after {
+    content: "★★★★★";
+    position: absolute;
+    top: 0;
+    left: 0;
+    color: #ffd86b;
+    width: calc(var(--rating) * var(--rating-fill-step));
+    overflow: hidden;
+    white-space: nowrap;
+}

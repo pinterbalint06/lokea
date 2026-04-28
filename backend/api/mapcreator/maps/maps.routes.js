@@ -3,7 +3,7 @@ const router = express.Router();
 const mapsController = require("#mapcreator/maps/maps.controller.js");
 const schemas = require("#mapcreator/maps/maps.schemas.js");
 const { validateRequest } = require("#utils/validation.js");
-const upload = require("#mapcreator/shared/middlewares/uploadConfig.js");
+const { upload } = require("#config/mapdatas-upload-config.js");
 
 
 // !Endpoints:

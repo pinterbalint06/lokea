@@ -28,6 +28,7 @@ export class MarkerEditorManager {
             deletePointBtn: document.getElementById("deletePointBtn"),
             newConnectionBtn: document.getElementById("kapcsolatLetrehozasaBtn"),
             equiFullscreenBtn: document.getElementById("equirectangularFullscreen"),
+            previewAccordionCollapse: document.getElementById("elonezet"),
             coordinateXInput: document.getElementById("coordinateX"),
             coordinateYInput: document.getElementById("coordinateY"),
             northDirectionWrapper: document.getElementById("northDirectionWrapper"),
@@ -37,6 +38,13 @@ export class MarkerEditorManager {
 
         this.elements.collapseBootstrapElement = new bootstrap.Collapse(
             this.elements.collapseElement,
+            {
+                toggle: false
+            }
+        );
+
+        this.elements.previewAccordionBootstrapElement = new bootstrap.Collapse(
+            this.elements.previewAccordionCollapse,
             {
                 toggle: false
             }
@@ -146,7 +154,7 @@ export class MarkerEditorManager {
                 if (this.store.doesActivePointHaveUnsavedChanges()) {
                     this.bus.emit(EVENTS.UI_POINT_SAVE_REQUESTED);
                 } else {
-                    this.bus.emit(EVENTS.TOAST_SHOW, { msg: "A pont nem változott!" });
+                    this.bus.emit(EVENTS.TOAST_SHOW, { msg: "A pont nem változott!", type: "info" });
                 }
             } else {
                 this.bus.emit(EVENTS.TOAST_SHOW, { msg: lockReason, type: "danger" });
@@ -187,6 +195,8 @@ export class MarkerEditorManager {
             this.#updateNewConnectionButtonState();
             this.#showCollapse();
         });
+
+        this.bus.on(EVENTS.EQUIRECTANGULAR_IMAGE_LOADED, () => this.elements.previewAccordionBootstrapElement.show());
 
         this.bus.on(EVENTS.UI_MODAL_CONFIRMED, ({ modalType }) => {
             if (modalType == "discard" && this.forceClose) {

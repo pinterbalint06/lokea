@@ -1,5 +1,5 @@
 const { createTestApp } = require("#mapcreatortest/helpers/setup-test.js");
-const { testInvalidIDs, testRequiresAuth, expectSuccessfulTransaction, expectRollback, expectErrorResponse, randomId, buildRequest, suppressConsoleErrors } = require("#mapcreatortest/helpers/helpers.js");
+const { testInvalidIDs, testRequiresAuth, expectSuccessfulTransaction, expectRollback, expectErrorResponse, randomId, buildRequest, suppressConsoleErrors } = require("#testhelpers/helpers.js");
 const { emptyTitles, tooLongTitles, invalidCharTitles, validTitles, imageStatusForPath } = require("#mapcreatortest/helpers/test-data.js");
 
 const database = require("#sql/database.js");
@@ -9,15 +9,15 @@ const {
     processImageMetadata,
     createWebpAndLowRes,
     mockImageMetadata
-} = require("#utils/imageProcessor.js");
+} = require("#utils/image-processor.js");
 
 const {
     deleteFile
-} = require("#utils/fileUtils.js");
+} = require("#utils/file-utils.js");
 
 const fs = require("fs/promises");
 const path = require("path");
-const ERRORS = require("#utils/errorMessages.js");
+const ERRORS = require("#utils/error-messages.js");
 
 
 const requestWithSupertest = createTestApp();

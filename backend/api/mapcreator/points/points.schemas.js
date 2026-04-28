@@ -1,5 +1,5 @@
 const joi = require("#utils/joi.js");
-const ERRORS = require("#utils/errorMessages.js");
+const ERRORS = require("#utils/error-messages.js");
 const { idSchema, degreeSchema, uvCoordinateSchema } = require("#mapcreator/shared/schemas/mapcreator.schemas.js");
 
 const northDirectionMessages = {

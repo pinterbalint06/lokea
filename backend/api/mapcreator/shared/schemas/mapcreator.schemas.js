@@ -1,6 +1,6 @@
 const joi = require("#utils/joi.js");
 const { idSchema } = require("#utils/schemas.js");
-const ERRORS = require("#utils/errorMessages.js");
+const ERRORS = require("#utils/error-messages.js");
 
 const titleSchema = joi
     .string()
@@ -21,7 +21,8 @@ const titleSchema = joi
 const degreeSchema = joi
     .number()
     .min(0)
-    .less(360);
+    .less(360)
+    .precision(2);
 
 const uvCoordinateSchema = joi
     .number()

@@ -300,7 +300,7 @@ export class MarkerManager {
 
     async #loadPoints(mapId) {
         try {
-            this.bus.emit(EVENTS.TOAST_SHOW, { id: "loadingPoints", msg: "Pontok betöltése", closable: false, autohide: false, spinner: true });
+            this.bus.emit(EVENTS.TOAST_SHOW, { id: "loadingPoints", msg: "Pontok betöltése", type: "info", closable: false, autohide: false, spinner: true });
             let points = await fetchPoints(mapId);
             if (mapId == this.store.getState().activeMapId) {
                 this.markersCache = {};
@@ -326,7 +326,7 @@ export class MarkerManager {
     async #savePoint(pointToSave) {
         this.store.setState({ isBusy: { point: "Pont mentése folyamatban, kérlek várj!" } });
 
-        this.bus.emit(EVENTS.TOAST_SHOW, { msg: "Pont mentése", id: "savingPoint", closable: false, autohide: false, spinner: true });
+        this.bus.emit(EVENTS.TOAST_SHOW, { msg: "Pont mentése", type: "info", id: "savingPoint", closable: false, autohide: false, spinner: true });
         try {
             let position = this.#getPointPosition(pointToSave);
             let isNewPoint = pointToSave == CONSTANTS.TEMP_ID;

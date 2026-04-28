@@ -9,17 +9,18 @@ export class DegreeInput extends EventTarget {
     /**
      * @param {HTMLElement} wrapperElement
      * @param {Object} config
-     * @param {string} config.min min value for the degree input default 0
-     * @param {string} config.max max value for the degree input default 359
-     * @param {string} config.value initial value for the degree input default 0
-     * 
-     */
+     * @param {number} config.min min value for the degree input default 0
+     * @param {number} config.max max value for the degree input default 359.99
+     * @param {number} config.value initial value for the degree input default 0
+     * */
     constructor(wrapperElement, config = {}) {
         super();
         this.wrapperElement = wrapperElement;
         this.#min = config.min ?? 0;
-        this.#max = config.max ?? 359;
-        this.#value = config.value ?? 0;
+        this.#max = config.max ?? 359.99;
+
+        const initialValue = config.value ?? 0;
+        this.#value = this.#formatToMaxTwoDecimals(initialValue);
         this.#prevValue = this.#value;
 
         this.wrapperElement.innerHTML = "";
@@ -30,7 +31,7 @@ export class DegreeInput extends EventTarget {
             class: "form-range glass-range",
             min: this.#min,
             max: this.#max,
-            step: 1,
+            step: 0.01,
             value: this.#value
         });
 
@@ -38,9 +39,10 @@ export class DegreeInput extends EventTarget {
         this.numberInput = createElement("input", {
             type: "number",
             class: "form-control uvegform p-1 hide-arrows text-center",
-            style: "width: 4em;",
+            style: "width: 6em;",
             min: this.#min,
             max: this.#max,
+            step: 0.01,
             value: this.#value
         });
 
@@ -56,18 +58,21 @@ export class DegreeInput extends EventTarget {
         this.#bindEvents();
     }
 
+    #formatToMaxTwoDecimals(val) {
+        return Number(parseFloat(val).toFixed(2));
+    }
+
     #bindEvents() {
         this.rangeInput.addEventListener("input", (event) => {
-            const newValue = parseInt(event.target.value);
+            const newValue = this.#formatToMaxTwoDecimals(event.target.value);
 
             this.numberInput.value = newValue;
-
             this.#value = newValue;
             this.dispatchEvent(new CustomEvent("input", { detail: { value: this.#value } }));
         });
 
         this.rangeInput.addEventListener("change", (event) => {
-            const newValue = parseInt(event.target.value);
+            const newValue = this.#formatToMaxTwoDecimals(event.target.value);
 
             this.#value = newValue;
             this.#prevValue = newValue;
@@ -75,14 +80,17 @@ export class DegreeInput extends EventTarget {
         });
 
         this.numberInput.addEventListener("focus", () => {
-            this.#prevValue = parseInt(this.numberInput.value);
+            this.#prevValue = this.#formatToMaxTwoDecimals(this.numberInput.value);
         });
 
         this.numberInput.addEventListener("change", (e) => {
-            const newValue = parseInt(e.target.value);
+            let newValue = parseFloat(e.target.value);
 
             if (!isNaN(newValue) && newValue <= this.#max && newValue >= this.#min) {
+                newValue = this.#formatToMaxTwoDecimals(newValue);
+
                 this.rangeInput.value = newValue;
+                this.numberInput.value = newValue;
                 this.#value = newValue;
                 this.#prevValue = newValue;
                 this.dispatchEvent(new CustomEvent("change", { detail: { value: this.#value } }));
@@ -100,11 +108,12 @@ export class DegreeInput extends EventTarget {
     }
 
     setValue(val) {
-        if (Number.isInteger(val) && val >= this.#min && val <= this.#max) {
-            this.#value = val;
-            this.#prevValue = val;
-            this.rangeInput.value = val;
-            this.numberInput.value = val;
+        if (!isNaN(val) && val >= this.#min && val <= this.#max) {
+            const formattedVal = this.#formatToMaxTwoDecimals(val);
+            this.#value = formattedVal;
+            this.#prevValue = formattedVal;
+            this.rangeInput.value = formattedVal;
+            this.numberInput.value = formattedVal;
         }
     }
 }

@@ -5,4 +5,5 @@ build/
 backend/temp/*
 backend/coverage
 backend/uploads/mapdatas/*
+!backend/uploads/mapdatas/assets/
 .claude

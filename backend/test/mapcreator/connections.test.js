@@ -1,11 +1,11 @@
 const { createTestApp } = require("#mapcreatortest/helpers/setup-test.js");
-const { testInvalidIDs, testRequiresAuth, expectSuccessfulTransaction, expectRollback, expectErrorResponse, randomId, buildRequest, suppressConsoleErrors } = require("#mapcreatortest/helpers/helpers.js");
+const { testInvalidIDs, testRequiresAuth, expectSuccessfulTransaction, expectRollback, expectErrorResponse, randomId, buildRequest, suppressConsoleErrors } = require("#testhelpers/helpers.js");
 const { invalidTypeNumbers, negativeNumbers, tooBigDegrees, } = require("#mapcreatortest/helpers/test-data.js");
 
 const database = require("#sql/database.js");
 const { mockConnection } = database;
 
-const ERRORS = require("#utils/errorMessages.js");
+const ERRORS = require("#utils/error-messages.js");
 
 
 const requestWithSupertest = createTestApp();
@@ -246,6 +246,20 @@ describe("Map Creator API - /api/map-creator/", () => {
 
                     expect(response.statusCode).toBe(204);
                 });
+
+                it("Should respond with 200 if both directions were updated and round to two decimals", async () => {
+                    const directionStartToEnd = 123.456789;
+                    const directionEndToStart = 210.987654;
+                    const directionStartToEndRounded = Number(directionStartToEnd.toFixed(2));
+                    const directionEndToStartRounded = Number(directionEndToStart.toFixed(2));
+                    const response = await makePutRequest({ directionStartToEnd, directionEndToStart });
+
+                    expect(mockConnection.beginTransaction).toHaveBeenCalled();
+                    expect(database.isConnectionCrossMap).toHaveBeenCalledWith(mockConnection, defaults.id);
+                    expect(database.updateConnectionDirections).toHaveBeenCalledWith(mockConnection, defaults.id, directionStartToEndRounded, directionEndToStartRounded);
+
+                    expect(response.statusCode).toBe(204);
+                });
             });
 
             describe("Server errors (500)", () => {
@@ -469,6 +483,22 @@ describe("Map Creator API - /api/map-creator/", () => {
                     const response = await makePostRequest();
 
                     expect(database.insertConnection).toHaveBeenCalledWith(mockConnection, defaults.startPointId, defaults.endPointId, defaults.id, defaults.directionStartToEnd, defaults.directionEndToStart);
+                    expectSuccessfulTransaction(mockConnection);
+
+                    expect(response.statusCode).toBe(201);
+                    expect(response.body).toHaveProperty("connectionId", newConnectionId);
+                });
+
+                it("Should respond with 201 if connection was created successfully offmap connection and round floats to two decimals", async () => {
+                    database.arePointsInSameMap.mockResolvedValueOnce(false);
+
+                    const directionStartToEnd = 123.456789;
+                    const directionEndToStart = 210.987654;
+                    const directionStartToEndRounded = Number(directionStartToEnd.toFixed(2));
+                    const directionEndToStartRounded = Number(directionEndToStart.toFixed(2));
+                    const response = await makePostRequest({ directionStartToEnd, directionEndToStart });
+
+                    expect(database.insertConnection).toHaveBeenCalledWith(mockConnection, defaults.startPointId, defaults.endPointId, defaults.id, directionStartToEndRounded, directionEndToStartRounded);
                     expectSuccessfulTransaction(mockConnection);
 
                     expect(response.statusCode).toBe(201);
