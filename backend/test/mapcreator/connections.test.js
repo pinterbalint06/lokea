@@ -2,8 +2,8 @@ const { createTestApp } = require("#mapcreatortest/helpers/setup-test.js");
 const { testInvalidIDs, testRequiresAuth, expectSuccessfulTransaction, expectRollback, expectErrorResponse, randomId, buildRequest, suppressConsoleErrors } = require("#testhelpers/helpers.js");
 const { invalidTypeNumbers, negativeNumbers, tooBigDegrees, } = require("#mapcreatortest/helpers/test-data.js");
 
-const database = require("#sql/database.js");
-const { mockConnection } = database;
+const database = require("#mapcreator/connections/connections.queries.js");
+const { mockConnection, getConnection, checkUserOwnsConnection, checkUserOwnsGameMap } = require("#sql/database.js");
 
 const ERRORS = require("#utils/error-messages.js");
 
@@ -62,7 +62,7 @@ describe("Map Creator API - /api/map-creator/", () => {
                 testRequiresAuth(() => makeGetRequest());
 
                 it("Should respond with 403 if it's not the user's game map", async () => {
-                    database.checkUserOwnsGameMap.mockResolvedValueOnce(false);
+                    checkUserOwnsGameMap.mockResolvedValueOnce(false);
 
                     const response = await makeGetRequest();
 
@@ -131,7 +131,7 @@ describe("Map Creator API - /api/map-creator/", () => {
                 testRequiresAuth(() => makePutRequest());
 
                 it("Should respond with 403 if it's not the user's connection", async () => {
-                    database.checkUserOwnsConnection.mockResolvedValueOnce(false);
+                    checkUserOwnsConnection.mockResolvedValueOnce(false);
 
                     const response = await makePutRequest();
 
@@ -266,7 +266,7 @@ describe("Map Creator API - /api/map-creator/", () => {
                 suppressConsoleErrors();
 
                 it("Should respond with 500 if the database refused connection", async () => {
-                    database.getConnection.mockRejectedValueOnce(new Error("Database connection refused"));
+                    getConnection.mockRejectedValueOnce(new Error("Database connection refused"));
 
                     const response = await makePutRequest();
 
@@ -348,7 +348,7 @@ describe("Map Creator API - /api/map-creator/", () => {
                 testRequiresAuth(() => makePostRequest());
 
                 it("Should respond with 403 if it's not the user's game map", async () => {
-                    database.checkUserOwnsGameMap.mockResolvedValueOnce(false);
+                    checkUserOwnsGameMap.mockResolvedValueOnce(false);
 
                     const response = await makePostRequest();
 
@@ -510,7 +510,7 @@ describe("Map Creator API - /api/map-creator/", () => {
                 suppressConsoleErrors();
 
                 it("Should respond with 500 if the database refused connection", async () => {
-                    database.getConnection.mockRejectedValueOnce(new Error("Database connection refused"));
+                    getConnection.mockRejectedValueOnce(new Error("Database connection refused"));
 
                     const response = await makePostRequest();
 
@@ -575,7 +575,7 @@ describe("Map Creator API - /api/map-creator/", () => {
                 testRequiresAuth(() => makeDeleteRequest());
 
                 it("Should respond with 403 if it's not the user's connection", async () => {
-                    database.checkUserOwnsConnection.mockResolvedValueOnce(false);
+                    checkUserOwnsConnection.mockResolvedValueOnce(false);
 
                     const response = await makeDeleteRequest();
 
@@ -608,7 +608,7 @@ describe("Map Creator API - /api/map-creator/", () => {
                 suppressConsoleErrors();
 
                 it("Should respond with 500 if the database refused connection", async () => {
-                    database.getConnection.mockRejectedValueOnce(new Error("Database connection refused"));
+                    getConnection.mockRejectedValueOnce(new Error("Database connection refused"));
 
                     const response = await makeDeleteRequest();
 
