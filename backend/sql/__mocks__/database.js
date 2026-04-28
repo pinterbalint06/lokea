@@ -6,20 +6,7 @@ const mockConnection = {
 };
 
 const mockDatabase = {
-    getConnection: jest.fn().mockResolvedValue(mockConnection),
-
-    checkUserOwnsGameMap: jest.fn().mockResolvedValue(true),
-    checkUserOwnsMap: jest.fn().mockResolvedValue(true),
-    checkUserOwnsPoint: jest.fn().mockResolvedValue(true),
-    checkUserOwnsConnection: jest.fn().mockResolvedValue(true),
-
-    getGameMapDetails: jest.fn(),
-    insertImage: jest.fn(),
-    updateImagePath: jest.fn().mockResolvedValue(true),
-    deleteImageById: jest.fn().mockResolvedValue(true),
-    getPointImage: jest.fn(),
-    insertConnection: jest.fn(),
-    getMapImage: jest.fn()
+    getConnection: jest.fn().mockResolvedValue(mockConnection)
 };
 
 module.exports = mockDatabase;

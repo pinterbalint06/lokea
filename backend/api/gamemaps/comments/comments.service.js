@@ -1,6 +1,7 @@
 const AppError = require("#utils/app-error.js");
 const database = require("#gamemaps/comments/comments.queries.js");
-const { getConnection, getGameMapDetails } = require("#sql/database.js");
+const { doesGameMapExist } = require("#gamemaps/shared/queries/gamemaps.queries.js");
+const { getConnection } = require("#sql/database.js");
 const ERRORS = require("#utils/error-messages.js");
 const { cleanupAfterError } = require("#mapcreator/shared/utils/mapcreator.utils.js");
 
@@ -28,8 +29,8 @@ async function getGameMapComments(gameMapID, page) {
 async function postGameMapComment(userId, gameMapID, comment, rating) {
     let dbConnection;
     try {
-        const gameMapDetails = await getGameMapDetails(gameMapID);
-        if (!gameMapDetails) {
+        const gameMapExists = await doesGameMapExist(gameMapID);
+        if (!gameMapExists) {
             throw new AppError(ERRORS.GAMEMAP.NOT_FOUND, 404);
         }
 

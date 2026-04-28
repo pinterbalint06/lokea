@@ -3,7 +3,11 @@ const { testInvalidIDs, testRequiresAuth, expectSuccessfulTransaction, expectRol
 const { emptyTitles, tooLongTitles, invalidCharTitles, validTitles, imageStatusForPath } = require("#mapcreatortest/helpers/test-data.js");
 
 const database = require("#mapcreator/maps/maps.queries.js");
-const { mockConnection, getConnection, checkUserOwnsMap, checkUserOwnsGameMap, deleteImageById, insertImage, updateImagePath } = require("#sql/database.js");
+const { mockConnection, getConnection } = require("#sql/database.js");
+
+const { checkUserOwnsGameMap, checkUserOwnsMap } = require("#sharedapi/queries/ownership.queries.js");
+
+const imageQueries = require("#imagequeries");
 
 const {
     processImageMetadata,
@@ -234,7 +238,7 @@ describe("Map Creator API - /api/map-creator/", () => {
             const mapId = randomId();
 
             beforeEach(() => {
-                insertImage.mockResolvedValue(imageId);
+                imageQueries.insertImage.mockResolvedValue(imageId);
                 database.insertMap.mockResolvedValue(mapId);
             });
 
@@ -340,9 +344,9 @@ describe("Map Creator API - /api/map-creator/", () => {
                         const response = await makePostRequest({ title: validTitle });
 
                         expect(getConnection).toHaveBeenCalled();
-                        expect(insertImage).toHaveBeenCalledWith(mockConnection, mockImageMetadata.width, mockImageMetadata.height, imageStatusForPath);
+                        expect(imageQueries.insertImage).toHaveBeenCalledWith(mockConnection, mockImageMetadata.width, mockImageMetadata.height, imageStatusForPath);
                         expect(database.insertMap).toHaveBeenCalledWith(mockConnection, validTitle.trim(), defaults.id, imageId);
-                        expect(updateImagePath).toHaveBeenCalledWith(mockConnection, imageId, expect.any(String));
+                        expect(imageQueries.updateImagePath).toHaveBeenCalledWith(mockConnection, imageId, expect.any(String));
                         expect(deleteFile).toHaveBeenCalledWith(expect.any(String));
                         expectSuccessfulTransaction(mockConnection);
 
@@ -453,8 +457,8 @@ describe("Map Creator API - /api/map-creator/", () => {
                     expectErrorResponse(response, 500);
                 });
 
-                it("Should respond with 500, rollback DB, and delete ALL files if updateImagePath fails", async () => {
-                    updateImagePath.mockRejectedValueOnce(new Error("Update failed"));
+                it("Should respond with 500, rollback DB, and delete ALL files if imageQueries.updateImagePath fails", async () => {
+                    imageQueries.updateImagePath.mockRejectedValueOnce(new Error("Update failed"));
 
                     const response = await makePostRequest();
 
@@ -464,8 +468,8 @@ describe("Map Creator API - /api/map-creator/", () => {
                     expectErrorResponse(response, 500);
                 });
 
-                it("Should respond with 500, rollback DB, and delete ALL files if updateImagePath fails with false", async () => {
-                    updateImagePath.mockResolvedValueOnce(false);
+                it("Should respond with 500, rollback DB, and delete ALL files if imageQueries.updateImagePath fails with false", async () => {
+                    imageQueries.updateImagePath.mockResolvedValueOnce(false);
 
                     const response = await makePostRequest();
 
@@ -547,9 +551,9 @@ describe("Map Creator API - /api/map-creator/", () => {
 
                     expect(getConnection).toHaveBeenCalled();
                     expect(database.deleteMapById).toHaveBeenCalledWith(mockConnection, defaults.id);
-                    expect(deleteImageById).toHaveBeenCalledTimes(imageIds.length);
+                    expect(imageQueries.deleteImageById).toHaveBeenCalledTimes(imageIds.length);
                     for (const imageId of imageIds) {
-                        expect(deleteImageById).toHaveBeenCalledWith(mockConnection, imageId);
+                        expect(imageQueries.deleteImageById).toHaveBeenCalledWith(mockConnection, imageId);
                     }
                     expect(fs.rm).toHaveBeenCalledWith(
                         expect.stringContaining(path.join(gameMapId.toString(), defaults.id.toString())),
@@ -623,7 +627,7 @@ describe("Map Creator API - /api/map-creator/", () => {
                 it("Should respond with 500 if the database images deletion failed", async () => {
                     const imageId = 103;
                     database.getAllImageIdsForMap.mockResolvedValueOnce([imageId]);
-                    deleteImageById.mockResolvedValueOnce(false);
+                    imageQueries.deleteImageById.mockResolvedValueOnce(false);
 
                     const response = await makeDeleteRequest();
 

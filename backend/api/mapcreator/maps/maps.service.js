@@ -1,5 +1,6 @@
 const database = require("#mapcreator/maps/maps.queries.js");
-const { getConnection, insertImage, deleteImageById, updateImagePath } = require("#sql/database.js");
+const { getConnection } = require("#sql/database.js");
+const imageQueries = require("#imagequeries");
 const AppError = require("#utils/app-error.js");
 const ERRORS = require("#utils/error-messages.js");
 const fs = require("fs/promises");
@@ -67,7 +68,7 @@ async function createMap(userId, gameMapID, title, file) {
         dbConnection = await getConnection();
         await dbConnection.beginTransaction();
 
-        const imageId = await insertImage(dbConnection, imageData.width, imageData.height, "pending");
+        const imageId = await imageQueries.insertImage(dbConnection, imageData.width, imageData.height, "pending");
 
         const newMapId = await database.insertMap(dbConnection, title, gameMapID, imageId);
 
@@ -89,7 +90,7 @@ async function createMap(userId, gameMapID, title, file) {
         });
 
         let dbPath = path.join(relativeDestDir, processedImagePaths.targetFileName);
-        const updateSuccess = await updateImagePath(dbConnection, imageId, dbPath);
+        const updateSuccess = await imageQueries.updateImagePath(dbConnection, imageId, dbPath);
         if (!updateSuccess) {
             throw new AppError(ERRORS.MAP.SAVE_FAILED, 500);
         }
@@ -136,7 +137,7 @@ async function deleteMap(userId, mapID) {
         }
 
         for (const imageId of imageIdsToDelete) {
-            let successImageDeletion = await deleteImageById(dbConnection, imageId);
+            let successImageDeletion = await imageQueries.deleteImageById(dbConnection, imageId);
             if (!successImageDeletion) {
                 throw new AppError(ERRORS.MAP.IMAGE_DELETIONS_FAILED, 500);
             }

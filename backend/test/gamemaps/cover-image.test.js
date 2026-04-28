@@ -15,7 +15,13 @@ const express = require("express");
 const ERRORS = require("#utils/error-messages.js");
 
 const database = require("#gamemaps/cover-image/cover-image.queries.js");
-const { mockConnection, getConnection, insertImage, getGameMapDetails, updateImagePath, deleteImageById, checkUserOwnsGameMap } = require("#sql/database.js");
+const { mockConnection, getConnection } = require("#sql/database.js");
+
+const { checkUserOwnsGameMap } = require("#sharedapi/queries/ownership.queries.js");
+
+const { doesGameMapExist } = require("#gamemaps/shared/queries/gamemaps.queries.js");
+
+const imageQueries = require("#imagequeries");
 
 const {
     processImageMetadata,
@@ -203,10 +209,9 @@ describe("Game Maps API - /api/game-maps/", () => {
                 imageIdDB = randomId();
                 oldImageIdDB = randomId();
 
-                getGameMapDetails.mockResolvedValue({ id: defaults.id });
                 database.getGameMapCoverImage.mockResolvedValue(null);
 
-                insertImage.mockResolvedValue(imageIdDB);
+                imageQueries.insertImage.mockResolvedValue(imageIdDB);
             });
 
             describe("Authorization (401, 403)", () => {
@@ -265,7 +270,7 @@ describe("Game Maps API - /api/game-maps/", () => {
                     const response = await makePutRequest();
 
                     expect(processImageMetadata).toHaveBeenCalled();
-                    expect(insertImage).not.toHaveBeenCalled();
+                    expect(imageQueries.insertImage).not.toHaveBeenCalled();
 
                     expect(deleteFile).toHaveBeenCalledWith(expect.any(String));
                     expect(mockConnection.beginTransaction).not.toHaveBeenCalled();
@@ -275,7 +280,7 @@ describe("Game Maps API - /api/game-maps/", () => {
 
             describe("Conflicts (404, 409)", () => {
                 it("Should respond with 404 if the game map does not exist somehow", async () => {
-                    getGameMapDetails.mockResolvedValueOnce(null);
+                    doesGameMapExist.mockResolvedValueOnce(false);
 
                     const response = await makePutRequest();
 
@@ -289,17 +294,17 @@ describe("Game Maps API - /api/game-maps/", () => {
                 it("Should respond with 204 and handle everything correctly when there is no old cover image", async () => {
                     const response = await makePutRequest();
 
-                    expect(insertImage).toHaveBeenCalledWith(mockConnection, mockImageMetadata.width, mockImageMetadata.height, "pending");
+                    expect(imageQueries.insertImage).toHaveBeenCalledWith(mockConnection, mockImageMetadata.width, mockImageMetadata.height, "pending");
                     expect(createWebpAndLowRes).toHaveBeenCalledWith({
                         inputFilePath: expect.any(String),
                         outputDirPath: expect.any(String),
                         baseName: expect.stringContaining(defaults.id.toString())
                     });
 
-                    expect(updateImagePath).toHaveBeenCalledWith(mockConnection, imageIdDB, expect.stringContaining(mockImageProcessed.targetFileName));
+                    expect(imageQueries.updateImagePath).toHaveBeenCalledWith(mockConnection, imageIdDB, expect.stringContaining(mockImageProcessed.targetFileName));
                     expect(database.updateGameMapCoverImage).toHaveBeenCalledWith(mockConnection, defaults.id, imageIdDB);
 
-                    expect(deleteImageById).not.toHaveBeenCalled();
+                    expect(imageQueries.deleteImageById).not.toHaveBeenCalled();
                     expect(deleteImageAndLowResByMainPath).not.toHaveBeenCalled();
                     expect(deleteFile).toHaveBeenCalledWith(expect.any(String));
 
@@ -313,7 +318,7 @@ describe("Game Maps API - /api/game-maps/", () => {
                     const response = await makePutRequest();
 
                     expect(database.updateGameMapCoverImage).toHaveBeenCalledWith(mockConnection, defaults.id, imageIdDB);
-                    expect(deleteImageById).toHaveBeenCalledWith(mockConnection, oldImageIdDB);
+                    expect(imageQueries.deleteImageById).toHaveBeenCalledWith(mockConnection, oldImageIdDB);
                     expect(deleteImageAndLowResByMainPath).toHaveBeenCalledWith(expect.stringContaining(path.join(dbOldImageFilePath)));
                     expect(deleteFile).toHaveBeenCalledWith(expect.any(String));
 
@@ -359,7 +364,7 @@ describe("Game Maps API - /api/game-maps/", () => {
                 suppressConsoleErrors();
 
                 it.each([
-                    { name: 'getGameMapDetails', databaseFunction: getGameMapDetails },
+                    { name: 'doesGameMapExist', databaseFunction: doesGameMapExist },
                     { name: 'checkUserOwnsGameMap', databaseFunction: checkUserOwnsGameMap },
                     { name: 'getConnection', databaseFunction: getConnection }
                 ])("Should respond with 500 and delete temp file if there is an unexpected database error during: $name", async ({ databaseFunction }) => {
@@ -372,8 +377,8 @@ describe("Game Maps API - /api/game-maps/", () => {
                     expectErrorResponse(response, 500, ERRORS.COMMON.UNEXPECTED_ERROR);
                 });
 
-                it("Should respond with 500, rollback and delete temp file if insertImage fails", async () => {
-                    insertImage.mockRejectedValueOnce(new Error("Database error"));
+                it("Should respond with 500, rollback and delete temp file if imageQueries.insertImage fails", async () => {
+                    imageQueries.insertImage.mockRejectedValueOnce(new Error("Database error"));
 
                     const response = await makePutRequest();
 
@@ -388,19 +393,19 @@ describe("Game Maps API - /api/game-maps/", () => {
                     const response = await makePutRequest();
 
                     expect(createWebpAndLowRes).toHaveBeenCalled();
-                    expect(updateImagePath).not.toHaveBeenCalled();
+                    expect(imageQueries.updateImagePath).not.toHaveBeenCalled();
 
                     expectRollback(mockConnection);
                     expect(deleteFile).toHaveBeenCalledWith(expect.any(String));
                     expectErrorResponse(response);
                 });
 
-                it("Should respond with 500, rollback and delete files if updateImagePath fails", async () => {
-                    updateImagePath.mockResolvedValueOnce(false);
+                it("Should respond with 500, rollback and delete files if imageQueries.updateImagePath fails", async () => {
+                    imageQueries.updateImagePath.mockResolvedValueOnce(false);
 
                     const response = await makePutRequest();
 
-                    expect(updateImagePath).toHaveBeenCalledWith(mockConnection, imageIdDB, expect.any(String));
+                    expect(imageQueries.updateImagePath).toHaveBeenCalledWith(mockConnection, imageIdDB, expect.any(String));
 
                     expectRollback(mockConnection);
                     expect(deleteFile).toHaveBeenCalledTimes(3); // 3 because temp file, mainPath, lowResPath
@@ -419,13 +424,13 @@ describe("Game Maps API - /api/game-maps/", () => {
                     expectErrorResponse(response, 500, ERRORS.GAMEMAP.COVER_IMAGE_UPDATE_FAILED);
                 });
 
-                it("Should respond with 500, rollback and delete files if deleteImageById fails", async () => {
+                it("Should respond with 500, rollback and delete files if imageQueries.deleteImageById fails", async () => {
                     database.getGameMapCoverImage.mockResolvedValueOnce({ image_id: oldImageIdDB, filepath: dbOldImageFilePath });
-                    deleteImageById.mockResolvedValueOnce(false);
+                    imageQueries.deleteImageById.mockResolvedValueOnce(false);
 
                     const response = await makePutRequest();
 
-                    expect(deleteImageById).toHaveBeenCalledWith(mockConnection, oldImageIdDB);
+                    expect(imageQueries.deleteImageById).toHaveBeenCalledWith(mockConnection, oldImageIdDB);
 
                     expectRollback(mockConnection);
                     expect(deleteFile).toHaveBeenCalledTimes(3); // 3 because temp file, mainPath, lowResPath
@@ -508,7 +513,7 @@ describe("Game Maps API - /api/game-maps/", () => {
                 it("Should respond with 204 and successfully delete the cover image from the database and the filesystem", async () => {
                     const response = await makeDeleteRequest();
 
-                    expect(deleteImageById).toHaveBeenCalledWith(mockConnection, dbCoverImage.image_id);
+                    expect(imageQueries.deleteImageById).toHaveBeenCalledWith(mockConnection, dbCoverImage.image_id);
                     expect(deleteImageAndLowResByMainPath).toHaveBeenCalledWith(expect.stringContaining(path.normalize(dbCoverImage.filepath)));
 
                     expectSuccessfulTransaction(mockConnection);
@@ -520,7 +525,7 @@ describe("Game Maps API - /api/game-maps/", () => {
 
                     const response = await makeDeleteRequest();
 
-                    expect(deleteImageById).toHaveBeenCalledWith(mockConnection, dbCoverImage.image_id);
+                    expect(imageQueries.deleteImageById).toHaveBeenCalledWith(mockConnection, dbCoverImage.image_id);
                     expect(deleteImageAndLowResByMainPath).not.toHaveBeenCalled();
 
                     expectSuccessfulTransaction(mockConnection);
@@ -536,7 +541,7 @@ describe("Game Maps API - /api/game-maps/", () => {
 
                         const response = await makeDeleteRequest();
 
-                        expect(deleteImageById).toHaveBeenCalledWith(mockConnection, dbCoverImage.image_id);
+                        expect(imageQueries.deleteImageById).toHaveBeenCalledWith(mockConnection, dbCoverImage.image_id);
                         expect(deleteImageAndLowResByMainPath).toHaveBeenCalled();
                         expect(console.error).toHaveBeenCalledWith(
                             expect.stringContaining("unsuccessful deletion"),
@@ -565,8 +570,8 @@ describe("Game Maps API - /api/game-maps/", () => {
                     expectErrorResponse(response, 500, ERRORS.COMMON.UNEXPECTED_ERROR);
                 });
 
-                it("Should respond with 500 and rollback if deleteImageById returns false", async () => {
-                    deleteImageById.mockResolvedValueOnce(false);
+                it("Should respond with 500 and rollback if imageQueries.deleteImageById returns false", async () => {
+                    imageQueries.deleteImageById.mockResolvedValueOnce(false);
 
                     const response = await makeDeleteRequest();
 
@@ -574,8 +579,8 @@ describe("Game Maps API - /api/game-maps/", () => {
                     expectErrorResponse(response, 500, ERRORS.GAMEMAP.COVER_IMAGE_DELETE_FAILED);
                 });
 
-                it("Should respond with 500 and rollback if there is an unexpected database error during deleteImageById", async () => {
-                    deleteImageById.mockRejectedValueOnce(new Error("Database error"));
+                it("Should respond with 500 and rollback if there is an unexpected database error during imageQueries.deleteImageById", async () => {
+                    imageQueries.deleteImageById.mockRejectedValueOnce(new Error("Database error"));
 
                     const response = await makeDeleteRequest();
 

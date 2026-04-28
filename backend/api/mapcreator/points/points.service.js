@@ -1,5 +1,7 @@
 const database = require("#mapcreator/points/points.queries.js");
-const { getConnection, insertImage, updateImagePath, deleteImageById, getPointImage } = require("#sql/database.js");
+const { getConnection } = require("#sql/database.js");
+const { getPointImage } = require("#gamemaps/images/images.queries.js");
+const imageQueries = require("#imagequeries");
 const AppError = require("#utils/app-error.js");
 const fs = require("fs/promises");
 const path = require("path");
@@ -60,7 +62,7 @@ async function updatePoint(userId, pointID, pointData, file) {
             } catch (err) {
                 throw new AppError(ERRORS.COMMON.IMAGE_PROCESSING_ERROR, 422);
             }
-            let newImageId = await insertImage(dbConnection, imageData.width, imageData.height, "pending");
+            let newImageId = await imageQueries.insertImage(dbConnection, imageData.width, imageData.height, "pending");
             let gameMapID = pointInfo.game_maps_id;
             let mapID = pointInfo.map_id;
 
@@ -84,7 +86,7 @@ async function updatePoint(userId, pointID, pointData, file) {
 
             let dbPath = path.join(relativeDestDir, processedImagePaths.targetFileName);
 
-            await updateImagePath(dbConnection, newImageId, dbPath);
+            await imageQueries.updateImagePath(dbConnection, newImageId, dbPath);
 
             let updateImageSuccess = await database.updatePointImage(dbConnection, pointID, newImageId);
             if (!updateImageSuccess) {
@@ -92,7 +94,7 @@ async function updatePoint(userId, pointID, pointData, file) {
             }
 
             if (oldImageInfo) {
-                let deleteSuccess = await deleteImageById(dbConnection, oldImageInfo.image_id);
+                let deleteSuccess = await imageQueries.deleteImageById(dbConnection, oldImageInfo.image_id);
                 if (!deleteSuccess) {
                     throw new AppError(ERRORS.POINT.OLD_IMAGE_DELETION_FAILED, 500);
                 }
@@ -162,7 +164,7 @@ async function createPoint(userId, mapID, pointData, file) {
             throw new AppError(ERRORS.POINT.ALREADY_EXISTS, 409);
         }
 
-        let imageId = await insertImage(dbConnection, imageData.width, imageData.height, "pending");
+        let imageId = await imageQueries.insertImage(dbConnection, imageData.width, imageData.height, "pending");
 
         let newPointId = await database.insertPoint(dbConnection, mapID, uCoordinate, vCoordinate, northDirection, imageId);
 
@@ -188,7 +190,7 @@ async function createPoint(userId, mapID, pointData, file) {
 
         let dbPath = path.join(relativeDestDir, processedImagePaths.targetFileName);
 
-        await updateImagePath(dbConnection, imageId, dbPath);
+        await imageQueries.updateImagePath(dbConnection, imageId, dbPath);
 
         await dbConnection.commit();
 
@@ -227,7 +229,7 @@ async function deletePoint(userId, pointID) {
         await dbConnection.beginTransaction();
 
         if (oldImageInfo && oldImageInfo.image_id) {
-            let successImageDeletion = await deleteImageById(dbConnection, oldImageInfo.image_id);
+            let successImageDeletion = await imageQueries.deleteImageById(dbConnection, oldImageInfo.image_id);
             if (!successImageDeletion) {
                 throw new AppError(ERRORS.POINT.IMAGE_DELETION_FAILED, 500);
             }

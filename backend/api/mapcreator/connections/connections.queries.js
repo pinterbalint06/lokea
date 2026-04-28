@@ -84,13 +84,14 @@ async function arePointsInSameMap(connection, pointId1, pointId2) {
 
 async function doesConnectionAlreadyExist(connection, pointId1, pointId2) {
     const query = `
-        SELECT COUNT(*) as count 
+        SELECT 1
         FROM point_connections
         WHERE
             (point_connections.start_point_id, point_connections.end_point_id) IN ((?, ?), (?, ?))
+        LIMIT 1
     `;
     const [rows] = await connection.execute(query, [pointId1, pointId2, pointId2, pointId1]);
-    return rows[0].count == 1;
+    return rows.length == 1;
 }
 
 async function deleteConnectionById(connection, connectionId) {

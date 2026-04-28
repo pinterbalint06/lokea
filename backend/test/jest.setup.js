@@ -10,3 +10,7 @@ jest.mock("#gamemaps/comments/comments.queries.js");
 jest.mock("#gamemaps/paths/paths.queries.js");
 jest.mock("#gamemaps/cover-image/cover-image.queries.js");
 jest.mock("#gamemaps/gamemap/gamemap.queries.js");
+jest.mock("#imagequeries");
+jest.mock("#gamemaps/shared/queries/gamemaps.queries.js");
+jest.mock("#gamemaps/images/images.queries.js");
+jest.mock("#sharedapi/queries/ownership.queries.js");

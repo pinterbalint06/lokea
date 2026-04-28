@@ -9,7 +9,7 @@ const TEMP_DIR = process.env.JEST_WORKER_ID
     ? path.join(__dirname, "..", "temp", `test-${process.env.JEST_WORKER_ID}`)
     : path.join(__dirname, "..", "temp");
 const UPLOAD_ROOT = path.join(__dirname, "..", "uploads");
-const UPLOAD_ROOT_MAP_DATA = path.join(__dirname, "..", "uploads", "mapdatas");
+const UPLOAD_ROOT_MAP_DATA = path.join(UPLOAD_ROOT, "mapdatas");
 const MAX_FILE_SIZE = 10 * 1024 * 1024; // 10 MB
 
 const ALLOWED_IMAGE_TYPES = {

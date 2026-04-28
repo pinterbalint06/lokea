@@ -3,7 +3,9 @@ const { testInvalidIDs, testRequiresAuth, expectSuccessfulTransaction, expectRol
 const { invalidTypeNumbers, negativeNumbers, tooBigDegrees, } = require("#mapcreatortest/helpers/test-data.js");
 
 const database = require("#mapcreator/connections/connections.queries.js");
-const { mockConnection, getConnection, checkUserOwnsConnection, checkUserOwnsGameMap } = require("#sql/database.js");
+const { mockConnection, getConnection } = require("#sql/database.js");
+
+const { checkUserOwnsGameMap, checkUserOwnsConnection } = require("#sharedapi/queries/ownership.queries.js");
 
 const ERRORS = require("#utils/error-messages.js");
 

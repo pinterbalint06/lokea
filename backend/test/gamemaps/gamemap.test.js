@@ -14,7 +14,13 @@ const { invalidTypeNumbers, invalidIds, invalidCharForHungarian } = require("#te
 const ERRORS = require("#utils/error-messages.js");
 
 const database = require("#gamemaps/gamemap/gamemap.queries.js");
-const { mockConnection, getConnection, deleteImageById, getGameMapDetails, checkUserOwnsGameMap } = require("#sql/database.js");
+const { mockConnection, getConnection } = require("#sql/database.js");
+
+const { checkUserOwnsGameMap } = require("#sharedapi/queries/ownership.queries.js");
+
+const { getGameMapDetails } = require("#gamemaps/shared/queries/gamemaps.queries.js");
+
+const imageQueries = require("#imagequeries");
 
 const fs = require("fs/promises");
 const path = require("path");
@@ -363,9 +369,9 @@ describe("Game Maps API - /api/game-maps/", () => {
                     const response = await makeDeleteRequest();
 
                     expect(database.deleteGameMapById).toHaveBeenCalledWith(mockConnection, defaults.id);
-                    expect(deleteImageById).toHaveBeenCalledTimes(mockImageIds.length);
+                    expect(imageQueries.deleteImageById).toHaveBeenCalledTimes(mockImageIds.length);
                     for (const imageId of mockImageIds) {
-                        expect(deleteImageById).toHaveBeenCalledWith(mockConnection, imageId);
+                        expect(imageQueries.deleteImageById).toHaveBeenCalledWith(mockConnection, imageId);
                     }
 
                     expect(fs.rm).toHaveBeenCalledWith(
@@ -383,7 +389,7 @@ describe("Game Maps API - /api/game-maps/", () => {
                     const response = await makeDeleteRequest();
 
                     expect(database.deleteGameMapById).toHaveBeenCalledWith(mockConnection, defaults.id);
-                    expect(deleteImageById).not.toHaveBeenCalled();
+                    expect(imageQueries.deleteImageById).not.toHaveBeenCalled();
 
                     expect(fs.rm).toHaveBeenCalledWith(
                         expect.stringContaining(defaults.id.toString()),
@@ -449,14 +455,14 @@ describe("Game Maps API - /api/game-maps/", () => {
                     expectErrorResponse(response, 500, ERRORS.GAMEMAP.DELETE_FAILED);
                 });
 
-                it("Should respond with 500 and rollback if deleteImageById returns false", async () => {
-                    deleteImageById
+                it("Should respond with 500 and rollback if imageQueries.deleteImageById returns false", async () => {
+                    imageQueries.deleteImageById
                         .mockResolvedValueOnce(true)
                         .mockResolvedValueOnce(false); // second one fails
 
                     const response = await makeDeleteRequest();
 
-                    expect(deleteImageById).toHaveBeenCalledTimes(2);
+                    expect(imageQueries.deleteImageById).toHaveBeenCalledTimes(2);
                     expectRollback(mockConnection);
                     expectErrorResponse(response, 500, ERRORS.MAP.IMAGE_DELETIONS_FAILED);
                 });

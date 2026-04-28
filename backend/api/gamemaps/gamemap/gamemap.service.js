@@ -2,7 +2,9 @@ const path = require("path");
 const AppError = require("#utils/app-error.js");
 const fs = require("fs/promises");
 const database = require("#gamemaps/gamemap/gamemap.queries.js");
-const { getConnection, deleteImageById, getGameMapDetails: getGameMapDetailsDb } = require("#sql/database.js");
+const { getConnection } = require("#sql/database.js");
+const { getGameMapDetails: getGameMapDetailsDb } = require("#gamemaps/shared/queries/gamemaps.queries.js");
+const imageQueries = require("#imagequeries");
 const ERRORS = require("#utils/error-messages.js");
 const { UPLOAD_ROOT_MAP_DATA, isInsideRoot } = require("#config/mapdatas-upload-config.js");
 const { assertUserOwnsGameMap } = require("#mapcreator/shared/utils/mapcreator.utils.js");
@@ -47,7 +49,7 @@ async function deleteGameMap(userId, gameMapID) {
         }
 
         for (const imageId of imageIdsToDelete) {
-            let successImageDeletion = await deleteImageById(dbConnection, imageId);
+            let successImageDeletion = await imageQueries.deleteImageById(dbConnection, imageId);
             if (!successImageDeletion) {
                 throw new AppError(ERRORS.MAP.IMAGE_DELETIONS_FAILED, 500);
             }

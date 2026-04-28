@@ -1,4 +1,4 @@
-const database = require("#sql/database.js");
+const { checkUserOwnsGameMap, checkUserOwnsMap, checkUserOwnsPoint, checkUserOwnsConnection } = require("#sharedapi/queries/ownership.queries.js");
 const { deleteFile } = require("#utils/file-utils.js");
 const AppError = require("#utils/app-error.js");
 const ERRORS = require("#utils/error-messages.js");
@@ -37,25 +37,25 @@ async function cleanupAfterError(dbConnection, file, processedImagePaths) {
 }
 
 async function assertUserOwnsGameMap(userId, gameMapID) {
-    if (!await database.checkUserOwnsGameMap(userId, gameMapID)) {
+    if (!await checkUserOwnsGameMap(userId, gameMapID)) {
         throw new AppError(ERRORS.GAMEMAP.NO_ACCESS, 403);
     }
 }
 
 async function assertUserOwnsMap(userId, mapID) {
-    if (!await database.checkUserOwnsMap(userId, mapID)) {
+    if (!await checkUserOwnsMap(userId, mapID)) {
         throw new AppError(ERRORS.MAP.NO_ACCESS, 403);
     }
 }
 
 async function assertUserOwnsPoint(userId, pointID) {
-    if (!await database.checkUserOwnsPoint(userId, pointID)) {
+    if (!await checkUserOwnsPoint(userId, pointID)) {
         throw new AppError(ERRORS.POINT.NO_ACCESS, 403);
     }
 }
 
 async function assertUserOwnsConnection(userId, connectionID) {
-    if (!await database.checkUserOwnsConnection(userId, connectionID)) {
+    if (!await checkUserOwnsConnection(userId, connectionID)) {
         throw new AppError(ERRORS.CONNECTION.NO_ACCESS, 403);
     }
 }

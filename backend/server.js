@@ -3,7 +3,7 @@ const express = require('express'); //?npm install express
 const session = require('express-session'); //?npm install express-session
 const path = require('path');
 const cors = require('cors');
-const database = require("./sql/database.js");
+const { doesGameMapExist } = require('#gamemaps/shared/queries/gamemaps.queries.js');
 const auth = require('./auth.js')
 const { Server } = require("socket.io");
 const http = require('http');
@@ -19,7 +19,7 @@ const router = express.Router();
 const ip = '127.0.0.1';
 const port = 3000;
 const server = http.createServer(app);
-const onlineUsers = new Map(); 
+const onlineUsers = new Map();
 const io = new Server(server);
 
 app.use(cors());
@@ -116,8 +116,8 @@ router.get(
                 convert: true
             });
 
-            const doesGameMapExist = await database.doesGameMapExist(request.params.gameMapId);
-            if (!doesGameMapExist) {
+            const gameMapExists = await doesGameMapExist(request.params.gameMapId);
+            if (!gameMapExists) {
                 throw new AppError(ERRORS.GAMEMAP.NOT_FOUND, 404);
             }
 
@@ -167,7 +167,7 @@ io.on("connection", (socket) => {
         if (!onlineUsers.has(userId)) {
             onlineUsers.set(userId, new Set());
             onlineUsers.get(userId).add(socket.id);
-            
+
             io.emit("totalOnline", onlineUsers.size);
         } else {
             onlineUsers.get(userId).add(socket.id);
