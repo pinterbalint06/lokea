@@ -1,4 +1,4 @@
-const mockConnectionQueries = {
+const mockMapQueries = {
     insertMap: jest.fn(),
     getMapInfo: jest.fn(),
     getMapsByGameMapId: jest.fn(),
@@ -7,4 +7,4 @@ const mockConnectionQueries = {
     deleteMapById: jest.fn().mockResolvedValue(true)
 };
 
-module.exports = mockConnectionQueries;
+module.exports = mockMapQueries;
