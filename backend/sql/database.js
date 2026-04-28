@@ -617,27 +617,6 @@ async function doesGameMapExist(gameMapId) {
     return rows[0].count > 0;
 }
 
-async function getGameMapCoverImage(gameMapId) {
-    const query = `
-        SELECT images.image_id, images.filepath, images.width, images.height
-        FROM game_maps
-            INNER JOIN images ON (game_maps.cover_image_id = images.image_id)
-        WHERE game_maps.game_maps_id = ?
-    `;
-    const [rows] = await pool.execute(query, [gameMapId]);
-    return rows.length > 0 ? rows[0] : null;
-}
-
-async function updateGameMapCoverImage(connection, gameMapId, imageId) {
-    const query = `
-        UPDATE game_maps
-        SET game_maps.cover_image_id = ?
-        WHERE game_maps.game_maps_id = ?
-    `;
-    const [result] = await connection.execute(query, [imageId, gameMapId]);
-    return isIdUpdateSuccessful(result);
-}
-
 async function updateGameMapDetails(connection, gameMapId, title, description) {
     const query = `
         UPDATE game_maps
@@ -704,8 +683,6 @@ module.exports = {
     getGameMapDetails,
     getTopScoresForGameMap,
     doesGameMapExist,
-    getGameMapCoverImage,
-    updateGameMapCoverImage,
     updateGameMapDetails,
     getAllImageIdsForGameMap,
     deleteGameMapById,
