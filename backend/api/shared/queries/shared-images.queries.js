@@ -29,23 +29,8 @@ async function deleteImageById(connection, imageId) {
     return result.affectedRows == 1;
 }
 
-async function getImagePath(image_id) {
-    const query = 'SELECT images.filepath FROM images WHERE images.image_id = ?';
-    const [result] = await pool.execute(query, [image_id]);
-    let re;
-    if (result.length === 0) {
-        re = null;
-    }
-    else {
-        re = result[0].filepath;
-    }
-    return re;
-}
-
-
 module.exports = {
     insertImage,
     updateImagePath,
-    deleteImageById,
-    getImagePath
+    deleteImageById
 }
