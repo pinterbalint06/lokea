@@ -1,5 +1,6 @@
 const AppError = require("#utils/app-error.js");
-const database = require("#sql/database.js");
+const database = require("#gamemaps/comments/comments.queries.js");
+const { getConnection, getGameMapDetails } = require("#sql/database.js");
 const ERRORS = require("#utils/error-messages.js");
 const { cleanupAfterError } = require("#mapcreator/shared/utils/mapcreator.utils.js");
 
@@ -27,7 +28,7 @@ async function getGameMapComments(gameMapID, page) {
 async function postGameMapComment(userId, gameMapID, comment, rating) {
     let dbConnection;
     try {
-        const gameMapDetails = await database.getGameMapDetails(gameMapID);
+        const gameMapDetails = await getGameMapDetails(gameMapID);
         if (!gameMapDetails) {
             throw new AppError(ERRORS.GAMEMAP.NOT_FOUND, 404);
         }
@@ -39,7 +40,7 @@ async function postGameMapComment(userId, gameMapID, comment, rating) {
 
         const commentDb = comment ?? null;
 
-        dbConnection = await database.getConnection();
+        dbConnection = await getConnection();
         await dbConnection.beginTransaction();
 
         try {
@@ -72,7 +73,7 @@ async function updateUserComment(userId, gameMapID, commentText, rating) {
     try {
         await assertHasCommentedOnGameMap(gameMapID, userId);
 
-        dbConnection = await database.getConnection();
+        dbConnection = await getConnection();
         await dbConnection.beginTransaction();
 
         const commentDb = commentText ?? null;
@@ -98,7 +99,7 @@ async function deleteUserComment(userId, gameMapID) {
     try {
         await assertHasCommentedOnGameMap(gameMapID, userId);
 
-        dbConnection = await database.getConnection();
+        dbConnection = await getConnection();
         await dbConnection.beginTransaction();
 
         const success = await database.deleteUserCommentOnGameMap(dbConnection, gameMapID, userId);

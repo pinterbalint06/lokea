@@ -1,9 +1,9 @@
 const { pointIDParamsSchema } = require("#gamemaps/shared/schemas/gamemaps.schemas.js");
 
-const getPointConnectionsSchema = {
+const getPointPathsSchema = {
     params: pointIDParamsSchema
 };
 
 module.exports = {
-    getPointConnectionsSchema
+    getPointPathsSchema
 };

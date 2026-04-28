@@ -6,3 +6,5 @@ jest.mock("#gamemaps/shared/middlewares/gamemaps.middleware.js");
 jest.mock("#mapcreator/connections/connections.queries.js");
 jest.mock("#mapcreator/maps/maps.queries.js");
 jest.mock("#mapcreator/points/points.queries.js");
+jest.mock("#gamemaps/comments/comments.queries.js");
+jest.mock("#gamemaps/paths/paths.queries.js");
