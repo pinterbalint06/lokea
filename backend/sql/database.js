@@ -462,15 +462,6 @@ async function insertImage(connection, width, height, filepath) {
     return result.insertId;
 }
 
-async function insertMap(connection, title, gameMapId, imageId) {
-    const query = `
-        INSERT INTO map (title, game_maps_id, image_id)
-        VALUES (?, ?, ?)
-    `;
-    const [result] = await connection.execute(query, [title, gameMapId, imageId]);
-    return result.insertId;
-}
-
 async function insertPoint(connection, mapId, u, v, northDirection, imageId) {
     const query = `
         INSERT INTO points (map_id, point_u, point_v, north_direction, image_id)
@@ -572,39 +563,6 @@ async function getMapImageIdByMapId(mapId) {
     return ret;
 }
 
-async function getMapInfo(mapId) {
-    const query = `
-        SELECT map.title, map.game_maps_id
-        FROM map
-        WHERE map.map_id = ?
-    `;
-    const [rows] = await pool.execute(query, [mapId]);
-    return rows.length > 0 ? rows[0] : null;
-}
-
-async function getAllImageIdsForMap(connection, mapId) {
-    const query = `
-        SELECT DISTINCT images.image_id
-        FROM map
-            LEFT JOIN points ON (map.map_id = points.map_id)
-            INNER JOIN images ON (points.image_id = images.image_id OR map.image_id = images.image_id)
-        WHERE map.map_id = ?
-    `;
-    const [rows] = await connection.execute(query, [mapId]);
-    return rows.length > 0 ? rows.map((row) => row.image_id) : [];
-}
-
-async function getMapsByGameMapId(gameMapId) {
-    const query = `
-        SELECT map.map_id, map.title
-        FROM game_maps
-            INNER JOIN map ON (game_maps.game_maps_id = map.game_maps_id)
-        WHERE game_maps.game_maps_id = ?
-    `;
-    const [rows] = await pool.execute(query, [gameMapId]);
-    return rows;
-}
-
 async function getGameMapIdByMapId(mapId) {
     const query = `
         SELECT map.game_maps_id
@@ -690,16 +648,6 @@ async function updatePointImage(connection, pointId, imageId) {
     return isIdUpdateSuccessful(result);
 }
 
-async function updateMapTitle(connection, mapId, title) {
-    const query = `
-        UPDATE map
-        SET map.title = ?
-        WHERE map.map_id = ?
-    `;
-    const [result] = await connection.execute(query, [title, mapId]);
-    return isIdUpdateSuccessful(result);
-}
-
 async function deleteImageById(connection, imageId) {
     const query = `
         DELETE FROM images
@@ -715,15 +663,6 @@ async function deletePointById(connection, pointId) {
         WHERE points.point_id = ?
     `;
     const [result] = await connection.execute(query, [pointId]);
-    return result.affectedRows == 1;
-}
-
-async function deleteMapById(connection, mapId) {
-    const query = `
-        DELETE FROM map
-        WHERE map.map_id = ?
-    `;
-    const [result] = await connection.execute(query, [mapId]);
     return result.affectedRows == 1;
 }
 
@@ -921,14 +860,12 @@ module.exports = {
     // selectall,
     getConnection,
     insertImage,
-    insertMap,
     insertPoint,
     updateImagePath,
     getMapImage,
     getPointImage,
     getPointsOnMap,
     getConnectionsByPointId,
-    getMapsByGameMapId,
     getGameMapIdByMapId,
     checkUserOwnsGameMap,
     checkUserOwnsMap,
@@ -937,7 +874,6 @@ module.exports = {
     updatePointCoordinates,
     updatePointImage,
     updatePointNorthDirection,
-    updateMapTitle,
     deleteImageById,
     getPointInfo,
     getPointOnMapByCoordinates,
@@ -946,7 +882,6 @@ module.exports = {
     getUserByUsername,
     getUserByEmail,
     deletePointById,
-    deleteMapById,
     getUsers,
     getUser,
     getUserNameProfile,
@@ -960,8 +895,6 @@ module.exports = {
     getGameMaps,
     getImagePath,
     getMapImageIdByMapId,
-    getMapInfo,
-    getAllImageIdsForMap,
     getGameMapDetails,
     getTopScoresForGameMap,
     doesGameMapExist,

@@ -4,3 +4,4 @@ jest.mock("#utils/file-utils.js");
 jest.mock("#root/auth.js");
 jest.mock("#gamemaps/shared/middlewares/gamemaps.middleware.js");
 jest.mock("#mapcreator/connections/connections.queries.js");
+jest.mock("#mapcreator/maps/maps.queries.js");

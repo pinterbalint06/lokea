@@ -2,8 +2,8 @@ const { createTestApp } = require("#mapcreatortest/helpers/setup-test.js");
 const { testInvalidIDs, testRequiresAuth, expectSuccessfulTransaction, expectRollback, expectErrorResponse, randomId, buildRequest, suppressConsoleErrors } = require("#testhelpers/helpers.js");
 const { emptyTitles, tooLongTitles, invalidCharTitles, validTitles, imageStatusForPath } = require("#mapcreatortest/helpers/test-data.js");
 
-const database = require("#sql/database.js");
-const { mockConnection } = database;
+const database = require("#mapcreator/maps/maps.queries.js");
+const { mockConnection, getConnection, checkUserOwnsMap, checkUserOwnsGameMap, deleteImageById, insertImage, updateImagePath } = require("#sql/database.js");
 
 const {
     processImageMetadata,
@@ -48,7 +48,7 @@ describe("Map Creator API - /api/map-creator/", () => {
                 testRequiresAuth(() => makeGetRequest());
 
                 it("Should respond with 403 if it's not the user's game map", async () => {
-                    database.checkUserOwnsGameMap.mockResolvedValueOnce(false);
+                    checkUserOwnsGameMap.mockResolvedValueOnce(false);
 
                     const response = await makeGetRequest();
 
@@ -120,7 +120,7 @@ describe("Map Creator API - /api/map-creator/", () => {
             describe("Authorization (401, 403)", () => {
                 testRequiresAuth(() => makePutRequest());
                 it("Should respond with 403 if it's not the user's map", async () => {
-                    database.checkUserOwnsMap.mockResolvedValueOnce(false);
+                    checkUserOwnsMap.mockResolvedValueOnce(false);
 
                     const response = await makePutRequest();
 
@@ -185,7 +185,7 @@ describe("Map Creator API - /api/map-creator/", () => {
 
                     expect(response.statusCode).toBe(200);
                     expect(response.body).toHaveProperty("title", newTitle.trim());
-                    expect(database.getConnection).toHaveBeenCalled();
+                    expect(getConnection).toHaveBeenCalled();
                     expect(database.updateMapTitle).toHaveBeenCalledWith(mockConnection, defaults.id, newTitle.trim());
                     expectSuccessfulTransaction(mockConnection);
                 });
@@ -208,7 +208,7 @@ describe("Map Creator API - /api/map-creator/", () => {
                     const response = await makePutRequest();
 
                     expectErrorResponse(response, 500, ERRORS.MAP.RENAME_FAILED);
-                    expect(database.getConnection).toHaveBeenCalled();
+                    expect(getConnection).toHaveBeenCalled();
                     expect(database.updateMapTitle).toHaveBeenCalledWith(mockConnection, defaults.id, defaults.title.trim());
                     expectRollback(mockConnection);
                 });
@@ -234,7 +234,7 @@ describe("Map Creator API - /api/map-creator/", () => {
             const mapId = randomId();
 
             beforeEach(() => {
-                database.insertImage.mockResolvedValue(imageId);
+                insertImage.mockResolvedValue(imageId);
                 database.insertMap.mockResolvedValue(mapId);
             });
 
@@ -242,7 +242,7 @@ describe("Map Creator API - /api/map-creator/", () => {
                 testRequiresAuth(() => makePostRequest());
 
                 it("Should respond with 403 if it's not the user's game map", async () => {
-                    database.checkUserOwnsGameMap.mockResolvedValueOnce(false);
+                    checkUserOwnsGameMap.mockResolvedValueOnce(false);
 
                     const response = await makePostRequest();
 
@@ -339,10 +339,10 @@ describe("Map Creator API - /api/map-creator/", () => {
                     for (const validTitle of validTitles) {
                         const response = await makePostRequest({ title: validTitle });
 
-                        expect(database.getConnection).toHaveBeenCalled();
-                        expect(database.insertImage).toHaveBeenCalledWith(mockConnection, mockImageMetadata.width, mockImageMetadata.height, imageStatusForPath);
+                        expect(getConnection).toHaveBeenCalled();
+                        expect(insertImage).toHaveBeenCalledWith(mockConnection, mockImageMetadata.width, mockImageMetadata.height, imageStatusForPath);
                         expect(database.insertMap).toHaveBeenCalledWith(mockConnection, validTitle.trim(), defaults.id, imageId);
-                        expect(database.updateImagePath).toHaveBeenCalledWith(mockConnection, imageId, expect.any(String));
+                        expect(updateImagePath).toHaveBeenCalledWith(mockConnection, imageId, expect.any(String));
                         expect(deleteFile).toHaveBeenCalledWith(expect.any(String));
                         expectSuccessfulTransaction(mockConnection);
 
@@ -394,7 +394,7 @@ describe("Map Creator API - /api/map-creator/", () => {
                 suppressConsoleErrors();
 
                 it("Should respond with 500 if the database refused connection", async () => {
-                    database.getConnection.mockRejectedValueOnce(new Error("Database connection refused"));
+                    getConnection.mockRejectedValueOnce(new Error("Database connection refused"));
 
                     const response = await makePostRequest();
 
@@ -454,7 +454,7 @@ describe("Map Creator API - /api/map-creator/", () => {
                 });
 
                 it("Should respond with 500, rollback DB, and delete ALL files if updateImagePath fails", async () => {
-                    database.updateImagePath.mockRejectedValueOnce(new Error("Update failed"));
+                    updateImagePath.mockRejectedValueOnce(new Error("Update failed"));
 
                     const response = await makePostRequest();
 
@@ -465,7 +465,7 @@ describe("Map Creator API - /api/map-creator/", () => {
                 });
 
                 it("Should respond with 500, rollback DB, and delete ALL files if updateImagePath fails with false", async () => {
-                    database.updateImagePath.mockResolvedValueOnce(false);
+                    updateImagePath.mockResolvedValueOnce(false);
 
                     const response = await makePostRequest();
 
@@ -503,7 +503,7 @@ describe("Map Creator API - /api/map-creator/", () => {
                 testRequiresAuth(() => makeDeleteRequest());
 
                 it("Should respond with 403 if it's not the user's map", async () => {
-                    database.checkUserOwnsMap.mockResolvedValueOnce(false);
+                    checkUserOwnsMap.mockResolvedValueOnce(false);
 
                     const response = await makeDeleteRequest();
 
@@ -545,11 +545,11 @@ describe("Map Creator API - /api/map-creator/", () => {
 
                     const response = await makeDeleteRequest();
 
-                    expect(database.getConnection).toHaveBeenCalled();
+                    expect(getConnection).toHaveBeenCalled();
                     expect(database.deleteMapById).toHaveBeenCalledWith(mockConnection, defaults.id);
-                    expect(database.deleteImageById).toHaveBeenCalledTimes(imageIds.length);
+                    expect(deleteImageById).toHaveBeenCalledTimes(imageIds.length);
                     for (const imageId of imageIds) {
-                        expect(database.deleteImageById).toHaveBeenCalledWith(mockConnection, imageId);
+                        expect(deleteImageById).toHaveBeenCalledWith(mockConnection, imageId);
                     }
                     expect(fs.rm).toHaveBeenCalledWith(
                         expect.stringContaining(path.join(gameMapId.toString(), defaults.id.toString())),
@@ -590,7 +590,7 @@ describe("Map Creator API - /api/map-creator/", () => {
                 suppressConsoleErrors();
 
                 it("Should respond with 500 if the database refused connection", async () => {
-                    database.getConnection.mockRejectedValueOnce(new Error("Database connection refused"));
+                    getConnection.mockRejectedValueOnce(new Error("Database connection refused"));
                     const response = await makeDeleteRequest();
 
                     expect(mockConnection.beginTransaction).not.toHaveBeenCalled();
@@ -623,7 +623,7 @@ describe("Map Creator API - /api/map-creator/", () => {
                 it("Should respond with 500 if the database images deletion failed", async () => {
                     const imageId = 103;
                     database.getAllImageIdsForMap.mockResolvedValueOnce([imageId]);
-                    database.deleteImageById.mockResolvedValueOnce(false);
+                    deleteImageById.mockResolvedValueOnce(false);
 
                     const response = await makeDeleteRequest();
 
