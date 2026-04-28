@@ -21,7 +21,7 @@ const checkRole = (...roles) => {
 
 const checkAuthPage = (request, response, next) => {
     if (!request.session.userid) {
-        return response.redirect('/login_page');
+        return response.redirect('/main');
     }
     next();
 };
@@ -31,7 +31,7 @@ const checkGameSessionPage = (request, response, next) => {
         return response.redirect('/login_page');
     }
     if (!request.session.game?.activeSessionId) {
-        return response.redirect('/choose_game');
+        return response.redirect('/game-maps');
     }
     next();
 };

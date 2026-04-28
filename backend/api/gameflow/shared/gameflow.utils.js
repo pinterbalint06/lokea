@@ -1,10 +1,10 @@
 const path = require("path");
 const fs = require("fs/promises");
-const AppError = require("../../../utils/AppError.js");
+const AppError = require("../../../utils/app-error.js");
 
 const COUNTDOWN_SECONDS = 3;
 
-const UPLOAD_ROOT = path.join(__dirname, "..", "..", "..", "uploads");
+const UPLOAD_ROOT = path.join(__dirname, "..", "..", "..", "uploads", "mapdatas");
 
 const MIME_TYPES = {
     ".jpg": "image/jpeg",

@@ -1,5 +1,5 @@
-const database = require("../../../sql/database.js");
-const AppError = require("../../../utils/AppError.js");
+const database = require("#sql/game.database.js");
+const AppError = require("#utils/app-error.js");
 const { COUNTDOWN_SECONDS } = require("../shared/gameflow.utils.js");
 
 const MAX_SCORE = 5000;
@@ -59,35 +59,35 @@ function calculateScore(distance, timeLeft, roundTime, sharpness) {
 function buildGuessResult(guess, game, correctMap, correctMapIndex) {
     const outOfBounds = guess.u < 0 || guess.v < 0 || guess.u > 1 || guess.v > 1;
     const wrongMap = correctMapIndex !== guess.mapI;
+    let re = { score: 0, distance: null, pixelDistance: null, mapIndex: correctMapIndex };
+    if (!outOfBounds && !wrongMap) {
+        const du = guess.u - game.point.pointu;
+        const dv = guess.v - game.point.pointv;
+        const distance = Math.sqrt(du * du + dv * dv);
 
-    if (outOfBounds || wrongMap) {
-        return { score: 0, distance: -1, pixelDistance: null, mapIndex: correctMapIndex };
+        const pixelDx = du * correctMap.width;
+        const pixelDy = dv * correctMap.height;
+        const pixelDistance = Math.round(Math.sqrt(pixelDx * pixelDx + pixelDy * pixelDy));
+
+        const timeLeft = calculateTimeLeft(game);
+        const score = calculateScore(distance, timeLeft, game.roundTime, game.sharpness);
+        re = { score, distance, pixelDistance, mapIndex: correctMapIndex };
     }
 
-    const du = guess.u - game.point.pointu;
-    const dv = guess.v - game.point.pointv;
-    const distance = Math.sqrt(du * du + dv * dv);
 
-    const pixelDx = du * correctMap.width;
-    const pixelDy = dv * correctMap.height;
-    const pixelDistance = Math.round(Math.sqrt(pixelDx * pixelDx + pixelDy * pixelDy));
-
-    const timeLeft = calculateTimeLeft(game);
-    const score = calculateScore(distance, timeLeft, game.roundTime, game.sharpness);
-
-    return { score, distance, pixelDistance, mapIndex: correctMapIndex };
+    return re;
 }
 
 async function persistGuess(sessionId, game, correctMap, guess, result) {
     const conn = await database.getConnection();
     try {
         await conn.beginTransaction();
-        await database.saveGuess(conn, sessionId, game.point.pointId, correctMap.mapId, guess.u, guess.v, result.distance, result.score, game.currentCycle);
+        await database.saveGuess(conn, sessionId, game.point.pointId, correctMap.mapId, guess.u, guess.v, result.distance, result.score, game.currentCycle, game.currentRound + 1);
         await database.incrementCurrentRound(conn, sessionId);
         await database.clearCurrentPoint(conn, sessionId);
         await conn.commit();
     } catch (error) {
-        try { await conn.rollback(); } catch (_) {}
+        try { await conn.rollback(); } catch (_) { }
         throw error;
     } finally {
         conn.release();

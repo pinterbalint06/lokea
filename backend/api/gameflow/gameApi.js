@@ -1,6 +1,6 @@
 const express = require("express");
 const router = express.Router();
-const database = require("../../sql/database.js");
+const database = require("#sql/game.database.js");
 const { checkGameSession } = require("../../auth.js");
 const mapsRoutes = require("./maps/maps.routes.js");
 const randomPointRoutes = require("./random-point/random-point.routes.js");
@@ -8,7 +8,7 @@ const guessRoutes = require("./guess/guess.routes.js");
 
 // router.use(checkGameSession);
 
-router.get("/get_game_info", async (request, response) => {
+router.get("/session", async (request, response) => {
     try {
         const game = request.session.game;
         response.status(200).json({
@@ -29,7 +29,7 @@ router.use("/", mapsRoutes);
 router.use("/", randomPointRoutes);
 router.use("/", guessRoutes);
 
-router.post("/finish_game_session", async (request, response) => {
+router.delete("/session", async (request, response) => {
     try {
         await database.finishGameSession(request.session.game.activeSessionId);
         delete request.session.game;

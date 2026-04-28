@@ -32,18 +32,21 @@ kesz--térkép nevének kiirása
 kesz--css szebbre valo megcsinalasareview_palya_oldal_ag
 kesz!!!!--tranzakciokezeles
 kesz--reszponziv javitas
-!!!!--svg-k helyes használata
+!!!!--svg-k helyes használata   uixwing
 kesz--checkauth mindenhova
-    --login hiba jo helyre vigyen
+    kesz--login hiba jo helyre vigyen
 kesz--mapi, rounds, roundtime vizsgalata
 kesz--térképváltoztatás csak ha van több
---adatbázis átírás miatt tipp kört is beküldeni
---végpontok átnevezése
+kesz--adatbázis átírás miatt tipp kört is beküldeni
+kesz--végpontok átnevezése
 kesz--idő visszaadasa
 kesz--ido resetnel jora
 --vegso panel a finish_game_sessionbol kapja az adatokat
---ne induljon uj jatek f5nel ha vege a kornek
-
+mindegy--ne induljon uj jatek f5nel ha vege a kornek
+--choose game - game mapsra
+--mapid elkuldese frontendre
+torolve--pinterrel megbeszelni, hogy mi legyen a scores-al
+--tesztek javitasa
 !!!!--palyak kedvencre tetele
 kesz--rendezés fix
 !!!!--esetleg modal alaphelyzetbe allitasa

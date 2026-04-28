@@ -1,7 +1,7 @@
 const { createGameApiTestApp } = require("#gametest/helpers/setup-test.js");
 const { testRequiresGameSession, suppressConsoleErrors } = require("#gametest/helpers/helpers.js");
 const { checkGameSession } = require("#root/auth.js");
-const database = require("#sql/database.js");
+const database = require("#sql/game.database.js");
 const { mockConnection } = database;
 const fs = require("fs/promises");
 
@@ -39,14 +39,14 @@ describe("Game API - /api/game/", () => {
         readFileSpy.mockRestore();
     });
 
-    describe("GET /get_game_info", () => {
+    describe("GET /session", () => {
         describe("Authorization (401, 403)", () => {
-            testRequiresGameSession(() => requestWithSupertest.get("/api/game/get_game_info"));
+            testRequiresGameSession(() => requestWithSupertest.get("/api/game/session"));
         });
 
         describe("Happy paths (200)", () => {
             it("Should return game info from the session", async () => {
-                const response = await requestWithSupertest.get("/api/game/get_game_info");
+                const response = await requestWithSupertest.get("/api/game/session");
 
                 expect(response.statusCode).toBe(200);
                 expect(response.body.success).toBe(true);
@@ -68,7 +68,7 @@ describe("Game API - /api/game/", () => {
                     next();
                 });
 
-                const response = await requestWithSupertest.get("/api/game/get_game_info");
+                const response = await requestWithSupertest.get("/api/game/session");
 
                 expect(response.statusCode).toBe(500);
                 expect(response.body.success).toBe(false);
@@ -76,18 +76,18 @@ describe("Game API - /api/game/", () => {
         });
     });
 
-    describe("GET /get_all_maps", () => {
+    describe("GET /maps", () => {
         beforeEach(() => {
             database.getAllMaps.mockResolvedValue([mockMap]);
         });
 
         describe("Authorization (401, 403)", () => {
-            testRequiresGameSession(() => requestWithSupertest.get("/api/game/get_all_maps"));
+            testRequiresGameSession(() => requestWithSupertest.get("/api/game/maps"));
         });
 
         describe("Happy paths (200)", () => {
             it("Should return maps with base64 image data", async () => {
-                const response = await requestWithSupertest.get("/api/game/get_all_maps");
+                const response = await requestWithSupertest.get("/api/game/maps");
 
                 expect(response.statusCode).toBe(200);
                 expect(response.body.success).toBe(true);
@@ -101,7 +101,7 @@ describe("Game API - /api/game/", () => {
             it("Should return an empty maps array if there are no maps", async () => {
                 database.getAllMaps.mockResolvedValueOnce([]);
 
-                const response = await requestWithSupertest.get("/api/game/get_all_maps");
+                const response = await requestWithSupertest.get("/api/game/maps");
 
                 expect(response.statusCode).toBe(200);
                 expect(response.body.maps).toEqual([]);
@@ -114,7 +114,7 @@ describe("Game API - /api/game/", () => {
                     { ...mockMap, filepath: "../../../etc/passwd" }
                 ]);
 
-                const response = await requestWithSupertest.get("/api/game/get_all_maps");
+                const response = await requestWithSupertest.get("/api/game/maps");
 
                 expect(response.statusCode).toBe(400);
                 expect(response.body.success).toBe(false);
@@ -127,7 +127,7 @@ describe("Game API - /api/game/", () => {
             it("Should respond with 500 if the database throws", async () => {
                 database.getAllMaps.mockRejectedValueOnce(new Error("DB error"));
 
-                const response = await requestWithSupertest.get("/api/game/get_all_maps");
+                const response = await requestWithSupertest.get("/api/game/maps");
 
                 expect(response.statusCode).toBe(500);
                 expect(response.body.success).toBe(false);
@@ -136,7 +136,7 @@ describe("Game API - /api/game/", () => {
             it("Should respond with 500 if file reading fails", async () => {
                 readFileSpy.mockRejectedValueOnce(new Error("File read error"));
 
-                const response = await requestWithSupertest.get("/api/game/get_all_maps");
+                const response = await requestWithSupertest.get("/api/game/maps");
 
                 expect(response.statusCode).toBe(500);
                 expect(response.body.success).toBe(false);
@@ -144,9 +144,9 @@ describe("Game API - /api/game/", () => {
         });
     });
 
-    describe("GET /get_random_point", () => {
+    describe("GET /round", () => {
         describe("Authorization (401, 403)", () => {
-            testRequiresGameSession(() => requestWithSupertest.get("/api/game/get_random_point"));
+            testRequiresGameSession(() => requestWithSupertest.get("/api/game/round"));
         });
 
         describe("Happy paths (200)", () => {
@@ -154,7 +154,7 @@ describe("Game API - /api/game/", () => {
                 database.getCurrentPointId.mockResolvedValueOnce(10);
                 database.getPointById.mockResolvedValueOnce(mockPoint);
 
-                const response = await requestWithSupertest.get("/api/game/get_random_point");
+                const response = await requestWithSupertest.get("/api/game/round");
 
                 expect(response.statusCode).toBe(200);
                 expect(response.body.success).toBe(true);
@@ -168,7 +168,7 @@ describe("Game API - /api/game/", () => {
                 database.getCurrentPointId.mockResolvedValueOnce(null);
                 database.getRandomPoint.mockResolvedValueOnce(mockPoint);
 
-                const response = await requestWithSupertest.get("/api/game/get_random_point");
+                const response = await requestWithSupertest.get("/api/game/round");
 
                 expect(response.statusCode).toBe(200);
                 expect(response.body.success).toBe(true);
@@ -182,7 +182,7 @@ describe("Game API - /api/game/", () => {
                     .mockResolvedValueOnce(null)
                     .mockResolvedValueOnce(mockPoint);
 
-                const response = await requestWithSupertest.get("/api/game/get_random_point");
+                const response = await requestWithSupertest.get("/api/game/round");
 
                 expect(response.statusCode).toBe(200);
                 expect(database.incrementCycle).toHaveBeenCalledWith(1);
@@ -207,7 +207,7 @@ describe("Game API - /api/game/", () => {
                 database.getCurrentPointId.mockResolvedValueOnce(null);
                 database.getRandomPoint.mockResolvedValueOnce(mockPoint);
 
-                const response = await requestWithSupertest.get("/api/game/get_random_point");
+                const response = await requestWithSupertest.get("/api/game/round");
 
                 expect(response.statusCode).toBe(200);
                 expect(session.game.roundStartedAt).toBeTruthy();
@@ -222,7 +222,7 @@ describe("Game API - /api/game/", () => {
                     filepath: "../../../etc/passwd"
                 });
 
-                const response = await requestWithSupertest.get("/api/game/get_random_point");
+                const response = await requestWithSupertest.get("/api/game/round");
 
                 expect(response.statusCode).toBe(400);
                 expect(response.body.success).toBe(false);
@@ -236,7 +236,7 @@ describe("Game API - /api/game/", () => {
                 database.getCurrentPointId.mockResolvedValueOnce(null);
                 database.getRandomPoint.mockResolvedValue(null);
 
-                const response = await requestWithSupertest.get("/api/game/get_random_point");
+                const response = await requestWithSupertest.get("/api/game/round");
 
                 expect(response.statusCode).toBe(500);
                 expect(response.body.success).toBe(false);
@@ -246,7 +246,7 @@ describe("Game API - /api/game/", () => {
             it("Should respond with 500 if the database throws", async () => {
                 database.getCurrentPointId.mockRejectedValueOnce(new Error("DB error"));
 
-                const response = await requestWithSupertest.get("/api/game/get_random_point");
+                const response = await requestWithSupertest.get("/api/game/round");
 
                 expect(response.statusCode).toBe(500);
                 expect(response.body.success).toBe(false);
@@ -254,7 +254,7 @@ describe("Game API - /api/game/", () => {
         });
     });
 
-    describe("POST /session_guess", () => {
+    describe("POST /round/guess", () => {
         const validGuess = { u: "0.5", v: "0.5", map_i: "0" };
 
         beforeEach(() => {
@@ -263,7 +263,7 @@ describe("Game API - /api/game/", () => {
 
         describe("Authorization (401, 403)", () => {
             testRequiresGameSession(() =>
-                requestWithSupertest.post("/api/game/session_guess").send(validGuess)
+                requestWithSupertest.post("/api/game/round/guess").send(validGuess)
             );
         });
 
@@ -272,7 +272,7 @@ describe("Game API - /api/game/", () => {
                 database.getCurrentPointId.mockResolvedValueOnce(null);
 
                 const response = await requestWithSupertest
-                    .post("/api/game/session_guess")
+                    .post("/api/game/round/guess")
                     .send(validGuess);
 
                 expect(response.statusCode).toBe(400);
@@ -295,7 +295,7 @@ describe("Game API - /api/game/", () => {
                 });
 
                 const response = await requestWithSupertest
-                    .post("/api/game/session_guess")
+                    .post("/api/game/round/guess")
                     .send(validGuess);
 
                 expect(response.statusCode).toBe(400);
@@ -318,7 +318,7 @@ describe("Game API - /api/game/", () => {
                 });
 
                 const response = await requestWithSupertest
-                    .post("/api/game/session_guess")
+                    .post("/api/game/round/guess")
                     .send(validGuess);
 
                 expect(response.statusCode).toBe(400);
@@ -327,7 +327,7 @@ describe("Game API - /api/game/", () => {
 
             it("Should respond with 400 if guess coordinates are not numbers", async () => {
                 const response = await requestWithSupertest
-                    .post("/api/game/session_guess")
+                    .post("/api/game/round/guess")
                     .send({ u: "abc", v: "0.5", map_i: "0" });
 
                 expect(response.statusCode).toBe(400);
@@ -352,7 +352,7 @@ describe("Game API - /api/game/", () => {
                 });
 
                 const response = await requestWithSupertest
-                    .post("/api/game/session_guess")
+                    .post("/api/game/round/guess")
                     .send(validGuess);
 
                 expect(response.statusCode).toBe(400);
@@ -363,7 +363,7 @@ describe("Game API - /api/game/", () => {
         describe("Score = 0 cases", () => {
             it("Should return score 0 when guess is out of bounds (u > 1)", async () => {
                 const response = await requestWithSupertest
-                    .post("/api/game/session_guess")
+                    .post("/api/game/round/guess")
                     .send({ u: "1.5", v: "0.5", map_i: "0" });
 
                 expect(response.statusCode).toBe(200);
@@ -374,7 +374,7 @@ describe("Game API - /api/game/", () => {
 
             it("Should return score 0 when guess is out of bounds (v < 0)", async () => {
                 const response = await requestWithSupertest
-                    .post("/api/game/session_guess")
+                    .post("/api/game/round/guess")
                     .send({ u: "0.5", v: "-0.1", map_i: "0" });
 
                 expect(response.statusCode).toBe(200);
@@ -383,7 +383,7 @@ describe("Game API - /api/game/", () => {
 
             it("Should return score 0 and correct mapI when wrong map is selected", async () => {
                 const response = await requestWithSupertest
-                    .post("/api/game/session_guess")
+                    .post("/api/game/round/guess")
                     .send({ u: "0.5", v: "0.5", map_i: "1" });
 
                 expect(response.statusCode).toBe(200);
@@ -395,7 +395,7 @@ describe("Game API - /api/game/", () => {
         describe("Happy paths (200)", () => {
             it("Should return score 5000 for a perfect guess with plenty of time left", async () => {
                 const response = await requestWithSupertest
-                    .post("/api/game/session_guess")
+                    .post("/api/game/round/guess")
                     .send(validGuess);
 
                 expect(response.statusCode).toBe(200);
@@ -430,7 +430,7 @@ describe("Game API - /api/game/", () => {
                 });
 
                 const response = await requestWithSupertest
-                    .post("/api/game/session_guess")
+                    .post("/api/game/round/guess")
                     .send(validGuess);
 
                 expect(response.statusCode).toBe(200);
@@ -458,7 +458,7 @@ describe("Game API - /api/game/", () => {
                 });
 
                 const response = await requestWithSupertest
-                    .post("/api/game/session_guess")
+                    .post("/api/game/round/guess")
                     .send(validGuess);
 
                 expect(response.statusCode).toBe(200);
@@ -467,7 +467,7 @@ describe("Game API - /api/game/", () => {
 
             it("Should use transaction: commit on success", async () => {
                 await requestWithSupertest
-                    .post("/api/game/session_guess")
+                    .post("/api/game/round/guess")
                     .send(validGuess);
 
                 expect(mockConnection.beginTransaction).toHaveBeenCalled();
@@ -484,7 +484,7 @@ describe("Game API - /api/game/", () => {
                 database.saveGuess.mockRejectedValueOnce(new Error("DB error"));
 
                 const response = await requestWithSupertest
-                    .post("/api/game/session_guess")
+                    .post("/api/game/round/guess")
                     .send(validGuess);
 
                 expect(response.statusCode).toBe(500);
@@ -496,7 +496,7 @@ describe("Game API - /api/game/", () => {
                 database.incrementCurrentRound.mockRejectedValueOnce(new Error("DB error"));
 
                 const response = await requestWithSupertest
-                    .post("/api/game/session_guess")
+                    .post("/api/game/round/guess")
                     .send(validGuess);
 
                 expect(response.statusCode).toBe(500);
@@ -507,7 +507,7 @@ describe("Game API - /api/game/", () => {
                 database.getConnection.mockRejectedValueOnce(new Error("Connection failed"));
 
                 const response = await requestWithSupertest
-                    .post("/api/game/session_guess")
+                    .post("/api/game/round/guess")
                     .send(validGuess);
 
                 expect(response.statusCode).toBe(500);
@@ -532,7 +532,7 @@ describe("Game API - /api/game/", () => {
                 });
 
                 const response = await requestWithSupertest
-                    .post("/api/game/session_guess")
+                    .post("/api/game/round/guess")
                     .send(validGuess);
 
                 expect(response.statusCode).toBe(500);
@@ -541,16 +541,16 @@ describe("Game API - /api/game/", () => {
         });
     });
 
-    describe("POST /finish_game_session", () => {
+    describe("DELETE /session", () => {
         describe("Authorization (401, 403)", () => {
             testRequiresGameSession(() =>
-                requestWithSupertest.post("/api/game/finish_game_session")
+                requestWithSupertest.delete("/api/game/session")
             );
         });
 
         describe("Happy paths (200)", () => {
             it("Should finish the session and return 200", async () => {
-                const response = await requestWithSupertest.post("/api/game/finish_game_session");
+                const response = await requestWithSupertest.delete("/api/game/session");
 
                 expect(response.statusCode).toBe(200);
                 expect(response.body.success).toBe(true);
@@ -564,7 +564,7 @@ describe("Game API - /api/game/", () => {
             it("Should respond with 500 if the database throws", async () => {
                 database.finishGameSession.mockRejectedValueOnce(new Error("DB error"));
 
-                const response = await requestWithSupertest.post("/api/game/finish_game_session");
+                const response = await requestWithSupertest.delete("/api/game/session");
 
                 expect(response.statusCode).toBe(500);
                 expect(response.body.success).toBe(false);

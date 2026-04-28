@@ -1,13 +1,13 @@
 const express = require("express");
 const router = express.Router();
-const database = require("../../sql/database.js");
+const database = require("#sql/game.database.js");
 const path = require("path");
 const sessionsRoutes = require("./sessions/sessions.routes.js");
 
 const UPLOADS_DIR = path.join(__dirname, "../../uploads");
 const FALLBACK_COVER_IMAGE = "cover_images/image-not-found.jpg";
 
-router.get("/game_maps", async (request, response) => {
+router.get("/", async (request, response) => {
     try {
         const sort = String(request.query.sort || "created").toLowerCase();
         const offset = parseInt(request.query.offset) || 0;
@@ -27,7 +27,7 @@ router.get("/game_maps", async (request, response) => {
     }
 });
 
-router.get("/get_cover_image/:cover_image_id", async (request, response) => {
+router.get("/cover-images/:cover_image_id", async (request, response) => {
     //TODO: képek visszadásának átdolgozása majd a lowhighres szerint
     try {
         let filePath = FALLBACK_COVER_IMAGE;

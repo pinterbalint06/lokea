@@ -146,8 +146,8 @@ function nextRound() {
 async function startGame() {
     try {
         const [gameData, mapsData] = await Promise.all([
-            fetchGameData('/api/game/get_game_info'),
-            fetchGameData('/api/game/get_all_maps')
+            fetchGameData('/api/game/session'),
+            fetchGameData('/api/game/maps')
         ]);
 
         console.log(gameData);
@@ -203,7 +203,7 @@ function resetGameState(roundTime, currentRound) {
 
 async function createPoint(roundTime) {
     try {
-        const pointData = await fetchGameData('/api/game/get_random_point')
+        const pointData = await fetchGameData('/api/game/round')
         if (!pointData.success || !pointData.point) throw new Error("Failed to fetch random point");
         const point = pointData.point;
         document.getElementById("timer").textContent = formatSecondsToMinutes(point.game.timeLeft - 3);
@@ -280,7 +280,7 @@ async function sendGuess() {
         sendData.map_i = gameMapsIndex;
         console.log("Sending guess:", sendData);
         try {
-            const response = await postGameScore('/api/game/session_guess', sendData);
+            const response = await postGameScore('/api/game/round/guess', sendData);
             showAnswer(response);
             if (resolveGuess) {
                 resolveGuess();
@@ -344,8 +344,8 @@ async function postGameScore(url, data) {
 
 async function finishGame() {
     try {
-        const response = await fetch('/api/game/finish_game_session', {
-            method: 'POST',
+        const response = await fetch('/api/game/session', {
+            method: 'DELETE',
             headers: {
                 'Content-Type': 'application/json'
             }

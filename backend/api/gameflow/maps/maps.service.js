@@ -1,4 +1,4 @@
-const database = require("../../../sql/database.js");
+const database = require("#sql/game.database.js");
 const { readImageData } = require("../shared/gameflow.utils.js");
 
 async function getAllMaps(gameMapId) {

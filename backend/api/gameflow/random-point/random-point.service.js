@@ -1,5 +1,5 @@
-const database = require("../../../sql/database.js");
-const AppError = require("../../../utils/AppError.js");
+const database = require("#sql/game.database.js");
+const AppError = require("../../../utils/app-error.js");
 const { COUNTDOWN_SECONDS, readImageData } = require("../shared/gameflow.utils.js");
 
 async function resolveCurrentPoint(gameMapId, sessionId) {

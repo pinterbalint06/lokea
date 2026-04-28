@@ -55,27 +55,7 @@ const mockDatabase = {
     updateGameMapDetails: jest.fn().mockResolvedValue(true),
     getAllImageIdsForGameMap: jest.fn(),
     deleteGameMapById: jest.fn().mockResolvedValue(true),
-    getMapImage: jest.fn(),
-
-    // gameApi
-    getAllMaps: jest.fn(),
-    getCurrentPointId: jest.fn(),
-    getPointById: jest.fn(),
-    getRandomPoint: jest.fn(),
-    incrementCycle: jest.fn().mockResolvedValue(undefined),
-    setCurrentPoint: jest.fn().mockResolvedValue(undefined),
-    saveGuess: jest.fn().mockResolvedValue(undefined),
-    incrementCurrentRound: jest.fn().mockResolvedValue(undefined),
-    clearCurrentPoint: jest.fn().mockResolvedValue(undefined),
-    totalScore: jest.fn().mockResolvedValue(1000),
-    finishGameSession: jest.fn().mockResolvedValue(undefined),
-
-    // gameChoosing
-    getGameMaps: jest.fn(),
-    getImagePath: jest.fn(),
-    selectLatestActiveGameSession: jest.fn().mockResolvedValue(null),
-    insertGameSession: jest.fn().mockResolvedValue(1),
-    getGameTitleById: jest.fn().mockResolvedValue("Test Game")
+    getMapImage: jest.fn()
 };
 
 module.exports = mockDatabase;

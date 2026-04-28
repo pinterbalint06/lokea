@@ -102,16 +102,10 @@ router.get('/game-maps/:gameMapId/edit',
 router.get('/admin', auth.checkRole("ADMIN"), (request, response) => {
     response.sendFile(path.join(__dirname, '../frontend/html/admin.html'));
 });
-// router.get('/choose_game', auth.checkAuthPage, (request, response) => {
-//     response.sendFile(path.join(__dirname, '../frontend/html/game-choosing.html'));
-// });
-router.get('/choose_game', (request, response) => {
+router.get('/game-maps', auth.checkAuthPage, (request, response) => {
     response.sendFile(path.join(__dirname, '../frontend/html/game-choosing.html'));
 });
-// router.get('/game', auth.checkGameSessionPage, (request, response) => {
-//     response.sendFile(path.join(__dirname, '../frontend/html/game-page.html'));
-// });
-router.get('/game', (request, response) => {
+router.get('/game', auth.checkGameSessionPage, (request, response) => {
     response.sendFile(path.join(__dirname, '../frontend/html/game-page.html'));
 });
 router.get(

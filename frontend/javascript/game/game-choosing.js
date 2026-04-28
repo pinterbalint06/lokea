@@ -50,7 +50,7 @@ document.addEventListener("DOMContentLoaded", function () {
 });
 
 async function loadGameMaps(sort) {
-    const gameMaps = await fetchURL('/api/choose-game/game_maps?sort=' + sort + '&offset=' + (cardLoadedTimes * 20));
+    const gameMaps = await fetchURL('/api/choose-game?sort=' + sort + '&offset=' + (cardLoadedTimes * 20));
     console.log(gameMaps.results);
     let gameMapsContainer = document.getElementById('game_maps_container');
     if (gameMaps.success) {
@@ -141,9 +141,9 @@ async function postGameId(gamemapId) {
     const formData = new FormData(document.getElementById('settingsForm'));
     formData.append('gameMapId', gamemapId);
     try {
-        const response = await fetch('/api/choose-game/post_game_id', {
+        const response = await fetch('/api/choose-game/session', {
             method: 'POST',
-            body: formData 
+            body: formData
         });
         if (!response.ok) {
             const errorData = await response.json();
@@ -171,7 +171,7 @@ async function fetchURL(url) {
 
 async function getCoverImage(cover_image_id) {
     try {
-        const response = await fetch('/api/choose-game/get_cover_image/' + cover_image_id, {
+        const response = await fetch('/api/choose-game/cover-images/' + cover_image_id, {
             method: 'GET',
             headers: {
                 'Content-Type': 'application/json'
@@ -202,7 +202,7 @@ function setupContinueGameModal() {
 }
 
 async function checkAndShowContinueModal() {
-    const activeGameSession = await fetchURL('/api/choose-game/active_game_session');
+    const activeGameSession = await fetchURL('/api/choose-game/session');
     if (activeGameSession.success && activeGameSession.hasActiveSession) {
         const continueModal = document.getElementById('continueGameModal');
         const continueModalDescription = document.getElementById('continue-modal-desc');
@@ -215,8 +215,8 @@ async function checkAndShowContinueModal() {
 
 async function finishStartedGameSession() {
     try {
-        const response = await fetch('/api/game/finish_game_session', {
-            method: 'POST',
+        const response = await fetch('/api/game/session', {
+            method: 'DELETE',
             headers: {
                 'Content-Type': 'application/json'
             }

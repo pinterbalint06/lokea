@@ -1,5 +1,5 @@
-const database = require("#sql/database.js");
-const AppError = require("#utils/AppError.js");
+const database = require("#sql/game.database.js");
+const AppError = require("#utils/app-error.js");
 
 const DIFFICULTY_SHARPNESS = { easy: -1.5, normal: -3, hard: -5 };
 const MIN_ROUNDS = 1;

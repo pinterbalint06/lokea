@@ -74,16 +74,6 @@ CREATE TABLE points (
     CONSTRAINT check_north_direction CHECK (north_direction >= 0 AND north_direction < 360)
 );
 
-CREATE TABLE scores (
-    score_id int AUTO_INCREMENT PRIMARY KEY NOT NULL,
-    user_id int,
-    game_maps_id int,
-    score int NOT NULL,
-    score_time TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    foreign key (user_id) references users(user_id) ON DELETE set NULL,
-    foreign key (game_maps_id) references game_maps(game_maps_id) ON DELETE CASCADE
-);
-
 CREATE TABLE favorites (
     favorite_id int AUTO_INCREMENT PRIMARY KEY NOT NULL,
     user_id int,
