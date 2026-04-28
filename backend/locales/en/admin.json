@@ -3,7 +3,8 @@
         "sort": "Sort",
         "user": "User",
         "moderator": "Moderator",
-        "admin": "Admin"
+        "admin": "Admin",
+        "lord": "Lord"
     },
     "logs": {
         "title": "Logs",

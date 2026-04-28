@@ -75,7 +75,7 @@ describe('Admin Logs API Átfogó Tesztek', () => {
 
             // A backendnek helyesen, tömbként kell továbbadnia a db rétegnek
             expect(db.sortedLogs).toHaveBeenCalledWith(
-                undefined, undefined, undefined, ['user', 'MOD'], ['Login', 'User update'], 1
+                undefined, undefined, undefined, ['user', 'MOD'], ['Login', 'User update'], "1"
             );
         });
 
@@ -126,7 +126,7 @@ describe('Admin Logs API Átfogó Tesztek', () => {
                 .post('/api/admin/exportLogs')
                 .send({ roles: ['ADMIN', 'MOD'], activities: ['Login'] })
                 .expect(404);
-                
+
             expect(db.sortedLogs).toHaveBeenCalledWith(undefined, undefined, undefined, ['ADMIN', 'MOD'], ['Login'], 1, 999999);
         });
 

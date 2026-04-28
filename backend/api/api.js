@@ -123,7 +123,7 @@ router.post("/login",
                     else {
                         let sesRole = rows[0].role;
                         if (remember) {
-                            if (sesRole === 'ADMIN') {
+                            if (sesRole === 'ADMIN' || sesRole === 'LORD') {
                                 request.session.cookie.maxAge = 15 * 60 * 1000;
                             }
                             else {
@@ -168,7 +168,7 @@ router.get('/loginRole', async (request, response) => {
         else {
             login = true;
             let user = await database.getUserNameProfile(request.session.userid);
-            if (request.session.role == "ADMIN") {
+            if (request.session.role == "ADMIN" || request.session.role == "LORD") {
                 response.status(200).json({ login, adminLink: "/admin", user: user[0] });
             }
             else {
@@ -185,7 +185,15 @@ router.get('/loginRole', async (request, response) => {
 router.get('/getUserData', auth.checkAuth, async (request, response) => {
     try {
         let users = await database.getUser(request.session.userid);
-        response.status(200).json({ users: users[0] });
+        let userData = users[0];
+        if (userData) {
+            if (userData.role && userData.role !== request.session.role) {
+                request.session.role = userData.role;
+            } else if (!userData.role) {
+                userData.role = request.session.role;
+            }
+        }
+        response.status(200).json({ users: userData });
     } catch (error) {
         response.status(500).json({ error: error.message });
     }

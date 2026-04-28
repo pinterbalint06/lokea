@@ -14,7 +14,7 @@ export async function usersDisplayre(variables) {
     let cim = createHTMLelement('h2', ["h2", "mb-0"], i18next.t('admin:users.title'));
     let newUserGomb = gombGeneral("button", i18next.t('admin:users.create_new'), "user-plus", "green", null);
     newUserGomb.addEventListener("click", async function () {
-        modalView(i18next.t('admin:users.create_new'), "new", newUserToModal(), variables);
+        modalView(i18next.t('admin:users.create_new'), "new", newUserToModal(variables), variables);
         variables.modal.show();
     });
     fejlecDiv.appendChild(cim);
@@ -91,6 +91,7 @@ export async function usersDisplayre(variables) {
     let roleDiv = document.createElement('div');
     let roleDivCim = createHTMLelement('h6', ["h6"], i18next.t('admin:users.role'));
     let roleFilters = [
+        { id: 'roleLord', label: i18next.t('admin:common.lord') },
         { id: 'roleAdmin', label: i18next.t('admin:common.admin') },
         { id: 'roleModerator', label: i18next.t('admin:common.moderator') },
         { id: 'roleUser', label: i18next.t('admin:common.user') }
@@ -169,7 +170,7 @@ export async function usersDisplayre(variables) {
     display.appendChild(row);
 }
 
-function newUserToModal() {
+function newUserToModal(variables) {
     let form = createHTMLelement('div', [], null, 'newUserFrom');
 
     let formGroup = createHTMLelement('div', ["form-group"]);
@@ -210,11 +211,16 @@ function newUserToModal() {
     let opt3 = document.createElement("option");
     opt3.value = "ADMIN";
     opt3.textContent = i18next.t('admin:common.admin');
-    opt3.disabled = true;
+    opt3.disabled = (variables.myRole !== 'LORD');
+    let opt4 = document.createElement("option");
+    opt4.value = "LORD";
+    opt4.textContent = i18next.t('admin:common.lord');
+    opt4.disabled = (variables.myRole !== 'LORD');
 
     select.appendChild(opt1);
     select.appendChild(opt2);
     select.appendChild(opt3);
+    select.appendChild(opt4);
     roleDiv.appendChild(roleP);
     roleDiv.appendChild(select);
 
@@ -349,18 +355,30 @@ async function editUserToModal(data, variables) {
     let opt3 = document.createElement("option");
     opt3.value = "ADMIN";
     opt3.textContent = i18next.t('admin:common.admin');
-    opt3.disabled = true;
+    opt3.disabled = (variables.myRole !== 'LORD');
+    let opt4 = document.createElement("option");
+    opt4.value = "LORD";
+    opt4.textContent = i18next.t('admin:common.lord');
+    opt4.disabled = (variables.myRole !== 'LORD');
     switch (role) {
+        case "LORD":
+            opt4.selected = true;
+            break;
+        case "ADMIN":
+            opt3.selected = true;
+            break;
         case "MOD":
             opt2.selected = true;
             break;
         case "user":
             opt1.selected = true;
+            break;
     }
 
     select.appendChild(opt1);
     select.appendChild(opt2);
     select.appendChild(opt3);
+    select.appendChild(opt4);
     roleDiv.appendChild(roleP);
     roleDiv.appendChild(select);
 
@@ -444,18 +462,25 @@ async function viewUserToModal(data, variables) {
     let select = document.createElement("select");
     select.classList.add("form-select");
     let opt1 = document.createElement("option");
-    opt1.value = "1";
+    opt1.value = "user";
     opt1.textContent = i18next.t('admin:common.user');
     opt1.disabled = true;
     let opt2 = document.createElement("option");
-    opt2.value = "2";
+    opt2.value = "MOD";
     opt2.textContent = i18next.t('admin:common.moderator');
     opt2.disabled = true;
     let opt3 = document.createElement("option");
-    opt3.value = "3";
+    opt3.value = "ADMIN";
     opt3.textContent = i18next.t('admin:common.admin');
     opt3.disabled = true;
+    let opt4 = document.createElement("option");
+    opt4.value = "LORD";
+    opt4.textContent = i18next.t('admin:common.lord');
+    opt4.disabled = true;
     switch (role) {
+        case "LORD":
+            opt4.selected = true;
+            break;
         case "ADMIN":
             opt3.selected = true;
             break;
@@ -470,6 +495,7 @@ async function viewUserToModal(data, variables) {
     select.appendChild(opt1);
     select.appendChild(opt2);
     select.appendChild(opt3);
+    select.appendChild(opt4);
     roleDiv.appendChild(roleP);
     roleDiv.appendChild(select);
 
@@ -530,7 +556,8 @@ function tablazatGeneral(adatok, variables) {
         let td = document.createElement('td');
         let modositoGombokDiv = createHTMLelement('div', ["d-flex", "justify-content-evenly"]);
         let editGomb, torloGomb, gombText;
-        if (adatok[i].role != "ADMIN" && adatok[i].deleted_at == null) {
+        let canEdit = (adatok[i].role !== "ADMIN" && adatok[i].role !== "LORD") || variables.myRole === "LORD";
+        if (canEdit && adatok[i].deleted_at == null) {
             editGomb = gombGeneral("button", null, "edit", "blue", null, ["d-flex", "flex-column", "flex-xl-row", "justify-content-center", "align-items-center", "ps-lg-2"]);
             editGomb.addEventListener("click", async function () {
                 currentData = await getUser(adatok[i].user_id);
@@ -540,22 +567,24 @@ function tablazatGeneral(adatok, variables) {
             gombText = createHTMLelement('span', ["d-none", "d-md-block"], i18next.t('admin:users.btn_edit'));
             editGomb.appendChild(gombText);
 
-            torloGomb = gombGeneral("button", null, "trash-2", "red", null, ["d-flex", "flex-column", "flex-xl-row", "justify-content-center", "align-items-center", "ps-xl-2"]);
-            torloGomb.addEventListener("click", async function () {
-                try {
-                    let uzenet = await userToInactive(adatok[i].user_id, adatok[i].role, adatok[i].deleted_at == null);
-                    if (uzenet) {
-                        showAlert(uzenet, 'success');
+            if (adatok[i].username !== variables.myUsername) {
+                torloGomb = gombGeneral("button", null, "trash-2", "red", null, ["d-flex", "flex-column", "flex-xl-row", "justify-content-center", "align-items-center", "ps-xl-2"]);
+                torloGomb.addEventListener("click", async function () {
+                    try {
+                        let uzenet = await userToInactive(adatok[i].user_id, adatok[i].role, adatok[i].deleted_at == null);
+                        if (uzenet) {
+                            showAlert(uzenet, 'success');
+                        }
+                    } catch (error) {
+                    } finally {
+                        currentPage.page = 1;
+                        let data = await sortedUser(getFilterValues());
+                        frissitUserTablazat(data.users, data.total, variables);
                     }
-                } catch (error) {
-                } finally {
-                    currentPage.page = 1;
-                    let data = await sortedUser(getFilterValues());
-                    frissitUserTablazat(data.users, data.total, variables);
-                }
-            });
-            gombText = createHTMLelement('span', ["d-none", "d-md-block"], i18next.t('admin:users.btn_delete'));
-            torloGomb.appendChild(gombText);
+                });
+                gombText = createHTMLelement('span', ["d-none", "d-md-block"], i18next.t('admin:users.btn_delete'));
+                torloGomb.appendChild(gombText);
+            }
         }
         else {
             editGomb = gombGeneral("button", null, "eye", "blue", null, ["d-flex", "flex-column", "flex-xl-row", "justify-content-center", "align-items-center", "ps-xl-2"]);
@@ -632,12 +661,6 @@ function modalView(title, type, content, variables) {
                     }
 
                     if (valids) {
-                        await newUser(inInput.username, inInput.email, inInput.password, inInput.role);
-                        currentPage.page = 1;
-                        let data = await sortedUser(getFilterValues());
-                        frissitUserTablazat(data.users, data.total, variables);
-                        showAlert(i18next.t('admin:usersApi.signup_success'), 'success');
-                        variables.modal.hide();
                         try {
                             await newUser(inInput.username, inInput.email, inInput.password, inInput.role);
                             currentPage.page = 1;
@@ -760,6 +783,7 @@ function getFilterValues() {
     let adminChecked = document.getElementById('roleAdmin').checked;
     let modChecked = document.getElementById('roleModerator').checked;
     let userChecked = document.getElementById('roleUser').checked;
+    let lordChecked = document.getElementById('roleLord').checked;
 
     return {
         mireKeresek: selectOption,
@@ -768,6 +792,7 @@ function getFilterValues() {
         adminChecked,
         modChecked,
         userChecked,
+        lordChecked,
         page: currentPage.page
     };
 }

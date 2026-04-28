@@ -59,13 +59,15 @@ router.get('/sortedUsers', [
         .isBoolean().withMessage((value, { req }) => req.t('admin:usersApi.validation_mod_checked_boolean')),
     query('userChecked')
         .isBoolean().withMessage((value, { req }) => req.t('admin:usersApi.validation_user_checked_boolean')),
+        query('lordChecked')
+            .isBoolean().withMessage((value, { req }) => req.t('admin:usersApi.validation_user_checked_boolean')),
     query('page')
         .isInt({ min: 1 }).withMessage((value, { req }) => req.t('admin:usersApi.validation_page_number_invalid'))
         .toInt(),
     validate
 ], async (request, response) => {
     try {
-        let { mireKeresek, mit, status, adminChecked, modChecked, userChecked, page } = request.query;
+        let { mireKeresek, mit, status, adminChecked, modChecked, userChecked, lordChecked, page } = request.query;
 
         let users = await databaseUsers.sortedUsers(
             mireKeresek,
@@ -74,6 +76,7 @@ router.get('/sortedUsers', [
             adminChecked,
             modChecked,
             userChecked,
+            lordChecked,
             page
         );
 
@@ -120,11 +123,15 @@ router.post("/signupFromAdmin",
             .matches(/\d/).withMessage((value, { req }) => req.t('admin:usersApi.validation_password_digit'))
             .matches(/[A-Z]/).withMessage((value, { req }) => req.t('admin:usersApi.validation_password_uppercase')),
         body("role")
-            .isIn(['user', 'MOD']).withMessage((value, { req }) => req.t('admin:usersApi.validation_role_invalid')),
+            .isIn(['user', 'MOD', 'ADMIN', 'LORD']).withMessage((value, { req }) => req.t('admin:usersApi.validation_role_invalid')),
     ], validate,
     async (request, response) => {
         try {
             const { username, email, password, role } = request.body;
+            if ((role === 'ADMIN' || role === 'LORD') && request.session.role !== 'LORD') {
+                return response.status(403).json({ error: request.t('admin:usersApi.permission_denied') });
+            }
+
             const hashedPassword = await bcrypt.hash(password, 10);
             let insert = await databaseUsers.newUserFromAdmin(username, email, hashedPassword, role);
             if (insert.success) {
@@ -166,11 +173,13 @@ router.post('/exportUsers',
             .isBoolean().withMessage((value, { req }) => req.t('admin:usersApi.validation_mod_checked_boolean')),
         body('userChecked')
             .isBoolean().withMessage((value, { req }) => req.t('admin:usersApi.validation_user_checked_boolean')),
+        body('lordChecked')
+            .isBoolean().withMessage((value, { req }) => req.t('admin:usersApi.validation_user_checked_boolean')),
     ], validate,
     async (request, response) => {
         try {
-            let { mireKeresek, mit, status, adminChecked, modChecked, userChecked } = request.body;
-            let users = (await databaseUsers.sortedUsers(mireKeresek, mit, status, adminChecked, modChecked, userChecked, 1, 999999)).rows;
+            let { mireKeresek, mit, status, adminChecked, modChecked, userChecked, lordChecked } = request.body;
+            let users = (await databaseUsers.sortedUsers(mireKeresek, mit, status, adminChecked, modChecked, userChecked, lordChecked, 1, 999999)).rows;
 
             let csvContent = "\uFEFFID;Username;Email;Status;Role\n";
 
@@ -208,7 +217,7 @@ router.put('/updateUserFromAdmin',
             .isLength({ min: 5, max: 250 }).withMessage((value, { req }) => req.t('admin:usersApi.validation_email_length')),
         body("role")
             .optional({ values: 'null' })
-            .isIn(['user', 'MOD', 'ADMIN']).withMessage((value, { req }) => req.t('admin:usersApi.validation_role_invalid')),
+            .isIn(['user', 'MOD', 'ADMIN', 'LORD']).withMessage((value, { req }) => req.t('admin:usersApi.validation_role_invalid')),
     ], validate,
     async (request, response) => {
         try {
@@ -221,10 +230,9 @@ router.put('/updateUserFromAdmin',
             }
             else {
                 let { user_id, username, email, role } = request.body;
-                if (role == "ADMIN" && request.session.role != "LORD") {
-                    response.status(403).json({ error: request.t('admin:usersApi.permission_denied') });
+                if ((role === 'ADMIN' || role === 'LORD') && request.session.role !== 'LORD') {
+                    return response.status(403).json({ error: request.t('admin:usersApi.permission_denied') });
                 }
-                else {
                     let success = await databaseUsers.updateUserByAdmin(user_id, username, email, role);
                     if (success === 'User exists') {
                         return response.status(409).json({ error: "A felhasználónév vagy e-mail cím már foglalt!" });
@@ -237,7 +245,6 @@ router.put('/updateUserFromAdmin',
                     else {
                         response.status(404).json({ error: request.t('admin:usersApi.update_not_found_or_inactive') });
                     }
-                }
             }
         } catch (error) {
             response.status(500).json({ error: request.t('admin:usersApi.update_error') });
@@ -328,13 +335,15 @@ router.put('/updateProfilePicFromAdmin', upload.single('profilePic'), async (req
 router.delete('/userToInactive',
     [
         body("role")
-            .not().matches("ADMIN").withMessage((value, { req }) => req.t('admin:usersApi.validation_cannot_update_admin'))
-            .isIn(['user', 'MOD']).withMessage((value, { req }) => req.t('admin:usersApi.validation_role_invalid')),
+            .isIn(['user', 'MOD', 'ADMIN', 'LORD']).withMessage((value, { req }) => req.t('admin:usersApi.validation_role_invalid')),
         body("deleted")
             .isBoolean().withMessage((value, { req }) => req.t('admin:usersApi.validation_deleted_boolean')),
     ], validate,
     async (request, response) => {
         try {
+            if ((request.body.role === 'ADMIN' || request.body.role === 'LORD') && request.session.role !== 'LORD') {
+                return response.status(403).json({ error: request.t('admin:usersApi.permission_denied') });
+            }
             let { userId } = request.body;
             let result = await databaseUsers.userToInactive(userId);
             if (result.affectedRows === 0) {

@@ -135,7 +135,7 @@ router.get('/maps/:gameMapId/edit',
     }
 );
 
-router.get('/admin', auth.checkRole("ADMIN"), (request, response) => {
+router.get('/admin', auth.checkRole("ADMIN", "LORD"), (request, response) => {
     response.sendFile(path.join(__dirname, '../private/frontend/html/admin.html'));
 });
 router.get('/choose_game', (request, response) => {
@@ -147,7 +147,7 @@ router.use((request, response) => {
 
 //!API endpoints
 const adminEndpoints = require('./api/admin/index.js');
-app.use('/api/admin', auth.checkAuth, auth.checkRole("ADMIN"), adminEndpoints);
+app.use('/api/admin', auth.checkAuth, auth.checkRole("ADMIN", "LORD"), adminEndpoints);
 const endpoints = require('./api/api.js');
 app.use('/api', endpoints);
 //!Map Creation API endpoints

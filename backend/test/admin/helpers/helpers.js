@@ -16,7 +16,7 @@ const mockCheckAuth = (req, res, next) => {
     }
     if (!req.session) req.session = {};
     req.session.userid = 99;
-    req.session.role = "ADMIN";
+    req.session.role = req.headers.simulaterole || "ADMIN";
     req.session.userLanguage = "en";
     next();
 };

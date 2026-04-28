@@ -18,7 +18,7 @@ async function getUsers(limit = 10) {
     }
 }
 
-async function sortedUsers(mireKeresek, mit, status, adminChecked, modChecked, userChecked, page = 1, customLimit = 10) {
+async function sortedUsers(mireKeresek, mit, status, adminChecked, modChecked, userChecked, lordChecked, page = 1, customLimit = 10) {
     const limit = customLimit;
     const offset = (page - 1) * limit;
 
@@ -45,6 +45,7 @@ async function sortedUsers(mireKeresek, mit, status, adminChecked, modChecked, u
     if (String(adminChecked) === 'true') roles.push('ADMIN');
     if (String(modChecked) === 'true') roles.push('MOD');
     if (String(userChecked) === 'true') roles.push('USER');
+    if (String(lordChecked) === 'true') roles.push('LORD');
 
     if (roles.length > 0) {
         const placeHolders = roles.map(() => '?').join(',');

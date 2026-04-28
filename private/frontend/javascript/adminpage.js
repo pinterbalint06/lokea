@@ -53,7 +53,7 @@ document.addEventListener("DOMContentLoaded", async function () {
     });
     adminSettings = await getAdminSettings();
     document.body.dataset.bsTheme = (adminSettings.darkmode == 1) ? 'dark' : 'light';
-    let userData = await getUserData();
+    userData = await getUserData();
     document.getElementById('dropdownUsername').innerText = userData.username;
     let pfp = document.getElementById('dropdownPfp');
     if (userData.filepath == null) {
@@ -122,7 +122,7 @@ async function melyikValaszt(melyik) {
             await dashboardDisplayre(adminSettings.selectedChart);
             break;
         case "users":
-            await usersDisplayre({ modal, objectURL });
+            await usersDisplayre({ modal, objectURL, myRole: userData.role, myUsername: userData.username });
             break;
         case "files":
             display.appendChild(await filesDisplayre());
@@ -189,3 +189,4 @@ let modalElement;
 let modal;
 let objectURL;
 let adminSettings;
+let userData;

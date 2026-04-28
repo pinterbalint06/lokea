@@ -81,6 +81,7 @@ export async function sortedUser(params) {
             adminChecked: params.adminChecked,
             modChecked: params.modChecked,
             userChecked: params.userChecked,
+            lordChecked: params.lordChecked,
             page: params.page
         }).toString();
 

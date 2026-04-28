@@ -3,7 +3,8 @@
         "sort": "Szűrés",
         "user": "Felhasználó",
         "moderator": "Moderátor",
-        "admin": "Admin"
+        "admin": "Admin",
+        "lord": "Lord"
     },
     "logs": {
         "title": "Naplók",

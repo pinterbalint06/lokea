@@ -60,7 +60,7 @@ describe('Admin Users API-tesztek', () => {
         it('HIBA - 400, ha érvénytelen query paraméter', async () => {
             const res = await request(app)
                 .get('/api/admin/sortedUsers')
-                .query({ mireKeresek: 'invalid', mit: 'a', status: 'statusAny', adminChecked: true, modChecked: true, userChecked: true, page: -1 })
+                .query({ mireKeresek: 'invalid', mit: 'a', status: 'statusAny', adminChecked: true, modChecked: true, userChecked: true, lordChecked: true, page: -1 })
                 .expect(400);
             expect(res.body.errors.some(e => e.msg === enTranslations.usersApi.validation_page_number_invalid)).toBe(true);
         });
@@ -70,7 +70,7 @@ describe('Admin Users API-tesztek', () => {
             db.sortedUsers.mockResolvedValue(mockUsers);
             const res = await request(app)
                 .get('/api/admin/sortedUsers')
-                .query({ mireKeresek: 'username', mit: 'User', status: 'statusAny', adminChecked: 'true', modChecked: 'true', userChecked: 'true', page: 1 })
+                .query({ mireKeresek: 'username', mit: 'User', status: 'statusAny', adminChecked: 'true', modChecked: 'true', userChecked: 'true', lordChecked: 'true', page: 1 })
                 .expect(200);
             expect(res.body.users).toHaveLength(1);
             expect(res.body.total).toBe(1);
@@ -81,7 +81,7 @@ describe('Admin Users API-tesztek', () => {
             db.sortedUsers.mockResolvedValue(mockUsers);
             const res = await request(app)
                 .get('/api/admin/sortedUsers')
-                .query({ mireKeresek: 'username', mit: 'User', status: 'statusAny', adminChecked: 'true', modChecked: 'true', userChecked: 'true', page: 1 })
+                .query({ mireKeresek: 'username', mit: 'User', status: 'statusAny', adminChecked: 'true', modChecked: 'true', userChecked: 'true', lordChecked: 'true', page: 1 })
                 .expect(200);
             expect(res.body.users).toHaveLength(0);
             expect(res.body.total).toBe(0);
@@ -91,7 +91,7 @@ describe('Admin Users API-tesztek', () => {
             db.sortedUsers.mockRejectedValue(new Error('Database error'));
             const res = await request(app)
                 .get('/api/admin/sortedUsers')
-                .query({ mireKeresek: 'username', mit: 'User', status: 'statusAny', adminChecked: 'true', modChecked: 'true', userChecked: 'true', page: 1 })
+                .query({ mireKeresek: 'username', mit: 'User', status: 'statusAny', adminChecked: 'true', modChecked: 'true', userChecked: 'true', lordChecked: 'true', page: 1 })
                 .expect(500);
             expect(res.body.error).toBe(enTranslations.usersApi.fetch_sorted_error);
         });
@@ -160,6 +160,34 @@ describe('Admin Users API-tesztek', () => {
             expect(sendWelcomeEmail).toHaveBeenCalledWith('newuser@example.com', 'NewUser');
         });
 
+        it('HIBA - 403, ha ADMIN próbál ADMIN-t létrehozni', async () => {
+            const res = await request(app)
+                .post('/api/admin/signupFromAdmin')
+                .send({ username: 'NewAdmin', email: 'admin@example.com', password: 'StrongPassword123', role: 'ADMIN' })
+                .expect(403);
+            expect(res.body.error).toBe(enTranslations.usersApi.permission_denied);
+            expect(sendWelcomeEmail).not.toHaveBeenCalled();
+        });
+
+        it('HIBA - 403, ha ADMIN próbál LORD-ot létrehozni', async () => {
+            const res = await request(app)
+                .post('/api/admin/signupFromAdmin')
+                .send({ username: 'NewLord', email: 'lord@example.com', password: 'StrongPassword123', role: 'LORD' })
+                .expect(403);
+            expect(res.body.error).toBe(enTranslations.usersApi.permission_denied);
+        });
+
+        it('SIKER - 201, ha LORD hoz létre ADMIN-t', async () => {
+            db.newUserFromAdmin.mockResolvedValue({ success: true, insertId: 101 });
+            const res = await request(app)
+                .post('/api/admin/signupFromAdmin')
+                .set('simulaterole', 'LORD')
+                .send({ username: 'NewAdmin', email: 'admin@example.com', password: 'StrongPassword123', role: 'ADMIN' })
+                .expect(201);
+            expect(res.body.success).toBe(true);
+            expect(sendWelcomeEmail).toHaveBeenCalledTimes(1);
+        });
+
         it('HIBA - 409, foglalt felhasználónév vagy e-mail esetén', async () => {
             db.newUserFromAdmin.mockResolvedValue({ success: false, error: 'User exists' });
             const res = await request(app)
@@ -195,7 +223,7 @@ describe('Admin Users API-tesztek', () => {
         it('HIBA - 400, ha érvénytelen body paraméter', async () => {
             const res = await request(app)
                 .post('/api/admin/exportUsers')
-                .send({ mireKeresek: 'invalid', mit: '', status: 'invalid', adminChecked: 'notbool', modChecked: 'notbool', userChecked: 'notbool' })
+                .send({ mireKeresek: 'invalid', mit: '', status: 'invalid', adminChecked: 'notbool', modChecked: 'notbool', userChecked: 'notbool', lordChecked: 'notbool' })
                 .expect(400);
             expect(res.body.errors.length).toBeGreaterThan(0);
         });
@@ -205,7 +233,7 @@ describe('Admin Users API-tesztek', () => {
             db.sortedUsers.mockResolvedValue({ rows: mockRows, total: 1 });
             const res = await request(app)
                 .post('/api/admin/exportUsers')
-                .send({ mireKeresek: 'username', mit: 'a', status: 'statusAny', adminChecked: true, modChecked: true, userChecked: true })
+                .send({ mireKeresek: 'username', mit: 'a', status: 'statusAny', adminChecked: true, modChecked: true, userChecked: true, lordChecked: true })
                 .expect(200);
             expect(res.header['content-type']).toContain('text/csv');
             expect(res.text).toContain('ID;Username;Email;Status;Role');
@@ -215,7 +243,7 @@ describe('Admin Users API-tesztek', () => {
             db.sortedUsers.mockRejectedValue(new Error('Database error'));
             const res = await request(app)
                 .post('/api/admin/exportUsers')
-                .send({ mireKeresek: 'username', mit: 'a', status: 'statusAny', adminChecked: true, modChecked: true, userChecked: true })
+                .send({ mireKeresek: 'username', mit: 'a', status: 'statusAny', adminChecked: true, modChecked: true, userChecked: true, lordChecked: true })
                 .expect(500);
             expect(res.body.error).toBe(enTranslations.usersApi.export_error);
         });
@@ -240,6 +268,26 @@ describe('Admin Users API-tesztek', () => {
                 .expect(200);
             expect(sendChangeEmail).toHaveBeenCalledTimes(1);
             expect(sendChangeEmail).toHaveBeenCalledWith('updateduser@example.com', 'UpdatedUser');
+        });
+
+        it('HIBA - 403, ha ADMIN próbál ADMIN rangot adni valakinek', async () => {
+            const res = await request(app)
+                .put('/api/admin/updateUserFromAdmin')
+                .send({ user_id: 2, username: 'UpdatedUser', email: 'updated@example.com', role: 'ADMIN' })
+                .expect(403);
+            expect(res.body.error).toBe(enTranslations.usersApi.permission_denied);
+            expect(sendChangeEmail).not.toHaveBeenCalled();
+        });
+
+        it('SIKER - 200, ha LORD módosít valakit ADMIN-ná', async () => {
+            db.updateUserByAdmin.mockResolvedValue(1);
+            const res = await request(app)
+                .put('/api/admin/updateUserFromAdmin')
+                .set('simulaterole', 'LORD')
+                .send({ user_id: 2, username: 'UpdatedUser', email: 'updated@example.com', role: 'ADMIN' })
+                .expect(200);
+            expect(res.body.message).toBe(enTranslations.usersApi.update_success);
+            expect(sendChangeEmail).toHaveBeenCalledTimes(1);
         });
 
         it('HIBA - 409, foglalt felhasználónév vagy e-mail esetén', async () => {
@@ -317,6 +365,7 @@ describe('Admin Users API-tesztek', () => {
 
         it('SIKER 201 - sikeresen frissíti a profilképet', async () => {
             const sharpMock = {
+                rotate: jest.fn().mockReturnThis(),
                 resize: jest.fn().mockReturnThis(),
                 toFormat: jest.fn().mockReturnThis(),
                 toFile: jest.fn().mockResolvedValue({ width: 400, height: 400 })
@@ -356,9 +405,37 @@ describe('Admin Users API-tesztek', () => {
         it('HIBA - 400, ha érvénytelen body paraméter', async () => {
             const res = await request(app)
                 .delete('/api/admin/userToInactive')
-                .send({ role: 'ADMIN', deleted: false })
+                .send({ role: 'invalid_role', deleted: 'nem_boolean' })
                 .expect(400);
             expect(res.body.errors.length).toBeGreaterThan(0);
+        });
+
+        it('HIBA - 403, ha ADMIN próbál törölni egy ADMIN-t', async () => {
+            const res = await request(app)
+                .delete('/api/admin/userToInactive')
+                .send({ userId: 2, role: 'ADMIN', deleted: false })
+                .expect(403);
+            expect(res.body.error).toBe(enTranslations.usersApi.permission_denied);
+            expect(sendDeleteEmail).not.toHaveBeenCalled();
+        });
+
+        it('HIBA - 403, ha ADMIN próbál törölni egy LORD-ot', async () => {
+            const res = await request(app)
+                .delete('/api/admin/userToInactive')
+                .send({ userId: 3, role: 'LORD', deleted: false })
+                .expect(403);
+            expect(res.body.error).toBe(enTranslations.usersApi.permission_denied);
+        });
+
+        it('SIKER - 200, ha LORD töröl egy ADMIN-t', async () => {
+            db.userToInactive.mockResolvedValue({ affectedRows: 1, email: 'admin@example.com', username: 'AdminUser' });
+            const res = await request(app)
+                .delete('/api/admin/userToInactive')
+                .set('simulaterole', 'LORD')
+                .send({ userId: 2, role: 'ADMIN', deleted: false })
+                .expect(200);
+            expect(res.body.message).toBe(enTranslations.usersApi.update_success);
+            expect(sendDeleteEmail).toHaveBeenCalledTimes(1);
         });
 
         it('SIKER - 200, felhasználó inaktívvá tétele', async () => {

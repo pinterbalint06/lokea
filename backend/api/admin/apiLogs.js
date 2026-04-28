@@ -43,7 +43,7 @@ router.get('/sortedLogs',
             .optional({ values: 'null' })
             .custom((value) => {
                 let arr = Array.isArray(value) ? value : [value];
-                return arr.every(r => ['ADMIN', 'MOD', 'user'].includes(r));
+                return arr.every(r => ['LORD', 'ADMIN', 'MOD', 'user'].includes(r));
             }),
         query('activities')
             .optional({ values: 'null' })
@@ -144,7 +144,7 @@ router.post('/exportLogs',
             .optional({ values: 'null' })
             .custom((value) => {
                 let arr = Array.isArray(value) ? value : [value];
-                return arr.every(r => ['ADMIN', 'MOD', 'user'].includes(r));
+                return arr.every(r => ['LORD', 'ADMIN', 'MOD', 'user'].includes(r));
             }),
         body('activities')
             .optional({ values: 'null' })
