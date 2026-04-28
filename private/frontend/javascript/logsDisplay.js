@@ -1,4 +1,4 @@
-import { createHTMLelement, inputGeneral, formatDate, gombGeneral, labelGeneral, lapozasGeneral, createSection } from "./utils/domUtils.js";
+import { createHTMLelement, inputGeneral, formatDate, gombGeneral, labelGeneral, lapozasGeneral, createSection, showAlert } from "./utils/domUtils.js";
 import { getLogs, sortedLogs, exportLogs } from "./fetchs.js";
 import i18n from "./utils/i18next.js";
 
@@ -15,10 +15,10 @@ export async function logsDisplayre() {
 
     let szuresTartalom = szuresek();
     let szuresCol = createHTMLelement('div', []);
-    
+
     let kartya = createHTMLelement('div', ["card", "bg-light", "p-3", "shadow-sm"]);
     let kiscim = createHTMLelement('h4', ["h4"], i18n.t('admin:common.sort'));
-    
+
     //tablazat
     let tablazatCol = createHTMLelement('div', []);
     let tablazatTartalom = createHTMLelement('div', [], null, "logsDiv");
@@ -51,7 +51,7 @@ export async function logsDisplayre() {
         } else {
             let accordionContainer = createHTMLelement('div', ['accordion'], null, 'settingsAccordion');
             let { item, body } = createSection('filter', i18n.t('admin:common.sort'), false);
-            
+
             body.appendChild(szuresTartalom);
             accordionContainer.appendChild(item);
             szuresCol.appendChild(accordionContainer);
@@ -121,7 +121,9 @@ function tablazatGeneral(adatok) {
 function frissitLogTablazat(data, logCount) {
     let tablePlace = document.getElementById('logsDiv');
     tablePlace.innerHTML = "";
-    //todo - alert ha nincs log
+    if (!data || data.length === 0) {
+        showAlert('Nincs megjeleníthető naplóbejegyzés!', 'info');
+    }
     tablePlace.appendChild(lapozasGeneral(logCount, paginate, currentPage));
     tablePlace.appendChild(tablazatGeneral(data));
 }
@@ -336,7 +338,7 @@ function getFilterValues() {
         periodTo = toDateValue ? `${toDateValue} ${getTimeFromSlider(toSliderValue)}` : null;
     }
 
-    
+
 
     return {
         username: document.getElementById("keresoInput").value,

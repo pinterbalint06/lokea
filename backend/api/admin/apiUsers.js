@@ -129,7 +129,7 @@ router.post("/signupFromAdmin",
             let insert = await databaseUsers.newUserFromAdmin(username, email, hashedPassword, role);
             if (insert.success) {
                 await databaseLogs.addLog(insert.insertId, 'Sign up (A)');
-                // await sendWelcomeEmail(email, username);
+                await sendWelcomeEmail(email, username);
                 response.status(201).json({
                     success: true,
                     message: request.t('admin:usersApi.signup_success')
@@ -223,7 +223,7 @@ router.put('/updateUserFromAdmin',
                     let success = await databaseUsers.updateUserByAdmin(user_id, username, email, role);
                     if (success == 1) {
                         await databaseLogs.addLog(request.session.userid, 'User update (A)', user_id);
-                        // await sendChangeEmail(email, username);
+                        await sendChangeEmail(email, username);
                         response.status(200).json({ message: request.t('admin:usersApi.update_success') });
                     }
                     else {
@@ -254,7 +254,7 @@ router.put('/userSelfUpdate',
             let success = await databaseUsers.updateUserByAdmin(request.session.userid, username, email);
             if (success == 1) {
                 await databaseLogs.addLog(request.session.userid, 'User update');
-                // await sendChangeEmail(email, username);
+                await sendChangeEmail(email, username);
                 response.status(200).json({ message: request.t('admin:usersApi.update_success') });
             }
             else {
@@ -322,13 +322,13 @@ router.delete('/userToInactive',
     async (request, response) => {
         try {
             let { userId } = request.body;
-            let sorok = await databaseUsers.userToInactive(userId);
-            if (sorok === 0) {
+            let result = await databaseUsers.userToInactive(userId);
+            if (result.affectedRows === 0) {
                 response.status(200).json({ message: request.t('admin:usersApi.deactivate_already_inactive') })
             }
             else {
                 await databaseLogs.addLog(request.session.userid, 'User delete (A)', userId);
-                // await sendDeleteEmail(email, username);
+                await sendDeleteEmail(result.email, result.username);
                 response.status(200).json({ message: request.t('admin:usersApi.update_success') });
             }
         } catch (error) {
@@ -341,7 +341,7 @@ router.delete('/deleteProfilePicFromAdmin', async (request, response) => {
         let user_id = request.body.user_id;
         let lastPfp = await databaseUsers.deleteProfilePic(user_id);
 
-        if (!lastPfp) { // If lastPfp is null or empty, it means there was no custom profile picture to delete
+        if (!lastPfp) {
             response.status(200).json({ success: true, message: request.t('admin:usersApi.profile_pic_already_default') });
         }
         else {

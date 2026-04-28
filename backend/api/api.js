@@ -272,7 +272,7 @@ router.put("/updatePassword", auth.checkAuth,
 router.delete("/inactiveUser", auth.checkAuth, async (request, response) => {
     try {
         let { email, username } = await database.userToInactive(request.session.userid);
-        request.session.destroy(error => async function () {
+        request.session.destroy(async (error) => {
             if (error) {
                 response.status(500).json({ success: false, error: error });
             }

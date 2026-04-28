@@ -82,7 +82,7 @@ async function getUser(user_id) {
 async function getUserNameProfile(user_id) {
     try {
         const query = 'SELECT users.username, users.darkmode, images.filepath FROM users LEFT JOIN images ON (images.image_id = users.pfp) WHERE users.user_id = ?';
-        const [result] = await pool.execute(query, [id]);
+        const [result] = await pool.execute(query, [user_id]);
         return result;
     } catch (error) {
         console.error('DB hiba getUser:', error);
@@ -232,9 +232,16 @@ async function updateUserByAdmin(user_id, username, email, role = null) {
 async function userToInactive(user_id) {
     let connection;
     let result;
+    let userData = {};
     try {
         connection = await pool.getConnection();
         await connection.beginTransaction();
+
+        const [rows] = await connection.execute('SELECT email, username FROM users WHERE user_id = ?', [user_id]);
+        if (rows.length > 0) {
+            userData = rows[0];
+        }
+
         const query = 'UPDATE users SET deleted_at = CURRENT_TIMESTAMP WHERE user_id = ? AND deleted_at IS NULL';
         [result] = await connection.execute(query, [user_id]);
         await connection.commit();
@@ -242,11 +249,12 @@ async function userToInactive(user_id) {
         if (connection) {
             await connection.rollback();
         }
+        throw error;
     }
     finally {
         if (connection) connection.release();
     }
-    return result.affectedRows;
+    return { ...userData, affectedRows: result.affectedRows };
 }
 
 async function deleteProfilePic(user_id) {

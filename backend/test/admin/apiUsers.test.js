@@ -1,3 +1,5 @@
+require('./helpers/mocks.js');
+
 const request = require('supertest');
 const express = require('express');
 const path = require('path');
@@ -11,44 +13,7 @@ const enTranslations = require('../../locales/en/admin.json');
 const huTranslations = require('../../locales/hu/admin.json');
 const { mockI18nMiddleware, testRequiresAdminOrAuth } = require('./helpers/helpers.js');
 
-jest.mock('multer', () => {
-    const multerMock = jest.fn(() => ({
-        single: jest.fn(() => (req, res, next) => {
-            if (!req.body) req.body = {};
-            req.body.user_id = req.body.user_id || 123;
-
-            if (req.headers['simulate-no-file']) {
-                req.file = undefined;
-            } else {
-                req.file = { path: 'test-temp.jpg', originalname: 'test.jpg' };
-            }
-            next();
-        })
-    }));
-    multerMock.diskStorage = jest.fn().mockReturnValue({});
-    return multerMock;
-});
-
-jest.mock('sharp', () => {
-    const sharpMock = jest.fn(() => ({
-        resize: jest.fn().mockReturnThis(),
-        toFormat: jest.fn().mockReturnThis(),
-        toFile: jest.fn().mockResolvedValue({ width: 400, height: 400 })
-    }));
-    sharpMock.cache = jest.fn();
-    return sharpMock;
-});
-jest.mock('../../sql/admin/databaseUsers.js');
-jest.mock('../../sql/admin/databaseLogs.js');
-jest.mock('fs/promises');
-
-jest.mock('../../utils/auth.js', () => {
-    const helpers = require('./helpers/helpers.js');
-    return {
-        checkAuth: helpers.mockCheckAuth,
-        checkRole: helpers.mockCheckRole
-    };
-});
+const { sendWelcomeEmail, sendChangeEmail, sendDeleteEmail } = require('../../utils/mails.js');
 
 const app = express();
 app.use(express.json());
@@ -191,6 +156,8 @@ describe('Admin Users API-tesztek', () => {
                 .expect(201);
             expect(res.body.success).toBe(true);
             expect(res.body.message).toBe(enTranslations.usersApi.signup_success);
+            expect(sendWelcomeEmail).toHaveBeenCalledTimes(1);
+            expect(sendWelcomeEmail).toHaveBeenCalledWith('newuser@example.com', 'NewUser');
         });
 
         it('HIBA - 500, sikertelen regisztráció', async () => {
@@ -261,6 +228,8 @@ describe('Admin Users API-tesztek', () => {
                 .put('/api/admin/updateUserFromAdmin')
                 .send({ user_id: 1, username: 'UpdatedUser', email: 'updateduser@example.com', role: 'user' })
                 .expect(200);
+            expect(sendChangeEmail).toHaveBeenCalledTimes(1);
+            expect(sendChangeEmail).toHaveBeenCalledWith('updateduser@example.com', 'UpdatedUser');
         });
 
         it('HIBA - 500, adatbázis hiba', async () => {
@@ -290,6 +259,8 @@ describe('Admin Users API-tesztek', () => {
                 .put('/api/admin/userSelfUpdate')
                 .send({ username: 'UpdatedUser', email: 'updateduser@example.com' })
                 .expect(200);
+            expect(sendChangeEmail).toHaveBeenCalledTimes(1);
+            expect(sendChangeEmail).toHaveBeenCalledWith('updateduser@example.com', 'UpdatedUser');
         });
 
         it('HIBA - 500, adatbázis hiba', async () => {
@@ -361,11 +332,13 @@ describe('Admin Users API-tesztek', () => {
         });
 
         it('SIKER - 200, felhasználó inaktívvá tétele', async () => {
-            db.userToInactive.mockResolvedValue(1);
+            db.userToInactive.mockResolvedValue({ affectedRows: 1, email: 'torolt@example.com', username: 'ToroltUser' });
             await request(app)
                 .delete('/api/admin/userToInactive')
                 .send({ userId: 1, role: 'user', deleted: false })
                 .expect(200);
+            expect(sendDeleteEmail).toHaveBeenCalledTimes(1);
+            expect(sendDeleteEmail).toHaveBeenCalledWith('torolt@example.com', 'ToroltUser');
         });
 
         it('HIBA - 500, adatbázis hiba', async () => {

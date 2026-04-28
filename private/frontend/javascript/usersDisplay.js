@@ -1,5 +1,5 @@
 import { osszesUser, getUser, sortedUser, getProfilePicture, newUser, userUpdate, userToInactive, exportUsers, uploadProfilePic, deleteProfilePicture } from "./fetchs.js";
-import { createHTMLelement, gombGeneral, inputGeneral, labelGeneral, lapozasGeneral, createPreview } from "./utils/domUtils.js";
+import { createHTMLelement, gombGeneral, inputGeneral, labelGeneral, lapozasGeneral, createPreview, showAlert } from "./utils/domUtils.js";
 import i18next from "./utils/i18next.js";
 
 export async function usersDisplayre(variables) {
@@ -541,7 +541,7 @@ function tablazatGeneral(adatok, variables) {
 
             torloGomb = gombGeneral("button", null, "trash-2", "red", null, ["d-flex", "flex-column", "flex-xl-row", "justify-content-center", "align-items-center", "ps-xl-2"]);
             torloGomb.addEventListener("click", async function () {
-                alert(await userToInactive(adatok[i].user_id, adatok[i].role, adatok[i].deleted_at == null));
+                showAlert(await userToInactive(adatok[i].user_id, adatok[i].role, adatok[i].deleted_at == null), 'success');
                 currentPage.page = 1;
                 let data = await sortedUser(getFilterValues());
                 frissitUserTablazat(data.users, data.total, variables);
@@ -605,7 +605,7 @@ function modalView(title, type, content, variables) {
                 }
                 Object.keys(inInput).forEach(key => {
                     if (inInput[key] == "") {
-                        alert('baj')
+                        ures = true;
                     }
                 });
                 if (!ures) {
@@ -613,6 +613,8 @@ function modalView(title, type, content, variables) {
                     currentPage.page = 1;
                     let data = await sortedUser(getFilterValues());
                     frissitUserTablazat(data.users, data.total, variables);
+                } else {
+                    showAlert(i18next.t('admin:users.validation_required'), 'warning');
                 }
                 variables.modal.hide();
             })

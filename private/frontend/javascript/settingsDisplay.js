@@ -1,5 +1,5 @@
 import { getUserData, deleteProfile, deleteProfilePicture, uploadProfilePic, userSelfUpdate, updatePassword, updateDarkMode, getProfilePicture, updateAdminSettings, updateLanguage } from "./fetchs.js";
-import { createHTMLelement, inputGeneral, gombGeneral, labelGeneral, makeSubtitle, createPreview, createSection } from "./utils/domUtils.js";
+import { createHTMLelement, inputGeneral, gombGeneral, labelGeneral, makeSubtitle, createPreview, createSection, showAlert } from "./utils/domUtils.js";
 import i18next from "./utils/i18next.js";
 
 export async function settingsDisplayre(adminSettings) {
@@ -40,7 +40,7 @@ export async function settingsDisplayre(adminSettings) {
                     }
                 }
             }
-            alert(i18next.t('admin:settings.settings_saved'));
+            showAlert(i18next.t('admin:settings.settings_saved'), 'success');
         } catch (error) {
             errordiv.innerHTML = `<p>${error.message}</p>`;
             errordiv.className = "alert alert-danger d-flex justify-content-between align-items-center";
@@ -225,7 +225,7 @@ export async function settingsDisplayre(adminSettings) {
 
         let response = await updateAdminSettings(isDark, chartVal);
         if (response && response.ok) {
-            alert(i18next.t('admin:settings.admin_settings_saved'));
+            showAlert(i18next.t('admin:settings.admin_settings_saved'), 'success');
             document.body.dataset.bsTheme = (adminDarkInput.checked) ? 'dark' : 'light';
             console.log(adminSettings)
             adminSettings.darkmode = adminDarkInput.checked ? 1 : 0;
@@ -298,24 +298,22 @@ async function saveModification(username, email) {
         }
     }
     else {
-        alert(i18next.t('admin:settings.modification_success')); //atmeneti
+        showAlert(i18next.t('admin:settings.modification_success'), 'success'); //atmeneti
     }
 }
 
 async function jelszoValtoztat() {
-    let alertPlaceholder = document.getElementById('passwordAlert');
     let passwordCollapse = document.getElementById('passwordCollapse');
     let oldPass = document.getElementById('oldPassword');
     let newPass = document.getElementById('newPassword');
-    let newAlert = null;
     if (oldPass.value == newPass.value) {
-        newAlert = createAlert(i18next.t('admin:settings.password_same_error'), 'danger');
+        showAlert(i18next.t('admin:settings.password_same_error'), 'danger');
     }
     else {
         if (validalvaJelszo(newPass.value)) {
             let response = await updatePassword(oldPass.value, newPass.value)
             if (response.ok) {
-                newAlert = createAlert(i18next.t('admin:settings.password_change_success'), 'success');
+                showAlert(i18next.t('admin:settings.password_change_success'), 'success');
                 let bsCollapse = bootstrap.Collapse.getInstance(passwordCollapse) || new bootstrap.Collapse(passwordCollapse);
                 bsCollapse.hide();
                 oldPass.value = '';
@@ -326,20 +324,17 @@ async function jelszoValtoztat() {
                 let hibaUzenet = '';
 
                 if (data.error && Array.isArray(data.error)) {
-                    hibaUzenet = data.error.map(err => err.msg).join('<br>');
-                    newAlert = createAlert(`Hiba! Az alábbi követelmények nem teljesülnek!<br>${hibaUzenet}`, 'danger');
+                    hibaUzenet = data.error.map(err => err.msg).join(', ');
+                    showAlert(`Hiba! Az alábbi követelmények nem teljesülnek: ${hibaUzenet}`, 'danger');
                 } else {
                     hibaUzenet = data.error || 'Ismeretlen hiba történt!';
-                    newAlert = createAlert(`Hiba! ${hibaUzenet}`, 'danger');
+                    showAlert(`Hiba! ${hibaUzenet}`, 'danger');
                 }
             }
         }
         else {
-            newAlert = createAlert(i18next.t('admin:settings.password_requirements_error'), 'danger');
+            showAlert(i18next.t('admin:settings.password_requirements_error'), 'danger');
         }
-    }
-    if (newAlert) {
-        alertPlaceholder.replaceChildren(newAlert);
     }
 }
 
@@ -352,25 +347,6 @@ function ejszakaimod() {
     } else {
         body.setAttribute('data-bs-theme', 'dark');
     }
-}
-
-function createAlert(message, type) {
-    let alertDiv = createHTMLelement('div', ["alert", "alert-dismissible", "fade", "show"]);
-    if (type) {
-        alertDiv.classList.add(`alert-${type}`)
-    }
-    alertDiv.role = 'alert';
-
-    let textNode = createHTMLelement('span', [], message);
-    alertDiv.appendChild(textNode);
-
-    let closeBtn = gombGeneral('button', null, null, null, null, ['btn-close']);
-    closeBtn.setAttribute('data-bs-dismiss', 'alert');
-    closeBtn.setAttribute('aria-label', 'Close');
-
-    alertDiv.appendChild(closeBtn);
-
-    return alertDiv;
 }
 
 function wrongInput(input) {

@@ -1,3 +1,5 @@
+require('./helpers/mocks.js');
+
 const request = require('supertest');
 const express = require('express');
 const db = require('../../sql/admin/databaseLogs.js');
@@ -5,16 +7,6 @@ const auth = require('../../utils/auth.js');
 const enTranslations = require('../../locales/en/admin.json');
 const huTranslations = require('../../locales/hu/admin.json');
 const { mockI18nMiddleware, testRequiresAdminOrAuth } = require('./helpers/helpers.js');
-
-jest.mock('../../sql/admin/databaseLogs.js');
-
-jest.mock('../../utils/auth.js', () => {
-    const helpers = require('./helpers/helpers.js');
-    return {
-        checkAuth: helpers.mockCheckAuth,
-        checkRole: helpers.mockCheckRole
-    };
-});
 
 const app = express();
 app.use(express.json());

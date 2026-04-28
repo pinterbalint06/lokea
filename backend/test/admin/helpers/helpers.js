@@ -3,6 +3,13 @@ const { mockConnection } = database;
 const enTranslations = require('../../../locales/en/admin.json');
 const huTranslations = require('../../../locales/hu/admin.json');
 
+jest.mock('../../../utils/mails.js', () => ({
+    sendWelcomeEmail: jest.fn(),
+    sendChangeEmail: jest.fn(),
+    sendDeleteEmail: jest.fn(),
+    sendPasswordChangeEmail: jest.fn()
+}));
+
 const mockCheckAuth = (req, res, next) => {
     if (req.headers.unauthenticated) {
         return res.status(401).json({ message: "Bejelentkezés szükséges!" });
