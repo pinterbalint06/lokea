@@ -20,8 +20,8 @@ public:
 
     // getters
     Camera *getCamera() const { return cam_.get(); }
-    int getMeshCount() const { return meshes_.size(); }
-    std::shared_ptr<Mesh> getMesh(int index) const { return meshes_.size() > index && index >= 0 ? meshes_[index] : nullptr; }
+    int getMeshCount() const { return static_cast<int>(meshes_.size()); }
+    std::shared_ptr<Mesh> getMesh(int index) const { return static_cast<int>(meshes_.size()) > index && index >= 0 ? meshes_[index] : nullptr; }
 
     void addMesh(std::shared_ptr<Mesh> mesh);
     void removeMesh(int index);

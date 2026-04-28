@@ -6,6 +6,7 @@
 #include <cmath>
 #include <cstdint>
 #include <memory>
+#include <stddef.h>
 
 #include "core/math/vector.h"
 #include "core/rendering/shader.h"
@@ -181,7 +182,7 @@ void EquirectangularEngine::uploadTiles(const std::string &url, int ctx, emscrip
     int tiles = currMode_;
     emscripten::val textureIds = emscripten::val::global("Uint32Array").new_(tiles * tiles);
 
-    for (size_t i = 0; i < tiles * tiles; i++)
+    for (int i = 0; i < tiles * tiles; i++)
     {
         textureIds.set(i, imageTiles_[i]->getTextureIndex());
     }
@@ -242,7 +243,7 @@ void EquirectangularEngine::clearImage()
     currentRequestId_++;
     changeImageMode(EQUIRECTANGULARMODE::FULL);
 
-    for (int i = 0; i < imageTiles_.size(); i++)
+    for (size_t i = 0; i < imageTiles_.size(); i++)
     {
         imageTiles_[i]->clear();
     }
@@ -250,7 +251,7 @@ void EquirectangularEngine::clearImage()
 
 void EquirectangularEngine::clearArrows()
 {
-    for (int i = 0; i < arrows_.size(); i++)
+    for (size_t i = 0; i < arrows_.size(); i++)
     {
         removeMesh(arrows_[i]);
     }
@@ -259,7 +260,7 @@ void EquirectangularEngine::clearArrows()
 
 int EquirectangularEngine::getArrowIndexById(int id)
 {
-    int i = 0;
+    size_t i = 0;
     while (i < arrows_.size() && arrows_[i]->getId() != id)
     {
         i++;
@@ -267,7 +268,7 @@ int EquirectangularEngine::getArrowIndexById(int id)
     int foundIndex = -1;
     if (i < arrows_.size())
     {
-        foundIndex = i;
+        foundIndex = static_cast<int>(i);
     }
 
     return foundIndex;
@@ -342,7 +343,7 @@ int EquirectangularEngine::findClosestArrowInDirection(const Vec3 &clickDirectio
         : EQUIRECTANGULAR_SETTINGS.horizonClickDotProductThreshold;
     int bestArrowId = -1;
 
-    for (int i = 0; i < arrows_.size(); i++)
+    for (size_t i = 0; i < arrows_.size(); i++)
     {
         Vec2 arrowDirection = arrows_[i]->getDirection();
         float currentDotProduct = Vec2::dotProduct(horizontalDirection, arrowDirection);

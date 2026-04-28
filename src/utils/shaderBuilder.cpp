@@ -1,6 +1,7 @@
 #include <memory>
 #include <vector>
 #include <string>
+#include <stddef.h>
 
 #include "core/rendering/shader.h"
 
@@ -13,7 +14,7 @@ namespace
     {
         std::string helpers = "";
 
-        for (int i = 0; i < helperPaths.size(); i++)
+        for (size_t i = 0; i < helperPaths.size(); i++)
         {
             std::string helper = FileUtils::readFile(helperPaths[i]);
             int lineLocatin = helper.find("#line 1");

@@ -2791,6 +2791,8 @@ var Md = {93440:() => {
   }
 }, glDepthMask:a => {
   W.depthMask(!!a);
+}, glDisableVertexAttribArray:a => {
+  W.disableVertexAttribArray(a);
 }, glDrawElements:(a, b, c, d) => {
   W.drawElements(a, b, c, d);
 }, glDrawElementsInstanced:(a, b, c, d, e) => {
@@ -2917,7 +2919,7 @@ var Md = {93440:() => {
   a = X[a];
   W.useProgram(a);
   W.$a = a;
-}, glVertexAttribDivisor:(a, b) => {
+}, glVertexAttrib2f:(a, b, c) => W.vertexAttrib2f(a, b, c), glVertexAttribDivisor:(a, b) => {
   W.vertexAttribDivisor(a, b);
 }, glVertexAttribPointer:(a, b, c, d, e, f) => {
   W.vertexAttribPointer(a, b, c, !!d, e, f);

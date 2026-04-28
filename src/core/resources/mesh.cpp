@@ -15,6 +15,7 @@ Mesh::Mesh(int vertexCount, int indexCount) : material_(Materials::Material::Err
     vertexBufferSizeBytes_ = 0;
     instanceBufferSizeBytes_ = 0;
     staticBuffersInitialized_ = false;
+    isInstanced_ = false;
 }
 
 Mesh::~Mesh()
@@ -82,7 +83,6 @@ void Mesh::initializeStaticBuffers()
         glBindBuffer(GL_ARRAY_BUFFER, instanceVbo_);
         glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, sizeof(Vec2), (void *)0);
         glVertexAttribDivisor(2, 1);
-        glEnableVertexAttribArray(2);
 
         staticBuffersInitialized_ = true;
     }
@@ -121,19 +121,26 @@ void Mesh::updateInstanceBuffer()
 
         int instanceDataSize = static_cast<int>(instanceOffsets_.size() * sizeof(Vec2));
 
-        if (instanceDataSize != instanceBufferSizeBytes_)
+        if (instanceDataSize > 0)
         {
-            glBufferData(GL_ARRAY_BUFFER, instanceDataSize, instanceOffsets_.data(), GL_DYNAMIC_DRAW);
-            instanceBufferSizeBytes_ = instanceDataSize;
-        }
-        else
-        {
-            if (instanceDataSize > 0)
+            glBindBuffer(GL_ARRAY_BUFFER, instanceVbo_);
+
+            if (instanceDataSize != instanceBufferSizeBytes_)
+            {
+                glBufferData(GL_ARRAY_BUFFER, instanceDataSize, instanceOffsets_.data(), GL_DYNAMIC_DRAW);
+                instanceBufferSizeBytes_ = instanceDataSize;
+            }
+            else
             {
                 glBufferSubData(GL_ARRAY_BUFFER, 0, instanceDataSize, instanceOffsets_.data());
             }
-        }
 
-        glEnableVertexAttribArray(2);
+            glEnableVertexAttribArray(2);
+        }
+        else
+        {
+            glDisableVertexAttribArray(2);
+            glVertexAttrib2f(2, 0.0f, 0.0f);
+        }
     }
 }

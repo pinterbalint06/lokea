@@ -13,6 +13,8 @@ private:
     int endMarkerId_;
     float thickness_;
 
+    void createVerticesAndIndices();
+
 public:
     MapLine(int id, int startMarkerId, int endMarkerId, float thickness, uint8_t r, uint8_t g, uint8_t b, uint8_t a);
     ~MapLine();
@@ -25,7 +27,6 @@ public:
     void rewriteEndpointMarkerId(int oldMarkerId, int newMarkerId);
 
     void setColor(uint8_t r, uint8_t g, uint8_t b, uint8_t a);
-
 };
 
 #endif

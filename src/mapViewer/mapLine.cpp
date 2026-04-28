@@ -20,14 +20,8 @@ enum LineVertexIndex
     LINE_BOTTOM_RIGHT = 3
 };
 
-MapLine::MapLine(int id, int startMarkerId, int endMarkerId, float thickness, uint8_t r, uint8_t g, uint8_t b, uint8_t a)
-    : Mesh(4, 6)
+void MapLine::createVerticesAndIndices()
 {
-    id_ = id;
-    startMarkerId_ = startMarkerId;
-    endMarkerId_ = endMarkerId;
-    thickness_ = thickness;
-
     std::vector<Vertex> &vertices = getVertices();
 
     float unitStartX = 0.0f;
@@ -61,9 +55,19 @@ MapLine::MapLine(int id, int startMarkerId, int endMarkerId, float thickness, ui
 
     std::vector<uint32_t> &indices = getIndices();
     indices = { LINE_TOP_RIGHT, LINE_BOTTOM_LEFT, LINE_TOP_LEFT, LINE_TOP_RIGHT, LINE_BOTTOM_RIGHT, LINE_BOTTOM_LEFT };
+}
 
-    Materials::Material lineMaterial = Materials::Material(Materials::Color::fromRGBA(r, g, b, a));
-    setMaterial(lineMaterial);
+MapLine::MapLine(int id, int startMarkerId, int endMarkerId, float thickness, uint8_t r, uint8_t g, uint8_t b, uint8_t a)
+    : Mesh(4, 6)
+{
+    id_ = id;
+    startMarkerId_ = startMarkerId;
+    endMarkerId_ = endMarkerId;
+    thickness_ = thickness;
+
+    createVerticesAndIndices();
+    setColor(r, g, b, a);
+    setIsInstanced(true);
 }
 
 MapLine::~MapLine()
@@ -103,10 +107,10 @@ void MapLine::updateLineGeometry(const std::vector<Vec2> &startPositions, const 
 
             meshData_.modelMatrix = scaleToPixels * rotation * scaleToClipSpace;
         }
-
-        setInstances(startPositions);
-        setUpOpenGL();
     }
+
+    setInstances(startPositions);
+    setUpOpenGL();
 }
 
 void MapLine::setColor(uint8_t r, uint8_t g, uint8_t b, uint8_t a)

@@ -7,6 +7,7 @@
 #include <cmath>
 #include <GLES3/gl3.h>
 #include <memory>
+#include <stddef.h>
 
 #include "core/rendering/shader.h"
 
@@ -123,7 +124,7 @@ void MapViewerEngine::rotateMarker(int id, float angleRadians)
 
 void MapViewerEngine::updateAllMarkers()
 {
-    for (int i = 0; i < markers_.size(); i++)
+    for (size_t i = 0; i < markers_.size(); i++)
     {
         updateSingleMarker(markers_[i].get());
     }
@@ -132,7 +133,7 @@ void MapViewerEngine::updateAllMarkers()
 
 void MapViewerEngine::clearAllMarkers()
 {
-    for (int i = 0; i < markers_.size(); i++)
+    for (size_t i = 0; i < markers_.size(); i++)
     {
         removeMesh(markers_[i]);
     }
@@ -141,7 +142,7 @@ void MapViewerEngine::clearAllMarkers()
 
 int MapViewerEngine::getMarkerIndexById(int id)
 {
-    int i = 0;
+    size_t i = 0;
     while (i < markers_.size() && markers_[i]->getId() != id)
     {
         i++;
@@ -149,7 +150,7 @@ int MapViewerEngine::getMarkerIndexById(int id)
     int foundIndex = -1;
     if (i < markers_.size())
     {
-        foundIndex = i;
+        foundIndex = static_cast<int>(i);
     }
 
     return foundIndex;
@@ -157,7 +158,7 @@ int MapViewerEngine::getMarkerIndexById(int id)
 
 int MapViewerEngine::getLineIndexById(int id)
 {
-    int i = 0;
+    size_t i = 0;
     while (i < lines_.size() && lines_[i]->getId() != id)
     {
         i++;
@@ -165,7 +166,7 @@ int MapViewerEngine::getLineIndexById(int id)
     int foundIndex = -1;
     if (i < lines_.size())
     {
-        foundIndex = i;
+        foundIndex = static_cast<int>(i);
     }
 
     return foundIndex;
@@ -328,7 +329,7 @@ void MapViewerEngine::removeLine(int id)
 
 bool MapViewerEngine::isAlreadyConnected(int markerId1, int markerId2)
 {
-    int i = 0;
+    size_t i = 0;
     while (
         i < lines_.size()
         &&
@@ -486,7 +487,7 @@ int MapViewerEngine::getMarkerIdAtScreenCoords(int screenX, int screenY)
         float planeY = 1.0f - ((float)screenY / height_) * 2.0f;
 
         // iterate backwards so the one on the top will be found first
-        int i = markers_.size() - 1;
+        int i = static_cast<int>(markers_.size()) - 1;
         while (i >= 0 && !(markers_[i]->doesPointOverlap(planeX, planeY) && markers_[i]->isSelectable()))
         {
             i--;
@@ -883,7 +884,7 @@ void MapViewerEngine::updateLinesWithMarker(int markerId)
 {
     if (doesMarkerExist(markerId))
     {
-        for (int i = 0; i < lines_.size(); i++)
+        for (size_t i = 0; i < lines_.size(); i++)
         {
             if (lines_[i]->getStartMarkerId() == markerId || lines_[i]->getEndMarkerId() == markerId)
             {
@@ -899,7 +900,7 @@ void MapViewerEngine::updateLinesWithMarker(int markerId)
 
 void MapViewerEngine::removeLinesConnectedToMarker(int markerId)
 {
-    for (int i = 0; i < lines_.size(); i++)
+    for (int i = static_cast<int>(lines_.size()) - 1; i >= 0; i--)
     {
         if (lines_[i]->getStartMarkerId() == markerId || lines_[i]->getEndMarkerId() == markerId)
         {
@@ -911,7 +912,7 @@ void MapViewerEngine::removeLinesConnectedToMarker(int markerId)
 
 void MapViewerEngine::rewriteLineEndpointMarkerIds(int oldMarkerId, int newMarkerId)
 {
-    for (int i = 0; i < lines_.size(); i++)
+    for (size_t i = 0; i < lines_.size(); i++)
     {
         lines_[i]->rewriteEndpointMarkerId(oldMarkerId, newMarkerId);
     }
@@ -921,7 +922,7 @@ void MapViewerEngine::updateAllLines()
 {
     if (mapPlane_)
     {
-        for (int i = 0; i < lines_.size(); i++)
+        for (size_t i = 0; i < lines_.size(); i++)
         {
             updateSingleLine(lines_[i].get());
         }
@@ -930,7 +931,7 @@ void MapViewerEngine::updateAllLines()
 
 void MapViewerEngine::clearAllLines()
 {
-    for (int i = 0; i < lines_.size(); i++)
+    for (size_t i = 0; i < lines_.size(); i++)
     {
         removeMesh(lines_[i]);
     }

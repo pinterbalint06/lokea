@@ -166,6 +166,14 @@ void Renderer::updateMeshUBO(Mesh *mesh)
     updateMaterialUBO(mesh->getMaterial());
 }
 
+void Renderer::prepareMeshForRendering(Mesh *mesh)
+{
+    updateMeshUBO(mesh);
+
+    // bind current mesh
+    glBindVertexArray(mesh->getVAO());
+}
+
 void Renderer::render(const Scene *scene)
 {
     if (currShader_)
@@ -180,18 +188,19 @@ void Renderer::render(const Scene *scene)
         for (int i = 0; i < scene->getMeshCount(); i++)
         {
             std::shared_ptr<Mesh> currMesh = scene->getMesh(i);
-            updateMeshUBO(currMesh.get());
 
-            // bind current mesh
-            glBindVertexArray(currMesh->getVAO());
-
-            int instanceCount = currMesh->getInstanceCount();
-            if (instanceCount > 0)
+            if (currMesh->getIsInstanced())
             {
-                glDrawElementsInstanced(GL_TRIANGLES, currMesh->getIndexCount(), GL_UNSIGNED_INT, 0, instanceCount);
+                int instanceCount = currMesh->getInstanceCount();
+                if (instanceCount > 0)
+                {
+                    prepareMeshForRendering(currMesh.get());
+                    glDrawElementsInstanced(GL_TRIANGLES, currMesh->getIndexCount(), GL_UNSIGNED_INT, 0, instanceCount);
+                }
             }
             else
             {
+                prepareMeshForRendering(currMesh.get());
                 glDrawElements(GL_TRIANGLES, currMesh->getIndexCount(), GL_UNSIGNED_INT, 0);
             }
         }

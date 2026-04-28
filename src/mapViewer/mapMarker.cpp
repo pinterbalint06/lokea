@@ -20,17 +20,8 @@ enum VertexIndex
     BOTTOM_RIGHT = 3
 };
 
-MapMarker::MapMarker(int id, const std::string &textureUrl, float u, float v, float width, float height) : Mesh(4, 6)
+void MapMarker::createVerticesAndIndices()
 {
-    id_ = id;
-    u_ = u;
-    v_ = v;
-    width_ = width;
-    height_ = height;
-    selectable_ = true;
-    fixedToMap_ = false;
-    rotation_ = 0.0f;
-
     std::vector<Vertex> &vertices = getVertices();
 
     float unitLeftX = -0.5f;
@@ -65,7 +56,10 @@ MapMarker::MapMarker(int id, const std::string &textureUrl, float u, float v, fl
 
     std::vector<uint32_t> &indices = getIndices();
     indices = { TOP_RIGHT, BOTTOM_LEFT, TOP_LEFT, TOP_RIGHT, BOTTOM_RIGHT, BOTTOM_LEFT };
+}
 
+void MapMarker::createTexture(const std::string &textureUrl)
+{
     std::shared_ptr<Texture> texture = std::make_shared<Texture>(true, true);
     TextureOptions textureOptions;
     textureOptions.wrapS = GL_CLAMP_TO_EDGE;
@@ -79,6 +73,22 @@ MapMarker::MapMarker(int id, const std::string &textureUrl, float u, float v, fl
     Materials::Material newTexMat = getMaterial();
     newTexMat.setTexture(texture);
     setMaterial(newTexMat);
+}
+
+MapMarker::MapMarker(int id, const std::string &textureUrl, float u, float v, float width, float height) : Mesh(4, 6)
+{
+    id_ = id;
+    u_ = u;
+    v_ = v;
+    width_ = width;
+    height_ = height;
+    selectable_ = true;
+    fixedToMap_ = false;
+    rotation_ = 0.0f;
+
+    createVerticesAndIndices();
+    createTexture(textureUrl);
+    setIsInstanced(true);
 }
 
 MapMarker::~MapMarker()
@@ -135,7 +145,7 @@ void MapMarker::updateRenderPosition(const std::vector<Vec2> &positions, float s
 bool MapMarker::doesPointOverlapRepetition(float pointX, float pointY, int repetitionIndex)
 {
     bool overlaps = false;
-    int repetitionCount = instanceOffsets_.size();
+    int repetitionCount = static_cast<int>(instanceOffsets_.size());
 
     if (repetitionIndex >= 0 && repetitionIndex < repetitionCount)
     {

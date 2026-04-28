@@ -41,6 +41,8 @@ private:
     int instanceBufferSizeBytes_;
     bool staticBuffersInitialized_;
 
+    bool isInstanced_;
+
     Materials::Material material_;
 
     void initializeStaticBuffers();
@@ -63,6 +65,7 @@ public:
     int getVertexCount() const { return static_cast<int>(vertices_.size()); }
     int getIndexCount() const { return static_cast<int>(indices_.size()); }
     int getInstanceCount() const { return static_cast<int>(instanceOffsets_.size()); }
+    bool getIsInstanced() const { return isInstanced_; }
 
     std::vector<Vertex> &getVertices() { return vertices_; }
     const std::vector<Vertex> &getVertices() const { return vertices_; }
@@ -77,6 +80,7 @@ public:
     // setters
     void setMaterial(Materials::Material material) { material_ = material; }
     void setInstances(const std::vector<Vec2> &instances) { instanceOffsets_ = instances; }
+    void setIsInstanced(bool isInstanced) { isInstanced_ = isInstanced; }
 
     Mesh(const Mesh &) = delete;
     Mesh &operator=(const Mesh &) = delete;

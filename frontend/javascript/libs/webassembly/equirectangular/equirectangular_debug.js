@@ -6076,17 +6076,17 @@ async function _equirectangularFromURL(url, ctxId, tiles, textureIdsHandle, onSu
           imageBitmap = await createImageBitmap(blob);
           let tileCount = tiles * tiles;
           let textures = getValidTextures(tileCount, textureIds);
-          let currentRequestId = HEAP32[_asan_js_check_index(HEAP32, pointerCurrentRequestId / 4, ___asan_loadN)];
+          let currentRequestId = HEAP32[_asan_js_check_index(HEAP32, pointerCurrentRequestId >> 2, ___asan_loadN)];
           if (textures.length == tileCount && requestID == currentRequestId) {
-            let tileWidth = imageBitmap.width / tiles;
-            let tileHeight = imageBitmap.height / tiles;
+            let tileWidth = Math.floor(imageBitmap.width / tiles);
+            let tileHeight = Math.floor(imageBitmap.height / tiles);
             let maxSize = glContext.getParameter(glContext.MAX_TEXTURE_SIZE);
             if (tileWidth <= maxSize && tileHeight <= maxSize) {
               try {
                 let tileCreationPromises = [];
                 for (let x = 0; x < tiles; x++) {
                   for (let y = 0; y < tiles; y++) {
-                    tileCreationPromises.push(createImageBitmap(imageBitmap, x * tileWidth, y * tileWidth, tileWidth, tileHeight));
+                    tileCreationPromises.push(createImageBitmap(imageBitmap, x * tileWidth, y * tileHeight, tileWidth, tileHeight));
                   }
                 }
                 bitmapTiles = await Promise.all(tileCreationPromises);
@@ -6096,10 +6096,10 @@ async function _equirectangularFromURL(url, ctxId, tiles, textureIdsHandle, onSu
                   if (tileCount == 1) {
                     glContext.generateMipmap(glContext.TEXTURE_2D);
                   }
-                  // if there is only one tile we disable linear interpolation
-                  // to prevent misalignment of the texture with linear interpolation on one tile
-                  let minFilter = tileCount == 1 ? glContext.LINEAR : glContext.LINEAR_MIPMAP_LINEAR;
-                  let magFilter = tileCount == 1 ? glContext.NEAREST : glContext.LINEAR;
+                  // if there is more than one tile we disable linear interpolation
+                  // to prevent misalignment of the texture with linear interpolation
+                  let minFilter = tileCount == 1 ? glContext.LINEAR_MIPMAP_LINEAR : glContext.LINEAR;
+                  let magFilter = glContext.LINEAR;
                   glContext.texParameteri(glContext.TEXTURE_2D, glContext.TEXTURE_MIN_FILTER, minFilter);
                   glContext.texParameteri(glContext.TEXTURE_2D, glContext.TEXTURE_MAG_FILTER, magFilter);
                   glContext.texParameteri(glContext.TEXTURE_2D, glContext.TEXTURE_WRAP_S, glContext.CLAMP_TO_EDGE);
@@ -6128,9 +6128,9 @@ async function _equirectangularFromURL(url, ctxId, tiles, textureIdsHandle, onSu
       } else {
         equirectangularReportError(onError, "Image failed to load:\t" + response.status, "NETWORK", imgUrl, requestID);
       }
-    } catch (err) {
+    } catch (error) {
       let msg = "Texture failed to load (Fetch/decoding error)";
-      equirectangularReportError(onError, msg, "IMAGE_DECODE", imgUrl, requestID);
+      equirectangularReportError(onError, msg, "IMAGE_DECODE", imgUrl, requestID, error);
     } finally {
       if (imageBitmap) {
         imageBitmap.close();
@@ -6423,6 +6423,12 @@ var _emscripten_glDeleteVertexArrays = (n, vaos) => {
 };
 
 var _glDeleteVertexArrays = _emscripten_glDeleteVertexArrays;
+
+var _emscripten_glDisableVertexAttribArray = index => {
+  GLctx.disableVertexAttribArray(index);
+};
+
+var _glDisableVertexAttribArray = _emscripten_glDisableVertexAttribArray;
 
 var _emscripten_glDrawElements = (mode, count, type, indices) => {
   GLctx.drawElements(mode, count, type, indices);
@@ -7025,6 +7031,10 @@ var _emscripten_glUseProgram = program => {
 
 var _glUseProgram = _emscripten_glUseProgram;
 
+var _emscripten_glVertexAttrib2f = (x0, x1, x2) => GLctx.vertexAttrib2f(x0, x1, x2);
+
+var _glVertexAttrib2f = _emscripten_glVertexAttrib2f;
+
 var _emscripten_glVertexAttribDivisor = (index, divisor) => {
   GLctx.vertexAttribDivisor(index, divisor);
 };
@@ -7578,6 +7588,7 @@ var wasmImports = {
   /** @export */ glDeleteShader: _glDeleteShader,
   /** @export */ glDeleteTextures: _glDeleteTextures,
   /** @export */ glDeleteVertexArrays: _glDeleteVertexArrays,
+  /** @export */ glDisableVertexAttribArray: _glDisableVertexAttribArray,
   /** @export */ glDrawElements: _glDrawElements,
   /** @export */ glDrawElementsInstanced: _glDrawElementsInstanced,
   /** @export */ glEnable: _glEnable,
@@ -7600,6 +7611,7 @@ var wasmImports = {
   /** @export */ glUniform1i: _glUniform1i,
   /** @export */ glUniformBlockBinding: _glUniformBlockBinding,
   /** @export */ glUseProgram: _glUseProgram,
+  /** @export */ glVertexAttrib2f: _glVertexAttrib2f,
   /** @export */ glVertexAttribDivisor: _glVertexAttribDivisor,
   /** @export */ glVertexAttribPointer: _glVertexAttribPointer,
   /** @export */ glViewport: _glViewport,

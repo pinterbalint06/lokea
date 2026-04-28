@@ -132,15 +132,6 @@ struct Mat4
         return result;
     }
 
-    Vec3 operator*(const Vec3 &vec) const
-    {
-        Vec3 result;
-        result.x = data[0] * vec.x + data[1] * vec.y + data[2] * vec.z + data[3];
-        result.y = data[4] * vec.x + data[5] * vec.y + data[6] * vec.z + data[7];
-        result.z = data[8] * vec.x + data[9] * vec.y + data[10] * vec.z + data[11];
-        return result;
-    }
-
     float &operator[](int index)
     {
         return data[index];

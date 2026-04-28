@@ -45,6 +45,7 @@ private:
     void updateSceneUBO(const Scene *scene);
     void updateMaterialUBO(const Materials::Material &meshMat);
     void updateMeshUBO(Mesh *mesh);
+    void prepareMeshForRendering(Mesh *mesh);
 
 public:
     Renderer(const std::string &canvasID);

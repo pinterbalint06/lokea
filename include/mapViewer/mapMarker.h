@@ -17,6 +17,8 @@ private:
     bool fixedToMap_;
 
     bool doesPointOverlapRepetition(float pointX, float pointY, int repetitionIndex);
+    void createVerticesAndIndices();
+    void createTexture(const std::string &textureUrl);
 
 public:
     MapMarker(int id, const std::string &textureUrl, float u, float v, float width, float height);

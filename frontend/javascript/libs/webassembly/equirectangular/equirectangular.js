@@ -2744,16 +2744,16 @@ var Qd = {91584:() => {
             l.push(zd[r[E]]), E++;
           }
           var x = l;
-          var y = H[k / 4];
+          var y = H[k >> 2];
           if (x.length == n && g == y) {
-            let G = z.width / c, D = z.height / c;
+            let G = Math.floor(z.width / c), D = Math.floor(z.height / c);
             var w = b.getParameter(b.MAX_TEXTURE_SIZE);
             if (G <= w && D <= w) {
               try {
                 k = [];
                 for (y = 0; y < c; y++) {
                   for (w = 0; w < c; w++) {
-                    k.push(createImageBitmap(z, y * G, w * G, G, D));
+                    k.push(createImageBitmap(z, y * G, w * D, G, D));
                   }
                 }
                 d = await Promise.all(k);
@@ -2761,8 +2761,8 @@ var Qd = {91584:() => {
                   b.bindTexture(b.TEXTURE_2D, x[c]);
                   b.texImage2D(b.TEXTURE_2D, 0, b.RGBA, b.RGBA, b.UNSIGNED_BYTE, d[c]);
                   1 == n && b.generateMipmap(b.TEXTURE_2D);
-                  let L = 1 == n ? b.NEAREST : b.LINEAR;
-                  b.texParameteri(b.TEXTURE_2D, b.TEXTURE_MIN_FILTER, 1 == n ? b.LINEAR : b.LINEAR_MIPMAP_LINEAR);
+                  let L = b.LINEAR;
+                  b.texParameteri(b.TEXTURE_2D, b.TEXTURE_MIN_FILTER, 1 == n ? b.LINEAR_MIPMAP_LINEAR : b.LINEAR);
                   b.texParameteri(b.TEXTURE_2D, b.TEXTURE_MAG_FILTER, L);
                   b.texParameteri(b.TEXTURE_2D, b.TEXTURE_WRAP_S, b.CLAMP_TO_EDGE);
                   b.texParameteri(b.TEXTURE_2D, b.TEXTURE_WRAP_T, b.CLAMP_TO_EDGE);
@@ -2785,7 +2785,7 @@ var Qd = {91584:() => {
         Kd(f, "Image failed to load:\t" + n.status, "NETWORK", a, g);
       }
     } catch (E) {
-      Kd(f, "Texture failed to load (Fetch/decoding error)", "IMAGE_DECODE", a, g);
+      Kd(f, "Texture failed to load (Fetch/decoding error)", "IMAGE_DECODE", a, g, E);
     } finally {
       for (z && z.close(), g = 0; g < d.length; g++) {
         d[g] && d[g].close();
@@ -2959,6 +2959,8 @@ var Qd = {91584:() => {
     W.deleteVertexArray(Ad[d]);
     Ad[d] = null;
   }
+}, glDisableVertexAttribArray:a => {
+  W.disableVertexAttribArray(a);
 }, glDrawElements:(a, b, c, d) => {
   W.drawElements(a, b, c, d);
 }, glDrawElementsInstanced:(a, b, c, d, e) => {
@@ -3085,7 +3087,7 @@ var Qd = {91584:() => {
   a = X[a];
   W.useProgram(a);
   W.$a = a;
-}, glVertexAttribDivisor:(a, b) => {
+}, glVertexAttrib2f:(a, b, c) => W.vertexAttrib2f(a, b, c), glVertexAttribDivisor:(a, b) => {
   W.vertexAttribDivisor(a, b);
 }, glVertexAttribPointer:(a, b, c, d, e, f) => {
   W.vertexAttribPointer(a, b, c, !!d, e, f);
