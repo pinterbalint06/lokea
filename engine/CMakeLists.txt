@@ -3,7 +3,7 @@ cmake_minimum_required(VERSION 3.10)
 project(Lokea)
 
 # move files to frontend by default
-set(WEBASSEMBLY_FOLDER_LOCATION "${CMAKE_SOURCE_DIR}/frontend/javascript/libs/webassembly")
+set(WEBASSEMBLY_FOLDER_LOCATION "${CMAKE_SOURCE_DIR}/../frontend/javascript/libs/webassembly")
 option(COPYFILES "Move output files to ${WEBASSEMBLY_FOLDER_LOCATION} directory" OFF)
 
 set(CMAKE_CXX_STANDARD 20)
@@ -78,11 +78,10 @@ set(DEBUG_COMPILE_FLAGS
 set(DEBUG_LINK_FLAGS
     -g
     -gsource-map
-    --source-map-base "http://localhost:3000/"
+    --source-map-base "/engine/build/"
     -fsanitize=address
 )
 
-# release
 # ---------------------------------------------------------
 # Equirectangular
 # ---------------------------------------------------------
@@ -133,6 +132,8 @@ if (COPYFILES)
 
     #release
     add_custom_command(TARGET equirectangular POST_BUILD
+        COMMAND ${CMAKE_COMMAND} -E make_directory "${EQUIRECTANGULAR_TARGET_LOCATION}"
+
         COMMAND ${CMAKE_COMMAND} -E copy_if_different 
             "${CMAKE_CURRENT_BINARY_DIR}/equirectangular.js"
             "${EQUIRECTANGULAR_TARGET_LOCATION}/equirectangular.js"
@@ -146,6 +147,8 @@ if (COPYFILES)
 
     #debug
     add_custom_command(TARGET equirectangular_debug POST_BUILD
+        COMMAND ${CMAKE_COMMAND} -E make_directory "${EQUIRECTANGULAR_TARGET_LOCATION}"
+
         COMMAND ${CMAKE_COMMAND} -E copy_if_different 
             "${CMAKE_CURRENT_BINARY_DIR}/equirectangular_debug.js"
             "${EQUIRECTANGULAR_TARGET_LOCATION}/equirectangular_debug.js"
@@ -168,6 +171,8 @@ if (COPYFILES)
 
     #release
     add_custom_command(TARGET mapViewer POST_BUILD
+        COMMAND ${CMAKE_COMMAND} -E make_directory "${MAP_VIEWER_TARGET_LOCATION}"
+
         COMMAND ${CMAKE_COMMAND} -E copy_if_different 
             "${CMAKE_CURRENT_BINARY_DIR}/mapViewer.js"
             "${MAP_VIEWER_TARGET_LOCATION}/mapViewer.js"
@@ -181,6 +186,8 @@ if (COPYFILES)
 
     #debug
     add_custom_command(TARGET mapViewer_debug POST_BUILD
+        COMMAND ${CMAKE_COMMAND} -E make_directory "${MAP_VIEWER_TARGET_LOCATION}"
+
         COMMAND ${CMAKE_COMMAND} -E copy_if_different 
             "${CMAKE_CURRENT_BINARY_DIR}/mapViewer_debug.js"
             "${MAP_VIEWER_TARGET_LOCATION}/mapViewer_debug.js"
