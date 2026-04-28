@@ -1,5 +1,4 @@
 import { EVENTS } from "../shared/EventBus.js";
-import { loadLowThenHigh } from "../../libs/network/progressiveImage.js";
 import { loadGameMapCoverImageLowThenHigh } from "../../libs/network/progressiveImage.js";
 import { uploadGameMapCoverImage, deleteGameMapCoverImage } from "../shared/api.js";
 

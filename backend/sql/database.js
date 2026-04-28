@@ -463,5 +463,6 @@ module.exports = {
     userToInactive,
     uploadProfilePic,
     deleteProfilePic,
-    getGameMaps
+    getGameMaps,
+    getImagePath
 };

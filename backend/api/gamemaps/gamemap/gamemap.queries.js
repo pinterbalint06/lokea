@@ -1,4 +1,5 @@
 const pool = require('#sql/connection.js');
+const { isIdUpdateSuccessful } = require('#sql/db-utils.js');
 
 async function getTopScoresForGameMap(gameMapID) {
     const query = `

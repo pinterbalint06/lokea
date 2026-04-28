@@ -6,7 +6,7 @@ async function getPointPaths(request, response, next) {
 
         const paths = await pathsService.getPointPaths(pointID);
 
-        response.status(200).json({ connections });
+        response.status(200).json({ paths });
     } catch (error) {
         next(error);
     }
