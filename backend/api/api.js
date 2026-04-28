@@ -147,7 +147,7 @@ router.post("/login",
         }
     });
 
-router.post('/signout', auth.checkAuth, (request, response) => {
+router.post('/signout', (request, response) => {
     request.session.destroy(error => {
         if (error) {
             response.status(500).json({ success: false, error: error });
@@ -304,6 +304,7 @@ router.put('/updateProfilePic', auth.checkAuth, upload.single('profilePic'), asy
             //Kép tömöritése
             sharp.cache(false);
             const metadata = await sharp(originalFile)
+                .rotate()
                 .resize(400, 400, {
                     fit: 'cover',
                     position: 'center'

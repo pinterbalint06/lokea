@@ -4,10 +4,10 @@ const enTranslations = require('../../../locales/en/admin.json');
 const huTranslations = require('../../../locales/hu/admin.json');
 
 jest.mock('../../../utils/mails.js', () => ({
-    sendWelcomeEmail: jest.fn(),
-    sendChangeEmail: jest.fn(),
-    sendDeleteEmail: jest.fn(),
-    sendPasswordChangeEmail: jest.fn()
+    sendWelcomeEmail: jest.fn().mockResolvedValue(),
+    sendChangeEmail: jest.fn().mockResolvedValue(),
+    sendDeleteEmail: jest.fn().mockResolvedValue(),
+    sendPasswordChangeEmail: jest.fn().mockResolvedValue()
 }));
 
 const mockCheckAuth = (req, res, next) => {

@@ -128,15 +128,20 @@ router.post("/signupFromAdmin",
             const hashedPassword = await bcrypt.hash(password, 10);
             let insert = await databaseUsers.newUserFromAdmin(username, email, hashedPassword, role);
             if (insert.success) {
-                await databaseLogs.addLog(insert.insertId, 'Sign up (A)');
-                await sendWelcomeEmail(email, username);
+                await databaseLogs.addLog(request.session.userid, 'Sign up (A)', insert.insertId);
+                sendWelcomeEmail(email, username).catch(err => console.log("Email hiba:", err.message));
                 response.status(201).json({
                     success: true,
                     message: request.t('admin:usersApi.signup_success')
                 });
             }
             else {
-                throw new Error(request.t('admin:usersApi.signup_failed_generic'));
+                if (insert.error === 'User exists') {
+                    response.status(409).json({ error: "A felhasználónév vagy e-mail cím már foglalt!" });
+                }
+                else {
+                    throw new Error(request.t('admin:usersApi.signup_failed_generic'));
+                }
             }
         } catch (error) {
             response.status(500).json({ error: request.t('admin:usersApi.signup_error') });
@@ -177,11 +182,11 @@ router.post('/exportUsers',
             response.setHeader('Content-Type', 'text/csv; charset=utf-8');
             response.setHeader('Content-Disposition', 'attachment; filename=users_export.csv');
 
-            return response.status(200).send(csvContent);
+            response.status(200).send(csvContent);
 
         } catch (error) {
-            console.log(error.message)
-            return response.status(500).json({ error: request.t('admin:usersApi.export_error') });
+            console.log(error.message);
+            response.status(500).json({ error: request.t('admin:usersApi.export_error') });
         }
     });
 
@@ -221,9 +226,12 @@ router.put('/updateUserFromAdmin',
                 }
                 else {
                     let success = await databaseUsers.updateUserByAdmin(user_id, username, email, role);
+                    if (success === 'User exists') {
+                        return response.status(409).json({ error: "A felhasználónév vagy e-mail cím már foglalt!" });
+                    }
                     if (success == 1) {
                         await databaseLogs.addLog(request.session.userid, 'User update (A)', user_id);
-                        await sendChangeEmail(email, username);
+                        sendChangeEmail(email, username).catch(err => console.log("Email hiba:", err.message));
                         response.status(200).json({ message: request.t('admin:usersApi.update_success') });
                     }
                     else {
@@ -252,13 +260,18 @@ router.put('/userSelfUpdate',
         try {
             let { username, email } = request.body;
             let success = await databaseUsers.updateUserByAdmin(request.session.userid, username, email);
-            if (success == 1) {
-                await databaseLogs.addLog(request.session.userid, 'User update');
-                await sendChangeEmail(email, username);
-                response.status(200).json({ message: request.t('admin:usersApi.update_success') });
+            if (success === 'User exists') {
+                response.status(409).json({ error: "A felhasználónév vagy e-mail cím már foglalt!" });
             }
             else {
-                response.status(404).json({ error: request.t('admin:usersApi.update_not_found_or_inactive') });
+                if (success == 1) {
+                    await databaseLogs.addLog(request.session.userid, 'User update');
+                    sendChangeEmail(email, username).catch(err => console.log("Email hiba:", err.message));
+                    response.status(200).json({ message: request.t('admin:usersApi.update_success') });
+                }
+                else {
+                    response.status(404).json({ error: request.t('admin:usersApi.update_not_found_or_inactive') });
+                }
             }
         } catch (error) {
             response.status(500).json({ error: request.t('admin:usersApi.update_error') });
@@ -281,6 +294,7 @@ router.put('/updateProfilePicFromAdmin', upload.single('profilePic'), async (req
 
             sharp.cache(false);
             const metadata = await sharp(originalFile)
+                .rotate()
                 .resize(400, 400, {
                     fit: 'cover',
                     position: 'center'
@@ -317,7 +331,7 @@ router.delete('/userToInactive',
             .not().matches("ADMIN").withMessage((value, { req }) => req.t('admin:usersApi.validation_cannot_update_admin'))
             .isIn(['user', 'MOD']).withMessage((value, { req }) => req.t('admin:usersApi.validation_role_invalid')),
         body("deleted")
-            .custom((value, { req }) => value === true ? Promise.reject(req.t('admin:usersApi.validation_cannot_update_inactive')) : true)
+            .isBoolean().withMessage((value, { req }) => req.t('admin:usersApi.validation_deleted_boolean')),
     ], validate,
     async (request, response) => {
         try {
@@ -328,7 +342,7 @@ router.delete('/userToInactive',
             }
             else {
                 await databaseLogs.addLog(request.session.userid, 'User delete (A)', userId);
-                await sendDeleteEmail(result.email, result.username);
+                sendDeleteEmail(result.email, result.username).catch(err => console.log("Email hiba:", err.message));
                 response.status(200).json({ message: request.t('admin:usersApi.update_success') });
             }
         } catch (error) {

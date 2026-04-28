@@ -1,6 +1,6 @@
 import { createHTMLelement, formatTime } from "./utils/domUtils.js";
 import { getDashboardInfo } from "./fetchs.js";
-import { initSocket } from "./utils/socketio.js";
+import { initSocket } from "/javascript/libs/utils/socketio.js";
 import i18next from "./utils/i18next.js";
 
 export async function dashboardDisplayre(selectedChart) {
@@ -11,9 +11,9 @@ export async function dashboardDisplayre(selectedChart) {
 
     let mainRow = createHTMLelement('div', ['row', 'g-4']);
     let rightCol = createHTMLelement('div', ['col-lg-4', 'd-flex', 'flex-column', 'gap-4']);
-    
+
     let kpi = createKpi(data.playerCount, data.activePlayerCount);
-    let chart = createChartBox(); 
+    let chart = createChartBox();
     let logs = createLogs(data.logsPreview);
 
     const mediaQuery = window.matchMedia('(min-width: 992px)');
@@ -25,7 +25,7 @@ export async function dashboardDisplayre(selectedChart) {
 
             rightCol.appendChild(kpi);
             rightCol.appendChild(logs);
-            
+
             mainRow.innerHTML = "";
             mainRow.appendChild(chart);
             mainRow.appendChild(rightCol);
@@ -53,7 +53,7 @@ export async function dashboardDisplayre(selectedChart) {
         chartImg.style.maxHeight = "400px";
         chartContainer.appendChild(chartImg);
     }
-    
+
     await initSocket();
 }
 

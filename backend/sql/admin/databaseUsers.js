@@ -42,9 +42,9 @@ async function sortedUsers(mireKeresek, mit, status, adminChecked, modChecked, u
 
     let roles = [];
 
-    if (adminChecked === 'true') roles.push('ADMIN');
-    if (modChecked === 'true') roles.push('MOD');
-    if (userChecked === 'true') roles.push('USER');
+    if (String(adminChecked) === 'true') roles.push('ADMIN');
+    if (String(modChecked) === 'true') roles.push('MOD');
+    if (String(userChecked) === 'true') roles.push('USER');
 
     if (roles.length > 0) {
         const placeHolders = roles.map(() => '?').join(',');
@@ -102,45 +102,26 @@ async function getOldPicturePath(user_id) {
 }
 
 async function newUserFromAdmin(username, email, password, role) {
-    let success = false;
-    let error;
-    const queryUserExistsCheck = 'SELECT email, username FROM users WHERE username = ? OR email = ?';
-    let [result] = await pool.execute(queryUserExistsCheck, [username, email]);
-    if (result.length == 0) {
-        let connection;
-        try {
-            connection = await pool.getConnection();
-            await connection.beginTransaction();
-            const queryInsertNewUser = 'INSERT INTO users (username, email, password, role) VALUES (?, ?, ?, ?, ?)';
-            [result] = await connection.execute(queryInsertNewUser, [username, email, password, role]);
-            if (result.affectedRows == 1) {
-                success = true;
-                await connection.commit();
-            }
-            else {
-                throw new Error("Insert failed");
-            }
+    let connection;
+    try {
+        connection = await pool.getConnection();
+        await connection.beginTransaction();
+        const queryInsertNewUser = 'INSERT INTO users (username, email, password, role) VALUES (?, ?, ?, ?)';
+        const [result] = await connection.execute(queryInsertNewUser, [username, email, password, role]);
+        if (result.affectedRows == 1) {
+            await connection.commit();
+            return { success: true, insertId: result.insertId };
         }
-        catch (fault) {
-            if (connection) {
-                await connection.rollback();
-            }
-            if (fault.code == 'ER_DUP_ENTRY') {
-                error = "User exists";
-            }
-            else {
-                error = "Failed insert";
-            }
+        throw new Error("Insert failed");
+    } catch (fault) {
+        if (connection) await connection.rollback();
+        if (fault.code === 'ER_DUP_ENTRY') {
+            return { success: false, error: 'User exists' };
         }
-        finally {
-            if (connection) connection.release();
-        }
+        throw fault;
+    } finally {
+        if (connection) connection.release();
     }
-    else {
-        error = "User exists";
-    }
-
-    return success ? { success, insertId: result.insertId } : { success, error };
 }
 
 async function uploadProfilePic(filepath, width, height, user_id) {
@@ -221,6 +202,9 @@ async function updateUserByAdmin(user_id, username, email, role = null) {
     } catch (error) {
         if (connection) {
             await connection.rollback();
+        }
+        if (error.code === 'ER_DUP_ENTRY') {
+            return 'User exists';
         }
         throw error;
     }

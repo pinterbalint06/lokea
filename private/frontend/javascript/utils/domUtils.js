@@ -114,8 +114,7 @@ export function formatTime(date) {
     }).format(rawDate);
 }
 
-export function lapozasGeneral(totalRecords, pageFunction, currentPage, ...args) {
-    const limit = 15;
+export function lapozasGeneral(totalRecords, pageFunction, currentPage, limit = 10, ...args) {
     let maxPage = Math.ceil(totalRecords / limit);
 
     let paginationDiv = createHTMLelement('div', ["d-flex", "justify-content-center", "align-items-center", "gap-3", "border", "rounded", "mt-3", "mb-5", "mx-auto", "p-2"]);

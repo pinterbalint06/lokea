@@ -66,6 +66,19 @@ describe('Admin Logs API Átfogó Tesztek', () => {
             );
         });
 
+        it('SIKER - 200, szűrés ellenőrzése tömb (több checkbox) paraméterekkel', async () => {
+            db.sortedLogs.mockResolvedValue({ total: 1, rows: [] });
+            await request(app)
+                .get('/api/admin/sortedLogs')
+                .query({ roles: ['user', 'MOD'], activities: ['Login', 'User update'], page: 1 })
+                .expect(200);
+
+            // A backendnek helyesen, tömbként kell továbbadnia a db rétegnek
+            expect(db.sortedLogs).toHaveBeenCalledWith(
+                undefined, undefined, undefined, ['user', 'MOD'], ['Login', 'User update'], 1
+            );
+        });
+
         it('HIBA - 500 hibaüzenet ellenőrzése', async () => {
             db.sortedLogs.mockRejectedValue(new Error('SQL Error'));
             const res = await request(app).get('/api/admin/sortedLogs').expect(500);
@@ -105,6 +118,16 @@ describe('Admin Logs API Átfogó Tesztek', () => {
         it('HIBA - 404, ha nincs exportálható adat', async () => {
             db.sortedLogs.mockResolvedValue({ total: 0, rows: [] });
             await request(app).post('/api/admin/exportLogs').send({}).expect(404);
+        });
+
+        it('HIBA - 404, tömb paraméterek (több filter) kezelésének ellenőrzése üres eredménynél', async () => {
+            db.sortedLogs.mockResolvedValue({ total: 0, rows: [] });
+            await request(app)
+                .post('/api/admin/exportLogs')
+                .send({ roles: ['ADMIN', 'MOD'], activities: ['Login'] })
+                .expect(404);
+                
+            expect(db.sortedLogs).toHaveBeenCalledWith(undefined, undefined, undefined, ['ADMIN', 'MOD'], ['Login'], 1, 999999);
         });
 
         it('SIKER - 200, CSV generálása', async () => {

@@ -34,7 +34,7 @@ router.get('/getAdminSettings', async (request, response) => {
 router.put('/updateAdminSettings',
     [
         body("darkmode").isBoolean().withMessage((value, { req }) => req.t("admin:settingsApi.validation_darkmode_boolean")),
-        body("selected_chart").isIn(["activity-day", "activity-week", "weekly_registrations", "weekly-matches"]).withMessage((value, { req }) => req.t("admin:settingsApi.validation_chart_type_invalid"))
+        body("selected_chart").isIn(["activity-day", "activity-week", "registrations", "matches"]).withMessage((value, { req }) => req.t("admin:settingsApi.validation_chart_type_invalid"))
     ],
     validate,
     async (request, response) => {

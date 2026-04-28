@@ -1,5 +1,6 @@
 import { osszesUser, getUser, sortedUser, getProfilePicture, newUser, userUpdate, userToInactive, exportUsers, uploadProfilePic, deleteProfilePicture } from "./fetchs.js";
 import { createHTMLelement, gombGeneral, inputGeneral, labelGeneral, lapozasGeneral, createPreview, showAlert } from "./utils/domUtils.js";
+import { validalvaUsername, validalvaEmail, validalvaJelszo, wrongInput } from "/javascript/libs/utils/validations.js";
 import i18next from "./utils/i18next.js";
 
 export async function usersDisplayre(variables) {
@@ -130,7 +131,7 @@ export async function usersDisplayre(variables) {
     let tablazatCol = createHTMLelement('div', []);
     let tablazatTartalom = createHTMLelement('div', ["table-responsive"], null, "usersTableDiv");
     let data = await osszesUser();
-    tablazatTartalom.appendChild(lapozasGeneral(data.total, paginate, currentPage, variables));
+    tablazatTartalom.appendChild(lapozasGeneral(data.total, paginate, currentPage, 10, variables));
     tablazatTartalom.appendChild(tablazatGeneral(data.users, variables));
     tablazatCol.appendChild(tablazatTartalom);
 
@@ -169,7 +170,7 @@ export async function usersDisplayre(variables) {
 }
 
 function newUserToModal() {
-    let form = createHTMLelement('form', [], null, 'newUserFrom');
+    let form = createHTMLelement('div', [], null, 'newUserFrom');
 
     let formGroup = createHTMLelement('div', ["form-group"]);
 
@@ -309,7 +310,7 @@ async function editUserToModal(data, variables) {
 
     /* JOBB OLDAL */
     let colRight = createHTMLelement('div', ["col-8"]);
-    let form = createHTMLelement('form', [], null, 'editUserForm');
+    let form = createHTMLelement('div', [], null, 'editUserForm');
     let formGroup = createHTMLelement('div', ["form-group"]);
 
     /* INPUTOK */
@@ -413,7 +414,7 @@ async function viewUserToModal(data, variables) {
 
     /* JOBB OLDAL */
     let colRight = createHTMLelement('div', ["col-8"]);
-    let form = createHTMLelement('form', [], null, 'editUserForm');
+    let form = createHTMLelement('div', [], null, 'editUserForm');
     let formGroup = createHTMLelement('div', ["form-group"]);
 
     /* INPUTOK */
@@ -491,7 +492,7 @@ async function viewUserToModal(data, variables) {
 function frissitUserTablazat(data, userCount, variables) {
     let tablePlace = document.getElementById('usersTableDiv');
     tablePlace.innerHTML = "";
-    tablePlace.appendChild(lapozasGeneral(userCount, paginate, currentPage, variables));
+    tablePlace.appendChild(lapozasGeneral(userCount, paginate, currentPage, 10, variables));
     tablePlace.appendChild(tablazatGeneral(data, variables));
 }
 
@@ -541,10 +542,17 @@ function tablazatGeneral(adatok, variables) {
 
             torloGomb = gombGeneral("button", null, "trash-2", "red", null, ["d-flex", "flex-column", "flex-xl-row", "justify-content-center", "align-items-center", "ps-xl-2"]);
             torloGomb.addEventListener("click", async function () {
-                showAlert(await userToInactive(adatok[i].user_id, adatok[i].role, adatok[i].deleted_at == null), 'success');
-                currentPage.page = 1;
-                let data = await sortedUser(getFilterValues());
-                frissitUserTablazat(data.users, data.total, variables);
+                try {
+                    let uzenet = await userToInactive(adatok[i].user_id, adatok[i].role, adatok[i].deleted_at == null);
+                    if (uzenet) {
+                        showAlert(uzenet, 'success');
+                    }
+                } catch (error) {
+                } finally {
+                    currentPage.page = 1;
+                    let data = await sortedUser(getFilterValues());
+                    frissitUserTablazat(data.users, data.total, variables);
+                }
             });
             gombText = createHTMLelement('span', ["d-none", "d-md-block"], i18next.t('admin:users.btn_delete'));
             torloGomb.appendChild(gombText);
@@ -597,6 +605,7 @@ function modalView(title, type, content, variables) {
             button = gombGeneral("button", i18next.t('admin:users.btn_create'), "user-check", "blue", null);
             button.addEventListener('click', async function () {
                 let ures = false;
+                let valids = true;
                 let inInput = {
                     username: document.getElementById("newUsernameInput").value,
                     email: document.getElementById("newEmailInput").value,
@@ -609,14 +618,39 @@ function modalView(title, type, content, variables) {
                     }
                 });
                 if (!ures) {
-                    await newUser(inInput.username, inInput.email, inInput.password, inInput.role);
-                    currentPage.page = 1;
-                    let data = await sortedUser(getFilterValues());
-                    frissitUserTablazat(data.users, data.total, variables);
+                    if (!validalvaUsername(inInput.username)) {
+                        wrongInput(document.getElementById("newUsernameInput"));
+                        valids = false;
+                    }
+                    if (!validalvaEmail(inInput.email)) {
+                        wrongInput(document.getElementById("newEmailInput"));
+                        valids = false;
+                    }
+                    if (!validalvaJelszo(inInput.password)) {
+                        wrongInput(document.getElementById("newPasswordInput"));
+                        valids = false;
+                    }
+
+                    if (valids) {
+                        await newUser(inInput.username, inInput.email, inInput.password, inInput.role);
+                        currentPage.page = 1;
+                        let data = await sortedUser(getFilterValues());
+                        frissitUserTablazat(data.users, data.total, variables);
+                        showAlert(i18next.t('admin:usersApi.signup_success'), 'success');
+                        variables.modal.hide();
+                        try {
+                            await newUser(inInput.username, inInput.email, inInput.password, inInput.role);
+                            currentPage.page = 1;
+                            let data = await sortedUser(getFilterValues());
+                            frissitUserTablazat(data.users, data.total, variables);
+                            showAlert(i18next.t('admin:usersApi.signup_success'), 'success');
+                            variables.modal.hide();
+                        } catch (error) {
+                        }
+                    }
                 } else {
                     showAlert(i18next.t('admin:users.validation_required'), 'warning');
                 }
-                variables.modal.hide();
             })
             footerButtons.appendChild(button);
             break;
@@ -637,6 +671,7 @@ function modalView(title, type, content, variables) {
             button = gombGeneral("button", i18next.t('admin:users.btn_save'), "save", "blue", null);
             button.addEventListener('click', async function () {
                 let valtozas = false;
+                let valids = true;
                 if (variables.deleteLast) {
                     await deleteProfilePicture(currentData.user_id);
                     valtozas = true;
@@ -658,14 +693,31 @@ function modalView(title, type, content, variables) {
                 });
 
                 if (valtozas) {
-                    let siker = await userUpdate(currentData.user_id, inInput.username, inInput.email, inInput.role);
-                    if (siker) {
-                        currentPage.page = 1;
-                        let data = await sortedUser(getFilterValues());
-                        frissitUserTablazat(data.users, data.total, variables);
+                    if (!validalvaUsername(inInput.username)) {
+                        wrongInput(document.getElementById("editUsernameInput"));
+                        valids = false;
                     }
+                    if (!validalvaEmail(inInput.email)) {
+                        wrongInput(document.getElementById("editEmailInput"));
+                        valids = false;
+                    }
+
+                    if (valids) {
+                        try {
+                            let siker = await userUpdate(currentData.user_id, inInput.username, inInput.email, inInput.role);
+                            if (siker) {
+                                currentPage.page = 1;
+                                let data = await sortedUser(getFilterValues());
+                                frissitUserTablazat(data.users, data.total, variables);
+                                showAlert(i18next.t('admin:usersApi.update_success'), 'success');
+                                variables.modal.hide();
+                            }
+                        } catch (error) {
+                        }
+                    }
+                } else {
+                    variables.modal.hide();
                 }
-                variables.modal.hide();
             });
             footerButtons.appendChild(button);
             break;

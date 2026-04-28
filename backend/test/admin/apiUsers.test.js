@@ -160,6 +160,16 @@ describe('Admin Users API-tesztek', () => {
             expect(sendWelcomeEmail).toHaveBeenCalledWith('newuser@example.com', 'NewUser');
         });
 
+        it('HIBA - 409, foglalt felhasználónév vagy e-mail esetén', async () => {
+            db.newUserFromAdmin.mockResolvedValue({ success: false, error: 'User exists' });
+            const res = await request(app)
+                .post('/api/admin/signupFromAdmin')
+                .send({ username: 'NewUser', email: 'newuser@example.com', password: 'StrongPassword123', role: 'user' })
+                .expect(409);
+            expect(res.body.error).toBe("A felhasználónév vagy e-mail cím már foglalt!");
+            expect(sendWelcomeEmail).not.toHaveBeenCalled();
+        });
+
         it('HIBA - 500, sikertelen regisztráció', async () => {
             db.newUserFromAdmin.mockResolvedValue({ success: false });
             const res = await request(app)
@@ -232,6 +242,16 @@ describe('Admin Users API-tesztek', () => {
             expect(sendChangeEmail).toHaveBeenCalledWith('updateduser@example.com', 'UpdatedUser');
         });
 
+        it('HIBA - 409, foglalt felhasználónév vagy e-mail esetén', async () => {
+            db.updateUserByAdmin.mockResolvedValue('User exists');
+            const res = await request(app)
+                .put('/api/admin/updateUserFromAdmin')
+                .send({ user_id: 1, username: 'UpdatedUser', email: 'updateduser@example.com', role: 'user' })
+                .expect(409);
+            expect(res.body.error).toBe("A felhasználónév vagy e-mail cím már foglalt!");
+            expect(sendChangeEmail).not.toHaveBeenCalled();
+        });
+
         it('HIBA - 500, adatbázis hiba', async () => {
             db.updateUserByAdmin.mockRejectedValue(new Error('Database error'));
             const res = await request(app)
@@ -261,6 +281,16 @@ describe('Admin Users API-tesztek', () => {
                 .expect(200);
             expect(sendChangeEmail).toHaveBeenCalledTimes(1);
             expect(sendChangeEmail).toHaveBeenCalledWith('updateduser@example.com', 'UpdatedUser');
+        });
+
+        it('HIBA - 409, foglalt felhasználónév vagy e-mail esetén', async () => {
+            db.updateUserByAdmin.mockResolvedValue('User exists');
+            const res = await request(app)
+                .put('/api/admin/userSelfUpdate')
+                .send({ username: 'UpdatedUser', email: 'updateduser@example.com' })
+                .expect(409);
+            expect(res.body.error).toBe("A felhasználónév vagy e-mail cím már foglalt!");
+            expect(sendChangeEmail).not.toHaveBeenCalled();
         });
 
         it('HIBA - 500, adatbázis hiba', async () => {

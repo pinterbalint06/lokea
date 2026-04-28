@@ -124,7 +124,7 @@ function frissitLogTablazat(data, logCount) {
     if (!data || data.length === 0) {
         showAlert('Nincs megjeleníthető naplóbejegyzés!', 'info');
     }
-    tablePlace.appendChild(lapozasGeneral(logCount, paginate, currentPage));
+    tablePlace.appendChild(lapozasGeneral(logCount, paginate, currentPage, 15));
     tablePlace.appendChild(tablazatGeneral(data));
 }
 

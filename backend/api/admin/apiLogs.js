@@ -41,11 +41,16 @@ router.get('/sortedLogs',
             }),
         query('roles')
             .optional({ values: 'null' })
-            .isIn(['ADMIN', 'MOD', 'user']),
-
+            .custom((value) => {
+                let arr = Array.isArray(value) ? value : [value];
+                return arr.every(r => ['ADMIN', 'MOD', 'user'].includes(r));
+            }),
         query('activities')
             .optional({ values: 'null' })
-            .matches(/^[a-zA-Z0-9_, -]+$/),
+            .custom((value) => {
+                let arr = Array.isArray(value) ? value : [value];
+                return arr.every(a => /^[a-zA-Z0-9_, -]+$/.test(a));
+            }),
         query('page')
             .optional()
             .isInt({
@@ -137,10 +142,16 @@ router.post('/exportLogs',
             }),
         body('roles')
             .optional({ values: 'null' })
-            .isIn(['ADMIN', 'MOD', 'user']),
+            .custom((value) => {
+                let arr = Array.isArray(value) ? value : [value];
+                return arr.every(r => ['ADMIN', 'MOD', 'user'].includes(r));
+            }),
         body('activities')
             .optional({ values: 'null' })
-            .matches(/^[a-zA-Z0-9_, -]+$/),
+            .custom((value) => {
+                let arr = Array.isArray(value) ? value : [value];
+                return arr.every(a => /^[a-zA-Z0-9_, -]+$/.test(a));
+            }),
         validate
     ],
     async (request, response) => {

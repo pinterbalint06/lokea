@@ -37,7 +37,7 @@ async function getUserActivityByDay() {
             ) AS calendar
             LEFT JOIN log ON DATE(log.happened_at) = calendar.nap AND log.activity LIKE '%Login%'
             GROUP BY calendar.nap
-            ORDER BY calendar.nap DESC
+            ORDER BY calendar.nap
             LIMIT 20;
             `;
         const [result] = await pool.execute(queryUserCount);

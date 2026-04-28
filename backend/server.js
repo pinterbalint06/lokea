@@ -141,9 +141,9 @@ router.get('/admin', auth.checkRole("ADMIN"), (request, response) => {
 router.get('/choose_game', (request, response) => {
     response.sendFile(path.join(__dirname, '../frontend/html/game-choosing.html'));
 });
-// router.use((request, response) => {
-//     response.status(404).sendFile(path.join(__dirname, '../frontend/html/notfound.html'));
-// });
+router.use((request, response) => {
+    response.status(404).sendFile(path.join(__dirname, '../frontend/html/notfound.html'));
+});
 
 //!API endpoints
 const adminEndpoints = require('./api/admin/index.js');

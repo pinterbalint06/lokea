@@ -1,12 +1,11 @@
 import { getUserData, deleteProfile, deleteProfilePicture, uploadProfilePic, userSelfUpdate, updatePassword, updateDarkMode, getProfilePicture, updateAdminSettings, updateLanguage } from "./fetchs.js";
 import { createHTMLelement, inputGeneral, gombGeneral, labelGeneral, makeSubtitle, createPreview, createSection, showAlert } from "./utils/domUtils.js";
+import { validalvaUsername, validalvaEmail, validalvaJelszo, wrongInput } from "/javascript/libs/utils/validations.js";
 import i18next from "./utils/i18next.js";
 
 export async function settingsDisplayre(adminSettings) {
     let hova = document.getElementById('content');
     hova.innerHTML = "";
-
-    let errordiv = createHTMLelement('div', ["d-none"], null, "errorLocation");
 
     tempPfp = null;
     let deleteLast = false;
@@ -42,12 +41,7 @@ export async function settingsDisplayre(adminSettings) {
             }
             showAlert(i18next.t('admin:settings.settings_saved'), 'success');
         } catch (error) {
-            errordiv.innerHTML = `<p>${error.message}</p>`;
-            errordiv.className = "alert alert-danger d-flex justify-content-between align-items-center";
-            let closeBtn = document.createElement('button');
-            closeBtn.className = 'btn-close';
-            closeBtn.onclick = () => { errordiv.classList.add('d-none'); };
-            errordiv.appendChild(closeBtn);
+            showAlert(error.message, 'danger');
         }
     });
 
@@ -171,7 +165,7 @@ export async function settingsDisplayre(adminSettings) {
     langSelect.addEventListener("change", async function () {
         let updatedLang = await updateLanguage(this.value);
         if (updatedLang) {
-            i18next.changeLanguage(updatedLang);
+            await i18next.changeLanguage(updatedLang);
             settingsDisplayre(adminSettings);
         }
     });
@@ -223,14 +217,14 @@ export async function settingsDisplayre(adminSettings) {
         const isDark = adminDarkInput.checked ? 1 : 0;
         const chartVal = chartSelect.value === "" ? null : chartSelect.value;
 
-        let response = await updateAdminSettings(isDark, chartVal);
-        if (response && response.ok) {
+        try {
+            await updateAdminSettings(isDark, chartVal);
             showAlert(i18next.t('admin:settings.admin_settings_saved'), 'success');
             document.body.dataset.bsTheme = (adminDarkInput.checked) ? 'dark' : 'light';
-            console.log(adminSettings)
             adminSettings.darkmode = adminDarkInput.checked ? 1 : 0;
             adminSettings.selectedChart = chartSelect.value;
-            console.log(adminSettings)
+        } catch (error) {
+            showAlert(error.message, 'danger');
         }
     });
     adminSec.body.appendChild(adminSaveBtn);
@@ -240,7 +234,6 @@ export async function settingsDisplayre(adminSettings) {
     accordion.appendChild(adminSec.item);
     container.appendChild(accordion);
 
-    hova.appendChild(errordiv);
     hova.appendChild(container);
 }
 
@@ -268,6 +261,9 @@ async function checkModification() {
             wrongInput(document.getElementById('emailInput'));
             siker = false;
         }
+        if (!siker) {
+            throw new Error(i18next.t('admin:users.validation_required') || "Kérlek, javítsd a pirossal jelölt mezőket!");
+        }
         if (siker) {
             await saveModification(inInput.username, inInput.email);
         }
@@ -275,31 +271,7 @@ async function checkModification() {
 }
 
 async function saveModification(username, email) {
-    let errordiv = document.getElementById('errorLocation');
-    errordiv.innerHTML = "";
-    let response = await userSelfUpdate(username, email);
-    if (!response.ok) {
-        let data = await response.json();
-        errordiv.classList.remove('d-none');
-        if (data.error) {
-            let ul = document.createElement('ul');
-            if (Array.isArray(data.error)) {
-                for (let i = 0; i < data.error.length; i++) {
-                    let li = createHTMLelement('li', [], `${data.error[i].path}: ${data.error[i].msg}`);
-                    ul.appendChild(li);
-                }
-            }
-            else {
-                let li = createHTMLelement('li', [], `${data.error.path}: ${data.error.msg}`);
-                ul.appendChild(li);
-            }
-
-            errordiv.appendChild(ul);
-        }
-    }
-    else {
-        showAlert(i18next.t('admin:settings.modification_success'), 'success'); //atmeneti
-    }
+    await userSelfUpdate(username, email);
 }
 
 async function jelszoValtoztat() {
@@ -311,25 +283,15 @@ async function jelszoValtoztat() {
     }
     else {
         if (validalvaJelszo(newPass.value)) {
-            let response = await updatePassword(oldPass.value, newPass.value)
-            if (response.ok) {
+            try {
+                await updatePassword(oldPass.value, newPass.value);
                 showAlert(i18next.t('admin:settings.password_change_success'), 'success');
                 let bsCollapse = bootstrap.Collapse.getInstance(passwordCollapse) || new bootstrap.Collapse(passwordCollapse);
-                bsCollapse.hide();
+                if (bsCollapse) bsCollapse.hide();
                 oldPass.value = '';
                 newPass.value = '';
-            }
-            else {
-                let data = await response.json();
-                let hibaUzenet = '';
-
-                if (data.error && Array.isArray(data.error)) {
-                    hibaUzenet = data.error.map(err => err.msg).join(', ');
-                    showAlert(`Hiba! Az alábbi követelmények nem teljesülnek: ${hibaUzenet}`, 'danger');
-                } else {
-                    hibaUzenet = data.error || 'Ismeretlen hiba történt!';
-                    showAlert(`Hiba! ${hibaUzenet}`, 'danger');
-                }
+            } catch (error) {
+                showAlert(`Hiba! ${error.message}`, 'danger');
             }
         }
         else {
@@ -347,43 +309,6 @@ function ejszakaimod() {
     } else {
         body.setAttribute('data-bs-theme', 'dark');
     }
-}
-
-function wrongInput(input) {
-    input.classList.add("border-danger")
-    input.addEventListener(
-        "input",
-        () => input.classList.remove("border-danger"),
-        { once: true }
-    );
-}
-
-function validalvaUsername(username) {
-    return username.length < 50 && username.length > 1 && isCorrectUsername(username);
-}
-
-function validalvaEmail(email) {
-    return email.length < 250 && email.length > 5 && isEmail(email);
-}
-
-function validalvaJelszo(password) {
-    return password.length < 50 && password.length > 8 && isCorrectPassword(password);
-}
-
-function isCorrectUsername(username) {
-    const re = /^[a-zA-Z0-9áéíóöőúüűÁÉÍÓÖŐÚÜŰ_-]{1,20}$/;
-    return re.test(username);
-}
-
-function isEmail(email) {
-    const re = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    return re.test(email);
-}
-
-function isCorrectPassword(password) {
-    const hasUpperCase = /[A-Z]/.test(password);
-    const hasNumber = /\d/.test(password);
-    return hasUpperCase && hasNumber;
 }
 
 let settingsModal;
