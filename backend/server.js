@@ -55,14 +55,8 @@ router.get('/main', (request, response) => {
 router.get('/register_page', (request, response) => {
     response.sendFile(path.join(__dirname, '../frontend/html/register.html'));
 });
-router.get('/terrain', (request, response) => {
-    response.sendFile(path.join(__dirname, '../frontend/html/test-terrain.html'));
-});
 router.get('/equirectangular', (request, response) => {
     response.sendFile(path.join(__dirname, '../frontend/html/test-equirectangular.html'));
-});
-router.get('/webgl', (request, response) => {
-    response.sendFile(path.join(__dirname, '../frontend/html/test-webgl.html'));
 });
 router.get('/map', (request, response) => {
     response.sendFile(path.join(__dirname, '../frontend/html/test-map.html'));
