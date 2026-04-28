@@ -19,10 +19,6 @@ const mockDatabase = {
     deleteImageById: jest.fn().mockResolvedValue(true),
     getPointImage: jest.fn(),
     insertConnection: jest.fn(),
-    getTopScoresForGameMap: jest.fn(),
-    updateGameMapDetails: jest.fn().mockResolvedValue(true),
-    getAllImageIdsForGameMap: jest.fn(),
-    deleteGameMapById: jest.fn().mockResolvedValue(true),
     getMapImage: jest.fn()
 };
 

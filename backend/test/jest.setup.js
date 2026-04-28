@@ -9,3 +9,4 @@ jest.mock("#mapcreator/points/points.queries.js");
 jest.mock("#gamemaps/comments/comments.queries.js");
 jest.mock("#gamemaps/paths/paths.queries.js");
 jest.mock("#gamemaps/cover-image/cover-image.queries.js");
+jest.mock("#gamemaps/gamemap/gamemap.queries.js");

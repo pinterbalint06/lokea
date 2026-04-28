@@ -1,14 +1,15 @@
 const path = require("path");
 const AppError = require("#utils/app-error.js");
 const fs = require("fs/promises");
-const database = require("#sql/database.js");
+const database = require("#gamemaps/gamemap/gamemap.queries.js");
+const { getConnection, deleteImageById, getGameMapDetails: getGameMapDetailsDb } = require("#sql/database.js");
 const ERRORS = require("#utils/error-messages.js");
 const { UPLOAD_ROOT_MAP_DATA, isInsideRoot } = require("#config/mapdatas-upload-config.js");
 const { assertUserOwnsGameMap } = require("#mapcreator/shared/utils/mapcreator.utils.js");
 const { cleanupAfterError } = require("#mapcreator/shared/utils/mapcreator.utils.js");
 
 async function getGameMapDetails(gameMapID, userId) {
-    const gameMapDetails = await database.getGameMapDetails(gameMapID);
+    const gameMapDetails = await getGameMapDetailsDb(gameMapID);
 
     if (!gameMapDetails) {
         throw new AppError(ERRORS.GAMEMAP.NOT_FOUND, 404);
@@ -28,14 +29,14 @@ async function deleteGameMap(userId, gameMapID) {
     let dbConnection;
 
     try {
-        const gameMapDetails = await database.getGameMapDetails(gameMapID);
+        const gameMapDetails = await getGameMapDetailsDb(gameMapID);
         if (!gameMapDetails) {
             throw new AppError(ERRORS.GAMEMAP.NOT_FOUND, 404);
         }
 
         await assertUserOwnsGameMap(userId, gameMapID);
 
-        dbConnection = await database.getConnection();
+        dbConnection = await getConnection();
         await dbConnection.beginTransaction();
 
         let imageIdsToDelete = await database.getAllImageIdsForGameMap(dbConnection, gameMapID);
@@ -46,7 +47,7 @@ async function deleteGameMap(userId, gameMapID) {
         }
 
         for (const imageId of imageIdsToDelete) {
-            let successImageDeletion = await database.deleteImageById(dbConnection, imageId);
+            let successImageDeletion = await deleteImageById(dbConnection, imageId);
             if (!successImageDeletion) {
                 throw new AppError(ERRORS.MAP.IMAGE_DELETIONS_FAILED, 500);
             }
@@ -88,7 +89,7 @@ async function updateGameMapDetails(userId, gameMapID, title, description) {
     try {
         await assertUserOwnsGameMap(userId, gameMapID);
 
-        dbConnection = await database.getConnection();
+        dbConnection = await getConnection();
         await dbConnection.beginTransaction();
 
         const titleDb = title ?? null;
