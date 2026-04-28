@@ -145,8 +145,7 @@ async function createPoint(userId, mapID, pointData, file) {
 
         const gameMapID = await database.getGameMapIdByMapId(mapID);
         if (!gameMapID) {
-            throw new AppError(ERRORS.COMMON.UNEXPECTED_ERROR, 500);
-            // TODO: throw new AppError(ERRORS.GAMEMAP.NOT_FOUND, 404);
+            throw new AppError(ERRORS.GAMEMAP.NOT_FOUND, 404);
         }
 
         let imageData;

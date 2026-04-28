@@ -797,7 +797,7 @@ describe("Map Creator API - /api/map-creator/", () => {
                     const response = await makePostRequest();
 
                     expect(deleteFile).toHaveBeenCalled();
-                    expectErrorResponse(response);
+                    expectErrorResponse(response, 404, ERRORS.GAMEMAP.NOT_FOUND);
                 });
 
                 it("Should respond with 500 if getGameMapIdByMapId fails with error", async () => {

@@ -9,15 +9,6 @@ const bcrypt = require('bcrypt');
 //     return rows;
 // }
 
-// TODO: a kozos fuggvenyek kiszervezese
-// TODO: eltavolitani miutan ki lett veve minden fuggveny ami hasznalta
-function isIdUpdateSuccessful(result) {
-    const match = result?.info?.match(/Rows matched:\s*(\d+)/);
-    const rowsMatched = match ? parseInt(match[1]) : 0;
-
-    return rowsMatched == 1;
-}
-
 async function newUser(username, email, password) {
     let success = false;
     let error;
