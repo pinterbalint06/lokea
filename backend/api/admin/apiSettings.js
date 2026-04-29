@@ -1,6 +1,7 @@
 const express = require('express');
 const router = express.Router();
 const { body, validationResult } = require('express-validator');
+const { validate } = require('../../utils/validate.js');
 
 //?SQL
 const databaseSettings = require('../../sql/admin/databaseSettings.js');
@@ -98,17 +99,5 @@ router.put('/updateLanguage', [
             response.status(500).json({ error: request.t('admin:settingsApi.update_error') });
         }
     });
-
-function validate(req, res, next) {
-    const errors = validationResult(req);
-    if (!errors.isEmpty()) {
-        res.status(400).json({
-            errors: errors.array()
-        });
-    }
-    else {
-        next();
-    }
-}
 
 module.exports = router;

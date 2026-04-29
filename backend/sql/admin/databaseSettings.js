@@ -77,15 +77,14 @@ async function updateLanguage(user_id, language) {
             const [result] = await connection.execute(query, [language, user_id]);
             await connection.commit();
             affectedRows = result.affectedRows;
-            return affectedRows;
         }
     } catch (error) {
         if (connection) await connection.rollback();
         throw error;
     } finally {
         if (connection) connection.release();
-
     }
+    return affectedRows;
 }
 
 module.exports = {

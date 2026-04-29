@@ -5,6 +5,7 @@ const bcrypt = require('bcrypt');
 const { body, query, validationResult } = require('express-validator');
 const sharp = require('sharp');
 const { sendWelcomeEmail, sendChangeEmail, sendDeleteEmail } = require('../../utils/mails.js');
+const { validate } = require('../../utils/validate.js');
 
 //?SQL
 const databaseUsers = require('../../sql/admin/databaseUsers.js');
@@ -16,17 +17,7 @@ const path = require('path');
 const { error } = require('console');
 const TARGET_UPLOADS_DIR = path.resolve(process.cwd(), 'uploads');
 
-const storage = multer.diskStorage({
-    destination: (request, file, callback) => {
-        callback(null, path.resolve(process.cwd(), 'uploads'));
-    },
-    filename: (request, file, callback) => {
-        callback(null, Date.now() + '-' + file.originalname);
-    }
-});
-
 const upload = multer({
-    storage: storage,
     limits: { fileSize: 5 * 1024 * 1024 }, // 5 MB
     fileFilter: (request, file, callback) => {
         if (file.mimetype && file.mimetype.startsWith('image/')) {
@@ -294,60 +285,71 @@ router.put('/userSelfUpdate',
     })
 
 router.put('/updateProfilePicFromAdmin',
-    upload.single('profilePic'),
+    (request, response, next) => {
+        upload.single('profilePic')(request, response, (err) => {
+            if (err instanceof multer.MulterError) {
+                if (err.code === 'LIMIT_FILE_SIZE') {
+                    request.fileValidationError = 'A fájl túl nagy! Maximum 5 MB engedélyezett.';
+                } else {
+                    request.fileValidationError = `Feltöltési hiba: ${err.message}`;
+                }
+            } else if (err) {
+                return response.status(500).json({ error: 'Rendszerhiba a feltöltés során.' });
+            }
+            next();
+        });
+    },
     [
         body("user_id")
             .isInt({ min: 1 }).withMessage((value, { req }) => req.t('admin:usersApi.validation_user_id_invalid'))
             .toInt()
     ], validate,
     async (request, response) => {
-        let originalFile;
-        let newFilePath;
+        let newFilePath = null;
         try {
             if (request.fileValidationError) {
                 return response.status(400).json({ error: request.fileValidationError });
             }
-            else {
-                if (!request.file) {
-                    return response.status(400).json({ error: request.t('admin:usersApi.no_image_provided') });
-                }
-                else {
-                    let user_id = request.body.user_id;
-                    originalFile = request.file.path;
-
-                    let newFileName = `processed-${Date.now()}.webp`;
-                    newFilePath = path.join(TARGET_UPLOADS_DIR, newFileName);
-
-                    sharp.cache(false);
-                    const metadata = await sharp(originalFile)
-                        .rotate()
-                        .resize(400, 400, {
-                            fit: 'cover',
-                            position: 'center'
-                        })
-                        .toFormat('webp')
-                        .toFile(newFilePath);
-
-                    let { width, height } = metadata;
-                    let lastPfp = await databaseUsers.uploadProfilePic(newFileName, width, height, user_id);
-
-                    await fs.unlink(originalFile);
-
-                    if (lastPfp) {
-                        let lastPfpPath = path.join(TARGET_UPLOADS_DIR, lastPfp);
-                        await fs.unlink(lastPfpPath);
-                    }
-
-                    await databaseLogs.addLog(request.session.userid, 'Profile picture update (A)', user_id);
-                    response.status(201).json({ success: true, message: request.t('admin:usersApi.profile_pic_update_success') });
-                }
+            if (!request.file) {
+                return response.status(400).json({ error: request.t('admin:usersApi.no_image_provided') });
             }
+
+            let user_id = request.body.user_id;
+
+            let newFileName = `processed-${Date.now()}.webp`;
+            newFilePath = path.join(TARGET_UPLOADS_DIR, newFileName);
+
+            sharp.cache(false);
+
+            // FIGYELEM: Itt a memóriából (buffer) olvassuk be az eredeti fájlt, nem a lemezről!
+            const metadata = await sharp(request.file.buffer)
+                .rotate()
+                .resize(400, 400, {
+                    fit: 'cover',
+                    position: 'center'
+                })
+                .toFormat('webp')
+                .toFile(newFilePath);
+
+            let { width, height } = metadata;
+            let lastPfp = await databaseUsers.uploadProfilePic(newFileName, width, height, user_id);
+
+            // Nincs fs.unlink(originalFile), mert nem írtuk ki lemezre! Csak a régi képet töröljük.
+            if (lastPfp) {
+                let lastPfpPath = path.join(TARGET_UPLOADS_DIR, lastPfp);
+                await fs.unlink(lastPfpPath).catch(() => { });
+            }
+
+            await databaseLogs.addLog(request.session.userid, 'Profile picture update (A)', user_id);
+            return response.status(201).json({ success: true, message: request.t('admin:usersApi.profile_pic_update_success') });
         } catch (error) {
-            if (originalFile) await fs.unlink(originalFile).catch(() => { });
+            console.error("Hiba a képfeldolgozás során:", error);
+            // Hiba esetén csak az újonnan (esetleg félig) létrehozott feldolgozott fájlt kell takarítani
             if (newFilePath) await fs.unlink(newFilePath).catch(() => { });
             response.status(500).json({ error: request.t('admin:usersApi.profile_pic_update_error') });
         }
-    });
+    }
+);
 
 //DELETE
 
@@ -403,17 +405,5 @@ router.delete('/deleteProfilePicFromAdmin',
             response.status(500).json({ error: request.t('admin:usersApi.profile_pic_delete_error') });
         }
     });
-
-function validate(req, res, next) {
-    const errors = validationResult(req);
-    if (!errors.isEmpty()) {
-        res.status(400).json({
-            errors: errors.array()
-        });
-    }
-    else {
-        next();
-    }
-}
 
 module.exports = router;

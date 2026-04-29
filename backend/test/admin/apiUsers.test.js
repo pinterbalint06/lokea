@@ -457,6 +457,7 @@ describe('Admin Users API-tesztek', () => {
                 .field('user_id', 123)
                 .attach('profilePic', Buffer.from('fake-pdf-content'), 'teszt.pdf')
                 .expect(400);
+            expect(res.body.error).toBe('Érvénytelen fájltípus! Csak képeket tölthetsz fel.');
         });
 
         it('HIBA 400 - nincs kép feltöltve', async () => {

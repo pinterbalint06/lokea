@@ -1,23 +1,6 @@
-jest.mock('multer', () => {
-    const multerMock = jest.fn(() => ({
-        single: jest.fn(() => (req, res, next) => {
-            if (!req.body) req.body = {};
-            req.body.user_id = req.body.user_id || 123;
-
-            if (req.headers['simulate-no-file']) {
-                req.file = undefined;
-            } else {
-                req.file = { path: 'test-temp.jpg', originalname: 'test.jpg' };
-            }
-            next();
-        })
-    }));
-    multerMock.diskStorage = jest.fn().mockReturnValue({});
-    return multerMock;
-});
-
 jest.mock('sharp', () => {
     const sharpMock = jest.fn(() => ({
+        rotate: jest.fn().mockReturnThis(),
         resize: jest.fn().mockReturnThis(),
         toFormat: jest.fn().mockReturnThis(),
         toFile: jest.fn().mockResolvedValue({ width: 400, height: 400 }),
@@ -56,3 +39,25 @@ jest.mock('../../../utils/auth.js', () => {
         checkRole: helpers.mockCheckRole
     };
 });
+
+const pool = require('../../../sql/connection.js');
+
+jest.mock('../../../sql/connection.js', () => ({
+    execute: jest.fn(),
+    getConnection: jest.fn()
+}));
+
+const mockConnection = {
+    beginTransaction: jest.fn(),
+    execute: jest.fn(),
+    commit: jest.fn(),
+    rollback: jest.fn(),
+    release: jest.fn()
+};
+
+function setupDbMocks() {
+    jest.clearAllMocks();
+    pool.getConnection.mockResolvedValue(mockConnection);
+}
+
+module.exports = { mockConnection, setupDbMocks };

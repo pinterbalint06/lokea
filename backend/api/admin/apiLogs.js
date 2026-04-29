@@ -1,6 +1,7 @@
 const express = require('express');
 const router = express.Router();
 const { body, query, validationResult } = require('express-validator');
+const { validate } = require('../../utils/validate.js');
 
 //?SQL
 const databaseLogs = require('../../sql/admin/databaseLogs.js');
@@ -150,7 +151,7 @@ router.post('/exportLogs',
             .optional({ values: 'null' })
             .custom((value) => {
                 let arr = Array.isArray(value) ? value : [value];
-                return arr.every(a => /^[a-zA-Z0-9_, -]+$/.test(a));
+                return arr.every(a => /^[a-zA-Z0-9 -]+$/.test(a));
             }),
         validate
     ],
@@ -196,17 +197,5 @@ router.post('/exportLogs',
             response.status(500).json({ error: request.t('admin:logsApi.export_error') });
         }
     });
-
-function validate(req, res, next) {
-    const errors = validationResult(req);
-    if (!errors.isEmpty()) {
-        res.status(400).json({
-            errors: errors.array()
-        });
-    }
-    else {
-        next();
-    }
-}
 
 module.exports = router;
