@@ -39,7 +39,7 @@ CREATE TABLE game_maps (
 
 CREATE TABLE game_maps_comments (
     comment_id int AUTO_INCREMENT PRIMARY KEY NOT NULL,
-    game_maps_id int,
+    game_maps_id int NOT NULL,
     user_id int,
     comment_text varchar(255) DEFAULT NULL,
     rating int NOT NULL,
@@ -53,7 +53,7 @@ CREATE TABLE game_maps_comments (
 CREATE TABLE map (
     map_id int AUTO_INCREMENT PRIMARY KEY NOT NULL,
     title varchar(20) NOT NULL,
-    game_maps_id int,
+    game_maps_id int NOT NULL,
     image_id int,
     foreign key (game_maps_id) references game_maps(game_maps_id) ON DELETE CASCADE,
     foreign key (image_id) references images(image_id) ON DELETE CASCADE
@@ -61,7 +61,7 @@ CREATE TABLE map (
 
 CREATE TABLE points (
     point_id int AUTO_INCREMENT PRIMARY KEY NOT NULL,
-    map_id int,
+    map_id int NOT NULL,
     point_u float NOT NULL,
     point_v float NOT NULL,
     north_direction DECIMAL(5,2) NOT NULL DEFAULT 0.00,
