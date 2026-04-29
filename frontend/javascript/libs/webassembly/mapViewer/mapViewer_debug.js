@@ -3717,132 +3717,6 @@ function ___syscall_stat64(path, buf) {
 
 var __abort_js = () => abort("native code called abort()");
 
-var structRegistrations = {};
-
-var runDestructors = destructors => {
-  while (destructors.length) {
-    var ptr = destructors.pop();
-    var del = destructors.pop();
-    del(ptr);
-  }
-};
-
-/** @suppress {globalThis} */ function readPointer(pointer) {
-  return this.fromWireType(HEAPU32[_asan_js_check_index(HEAPU32, ((pointer) >> 2), ___asan_loadN)]);
-}
-
-var awaitingDependencies = {};
-
-var registeredTypes = {};
-
-var typeDependencies = {};
-
-var InternalError = class InternalError extends Error {
-  constructor(message) {
-    super(message);
-    this.name = "InternalError";
-  }
-};
-
-var throwInternalError = message => {
-  throw new InternalError(message);
-};
-
-var whenDependentTypesAreResolved = (myTypes, dependentTypes, getTypeConverters) => {
-  myTypes.forEach(type => typeDependencies[type] = dependentTypes);
-  function onComplete(typeConverters) {
-    var myTypeConverters = getTypeConverters(typeConverters);
-    if (myTypeConverters.length !== myTypes.length) {
-      throwInternalError("Mismatched type converter count");
-    }
-    for (var i = 0; i < myTypes.length; ++i) {
-      registerType(myTypes[i], myTypeConverters[i]);
-    }
-  }
-  var typeConverters = new Array(dependentTypes.length);
-  var unregisteredTypes = [];
-  var registered = 0;
-  for (let [i, dt] of dependentTypes.entries()) {
-    if (registeredTypes.hasOwnProperty(dt)) {
-      typeConverters[i] = registeredTypes[dt];
-    } else {
-      unregisteredTypes.push(dt);
-      if (!awaitingDependencies.hasOwnProperty(dt)) {
-        awaitingDependencies[dt] = [];
-      }
-      awaitingDependencies[dt].push(() => {
-        typeConverters[i] = registeredTypes[dt];
-        ++registered;
-        if (registered === unregisteredTypes.length) {
-          onComplete(typeConverters);
-        }
-      });
-    }
-  }
-  if (0 === unregisteredTypes.length) {
-    onComplete(typeConverters);
-  }
-};
-
-var __embind_finalize_value_object = structType => {
-  var reg = structRegistrations[structType];
-  delete structRegistrations[structType];
-  var rawConstructor = reg.rawConstructor;
-  var rawDestructor = reg.rawDestructor;
-  var fieldRecords = reg.fields;
-  var fieldTypes = fieldRecords.map(field => field.getterReturnType).concat(fieldRecords.map(field => field.setterArgumentType));
-  whenDependentTypesAreResolved([ structType ], fieldTypes, fieldTypes => {
-    var fields = {};
-    for (var [i, field] of fieldRecords.entries()) {
-      const getterReturnType = fieldTypes[i];
-      const getter = field.getter;
-      const getterContext = field.getterContext;
-      const setterArgumentType = fieldTypes[i + fieldRecords.length];
-      const setter = field.setter;
-      const setterContext = field.setterContext;
-      fields[field.fieldName] = {
-        read: ptr => getterReturnType.fromWireType(getter(getterContext, ptr)),
-        write: (ptr, o) => {
-          var destructors = [];
-          setter(setterContext, ptr, setterArgumentType.toWireType(destructors, o));
-          runDestructors(destructors);
-        },
-        optional: getterReturnType.optional
-      };
-    }
-    return [ {
-      name: reg.name,
-      fromWireType: ptr => {
-        var rv = {};
-        for (var i in fields) {
-          rv[i] = fields[i].read(ptr);
-        }
-        rawDestructor(ptr);
-        return rv;
-      },
-      toWireType: (destructors, o) => {
-        // todo: Here we have an opportunity for -O3 level "unsafe" optimizations:
-        // assume all fields are present without checking.
-        for (var fieldName in fields) {
-          if (!(fieldName in o) && !fields[fieldName].optional) {
-            throw new TypeError(`Missing field: "${fieldName}"`);
-          }
-        }
-        var ptr = rawConstructor();
-        for (fieldName in fields) {
-          fields[fieldName].write(ptr, o[fieldName]);
-        }
-        if (destructors !== null) {
-          destructors.push(rawDestructor, ptr);
-        }
-        return ptr;
-      },
-      readValueFromPointer: readPointer,
-      destructorFunction: rawDestructor
-    } ];
-  });
-};
-
 var AsciiToString = ptr => {
   var str = "";
   while (1) {
@@ -3851,6 +3725,12 @@ var AsciiToString = ptr => {
     str += String.fromCharCode(ch);
   }
 };
+
+var awaitingDependencies = {};
+
+var registeredTypes = {};
+
+var typeDependencies = {};
 
 var BindingError = class BindingError extends Error {
   constructor(message) {
@@ -4041,6 +3921,17 @@ var getBasestPointer = (class_, ptr) => {
 var getInheritedInstance = (class_, ptr) => {
   ptr = getBasestPointer(class_, ptr);
   return registeredInstances[ptr];
+};
+
+var InternalError = class InternalError extends Error {
+  constructor(message) {
+    super(message);
+    this.name = "InternalError";
+  }
+};
+
+var throwInternalError = message => {
+  throw new InternalError(message);
 };
 
 var makeClassHandle = (prototype, record) => {
@@ -4453,6 +4344,10 @@ var upcastPointer = (ptr, ptrClass, desiredClass) => {
   return ptr;
 }
 
+/** @suppress {globalThis} */ function readPointer(pointer) {
+  return this.fromWireType(HEAPU32[_asan_js_check_index(HEAPU32, ((pointer) >> 2), ___asan_loadN)]);
+}
+
 var init_RegisteredPointer = () => {
   Object.assign(RegisteredPointer.prototype, {
     getPointee(ptr) {
@@ -4571,6 +4466,42 @@ var throwUnboundTypeError = (message, types) => {
   throw new UnboundTypeError(`${message}: ` + unboundTypes.map(getTypeName).join([ ", " ]));
 };
 
+var whenDependentTypesAreResolved = (myTypes, dependentTypes, getTypeConverters) => {
+  myTypes.forEach(type => typeDependencies[type] = dependentTypes);
+  function onComplete(typeConverters) {
+    var myTypeConverters = getTypeConverters(typeConverters);
+    if (myTypeConverters.length !== myTypes.length) {
+      throwInternalError("Mismatched type converter count");
+    }
+    for (var i = 0; i < myTypes.length; ++i) {
+      registerType(myTypes[i], myTypeConverters[i]);
+    }
+  }
+  var typeConverters = new Array(dependentTypes.length);
+  var unregisteredTypes = [];
+  var registered = 0;
+  for (let [i, dt] of dependentTypes.entries()) {
+    if (registeredTypes.hasOwnProperty(dt)) {
+      typeConverters[i] = registeredTypes[dt];
+    } else {
+      unregisteredTypes.push(dt);
+      if (!awaitingDependencies.hasOwnProperty(dt)) {
+        awaitingDependencies[dt] = [];
+      }
+      awaitingDependencies[dt].push(() => {
+        typeConverters[i] = registeredTypes[dt];
+        ++registered;
+        if (registered === unregisteredTypes.length) {
+          onComplete(typeConverters);
+        }
+      });
+    }
+  }
+  if (0 === unregisteredTypes.length) {
+    onComplete(typeConverters);
+  }
+};
+
 var __embind_register_class = (rawType, rawPointerType, rawConstPointerType, baseClassRawType, getActualTypeSignature, getActualType, upcastSignature, upcast, downcastSignature, downcast, name, destructorSignature, rawDestructor) => {
   name = AsciiToString(name);
   getActualType = embind__requireFunction(getActualTypeSignature, getActualType);
@@ -4637,6 +4568,14 @@ var heap32VectorToArray = (count, firstElement) => {
     array.push(HEAPU32[_asan_js_check_index(HEAPU32, (((firstElement) + (i * 4)) >> 2), ___asan_loadN)]);
   }
   return array;
+};
+
+var runDestructors = destructors => {
+  while (destructors.length) {
+    var ptr = destructors.pop();
+    var del = destructors.pop();
+    del(ptr);
+  }
 };
 
 function usesDestructorStack(argTypes) {
@@ -5267,27 +5206,6 @@ var __embind_register_std_wstring = (rawType, charSize, name) => {
     destructorFunction(ptr) {
       _free(ptr);
     }
-  });
-};
-
-var __embind_register_value_object = (rawType, name, constructorSignature, rawConstructor, destructorSignature, rawDestructor) => {
-  structRegistrations[rawType] = {
-    name: AsciiToString(name),
-    rawConstructor: embind__requireFunction(constructorSignature, rawConstructor),
-    rawDestructor: embind__requireFunction(destructorSignature, rawDestructor),
-    fields: []
-  };
-};
-
-var __embind_register_value_object_field = (structType, fieldName, getterReturnType, getterSignature, getter, getterContext, setterArgumentType, setterSignature, setter, setterContext) => {
-  structRegistrations[structType].fields.push({
-    fieldName: AsciiToString(fieldName),
-    getterReturnType,
-    getter: embind__requireFunction(getterSignature, getter),
-    getterContext,
-    setterArgumentType,
-    setter: embind__requireFunction(setterSignature, setter),
-    setterContext
   });
 };
 
@@ -6383,11 +6301,23 @@ var _emscripten_glDepthMask = flag => {
 
 var _glDepthMask = _emscripten_glDepthMask;
 
+var _emscripten_glDisableVertexAttribArray = index => {
+  GLctx.disableVertexAttribArray(index);
+};
+
+var _glDisableVertexAttribArray = _emscripten_glDisableVertexAttribArray;
+
 var _emscripten_glDrawElements = (mode, count, type, indices) => {
   GLctx.drawElements(mode, count, type, indices);
 };
 
 var _glDrawElements = _emscripten_glDrawElements;
+
+var _emscripten_glDrawElementsInstanced = (mode, count, type, indices, primcount) => {
+  GLctx.drawElementsInstanced(mode, count, type, indices, primcount);
+};
+
+var _glDrawElementsInstanced = _emscripten_glDrawElementsInstanced;
 
 var _emscripten_glEnable = x0 => GLctx.enable(x0);
 
@@ -6751,6 +6681,16 @@ var _emscripten_glUseProgram = program => {
 
 var _glUseProgram = _emscripten_glUseProgram;
 
+var _emscripten_glVertexAttrib2f = (x0, x1, x2) => GLctx.vertexAttrib2f(x0, x1, x2);
+
+var _glVertexAttrib2f = _emscripten_glVertexAttrib2f;
+
+var _emscripten_glVertexAttribDivisor = (index, divisor) => {
+  GLctx.vertexAttribDivisor(index, divisor);
+};
+
+var _glVertexAttribDivisor = _emscripten_glVertexAttribDivisor;
+
 var _emscripten_glVertexAttribPointer = (index, size, type, normalized, stride, ptr) => {
   GLctx.vertexAttribPointer(index, size, type, !!normalized, stride, ptr);
 };
@@ -6951,205 +6891,201 @@ function checkIncomingModuleAPI() {
 }
 
 var ASM_CONSTS = {
-  306912992: () => {
+  306902144: () => {
     throw ("A böngésződ nem támogatja a WebGL-t!");
   },
-  306913043: () => {},
-  306913044: () => {},
-  306913045: () => {},
-  306913046: () => {},
-  306913047: () => {},
-  306913048: () => {},
-  306913049: () => {},
-  306913050: () => {},
-  306913051: () => {},
-  306913052: () => {},
-  306913053: () => {},
-  306913054: () => {},
-  306913055: () => {},
-  306913056: () => {},
-  306913057: () => {},
-  306913058: () => {},
-  306913059: () => {},
-  306913060: () => {},
-  306913061: () => {},
-  306913062: () => {},
-  306913063: () => {},
-  306913064: () => {},
-  306913065: () => {},
-  306913066: () => {},
-  306913067: () => {},
-  306913068: () => {},
-  306913069: () => {},
-  306913070: () => {},
-  306913071: () => {},
-  306913072: () => {},
-  306913073: () => {},
-  306913074: () => {},
-  306913075: () => {},
-  306913076: () => {},
-  306913077: () => {},
-  306913078: () => {},
-  306913079: () => {},
-  306913080: () => {},
-  306913081: () => {},
-  306913082: () => {},
-  306913083: () => {},
-  306913084: () => {},
-  306913085: () => {},
-  306913086: () => {},
-  306913087: () => {},
-  306913088: $0 => {
+  306902195: () => {},
+  306902196: () => {},
+  306902197: () => {},
+  306902198: () => {},
+  306902199: () => {},
+  306902200: () => {},
+  306902201: () => {},
+  306902202: () => {},
+  306902203: () => {},
+  306902204: () => {},
+  306902205: () => {},
+  306902206: () => {},
+  306902207: () => {},
+  306902208: () => {},
+  306902209: () => {},
+  306902210: () => {},
+  306902211: () => {},
+  306902212: () => {},
+  306902213: () => {},
+  306902214: () => {},
+  306902215: () => {},
+  306902216: () => {},
+  306902217: () => {},
+  306902218: () => {},
+  306902219: () => {},
+  306902220: () => {},
+  306902221: () => {},
+  306902222: () => {},
+  306902223: () => {},
+  306902224: () => {},
+  306902225: () => {},
+  306902226: () => {},
+  306902227: () => {},
+  306902228: () => {},
+  306902229: () => {},
+  306902230: () => {},
+  306902231: () => {},
+  306902232: () => {},
+  306902233: () => {},
+  306902234: () => {},
+  306902235: () => {},
+  306902236: () => {},
+  306902237: () => {},
+  306902238: () => {},
+  306902239: () => {},
+  306902240: $0 => {
     throw ("Sikertelen shader fordítás: " + UTF8ToString($0));
   },
-  306913152: () => {},
-  306913153: () => {},
-  306913154: () => {},
-  306913155: () => {},
-  306913156: () => {},
-  306913157: () => {},
-  306913158: () => {},
-  306913159: () => {},
-  306913160: () => {},
-  306913161: () => {},
-  306913162: () => {},
-  306913163: () => {},
-  306913164: () => {},
-  306913165: () => {},
-  306913166: () => {},
-  306913167: () => {},
-  306913168: () => {},
-  306913169: () => {},
-  306913170: () => {},
-  306913171: () => {},
-  306913172: () => {},
-  306913173: () => {},
-  306913174: () => {},
-  306913175: () => {},
-  306913176: () => {},
-  306913177: () => {},
-  306913178: () => {},
-  306913179: () => {},
-  306913180: () => {},
-  306913181: () => {},
-  306913182: () => {},
-  306913183: () => {},
-  306913184: $0 => {
+  306902304: () => {},
+  306902305: () => {},
+  306902306: () => {},
+  306902307: () => {},
+  306902308: () => {},
+  306902309: () => {},
+  306902310: () => {},
+  306902311: () => {},
+  306902312: () => {},
+  306902313: () => {},
+  306902314: () => {},
+  306902315: () => {},
+  306902316: () => {},
+  306902317: () => {},
+  306902318: () => {},
+  306902319: () => {},
+  306902320: () => {},
+  306902321: () => {},
+  306902322: () => {},
+  306902323: () => {},
+  306902324: () => {},
+  306902325: () => {},
+  306902326: () => {},
+  306902327: () => {},
+  306902328: () => {},
+  306902329: () => {},
+  306902330: () => {},
+  306902331: () => {},
+  306902332: () => {},
+  306902333: () => {},
+  306902334: () => {},
+  306902335: () => {},
+  306902336: $0 => {
     throw ("Sikertelen shader összekapcsolás: " + UTF8ToString($0));
   },
-  306913254: () => {},
-  306913255: () => {},
-  306913256: () => {},
-  306913257: () => {},
-  306913258: () => {},
-  306913259: () => {},
-  306913260: () => {},
-  306913261: () => {},
-  306913262: () => {},
-  306913263: () => {},
-  306913264: () => {},
-  306913265: () => {},
-  306913266: () => {},
-  306913267: () => {},
-  306913268: () => {},
-  306913269: () => {},
-  306913270: () => {},
-  306913271: () => {},
-  306913272: () => {},
-  306913273: () => {},
-  306913274: () => {},
-  306913275: () => {},
-  306913276: () => {},
-  306913277: () => {},
-  306913278: () => {},
-  306913279: () => {},
-  306913280: () => {},
-  306913281: () => {},
-  306913282: () => {},
-  306913283: () => {},
-  306913284: () => {},
-  306913285: () => {},
-  306913286: () => {},
-  306913287: () => {},
-  306913288: () => {},
-  306913289: () => {},
-  306913290: () => {},
-  306913291: () => {},
-  306913292: () => {},
-  306913293: () => {},
-  306913294: () => {},
-  306913295: () => {},
-  306913296: () => {},
-  306913297: () => {},
-  306913298: () => {},
-  306913299: () => {},
-  306913300: () => {},
-  306913301: () => {},
-  306913302: () => {},
-  306913303: () => {},
-  306913304: () => {},
-  306913305: () => {},
-  306913306: () => {},
-  306913307: () => {},
-  306913308: () => {},
-  306913309: () => {},
-  306913310: () => {},
-  306913311: () => {},
-  306913312: ($0, $1) => {
+  306902406: () => {},
+  306902407: () => {},
+  306902408: () => {},
+  306902409: () => {},
+  306902410: () => {},
+  306902411: () => {},
+  306902412: () => {},
+  306902413: () => {},
+  306902414: () => {},
+  306902415: () => {},
+  306902416: () => {},
+  306902417: () => {},
+  306902418: () => {},
+  306902419: () => {},
+  306902420: () => {},
+  306902421: () => {},
+  306902422: () => {},
+  306902423: () => {},
+  306902424: () => {},
+  306902425: () => {},
+  306902426: () => {},
+  306902427: () => {},
+  306902428: () => {},
+  306902429: () => {},
+  306902430: () => {},
+  306902431: () => {},
+  306902432: () => {},
+  306902433: () => {},
+  306902434: () => {},
+  306902435: () => {},
+  306902436: () => {},
+  306902437: () => {},
+  306902438: () => {},
+  306902439: () => {},
+  306902440: () => {},
+  306902441: () => {},
+  306902442: () => {},
+  306902443: () => {},
+  306902444: () => {},
+  306902445: () => {},
+  306902446: () => {},
+  306902447: () => {},
+  306902448: () => {},
+  306902449: () => {},
+  306902450: () => {},
+  306902451: () => {},
+  306902452: () => {},
+  306902453: () => {},
+  306902454: () => {},
+  306902455: () => {},
+  306902456: () => {},
+  306902457: () => {},
+  306902458: () => {},
+  306902459: () => {},
+  306902460: () => {},
+  306902461: () => {},
+  306902462: () => {},
+  306902463: () => {},
+  306902464: ($0, $1) => {
     let fps = document.getElementById(UTF8ToString($1));
     if (fps) {
       fps.innerText = $0;
     }
   },
-  306913402: () => {},
-  306913403: () => {},
-  306913404: () => {},
-  306913405: () => {},
-  306913406: () => {},
-  306913407: () => {},
-  306913408: () => {},
-  306913409: () => {},
-  306913410: () => {},
-  306913411: () => {},
-  306913412: () => {},
-  306913413: () => {},
-  306913414: () => {},
-  306913415: () => {},
-  306913416: () => {},
-  306913417: () => {},
-  306913418: () => {},
-  306913419: () => {},
-  306913420: () => {},
-  306913421: () => {},
-  306913422: () => {},
-  306913423: () => {},
-  306913424: () => {},
-  306913425: () => {},
-  306913426: () => {},
-  306913427: () => {},
-  306913428: () => {},
-  306913429: () => {},
-  306913430: () => {},
-  306913431: () => {},
-  306913432: () => {},
-  306913433: () => {},
-  306913434: () => {},
-  306913435: () => {},
-  306913436: () => {},
-  306913437: () => {},
-  306913438: () => {},
-  306913439: () => {},
-  306913440: $0 => {
+  306902554: () => {},
+  306902555: () => {},
+  306902556: () => {},
+  306902557: () => {},
+  306902558: () => {},
+  306902559: () => {},
+  306902560: () => {},
+  306902561: () => {},
+  306902562: () => {},
+  306902563: () => {},
+  306902564: () => {},
+  306902565: () => {},
+  306902566: () => {},
+  306902567: () => {},
+  306902568: () => {},
+  306902569: () => {},
+  306902570: () => {},
+  306902571: () => {},
+  306902572: () => {},
+  306902573: () => {},
+  306902574: () => {},
+  306902575: () => {},
+  306902576: () => {},
+  306902577: () => {},
+  306902578: () => {},
+  306902579: () => {},
+  306902580: () => {},
+  306902581: () => {},
+  306902582: () => {},
+  306902583: () => {},
+  306902584: () => {},
+  306902585: () => {},
+  306902586: () => {},
+  306902587: () => {},
+  306902588: () => {},
+  306902589: () => {},
+  306902590: () => {},
+  306902591: () => {},
+  306902592: $0 => {
     throw ("Sikertelen fájl beolvasás: " + UTF8ToString($0));
   }
 };
 
 // Imports from the Wasm binary.
 var ___getTypeName = makeInvalidEarlyAccess("___getTypeName");
-
-var _malloc = makeInvalidEarlyAccess("_malloc");
-
-var _free = makeInvalidEarlyAccess("_free");
 
 var ___funcs_on_exit = makeInvalidEarlyAccess("___funcs_on_exit");
 
@@ -7158,6 +7094,8 @@ var _fflush = makeInvalidEarlyAccess("_fflush");
 var _emscripten_stack_get_end = makeInvalidEarlyAccess("_emscripten_stack_get_end");
 
 var _emscripten_stack_get_base = makeInvalidEarlyAccess("_emscripten_stack_get_base");
+
+var _malloc = makeInvalidEarlyAccess("_malloc");
 
 var _strerror = makeInvalidEarlyAccess("_strerror");
 
@@ -7170,6 +7108,8 @@ var _emscripten_builtin_realloc = makeInvalidEarlyAccess("_emscripten_builtin_re
 var _emscripten_builtin_memalign = makeInvalidEarlyAccess("_emscripten_builtin_memalign");
 
 var _emscripten_builtin_calloc = makeInvalidEarlyAccess("_emscripten_builtin_calloc");
+
+var _free = makeInvalidEarlyAccess("_free");
 
 var _calloc = makeInvalidEarlyAccess("_calloc");
 
@@ -7206,10 +7146,6 @@ var wasmTable = makeInvalidEarlyAccess("wasmTable");
 function assignWasmExports(wasmExports) {
   assert(typeof wasmExports["__getTypeName"] != "undefined", "missing Wasm export: __getTypeName");
   ___getTypeName = createExportWrapper("__getTypeName", 1);
-  assert(typeof wasmExports["malloc"] != "undefined", "missing Wasm export: malloc");
-  _malloc = createExportWrapper("malloc", 1);
-  assert(typeof wasmExports["free"] != "undefined", "missing Wasm export: free");
-  _free = createExportWrapper("free", 1);
   assert(typeof wasmExports["__funcs_on_exit"] != "undefined", "missing Wasm export: __funcs_on_exit");
   ___funcs_on_exit = createExportWrapper("__funcs_on_exit", 0);
   assert(typeof wasmExports["fflush"] != "undefined", "missing Wasm export: fflush");
@@ -7218,6 +7154,8 @@ function assignWasmExports(wasmExports) {
   _emscripten_stack_get_end = wasmExports["emscripten_stack_get_end"];
   assert(typeof wasmExports["emscripten_stack_get_base"] != "undefined", "missing Wasm export: emscripten_stack_get_base");
   _emscripten_stack_get_base = wasmExports["emscripten_stack_get_base"];
+  assert(typeof wasmExports["malloc"] != "undefined", "missing Wasm export: malloc");
+  _malloc = createExportWrapper("malloc", 1);
   assert(typeof wasmExports["strerror"] != "undefined", "missing Wasm export: strerror");
   _strerror = createExportWrapper("strerror", 1);
   assert(typeof wasmExports["emscripten_builtin_malloc"] != "undefined", "missing Wasm export: emscripten_builtin_malloc");
@@ -7230,6 +7168,8 @@ function assignWasmExports(wasmExports) {
   _emscripten_builtin_memalign = createExportWrapper("emscripten_builtin_memalign", 2);
   assert(typeof wasmExports["emscripten_builtin_calloc"] != "undefined", "missing Wasm export: emscripten_builtin_calloc");
   _emscripten_builtin_calloc = createExportWrapper("emscripten_builtin_calloc", 2);
+  assert(typeof wasmExports["free"] != "undefined", "missing Wasm export: free");
+  _free = createExportWrapper("free", 1);
   assert(typeof wasmExports["calloc"] != "undefined", "missing Wasm export: calloc");
   _calloc = createExportWrapper("calloc", 2);
   assert(typeof wasmExports["realloc"] != "undefined", "missing Wasm export: realloc");
@@ -7273,7 +7213,6 @@ var wasmImports = {
   /** @export */ __syscall_openat: ___syscall_openat,
   /** @export */ __syscall_stat64: ___syscall_stat64,
   /** @export */ _abort_js: __abort_js,
-  /** @export */ _embind_finalize_value_object: __embind_finalize_value_object,
   /** @export */ _embind_register_bigint: __embind_register_bigint,
   /** @export */ _embind_register_bool: __embind_register_bool,
   /** @export */ _embind_register_class: __embind_register_class,
@@ -7286,8 +7225,6 @@ var wasmImports = {
   /** @export */ _embind_register_memory_view: __embind_register_memory_view,
   /** @export */ _embind_register_std_string: __embind_register_std_string,
   /** @export */ _embind_register_std_wstring: __embind_register_std_wstring,
-  /** @export */ _embind_register_value_object: __embind_register_value_object,
-  /** @export */ _embind_register_value_object_field: __embind_register_value_object_field,
   /** @export */ _embind_register_void: __embind_register_void,
   /** @export */ _emscripten_fs_load_embedded_files: __emscripten_fs_load_embedded_files,
   /** @export */ _emscripten_get_progname: __emscripten_get_progname,
@@ -7348,7 +7285,9 @@ var wasmImports = {
   /** @export */ glDeleteTextures: _glDeleteTextures,
   /** @export */ glDeleteVertexArrays: _glDeleteVertexArrays,
   /** @export */ glDepthMask: _glDepthMask,
+  /** @export */ glDisableVertexAttribArray: _glDisableVertexAttribArray,
   /** @export */ glDrawElements: _glDrawElements,
+  /** @export */ glDrawElementsInstanced: _glDrawElementsInstanced,
   /** @export */ glEnable: _glEnable,
   /** @export */ glEnableVertexAttribArray: _glEnableVertexAttribArray,
   /** @export */ glGenBuffers: _glGenBuffers,
@@ -7368,6 +7307,8 @@ var wasmImports = {
   /** @export */ glUniform1i: _glUniform1i,
   /** @export */ glUniformBlockBinding: _glUniformBlockBinding,
   /** @export */ glUseProgram: _glUseProgram,
+  /** @export */ glVertexAttrib2f: _glVertexAttrib2f,
+  /** @export */ glVertexAttribDivisor: _glVertexAttribDivisor,
   /** @export */ glVertexAttribPointer: _glVertexAttribPointer,
   /** @export */ glViewport: _glViewport,
   /** @export */ proc_exit: _proc_exit,

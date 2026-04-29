@@ -14,6 +14,7 @@ const mockDatabase = {
     checkUserOwnsConnection: jest.fn().mockResolvedValue(true),
 
     updateMapTitle: jest.fn().mockResolvedValue(true),
+    getGameMapDetails: jest.fn(),
     getMapsByGameMapId: jest.fn(),
     getMapInfo: jest.fn(),
     insertMap: jest.fn(),
@@ -39,7 +40,22 @@ const mockDatabase = {
     insertConnection: jest.fn(),
     arePointsInSameMap: jest.fn().mockResolvedValue(true),
     isConnectionCrossMap: jest.fn().mockResolvedValue(true),
-    updateConnectionDirections: jest.fn().mockResolvedValue(true)
+    updateConnectionDirections: jest.fn().mockResolvedValue(true),
+
+    getGameMapComments: jest.fn(),
+    getGameMapCommentCount: jest.fn(),
+    hasUserCommentedOnGameMap: jest.fn().mockResolvedValue(true),
+    getUserCommentOnGameMap: jest.fn(),
+    insertGameMapComment: jest.fn(),
+    updateUserCommentOnGameMap: jest.fn().mockResolvedValue(true),
+    deleteUserCommentOnGameMap: jest.fn().mockResolvedValue(true),
+    getGameMapCoverImage: jest.fn(),
+    updateGameMapCoverImage: jest.fn().mockResolvedValue(true),
+    getTopScoresForGameMap: jest.fn(),
+    updateGameMapDetails: jest.fn().mockResolvedValue(true),
+    getAllImageIdsForGameMap: jest.fn(),
+    deleteGameMapById: jest.fn().mockResolvedValue(true),
+    getMapImage: jest.fn()
 };
 
 module.exports = mockDatabase;

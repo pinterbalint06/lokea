@@ -1,0 +1,15 @@
+const APP_EVENTS = {
+    APP_INIT: "APP_INIT",
+    STATE_UPDATED: "STATE_UPDATED",
+    COMMENT_UPDATED: "COMMENT_UPDATED",
+    TOAST_SHOW: "TOAST_SHOW",
+    TOAST_HIDE_ID: "TOAST_HIDE_ID",
+    UI_MODAL_REQUESTED: "UI_MODAL_REQUESTED",
+    UI_MODAL_CONFIRMED: "UI_MODAL_CONFIRMED"
+};
+
+export const EVENTS = {
+    ...APP_EVENTS
+};
+
+export { EventBus } from "../../libs/EventBus.js";

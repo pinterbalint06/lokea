@@ -1,10 +1,10 @@
 const express = require("express");
 const router = express.Router();
 const multer = require("multer");
-const { deleteFile } = require("#utils/fileUtils.js");
-const AppError = require("#utils/AppError.js");
-const { checkAuth } = require("#utils/auth.js");
-const ERRORS = require("#utils/errorMessages.js");
+const { deleteFile } = require("#utils/file-utils.js");
+const AppError = require("#utils/app-error.js");
+const { checkAuth } = require("#root/auth.js");
+const ERRORS = require("#utils/error-messages.js");
 
 const mapsEndpoints = require("#mapcreator/maps/maps.routes.js");
 const pointsEndpoints = require("#mapcreator/points/points.routes.js");

@@ -16,7 +16,8 @@
         "#mapcreatortest/*": "./test/mapcreator/*",
         "#root/*": "./*",
         "#mapcreator/*": "./api/mapcreator/*",
-        "#gamemaps/*": "./api/gamemaps/*"
+        "#gamemaps/*": "./api/gamemaps/*",
+        "#testhelpers/*": "./test/helpers/*"
     },
     "author": "Kardos Krisztián",
     "license": "ISC",

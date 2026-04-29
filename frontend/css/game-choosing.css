@@ -1,3 +1,6 @@
+@import url('./base.css');
+@import url('./game-map-base.css');
+
 body {
     font-family: sans-serif;
     margin: 0;
@@ -89,31 +92,6 @@ body {
     color: #e6d9ff;
 }
 
-.stars {
-    display: inline-block;
-    font-size: 18px;
-    font-family: Times;
-    line-height: 1;
-    position: relative;
-    color: #7f709a;
-}
-
-.stars::before {
-    content: '★★★★★';
-    display: block;
-}
-
-.stars::after {
-    content: '★★★★★';
-    position: absolute;
-    top: 0;
-    left: 0;
-    color: #ffd86b;
-    overflow: hidden;
-    white-space: nowrap;
-    width: calc(var(--rating) * 10%);
-}
-
 .modal-overlay {
     display: none;
     position: fixed;
@@ -182,11 +160,6 @@ body {
     background-color: #cfa9ff;
     border-color: #cfa9ff;
     color: #210f3a;
-}
-
-.navPic {
-    height: 45px;
-    width: auto;
 }
 
 .dropdown:hover .dropdown-menu {

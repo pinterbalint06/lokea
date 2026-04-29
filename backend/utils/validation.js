@@ -1,5 +1,5 @@
-const AppError = require("#utils/AppError.js");
-const { deleteFile } = require("#utils/fileUtils.js");
+const AppError = require("#utils/app-error.js");
+const { deleteFile } = require("#utils/file-utils.js");
 
 const validateRequest = (schema) => async (request, response, next) => {
     try {
@@ -24,7 +24,7 @@ const validateRequest = (schema) => async (request, response, next) => {
             );
         }
         if (schema.query) {
-            request.query = await schema.query.validateAsync(
+            const validatedQuery = await schema.query.validateAsync(
                 request.query,
                 {
                     abortEarly: true,
@@ -32,6 +32,8 @@ const validateRequest = (schema) => async (request, response, next) => {
                     convert: true
                 }
             );
+            request.query = validatedQuery;
+            request.validatedQuery = validatedQuery;
         }
         next();
     } catch (error) {
