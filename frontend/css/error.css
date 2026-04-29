@@ -1,0 +1,29 @@
+@import url('./variables.css');
+@import url('./base.css');
+
+.lilagradiensbg {
+    background: var(--bg-radial-main);
+}
+
+.error-container {
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 1.5rem;
+}
+
+.error-card {
+    max-width: 500px;
+    width: 100%;
+    text-align: center;
+}
+
+.error-code {
+    font-size: clamp(4rem, 12vw, 6rem);
+    font-weight: 900;
+    color: var(--text-danger);
+    line-height: 1;
+    margin-bottom: 0;
+    text-shadow: 0 0 20px rgba(var(--state-danger-rgb), 0.5);
+}

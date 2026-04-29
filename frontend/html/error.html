@@ -1,0 +1,32 @@
+<!DOCTYPE html>
+<html lang="hu">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Lokea - Hiba ({{STATUS_CODE}})</title>
+    <link href="/bootstrap/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="/css/error.css">
+    <script type="module" src="/javascript/error/error.js"></script>
+</head>
+
+<body class="lilagradiensbg">
+    <main class="error-container">
+        <section class="error-card uveg p-5 rounded-4 shadow-lg">
+            <h1 class="error-code">{{STATUS_CODE}}</h1>
+            <h2 class="h4 mt-3 mb-4 text-white">Hoppáré! Valami elromlott.</h2>
+            <p class="text-white-50 mb-4">{{ERROR_MESSAGE}}</p>
+
+            <div class="d-flex justify-content-center gap-3 flex-wrap">
+                <button id="backBtn" type="button" class="btn btn-outline-secondary rounded-pill px-4">
+                    Vissza az előző oldalra
+                </button>
+                <a href="/" class="btn uvegbutton rounded-pill px-4">
+                    Vissza a főoldalra
+                </a>
+            </div>
+        </section>
+    </main>
+</body>
+
+</html>

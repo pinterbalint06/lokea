@@ -11,6 +11,7 @@ const { idSchema } = require('./utils/schemas.js');
 const ERRORS = require('./utils/error-messages.js');
 const { assertUserOwnsGameMap } = require('./api/mapcreator/shared/utils/mapcreator.utils.js');
 const AppError = require('#utils/app-error.js');
+const { buildErrorHtml } = require('./utils/error-template.js');
 
 //!Beállítások
 const app = express();
@@ -143,8 +144,8 @@ app.use('/api', (request, response) => {
 
 app.use('/', router);
 
-app.use((request, response) => {
-    response.status(404).sendFile(path.join(__dirname, '../frontend/html/notfound.html'));
+app.use((request, response, next) => {
+    next(new AppError("A keresett oldal nem található.", 404));
 });
 
 
@@ -162,7 +163,8 @@ app.use((error, request, response, next) => {
                 error: message
             });
         } else {
-            response.status(statusCode).send(`ide valahogy html`); // TODO
+            const finalHtml = buildErrorHtml(statusCode, message);
+            response.status(statusCode).send(finalHtml);
         }
     } else {
         next(error);
