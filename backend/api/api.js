@@ -24,7 +24,15 @@ const storage = multer.diskStorage({
 
 const upload = multer({
     storage: storage,
-    limits: { fileSize: 5 * 1024 * 1024 } // 5 MB
+    limits: { fileSize: 5 * 1024 * 1024 }, // 5 MB
+    fileFilter: (request, file, callback) => {
+        if (file.mimetype.startsWith('image/')) {
+            callback(null, true);
+        } else {
+            request.fileValidationError = 'Érvénytelen fájltípus! Csak képeket tölthetsz fel.';
+            callback(null, false); // Elutasítja a fájlt mentés nélkül
+        }
+    }
 });
 
 //!ENDPOINTS
@@ -299,39 +307,44 @@ router.put('/updateProfilePic', auth.checkAuth, upload.single('profilePic'), asy
     let originalFile;
     let newFilePath;
     try {
-        if (!request.file) {
-            response.status(400).json({ message: "Nincs kép!" });
+        if (request.fileValidationError) {
+            response.status(400).json({ message: request.fileValidationError });
         }
         else {
-            originalFile = request.file.path;
-            let newFileName = `processed-${Date.now()}.webp`;
-            newFilePath = path.join('uploads', newFileName);
-
-            //Kép tömöritése
-            sharp.cache(false);
-            const metadata = await sharp(originalFile)
-                .rotate()
-                .resize(400, 400, {
-                    fit: 'cover',
-                    position: 'center'
-                })
-                .toFormat('webp')
-                .toFile(newFilePath);
-
-            let { width, height } = metadata;
-            let finalUrl = `${newFileName}`;
-            let lastPfp = await database.uploadProfilePic(finalUrl, width, height, request.session.userid);
-
-            await fs.unlink(originalFile).catch(() => { });
-
-            if (lastPfp) {
-                let lastPfpPath = path.join(__dirname, '..', 'uploads', lastPfp);
-                await fs.unlink(lastPfpPath).catch((err) => {
-                    console.error("Régi kép törlése sikertelen:", err.path);
-                });
+            if (!request.file) {
+                response.status(400).json({ message: "Nincs kép!" });
             }
-            await database.addLog(request.session.userid, 'Profile picture update');
-            response.status(201).json({ success: true, message: "Profilkép frissítve!" });
+            else {
+                originalFile = request.file.path;
+                let newFileName = `processed-${Date.now()}.webp`;
+                newFilePath = path.join('uploads', newFileName);
+
+                //Kép tömöritése
+                sharp.cache(false);
+                const metadata = await sharp(originalFile)
+                    .rotate()
+                    .resize(400, 400, {
+                        fit: 'cover',
+                        position: 'center'
+                    })
+                    .toFormat('webp')
+                    .toFile(newFilePath);
+
+                let { width, height } = metadata;
+                let finalUrl = `${newFileName}`;
+                let lastPfp = await database.uploadProfilePic(finalUrl, width, height, request.session.userid);
+
+                await fs.unlink(originalFile).catch(() => { });
+
+                if (lastPfp) {
+                    let lastPfpPath = path.join(__dirname, '..', 'uploads', lastPfp);
+                    await fs.unlink(lastPfpPath).catch((err) => {
+                        console.error("Régi kép törlése sikertelen:", err.path);
+                    });
+                }
+                await database.addLog(request.session.userid, 'Profile picture update');
+                response.status(201).json({ success: true, message: "Profilkép frissítve!" });
+            }
         }
     } catch (error) {
         if (originalFile) {

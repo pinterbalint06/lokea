@@ -42,10 +42,35 @@ describe('Admin Logs API Átfogó Tesztek', () => {
         testRequiresAdminOrAuth(() => request(app).get('/api/admin/sortedLogs'));
 
         it('HIBA - 400, ha a dátum intervallum hibás', async () => {
-            await request(app)
+            const res = await request(app)
                 .get('/api/admin/sortedLogs')
                 .query({ periodFrom: '2024-05-10', periodTo: '2024-05-01' })
                 .expect(400);
+            expect(res.body.errors || res.body.error).toBeDefined();
+        });
+
+        it('HIBA - 400, ha az oldalszám (page) érvénytelen', async () => {
+            const res = await request(app)
+                .get('/api/admin/sortedLogs')
+                .query({ page: -1 })
+                .expect(400);
+            expect(res.body.errors.some(e => e.path === 'page')).toBe(true);
+        });
+
+        it('HIBA - 400, ha a roles paraméter érvénytelen', async () => {
+            const res = await request(app)
+                .get('/api/admin/sortedLogs')
+                .query({ roles: 'invalid_role_format' })
+                .expect(400);
+            expect(res.body.errors.some(e => e.path === 'roles' || e.path === 'roles[0]')).toBe(true);
+        });
+
+        it('HIBA - 400, ha az activities paraméter érvénytelen', async () => {
+            const res = await request(app)
+                .get('/api/admin/sortedLogs')
+                .query({ activities: 'invalid_activity_format' })
+                .expect(400);
+            expect(res.body.errors.some(e => e.path === 'activities' || e.path === 'activities[0]')).toBe(true);
         });
 
         it('SIKER - 200, ha nincs találat (üres lista)', async () => {
@@ -90,7 +115,16 @@ describe('Admin Logs API Átfogó Tesztek', () => {
         testRequiresAdminOrAuth(() => request(app).post('/api/admin/addLog'));
 
         it('HIBA - 400, ha az activity hiányzik vagy rövid', async () => {
-            await request(app).post('/api/admin/addLog').send({ activity: 'a' }).expect(400);
+            const res = await request(app).post('/api/admin/addLog').send({ activity: 'a' }).expect(400);
+            expect(res.body.errors.some(e => e.path === 'activity')).toBe(true);
+        });
+
+        it('HIBA - 400, ha a victimid érvénytelen (pl. nem szám)', async () => {
+            const res = await request(app)
+                .post('/api/admin/addLog')
+                .send({ activity: 'MUTE_USER', victimid: 'not_a_number' })
+                .expect(400);
+            expect(res.body.errors.some(e => e.path === 'victimid')).toBe(true);
         });
 
         it('SIKER - 200, új log mentése session userid-vel', async () => {
@@ -114,6 +148,30 @@ describe('Admin Logs API Átfogó Tesztek', () => {
 
     describe('Végpont: POST /exportLogs', () => {
         testRequiresAdminOrAuth(() => request(app).post('/api/admin/exportLogs'));
+
+        it('HIBA - 400, ha a dátum intervallum hibás', async () => {
+            const res = await request(app)
+                .post('/api/admin/exportLogs')
+                .send({ periodFrom: '2024-05-10', periodTo: '2024-05-01' })
+                .expect(400);
+            expect(res.body.errors || res.body.error).toBeDefined();
+        });
+
+        it('HIBA - 400, ha a roles paraméter érvénytelen', async () => {
+            const res = await request(app)
+                .post('/api/admin/exportLogs')
+                .send({ roles: 'invalid_role_format' })
+                .expect(400);
+            expect(res.body.errors.some(e => e.path === 'roles' || e.path === 'roles[0]')).toBe(true);
+        });
+
+        it('HIBA - 400, ha az activities paraméter érvénytelen', async () => {
+            const res = await request(app)
+                .post('/api/admin/exportLogs')
+                .send({ activities: 'invalid_activity_format' })
+                .expect(400);
+            expect(res.body.errors.some(e => e.path === 'activities' || e.path === 'activities[0]')).toBe(true);
+        });
 
         it('HIBA - 404, ha nincs exportálható adat', async () => {
             db.sortedLogs.mockResolvedValue({ total: 0, rows: [] });

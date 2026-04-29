@@ -49,7 +49,7 @@ router.get('/sortedLogs',
             .optional({ values: 'null' })
             .custom((value) => {
                 let arr = Array.isArray(value) ? value : [value];
-                return arr.every(a => /^[a-zA-Z0-9_, -]+$/.test(a));
+                return arr.every(a => /^[a-zA-Z0-9 -]+$/.test(a));
             }),
         query('page')
             .optional()

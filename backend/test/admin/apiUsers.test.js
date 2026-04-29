@@ -57,10 +57,26 @@ describe('Admin Users API-tesztek', () => {
     describe('GET /api/admin/sortedUsers', () => {
         testRequiresAdminOrAuth(() => request(app).get('/api/admin/sortedUsers'));
 
-        it('HIBA - 400, ha érvénytelen query paraméter', async () => {
+        it('HIBA - 400, ha a keresési típus (mireKeresek) érvénytelen', async () => {
             const res = await request(app)
                 .get('/api/admin/sortedUsers')
-                .query({ mireKeresek: 'invalid', mit: 'a', status: 'statusAny', adminChecked: true, modChecked: true, userChecked: true, lordChecked: true, page: -1 })
+                .query({ mireKeresek: 'invalid', mit: 'a', status: 'statusAny', adminChecked: true, modChecked: true, userChecked: true, lordChecked: true, page: 1 })
+                .expect(400);
+            expect(res.body.errors.some(e => e.path === 'mireKeresek')).toBe(true);
+        });
+
+        it('HIBA - 400, ha a státusz érvénytelen', async () => {
+            const res = await request(app)
+                .get('/api/admin/sortedUsers')
+                .query({ mireKeresek: 'username', mit: 'a', status: 'invalid', adminChecked: true, modChecked: true, userChecked: true, lordChecked: true, page: 1 })
+                .expect(400);
+            expect(res.body.errors.some(e => e.path === 'status')).toBe(true);
+        });
+
+        it('HIBA - 400, ha az oldalszám (page) érvénytelen', async () => {
+            const res = await request(app)
+                .get('/api/admin/sortedUsers')
+                .query({ mireKeresek: 'username', mit: 'a', status: 'statusAny', adminChecked: true, modChecked: true, userChecked: true, lordChecked: true, page: -1 })
                 .expect(400);
             expect(res.body.errors.some(e => e.msg === enTranslations.usersApi.validation_page_number_invalid)).toBe(true);
         });
@@ -140,12 +156,36 @@ describe('Admin Users API-tesztek', () => {
     describe('POST /api/admin/signupFromAdmin', () => {
         testRequiresAdminOrAuth(() => request(app).post('/api/admin/signupFromAdmin'));
 
-        it('HIBA - 400, ha érvénytelen body paraméter', async () => {
+        it('HIBA - 400, ha a username érvénytelen', async () => {
             const res = await request(app)
                 .post('/api/admin/signupFromAdmin')
-                .send({ username: '', email: 'invalid', password: 'short', role: 'invalid' })
+                .send({ username: '', email: 'valid@example.com', password: 'StrongPassword123', role: 'user' })
                 .expect(400);
-            expect(res.body.errors.length).toBeGreaterThan(0);
+            expect(res.body.errors.some(e => e.path === 'username')).toBe(true);
+        });
+
+        it('HIBA - 400, ha az email érvénytelen', async () => {
+            const res = await request(app)
+                .post('/api/admin/signupFromAdmin')
+                .send({ username: 'ValidUser', email: 'invalid', password: 'StrongPassword123', role: 'user' })
+                .expect(400);
+            expect(res.body.errors.some(e => e.path === 'email')).toBe(true);
+        });
+
+        it('HIBA - 400, ha a jelszó érvénytelen', async () => {
+            const res = await request(app)
+                .post('/api/admin/signupFromAdmin')
+                .send({ username: 'ValidUser', email: 'valid@example.com', password: 'short', role: 'user' })
+                .expect(400);
+            expect(res.body.errors.some(e => e.path === 'password')).toBe(true);
+        });
+
+        it('HIBA - 400, ha a szerepkör (role) érvénytelen', async () => {
+            const res = await request(app)
+                .post('/api/admin/signupFromAdmin')
+                .send({ username: 'ValidUser', email: 'valid@example.com', password: 'StrongPassword123', role: 'invalid' })
+                .expect(400);
+            expect(res.body.errors.some(e => e.path === 'role')).toBe(true);
         });
 
         it('SIKER - 201, új felhasználó létrehozása', async () => {
@@ -220,12 +260,28 @@ describe('Admin Users API-tesztek', () => {
     describe('POST /api/admin/exportUsers', () => {
         testRequiresAdminOrAuth(() => request(app).post('/api/admin/exportUsers'));
 
-        it('HIBA - 400, ha érvénytelen body paraméter', async () => {
+        it('HIBA - 400, ha a keresési típus (mireKeresek) érvénytelen', async () => {
             const res = await request(app)
                 .post('/api/admin/exportUsers')
-                .send({ mireKeresek: 'invalid', mit: '', status: 'invalid', adminChecked: 'notbool', modChecked: 'notbool', userChecked: 'notbool', lordChecked: 'notbool' })
+                .send({ mireKeresek: 'invalid', mit: '', status: 'statusAny', adminChecked: true, modChecked: true, userChecked: true, lordChecked: true })
                 .expect(400);
-            expect(res.body.errors.length).toBeGreaterThan(0);
+            expect(res.body.errors.some(e => e.path === 'mireKeresek')).toBe(true);
+        });
+
+        it('HIBA - 400, ha a státusz érvénytelen', async () => {
+            const res = await request(app)
+                .post('/api/admin/exportUsers')
+                .send({ mireKeresek: 'username', mit: '', status: 'invalid', adminChecked: true, modChecked: true, userChecked: true, lordChecked: true })
+                .expect(400);
+            expect(res.body.errors.some(e => e.path === 'status')).toBe(true);
+        });
+
+        it('HIBA - 400, ha a checkbox paraméter nem boolean', async () => {
+            const res = await request(app)
+                .post('/api/admin/exportUsers')
+                .send({ mireKeresek: 'username', mit: '', status: 'statusAny', adminChecked: 'notbool', modChecked: true, userChecked: true, lordChecked: true })
+                .expect(400);
+            expect(res.body.errors.some(e => e.path === 'adminChecked')).toBe(true);
         });
 
         it('SIKER - 200, felhasználók exportálása', async () => {
@@ -252,12 +308,36 @@ describe('Admin Users API-tesztek', () => {
     describe('PUT /api/admin/updateUserFromAdmin', () => {
         testRequiresAdminOrAuth(() => request(app).put('/api/admin/updateUserFromAdmin'));
 
-        it('HIBA - 400, ha érvénytelen body paraméter', async () => {
+        it('HIBA - 400, ha a user_id érvénytelen', async () => {
             const res = await request(app)
                 .put('/api/admin/updateUserFromAdmin')
-                .send({ user_id: -1, username: '', email: 'invalid', role: 'invalid' })
+                .send({ user_id: -1, username: 'ValidUser', email: 'valid@example.com', role: 'user' })
                 .expect(400);
-            expect(res.body.errors.length).toBeGreaterThan(0);
+            expect(res.body.errors.some(e => e.path === 'user_id')).toBe(true);
+        });
+
+        it('HIBA - 400, ha a username érvénytelen', async () => {
+            const res = await request(app)
+                .put('/api/admin/updateUserFromAdmin')
+                .send({ user_id: 1, username: '', email: 'valid@example.com', role: 'user' })
+                .expect(400);
+            expect(res.body.errors.some(e => e.path === 'username')).toBe(true);
+        });
+
+        it('HIBA - 400, ha az email érvénytelen', async () => {
+            const res = await request(app)
+                .put('/api/admin/updateUserFromAdmin')
+                .send({ user_id: 1, username: 'ValidUser', email: 'invalid', role: 'user' })
+                .expect(400);
+            expect(res.body.errors.some(e => e.path === 'email')).toBe(true);
+        });
+
+        it('HIBA - 400, ha a szerepkör (role) érvénytelen', async () => {
+            const res = await request(app)
+                .put('/api/admin/updateUserFromAdmin')
+                .send({ user_id: 1, username: 'ValidUser', email: 'valid@example.com', role: 'invalid' })
+                .expect(400);
+            expect(res.body.errors.some(e => e.path === 'role')).toBe(true);
         });
 
         it('SIKER - 200, felhasználó adatainak frissítése', async () => {
@@ -313,12 +393,20 @@ describe('Admin Users API-tesztek', () => {
     describe('PUT /api/admin/userSelfUpdate', () => {
         testRequiresAdminOrAuth(() => request(app).put('/api/admin/userSelfUpdate'));
 
-        it('HIBA - 400, ha érvénytelen body paraméter', async () => {
+        it('HIBA - 400, ha a username érvénytelen', async () => {
             const res = await request(app)
                 .put('/api/admin/userSelfUpdate')
-                .send({ username: '', email: 'invalid' })
+                .send({ username: '', email: 'valid@example.com' })
                 .expect(400);
-            expect(res.body.errors.length).toBeGreaterThan(0);
+            expect(res.body.errors.some(e => e.path === 'username')).toBe(true);
+        });
+
+        it('HIBA - 400, ha az email érvénytelen', async () => {
+            const res = await request(app)
+                .put('/api/admin/userSelfUpdate')
+                .send({ username: 'ValidUser', email: 'invalid' })
+                .expect(400);
+            expect(res.body.errors.some(e => e.path === 'email')).toBe(true);
         });
 
         it('SIKER - 200, saját adatainak frissítése', async () => {
@@ -353,6 +441,23 @@ describe('Admin Users API-tesztek', () => {
 
     describe('PUT /api/admin/updateProfilePicFromAdmin', () => {
         testRequiresAdminOrAuth(() => request(app).put('/api/admin/updateProfilePicFromAdmin'));
+
+        it('HIBA 400 - érvénytelen user_id', async () => {
+            const res = await request(app)
+                .put('/api/admin/updateProfilePicFromAdmin')
+                .field('user_id', -1)
+                .attach('profilePic', Buffer.from('fake-image'), 'test.jpg')
+                .expect(400);
+            expect(res.body.errors.some(e => e.path === 'user_id')).toBe(true);
+        });
+
+        it('HIBA 400 - nem képfájl lett feltöltve (pl. PDF)', async () => {
+            const res = await request(app)
+                .put('/api/admin/updateProfilePicFromAdmin')
+                .field('user_id', 123)
+                .attach('profilePic', Buffer.from('fake-pdf-content'), 'teszt.pdf')
+                .expect(400);
+        });
 
         it('HIBA 400 - nincs kép feltöltve', async () => {
             const res = await request(app)
@@ -402,12 +507,20 @@ describe('Admin Users API-tesztek', () => {
     describe('DELETE /api/admin/userToInactive', () => {
         testRequiresAdminOrAuth(() => request(app).delete('/api/admin/userToInactive'));
 
-        it('HIBA - 400, ha érvénytelen body paraméter', async () => {
+        it('HIBA - 400, ha a szerepkör (role) érvénytelen', async () => {
             const res = await request(app)
                 .delete('/api/admin/userToInactive')
-                .send({ role: 'invalid_role', deleted: 'nem_boolean' })
+                .send({ userId: 1, role: 'invalid_role', deleted: false })
                 .expect(400);
-            expect(res.body.errors.length).toBeGreaterThan(0);
+            expect(res.body.errors.some(e => e.path === 'role')).toBe(true);
+        });
+
+        it('HIBA - 400, ha a deleted paraméter nem boolean', async () => {
+            const res = await request(app)
+                .delete('/api/admin/userToInactive')
+                .send({ userId: 1, role: 'user', deleted: 'nem_boolean' })
+                .expect(400);
+            expect(res.body.errors.some(e => e.path === 'deleted')).toBe(true);
         });
 
         it('HIBA - 403, ha ADMIN próbál törölni egy ADMIN-t', async () => {
@@ -460,6 +573,14 @@ describe('Admin Users API-tesztek', () => {
 
     describe('DELETE /api/admin/deleteProfilePicFromAdmin', () => {
         testRequiresAdminOrAuth(() => request(app).delete('/api/admin/deleteProfilePicFromAdmin'));
+
+        it('HIBA 400 - érvénytelen user_id', async () => {
+            const res = await request(app)
+                .delete('/api/admin/deleteProfilePicFromAdmin')
+                .send({ user_id: -1 })
+                .expect(400);
+            expect(res.body.errors.some(e => e.path === 'user_id')).toBe(true);
+        });
 
         it('SIKER 201 - sikeresen törli a profilképet', async () => {
             db.deleteProfilePic.mockResolvedValue('old-pic.webp');

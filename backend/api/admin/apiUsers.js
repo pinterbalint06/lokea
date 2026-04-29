@@ -27,7 +27,15 @@ const storage = multer.diskStorage({
 
 const upload = multer({
     storage: storage,
-    limits: { fileSize: 5 * 1024 * 1024 } // 5 MB
+    limits: { fileSize: 5 * 1024 * 1024 }, // 5 MB
+    fileFilter: (request, file, callback) => {
+        if (file.mimetype && file.mimetype.startsWith('image/')) {
+            callback(null, true);
+        } else {
+            request.fileValidationError = 'Érvénytelen fájltípus! Csak képeket tölthetsz fel.';
+            callback(null, false);
+        }
+    }
 });
 
 //API endpoints
@@ -59,8 +67,8 @@ router.get('/sortedUsers', [
         .isBoolean().withMessage((value, { req }) => req.t('admin:usersApi.validation_mod_checked_boolean')),
     query('userChecked')
         .isBoolean().withMessage((value, { req }) => req.t('admin:usersApi.validation_user_checked_boolean')),
-        query('lordChecked')
-            .isBoolean().withMessage((value, { req }) => req.t('admin:usersApi.validation_user_checked_boolean')),
+    query('lordChecked')
+        .isBoolean().withMessage((value, { req }) => req.t('admin:usersApi.validation_user_checked_boolean')),
     query('page')
         .isInt({ min: 1 }).withMessage((value, { req }) => req.t('admin:usersApi.validation_page_number_invalid'))
         .toInt(),
@@ -233,18 +241,18 @@ router.put('/updateUserFromAdmin',
                 if ((role === 'ADMIN' || role === 'LORD') && request.session.role !== 'LORD') {
                     return response.status(403).json({ error: request.t('admin:usersApi.permission_denied') });
                 }
-                    let success = await databaseUsers.updateUserByAdmin(user_id, username, email, role);
-                    if (success === 'User exists') {
-                        return response.status(409).json({ error: "A felhasználónév vagy e-mail cím már foglalt!" });
-                    }
-                    if (success == 1) {
-                        await databaseLogs.addLog(request.session.userid, 'User update (A)', user_id);
-                        sendChangeEmail(email, username).catch(err => console.log("Email hiba:", err.message));
-                        response.status(200).json({ message: request.t('admin:usersApi.update_success') });
-                    }
-                    else {
-                        response.status(404).json({ error: request.t('admin:usersApi.update_not_found_or_inactive') });
-                    }
+                let success = await databaseUsers.updateUserByAdmin(user_id, username, email, role);
+                if (success === 'User exists') {
+                    return response.status(409).json({ error: "A felhasználónév vagy e-mail cím már foglalt!" });
+                }
+                if (success == 1) {
+                    await databaseLogs.addLog(request.session.userid, 'User update (A)', user_id);
+                    sendChangeEmail(email, username).catch(err => console.log("Email hiba:", err.message));
+                    response.status(200).json({ message: request.t('admin:usersApi.update_success') });
+                }
+                else {
+                    response.status(404).json({ error: request.t('admin:usersApi.update_not_found_or_inactive') });
+                }
             }
         } catch (error) {
             response.status(500).json({ error: request.t('admin:usersApi.update_error') });
@@ -285,50 +293,61 @@ router.put('/userSelfUpdate',
         }
     })
 
-router.put('/updateProfilePicFromAdmin', upload.single('profilePic'), async (request, response) => {
-    let originalFile;
-    let newFilePath;
-    try {
-        if (!request.file) {
-            return response.status(400).json({ error: request.t('admin:usersApi.no_image_provided') });
-        }
-        else {
-            let user_id = request.body.user_id;
-            originalFile = request.file.path;
-
-            let newFileName = `processed-${Date.now()}.webp`;
-            newFilePath = path.join(TARGET_UPLOADS_DIR, newFileName);
-
-            sharp.cache(false);
-            const metadata = await sharp(originalFile)
-                .rotate()
-                .resize(400, 400, {
-                    fit: 'cover',
-                    position: 'center'
-                })
-                .toFormat('webp')
-                .toFile(newFilePath);
-
-            let { width, height } = metadata;
-            let lastPfp = await databaseUsers.uploadProfilePic(newFileName, width, height, user_id);
-
-            await fs.unlink(originalFile);
-
-            if (lastPfp) {
-                let lastPfpPath = path.join(TARGET_UPLOADS_DIR, lastPfp);
-                await fs.unlink(lastPfpPath);
+router.put('/updateProfilePicFromAdmin',
+    upload.single('profilePic'),
+    [
+        body("user_id")
+            .isInt({ min: 1 }).withMessage((value, { req }) => req.t('admin:usersApi.validation_user_id_invalid'))
+            .toInt()
+    ], validate,
+    async (request, response) => {
+        let originalFile;
+        let newFilePath;
+        try {
+            if (request.fileValidationError) {
+                return response.status(400).json({ error: request.fileValidationError });
             }
+            else {
+                if (!request.file) {
+                    return response.status(400).json({ error: request.t('admin:usersApi.no_image_provided') });
+                }
+                else {
+                    let user_id = request.body.user_id;
+                    originalFile = request.file.path;
 
-            await databaseLogs.addLog(request.session.userid, 'Profile picture update (A)', user_id);
-            response.status(201).json({ success: true, message: request.t('admin:usersApi.profile_pic_update_success') });
+                    let newFileName = `processed-${Date.now()}.webp`;
+                    newFilePath = path.join(TARGET_UPLOADS_DIR, newFileName);
 
+                    sharp.cache(false);
+                    const metadata = await sharp(originalFile)
+                        .rotate()
+                        .resize(400, 400, {
+                            fit: 'cover',
+                            position: 'center'
+                        })
+                        .toFormat('webp')
+                        .toFile(newFilePath);
+
+                    let { width, height } = metadata;
+                    let lastPfp = await databaseUsers.uploadProfilePic(newFileName, width, height, user_id);
+
+                    await fs.unlink(originalFile);
+
+                    if (lastPfp) {
+                        let lastPfpPath = path.join(TARGET_UPLOADS_DIR, lastPfp);
+                        await fs.unlink(lastPfpPath);
+                    }
+
+                    await databaseLogs.addLog(request.session.userid, 'Profile picture update (A)', user_id);
+                    response.status(201).json({ success: true, message: request.t('admin:usersApi.profile_pic_update_success') });
+                }
+            }
+        } catch (error) {
+            if (originalFile) await fs.unlink(originalFile).catch(() => { });
+            if (newFilePath) await fs.unlink(newFilePath).catch(() => { });
+            response.status(500).json({ error: request.t('admin:usersApi.profile_pic_update_error') });
         }
-    } catch (error) {
-        if (originalFile) await fs.unlink(originalFile).catch(() => { });
-        if (newFilePath) await fs.unlink(newFilePath).catch(() => { });
-        response.status(500).json({ error: request.t('admin:usersApi.profile_pic_update_error') });
-    }
-});
+    });
 
 //DELETE
 
@@ -359,25 +378,31 @@ router.delete('/userToInactive',
         }
     })
 
-router.delete('/deleteProfilePicFromAdmin', async (request, response) => {
-    try {
-        let user_id = request.body.user_id;
-        let lastPfp = await databaseUsers.deleteProfilePic(user_id);
+router.delete('/deleteProfilePicFromAdmin',
+    [
+        body("user_id")
+            .isInt({ min: 1 }).withMessage((value, { req }) => req.t('admin:usersApi.validation_user_id_invalid'))
+            .toInt()
+    ], validate,
+    async (request, response) => {
+        try {
+            let user_id = request.body.user_id;
+            let lastPfp = await databaseUsers.deleteProfilePic(user_id);
 
-        if (!lastPfp) {
-            response.status(200).json({ success: true, message: request.t('admin:usersApi.profile_pic_already_default') });
-        }
-        else {
-            let lastPfpPath = path.join(TARGET_UPLOADS_DIR, lastPfp);
-            await fs.unlink(lastPfpPath).catch(() => { });
+            if (!lastPfp) {
+                response.status(200).json({ success: true, message: request.t('admin:usersApi.profile_pic_already_default') });
+            }
+            else {
+                let lastPfpPath = path.join(TARGET_UPLOADS_DIR, lastPfp);
+                await fs.unlink(lastPfpPath).catch(() => { });
 
-            await databaseLogs.addLog(request.session.userid, 'Profile picture delete (A)', user_id);
-            response.status(201).json({ success: true, message: request.t('admin:usersApi.profile_pic_delete_success') });
+                await databaseLogs.addLog(request.session.userid, 'Profile picture delete (A)', user_id);
+                response.status(201).json({ success: true, message: request.t('admin:usersApi.profile_pic_delete_success') });
+            }
+        } catch (error) {
+            response.status(500).json({ error: request.t('admin:usersApi.profile_pic_delete_error') });
         }
-    } catch (error) {
-        response.status(500).json({ error: request.t('admin:usersApi.profile_pic_delete_error') });
-    }
-});
+    });
 
 function validate(req, res, next) {
     const errors = validationResult(req);
