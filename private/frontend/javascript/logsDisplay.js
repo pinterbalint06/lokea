@@ -78,7 +78,6 @@ export async function logsDisplayre() {
 }
 
 function tablazatGeneral(adatok) {
-    //todo - ha ures a data, ird ki hogy nincs talalat
     let tablazat = createHTMLelement('table', ["table", "table-striped", "table-hover", "mt-3"], null, 'logsTable');
 
     let thead = document.createElement('thead');
@@ -295,7 +294,6 @@ function createDatePicker(labelStr, idPrefix) {
     let label = document.createElement('label');
     label.classList.add("form-label", "small", "fw-bold");
     label.innerText = labelStr;
-    //megnezni
 
     let dateInp = inputGeneral('date', null, new Date().toISOString().split('T')[0], `${idPrefix}Date`, ["form-control", "form-control-sm", "mb-2"], true);
 
@@ -330,7 +328,6 @@ function getFilterValues() {
     if (isDateEnabled) {
         let fromDateValue = document.getElementById("fromDate").value;
         let fromSliderValue = document.querySelector("#fromDate + input[type='range']").value;
-        console.log(fromDateValue, fromSliderValue);
         periodFrom = fromDateValue ? `${fromDateValue} ${getTimeFromSlider(fromSliderValue)}` : null;
 
         let toDateValue = document.getElementById("toDate").value;

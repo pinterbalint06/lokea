@@ -62,6 +62,8 @@
         "btn_id": "ID"
     },
     "dashboard": {
+        "title": "Dashboard",
+        "welcome": "Welcome, {{username}}!",
         "player_data": "Player data",
         "registered_players": "Registered players",
         "active_players": "Active players",
@@ -92,7 +94,7 @@
         "dark_mode": "Dark mode",
         "enable_dark_mode": "Enable dark mode",
         "admin_darkmode": "Admin dark mode",
-        "enable_admin_dark_mode": "Enable dark mode for charts",
+        "enable_admin_dark_mode": "Enable dark mode for admin page",
         "default_stats_view": "Default statistics view",
         "daily_activity": "Daily activity",
         "weekly_activity": "Weekly activity",

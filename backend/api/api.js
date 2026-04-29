@@ -81,7 +81,6 @@ router.post("/signup",
             }
         } catch (error) {
             response.status(500).json({ error: error.message });
-            response.status(500).json({ error: error.message });
         }
     }
 );
@@ -133,7 +132,6 @@ router.post("/login",
                         else {
                             request.session.cookie.expires = false;
                         }
-                        console.log(rows[0]);
                         request.session.userid = rows[0].user_id;
                         request.session.role = sesRole;
                         request.session.userLanguage = rows[0].language;
@@ -410,7 +408,7 @@ router.get('/game_maps', async (request, response) => {
             });
         }
 
-        const user_id = request.session?.userid || 1; //TODO: teszt user törlése session stabilizálás után
+        const user_id = request.session?.userid || 1;
         const palyak = await database.getGameMaps(sort, user_id, offset);
 
         response.status(200).json({

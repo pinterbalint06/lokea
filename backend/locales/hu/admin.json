@@ -62,6 +62,8 @@
         "btn_id": "ID"
     },
     "dashboard": {
+        "title": "Kezelőpult",
+        "welcome": "Üdv, {{username}}!",
         "player_data": "Játékos adat",
         "registered_players": "Regisztrált játékosok",
         "active_players": "Aktív játékosok",
@@ -92,7 +94,7 @@
         "dark_mode": "Sötét mód",
         "enable_dark_mode": "Sötét mód engedélyezése",
         "admin_darkmode": "Admin sötét mód",
-        "enable_admin_dark_mode": "Grafikonok sötét módjának engedélyezése",
+        "enable_admin_dark_mode": "Admin felület sötét módjának engedélyezése",
         "default_stats_view": "Alapértelmezett statisztika nézet",
         "daily_activity": "Napi aktivitás",
         "weekly_activity": "Heti aktivitás",

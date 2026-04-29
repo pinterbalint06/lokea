@@ -174,10 +174,10 @@ export async function settingsDisplayre(adminSettings) {
     uiSec.body.appendChild(makeSubtitle(i18next.t('admin:settings.dark_mode')));
     let darkSwitchDiv = createHTMLelement('div', ['form-check', 'form-switch']);
     let darkInput = inputGeneral("checkbox", null, null, "darkMode", ["form-check-input"], false);
-    darkInput.checked = (data.darkmode == 0);
+    darkInput.checked = (data.darkmode == 1);
     darkInput.onclick = async function () {
-        await updateDarkMode(document.getElementById("darkMode").checked);
-        ejszakaimod();
+        await updateDarkMode(this.checked);
+        showAlert(i18next.t('admin:settings.modification_success'), 'success');
     };
     let darkLabel = document.createElement('label');
     darkLabel.innerText = i18next.t('admin:settings.enable_dark_mode');
@@ -261,11 +261,11 @@ async function checkModification() {
             wrongInput(document.getElementById('emailInput'));
             siker = false;
         }
-        if (!siker) {
-            throw new Error(i18next.t('admin:users.validation_required') || "Kérlek, javítsd a pirossal jelölt mezőket!");
-        }
         if (siker) {
             await saveModification(inInput.username, inInput.email);
+        }
+        else {
+            throw new Error(i18next.t('admin:users.validation_required') || "Kérlek, javítsd a pirossal jelölt mezőket!");
         }
     }
 }
@@ -300,20 +300,7 @@ async function jelszoValtoztat() {
     }
 }
 
-function ejszakaimod() {
-    let body = document.body;
-    let aktualis = body.getAttribute('data-bs-theme');
-
-    if (aktualis === 'dark') {
-        body.setAttribute('data-bs-theme', 'light');
-    } else {
-        body.setAttribute('data-bs-theme', 'dark');
-    }
-}
-
 let settingsModal;
 let currentSettings;
 let objectURL;
 let tempPfp;
-
-//megnezni selectet

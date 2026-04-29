@@ -1,5 +1,5 @@
 import { createHTMLelement, formatTime } from "./utils/domUtils.js";
-import { getDashboardInfo } from "./fetchs.js";
+import { getDashboardInfo, getUserData } from "./fetchs.js";
 import { initSocket } from "/javascript/libs/utils/socketio.js";
 import i18next from "./utils/i18next.js";
 
@@ -8,11 +8,19 @@ export async function dashboardDisplayre(selectedChart) {
     display.innerHTML = "";
 
     let data = await getDashboardInfo();
+    let userData = await getUserData();
+
+    let fejlecDiv = createHTMLelement('div', ['mb-4', 'mt-4']);
+    let cim = createHTMLelement('h2', ['h2', 'mb-1'], i18next.t('admin:dashboard.title'));
+    let udvozlet = createHTMLelement('p', ['text-muted', 'fs-5', 'mb-0'], i18next.t('admin:dashboard.welcome', { username: userData.username }));
+    fejlecDiv.appendChild(cim);
+    fejlecDiv.appendChild(udvozlet);
+    display.appendChild(fejlecDiv);
 
     let mainRow = createHTMLelement('div', ['row', 'g-4']);
     let rightCol = createHTMLelement('div', ['col-lg-4', 'd-flex', 'flex-column', 'gap-4']);
 
-    let kpi = createKpi(data.playerCount, data.activePlayerCount);
+    let kpi = createKpi(data.playerCount, data.activePlayerCount, cachedOnlineCount);
     let chart = createChartBox();
     let logs = createLogs(data.logsPreview);
 
@@ -54,10 +62,15 @@ export async function dashboardDisplayre(selectedChart) {
         chartContainer.appendChild(chartImg);
     }
 
+    if (onlineCheckTimeout) {
+        clearTimeout(onlineCheckTimeout);
+    }
+    checkOnlineCount();
+
     await initSocket();
 }
 
-function createKpi(playerCount, activePlayerCount) {
+function createKpi(playerCount, activePlayerCount, onlineCount) {
     let card = createHTMLelement('div', ['card', 'p-4', 'shadow-sm', 'border-0']);
     card.appendChild(createHTMLelement('h6', ['text-muted', 'text-uppercase', 'small', 'fw-bold', 'mb-3'], i18next.t('admin:dashboard.player_data')));
 
@@ -76,12 +89,20 @@ function createKpi(playerCount, activePlayerCount) {
     });
     let row = createHTMLelement('div', ['d-flex', 'justify-content-between', 'align-items-center', 'p-2', 'rounded', 'bg-success-subtle']);
     row.appendChild(createHTMLelement('span', ['small', 'fw-bold'], i18next.t('admin:dashboard.online_players')));
-    row.appendChild(createHTMLelement('span', ['badge', 'bg-success-subtle', 'text-success', 'border'], null, "onlinePlayerCounter"));
+    row.appendChild(createHTMLelement('span', ['badge', 'bg-success-subtle', 'text-success', 'border'], onlineCount, "onlinePlayerCounter"));
     list.appendChild(row);
 
 
     card.appendChild(list);
     return card;
+}
+
+function checkOnlineCount() {
+    let onlineSpan = document.getElementById('onlinePlayerCounter');
+    if (onlineSpan) {
+        cachedOnlineCount = onlineSpan.innerText;
+        onlineCheckTimeout = setTimeout(checkOnlineCount, 1000);
+    }
 }
 
 function createChartBox() {
@@ -105,10 +126,14 @@ function createLogs(logArray) {
         let line = createHTMLelement('div', ['mb-1', 'border-bottom', 'border-secondary', 'pb-1']);
         line.style.opacity = "0.8";
         line.appendChild(createHTMLelement('span', ['text-info'], formatTime(logArray[i].happened_at)));
-        line.append(` - ${logArray[i].username} ${logArray[i].victim == null ? "" : logArray[i].victim}: ${logArray[i].activity}`);
+        let victimText = logArray[i].victim ? ` (${logArray[i].victim})` : "";
+        line.append(` - ${logArray[i].username}${victimText}: ${logArray[i].activity}`);
         shell.appendChild(line);
     }
 
     card.appendChild(shell);
     return card;
 }
+
+let cachedOnlineCount = "0";
+let onlineCheckTimeout = null;
