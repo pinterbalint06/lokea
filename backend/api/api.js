@@ -1,12 +1,13 @@
 const express = require('express');
 const router = express.Router();
 const database = require('../sql/database.js');
-const auth = require('../auth.js')
+const auth = require('../utils/auth.js')
 const fs = require('fs/promises');
 const bcrypt = require('bcrypt');
 const validator = require('validator');
 const { body, check, validationResult } = require("express-validator");
 const sharp = require('sharp');
+const { sendWelcomeEmail, sendDeleteEmail, sendChangeEmail, sendPasswordChangeEmail } = require('../utils/mails.js')
 
 //!Multer
 const multer = require('multer'); //?npm install multer
@@ -23,7 +24,15 @@ const storage = multer.diskStorage({
 
 const upload = multer({
     storage: storage,
-    limits: { fileSize: 5 * 1024 * 1024 } // 5 MB
+    limits: { fileSize: 5 * 1024 * 1024 }, // 5 MB
+    fileFilter: (request, file, callback) => {
+        if (file.mimetype.startsWith('image/')) {
+            callback(null, true);
+        } else {
+            request.fileValidationError = 'Érvénytelen fájltípus! Csak képeket tölthetsz fel.';
+            callback(null, false); // Elutasítja a fájlt mentés nélkül
+        }
+    }
 });
 
 //!ENDPOINTS
@@ -44,7 +53,6 @@ router.post("/signup",
         body("email")
             .isEmail().withMessage("Hibás email formátum")
             .isLength({ min: 5, max: 254 }).withMessage("Email max 254 karakter"),
-
         body("password")
             .isLength({ min: 8, max: 60 }).withMessage("Jelszó hossza 8-60 karakter")
             .matches(/\d/).withMessage("Kell benne szám")
@@ -64,6 +72,9 @@ router.post("/signup",
                 const hashedPassword = await bcrypt.hash(password, 10);
                 let insert = await database.newUser(username, email, hashedPassword);
                 if (insert.success) {
+                    let userid = insert.insertId;
+                    await database.addLog(userid, 'Sign up');
+                    // await sendWelcomeEmail(email, username);
                     response.status(201).json({
                         success: true,
                         message: "Sikeres regisztráció!"
@@ -119,7 +130,7 @@ router.post("/login",
                     else {
                         let sesRole = rows[0].role;
                         if (remember) {
-                            if (sesRole === 'ADMIN') {
+                            if (sesRole === 'ADMIN' || sesRole === 'LORD') {
                                 request.session.cookie.maxAge = 15 * 60 * 1000;
                             }
                             else {
@@ -131,6 +142,8 @@ router.post("/login",
                         }
                         request.session.userid = rows[0].user_id;
                         request.session.role = sesRole;
+                        request.session.userLanguage = rows[0].language;
+                        await database.addLog(rows[0].user_id, 'Login');
                         response.status(200).json({ message: "Sikeres bejelentkezés", role: sesRole, username: rows[0].username });
                     }
                 }
@@ -140,7 +153,7 @@ router.post("/login",
         }
     });
 
-router.post('/signout', auth.checkAuth, (request, response) => {
+router.post('/signout', (request, response) => {
     request.session.destroy(error => {
         if (error) {
             response.status(500).json({ success: false, error: error });
@@ -161,7 +174,7 @@ router.get('/loginRole', async (request, response) => {
         else {
             login = true;
             let user = await database.getUserNameProfile(request.session.userid);
-            if (request.session.role == "ADMIN") {
+            if (request.session.role == "ADMIN" || request.session.role == "LORD") {
                 response.status(200).json({ login, adminLink: "/admin", user: user[0] });
             }
             else {
@@ -169,7 +182,7 @@ router.get('/loginRole', async (request, response) => {
             }
         }
     } catch (error) {
-        response.status(500).json({ login, error: error });
+        response.status(500).json({ login, error: error.message });
     }
 })
 
@@ -178,9 +191,17 @@ router.get('/loginRole', async (request, response) => {
 router.get('/getUserData', auth.checkAuth, async (request, response) => {
     try {
         let users = await database.getUser(request.session.userid);
-        response.status(200).json({ users: users[0] });
+        let userData = users[0];
+        if (userData) {
+            if (userData.role && userData.role !== request.session.role) {
+                request.session.role = userData.role;
+            } else if (!userData.role) {
+                userData.role = request.session.role;
+            }
+        }
+        response.status(200).json({ users: userData });
     } catch (error) {
-        response.status(500).json({ error: error });
+        response.status(500).json({ error: error.message });
     }
 })
 
@@ -194,7 +215,15 @@ router.put('/updateUser', auth.checkAuth,
         body("email")
             .optional({ nullable: true })
             .isEmail().withMessage("Hibás email formátum")
-            .isLength({ min: 5, max: 254 }).withMessage("Email max 254 karakter!")
+            .isLength({ min: 5, max: 254 }).withMessage("Email max 254 karakter!"),
+        body("language")
+            .optional({ values: "null" })
+            .isString().withMessage("A nyelv formátuma érvénytelen!")
+            .isIn(['en', 'hu']).withMessage("A választható nyelvek: 'en' vagy 'hu'!"),
+
+        body("darkmode")
+            .optional({ values: "null" })
+            .isBoolean().withMessage("A sötét mód értéke csak logikai lehet!")
     ], async (request, response) => {
         try {
             const errors = validationResult(request);
@@ -205,13 +234,21 @@ router.put('/updateUser', auth.checkAuth,
                 });
             }
             else {
-                let { username, email, is_2fa, language, darkmode } = request.body;
-                await database.updateUser(request.session.userid, username, email, is_2fa, language, darkmode);
-                response.status(200).json({ message: "Sikeres frissités!" });
+                let { username, email, language, darkmode } = request.body;
+                let result = await database.updateUser(request.session.userid, username, email, language, darkmode);
+                if (result == 1) {
+                    if (language) request.session.userLanguage = language;
+                    await database.addLog(request.session.userid, 'User update');
+                    response.status(200).json({ message: "Sikeres frissités!" });
+                    // await sendChangeEmail(email, username);
+                }
+                else {
+                    response.status(200).json({ message: "Nem történt módositás!" });
+                }
             }
 
         } catch (error) {
-            response.status(500).json({ error: error });
+            response.status(500).json({ error: error.message });
         }
     })
 
@@ -235,68 +272,79 @@ router.put("/updatePassword", auth.checkAuth,
             }
             else {
                 let { oldPass, newPass } = request.body;
-                await database.updatePassword(request.session.userid, oldPass, newPass);
+                let { email, username } = await database.updatePassword(request.session.userid, oldPass, newPass);
+                await database.addLog(request.session.userid, 'Password update');
+                // await sendPasswordChangeEmail(email, username);
                 response.status(200).json({ message: "Sikeres frissités!" });
             }
 
         } catch (error) {
-            response.status(500).json({ error: error });
+            response.status(500).json({ error: error.message });
         }
     })
 
-router.post("/inactiveUser", auth.checkAuth, async (request, response) => {
+router.delete("/inactiveUser", auth.checkAuth, async (request, response) => {
     try {
-        await database.userToInactive(request.session.userid);
-        request.session.destroy(error => {
+        let { email, username } = await database.userToInactive(request.session.userid);
+        request.session.destroy(async (error) => {
             if (error) {
                 response.status(500).json({ success: false, error: error });
             }
             else {
+                await database.addLog(request.session.userid, 'User delete');
                 response.clearCookie('geo.sid');
-                response.status(200).json({ success: true, message: "Sikeres frissités!" });
+                // await sendDeleteEmail(email, username);
+                response.status(200).json({ success: true, message: "Sikeres törlés!" });
             }
         });
 
     } catch (error) {
-        response.status(500).json({ error: error });
+        response.status(500).json({ error: error.message });
     }
 })
 
-router.post('/updateProfilePic', auth.checkAuth, upload.single('profilePic'), async (request, response) => {
+router.put('/updateProfilePic', auth.checkAuth, upload.single('profilePic'), async (request, response) => {
     let originalFile;
     let newFilePath;
     try {
-        if (!request.file) {
-            response.status(400).json({ message: "Nincs kép!" });
+        if (request.fileValidationError) {
+            response.status(400).json({ message: request.fileValidationError });
         }
         else {
-            originalFile = request.file.path;
-            let newFileName = `processed-${Date.now()}.webp`;
-            newFilePath = path.join('uploads', newFileName);
-
-            //Kép tömöritése
-            sharp.cache(false);
-            const metadata = await sharp(originalFile)
-                .resize(400, 400, {
-                    fit: 'cover',
-                    position: 'center'
-                })
-                .toFormat('webp')
-                .toFile(newFilePath);
-
-            let { width, height } = metadata;
-            let finalUrl = `${newFileName}`;
-            let lastPfp = await database.uploadProfilePic(finalUrl, width, height, request.session.userid);
-
-            await fs.unlink(originalFile).catch(() => { });
-
-            if (lastPfp) {
-                let lastPfpPath = path.join(__dirname, '..', 'uploads', lastPfp);
-                await fs.unlink(lastPfpPath).catch((err) => {
-                    console.error("Régi kép törlése sikertelen:", err.path);
-                });
+            if (!request.file) {
+                response.status(400).json({ message: "Nincs kép!" });
             }
-            response.status(201).json({ success: true, message: "Profilkép frissítve!" });
+            else {
+                originalFile = request.file.path;
+                let newFileName = `processed-${Date.now()}.webp`;
+                newFilePath = path.join('uploads', newFileName);
+
+                //Kép tömöritése
+                sharp.cache(false);
+                const metadata = await sharp(originalFile)
+                    .rotate()
+                    .resize(400, 400, {
+                        fit: 'cover',
+                        position: 'center'
+                    })
+                    .toFormat('webp')
+                    .toFile(newFilePath);
+
+                let { width, height } = metadata;
+                let finalUrl = `${newFileName}`;
+                let lastPfp = await database.uploadProfilePic(finalUrl, width, height, request.session.userid);
+
+                await fs.unlink(originalFile).catch(() => { });
+
+                if (lastPfp) {
+                    let lastPfpPath = path.join(__dirname, '..', 'uploads', lastPfp);
+                    await fs.unlink(lastPfpPath).catch((err) => {
+                        console.error("Régi kép törlése sikertelen:", err.path);
+                    });
+                }
+                await database.addLog(request.session.userid, 'Profile picture update');
+                response.status(201).json({ success: true, message: "Profilkép frissítve!" });
+            }
         }
     } catch (error) {
         if (originalFile) {
@@ -322,10 +370,11 @@ router.delete('/deleteProfilePic', auth.checkAuth, async (request, response) => 
             } catch (error) {
                 console.log("a kép nincs a szerveren!" + error);
             }
+            await database.addLog(request.session.userid, 'Profile picture delete');
             response.status(201).json({ success: true, message: "Profilkép törölve!" });
         }
     } catch (error) {
-        response.status(500).json({ error: error });
+        response.status(500).json({ error: error.message });
     }
 })
 
@@ -354,7 +403,7 @@ router.get('/getProfilePic', auth.checkAuth,
                 });
             }
         } catch (error) {
-            response.status(500).json({ message: error })
+            response.status(500).json({ message: error.message })
         }
     })
 
@@ -372,7 +421,7 @@ router.get('/game_maps', async (request, response) => {
             });
         }
 
-        const user_id = request.session?.userid || 1; //TODO: teszt user törlése session stabilizálás után
+        const user_id = request.session?.userid || 1;
         const palyak = await database.getGameMaps(sort, user_id, offset);
 
         response.status(200).json({

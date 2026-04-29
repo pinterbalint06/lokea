@@ -4,9 +4,14 @@ const session = require('express-session'); //?npm install express-session
 const path = require('path');
 const cors = require('cors');
 const database = require("./sql/database.js");
-const auth = require('./auth.js')
+const auth = require('./utils/auth.js')
 const { Server } = require("socket.io");
 const http = require('http');
+const nodemailer = require("nodemailer");
+const { Chart, registerables } = require('chart.js');
+const i18next = require('i18next');
+const i18n_Backend = require('i18next-fs-backend');
+const i18n_Middleware = require('i18next-http-middleware');
 const { idSchema } = require('./utils/schemas.js');
 const ERRORS = require('./utils/error-messages.js');
 const { assertUserOwnsGameMap } = require('./api/mapcreator/shared/utils/mapcreator.utils.js');
@@ -19,8 +24,35 @@ const router = express.Router();
 const ip = '127.0.0.1';
 const port = 3000;
 const server = http.createServer(app);
-const onlineUsers = new Map(); 
+const onlineUsers = new Map();
 const io = new Server(server);
+
+const lngDetector = new i18n_Middleware.LanguageDetector();
+lngDetector.addDetector({
+    name: 'customDetector',
+    lookup(req, res, options) {
+        if (req.session && req.session.userLanguage) {
+            return req.session.userLanguage;
+        }
+        return null;
+    }
+});
+
+i18next
+    .use(i18n_Backend)
+    .use(lngDetector)
+    .init({
+        fallbackLng: 'en',
+        ns: ['admin', 'common'],
+        defaultNS: 'common',
+        backend: {
+            loadPath: path.join(__dirname, '/locales/{{lng}}/{{ns}}.json'),
+        },
+        detection: {
+            order: ['customDetector', 'querystring', 'cookie'],
+            caches: ['cookie']
+        }
+    });
 
 app.use(cors());
 app.use(express.json()); //?Middleware JSON
@@ -43,6 +75,10 @@ const sessionMiddleware = session({
 });
 app.use(sessionMiddleware);
 io.engine.use(sessionMiddleware);
+app.use(i18n_Middleware.handle(i18next));
+app.use(express.static(path.join(__dirname, '../frontend')));
+app.use(express.static(path.join(__dirname, '../private/frontend')));
+app.use('/locales', express.static(path.join(__dirname, 'locales')));
 
 //!Routing
 //?Főoldal:
@@ -93,8 +129,8 @@ router.get('/game-maps/:gameMapId/edit',
     }
 );
 
-router.get('/admin', auth.checkRole("ADMIN"), (request, response) => {
-    response.sendFile(path.join(__dirname, '../frontend/html/admin.html'));
+router.get('/admin', auth.checkRole("ADMIN", "LORD"), (request, response) => {
+    response.sendFile(path.join(__dirname, '../private/frontend/html/admin.html'));
 });
 router.get('/choose_game', (request, response) => {
     response.sendFile(path.join(__dirname, '../frontend/html/game-choosing.html'));
@@ -136,9 +172,8 @@ router.use((request, response) => {
 });
 
 //!API endpoints
-app.use(express.static(path.join(__dirname, '../frontend')));
-const adminEndpoints = require('./api/admin.js');
-app.use('/api/admin', adminEndpoints);
+const adminEndpoints = require('./api/admin/index.js');
+app.use('/api/admin', auth.checkAuth, auth.checkRole("ADMIN", "LORD"), adminEndpoints);
 const endpoints = require('./api/api.js');
 app.use('/api', endpoints);
 //!Map Creation API endpoints
@@ -161,7 +196,7 @@ io.on("connection", (socket) => {
         if (!onlineUsers.has(userId)) {
             onlineUsers.set(userId, new Set());
             onlineUsers.get(userId).add(socket.id);
-            
+
             io.emit("totalOnline", onlineUsers.size);
         } else {
             onlineUsers.get(userId).add(socket.id);
@@ -181,7 +216,6 @@ io.on("connection", (socket) => {
         }
     });
 });
-
 
 //!Szerver futtatása
 server.listen(port, ip, () => {

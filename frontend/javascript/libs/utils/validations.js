@@ -46,17 +46,17 @@ export function validalvaJelszo(password) {
     return password.length < 61 && password.length > 7 && isCorrectPassword(password);
 }
 
-function isCorrectUsername(username) {
+export function isCorrectUsername(username) {
     const re = /^[a-zA-Z0-9áéíóöőúüűÁÉÍÓÖŐÚÜŰ_-]{1,20}$/;
     return re.test(username);
 }
 
-function isEmail(email) {
+export function isEmail(email) {
     const re = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     return re.test(email);
 }
 
-function isCorrectPassword(password) {
+export function isCorrectPassword(password) {
     const hasUpperCase = /[A-Z]/.test(password);
     const hasNumber = /\d/.test(password);
     return hasUpperCase && hasNumber;

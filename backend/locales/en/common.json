@@ -1,0 +1,14 @@
+{
+    "common": {
+        "Sign up": "Sign up",
+        "Login": "Login",
+        "User update": "User update",
+        "Password update": "Password update",
+        "User delete": "User delete",
+        "Update profile picture": "Update profile picture",
+        "Delete profile picture": "Delete profile picture",
+        "from": "from",
+        "to": "to",
+        "reset": "Reset"
+    }
+}
