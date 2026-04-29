@@ -28,11 +28,10 @@ async function getPointPaths(pointID) {
     const paths = [];
 
     if (connections.length > 0) {
-        if (connections[0].start_point_id != pointID && connections[0].end_point_id != pointID) {
-            throw new AppError(ERRORS.COMMON.UNEXPECTED_ERROR, 500);
-        }
-
         for (const connection of connections) {
+            if (connection.start_point_id != pointID && connection.end_point_id != pointID) {
+                throw new AppError(ERRORS.COMMON.UNEXPECTED_ERROR, 500);
+            }
             const isStart = connection.start_point_id == pointID;
 
             const targetPointId = isStart ? connection.end_point_id : connection.start_point_id;
@@ -44,6 +43,9 @@ async function getPointPaths(pointID) {
                     directionDegrees = parseFloat(connection.direction_start_to_end);
                 } else {
                     directionDegrees = parseFloat(connection.direction_end_to_start);
+                }
+                if (Number.isNaN(directionDegrees)) {
+                    directionDegrees = null;
                 }
             } else {
                 if (connection.map_width == null || connection.map_height == null) {

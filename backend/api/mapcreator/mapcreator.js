@@ -8,7 +8,7 @@ const ERRORS = require("#utils/error-messages.js");
 
 const mapsEndpoints = require("#mapcreator/maps/maps.routes.js");
 const pointsEndpoints = require("#mapcreator/points/points.routes.js");
-const connectionsEndpoints = require("#mapcreator/connections/connections.route.js");
+const connectionsEndpoints = require("#mapcreator/connections/connections.routes.js");
 
 router.use("/", checkAuth, mapsEndpoints);
 router.use("/", checkAuth, pointsEndpoints);
