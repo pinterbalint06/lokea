@@ -52,7 +52,7 @@ async function updateDarkMode(user_id, darkmode) {
     try {
         connection = await pool.getConnection();
         await connection.beginTransaction();
-        const query = `UPDATE admin_settings SET darkmode = ? WHERE admin_id = ?`;
+        const query = `UPDATE users SET darkmode = ? WHERE user_id = ?`;
         const [result] = await connection.execute(query, [darkmode, user_id]);
         await connection.commit();
         affectedRows = result.affectedRows;

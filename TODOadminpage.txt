@@ -1,11 +1,1 @@
-TODO - egész
--reszponzivitás, sötétmód
--forditás response.error/message-re
-
-TODO - dashboard (main)
--check: diagram nulla adattal mit csinal
-
-
-hibak amiket javitani kell:
--fetch.js -> tovabbdobja a hibat olyan helyeken, ahol kesobb nincs try-catch
--grafikon cachebol tolt be
+-a match chart nincs kész!
