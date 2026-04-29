@@ -124,64 +124,15 @@ async function melyikValaszt(melyik) {
         case "users":
             await usersDisplayre({ modal, objectURL, myRole: userData.role, myUsername: userData.username });
             break;
-        case "files":
-            display.appendChild(await filesDisplayre());
-            break;
-        case "transactions":
-            display.appendChild(await transactionsDisplayre());
-            break;
         case "logs":
             await logsDisplayre();
             break;
         case "settings":
             await settingsDisplayre(adminSettings);
             break;
-        case "devlog":
-            display.appendChild(await devlogDisplayre());
-            break;
-        case "ttools":
-            display.appendChild(await testToolsDisplayre());
-            break;
-        case "fflags":
-            display.appendChild(await featureFlagsDisplayre());
-            break;
     }
 }
 
-async function filesDisplayre() {
-    let h1 = document.createElement('h1');
-    h1.classList.add("h2", "m-5", "text-center");
-    h1.innerText = "404 Egyenlőre nincs itt semmi... de itt lenne a files";
-    return h1;
-}
-
-async function transactionsDisplayre() {
-    let h1 = document.createElement('h1');
-    h1.classList.add("h2", "m-5", "text-center");
-    h1.innerText = "404 Egyenlőre nincs itt semmi... de itt lenne a tranzakciok";
-    return h1;
-}
-
-async function devlogDisplayre() {
-    let h1 = document.createElement('h1');
-    h1.classList.add("h2", "m-5", "text-center");
-    h1.innerText = "404 Egyenlőre nincs itt semmi... de itt lenne a devlog";
-    return h1;
-}
-
-async function testToolsDisplayre() {
-    let h1 = document.createElement('h1');
-    h1.classList.add("h2", "m-5", "text-center");
-    h1.innerText = "404 Egyenlőre nincs itt semmi... de itt lenne a testtools";
-    return h1;
-}
-
-async function featureFlagsDisplayre() {
-    let h1 = document.createElement('h1');
-    h1.classList.add("h2", "m-5", "text-center");
-    h1.innerText = "404 Egyenlőre nincs itt semmi... de itt lenne a featureflags";
-    return h1;
-}
 
 //VARIABLES
 
