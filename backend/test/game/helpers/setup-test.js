@@ -1,16 +1,16 @@
 const express = require("express");
 const supertest = require("supertest");
-const gameApiEndpoints = require("#root/api/gameflow/game.js");
-const gameChoosingEndpoints = require("#root/api/gameflow/gamelobby.js");
+const gameEndpoints = require("#root/api/gameflow/game.js");
+const gameLobbyEndpoints = require("#root/api/gameflow/gamelobby.js");
 
-function createGameApiTestApp() {
+function createGameTestApp() {
     const app = express();
     app.use(express.json());
-    app.use("/api/game", gameApiEndpoints);
+    app.use("/api/game", gameEndpoints);
     return supertest(app);
 }
 
-function createGameChoosingTestApp() {
+function createGameLobbyTestApp() {
     const app = express();
     app.use(express.json());
     app.use(express.urlencoded({ extended: false }));
@@ -20,8 +20,8 @@ function createGameChoosingTestApp() {
         });
         next();
     });
-    app.use("/api/choose-game", gameChoosingEndpoints);
+    app.use("/api/choose-game", gameLobbyEndpoints);
     return supertest(app);
 }
 
-module.exports = { createGameApiTestApp, createGameChoosingTestApp };
+module.exports = { createGameTestApp, createGameLobbyTestApp };

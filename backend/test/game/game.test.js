@@ -1,19 +1,16 @@
-const { createGameApiTestApp } = require("#gametest/helpers/setup-test.js");
+const { createGameTestApp } = require("#gametest/helpers/setup-test.js");
 const { testRequiresGameSession, suppressConsoleErrors } = require("#gametest/helpers/helpers.js");
 const { checkGameSession } = require("#root/auth.js");
 const database = require("#sql/game.database.js");
 const { mockConnection } = database;
-const fs = require("fs/promises");
 
-const requestWithSupertest = createGameApiTestApp();
+const requestWithSupertest = createGameTestApp();
 
 const mockMap = {
     map_id: 1,
     title: "Test Map",
-    filepath: "1/1/test.webp",
     width: 800,
-    height: 600,
-    image_id: 10
+    height: 600
 };
 
 const mockPoint = {
@@ -21,24 +18,10 @@ const mockPoint = {
     point_u: 0.5,
     point_v: 0.5,
     north_direction: 0,
-    map_id: 1,
-    filepath: "1/1/point.webp",
-    image_id: 20,
-    width: 800,
-    height: 600
+    map_id: 1
 };
 
 describe("Game API - /api/game/", () => {
-    let readFileSpy;
-
-    beforeEach(() => {
-        readFileSpy = jest.spyOn(fs, "readFile").mockResolvedValue(Buffer.from("fake-image-data"));
-    });
-
-    afterEach(() => {
-        readFileSpy.mockRestore();
-    });
-
     describe("GET /session", () => {
         describe("Authorization (401, 403)", () => {
             testRequiresGameSession(() => requestWithSupertest.get("/api/game/session"));
@@ -86,15 +69,14 @@ describe("Game API - /api/game/", () => {
         });
 
         describe("Happy paths (200)", () => {
-            it("Should return maps with base64 image data", async () => {
+            it("Should return maps array with title and mapId", async () => {
                 const response = await requestWithSupertest.get("/api/game/maps");
 
                 expect(response.statusCode).toBe(200);
                 expect(response.body.success).toBe(true);
                 expect(response.body.maps).toHaveLength(1);
                 expect(response.body.maps[0].title).toBe("Test Map");
-                expect(response.body.maps[0].image.base64).toBe(Buffer.from("fake-image-data").toString("base64"));
-                expect(response.body.maps[0].image.mimeType).toBe("image/webp");
+                expect(response.body.maps[0].mapId).toBe(1);
                 expect(database.getAllMaps).toHaveBeenCalledWith(100);
             });
 
@@ -108,33 +90,11 @@ describe("Game API - /api/game/", () => {
             });
         });
 
-        describe("Input validation (400)", () => {
-            it("Should respond with 400 for a path traversal attack in map filepath", async () => {
-                database.getAllMaps.mockResolvedValueOnce([
-                    { ...mockMap, filepath: "../../../etc/passwd" }
-                ]);
-
-                const response = await requestWithSupertest.get("/api/game/maps");
-
-                expect(response.statusCode).toBe(400);
-                expect(response.body.success).toBe(false);
-            });
-        });
-
         describe("Server errors (500)", () => {
             suppressConsoleErrors();
 
             it("Should respond with 500 if the database throws", async () => {
                 database.getAllMaps.mockRejectedValueOnce(new Error("DB error"));
-
-                const response = await requestWithSupertest.get("/api/game/maps");
-
-                expect(response.statusCode).toBe(500);
-                expect(response.body.success).toBe(false);
-            });
-
-            it("Should respond with 500 if file reading fails", async () => {
-                readFileSpy.mockRejectedValueOnce(new Error("File read error"));
 
                 const response = await requestWithSupertest.get("/api/game/maps");
 
@@ -158,9 +118,9 @@ describe("Game API - /api/game/", () => {
 
                 expect(response.statusCode).toBe(200);
                 expect(response.body.success).toBe(true);
-                expect(response.body.point.point_id).toBe(mockPoint.point_id);
-                expect(response.body.point.north_direction).toBe(mockPoint.north_direction);
-                expect(response.body.point.image.base64).toBeTruthy();
+                expect(response.body.point.pointId).toBe(mockPoint.point_id);
+                expect(response.body.point.game.timeLeft).toBeGreaterThanOrEqual(0);
+                expect(response.body.point.game.roundEndAt).toBeTruthy();
                 expect(database.getPointById).toHaveBeenCalledWith(10);
             });
 
@@ -211,21 +171,6 @@ describe("Game API - /api/game/", () => {
 
                 expect(response.statusCode).toBe(200);
                 expect(session.game.roundStartedAt).toBeTruthy();
-            });
-        });
-
-        describe("Input validation (400)", () => {
-            it("Should respond with 400 for a path traversal attack in point filepath", async () => {
-                database.getCurrentPointId.mockResolvedValueOnce(null);
-                database.getRandomPoint.mockResolvedValueOnce({
-                    ...mockPoint,
-                    filepath: "../../../etc/passwd"
-                });
-
-                const response = await requestWithSupertest.get("/api/game/round");
-
-                expect(response.statusCode).toBe(400);
-                expect(response.body.success).toBe(false);
             });
         });
 

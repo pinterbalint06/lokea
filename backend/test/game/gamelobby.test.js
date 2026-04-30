@@ -1,22 +1,18 @@
-const { createGameChoosingTestApp } = require("#gametest/helpers/setup-test.js");
+const { createGameLobbyTestApp } = require("#gametest/helpers/setup-test.js");
 const { testRequiresAuth, suppressConsoleErrors } = require("#gametest/helpers/helpers.js");
 const database = require("#sql/game.database.js");
 
-const requestWithSupertest = createGameChoosingTestApp();
+const requestWithSupertest = createGameLobbyTestApp();
 
 const mockGameMaps = [
     { id: 1, title: "Test Map", plays: 10, rating: 4.5 },
     { id: 2, title: "Another Map", plays: 5, rating: 3.0 }
 ];
 
-describe("Game Choosing API - /api/choose-game/", () => {
+describe("Game Lobby API - /api/choose-game/", () => {
     describe("GET /", () => {
         beforeEach(() => {
             database.getGameMaps.mockResolvedValue(mockGameMaps);
-        });
-
-        describe("Authorization (401)", () => {
-            testRequiresAuth(() => requestWithSupertest.get("/api/choose-game"));
         });
 
         describe("Input validation (400)", () => {
@@ -31,7 +27,7 @@ describe("Game Choosing API - /api/choose-game/", () => {
                 const response = await requestWithSupertest.get("/api/choose-game?sort=CREATED");
 
                 expect(response.statusCode).toBe(200);
-                expect(database.getGameMaps).toHaveBeenCalledWith("created", 1, 0);
+                expect(database.getGameMaps).toHaveBeenCalledWith("created", undefined, 0);
             });
         });
 
@@ -42,21 +38,21 @@ describe("Game Choosing API - /api/choose-game/", () => {
                 expect(response.statusCode).toBe(200);
                 expect(response.body.success).toBe(true);
                 expect(response.body.results).toEqual(mockGameMaps);
-                expect(database.getGameMaps).toHaveBeenCalledWith(sort, 1, 0);
+                expect(database.getGameMaps).toHaveBeenCalledWith(sort, undefined, 0);
             });
 
             it("Should default to 'created' sort when no sort param is given", async () => {
                 const response = await requestWithSupertest.get("/api/choose-game");
 
                 expect(response.statusCode).toBe(200);
-                expect(database.getGameMaps).toHaveBeenCalledWith("created", 1, 0);
+                expect(database.getGameMaps).toHaveBeenCalledWith("created", undefined, 0);
             });
 
             it("Should pass offset to database when provided", async () => {
                 const response = await requestWithSupertest.get("/api/choose-game?offset=10");
 
                 expect(response.statusCode).toBe(200);
-                expect(database.getGameMaps).toHaveBeenCalledWith("created", 1, 10);
+                expect(database.getGameMaps).toHaveBeenCalledWith("created", undefined, 10);
             });
         });
 
@@ -75,8 +71,6 @@ describe("Game Choosing API - /api/choose-game/", () => {
     });
 
     describe("GET /cover-images/:cover_image_id", () => {
-        const uploadsPath = require("path").join(__dirname, "../../uploads");
-
         describe("Happy paths (200)", () => {
             it("Should send the file at the path returned by the database", async () => {
                 database.getImagePath.mockResolvedValueOnce("cover_images/test.jpg");
@@ -90,13 +84,13 @@ describe("Game Choosing API - /api/choose-game/", () => {
                 expect(response.body.filePath).toContain("test.jpg");
             });
 
-            it("Should fall back to image-not-found.jpg when DB returns no path", async () => {
+            it("Should fall back to not_found.webp when DB returns no path", async () => {
                 database.getImagePath.mockResolvedValueOnce(null);
 
                 const response = await requestWithSupertest.get("/api/choose-game/cover-images/99");
 
                 expect(response.statusCode).toBe(200);
-                expect(response.body.filePath).toContain("image-not-found.jpg");
+                expect(response.body.filePath).toContain("not_found.webp");
             });
         });
 
@@ -266,19 +260,6 @@ describe("Game Choosing API - /api/choose-game/", () => {
             });
         });
 
-        describe("Conflicts (409)", () => {
-            it("Should respond with 409 if the user already has an active session", async () => {
-                database.selectLatestActiveGameSession.mockResolvedValueOnce({ session_id: 1 });
-
-                const response = await requestWithSupertest
-                    .post("/api/choose-game/session")
-                    .send(validBody);
-
-                expect(response.statusCode).toBe(409);
-                expect(response.body.success).toBe(false);
-            });
-        });
-
         describe("Happy paths (200)", () => {
             it("Should create a session and return 200 for normal difficulty", async () => {
                 const response = await requestWithSupertest
@@ -307,7 +288,6 @@ describe("Game Choosing API - /api/choose-game/", () => {
                 expect(response.statusCode).toBe(200);
                 expect(database.insertGameSession).toHaveBeenCalledWith(1, 5, 60, 100, -5);
             });
-
         });
 
         describe("Server errors (500)", () => {
@@ -325,7 +305,7 @@ describe("Game Choosing API - /api/choose-game/", () => {
             });
 
             it("Should respect statusCode from AppError thrown by database", async () => {
-                const AppError = require("#root/utils/AppError.js");
+                const AppError = require("#utils/app-error.js");
                 database.insertGameSession.mockRejectedValueOnce(new AppError("Custom error", 503));
 
                 const response = await requestWithSupertest

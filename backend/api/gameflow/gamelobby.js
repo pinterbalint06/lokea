@@ -34,7 +34,6 @@ router.get("/cover-images/:cover_image_id", async (request, response) => {
         let filePath = FALLBACK_COVER_IMAGE;
         if (request.params.cover_image_id) {
             const dbPath = await database.getImagePath(request.params.cover_image_id);
-            console.log("DB Path:", dbPath);
             if (dbPath) filePath = dbPath;
         }
         response.sendFile(path.join(UPLOADS_DIR, filePath));
