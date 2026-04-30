@@ -1,4 +1,5 @@
 //!Module-ok importálása
+require('dotenv').config();
 const express = require('express'); //?npm install express
 const session = require('express-session'); //?npm install express-session
 const path = require('path');
@@ -7,8 +8,6 @@ const database = require("./sql/database.js");
 const auth = require('./utils/auth.js')
 const { Server } = require("socket.io");
 const http = require('http');
-const nodemailer = require("nodemailer");
-const { Chart, registerables } = require('chart.js');
 const i18next = require('i18next');
 const i18n_Backend = require('i18next-fs-backend');
 const i18n_Middleware = require('i18next-http-middleware');
@@ -38,7 +37,7 @@ lngDetector.addDetector({
     }
 });
 
-i18next
+const i18nInitPromise = i18next
     .use(i18n_Backend)
     .use(lngDetector)
     .init({
@@ -218,8 +217,12 @@ io.on("connection", (socket) => {
 });
 
 //!Szerver futtatása
-server.listen(port, ip, () => {
-    console.log(`Szerver elérhetősége: http://${ip}:${port}`);
+i18nInitPromise.then(() => {
+    server.listen(port, ip, () => {
+        console.log(`Szerver elérhetősége: http://${ip}:${port}`);
+    });
+}).catch(err => {
+    console.error("Hiba az i18next inicializálása közben:", err);
 });
 
 //?Szerver futtatása terminalból: npm run dev

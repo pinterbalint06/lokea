@@ -1,5 +1,4 @@
 const pool = require('../connection.js');
-const bcrypt = require('bcrypt');
 
 //!SQL Queries
 

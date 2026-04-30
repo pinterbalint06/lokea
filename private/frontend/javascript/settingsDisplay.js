@@ -209,7 +209,7 @@ export async function settingsDisplayre(adminSettings) {
     chartSelect.add(new Option(i18next.t('admin:settings.weekly_registrations'), "registrations"));
     chartSelect.add(new Option(i18next.t('admin:settings.weekly_matches'), "matches"));
 
-    chartSelect.value = adminSettings.selectedChart || i18next.t('admin:settings.weekly_activity');
+    chartSelect.value = adminSettings.selectedChart || "activity-week";
     adminSec.body.appendChild(chartSelect);
 
     let adminSaveBtn = gombGeneral("button", i18next.t('admin:settings.save_admin_settings'), null, "green", null, ['w-100']);

@@ -153,7 +153,7 @@ router.post("/login",
         }
     });
 
-router.post('/signout', (request, response) => {
+router.post('/signout', auth.checkAuth, (request, response) => {
     request.session.destroy(error => {
         if (error) {
             response.status(500).json({ success: false, error: error });
@@ -285,13 +285,14 @@ router.put("/updatePassword", auth.checkAuth,
 
 router.delete("/inactiveUser", auth.checkAuth, async (request, response) => {
     try {
-        let { email, username } = await database.userToInactive(request.session.userid);
+        let userid = request.session.userid;
+        let { email, username } = await database.userToInactive(userid);
         request.session.destroy(async (error) => {
             if (error) {
                 response.status(500).json({ success: false, error: error });
             }
             else {
-                await database.addLog(request.session.userid, 'User delete');
+                await database.addLog(userid, 'User delete');
                 response.clearCookie('geo.sid');
                 // await sendDeleteEmail(email, username);
                 response.status(200).json({ success: true, message: "Sikeres törlés!" });

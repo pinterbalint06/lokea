@@ -7,3 +7,6 @@ backend/coverage
 backend/uploads/mapdatas/*
 
 !backend/uploads/mapdatas/assets/
+
+.env
+*.env

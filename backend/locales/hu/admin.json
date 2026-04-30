@@ -133,6 +133,7 @@
         "validation_mod_checked_boolean": "A modChecked paraméter nem boolean!",
         "validation_user_checked_boolean": "A userChecked paraméter nem boolean!",
         "validation_page_number_invalid": "Az oldalszám nem megfelelő!",
+        "validation_deleted_boolean": "A deleted paraméter nem logikai (boolean) érték!",
         "export_error": "Hiba az exportálás során!",
         "validation_user_id_invalid": "A user ID nem megfelelő!",
         "permission_denied": "Nincs jogosultságod ehhez!",

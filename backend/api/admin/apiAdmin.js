@@ -16,8 +16,8 @@ Chart.register(...registerables);
 router.get('/getLanguage', (request, response) => {
     try {
         if (!request.session) {
-            throw new Error();
             console.error("Session is missing");
+            throw new Error();
         }
         let language = request.session.userLanguage;
         response.status(200).json({ language: request.session.userLanguage });

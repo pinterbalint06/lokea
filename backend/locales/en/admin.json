@@ -133,6 +133,7 @@
         "validation_mod_checked_boolean": "The modChecked parameter is not a boolean!",
         "validation_user_checked_boolean": "The userChecked parameter is not a boolean!",
         "validation_page_number_invalid": "Invalid page number!",
+        "validation_deleted_boolean": "The deleted parameter must be a boolean!",
         "export_error": "An error occurred during export!",
         "validation_user_id_invalid": "Invalid user ID!",
         "permission_denied": "You do not have permission for this!",

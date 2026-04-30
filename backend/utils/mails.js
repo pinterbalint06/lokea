@@ -1,11 +1,15 @@
 const nodemailer = require("nodemailer");
 
+if (!process.env.EMAIL_USER || !process.env.EMAIL_PASS) {
+    console.error("KRITIKUS HIBA: EMAIL_USER és EMAIL_PASS környezeti változók nincsenek beállítva!");
+    process.exit(1);
+}
 
 const transporter = nodemailer.createTransport({
     service: "gmail",
     auth: {
-        user: "muhahaha2005@gmail.com",
-        pass: "jfsd nblp xvsb oyyp",
+        user: process.env.EMAIL_USER,
+        pass: process.env.EMAIL_PASS,
     },
 });
 
@@ -13,7 +17,7 @@ const transporter = nodemailer.createTransport({
 
 const sendWelcomeEmail = async (userEmail, username) => {
     const mailOptions = {
-        from: '"Lokea Csapata" <muhahaha2005@gmail.com>',
+        from: `"Lokea Csapata" <${process.env.EMAIL_USER}>`,
         to: userEmail,
         subject: "Üdvözlünk a Lokeában! 🌍",
         html: `
@@ -35,7 +39,7 @@ const sendWelcomeEmail = async (userEmail, username) => {
 
 const sendDeleteEmail = async (userEmail, username) => {
     const mailOptions = {
-        from: '"Lokea Csapata" <muhahaha2005@gmail.com>',
+        from: `"Lokea Csapata" <${process.env.EMAIL_USER}>`,
         to: userEmail,
         subject: "Fiókod törlésre került",
         html: `
@@ -53,7 +57,7 @@ const sendDeleteEmail = async (userEmail, username) => {
 
 const sendChangeEmail = async (userEmail, username) => {
     const mailOptions = {
-        from: '"Lokea Csapata" <visszaigazolas@lokea.hu>',
+        from: `"Lokea Csapata" <${process.env.EMAIL_USER}>`,
         to: userEmail,
         subject: "Fiókváltozatások",
         html: `
@@ -77,7 +81,7 @@ const sendChangeEmail = async (userEmail, username) => {
 
 const sendPasswordChangeEmail = async (userEmail, username) => {
     const mailOptions = {
-        from: '"Lokea Csapata" <visszaigazolas@lokea.hu>',
+        from: `"Lokea Csapata" <${process.env.EMAIL_USER}>`,
         to: userEmail,
         subject: "Jelszó mergváltozott",
         html: `

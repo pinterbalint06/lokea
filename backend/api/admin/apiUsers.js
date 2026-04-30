@@ -14,7 +14,6 @@ const databaseLogs = require('../../sql/admin/databaseLogs.js');
 //!Multer
 const multer = require('multer'); //?npm install multer
 const path = require('path');
-const { error } = require('console');
 const TARGET_UPLOADS_DIR = path.resolve(process.cwd(), 'uploads');
 
 const upload = multer({
@@ -162,7 +161,7 @@ router.post('/exportUsers',
             .isIn(['user_id', 'username', 'email']).withMessage((value, { req }) => req.t('admin:usersApi.validation_search_type_invalid')),
         body('mit')
             .optional({ values: 'null' })
-            .matches(/^[a-zA-Z0-9áéíóöőúüűÁÉÍÓÖŐÚÜŰ_-]*$/).withMessage((value, { req }) => req.t('admin:usersApi.validation_search_value_invalid_chars'))
+            .matches(/^[a-zA-Z0-9áéíóöőúüűÁÉÍÓÖŐÚÜŰ_.@-]*$/).withMessage((value, { req }) => req.t('admin:usersApi.validation_search_value_invalid_chars'))
             .isLength({ max: 254 }).withMessage((value, { req }) => req.t('admin:usersApi.validation_search_value_length')),
         body('status')
             .isIn(['statusActive', 'statusDeleted', 'statusAny']).withMessage((value, { req }) => req.t('admin:usersApi.validation_status_invalid')),
@@ -220,30 +219,21 @@ router.put('/updateUserFromAdmin',
     ], validate,
     async (request, response) => {
         try {
-            const errors = validationResult(request);
-            if (!errors.isEmpty()) {
-                response.status(400).json({
-                    success: false,
-                    error: errors.array()
-                });
+            let { user_id, username, email, role } = request.body;
+            if ((role === 'ADMIN' || role === 'LORD') && request.session.role !== 'LORD') {
+                return response.status(403).json({ error: request.t('admin:usersApi.permission_denied') });
+            }
+            let success = await databaseUsers.updateUserByAdmin(user_id, username, email, role);
+            if (success === 'User exists') {
+                return response.status(409).json({ error: "A felhasználónév vagy e-mail cím már foglalt!" });
+            }
+            if (success == 1) {
+                await databaseLogs.addLog(request.session.userid, 'User update (A)', user_id);
+                sendChangeEmail(email, username).catch(err => console.log("Email hiba:", err.message));
+                response.status(200).json({ message: request.t('admin:usersApi.update_success') });
             }
             else {
-                let { user_id, username, email, role } = request.body;
-                if ((role === 'ADMIN' || role === 'LORD') && request.session.role !== 'LORD') {
-                    return response.status(403).json({ error: request.t('admin:usersApi.permission_denied') });
-                }
-                let success = await databaseUsers.updateUserByAdmin(user_id, username, email, role);
-                if (success === 'User exists') {
-                    return response.status(409).json({ error: "A felhasználónév vagy e-mail cím már foglalt!" });
-                }
-                if (success == 1) {
-                    await databaseLogs.addLog(request.session.userid, 'User update (A)', user_id);
-                    sendChangeEmail(email, username).catch(err => console.log("Email hiba:", err.message));
-                    response.status(200).json({ message: request.t('admin:usersApi.update_success') });
-                }
-                else {
-                    response.status(404).json({ error: request.t('admin:usersApi.update_not_found_or_inactive') });
-                }
+                response.status(404).json({ error: request.t('admin:usersApi.update_not_found_or_inactive') });
             }
         } catch (error) {
             response.status(500).json({ error: request.t('admin:usersApi.update_error') });

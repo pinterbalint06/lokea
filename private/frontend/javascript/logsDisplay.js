@@ -27,6 +27,10 @@ export async function logsDisplayre() {
     let balOldal = createHTMLelement('div', ["col-lg-8"]);
     let jobbOldal = createHTMLelement('div', ["col-lg-4"]);
 
+    if (activeMediaQuery && activeLayoutHandler) {
+        activeMediaQuery.removeEventListener('change', activeLayoutHandler);
+    }
+
     const mediaQuery = window.matchMedia('(min-width: 992px)');
 
     const handleLayoutChange = (e) => {
@@ -69,6 +73,8 @@ export async function logsDisplayre() {
     };
 
     mediaQuery.addEventListener('change', handleLayoutChange);
+    activeMediaQuery = mediaQuery;
+    activeLayoutHandler = handleLayoutChange;
     handleLayoutChange(mediaQuery);
 
     display.appendChild(row);
@@ -104,7 +110,7 @@ function tablazatGeneral(adatok) {
         ];
 
         sorAdat.forEach(ertek => {
-            let td = createHTMLelement('th', [], ertek);
+            let td = createHTMLelement('td', [], ertek);
             tr.appendChild(td);
         });
 
@@ -348,3 +354,5 @@ function getFilterValues() {
 }
 
 let currentPage = { page: 1 };
+let activeMediaQuery = null;
+let activeLayoutHandler = null;

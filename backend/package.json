@@ -31,6 +31,7 @@
         "bcrypt": "^6.0.0",
         "chart.js": "^4.5.1",
         "cors": "^2.8.5",
+        "dotenv": "^17.4.2",
         "express": "^5.1.0",
         "express-session": "^1.18.2",
         "express-validator": "^7.3.1",

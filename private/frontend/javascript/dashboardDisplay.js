@@ -24,6 +24,10 @@ export async function dashboardDisplayre(selectedChart) {
     let chart = createChartBox();
     let logs = createLogs(data.logsPreview);
 
+    if (activeMediaQuery && activeLayoutHandler) {
+        activeMediaQuery.removeEventListener('change', activeLayoutHandler);
+    }
+
     const mediaQuery = window.matchMedia('(min-width: 992px)');
     const handleLayoutChange = (e) => {
         if (e.matches) {
@@ -49,6 +53,8 @@ export async function dashboardDisplayre(selectedChart) {
         }
     }
     mediaQuery.addEventListener('change', handleLayoutChange);
+    activeMediaQuery = mediaQuery;
+    activeLayoutHandler = handleLayoutChange;
     handleLayoutChange(mediaQuery);
 
     display.appendChild(mainRow);
@@ -137,3 +143,5 @@ function createLogs(logArray) {
 
 let cachedOnlineCount = "0";
 let onlineCheckTimeout = null;
+let activeMediaQuery = null;
+let activeLayoutHandler = null;
