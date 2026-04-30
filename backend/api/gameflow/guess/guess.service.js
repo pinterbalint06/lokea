@@ -59,7 +59,7 @@ function calculateScore(distance, timeLeft, roundTime, sharpness) {
 function buildGuessResult(guess, game, correctMap, correctMapIndex) {
     const outOfBounds = guess.u < 0 || guess.v < 0 || guess.u > 1 || guess.v > 1;
     const wrongMap = correctMapIndex !== guess.mapI;
-    let re = { score: 0, distance: null, pixelDistance: null, mapIndex: correctMapIndex };
+    let re = { score: 0, distance: -1, pixelDistance: null, mapIndex: correctMapIndex };
     if (!outOfBounds && !wrongMap) {
         const du = guess.u - game.point.pointu;
         const dv = guess.v - game.point.pointv;

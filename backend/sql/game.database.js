@@ -51,14 +51,12 @@ async function getGameTitleById(gameMapId) {
         WHERE game_maps.game_maps_id = ?
     `;
     const [result] = await pool.execute(query, [gameMapId]);
-    console.log("Queried game title for gameMapId", gameMapId, "Result:", result);
     return result.length > 0 ? result[0].title : null;
 }
 
 async function insertGameSession(userId, rounds, roundTime, gameMapId, sharpness) {
     const query = 'INSERT INTO game_sessions (user_id, game_maps_id, rounds, sharpness, time_per_round) VALUES (?, ?, ?, ?, ?)';
     const [result] = await pool.execute(query, [userId, gameMapId, rounds, sharpness, roundTime]);
-    console.log("Inserted game session for userId", userId, "gameMapId", gameMapId, "Result:", result);
     return result.insertId;
 }
 

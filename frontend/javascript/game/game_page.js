@@ -1,6 +1,8 @@
 import { MapViewer } from "../libs/viewer/MapViewer.js";
 import { EquirectangularViewer } from "../libs/viewer/EquirectangularViewer.js";
 import { formatSecondsToMinutes } from "./timer-conversion.js";
+// import { degreeToRadian } from "../libs/math/geometry.js";
+// import { loadPointEquirectangularLowThenHigh } from "../libs/network/progressiveImage.js";
 
 const pictureCanvasId = "pictureCanvas";
 const mapCanvasId = "mapCanvas";
@@ -163,9 +165,11 @@ async function startGame() {
         gameMaps = mapsData.maps;
         cycleMaps();
         if (gameMaps.length > 1) {
+            document.querySelectorAll('.map-side-btn').forEach(btn => btn.style.display = 'flex');
             document.getElementById('mapPrevBtn').addEventListener('click', () => cycleMaps(-1));
             document.getElementById('mapNextBtn').addEventListener('click', () => cycleMaps(1));
         }
+        
 
         const roundCount = gameData.game.rounds;
         const currentRound = gameData.game.currentRound;
@@ -316,6 +320,14 @@ function showAnswer(response) {
             movetoMarker(response.pointx, response.pointy);
         }, 500);
     }, 320);
+}
+
+async function loadPointLowThenHigh(point) {
+    try {
+        await loadPointEquirectangularLowThenHigh(equirectangularViewer, point.image);
+    } catch (error) {
+        console.error("Error loading point:", error);
+    }
 }
 
 async function fetchGameData(url) {

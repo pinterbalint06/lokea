@@ -41,7 +41,7 @@
             <div id="errorBox">
                 <p class="panel-label">Hiba</p>
                 <p id="errorMessage"></p>
-                <button class="btn-next-round" onclick="location.href='/choose_game'">Vissza a főoldalra</button>
+                <button class="btn-next-round" onclick="location.href='/game-maps'">Vissza a főoldalra</button>
             </div>
         </div>
 
@@ -107,7 +107,35 @@
                         <p class="panel-label">Játék vége</p>
                         <h1 id="finalScore">0</h1>
                         <p class="panel-label">Végső pontszám</p>
-                        <button class="btn-next-round" onclick="location.href='/choose_game'">Vissza a főoldalra</button>
+
+                        <hr class="panel-divider">
+
+                        <div class="gameover-columns">
+                            <div class="gameover-left">
+                                <p class="panel-label">Értékeld a pályát</p>
+                                <fieldset class="gameover-rating-group">
+                                    <div class="gameover-rating-input">
+                                        <input type="radio" id="goStar5" name="gameOverRating" value="5">
+                                        <label for="goStar5" aria-label="5 csillag">&#9733;</label>
+                                        <input type="radio" id="goStar4" name="gameOverRating" value="4">
+                                        <label for="goStar4" aria-label="4 csillag">&#9733;</label>
+                                        <input type="radio" id="goStar3" name="gameOverRating" value="3">
+                                        <label for="goStar3" aria-label="3 csillag">&#9733;</label>
+                                        <input type="radio" id="goStar2" name="gameOverRating" value="2">
+                                        <label for="goStar2" aria-label="2 csillag">&#9733;</label>
+                                        <input type="radio" id="goStar1" name="gameOverRating" value="1">
+                                        <label for="goStar1" aria-label="1 csillag">&#9733;</label>
+                                    </div>
+                                </fieldset>
+                                <button class="btn-next-round" id="submitRatingBtn">Értékelés küldése</button>
+                                <button class="btn-next-round gameover-back-btn" onclick="location.href='/game-maps'">Vissza a főoldalra</button>
+                            </div>
+
+                            <div class="gameover-right">
+                                <p class="panel-label">Rangsor</p>
+                                <div id="gameOverLeaderboard" class="gameover-leaderboard"></div>
+                            </div>
+                        </div>
                     </div>
                 </div>
             </div>

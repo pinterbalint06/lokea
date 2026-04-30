@@ -4,7 +4,6 @@ async function processGuess(request, response) {
     try {
         const sessionId = request.session.game.activeSessionId;
         const game = request.session.game;
-
         const result = await guessService.processGuess(sessionId, game, request.body);
 
         game.currentRound += 1;

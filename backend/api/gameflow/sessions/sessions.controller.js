@@ -2,7 +2,7 @@ const sessionsService = require("./sessions.service.js");
 
 async function getActiveSession(request, response) {
     try {
-        const userId = request.session?.userid || 1; //TODO: törlés ha van login
+        const userId = request.session?.userid;
         const sessionObject = await sessionsService.getActiveSession(userId);
 
         if (!sessionObject) {
@@ -18,7 +18,7 @@ async function getActiveSession(request, response) {
 
 async function createGameSession(request, response) {
     try {
-        const userId = request.session?.userid || 1; //TODO: törlés ha van login
+        const userId = request.session?.userid;
         const sessionObject = await sessionsService.createGameSession(userId, request.body);
 
         request.session.game = sessionObject;

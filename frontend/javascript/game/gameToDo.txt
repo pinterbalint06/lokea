@@ -13,9 +13,6 @@ kesz--csalás ellenőrzés - idő
 kesz--dizájn
 kesz--gombok kinézete stb
 kesz--auth
-!!!felig kesz--játékok befejezése
-    --toplista megcsinalasa
-    --kommentelés megcsinálása
 kesz--session_guess get vagy post???
 kesz!!!!--127 kidurrantas
 kesz--adott körre sorsolt kep elmentese
@@ -32,7 +29,6 @@ kesz--térkép nevének kiirása
 kesz--css szebbre valo megcsinalasareview_palya_oldal_ag
 kesz!!!!--tranzakciokezeles
 kesz--reszponziv javitas
-!!!!--svg-k helyes használata   uixwing
 kesz--checkauth mindenhova
     kesz--login hiba jo helyre vigyen
 kesz--mapi, rounds, roundtime vizsgalata
@@ -41,12 +37,20 @@ kesz--adatbázis átírás miatt tipp kört is beküldeni
 kesz--végpontok átnevezése
 kesz--idő visszaadasa
 kesz--ido resetnel jora
---vegso panel a finish_game_sessionbol kapja az adatokat
+
 mindegy--ne induljon uj jatek f5nel ha vege a kornek
---choose game - game mapsra
---mapid elkuldese frontendre
+kesz--choose game - game mapsra
 torolve--pinterrel megbeszelni, hogy mi legyen a scores-al
+kesz--rendezés fix
+
+Teendők 2:
+!!!felig kesz--játékok befejezése ------pull utan
+    --toplista megcsinalasa
+    --kommentelés megcsinálása
+--vegso panel a finish_game_sessionbol kapja az adatokat
+--mapid elkuldese frontendre
 --tesztek javitasa
 !!!!--palyak kedvencre tetele
-kesz--rendezés fix
 !!!!--esetleg modal alaphelyzetbe allitasa
+--mapcover kepek megcsinalasa
+!!!!--svg-k helyes használata   uixwing  ------- utolso prio
