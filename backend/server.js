@@ -152,7 +152,7 @@ app.use((request, response, next) => {
 //! global error handler
 app.use((error, request, response, next) => {
     const statusCode = error.statusCode || 500;
-    const message = error.message || ERRORS.COMMON.UNEXPECTED_ERROR;
+    const message = statusCode >= 500 ? ERRORS.COMMON.UNEXPECTED_ERROR : (error.message || ERRORS.COMMON.UNEXPECTED_ERROR);
     if (statusCode >= 500) {
         console.error(`Unhandled Server Error: ${request.method} ${request.originalUrl}\n`, error);
     }

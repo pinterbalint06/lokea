@@ -17,10 +17,19 @@ try {
     `;
 }
 
+const sanitizeHtml = (value) => {
+    return String(value)
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/"/g, "&quot;")
+        .replace(/'/g, "&#39;");
+};
+
 const buildErrorHtml = (statusCode, message) => {
     return template
-        .replace(/{{STATUS_CODE}}/g, statusCode)
-        .replace(/{{ERROR_MESSAGE}}/g, message);
+        .replace(/{{STATUS_CODE}}/g, sanitizeHtml(statusCode))
+        .replace(/{{ERROR_MESSAGE}}/g, sanitizeHtml(message));
 };
 
 module.exports = {
