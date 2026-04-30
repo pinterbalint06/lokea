@@ -116,7 +116,7 @@ router.post("/signupFromAdmin",
             .isLength({ min: 1, max: 20 }).withMessage((value, { req }) => req.t('admin:usersApi.validation_username_length')),
         body("email")
             .isEmail().withMessage((value, { req }) => req.t('admin:usersApi.validation_email_format'))
-            .isLength({ min: 5, max: 250 }).withMessage((value, { req }) => req.t('admin:usersApi.validation_email_length')),
+            .isLength({ min: 5, max: 254 }).withMessage((value, { req }) => req.t('admin:usersApi.validation_email_length')),
         body("password")
             .isLength({ min: 8, max: 50 }).withMessage((value, { req }) => req.t('admin:usersApi.validation_password_length'))
             .matches(/\d/).withMessage((value, { req }) => req.t('admin:usersApi.validation_password_digit'))

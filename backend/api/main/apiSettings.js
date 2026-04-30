@@ -3,10 +3,10 @@ const router = express.Router();
 const database = require('../sql/database.js');
 const auth = require('../utils/auth.js')
 const fs = require('fs/promises');
-const bcrypt = require('bcrypt');
 const { body, check, validationResult } = require("express-validator");
 const sharp = require('sharp');
-const { sendWelcomeEmail, sendDeleteEmail, sendChangeEmail, sendPasswordChangeEmail } = require('../utils/mails.js')
+const { sendDeleteEmail, sendChangeEmail, sendPasswordChangeEmail } = require('../utils/mails.js');
+const { validate } = require('../../utils/validate.js');
 
 //!Multer
 const multer = require('multer'); //?npm install multer
@@ -28,7 +28,7 @@ const upload = multer({
         if (file.mimetype.startsWith('image/')) {
             callback(null, true);
         } else {
-            request.fileValidationError = 'Érvénytelen fájltípus! Csak képeket tölthetsz fel.';
+            request.fileValidationError = request.t('main:apiSettings.updateProfilePic.invalid_file_type');
             callback(null, false); // Elutasítja a fájlt mentés nélkül
         }
     }
@@ -49,7 +49,7 @@ router.get('/getUserData', auth.checkAuth, async (request, response) => {
         }
         response.status(200).json({ users: userData });
     } catch (error) {
-        response.status(500).json({ error: error.message });
+        response.status(500).json({ error: request.t('main:apiSettings.getUserData.error') });
     }
 })
 
@@ -57,77 +57,58 @@ router.put('/updateUser', auth.checkAuth,
     [
         body("username")
             .optional({ nullable: true })
-            .not().isEmail().withMessage("Felhasználónév nem lehet email cim!")
-            .matches(/^[a-zA-Z0-9áéíóöőúüűÁÉÍÓÖŐÚÜŰ_-]+$/).withMessage('A felhasználónév csak betűket, számokat, - vagy _ karaktert, és ékezetes betűket tartalmazhat.')
-            .isLength({ min: 1, max: 20 }).withMessage("Felhasználónév hossza nem megfelelő!"),
+            .not().isEmail().withMessage((value, { req }) => req.t('main:apiSettings.updateUser.validation_username_no_email'))
+            .matches(/^[a-zA-Z0-9áéíóöőúüűÁÉÍÓÖŐÚÜŰ_-]+$/).withMessage((value, { req }) => req.t('main:apiSettings.updateUser.validation_username_invalid_chars'))
+            .isLength({ min: 1, max: 20 }).withMessage((value, { req }) => req.t('main:apiSettings.updateUser.validation_username_length')),
         body("email")
             .optional({ nullable: true })
-            .isEmail().withMessage("Hibás email formátum")
-            .isLength({ min: 5, max: 254 }).withMessage("Email max 254 karakter!"),
+            .isEmail().withMessage((value, { req }) => req.t('main:apiSettings.updateUser.validation_email_format'))
+            .isLength({ min: 5, max: 254 }).withMessage((value, { req }) => req.t('main:apiSettings.updateUser.validation_email_length')),
         body("language")
             .optional({ values: "null" })
-            .isString().withMessage("A nyelv formátuma érvénytelen!")
-            .isIn(['en', 'hu']).withMessage("A választható nyelvek: 'en' vagy 'hu'!"),
+            .isString().withMessage((value, { req }) => req.t('main:apiSettings.updateUser.validation_language_format'))
+            .isIn(['en', 'hu']).withMessage((value, { req }) => req.t('main:apiSettings.updateUser.validation_language_values')),
 
         body("darkmode")
             .optional({ values: "null" })
-            .isBoolean().withMessage("A sötét mód értéke csak logikai lehet!")
-    ], async (request, response) => {
+            .isBoolean().withMessage((value, { req }) => req.t('main:apiSettings.updateUser.validation_darkmode_boolean'))
+    ], validate,
+    async (request, response) => {
         try {
-            const errors = validationResult(request);
-            if (!errors.isEmpty()) {
-                response.status(400).json({
-                    success: false,
-                    error: errors.array()
-                });
+            let { username, email, language, darkmode } = request.body;
+            let result = await database.updateUser(request.session.userid, username, email, language, darkmode);
+            if (result == 1) {
+                if (language) request.session.userLanguage = language;
+                await database.addLog(request.session.userid, 'User update');
+                response.status(200).json({ message: request.t('main:apiSettings.updateUser.success') });
+                // await sendChangeEmail(email, username);
             }
             else {
-                let { username, email, language, darkmode } = request.body;
-                let result = await database.updateUser(request.session.userid, username, email, language, darkmode);
-                if (result == 1) {
-                    if (language) request.session.userLanguage = language;
-                    await database.addLog(request.session.userid, 'User update');
-                    response.status(200).json({ message: "Sikeres frissités!" });
-                    // await sendChangeEmail(email, username);
-                }
-                else {
-                    response.status(200).json({ message: "Nem történt módositás!" });
-                }
+                response.status(200).json({ message: request.t('main:apiSettings.updateUser.no_change') });
             }
-
         } catch (error) {
-            response.status(500).json({ error: error.message });
+            response.status(500).json({ error: request.t('main:apiSettings.updateUser.error') });
         }
     })
 
 router.put("/updatePassword", auth.checkAuth,
     [
         body("oldPass")
-            .isLength({ min: 8, max: 60 }).withMessage("A régi jelszó hossza nem 8-60 karakter!"),
+            .isLength({ min: 8, max: 60 }).withMessage((value, { req }) => req.t('main:apiSettings.updatePassword.validation_old_password_length')),
         body("newPass")
-            .isLength({ min: 8, max: 60 }).withMessage("Az új jelszó hossza nem 8-60 karakter!")
-            .matches(/\d/).withMessage("A jelszóba kell minimum 1 szám!")
-            .matches(/[A-Z]/).withMessage("A jelszóba kell minimum 1 nagybetű!")
-    ],
+            .isLength({ min: 8, max: 60 }).withMessage((value, { req }) => req.t('main:apiSettings.updatePassword.validation_new_password_length'))
+            .matches(/\d/).withMessage((value, { req }) => req.t('main:apiSettings.updatePassword.validation_new_password_digit'))
+            .matches(/[A-Z]/).withMessage((value, { req }) => req.t('main:apiSettings.updatePassword.validation_new_password_uppercase'))
+    ], validate,
     async (request, response) => {
         try {
-            const errors = validationResult(request);
-            if (!errors.isEmpty()) {
-                response.status(400).json({
-                    success: false,
-                    error: errors.array()
-                });
-            }
-            else {
-                let { oldPass, newPass } = request.body;
-                let { email, username } = await database.updatePassword(request.session.userid, oldPass, newPass);
-                await database.addLog(request.session.userid, 'Password update');
-                // await sendPasswordChangeEmail(email, username);
-                response.status(200).json({ message: "Sikeres frissités!" });
-            }
-
+            let { oldPass, newPass } = request.body;
+            let { email, username } = await database.updatePassword(request.session.userid, oldPass, newPass);
+            await database.addLog(request.session.userid, 'Password update');
+            // await sendPasswordChangeEmail(email, username);
+            response.status(200).json({ message: request.t('main:apiSettings.updatePassword.success') });
         } catch (error) {
-            response.status(500).json({ error: error.message });
+            response.status(500).json({ error: request.t('main:apiSettings.updatePassword.error') });
         }
     })
 
@@ -136,18 +117,18 @@ router.delete("/inactiveUser", auth.checkAuth, async (request, response) => {
         let { email, username } = await database.userToInactive(request.session.userid);
         request.session.destroy(async (error) => {
             if (error) {
-                response.status(500).json({ success: false, error: error });
+                response.status(500).json({ success: false, error: request.t('main:apiSettings.inactiveUser.error') });
             }
             else {
                 await database.addLog(request.session.userid, 'User delete');
                 response.clearCookie('geo.sid');
                 // await sendDeleteEmail(email, username);
-                response.status(200).json({ success: true, message: "Sikeres törlés!" });
+                response.status(200).json({ success: true, message: request.t('main:apiSettings.inactiveUser.success') });
             }
         });
 
     } catch (error) {
-        response.status(500).json({ error: error.message });
+        response.status(500).json({ error: request.t('main:apiSettings.inactiveUser.error') });
     }
 })
 
@@ -156,11 +137,11 @@ router.put('/updateProfilePic', auth.checkAuth, upload.single('profilePic'), asy
     let newFilePath;
     try {
         if (request.fileValidationError) {
-            response.status(400).json({ message: request.fileValidationError });
+            response.status(400).json({ error: request.fileValidationError });
         }
         else {
             if (!request.file) {
-                response.status(400).json({ message: "Nincs kép!" });
+                response.status(400).json({ error: request.t('main:apiSettings.updateProfilePic.no_image') });
             }
             else {
                 originalFile = request.file.path;
@@ -191,7 +172,7 @@ router.put('/updateProfilePic', auth.checkAuth, upload.single('profilePic'), asy
                     });
                 }
                 await database.addLog(request.session.userid, 'Profile picture update');
-                response.status(201).json({ success: true, message: "Profilkép frissítve!" });
+                response.status(201).json({ success: true, message: request.t('main:apiSettings.updateProfilePic.success') });
             }
         }
     } catch (error) {
@@ -201,7 +182,7 @@ router.put('/updateProfilePic', auth.checkAuth, upload.single('profilePic'), asy
         if (newFilePath) {
             await fs.unlink(newFilePath).catch(() => { });
         }
-        response.status(500).json({ error: error.message });
+        response.status(500).json({ error: request.t('main:apiSettings.updateProfilePic.error') });
     }
 })
 
@@ -209,7 +190,7 @@ router.delete('/deleteProfilePic', auth.checkAuth, async (request, response) => 
     try {
         let lastPfp = await database.deleteProfilePic(request.session.userid);
         if (!lastPfp) {
-            response.status(200).json({ success: true, message: "A profilkép már alapértelmezett volt." });
+            response.status(200).json({ success: true, message: request.t('main:apiSettings.deleteProfilePic.already_default') });
         }
         else {
             let lastPfpPath = path.join(__dirname, '..', 'uploads', lastPfp);
@@ -219,17 +200,16 @@ router.delete('/deleteProfilePic', auth.checkAuth, async (request, response) => 
                 console.log("a kép nincs a szerveren!" + error);
             }
             await database.addLog(request.session.userid, 'Profile picture delete');
-            response.status(201).json({ success: true, message: "Profilkép törölve!" });
+            response.status(201).json({ success: true, message: request.t('main:apiSettings.deleteProfilePic.success') });
         }
     } catch (error) {
-        response.status(500).json({ error: error.message });
+        response.status(500).json({ error: request.t('main:apiSettings.deleteProfilePic.error') });
     }
 })
 
 router.get('/getProfilePic', auth.checkAuth,
     [
-        check("route")
-            .matches(/^[a-zA-Z0-9_\-]+\.[a-zA-Z0-9]+$/).withMessage('Érvénytelen fájl név!')
+        check("route").matches(/^[a-zA-Z0-9_\-]+\.[a-zA-Z0-9]+$/).withMessage((value, { req }) => req.t('main:apiSettings.getProfilePic.validation_invalid_filename'))
     ], (request, response) => {
         try {
             const errors = validationResult(request);
@@ -251,7 +231,7 @@ router.get('/getProfilePic', auth.checkAuth,
                 });
             }
         } catch (error) {
-            response.status(500).json({ message: error.message })
+            response.status(500).json({ error: request.t('main:apiSettings.getProfilePic.error') })
         }
     });
 

@@ -1,0 +1,69 @@
+{
+    "apiMain": {
+        "signup": {
+            "validation_username_no_email": "Username cannot be an email address!",
+            "validation_username_invalid_chars": "The username can only contain letters, numbers, - or _ characters.",
+            "validation_username_length": "Username length must be between 1 and 20 characters!",
+            "validation_email_format": "Invalid email format.",
+            "validation_email_length": "Email length must be between 5 and 254 characters!",
+            "validation_password_length": "Password length must be between 8 and 60 characters!",
+            "validation_password_digit": "Password must contain at least one number!",
+            "validation_password_uppercase": "Password must contain at least one uppercase letter!",
+            "success": "Registration successful!",
+            "user_exists": "The username or email address is already taken!",
+            "error": "An error occurred during registration!"
+        },
+        "login": {
+            "validation_username_length": "Invalid username/email length!",
+            "validation_password_length": "Invalid password length!",
+            "invalid_credentials": "Invalid username/email or password!",
+            "success": "Login successful!",
+            "error": "An error occurred during login!"
+        }
+    },
+    "apiSettings": {
+        "getUserData": {
+            "error": "Error fetching user data!"
+        },
+        "updateUser": {
+            "validation_username_no_email": "Username cannot be an email address!",
+            "validation_username_invalid_chars": "The username can only contain letters, numbers, - or _ characters.",
+            "validation_username_length": "Username length must be between 1 and 20 characters!",
+            "validation_email_format": "Invalid email format.",
+            "validation_email_length": "Email length must be between 5 and 254 characters!",
+            "validation_language_format": "The language format is invalid!",
+            "validation_language_values": "The available languages are: 'en' or 'hu'!",
+            "validation_darkmode_boolean": "The dark mode value can only be a boolean (true/false)!",
+            "success": "Update successful!",
+            "no_change": "No changes were made!",
+            "error": "Error updating user!"
+        },
+        "updatePassword": {
+            "validation_old_password_length": "Old password length must be between 8 and 60 characters!",
+            "validation_new_password_length": "New password length must be between 8 and 60 characters!",
+            "validation_new_password_digit": "The new password must contain at least one number!",
+            "validation_new_password_uppercase": "The new password must contain at least one uppercase letter!",
+            "success": "Password update successful!",
+            "error": "Error updating password!"
+        },
+        "inactiveUser": {
+            "success": "Account successfully deactivated!",
+            "error": "Error deactivating account!"
+        },
+        "updateProfilePic": {
+            "invalid_file_type": "Invalid file type! You can only upload images.",
+            "no_image": "No image selected!",
+            "success": "Profile picture updated successfully!",
+            "error": "Error updating profile picture!"
+        },
+        "deleteProfilePic": {
+            "already_default": "The profile picture was already the default.",
+            "success": "Profile picture deleted successfully!",
+            "error": "Error deleting profile picture!"
+        },
+        "getProfilePic": {
+            "validation_invalid_filename": "Invalid filename!",
+            "error": "Error fetching profile picture!"
+        }
+    }
+}
