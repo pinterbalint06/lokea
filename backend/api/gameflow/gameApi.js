@@ -6,7 +6,7 @@ const mapsRoutes = require("./maps/maps.routes.js");
 const randomPointRoutes = require("./random-point/random-point.routes.js");
 const guessRoutes = require("./guess/guess.routes.js");
 
-// router.use(checkGameSession);
+router.use(checkGameSession);
 
 router.get("/session", async (request, response) => {
     try {

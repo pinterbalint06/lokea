@@ -1,8 +1,8 @@
 import { MapViewer } from "../libs/viewer/MapViewer.js";
 import { EquirectangularViewer } from "../libs/viewer/EquirectangularViewer.js";
 import { formatSecondsToMinutes } from "./timer-conversion.js";
-// import { degreeToRadian } from "../libs/math/geometry.js";
-// import { loadPointEquirectangularLowThenHigh } from "../libs/network/progressiveImage.js";
+import { degreeToRadian } from "../libs/math/mathUtils.js";
+import { loadPointEquirectangularLowThenHigh, loadMapImageLowThenHigh } from "../libs/network/progressiveImage.js";
 
 const pictureCanvasId = "pictureCanvas";
 const mapCanvasId = "mapCanvas";
@@ -15,8 +15,9 @@ let equirectangularViewer;
 let mapViewerEngine;
 
 
-let gameMaps = [];
-let gameMapsIndex = -1;
+let maps = [];
+let mapId = null;
+let mapsIndex = -1;
 
 let canPlaceMarker = true;
 
@@ -27,6 +28,8 @@ let timerInterval = null;
 let timeLeft = 0;
 
 let guessSent = false;
+
+let currentPointId = null;
 
 document.addEventListener("DOMContentLoaded", function () {
     init();
@@ -162,14 +165,14 @@ async function startGame() {
         if (!gameData.game || typeof gameData.game.rounds !== 'number' || typeof gameData.game.roundTime !== 'number') {
             throw new Error("Érvénytelen játékadatok érkeztek a szervertől.");
         }
-        gameMaps = mapsData.maps;
+        maps = mapsData.maps;
         cycleMaps();
-        if (gameMaps.length > 1) {
+        if (maps.length > 1) {
             document.querySelectorAll('.map-side-btn').forEach(btn => btn.style.display = 'flex');
             document.getElementById('mapPrevBtn').addEventListener('click', () => cycleMaps(-1));
             document.getElementById('mapNextBtn').addEventListener('click', () => cycleMaps(1));
         }
-        
+
 
         const roundCount = gameData.game.rounds;
         const currentRound = gameData.game.currentRound;
@@ -208,13 +211,12 @@ function resetGameState(roundTime, currentRound) {
 async function createPoint(roundTime) {
     try {
         const pointData = await fetchGameData('/api/game/round')
+        console.log("Received point data:", pointData);
         if (!pointData.success || !pointData.point) throw new Error("Failed to fetch random point");
         const point = pointData.point;
         document.getElementById("timer").textContent = formatSecondsToMinutes(point.game.timeLeft - 3);
-        equirectangularViewer.loadImage(
-            `data:${point.image.mimeType};base64,${point.image.base64}`,
-            point.image.width, point.image.height
-        );
+        currentPointId = point.pointId;
+        loadPointLowThenHigh(point.pointId);
         equirectangularViewer.setZoom(0);
         if (point.game.timeLeft >= roundTime) {
             await createCountdownTimer();
@@ -227,23 +229,20 @@ async function createPoint(roundTime) {
 }
 
 function cycleMaps(direction = 1) {
-    gameMapsIndex += direction;
-    if (gameMapsIndex >= gameMaps.length) {
-        gameMapsIndex = 0;
-    } else if (gameMapsIndex < 0) {
-        gameMapsIndex = gameMaps.length - 1;
+    mapsIndex += direction;
+    if (mapsIndex >= maps.length) {
+        mapsIndex = 0;
+    } else if (mapsIndex < 0) {
+        mapsIndex = maps.length - 1;
     }
     nextMap();
 }
 
 function nextMap() {
-    const map = gameMaps[gameMapsIndex];
+    const map = maps[mapsIndex];
+    mapId = map.mapId;
     console.log(map);
-    const imageDataUrl = `data:${map.image.mimeType};base64,${map.image.base64}`;
-    mapViewerEngine.loadMap(imageDataUrl, map.image.width, map.image.height)
-        .catch(function (e) {
-            console.error("Failed to load game map:", e);
-        });
+    loadMaplowThenHigh(mapId);
     document.getElementById('mapTitle').textContent = map.title || '-';
     removeEverything();
 
@@ -281,7 +280,7 @@ async function sendGuess() {
         else {
             sendData = markerPosition();
         }
-        sendData.map_i = gameMapsIndex;
+        sendData.map_i = mapsIndex;
         console.log("Sending guess:", sendData);
         try {
             const response = await postGameScore('/api/game/round/guess', sendData);
@@ -298,8 +297,8 @@ async function sendGuess() {
 
 function showAnswer(response) {
     console.log("Guess response:", response);
-    if (gameMapsIndex != response.mapI) {
-        gameMapsIndex = response.mapI;
+    if (mapsIndex != response.mapI) {
+        mapsIndex = response.mapI;
         nextMap();
     }
 
@@ -322,11 +321,31 @@ function showAnswer(response) {
     }, 320);
 }
 
-async function loadPointLowThenHigh(point) {
+async function loadPointLowThenHigh(pId) {
     try {
-        await loadPointEquirectangularLowThenHigh(equirectangularViewer, point.image);
+        await loadPointEquirectangularLowThenHigh({
+            pointId: pId,
+            loadToViewer: async (imgData) => {
+                await equirectangularViewer.loadImage(imgData.url, imgData.width, imgData.height, degreeToRadian(imgData.northDirection));
+            },
+            isCurrent: () => currentPointId && currentPointId === pId
+        });
     } catch (error) {
         console.error("Error loading point:", error);
+    }
+}
+
+async function loadMaplowThenHigh(mId) {
+    try {
+        await loadMapImageLowThenHigh({
+            mapId: mId,
+            loadToViewer: async (imgData) => {
+                await mapViewerEngine.loadMap(imgData.url, imgData.width, imgData.height);
+            },
+            isCurrent: () => mapId && mapId === mId
+        });
+    } catch (error) {
+        console.error("Error loading map:", error);
     }
 }
 

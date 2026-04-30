@@ -4,8 +4,9 @@ const database = require("#sql/game.database.js");
 const path = require("path");
 const sessionsRoutes = require("./sessions/sessions.routes.js");
 
-const UPLOADS_DIR = path.join(__dirname, "../../uploads");
-const FALLBACK_COVER_IMAGE = "cover_images/image-not-found.jpg";
+const UPLOADS_DIR = path.join(__dirname, "../../uploads/mapdatas");
+
+const FALLBACK_COVER_IMAGE = "/assets/not_found.webp";
 
 router.get("/", async (request, response) => {
     try {
@@ -19,11 +20,11 @@ router.get("/", async (request, response) => {
             });
         }
 
-        const userId = request.session?.userid || 1; //TODO: törlés ha van login
+        const userId = request.session?.userid;
         const palyak = await database.getGameMaps(sort, userId, offset);
         response.status(200).json({ success: true, results: palyak });
     } catch (error) {
-        response.status(500).json({ success: false, message: "Error fetching game maps" + error.message });
+        response.status(500).json({ success: false, message: "Error fetching game maps" });
     }
 });
 
@@ -33,6 +34,7 @@ router.get("/cover-images/:cover_image_id", async (request, response) => {
         let filePath = FALLBACK_COVER_IMAGE;
         if (request.params.cover_image_id) {
             const dbPath = await database.getImagePath(request.params.cover_image_id);
+            console.log("DB Path:", dbPath);
             if (dbPath) filePath = dbPath;
         }
         response.sendFile(path.join(UPLOADS_DIR, filePath));

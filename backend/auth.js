@@ -28,7 +28,7 @@ const checkAuthPage = (request, response, next) => {
 
 const checkGameSessionPage = (request, response, next) => {
     if (!request.session.userid) {
-        return response.redirect('/login_page');
+        return response.redirect('/main');
     }
     if (!request.session.game?.activeSessionId) {
         return response.redirect('/game-maps');

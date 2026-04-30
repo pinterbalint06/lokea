@@ -1,6 +1,6 @@
 const database = require("#sql/game.database.js");
 const AppError = require("../../../utils/app-error.js");
-const { COUNTDOWN_SECONDS, readImageData } = require("../shared/gameflow.utils.js");
+const { COUNTDOWN_SECONDS } = require("../shared/gameflow.utils.js");
 
 async function resolveCurrentPoint(gameMapId, sessionId) {
     const currentPointId = await database.getCurrentPointId(sessionId);
@@ -15,6 +15,7 @@ async function resolveCurrentPoint(gameMapId, sessionId) {
 
     await database.incrementCycle(sessionId);
     point = await database.getRandomPoint(gameMapId, sessionId);
+    console.log("Cycle incremented, new point:", point);
     return { point, cycleIncremented: true };
 }
 
@@ -24,27 +25,20 @@ function calculateRoundTiming(roundStartedAt, roundTime) {
     return { roundEndAt, timeLeft };
 }
 
-function buildPointObjects(point, imageData, timing) {
-    const { base64, mimeType } = imageData;
+function buildPointObjects(point, timing) {
     const { roundEndAt, timeLeft } = timing;
-    const image = { id: point.image_id, mimeType, base64, width: point.width, height: point.height };
 
     const sessionPoint = {
         pointId: point.point_id,
         pointu: point.point_u,
         pointv: point.point_v,
-        north_direction: point.north_direction,
         mapId: point.map_id,
-        image
     };
 
     const responsePoint = {
-        point_id: point.point_id,
-        north_direction: point.north_direction,
-        image,
+        pointId: point.point_id,
         game: { timeLeft, roundEndAt }
     };
-
     return { sessionPoint, responsePoint };
 }
 
@@ -56,9 +50,8 @@ async function getRandomPoint(sessionId, game) {
 
     await database.setCurrentPoint(sessionId, point.point_id);
 
-    const imageData = await readImageData(point.filepath);
     const timing = calculateRoundTiming(game.roundStartedAt, game.roundTime);
-    const { sessionPoint, responsePoint } = buildPointObjects(point, imageData, timing);
+    const { sessionPoint, responsePoint } = buildPointObjects(point, timing);
 
     return { sessionPoint, responsePoint, cycleIncremented };
 }

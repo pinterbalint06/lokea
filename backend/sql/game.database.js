@@ -84,9 +84,8 @@ async function finishGameSession(sessionId) {
 
 async function getRandomPoint(gameMapId, gameSessionId) {
     const query = `
-        SELECT points.point_id, points.point_u, points.point_v, points.north_direction, images.image_id, images.filepath, images.width, images.height, map.map_id
+        SELECT points.point_id, points.point_u, points.point_v, map.map_id
         FROM points
-            INNER JOIN images ON points.image_id = images.image_id
             INNER JOIN map ON map.map_id = points.map_id
         WHERE map.game_maps_id =  ?
         AND points.point_id NOT IN (
@@ -104,7 +103,7 @@ async function getRandomPoint(gameMapId, gameSessionId) {
 
 async function getAllMaps(gameMapId) {
     const query = `
-        SELECT map.map_id, map.title, images.image_id, images.filepath, images.width, images.height
+        SELECT map.map_id, map.title, images.width, images.height
         FROM map
             INNER JOIN images ON map.image_id = images.image_id
         WHERE map.game_maps_id = ?
@@ -160,10 +159,8 @@ async function getCurrentPointId(sessionId) {
 
 async function getPointById(pointId) {
     const query = `
-        SELECT points.point_id, points.point_u, points.point_v, points.north_direction,
-               images.image_id, images.filepath, images.width, images.height, map.map_id
+        SELECT points.point_id, points.point_u, points.point_v, map.map_id
         FROM points
-            INNER JOIN images ON points.image_id = images.image_id
             INNER JOIN map ON map.map_id = points.map_id
         WHERE points.point_id = ?
     `;
