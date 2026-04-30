@@ -3,7 +3,7 @@ const { checkGameSession, checkAuth } = require("#root/auth.js");
 function testRequiresGameSession(requestCallback) {
     it("Should respond with 401 if the user is not authenticated", async () => {
         checkGameSession.mockImplementationOnce((request, response, next) => {
-            response.status(401).json({ success: false, message: "Bejelentkezés szükséges!" });
+            response.status(401).json({ message:"Bejelentkezés szükséges!" });
         });
 
         const response = await requestCallback();
@@ -13,7 +13,7 @@ function testRequiresGameSession(requestCallback) {
 
     it("Should respond with 403 if there is no active game session", async () => {
         checkGameSession.mockImplementationOnce((request, response, next) => {
-            response.status(403).json({ success: false, message: "Nincs aktív játék munkamenet!" });
+            response.status(403).json({ message:"Nincs aktív játék munkamenet!" });
         });
 
         const response = await requestCallback();

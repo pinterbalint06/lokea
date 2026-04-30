@@ -16,7 +16,7 @@ function createGameLobbyTestApp() {
     app.use(express.urlencoded({ extended: false }));
     app.use((req, res, next) => {
         res.sendFile = jest.fn((filePath) => {
-            res.status(200).json({ success: true, filePath });
+            res.status(200).json({ filePath });
         });
         next();
     });

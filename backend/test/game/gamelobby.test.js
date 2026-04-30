@@ -1,5 +1,6 @@
 const { createGameLobbyTestApp } = require("#gametest/helpers/setup-test.js");
 const { testRequiresAuth, suppressConsoleErrors } = require("#gametest/helpers/helpers.js");
+const AppError = require("#utils/app-error.js");
 const database = require("#sql/game.database.js");
 
 const requestWithSupertest = createGameLobbyTestApp();
@@ -20,7 +21,6 @@ describe("Game Lobby API - /api/choose-game/", () => {
                 const response = await requestWithSupertest.get("/api/choose-game?sort=invalid");
 
                 expect(response.statusCode).toBe(400);
-                expect(response.body.success).toBe(false);
             });
 
             it("Should accept uppercase sort by converting to lowercase", async () => {
@@ -34,14 +34,12 @@ describe("Game Lobby API - /api/choose-game/", () => {
                 const response = await requestWithSupertest.get("/api/choose-game?offset=-5");
 
                 expect(response.statusCode).toBe(400);
-                expect(response.body.success).toBe(false);
             });
 
             it("Should respond with 400 for a non-integer offset parameter", async () => {
                 const response = await requestWithSupertest.get("/api/choose-game?offset=abc");
 
                 expect(response.statusCode).toBe(400);
-                expect(response.body.success).toBe(false);
             });
         });
 
@@ -50,7 +48,6 @@ describe("Game Lobby API - /api/choose-game/", () => {
                 const response = await requestWithSupertest.get(`/api/choose-game?sort=${sort}`);
 
                 expect(response.statusCode).toBe(200);
-                expect(response.body.success).toBe(true);
                 expect(response.body.results).toEqual(mockGameMaps);
                 expect(database.getGameMaps).toHaveBeenCalledWith(sort, undefined, 0);
             });
@@ -79,7 +76,6 @@ describe("Game Lobby API - /api/choose-game/", () => {
                 const response = await requestWithSupertest.get("/api/choose-game");
 
                 expect(response.statusCode).toBe(500);
-                expect(response.body.success).toBe(false);
             });
         });
     });
@@ -92,7 +88,6 @@ describe("Game Lobby API - /api/choose-game/", () => {
                 const response = await requestWithSupertest.get("/api/choose-game/cover-images/42");
 
                 expect(response.statusCode).toBe(200);
-                expect(response.body.success).toBe(true);
                 expect(database.getImagePath).toHaveBeenCalledWith("42");
                 expect(response.body.filePath).toContain("cover_images");
                 expect(response.body.filePath).toContain("test.jpg");
@@ -117,7 +112,6 @@ describe("Game Lobby API - /api/choose-game/", () => {
                 const response = await requestWithSupertest.get("/api/choose-game/cover-images/1");
 
                 expect(response.statusCode).toBe(500);
-                expect(response.body.success).toBe(false);
             });
         });
     });
@@ -134,7 +128,6 @@ describe("Game Lobby API - /api/choose-game/", () => {
                 const response = await requestWithSupertest.get("/api/choose-game/session");
 
                 expect(response.statusCode).toBe(200);
-                expect(response.body.success).toBe(true);
                 expect(response.body.hasActiveSession).toBe(false);
             });
 
@@ -153,7 +146,6 @@ describe("Game Lobby API - /api/choose-game/", () => {
                 const response = await requestWithSupertest.get("/api/choose-game/session");
 
                 expect(response.statusCode).toBe(200);
-                expect(response.body.success).toBe(true);
                 expect(response.body.hasActiveSession).toBe(true);
                 expect(response.body.gameTitle).toBe("My Game");
             });
@@ -168,7 +160,6 @@ describe("Game Lobby API - /api/choose-game/", () => {
                 const response = await requestWithSupertest.get("/api/choose-game/session");
 
                 expect(response.statusCode).toBe(500);
-                expect(response.body.success).toBe(false);
             });
         });
     });
@@ -192,7 +183,6 @@ describe("Game Lobby API - /api/choose-game/", () => {
                     .send({ ...validBody, gameMapId: "abc" });
 
                 expect(response.statusCode).toBe(400);
-                expect(response.body.success).toBe(false);
                 expect(response.body.message).toBe("Invalid gameMapId");
             });
 
@@ -229,7 +219,6 @@ describe("Game Lobby API - /api/choose-game/", () => {
                     .send({ ...validBody, difficulty: "unknown" });
 
                 expect(response.statusCode).toBe(400);
-                expect(response.body.success).toBe(false);
             });
 
             it.each([
@@ -243,7 +232,6 @@ describe("Game Lobby API - /api/choose-game/", () => {
                     .send(body);
 
                 expect(response.statusCode).toBe(400);
-                expect(response.body.success).toBe(false);
             });
 
             it.each([
@@ -257,7 +245,6 @@ describe("Game Lobby API - /api/choose-game/", () => {
                     .send(body);
 
                 expect(response.statusCode).toBe(400);
-                expect(response.body.success).toBe(false);
             });
         });
 
@@ -270,7 +257,6 @@ describe("Game Lobby API - /api/choose-game/", () => {
                     .send(validBody);
 
                 expect(response.statusCode).toBe(404);
-                expect(response.body.success).toBe(false);
             });
         });
 
@@ -281,7 +267,6 @@ describe("Game Lobby API - /api/choose-game/", () => {
                     .send(validBody);
 
                 expect(response.statusCode).toBe(200);
-                expect(response.body.success).toBe(true);
                 expect(database.insertGameSession).toHaveBeenCalledWith(1, 5, 60, 100, -3);
             });
 
@@ -315,11 +300,9 @@ describe("Game Lobby API - /api/choose-game/", () => {
                     .send(validBody);
 
                 expect(response.statusCode).toBe(500);
-                expect(response.body.success).toBe(false);
             });
 
             it("Should respect statusCode from AppError thrown by database", async () => {
-                const AppError = require("#utils/app-error.js");
                 database.insertGameSession.mockRejectedValueOnce(new AppError("Custom error", 503));
 
                 const response = await requestWithSupertest

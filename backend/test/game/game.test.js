@@ -32,7 +32,6 @@ describe("Game API - /api/game/", () => {
                 const response = await requestWithSupertest.get("/api/game/session");
 
                 expect(response.statusCode).toBe(200);
-                expect(response.body.success).toBe(true);
                 expect(response.body.game).toEqual({
                     title: "Test Game",
                     rounds: 5,
@@ -54,7 +53,6 @@ describe("Game API - /api/game/", () => {
                 const response = await requestWithSupertest.get("/api/game/session");
 
                 expect(response.statusCode).toBe(500);
-                expect(response.body.success).toBe(false);
             });
         });
     });
@@ -73,7 +71,6 @@ describe("Game API - /api/game/", () => {
                 const response = await requestWithSupertest.get("/api/game/maps");
 
                 expect(response.statusCode).toBe(200);
-                expect(response.body.success).toBe(true);
                 expect(response.body.maps).toHaveLength(1);
                 expect(response.body.maps[0].title).toBe("Test Map");
                 expect(response.body.maps[0].mapId).toBe(1);
@@ -99,7 +96,6 @@ describe("Game API - /api/game/", () => {
                 const response = await requestWithSupertest.get("/api/game/maps");
 
                 expect(response.statusCode).toBe(500);
-                expect(response.body.success).toBe(false);
             });
         });
     });
@@ -117,7 +113,6 @@ describe("Game API - /api/game/", () => {
                 const response = await requestWithSupertest.get("/api/game/round");
 
                 expect(response.statusCode).toBe(200);
-                expect(response.body.success).toBe(true);
                 expect(response.body.point.pointId).toBe(mockPoint.point_id);
                 expect(response.body.point.game.timeLeft).toBeGreaterThanOrEqual(0);
                 expect(response.body.point.game.roundEndAt).toBeTruthy();
@@ -131,7 +126,6 @@ describe("Game API - /api/game/", () => {
                 const response = await requestWithSupertest.get("/api/game/round");
 
                 expect(response.statusCode).toBe(200);
-                expect(response.body.success).toBe(true);
                 expect(database.getRandomPoint).toHaveBeenCalledWith(100, 1);
                 expect(database.incrementCycle).not.toHaveBeenCalled();
             });
@@ -184,7 +178,6 @@ describe("Game API - /api/game/", () => {
                 const response = await requestWithSupertest.get("/api/game/round");
 
                 expect(response.statusCode).toBe(500);
-                expect(response.body.success).toBe(false);
                 expect(response.body.message).toBe("No points available");
             });
 
@@ -194,7 +187,6 @@ describe("Game API - /api/game/", () => {
                 const response = await requestWithSupertest.get("/api/game/round");
 
                 expect(response.statusCode).toBe(500);
-                expect(response.body.success).toBe(false);
             });
         });
     });
@@ -312,7 +304,6 @@ describe("Game API - /api/game/", () => {
                     .send({ u: "1.5", v: "0.5", map_i: "0" });
 
                 expect(response.statusCode).toBe(200);
-                expect(response.body.success).toBe(true);
                 expect(response.body.score).toBe(0);
                 expect(response.body.distance).toBeNull();
             });
@@ -344,7 +335,6 @@ describe("Game API - /api/game/", () => {
                     .send(validGuess);
 
                 expect(response.statusCode).toBe(200);
-                expect(response.body.success).toBe(true);
                 expect(response.body.score).toBe(5000);
                 expect(response.body.distance).toBe(0);
                 expect(response.body.totalScore).toBe(1000);
@@ -456,7 +446,6 @@ describe("Game API - /api/game/", () => {
                     .send(validGuess);
 
                 expect(response.statusCode).toBe(500);
-                expect(response.body.success).toBe(false);
             });
 
             it("Should respond with 500 if sharpness is invalid", async () => {
@@ -498,7 +487,6 @@ describe("Game API - /api/game/", () => {
                 const response = await requestWithSupertest.delete("/api/game/session");
 
                 expect(response.statusCode).toBe(200);
-                expect(response.body.success).toBe(true);
                 expect(database.finishGameSession).toHaveBeenCalledWith(1);
             });
         });
@@ -512,7 +500,6 @@ describe("Game API - /api/game/", () => {
                 const response = await requestWithSupertest.delete("/api/game/session");
 
                 expect(response.statusCode).toBe(500);
-                expect(response.body.success).toBe(false);
             });
         });
     });
