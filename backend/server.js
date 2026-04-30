@@ -91,8 +91,11 @@ router.get('/game-maps/:gameMapId/edit',
 router.get('/admin', auth.checkRole("ADMIN"), (request, response) => {
     response.sendFile(path.join(__dirname, '../frontend/html/admin.html'));
 });
-router.get('/choose_game', (request, response) => {
+router.get('/game-maps', auth.checkAuthPage, (request, response) => {
     response.sendFile(path.join(__dirname, '../frontend/html/game-choosing.html'));
+});
+router.get('/game', auth.checkGameSessionPage, (request, response) => {
+    response.sendFile(path.join(__dirname, '../frontend/html/game-page.html'));
 });
 router.get(
     '/game-maps/:gameMapId',
@@ -130,11 +133,17 @@ app.use('/api/admin', adminEndpoints);
 const endpoints = require('./api/api.js');
 app.use('/api', endpoints);
 
+const gameChoosingEndpoints = require('./api/gameflow/gamelobby.js');
+app.use('/api/choose-game', gameChoosingEndpoints);
+
 const mapCreationEndpoints = require('./api/mapcreator/mapcreator.js');
 app.use('/api/map-creator', mapCreationEndpoints);
 
 const gameMapsEndpoints = require('./api/gamemaps/gamemaps.routes.js');
 app.use('/api/game-maps', gameMapsEndpoints);
+
+const gameEndpoints = require('./api/gameflow/game.js');
+app.use('/api/game', gameEndpoints);
 
 app.use('/api', (request, response) => {
     response.status(404).json({

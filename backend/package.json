@@ -13,6 +13,7 @@
         "#sql/*": "./sql/*",
         "#config/*": "./config/*",
         "#mapcreatortest/*": "./test/mapcreator/*",
+        "#gametest/*": "./test/game/*",
         "#root/*": "./*",
         "#mapcreator/*": "./api/mapcreator/*",
         "#gamemaps/*": "./api/gamemaps/*",
