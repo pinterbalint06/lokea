@@ -1,4 +1,3 @@
-const pool = require('#sql/connection.js');
 const { isIdUpdateSuccessful } = require('#sql/db-utils.js');
 
 async function insertImage(connection, width, height, filepath) {
