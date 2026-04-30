@@ -757,6 +757,19 @@ async function createPreview(file) {
     return canvas.toDataURL("image/webp");
 }
 
+export async function nyelvSzinkronizalas() {
+    try {
+        let response = await fetch('/api/admin/getLanguage');
+        let data = await response.json();
+        if (!response.ok) throw new Error(extractError(data));
+        await initI18next(data.language);
+        return data.language;
+    } catch (error) {
+        showAlert(error.message);
+        throw error;
+    }
+}
+
 let modalElement;
 let settingsModal;
 let currentSettings;

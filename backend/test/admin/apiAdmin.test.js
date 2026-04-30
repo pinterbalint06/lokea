@@ -21,15 +21,6 @@ describe('Admin API-tesztek', () => {
         jest.clearAllMocks();
     });
 
-    describe('Végpont: GET /getLanguage', () => {
-        testRequiresAdminOrAuth(() => request(app).get('/api/admin/getLanguage'));
-
-        it('SIKER - 200, nyelv lekérése', async () => {
-            const res = await request(app).get('/api/admin/getLanguage').expect(200);
-            expect(res.body.language).toBe("en");
-        });
-    });
-
     describe('Végpont: PUT /getDashboardInfo', () => {
         testRequiresAdminOrAuth(() => request(app).get('/api/admin/getDashboardInfo'));
 

@@ -13,20 +13,6 @@ Chart.register(...registerables);
 
 //API endpoints - GET
 
-router.get('/getLanguage', (request, response) => {
-    try {
-        if (!request.session) {
-            throw new Error();
-            console.error("Session is missing");
-        }
-        let language = request.session.userLanguage;
-        response.status(200).json({ language: request.session.userLanguage });
-    } catch (error) {
-        response.status(500).json({ error: request.t('admin:adminApi.language_fetch_error') });
-    }
-
-});
-
 router.get('/getDashboardInfo', async (request, response) => {
     try {
         let playerCount = await databaseAdmin.getUserCount();

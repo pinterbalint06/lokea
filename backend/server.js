@@ -174,7 +174,7 @@ router.use((request, response) => {
 //!API endpoints
 const adminEndpoints = require('./api/admin/index.js');
 app.use('/api/admin', auth.checkAuth, auth.checkRole("ADMIN", "LORD"), adminEndpoints);
-const endpoints = require('./api/api.js');
+const endpoints = require('./api/main/index.js');
 app.use('/api', endpoints);
 //!Map Creation API endpoints
 const mapCreationEndpoints = require('./api/mapcreator/mapcreator.js');

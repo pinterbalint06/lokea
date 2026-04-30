@@ -25,7 +25,7 @@ function extractError(data) {
 
 export async function nyelvSzinkronizalas() {
     try {
-        let response = await fetch('/api/admin/getLanguage');
+        let response = await fetch('/api/getLanguage');
         let data = await response.json();
         if (!response.ok) throw new Error(extractError(data));
         await initI18next(data.language);
