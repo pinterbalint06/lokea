@@ -7,11 +7,11 @@ async function getActiveSession(request, response) {
         const sessionObject = await sessionsService.getActiveSession(userId);
 
         if (!sessionObject) {
-            return response.status(200).json({ success: true, hasActiveSession: false });
+            response.status(200).json({ success: true, hasActiveSession: false });
+        } else {
+            request.session.game = sessionObject;
+            response.status(200).json({ success: true, hasActiveSession: true, gameTitle: sessionObject.gameTitle });
         }
-
-        request.session.game = sessionObject;
-        response.status(200).json({ success: true, hasActiveSession: true, gameTitle: sessionObject.gameTitle });
     } catch (error) {
         if (error instanceof AppError) {
             response.status(error.statusCode).json({ success: false, message: error.message });

@@ -14,15 +14,15 @@ router.get("/", async (request, response) => {
         const offset = parseInt(request.query.offset) || 0;
         const validSorts = ["created", "rating", "plays", "favorites"];
         if (!validSorts.includes(sort)) {
-            return response.status(400).json({
+            response.status(400).json({
                 success: false,
                 message: "Érvénytelen rendezés. Használható: created, rating, plays, favorites"
             });
+        } else {
+            const userId = request.session?.userid;
+            const palyak = await database.getGameMaps(sort, userId, offset);
+            response.status(200).json({ success: true, results: palyak });
         }
-
-        const userId = request.session?.userid;
-        const palyak = await database.getGameMaps(sort, userId, offset);
-        response.status(200).json({ success: true, results: palyak });
     } catch (error) {
         response.status(500).json({ success: false, message: "Error fetching game maps" });
     }

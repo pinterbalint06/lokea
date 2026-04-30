@@ -35,18 +35,18 @@ function validateGameStartInput(body) {
 
 async function getActiveSession(userId) {
     const row = await database.selectLatestActiveGameSession(userId);
-    if (!row) return null;
-
-    return buildSessionObject({
-        activeSessionId: row.session_id,
-        gameMapId: row.game_maps_id,
-        currentCycle: row.current_cycle,
-        sharpness: row.sharpness,
-        rounds: row.rounds,
-        currentRound: row.current_round,
-        roundTime: row.time_per_round,
-        gameTitle: row.title
-    });
+    return row
+        ? buildSessionObject({
+            activeSessionId: row.session_id,
+            gameMapId: row.game_maps_id,
+            currentCycle: row.current_cycle,
+            sharpness: row.sharpness,
+            rounds: row.rounds,
+            currentRound: row.current_round,
+            roundTime: row.time_per_round,
+            gameTitle: row.title
+        })
+        : null;
 }
 
 async function createGameSession(userId, body) {

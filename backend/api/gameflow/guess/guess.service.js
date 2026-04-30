@@ -47,13 +47,15 @@ function calculateTimeLeft(game) {
 function calculateScore(distance, timeLeft, roundTime, sharpness) {
     const base = MAX_SCORE * Math.exp(sharpness * (distance / Math.SQRT2));
     const timePunishment = roundTime - TIME_PUNISHMENT_BUFFER_SECONDS;
+    let multiplier;
     if (timeLeft > timePunishment) {
-        return Math.round(base);
+        multiplier = 1;
+    } else if (timeLeft === 0) {
+        multiplier = MIN_TIME_MULTIPLIER;
+    } else {
+        multiplier = timeLeft / timePunishment;
     }
-    if (timeLeft === 0) {
-        return Math.round(base * MIN_TIME_MULTIPLIER);
-    }
-    return Math.round(base * (timeLeft / timePunishment));
+    return Math.round(base * multiplier);
 }
 
 function buildGuessResult(guess, game, correctMap, correctMapIndex) {
@@ -73,8 +75,7 @@ function buildGuessResult(guess, game, correctMap, correctMapIndex) {
         const score = calculateScore(distance, timeLeft, game.roundTime, game.sharpness);
         re = { score, distance, pixelDistance, mapIndex: correctMapIndex };
     }
-
-
+    
     return re;
 }
 

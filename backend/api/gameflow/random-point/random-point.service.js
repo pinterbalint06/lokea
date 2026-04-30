@@ -3,20 +3,21 @@ const AppError = require("../../../utils/app-error.js");
 const { COUNTDOWN_SECONDS } = require("../shared/gameflow.utils.js");
 
 async function resolveCurrentPoint(gameMapId, sessionId) {
+    let point;
+    let cycleIncremented = false;
+
     const currentPointId = await database.getCurrentPointId(sessionId);
     if (currentPointId) {
-        return { point: await database.getPointById(currentPointId), cycleIncremented: false };
+        point = await database.getPointById(currentPointId);
+    } else {
+        point = await database.getRandomPoint(gameMapId, sessionId);
+        if (!point) {
+            await database.incrementCycle(sessionId);
+            point = await database.getRandomPoint(gameMapId, sessionId);
+            cycleIncremented = true;
+        }
     }
-
-    let point = await database.getRandomPoint(gameMapId, sessionId);
-    if (point) {
-        return { point, cycleIncremented: false };
-    }
-
-    await database.incrementCycle(sessionId);
-    point = await database.getRandomPoint(gameMapId, sessionId);
-    console.log("Cycle incremented, new point:", point);
-    return { point, cycleIncremented: true };
+    return { point, cycleIncremented };
 }
 
 function calculateRoundTiming(roundStartedAt, roundTime) {
