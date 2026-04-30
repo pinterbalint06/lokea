@@ -1,0 +1,56 @@
+#ifndef ENGINE_H
+#define ENGINE_H
+
+#include <string>
+#include <memory>
+
+#include "core/rendering/shader.h"
+#include "core/rendering/renderer.h"
+
+#include "core/scene/scene.h"
+#include "core/scene/camera/camera.h"
+
+// Forward declaration
+class Mesh; // defined in "core/resources/mesh.h"
+
+class Engine
+{
+protected:
+    std::unique_ptr<Scene> scene_;
+    std::unique_ptr<Renderer> renderer_;
+    std::string canvas_;
+
+    void enableAlphaBlending();
+
+public:
+    Engine(std::string canvID);
+    virtual ~Engine();
+
+
+    void setShadingMode(Shaders::SHADINGMODE shadingmode);
+    void setZoom(float amount);
+    void zoom(float amount);
+    void setCanvasSize(int width, int height);
+    void setProjectionType(PROJECTIONTYPE type);
+    void setProjectionType(int type);
+
+    void rotateCamera(float dPitch, float dYaw);
+    void setCameraRotation(float pitch, float yaw);
+    void setPitch(float pitch);
+    void setYaw(float yaw);
+    void setCameraPosition(float x, float y, float z);
+    void resetCameraPosition();
+    
+    void render() { renderer_->render(scene_.get()); };
+
+    float getPitch() const { return scene_->getCamera()->getPitch(); }
+    float getYaw() const { return scene_->getCamera()->getYaw(); }
+    float getZoom() const { return scene_->getCamera()->getZoom(); }
+
+    void addMesh(std::shared_ptr<Mesh> mesh) { scene_->addMesh(mesh); }
+    void removeMesh(int index) { scene_->removeMesh(index); }
+    void removeMesh(std::shared_ptr<Mesh> mesh) { scene_->removeMesh(mesh); }
+    void clearScene() { scene_->clearMeshes(); };
+};
+
+#endif

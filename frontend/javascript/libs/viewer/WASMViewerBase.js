@@ -228,6 +228,9 @@ export class WASMViewerBase {
                 });
         }
 
+        width = Math.max(1, width);
+        height = Math.max(1, height);
+
         await this._ensureEngineReadyAsync();
 
         if (this._canvasWidth != width || this._canvasHeight != height) {
