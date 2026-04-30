@@ -1,8 +1,10 @@
 import { makeSubtitle, inputGeneral, labelGeneral, gombGeneral, makeSvg } from "./libs/utils/DOMutils.js";
 import { validalvaBej, validalvaUsername, validalvaEmail, validalvaJelszo, wrongInput } from "./libs/utils/validations.js";
 import { initSocket } from "./libs/utils/socketio.js";
+import i18next, { initI18next } from "./libs/language/i18next.js";
 
 document.addEventListener("DOMContentLoaded", async function () {
+    translatePage(await nyelvSzinkronizalas());
     if (!await isLogined()) {
         document.getElementById('loginButton').addEventListener("click", async function (e) {
             e.preventDefault();
@@ -36,6 +38,10 @@ async function isLogined() {
         if (response.ok) {
             loginStatus = data.login;
             if (loginStatus) {
+                if (data.user.language && data.user.language !== i18next.language) {
+                    await i18next.changeLanguage(data.user.language);
+                    translatePage();
+                }
                 if (data.adminLink) {
                     await dropdownLetrehoz(data.adminLink, data.user.username, data.user.filepath);
                 }
@@ -175,19 +181,19 @@ async function dropdownLetrehoz(link, nev, kep) {
     let ul = document.createElement('ul');
     ul.classList.add("dropdown-menu", "dropdown-menu-end", "text-small");
 
-    let li = dropdownLink("Fiókom", null, null, "sliders");
+    let li = dropdownLink(i18next.t('settingsModal.myAccount'), null, null, "sliders");
     li.addEventListener("click", async function () {
         await showSettingsModal();
     })
     ul.appendChild(li);
     ul.appendChild(dropdownDivider());
-    ul.appendChild(dropdownLink("Saját játékaim", null, null, "map"));
+    ul.appendChild(dropdownLink(i18next.t('settingsModal.myGames'), null, null, "map"));
     ul.appendChild(dropdownDivider());
     if (link) {
-        ul.appendChild(dropdownLink("Belépés az admin oldalra", 'enterAdmin', null, "shield", link));
+        ul.appendChild(dropdownLink(i18next.t('settingsModal.adminPanel'), 'enterAdmin', null, "shield", link));
         ul.appendChild(dropdownDivider());
     }
-    li = dropdownLink("Kijelentkezés", 'signOut', ["text-danger"], "logout");
+    li = dropdownLink(i18next.t('settingsModal.logout'), 'signOut', ["text-danger"], "logout");
     li.addEventListener("click", async function () {
         await kijelentkezes();
     });
@@ -322,7 +328,7 @@ async function showSettingsModal() {
     });
 
     let text = document.createElement('p');
-    text.innerText = "Kép feltöltéshez kattints ide, vagy húzz be egy képet!";
+    text.innerText = i18next.t('settingsModal.uploadImageText');
     text.classList.add("subtitle", "text-center");
 
     dropzone.appendChild(pfp);
@@ -333,7 +339,7 @@ async function showSettingsModal() {
     });
     div.appendChild(dropzone);
     if (data.filepath != null) {
-        let deletePfpButton = gombGeneral("button", "Profilkép törlése", "trash-2", "red", null);
+        let deletePfpButton = gombGeneral("button", i18next.t('settingsModal.deleteProfilePicture'), "trash-2", "red", null);
         deletePfpButton.addEventListener("click", async function () {
             pfp.src = "../images/default.png";
             deleteLast = true;
@@ -348,12 +354,12 @@ async function showSettingsModal() {
 
     let date = new Date(data.created_at);
 
-    div.appendChild(makeSubtitle(`Regisztrált: ${date.toLocaleString("hu-HU")}`));
+    div.appendChild(makeSubtitle(`${i18next.t('settingsModal.registeredAt')} ${date.toLocaleString(i18next.language === 'hu' ? 'hu-HU' : 'en-US')}`));
 
-    div.appendChild(makeSubtitle("Felhasználónév"));
+    div.appendChild(makeSubtitle(i18next.t('settingsModal.username')));
     div.appendChild(inputGeneral("text", "mintajancsi123", data.username, "usernameInput", ["form-control"], false));
 
-    div.appendChild(makeSubtitle("E-mail-cim"));
+    div.appendChild(makeSubtitle(i18next.t('settingsModal.email')));
     div.appendChild(inputGeneral("text", "mintajan@gmail.com", data.email, "emailInput", ["form-control"], false));
 
     let alertPlaceholder = document.createElement('div');
@@ -362,7 +368,7 @@ async function showSettingsModal() {
     let buttonsDiv = document.createElement('div');
     buttonsDiv.classList.add("d-flex", "justify-content-center", "my-3");
 
-    let changePassBtn = gombGeneral("button", "Új jelszó igénylése", null, null, null);
+    let changePassBtn = gombGeneral("button", i18next.t('settingsModal.requestNewPassword'), null, null, null);
     changePassBtn.classList.add("btn", "btn-purple", "px-5", "rounded-pill", "d-block", "mx-auto");
     changePassBtn.setAttribute('data-bs-toggle', 'collapse');
     changePassBtn.setAttribute('data-bs-target', '#passwordCollapse');
@@ -376,26 +382,26 @@ async function showSettingsModal() {
 
     let passGroup = document.createElement('div');
     passGroup.classList.add('d-flex');
-    passGroup.appendChild(labelGeneral('oldPassword', 'Régi jelszó:', ['text-nowrap', 'me-3']));
+    passGroup.appendChild(labelGeneral('oldPassword', i18next.t('settingsModal.oldPassword'), ['text-nowrap', 'me-3']));
     passGroup.appendChild(inputGeneral('password', null, null, 'oldPassword', ["form-control"], false));
     innerCard.appendChild(passGroup);
 
     passGroup = document.createElement('div');
     passGroup.classList.add('d-flex');
-    passGroup.appendChild(labelGeneral('newPassword', 'Új jelszó:', ['text-nowrap', 'me-3']));
+    passGroup.appendChild(labelGeneral('newPassword', i18next.t('settingsModal.newPassword'), ['text-nowrap', 'me-3']));
     passGroup.appendChild(inputGeneral('password', null, null, 'newPassword', ["form-control"], false));
     innerCard.appendChild(passGroup);
 
     let saveBtn = document.createElement('button');
     saveBtn.type = 'button';
     saveBtn.className = 'btn btn-success btn-sm w-100';
-    saveBtn.innerText = 'Mentés';
+    saveBtn.innerText = i18next.t('settingsModal.saveButton');
     saveBtn.onclick = jelszoValtoztat;
 
     innerCard.appendChild(saveBtn);
     collapseDiv.appendChild(innerCard);
 
-    let deleteProfileBtn = gombGeneral("button", "Fiók törlése", null, "red", null);
+    let deleteProfileBtn = gombGeneral("button", i18next.t('settingsModal.deleteAccount'), null, "red", null);
     deleteProfileBtn.addEventListener("click", function () {
         deleteProfile();
     });
@@ -407,6 +413,9 @@ async function showSettingsModal() {
     div.appendChild(collapseDiv);
 
     document.getElementById('darkMode').checked = (data.darkmode == 1);
+    if (data.language) {
+        document.getElementById('languageSelect').value = data.language;
+    }
 
     currentSettings = {
         username: data.username,
@@ -500,6 +509,12 @@ async function checkModification() {
     if (inInput.darkmode != currentSettings.darkmode) {
         ejszakaimod();
     }
+
+    if (inInput.language !== currentSettings.language) {
+        await i18next.changeLanguage(inInput.language);
+        translatePage();
+    }
+
     Object.keys(inInput).forEach(key => {
         if (inInput[key] == currentSettings[key]) {
             inInput[key] = null;
@@ -528,7 +543,7 @@ async function checkModification() {
 
 async function saveModification(username, email, language, darkmode) {
     try {
-        console.log(username, email,  language, darkmode)
+        console.log(username, email, language, darkmode)
         let response = await fetch("/api/updateUser", {
             method: "PUT",
             headers: {
@@ -757,16 +772,34 @@ async function createPreview(file) {
     return canvas.toDataURL("image/webp");
 }
 
+function translatePage() {
+    document.querySelectorAll('[data-i18n]').forEach(element => {
+        const key = element.getAttribute('data-i18n');
+        element.innerText = i18next.t(key);
+    });
+    document.querySelectorAll('[data-i18n-label]').forEach(element => {
+        const key = element.getAttribute('data-i18n-label');
+        element.dataset.label = i18next.t(key) + ':';
+    });
+    document.documentElement.lang = i18next.language;
+    const titleKey = document.querySelector('title')?.getAttribute('data-i18n');
+    if (titleKey) {
+        document.title = i18next.t(titleKey);
+    }
+}
+
 export async function nyelvSzinkronizalas() {
     try {
-        let response = await fetch('/api/admin/getLanguage');
+        let response = await fetch('/api/getLanguage');
         let data = await response.json();
-        if (!response.ok) throw new Error(extractError(data));
+        if (!response.ok) throw new Error(data.message || data.error || "Hiba a nyelv lekérdezésekor");
         await initI18next(data.language);
         return data.language;
     } catch (error) {
-        showAlert(error.message);
-        throw error;
+        console.warn("Nyelv szinkronizálása sikertelen, visszatérés az alapértelmezett nyelvhez (hu):", error.message);
+        let fallbackLang = 'hu';
+        await initI18next(fallbackLang);
+        return fallbackLang;
     }
 }
 

@@ -1,10 +1,10 @@
 const express = require('express');
 const router = express.Router();
-const database = require('../sql/database.js');
+const database = require('../../sql/database.js');
 const bcrypt = require('bcrypt');
 const validator = require('validator');
 const { body, validationResult } = require("express-validator");
-const { sendWelcomeEmail } = require('../utils/mails.js');
+const { sendWelcomeEmail } = require('../../utils/mails.js');
 const { validate } = require('../../utils/validate.js');
 
 //Endpoints - signup, login, signout
@@ -131,5 +131,19 @@ router.get('/loginRole', async (request, response) => {
         response.status(500).json({ login, error: error.message });
     }
 })
+
+router.get('/getLanguage', (request, response) => {
+    try {
+        if (!request.session) {
+            throw new Error();
+            console.error("Session is missing");
+        }
+        let language = request.session.userLanguage;
+        response.status(200).json({ language: request.session.userLanguage });
+    } catch (error) {
+        response.status(500).json({ error: request.t('admin:adminApi.language_fetch_error') });
+    }
+
+});
 
 module.exports = router;

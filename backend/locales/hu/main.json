@@ -65,5 +65,86 @@
             "validation_invalid_filename": "Érvénytelen fájlnév!",
             "error": "Hiba a profilkép lekérése során!"
         }
+    },
+    "title": "Főoldal",
+    "nav": {
+        "ip": "IP: lokea.com",
+        "onlinePlayers": "Online játékosok: ",
+        "logoTitle": "Légy bárhol",
+        "login": "Bejelentkezés"
+    },
+    "hero": {
+        "title": "Legyél ott ahol nem tudsz! Lokea."
+    },
+    "gamemodes": {
+        "pinpointGoogle": {
+            "title": "Pinpoint Google térképen",
+            "description": "Találd meg a pontos helyszínt a Google hivatalos utcaképének segítségével!"
+        },
+        "pinpointCustom": {
+            "title": "Pinpoint felhasználók térképein",
+            "description": "Találd meg a pontos helyszínt a közösség által készített egyedi térképeken!"
+        },
+        "guessCountryGoogle": {
+            "title": "Guess the country a Google térképen",
+            "description": "Találd ki a pontos országot a Google hivatalos utcaképének segítségével!"
+        },
+        "guessCountryCustom": {
+            "title": "Guess the country a felhasználók térképein",
+            "description": "Találd ki a pontos országot a közösség által készített egyedi térképeken!"
+        }
+    },
+    "customMaps": {
+        "sectionTitle": "Egyedi térképek, amit a felhasználók hoztak létre",
+        "mapTitlePlaceholder": "Főcim focim",
+        "rating": "Csillag",
+        "ratingsCount": "értékelés",
+        "plays": "Játékok"
+    },
+    "comparison": {
+        "sectionTitle": "Miért jobb a lokea?",
+        "platform": "Platform",
+        "streetView": "Street View",
+        "multiplayer": "Multiplayer",
+        "championships": "Bajnokságok",
+        "customMaps": "Saját térképek",
+        "free": "Ingyenes",
+        "lokeaAlt": "Lokea"
+    },
+    "loginModal": {
+        "title": "Bejelentkezés",
+        "prompt": "Jelentkezz be a játék folytatásához!",
+        "usernameLabel": "Felhasználónév vagy e-mail",
+        "passwordLabel": "Jelszó",
+        "rememberMe": "Emlékezz rám",
+        "registerPrompt": "Nincs még fiókod? ",
+        "registerLink": "Regisztrálás",
+        "loginButton": "Bejelentkezés"
+    },
+    "settingsModal": {
+        "accountTab": "Fiók",
+        "appearanceTab": "Megjelenés",
+        "accountSettingsTitle": "Fiókbeállítások",
+        "notLoggedIn": "Nem vagy bejelentkezve!",
+        "uiSettingsTitle": "UI beállítások",
+        "languageSelection": "Nyelvválasztás",
+        "hungarian": "Magyar",
+        "english": "English",
+        "appearanceTitle": "Megjelenés",
+        "darkMode": "Éjszakai üzemmód (Dark Mode)",
+        "saveButton": "Mentés",
+        "uploadImageText": "Kép feltöltéshez kattints ide, vagy húzz be egy képet!",
+        "deleteProfilePicture": "Profilkép törlése",
+        "registeredAt": "Regisztrált:",
+        "username": "Felhasználónév",
+        "email": "E-mail-cim",
+        "requestNewPassword": "Új jelszó igénylése",
+        "oldPassword": "Régi jelszó:",
+        "newPassword": "Új jelszó:",
+        "deleteAccount": "Fiók törlése",
+        "myGames": "Saját játékaim",
+        "adminPanel": "Belépés az admin oldalra",
+        "logout": "Kijelentkezés",
+        "myAccount": "Fiókom"
     }
 }
