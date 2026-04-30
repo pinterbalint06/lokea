@@ -59,18 +59,18 @@
                     </button>
                     <div id="mapControls">
                         <button class="map-btn" onclick="mapFullScreen()" title="Teljes képernyő">
-                            <svg viewBox="0 0 24 24"><polyline points="15 3 21 3 21 9"/><polyline points="9 21 3 21 3 15"/><line x1="21" y1="3" x2="14" y2="10"/><line x1="3" y1="21" x2="10" y2="14"/></svg>
+                            <svg><use href="../images/icons/game-icons.svg#fullscreen"/></svg>
                         </button>
                     </div>
                 </div>
 
                 <div id="sidebar">
                     <button class="icon-btn" id="pictureFullScreenBtn" onclick="pictureFullScreen()" title="Teljes képernyő">
-                        <svg viewBox="0 0 24 24"><polyline points="15 3 21 3 21 9"/><polyline points="9 21 3 21 3 15"/><line x1="21" y1="3" x2="14" y2="10"/><line x1="3" y1="21" x2="10" y2="14"/></svg>
+                        <svg><use href="../images/icons/game-icons.svg#fullscreen"/></svg>
                     </button>
                     <label class="icon-btn" id="autoRotateBtn" title="Automatikus forgatás">
                         <input type="checkbox" id="autoRotate" hidden>
-                        <svg viewBox="0 0 24 24"><polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 1 0 .49-5.36L1 10"/></svg>
+                        <svg><use href="../images/icons/game-icons.svg#auto-rotate"/></svg>
                     </label>
                 </div>
 
@@ -81,11 +81,11 @@
                 <div id="bottomBar">
                     <div id="bottomRight">
                         <div id="roundCounter">
-                            <span id="mapName">Térkép: <span id="mapTitle">-</span></span>
+                            <span id="mapName" title="Térkép"><svg><use href="../images/icons/game-icons.svg#map"/></svg><span id="mapTitle">-</span></span>
                             <span id="roundCount">Kör: <span id="currentRound">-</span> / <span id="totalRounds">-</span></span>
                         </div>
                         <button class="btn-guess" id="guessBtn" onclick="sendGuess()">
-                            <svg viewBox="0 0 24 24"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>
+                            <svg><use href="../images/icons/game-icons.svg#guess"/></svg>
                             Tipp leadása
                         </button>
                     </div>

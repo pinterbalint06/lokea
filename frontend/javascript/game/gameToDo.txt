@@ -48,9 +48,9 @@ Teendők 2:
     --toplista megcsinalasa
     --kommentelés megcsinálása
 --vegso panel a finish_game_sessionbol kapja az adatokat
---mapid elkuldese frontendre
---tesztek javitasa
+kesz--mapid elkuldese frontendre
+kesz--tesztek javitasa
 !!!!--palyak kedvencre tetele
-!!!!--esetleg modal alaphelyzetbe allitasa
---mapcover kepek megcsinalasa
-!!!!--svg-k helyes használata   uixwing  ------- utolso prio
+kesz!!!!--esetleg modal alaphelyzetbe allitasa
+--mapcover kepek megcsinalasa ----------pull utan
+kesz!!!!--svg-k helyes használata   uixwing  ------- utolso prio

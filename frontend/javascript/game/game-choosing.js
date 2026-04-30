@@ -1,4 +1,5 @@
 import { formatSecondsToMinutes } from "./timer-conversion.js";
+import { createFavoriteButton } from "../libs/elements/favoriteButton.js";
 
 window.addEventListener('pageshow', (event) => {
     if (event.persisted) window.location.reload();
@@ -84,6 +85,7 @@ function createCard(game_map) {
     game_maps_card_content.appendChild(card_plays);
     game_maps_card_content.appendChild(card_created);
     game_maps_card.appendChild(game_maps_card_content);
+    game_maps_card.appendChild(createFavoriteButton(game_map.game_maps_id));
     game_maps_card.addEventListener('click', function () {
         createModal(game_map);
     });

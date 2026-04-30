@@ -1,5 +1,6 @@
 @import url('./base.css');
 @import url('./game-map-base.css');
+@import url('./favorite-button.css');
 
 body {
     font-family: sans-serif;
@@ -60,6 +61,7 @@ body {
 }
 
 .card {
+    position: relative;
     width: 250px;
     height: 400px;
     border-radius: 15px;
@@ -334,4 +336,8 @@ body {
     .max-rounds-info .info-desc {
         font-size: 0.88rem;
     }
+}
+
+.dropdown-toggle::after {
+    display: none;
 }

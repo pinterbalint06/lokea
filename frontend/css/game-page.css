@@ -41,7 +41,7 @@ body {
 
 #mapWrapper {
     position: absolute;
-    bottom: 76px;
+    bottom: 90px;
     right: 12px;
     width: 30%;
     min-width: 320px;
@@ -183,11 +183,8 @@ body {
 .map-btn svg {
     width: 12px;
     height: 12px;
-    stroke: currentColor;
-    fill: none;
-    stroke-width: 2.5;
-    stroke-linecap: round;
-    stroke-linejoin: round;
+    fill: currentColor;
+    stroke: none;
 }
 
 #sidebar {
@@ -243,11 +240,8 @@ body {
 .icon-btn svg {
     width: 17px;
     height: 17px;
-    stroke: currentColor;
-    fill: none;
-    stroke-width: 2;
-    stroke-linecap: round;
-    stroke-linejoin: round;
+    fill: currentColor;
+    stroke: none;
     pointer-events: none;
 }
 
@@ -288,7 +282,7 @@ body {
     bottom: 0;
     left: 0;
     right: 0;
-    height: 80px;
+    height: 96px;
     background: linear-gradient(to top, rgba(10, 5, 16, 0.85) 0%, transparent 100%);
     z-index: 20;
     pointer-events: none;
@@ -296,7 +290,7 @@ body {
 
 #bottomRight {
     position: absolute;
-    bottom: 14px;
+    bottom: 18px;
     right: 12px;
     width: 30%;
     min-width: 320px;
@@ -317,7 +311,7 @@ body {
     -webkit-backdrop-filter: blur(8px);
     border: 1px solid rgba(255, 255, 255, 0.08);
     border-radius: 8px;
-    padding: 0 16px;
+    padding: 0 20px;
     flex: 1;
     min-width: 0;
     display: flex;
@@ -327,17 +321,30 @@ body {
 }
 
 #mapName {
-    font-size: 14px;
+    font-size: 15px;
     font-weight: 700;
     color: rgba(255, 255, 255, 0.75);
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
     min-width: 0;
+    display: flex;
+    align-items: center;
+    gap: 7px;
+    pointer-events: auto;
+    cursor: default;
+}
+
+#mapName svg {
+    width: 17px;
+    height: 17px;
+    fill: currentColor;
+    stroke: none;
+    flex-shrink: 0;
 }
 
 #roundCount {
-    font-size: 14px;
+    font-size: 15px;
     font-weight: 700;
     color: rgba(255, 255, 255, 0.75);
     white-space: nowrap;
@@ -352,10 +359,10 @@ body {
     background: var(--accent-main);
     color: white;
     border: 1px solid rgba(180, 100, 255, 0.35);
-    padding: 10px 22px;
+    padding: 12px 24px;
     border-radius: 24px;
     font-weight: 700;
-    font-size: 14px;
+    font-size: 15px;
     cursor: pointer;
     letter-spacing: 0.04em;
     box-shadow: 0 0 24px rgba(123, 44, 191, 0.32),
@@ -366,13 +373,10 @@ body {
 }
 
 .btn-guess svg {
-    width: 14px;
-    height: 14px;
-    stroke: currentColor;
-    fill: none;
-    stroke-width: 2;
-    stroke-linecap: round;
-    stroke-linejoin: round;
+    width: 16px;
+    height: 16px;
+    fill: currentColor;
+    stroke: none;
 }
 
 .btn-guess:hover {
@@ -780,7 +784,7 @@ body {
         width: 50%;
         min-width: 240px;
         padding-top: 25%;
-        max-height: calc(100% - 88px);
+        max-height: calc(100% - 104px);
     }
 
     #mapWrapper:not(:has(#mapCanvas.full)):hover {
