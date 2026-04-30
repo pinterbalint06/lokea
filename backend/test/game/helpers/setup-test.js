@@ -1,7 +1,7 @@
 const express = require("express");
 const supertest = require("supertest");
-const gameApiEndpoints = require("#root/api/gameflow/gameApi.js");
-const gameChoosingEndpoints = require("#root/api/gameflow/gameChoosing.js");
+const gameApiEndpoints = require("#root/api/gameflow/game.js");
+const gameChoosingEndpoints = require("#root/api/gameflow/gamelobby.js");
 
 function createGameApiTestApp() {
     const app = express();

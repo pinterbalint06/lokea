@@ -1,4 +1,5 @@
 const mapsService = require("./maps.service.js");
+const AppError = require("#utils/app-error.js");
 
 async function getAllMaps(request, response) {
     try {
@@ -6,7 +7,7 @@ async function getAllMaps(request, response) {
         request.session.game.mapInfo = mapInfo;
         response.status(200).json({ success: true, maps });
     } catch (error) {
-        if (error.statusCode) {
+        if (error instanceof AppError) {
             response.status(error.statusCode).json({ success: false, message: error.message });
         } else {
             response.status(500).json({ success: false, message: "Error fetching maps" });

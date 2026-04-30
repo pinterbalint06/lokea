@@ -1,4 +1,5 @@
 const guessService = require("./guess.service.js");
+const AppError = require("#utils/app-error.js");
 
 async function processGuess(request, response) {
     try {
@@ -11,7 +12,7 @@ async function processGuess(request, response) {
 
         response.status(200).json(result);
     } catch (error) {
-        if (error.statusCode) {
+        if (error instanceof AppError) {
             response.status(error.statusCode).json({ success: false, message: error.message });
         } else {
             response.status(500).json({ success: false, message: "Error processing guess" });

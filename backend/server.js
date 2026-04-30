@@ -151,7 +151,7 @@ app.use('/api/admin', adminEndpoints);
 const endpoints = require('./api/api.js');
 app.use('/api', endpoints);
 //!Game choosing API endpoints
-const gameChoosingEndpoints = require('./api/gameflow/gameChoosing.js');
+const gameChoosingEndpoints = require('./api/gameflow/gamelobby.js');
 app.use('/api/choose-game', gameChoosingEndpoints);
 //!Map Creation API endpoints
 const mapCreationEndpoints = require('./api/mapcreator/mapcreator.js');
@@ -160,7 +160,7 @@ app.use('/api/map-creator', mapCreationEndpoints);
 const gameMapsEndpoints = require('./api/gamemaps/gamemaps.routes.js');
 app.use('/api/game-maps', gameMapsEndpoints);
 //!game API endpoints
-const gameEndpoints = require('./api/gameflow/gameApi.js');
+const gameEndpoints = require('./api/gameflow/game.js');
 app.use('/api/game', gameEndpoints);
 app.use('/', router);
 
