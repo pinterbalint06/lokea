@@ -20,7 +20,7 @@ export function createFavoriteButton(game_map_id) {
     favoriteBtn.addEventListener('click', async function (e) {
         e.stopPropagation();
         this.classList.toggle('active');
-        favorited(game_map_id);
+        console.log("nigger");
     });
     return favoriteBtn;
 }

@@ -11,7 +11,17 @@ const FALLBACK_COVER_IMAGE = "/assets/not_found.webp";
 router.get("/", async (request, response) => {
     try {
         const sort = String(request.query.sort || "created").toLowerCase();
-        const offset = parseInt(request.query.offset) || 0;
+        let offset = 0;
+        if (request.query.offset !== undefined) {
+            offset = Number(request.query.offset);
+            if (!Number.isInteger(offset) || offset < 0) {
+                response.status(400).json({
+                    success: false,
+                    message: "Érvénytelen offset. Pozitív egész számnak kell lennie."
+                });
+            }
+        }
+
         const validSorts = ["created", "rating", "plays", "favorites"];
         if (!validSorts.includes(sort)) {
             response.status(400).json({

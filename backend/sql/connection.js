@@ -4,7 +4,7 @@ const pool = mysql.createPool({
     host: '127.0.0.1',
     user: 'root',
     password: 'rootpassword',
-    database: 'bigprojekt_db',
+    database: 'lokea',
     waitForConnections: true,
     connectionLimit: 10,
     queueLimit: 0

@@ -52,7 +52,6 @@ document.addEventListener("DOMContentLoaded", function () {
 
 async function loadGameMaps(sort) {
     const gameMaps = await fetchURL('/api/choose-game?sort=' + sort + '&offset=' + (cardLoadedTimes * 20));
-    console.log(gameMaps.results);
     let gameMapsContainer = document.getElementById('game_maps_container');
     if (gameMaps.success) {
         for (let i = 0; i < gameMaps.results.length; i++) {
@@ -114,7 +113,6 @@ function createModal(game_map) {
     let modalStars = document.getElementById('modal-stars');
     let modalDesc = document.getElementById('modal-desc');
     let maxUniqueRounds = document.getElementById('maxUniqueRounds');
-    console.log(game_map);
     const pointCount = Number(game_map.point_count);
     const safePointCount = Number.isFinite(pointCount) && pointCount > 0 ? pointCount : 0;
     modal.dataset.gameMapId = game_map.game_maps_id;

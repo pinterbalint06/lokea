@@ -1,7 +1,7 @@
 const express = require("express");
 const router = express.Router();
 const database = require("#sql/game.database.js");
-const { checkGameSession } = require("../../auth.js");
+const { checkGameSession } = require("#root/auth.js");
 const mapsRoutes = require("./maps/maps.routes.js");
 const randomPointRoutes = require("./random-point/random-point.routes.js");
 const guessRoutes = require("./guess/guess.routes.js");

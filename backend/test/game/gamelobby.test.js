@@ -29,6 +29,20 @@ describe("Game Lobby API - /api/choose-game/", () => {
                 expect(response.statusCode).toBe(200);
                 expect(database.getGameMaps).toHaveBeenCalledWith("created", undefined, 0);
             });
+
+            it("Should respond with 400 for a negative offset parameter", async () => {
+                const response = await requestWithSupertest.get("/api/choose-game?offset=-5");
+
+                expect(response.statusCode).toBe(400);
+                expect(response.body.success).toBe(false);
+            });
+
+            it("Should respond with 400 for a non-integer offset parameter", async () => {
+                const response = await requestWithSupertest.get("/api/choose-game?offset=abc");
+
+                expect(response.statusCode).toBe(400);
+                expect(response.body.success).toBe(false);
+            });
         });
 
         describe("Happy paths (200)", () => {

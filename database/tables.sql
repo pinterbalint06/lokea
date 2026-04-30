@@ -1,14 +1,14 @@
-CREATE DATABASE IF NOT EXISTS bigprojekt_db
+CREATE DATABASE IF NOT EXISTS lokea
 DEFAULT CHARACTER SET utf8
 COLLATE utf8_hungarian_ci;
 
-USE bigprojekt_db;
+USE lokea;
 
 CREATE TABLE images (
-    image_id int AUTO_INCREMENT PRIMARY KEY NOT NULL,
-    width int NOT NULL,
-    height int NOT NULL,
-    filepath varchar(255) NOT NULL
+    image_id INT AUTO_INCREMENT PRIMARY KEY NOT NULL,
+    width INT NOT NULL,
+    height INT NOT NULL,
+    filepath VARCHAR(255) NOT NULL
 );
 
 CREATE TABLE users (
@@ -23,51 +23,51 @@ CREATE TABLE users (
     darkmode BOOLEAN DEFAULT 0,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     deleted_at TIMESTAMP NULL,
-    foreign key (pfp) references images(image_id) ON DELETE SET NULL
+    FOREIGN KEY (pfp) REFERENCES images(image_id) ON DELETE SET NULL
 );
 
 CREATE TABLE game_maps (
-    game_maps_id int AUTO_INCREMENT PRIMARY KEY NOT NULL,
-    creator_id int,
-    title varchar(50) NOT NULL DEFAULT 'Névtelen pálya',
-    cover_image_id int,
-    game_description varchar(255) NOT NULL DEFAULT 'Nem található leírás',
+    game_maps_id INT AUTO_INCREMENT PRIMARY KEY NOT NULL,
+    creator_id INT,
+    title VARCHAR(50) NOT NULL DEFAULT 'Névtelen pálya',
+    cover_image_id INT,
+    game_description VARCHAR(255) NOT NULL DEFAULT 'Nem található leírás',
     game_created TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    foreign key (creator_id) references users(user_id) ON DELETE SET NULL,
-    foreign key (cover_image_id) references images(image_id) ON DELETE SET NULL
+    FOREIGN KEY (creator_id) REFERENCES users(user_id) ON DELETE SET NULL,
+    FOREIGN KEY (cover_image_id) REFERENCES images(image_id) ON DELETE SET NULL
 );
 
 CREATE TABLE game_maps_comments (
-    comment_id int AUTO_INCREMENT PRIMARY KEY NOT NULL,
-    game_maps_id int,
-    user_id int,
-    comment_text varchar(255) DEFAULT NULL,
-    rating int NOT NULL,
+    comment_id INT AUTO_INCREMENT PRIMARY KEY NOT NULL,
+    game_maps_id INT NOT NULL,
+    user_id INT,
+    comment_text VARCHAR(255) DEFAULT NULL,
+    rating INT NOT NULL,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    foreign key (game_maps_id) references game_maps(game_maps_id) ON DELETE CASCADE,
-    foreign key (user_id) references users(user_id) ON DELETE SET NULL,
+    FOREIGN KEY (game_maps_id) REFERENCES game_maps(game_maps_id) ON DELETE CASCADE,
+    FOREIGN KEY (user_id) REFERENCES users(user_id) ON DELETE SET NULL,
     CONSTRAINT unique_comment_per_user_per_map UNIQUE (game_maps_id, user_id),
     CONSTRAINT check_rating_range CHECK (rating >= 1 AND rating <= 5)
 );
 
 CREATE TABLE map (
-    map_id int AUTO_INCREMENT PRIMARY KEY NOT NULL,
-    title varchar(20) NOT NULL,
-    game_maps_id int,
-    image_id int,
-    foreign key (game_maps_id) references game_maps(game_maps_id) ON DELETE CASCADE,
-    foreign key (image_id) references images(image_id) ON DELETE CASCADE
+    map_id INT AUTO_INCREMENT PRIMARY KEY NOT NULL,
+    title VARCHAR(20) NOT NULL,
+    game_maps_id INT,
+    image_id INT,
+    FOREIGN KEY (game_maps_id) REFERENCES game_maps(game_maps_id) ON DELETE CASCADE,
+    FOREIGN KEY (image_id) REFERENCES images(image_id) ON DELETE CASCADE
 );
 
 CREATE TABLE points (
-    point_id int AUTO_INCREMENT PRIMARY KEY NOT NULL,
-    map_id int,
-    point_u float NOT NULL,
-    point_v float NOT NULL,
+    point_id INT AUTO_INCREMENT PRIMARY KEY NOT NULL,
+    map_id INT NOT NULL,
+    point_u FLOAT NOT NULL,
+    point_v FLOAT NOT NULL,
     north_direction DECIMAL(5,2) NOT NULL DEFAULT 0.00,
-    image_id int,
-    foreign key (map_id) references map(map_id) ON DELETE CASCADE,
-    foreign key (image_id) references images(image_id) ON DELETE SET NULL,
+    image_id INT,
+    FOREIGN KEY (map_id) REFERENCES map(map_id) ON DELETE CASCADE,
+    FOREIGN KEY (image_id) REFERENCES images(image_id) ON DELETE SET NULL,
     UNIQUE KEY unique_point_coordinates_per_map (map_id, point_u, point_v),
     CONSTRAINT check_point_u_range CHECK (point_u >= 0 AND point_u < 1),
     CONSTRAINT check_point_v_range CHECK (point_v >= 0 AND point_v < 1),
@@ -75,26 +75,26 @@ CREATE TABLE points (
 );
 
 CREATE TABLE favorites (
-    favorite_id int AUTO_INCREMENT PRIMARY KEY NOT NULL,
-    user_id int,
-    game_maps_id int,
-    foreign key (user_id) references users(user_id) ON DELETE CASCADE,
-    foreign key (game_maps_id) references game_maps(game_maps_id) ON DELETE CASCADE
+    user_id INT NOT NULL,
+    game_maps_id INT NOT NULL,
+    PRIMARY KEY (user_id, game_maps_id),
+    FOREIGN KEY (user_id) REFERENCES users(user_id) ON DELETE CASCADE,
+    FOREIGN KEY (game_maps_id) REFERENCES game_maps(game_maps_id) ON DELETE CASCADE
 );
 
 CREATE TABLE log (
     log_id INT AUTO_INCREMENT PRIMARY KEY NOT NULL,
-    user_id int,
-    activity varchar(50),
+    user_id INT,
+    activity VARCHAR(50),
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    foreign key (user_id) references users(user_id) ON DELETE CASCADE
+    FOREIGN KEY (user_id) REFERENCES users(user_id) ON DELETE CASCADE
 );
 
 CREATE TABLE point_connections (
-    connection_id int AUTO_INCREMENT PRIMARY KEY NOT NULL,
-    start_point_id int NOT NULL,
-    end_point_id int NOT NULL,
-    game_maps_id int NOT NULL,
+    connection_id INT AUTO_INCREMENT PRIMARY KEY NOT NULL,
+    start_point_id INT NOT NULL,
+    end_point_id INT NOT NULL,
+    game_maps_id INT NOT NULL,
 
     direction_start_to_end DECIMAL(5,2) DEFAULT NULL,
     direction_end_to_start DECIMAL(5,2) DEFAULT NULL,
@@ -134,13 +134,13 @@ CREATE TABLE session_guesses (
     point_id INT,
     round INT NOT NULL,
     map_id INT NOT NULL,
-    guessed_u float NOT NULL,
-    guessed_v float NOT NULL,
+    guessed_u FLOAT NOT NULL,
+    guessed_v FLOAT NOT NULL,
     distance_error FLOAT NOT NULL,
     points_awarded INT NOT NULL,
     guessed_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     cycle INT NOT NULL,
-    foreign key (map_id) references map(map_id) ON DELETE CASCADE,
+    FOREIGN KEY (map_id) REFERENCES map(map_id) ON DELETE CASCADE,
     FOREIGN KEY (session_id) REFERENCES game_sessions(session_id) ON DELETE CASCADE,
     FOREIGN KEY (point_id) REFERENCES points(point_id) ON DELETE SET NULL
 );

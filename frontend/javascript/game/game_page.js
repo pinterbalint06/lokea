@@ -155,9 +155,6 @@ async function startGame() {
             fetchGameData('/api/game/maps')
         ]);
 
-        console.log(gameData);
-        console.log(mapsData);
-
         if (!Array.isArray(mapsData.maps) || mapsData.maps.length === 0) {
             canPlaceMarker = false;
             throw new Error("Nincsenek elérhető térképek a játékhoz.");
@@ -181,7 +178,6 @@ async function startGame() {
         document.getElementById('totalRounds').textContent = roundCount;
 
         for (let i = currentRound; i < roundCount; i++) {
-            console.log(`Starting round ${i + 1} of ${roundCount}`);
             const isLastRound = i === roundCount - 1;
             resetGameState(roundTime, i);
             await createPoint(roundTime);
@@ -192,7 +188,6 @@ async function startGame() {
             await waitForNext();
             removeEverything();
         }
-        console.log("Game over");
         await finishGame();
     } catch (error) {
         showError('Nem sikerült csatlakozni a játékhoz: ' + error.message);
@@ -210,8 +205,7 @@ function resetGameState(roundTime, currentRound) {
 
 async function createPoint(roundTime) {
     try {
-        const pointData = await fetchGameData('/api/game/round')
-        console.log("Received point data:", pointData);
+        const pointData = await fetchGameData('/api/game/round');
         if (!pointData.success || !pointData.point) throw new Error("Failed to fetch random point");
         const point = pointData.point;
         document.getElementById("timer").textContent = formatSecondsToMinutes(point.game.timeLeft - 3);
@@ -241,7 +235,6 @@ function cycleMaps(direction = 1) {
 function nextMap() {
     const map = maps[mapsIndex];
     mapId = map.mapId;
-    console.log(map);
     loadMaplowThenHigh(mapId);
     document.getElementById('mapTitle').textContent = map.title || '-';
     removeEverything();
@@ -281,7 +274,6 @@ async function sendGuess() {
             sendData = markerPosition();
         }
         sendData.map_i = mapsIndex;
-        console.log("Sending guess:", sendData);
         try {
             const response = await postGameScore('/api/game/round/guess', sendData);
             showAnswer(response);
@@ -296,7 +288,6 @@ async function sendGuess() {
 }
 
 function showAnswer(response) {
-    console.log("Guess response:", response);
     if (mapsIndex != response.mapI) {
         mapsIndex = response.mapI;
         nextMap();
@@ -386,7 +377,6 @@ async function finishGame() {
             throw new Error(responseData.message || 'Hálózati hiba');
         }
         const result = await response.json();
-        console.log("Finish game response:", result);
     } catch (error) {
         showError("Hiba a játék befejezésekor: " + error.message);
     }
