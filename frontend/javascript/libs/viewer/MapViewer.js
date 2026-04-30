@@ -691,6 +691,14 @@ export class MapViewer extends WASMViewerBase {
                 });
         }
 
+        if (oldId !== newId && this.doesMarkerExist(newId)) {
+            throw new WebassemblyError(
+                "New marker ID already exists",
+                {
+                    "type": MAP_VIEWER_ERROR_TYPES.INVALID_INPUT
+                });
+        }
+
         this._engine.changeMarkerId(oldId, newId);
     }
 

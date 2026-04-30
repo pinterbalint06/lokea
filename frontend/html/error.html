@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html lang="hu" data-bs-theme="dark">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Lokea - Hiba ({{STATUS_CODE}})</title>
+    <link href="/bootstrap/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="/css/error.css">
+    <script type="module" src="/javascript/error/error.js"></script>
+</head>
+
+<body class="lilagradiensbg d-flex flex-column min-vh-100">
+    <nav class="navbar navbar-expand-lg uveg sticky-top">
+        <div class="container-fluid justify-content-between">
+            <a class="navbar-brand" href="/">
+                <img src="/images/lokea.webp" alt="Lokea logo" class="navPic">
+            </a>
+        </div>
+    </nav>
+
+    <main class="error-container flex-grow-1">
+        <section class="error-card uveg p-5 rounded-4 shadow-lg">
+
+            <div class="floating-wrapper mb-3">
+                <img src="/images/lokea-error.webp" alt="Hiba történt" class="img-fluid error-image">
+            </div>
+
+            <h1 class="error-code">{{STATUS_CODE}}</h1>
+            <h2 class="h4 mt-3 mb-4 text-white">Hoppáré! Valami elromlott.</h2>
+            <p class="text-white-50 mb-5">{{ERROR_MESSAGE}}</p>
+
+            <div class="d-flex justify-content-center gap-3 flex-wrap">
+                <button id="backBtn" type="button" class="btn btn-outline-secondary rounded-pill px-4">
+                    Vissza az előző oldalra
+                </button>
+                <a href="/" class="btn uvegbutton rounded-pill px-4">
+                    Vissza a főoldalra
+                </a>
+            </div>
+        </section>
+    </main>
+
+    <script src="/bootstrap/js/bootstrap.min.js"></script>
+</body>
+
+</html>

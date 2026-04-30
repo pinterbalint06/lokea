@@ -9,11 +9,8 @@ const checkAuth = (request, response, next) => {
 
 const checkRole = (...roles) => {
     return (request, response, next) => {
-        if (!request.session.userid) {
-            return response.status(401).json({ message: "Bejelentkezés szükséges!" });
-        }
         if (!roles.includes(request.session.role)) {
-            return response.status(404).sendFile(path.join(__dirname, '../frontend/html/notfound.html'));
+            next(new AppError("A keresett oldal nem található.", 404));
         }
         next();
     };
