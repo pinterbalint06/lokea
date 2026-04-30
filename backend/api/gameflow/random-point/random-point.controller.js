@@ -17,12 +17,12 @@ async function getRandomPoint(request, response) {
             game.currentCycle += 1;
         }
 
-        response.status(200).json({ success: true, point: responsePoint });
+        response.status(200).json({ point: responsePoint });
     } catch (error) {
         if (error instanceof AppError) {
-            response.status(error.statusCode).json({ success: false, message: error.message });
+            response.status(error.statusCode).json({ message: error.message });
         } else {
-            response.status(500).json({ success: false, message: "Error fetching random point" });
+            response.status(500).json({ message: "Error fetching random point" });
         }
     }
 }

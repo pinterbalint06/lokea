@@ -113,7 +113,6 @@ async function processGuess(sessionId, game, body) {
     const totalScore = await database.totalScore(sessionId);
 
     return {
-        success: true,
         score: result.score,
         distance: result.pixelDistance,
         mapI: result.mapIndex,

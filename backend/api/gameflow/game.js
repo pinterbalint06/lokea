@@ -12,7 +12,6 @@ router.get("/session", async (request, response) => {
     try {
         const game = request.session.game;
         response.status(200).json({
-            success: true,
             game: {
                 title: game.gameTitle,
                 rounds: game.rounds,
@@ -21,7 +20,7 @@ router.get("/session", async (request, response) => {
             }
         });
     } catch (error) {
-        response.status(500).json({ success: false, message: "Error fetching game info" });
+        response.status(500).json({ message: "Error fetching game info" });
     }
 });
 
@@ -33,9 +32,9 @@ router.delete("/session", async (request, response) => {
     try {
         await database.finishGameSession(request.session.game.activeSessionId);
         delete request.session.game;
-        response.status(200).json({ success: true, message: "Game session finished" });
+        response.status(200).json({ message: "Game session finished" });
     } catch (error) {
-        response.status(500).json({ success: false, message: "Error finishing game session" });
+        response.status(500).json({ message: "Error finishing game session" });
     }
 });
 

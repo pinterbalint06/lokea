@@ -13,9 +13,9 @@ async function processGuess(request, response) {
         response.status(200).json(result);
     } catch (error) {
         if (error instanceof AppError) {
-            response.status(error.statusCode).json({ success: false, message: error.message });
+            response.status(error.statusCode).json({ message: error.message });
         } else {
-            response.status(500).json({ success: false, message: "Error processing guess" });
+            response.status(500).json({ message: "Error processing guess" });
         }
     }
 }

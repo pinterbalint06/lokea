@@ -206,13 +206,16 @@ function resetGameState(roundTime, currentRound) {
 async function createPoint(roundTime) {
     try {
         const pointData = await fetchGameData('/api/game/round');
-        if (!pointData.success || !pointData.point) throw new Error("Failed to fetch random point");
+        if (!pointData.point) throw new Error("Failed to fetch random point");
         const point = pointData.point;
-        document.getElementById("timer").textContent = formatSecondsToMinutes(point.game.timeLeft - 3);
+        const showCountdown = point.game.timeLeft > roundTime;
+        document.getElementById("timer").textContent = formatSecondsToMinutes(
+            showCountdown ? point.game.timeLeft - 3 : point.game.timeLeft
+        );
         currentPointId = point.pointId;
         loadPointLowThenHigh(point.pointId);
         equirectangularViewer.setZoom(0);
-        if (point.game.timeLeft >= roundTime) {
+        if (showCountdown) {
             await createCountdownTimer();
         }
         startRoundTimer(point.game.roundEndAt);

@@ -1,6 +1,7 @@
 const express = require("express");
 const router = express.Router();
 const database = require("#sql/game.database.js");
+const AppError = require("#utils/app-error.js");
 const path = require("path");
 const sessionsRoutes = require("./sessions/sessions.routes.js");
 
@@ -15,26 +16,24 @@ router.get("/", async (request, response) => {
         if (request.query.offset !== undefined) {
             offset = Number(request.query.offset);
             if (!Number.isInteger(offset) || offset < 0) {
-                response.status(400).json({
-                    success: false,
-                    message: "Érvénytelen offset. Pozitív egész számnak kell lennie."
-                });
+                throw new AppError("Érvénytelen offset. Pozitív egész számnak kell lennie.", 400);
             }
         }
 
         const validSorts = ["created", "rating", "plays", "favorites"];
         if (!validSorts.includes(sort)) {
-            response.status(400).json({
-                success: false,
-                message: "Érvénytelen rendezés. Használható: created, rating, plays, favorites"
-            });
-        } else {
-            const userId = request.session?.userid;
-            const palyak = await database.getGameMaps(sort, userId, offset);
-            response.status(200).json({ success: true, results: palyak });
+            throw new AppError("Érvénytelen rendezés. Használható: created, rating, plays, favorites", 400);
         }
+
+        const userId = request.session?.userid;
+        const palyak = await database.getGameMaps(sort, userId, offset);
+        response.status(200).json({ results: palyak });
     } catch (error) {
-        response.status(500).json({ success: false, message: "Error fetching game maps" });
+        if (error instanceof AppError) {
+            response.status(error.statusCode).json({ message: error.message });
+        } else {
+            response.status(500).json({ message: "Error fetching game maps" });
+        }
     }
 });
 
@@ -48,7 +47,7 @@ router.get("/cover-images/:cover_image_id", async (request, response) => {
         }
         response.sendFile(path.join(UPLOADS_DIR, filePath));
     } catch (error) {
-        response.status(500).json({ success: false, message: "Error fetching cover image" });
+        response.status(500).json({ message: "Error fetching cover image" });
     }
 });
 
