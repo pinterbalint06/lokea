@@ -3,7 +3,7 @@ const express = require('express'); //?npm install express
 const session = require('express-session'); //?npm install express-session
 const path = require('path');
 const cors = require('cors');
-const database = require("./sql/database.js");
+const { doesGameMapExist } = require('#gamemaps/shared/queries/gamemaps.queries.js');
 const auth = require('./auth.js')
 const { Server } = require("socket.io");
 const http = require('http');
@@ -108,8 +108,8 @@ router.get(
                 convert: true
             });
 
-            const doesGameMapExist = await database.doesGameMapExist(request.params.gameMapId);
-            if (!doesGameMapExist) {
+            const gameMapExists = await doesGameMapExist(request.params.gameMapId);
+            if (!gameMapExists) {
                 throw new AppError(ERRORS.GAMEMAP.NOT_FOUND, 404);
             }
 

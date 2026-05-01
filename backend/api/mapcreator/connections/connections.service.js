@@ -1,5 +1,6 @@
 const ERRORS = require("#utils/error-messages.js");
-const database = require("#sql/database.js");
+const database = require("#mapcreator/connections/connections.queries.js");
+const { getConnection } = require("#sql/database.js");
 const AppError = require("#utils/app-error.js");
 const { cleanupAfterError, assertUserOwnsGameMap, assertUserOwnsConnection } = require("#mapcreator/shared/utils/mapcreator.utils.js");
 
@@ -20,7 +21,7 @@ async function updateConnection(userId, connectionID, directionStartToEnd, direc
             ? directionEndToStart
             : null;
 
-        dbConnection = await database.getConnection();
+        dbConnection = await getConnection();
         await dbConnection.beginTransaction();
 
         const isCrossMapConnection = await database.isConnectionCrossMap(dbConnection, connectionID);
@@ -48,7 +49,7 @@ async function createConnection(userId, gameMapID, startPointId, endPointId, dir
     let dbConnection;
     try {
         await assertUserOwnsGameMap(userId, gameMapID);
-        dbConnection = await database.getConnection();
+        dbConnection = await getConnection();
         await dbConnection.beginTransaction();
 
         if (!await database.arePointsInSameGameMap(dbConnection, startPointId, endPointId, gameMapID)) {
@@ -91,7 +92,7 @@ async function deleteConnection(userId, connectionID) {
     try {
         await assertUserOwnsConnection(userId, connectionID);
 
-        dbConnection = await database.getConnection();
+        dbConnection = await getConnection();
         await dbConnection.beginTransaction();
 
         const successConnectionDeletion = await database.deleteConnectionById(dbConnection, connectionID);
