@@ -302,5 +302,5 @@ module.exports = {
     userToInactive,
     uploadProfilePic,
     deleteProfilePic,
-    addLog,
+    addLog
 };

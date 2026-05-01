@@ -1,4 +1,4 @@
-const { checkAuth } = require("#root/auth.js");
+const { checkAuth } = require("#utils/auth.js");
 const { invalidIds, invalidIdsWithNulls } = require("#testhelpers/test-data.js");
 const ERRORS = require("#utils/error-messages.js");
 
