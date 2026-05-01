@@ -25,11 +25,13 @@
                 <div class="row g-4">
                     <div class="col-12 col-xl-5">
                         <div class="d-flex flex-column gap-3">
-                            <div class="cover-image-wrapper uveg rounded-4 overflow-hidden position-relative">
-                                <button id="editCoverImageButton" type="button"
-                                    class="btn btn-outline-light btn-sm rounded-pill px-3 cover-edit-button d-none">
-                                    Borítókép szerkesztése
-                                </button>
+                            <div id="coverImageWrapper" class="cover-image-wrapper uveg rounded-4 overflow-hidden position-relative">
+                                <div id="coverActionsWrapper" class="position-absolute top-0 end-0 p-3 z-3 d-flex gap-2 align-items-center">
+                                    <button id="editCoverImageButton" type="button"
+                                        class="btn btn-outline-light btn-sm rounded-pill px-3 cover-edit-button d-none">
+                                        Borítókép szerkesztése
+                                    </button>
+                                </div>
                                 <div id="coverPlaceholder"
                                     class="placeholder position-absolute top-0 start-0 w-100 h-100 cover-placeholder">
                                 </div>

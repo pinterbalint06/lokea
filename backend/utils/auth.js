@@ -17,14 +17,14 @@ const checkRole = (...roles) => {
 };
 
 const checkAuthPage = (request, response, next) => {
-    if (!request.session.userid) {
-        return response.redirect('/main');
+    if (!request.session?.userid) {
+        return response.redirect('/');
     }
     next();
 };
 
 const checkGameSessionPage = (request, response, next) => {
-    if (!request.session.userid) {
+    if (!request.session?.userid) {
         return response.redirect('/main');
     }
     if (!request.session.game?.activeSessionId) {

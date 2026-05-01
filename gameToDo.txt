@@ -43,14 +43,15 @@ kesz--choose game - game mapsra
 torolve--pinterrel megbeszelni, hogy mi legyen a scores-al
 kesz--rendezés fix
 
+kesz--mapid elkuldese frontendre
+kesz--tesztek javitasa
+kesz!!!!--palyak kedvencre tetele    -------pull utan
+kesz!!!!--esetleg modal alaphelyzetbe allitasa
+kesz!!!!--svg-k helyes használata   uixwing  ------- utolso prio
+
 Teendők 2:
 !!!felig kesz--játékok befejezése ------pull utan
     --toplista megcsinalasa
     --kommentelés megcsinálása
 --vegso panel a finish_game_sessionbol kapja az adatokat   ----pull utan
-kesz--mapid elkuldese frontendre
-kesz--tesztek javitasa
-!!!!--palyak kedvencre tetele    -------pull utan
-kesz!!!!--esetleg modal alaphelyzetbe allitasa
 --mapcover kepek megcsinalasa ----------pull utan
-kesz!!!!--svg-k helyes használata   uixwing  ------- utolso prio

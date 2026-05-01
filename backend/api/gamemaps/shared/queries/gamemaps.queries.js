@@ -16,8 +16,8 @@ async function getGameMapDetails(gameMapID) {
             ) AS rating,
             (
                 SELECT COUNT(*)
-                FROM scores
-                WHERE scores.game_maps_id = ?
+                FROM game_sessions
+                WHERE game_sessions.game_maps_id = ? AND game_sessions.finished_at IS NOT NULL
             ) AS plays,
             game_maps.game_created,
             game_maps.game_description

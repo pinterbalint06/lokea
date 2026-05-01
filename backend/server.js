@@ -4,7 +4,7 @@ const session = require('express-session'); //?npm install express-session
 const path = require('path');
 const cors = require('cors');
 const { doesGameMapExist } = require('#gamemaps/shared/queries/gamemaps.queries.js');
-const auth = require('./auth.js')
+const auth = require('#utils/auth.js')
 const { Server } = require("socket.io");
 const http = require('http');
 const { idSchema } = require('./utils/schemas.js');
@@ -63,7 +63,7 @@ router.get('/map', (request, response) => {
     response.sendFile(path.join(__dirname, '../frontend/html/test-map.html'));
 });
 router.get('/game-maps/:gameMapId/edit',
-    auth.checkAuth,
+    auth.checkAuthPage,
     async (request, response, next) => {
         try {
             const gameMapId = await idSchema(ERRORS.GAMEMAP.INVALID_ID).validateAsync(
@@ -99,7 +99,7 @@ router.get('/game', auth.checkGameSessionPage, (request, response) => {
 });
 router.get(
     '/game-maps/:gameMapId',
-    auth.checkAuth,
+    auth.checkAuthPage,
     async (request, response, next) => {
         try {
             await idSchema(ERRORS.GAMEMAP.INVALID_ID).validateAsync(request.params.gameMapId, {

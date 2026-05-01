@@ -129,6 +129,13 @@ const ERRORS = {
         TOO_LOW_RATING: "Az értékelésnek legalább 1-nek kell lennie!",
         TOO_HIGH_RATING: "Az értékelésnek legfeljebb 5-nek kell lennie!",
         RATING_REQUIRED: "Az értékelés megadása kötelező!"
+    },
+
+    FAVORITE: {
+        ALREADY_FAVORITED: "Ezt a pályát már kedvencnek jelölted!",
+        NOT_FAVORITED: "Ezt a pályát még nem jelölted kedvencnek!",
+        ADD_FAILED: "A kedvencekhez adás nem sikerült!",
+        REMOVE_FAILED: "A kedvencekből való eltávolítás nem sikerült!"
     }
 };
 
