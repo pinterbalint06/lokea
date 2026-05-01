@@ -422,7 +422,5 @@ module.exports = {
     updatePassword,
     userToInactive,
     uploadProfilePic,
-    deleteProfilePic,
-    getGameMaps,
-    getImagePath
+    deleteProfilePic
 };
