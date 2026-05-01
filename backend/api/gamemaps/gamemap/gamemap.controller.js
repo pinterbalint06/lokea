@@ -1,6 +1,18 @@
 const gamemapsService = require("#gamemaps/gamemap/gamemap.service.js");
 const ERRORS = require("#utils/error-messages.js");
 
+async function createGameMap(request, response, next) {
+    try {
+        const userId = request.session.userid;
+
+        const gameMapID = await gamemapsService.createGameMap(userId);
+
+        response.status(201).json({ gameMapID });
+    } catch (error) {
+        next(error);
+    }
+}
+
 async function getGameMapDetails(request, response, next) {
     try {
         const { gameMapID } = request.params;
@@ -42,6 +54,7 @@ async function deleteGameMap(request, response, next) {
 }
 
 module.exports = {
+    createGameMap,
     getGameMapDetails,
     updateGameMap,
     deleteGameMap

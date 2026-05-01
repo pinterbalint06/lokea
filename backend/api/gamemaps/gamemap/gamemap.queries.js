@@ -19,6 +19,15 @@ async function getTopScoresForGameMap(gameMapID) {
     return rows;
 }
 
+async function createGameMap(userId) {
+    const query = `
+        INSERT INTO game_maps (creator_id)
+        VALUES (?)
+    `;
+    const [result] = await pool.execute(query, [userId]);
+    return result.insertId;
+}
+
 async function updateGameMapDetails(connection, gameMapId, title, description) {
     const query = `
         UPDATE game_maps
@@ -54,7 +63,8 @@ async function deleteGameMapById(connection, gameMapId) {
 
 module.exports = {
     getTopScoresForGameMap,
+    createGameMap,
     updateGameMapDetails,
     getAllImageIdsForGameMap,
     deleteGameMapById
-}
+};

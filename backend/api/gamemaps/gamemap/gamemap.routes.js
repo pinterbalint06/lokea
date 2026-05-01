@@ -20,6 +20,13 @@ router.put(
     controller.updateGameMap
 );
 
+//?POST /api/game-maps
+router.post(
+    "/",
+    controller.createGameMap
+);
+
+
 //?DELETE /api/game-maps/:gameMapID
 router.delete(
     "/",

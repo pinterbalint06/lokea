@@ -27,6 +27,11 @@ async function getGameMapDetails(gameMapID, userId) {
     };
 }
 
+async function createGameMap(userId) {
+    const gameMapId = await database.createGameMap(userId);
+    return gameMapId;
+}
+
 async function deleteGameMap(userId, gameMapID) {
     let dbConnection;
 
@@ -115,6 +120,7 @@ async function updateGameMapDetails(userId, gameMapID, title, description) {
 
 module.exports = {
     getGameMapDetails,
+    createGameMap,
     updateGameMapDetails,
     deleteGameMap
 };
