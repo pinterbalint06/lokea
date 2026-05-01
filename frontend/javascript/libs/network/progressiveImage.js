@@ -110,8 +110,8 @@ export async function loadLowThenHigh({ fetchLow, fetchHigh, loadToViewer, isCur
  * @param {AbortSignal|null} [signal]                 - Aborts ongoing fetches
  * @param {function(): boolean} isCurrent             - Should return false if the load is no longer relevant
  * @param {function(imageData): Promise} loadToViewer - Loads the image into the viewer
- * @param {function(): void} [onLowReady]             - Called after low-res is displayed
- * @param {function(): void} [onHighReady]            - Called after high-res is displayed
+ * @param {function(imageData): Promise} [onLowReady]             - Called after low-res is displayed
+ * @param {function(imageData): Promise} [onHighReady]            - Called after high-res is displayed
  */
 export async function loadPointEquirectangularLowThenHigh({ pointId, signal = null, isCurrent, loadToViewer, onLowReady, onHighReady }) {
     return await loadLowThenHigh({
@@ -132,8 +132,8 @@ export async function loadPointEquirectangularLowThenHigh({ pointId, signal = nu
  * @param {AbortSignal|null} [signal]                 - Aborts ongoing fetches
  * @param {function(): boolean} isCurrent             - Should return false if the load is no longer relevant
  * @param {function(imageData): Promise} loadToViewer - Loads the image into the viewer
- * @param {function(): void} [onLowReady]             - Called after low-res is displayed
- * @param {function(): void} [onHighReady]            - Called after high-res is displayed
+ * @param {function(imageData): Promise} [onLowReady]             - Called after low-res is displayed
+ * @param {function(imageData): Promise} [onHighReady]            - Called after high-res is displayed
  */
 export async function loadMapImageLowThenHigh({ mapId, signal = null, isCurrent, loadToViewer, onLowReady, onHighReady }) {
     return await loadLowThenHigh({
@@ -154,8 +154,8 @@ export async function loadMapImageLowThenHigh({ mapId, signal = null, isCurrent,
  * @param {AbortSignal|null} [signal]                 - Aborts ongoing fetches
  * @param {function(): boolean} isCurrent             - Should return false if the load is no longer relevant
  * @param {function(imageData): Promise} loadToViewer - Loads the image into the viewer
- * @param {function(): void} [onLowReady]             - Called after low-res is displayed
- * @param {function(): void} [onHighReady]            - Called after high-res is displayed
+ * @param {function(imageData): Promise} [onLowReady]             - Called after low-res is displayed
+ * @param {function(imageData): Promise} [onHighReady]            - Called after high-res is displayed
  */
 export async function loadGameMapCoverImageLowThenHigh({ gameMapId, signal = null, isCurrent, loadToViewer, onLowReady, onHighReady }) {
     return await loadLowThenHigh({
