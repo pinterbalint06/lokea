@@ -6,7 +6,7 @@ const db = require('#sql/admin/databaseLogs.js');
 const auth = require('#utils/auth.js');
 const enTranslations = require('#locales/en/admin.json');
 const huTranslations = require('#locales/hu/admin.json');
-const { mockI18nMiddleware, testRequiresAdminOrAuth } = require('./helpers/helpers.js');
+const { mockI18nMiddleware, testRequiresAdminOrAuth, suppressConsoleErrors } = require('./helpers/helpers.js');
 
 const app = express();
 app.use(express.json());
@@ -16,6 +16,7 @@ app.use(mockI18nMiddleware);
 app.use('/api/admin', auth.checkAuth, auth.checkRole("ADMIN"), require('#admin/index.js'));
 
 describe('Admin Logs API Átfogó Tesztek', () => {
+    suppressConsoleErrors();
 
     describe('Végpont: GET /logs', () => {
         testRequiresAdminOrAuth(() => request(app).get('/api/admin/logs'));

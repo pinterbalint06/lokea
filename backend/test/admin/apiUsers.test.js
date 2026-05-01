@@ -11,7 +11,7 @@ const multer = require('multer');
 const sharp = require('sharp');
 const enTranslations = require('#locales/en/admin.json');
 const huTranslations = require('#locales/hu/admin.json');
-const { mockI18nMiddleware, testRequiresAdminOrAuth } = require('./helpers/helpers.js');
+const { mockI18nMiddleware, testRequiresAdminOrAuth, suppressConsoleErrors } = require('./helpers/helpers.js');
 
 const { sendWelcomeEmail, sendChangeEmail, sendDeleteEmail } = require('#utils/mails.js');
 
@@ -23,6 +23,7 @@ app.use(mockI18nMiddleware);
 app.use('/api/admin', auth.checkAuth, auth.checkRole("ADMIN"), require('#admin/index.js'));
 
 describe('Admin Users API-tesztek', () => {
+    suppressConsoleErrors();
     beforeEach(() => {
         fs.unlink.mockResolvedValue(undefined);
     });

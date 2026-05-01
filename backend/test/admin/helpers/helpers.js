@@ -1,6 +1,7 @@
 const { mockConnection } = require('./mocks.js');
 const enTranslations = require('#locales/en/admin.json');
 const huTranslations = require('#locales/hu/admin.json');
+const { suppressConsoleErrors } = require('#testhelpers/helpers.js');
 
 jest.mock('../../../utils/mails.js', () => ({
     sendWelcomeEmail: jest.fn().mockResolvedValue(),
@@ -62,5 +63,6 @@ module.exports = {
     mockCheckAuth,
     mockCheckRole,
     mockI18nMiddleware,
-    testRequiresAdminOrAuth
+    testRequiresAdminOrAuth,
+    suppressConsoleErrors
 };
