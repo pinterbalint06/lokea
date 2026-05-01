@@ -14,10 +14,13 @@
         "#sql/*": "./sql/*",
         "#config/*": "./config/*",
         "#mapcreatortest/*": "./test/mapcreator/*",
+        "#gametest/*": "./test/game/*",
         "#root/*": "./*",
         "#mapcreator/*": "./api/mapcreator/*",
         "#gamemaps/*": "./api/gamemaps/*",
-        "#testhelpers/*": "./test/helpers/*"
+        "#testhelpers/*": "./test/helpers/*",
+        "#imagequeries": "./api/shared/queries/shared-images.queries.js",
+        "#sharedapi/*": "./api/shared/*"
     },
     "author": "Kardos Krisztián",
     "license": "ISC",

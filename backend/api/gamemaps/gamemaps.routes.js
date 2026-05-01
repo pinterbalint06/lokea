@@ -8,16 +8,16 @@ const ERRORS = require("#utils/error-messages.js");
 const { deleteFile } = require("#utils/file-utils.js");
 const gamemapRoutes = require("#gamemaps/gamemap/gamemap.routes.js");
 const imagesRoutes = require("#gamemaps/images/images.routes.js");
-const connectionsRoutes = require("#gamemaps/connections/connections.routes.js");
+const pathsRoutes = require("#gamemaps/paths/paths.routes.js");
 const commentsRoutes = require("#gamemaps/comments/comments.routes.js");
 const coverImageRoutes = require("#gamemaps/cover-image/cover-image.routes.js");
 const schemas = require("#gamemaps/shared/schemas/gamemaps.schemas.js");
 
 router.use(checkAuth);
 
-router.use("/", imagesRoutes); 
+router.use("/", imagesRoutes);
 
-router.use("/", connectionsRoutes);
+router.use("/", pathsRoutes);
 
 router.use(
     "/:gameMapID/cover-image",

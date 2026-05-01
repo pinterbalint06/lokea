@@ -3,7 +3,7 @@ const express = require('express'); //?npm install express
 const session = require('express-session'); //?npm install express-session
 const path = require('path');
 const cors = require('cors');
-const database = require("./sql/database.js");
+const { doesGameMapExist } = require('#gamemaps/shared/queries/gamemaps.queries.js');
 const auth = require('./utils/auth.js')
 const { Server } = require("socket.io");
 const http = require('http');
@@ -16,6 +16,7 @@ const { idSchema } = require('./utils/schemas.js');
 const ERRORS = require('./utils/error-messages.js');
 const { assertUserOwnsGameMap } = require('./api/mapcreator/shared/utils/mapcreator.utils.js');
 const AppError = require('#utils/app-error.js');
+const { buildErrorHtml } = require('./utils/error-template.js');
 
 //!Beállítások
 const app = express();
@@ -99,7 +100,7 @@ router.get('/map', (request, response) => {
 });
 router.get('/game-maps/:gameMapId/edit',
     auth.checkAuth,
-    async (request, response) => {
+    async (request, response, next) => {
         try {
             const gameMapId = await idSchema(ERRORS.GAMEMAP.INVALID_ID).validateAsync(
                 request.params.gameMapId,
@@ -115,15 +116,9 @@ router.get('/game-maps/:gameMapId/edit',
             response.sendFile(path.join(__dirname, '../frontend/html/map-creator.html'));
         } catch (error) {
             if (error.isJoi) {
-                // TODO: valami oldal ennek
-                response.status(400).json({ error: error.details[0].message });
+                next(new AppError(error.details[0].message, 400));
             } else {
-                if (error instanceof AppError) {
-                    response.status(error.statusCode).send();
-                } else {
-                    console.error(error);
-                    response.status(500).send();
-                }
+                next(error);
             }
         }
     }
@@ -132,13 +127,16 @@ router.get('/game-maps/:gameMapId/edit',
 router.get('/admin', auth.checkRole("ADMIN", "LORD"), (request, response) => {
     response.sendFile(path.join(__dirname, '../private/frontend/html/admin.html'));
 });
-router.get('/choose_game', (request, response) => {
+router.get('/game-maps', auth.checkAuthPage, (request, response) => {
     response.sendFile(path.join(__dirname, '../frontend/html/game-choosing.html'));
+});
+router.get('/game', auth.checkGameSessionPage, (request, response) => {
+    response.sendFile(path.join(__dirname, '../frontend/html/game-page.html'));
 });
 router.get(
     '/game-maps/:gameMapId',
     auth.checkAuth,
-    async (request, response) => {
+    async (request, response, next) => {
         try {
             await idSchema(ERRORS.GAMEMAP.INVALID_ID).validateAsync(request.params.gameMapId, {
                 abortEarly: true,
@@ -146,46 +144,79 @@ router.get(
                 convert: true
             });
 
-            const doesGameMapExist = await database.doesGameMapExist(request.params.gameMapId);
-            if (!doesGameMapExist) {
+            const gameMapExists = await doesGameMapExist(request.params.gameMapId);
+            if (!gameMapExists) {
                 throw new AppError(ERRORS.GAMEMAP.NOT_FOUND, 404);
             }
 
             response.sendFile(path.join(__dirname, '../frontend/html/game-map.html'));
         } catch (error) {
             if (error.isJoi) {
-                // TODO: valami oldal ennek
-                response.status(400).json({ error: error.details[0].message });
+                next(new AppError(error.details[0].message, 400));
             } else {
-                if (error instanceof AppError && error.statusCode == 404) {
-                    response.status(404).sendFile(path.join(__dirname, '../frontend/html/notfound.html'));
-                } else {
-                    console.error(error);
-                    response.status(500).send();
-                }
+                next(error);
             }
         }
     }
 );
-router.use((request, response) => {
-    response.status(404).sendFile(path.join(__dirname, '../frontend/html/notfound.html'));
-});
 
 //!API endpoints
+
 const adminEndpoints = require('./api/admin/index.js');
 app.use('/api/admin', auth.checkAuth, auth.checkRole("ADMIN", "LORD"), adminEndpoints);
+
 const endpoints = require('./api/api.js');
 app.use('/api', endpoints);
-//!Map Creation API endpoints
+
+const gameChoosingEndpoints = require('./api/gameflow/gamelobby.js');
+app.use('/api/choose-game', gameChoosingEndpoints);
+
 const mapCreationEndpoints = require('./api/mapcreator/mapcreator.js');
 app.use('/api/map-creator', mapCreationEndpoints);
-//!game maps API endpoints
+
 const gameMapsEndpoints = require('./api/gamemaps/gamemaps.routes.js');
 app.use('/api/game-maps', gameMapsEndpoints);
+
+const gameEndpoints = require('./api/gameflow/game.js');
+app.use('/api/game', gameEndpoints);
+
+app.use('/api', (request, response) => {
+    response.status(404).json({
+        error: ERRORS.COMMON.ENDPOINT_NOT_FOUND
+    });
+});
+
 app.use('/', router);
 
-//Socket.io
+app.use((request, response, next) => {
+    next(new AppError("A keresett oldal nem található.", 404));
+});
 
+
+//! global error handler
+app.use((error, request, response, next) => {
+    const statusCode = error.statusCode || 500;
+    const message = statusCode >= 500 ? ERRORS.COMMON.UNEXPECTED_ERROR : (error.message || ERRORS.COMMON.UNEXPECTED_ERROR);
+    if (statusCode >= 500) {
+        console.error(`Unhandled Server Error: ${request.method} ${request.originalUrl}\n`, error);
+    }
+
+    if (!response.headersSent) {
+        if (request.originalUrl.startsWith('/api')) {
+            response.status(statusCode).json({
+                error: message
+            });
+        } else {
+            const finalHtml = buildErrorHtml(statusCode, message);
+            response.status(statusCode).send(finalHtml);
+        }
+    } else {
+        next(error);
+    }
+});
+
+
+//Socket.io
 io.on("connection", (socket) => {
     const session = socket.request.session;
     const userId = session ? session.userid : null;

@@ -13,8 +13,14 @@ const { invalidTypeNumbers, invalidIds, invalidCharForHungarian } = require("#te
 
 const ERRORS = require("#utils/error-messages.js");
 
-const database = require("#sql/database.js");
-const { mockConnection } = database;
+const database = require("#gamemaps/gamemap/gamemap.queries.js");
+const { mockConnection, getConnection } = require("#sql/database.js");
+
+const { checkUserOwnsGameMap } = require("#sharedapi/queries/ownership.queries.js");
+
+const { getGameMapDetails } = require("#gamemaps/shared/queries/gamemaps.queries.js");
+
+const imageQueries = require("#imagequeries");
 
 const fs = require("fs/promises");
 const path = require("path");
@@ -49,7 +55,7 @@ describe("Game Maps API - /api/game-maps/", () => {
             );
 
             beforeEach(() => {
-                database.getGameMapDetails.mockResolvedValue(mockGameMapDetails);
+                getGameMapDetails.mockResolvedValue(mockGameMapDetails);
                 database.getTopScoresForGameMap.mockResolvedValue(mockTopScores);
             });
 
@@ -68,7 +74,7 @@ describe("Game Maps API - /api/game-maps/", () => {
 
             describe("Conflicts (404, 409)", () => {
                 it("Should respond with 404 if the game map does not exist", async () => {
-                    database.getGameMapDetails.mockResolvedValueOnce(null);
+                    getGameMapDetails.mockResolvedValueOnce(null);
 
                     const response = await makeGetRequest();
 
@@ -78,11 +84,11 @@ describe("Game Maps API - /api/game-maps/", () => {
 
             describe("Happy paths (200, 201, 204)", () => {
                 it("Should respond with 200, returning the game map details, top scores, and is_owner: true if the requesting user is the creator", async () => {
-                    database.getGameMapDetails.mockResolvedValueOnce({ ...mockGameMapDetails });
+                    getGameMapDetails.mockResolvedValueOnce({ ...mockGameMapDetails });
 
                     const response = await makeGetRequest();
 
-                    expect(database.getGameMapDetails).toHaveBeenCalledWith(defaults.id);
+                    expect(getGameMapDetails).toHaveBeenCalledWith(defaults.id);
                     expect(database.getTopScoresForGameMap).toHaveBeenCalledWith(defaults.id);
 
                     expect(response.statusCode).toBe(200);
@@ -94,7 +100,7 @@ describe("Game Maps API - /api/game-maps/", () => {
                 });
 
                 it("Should respond with 200, returning the game map details, top scores, and is_owner: false if the requesting user is not the creator", async () => {
-                    database.getGameMapDetails.mockResolvedValueOnce({ ...mockGameMapDetails, creator_id: 999 });
+                    getGameMapDetails.mockResolvedValueOnce({ ...mockGameMapDetails, creator_id: 999 });
 
                     const response = await makeGetRequest();
 
@@ -108,7 +114,7 @@ describe("Game Maps API - /api/game-maps/", () => {
                 suppressConsoleErrors();
 
                 it.each([
-                    { name: 'database.getGameMapDetails', databaseFunction: database.getGameMapDetails },
+                    { name: 'getGameMapDetails', databaseFunction: getGameMapDetails },
                     { name: 'database.getTopScoresForGameMap', databaseFunction: database.getTopScoresForGameMap }
                 ])("Should respond with 500 if there is an unexpected database error during: $name", async ({ databaseFunction }) => {
                     databaseFunction.mockRejectedValueOnce(new Error("Database error"));
@@ -137,7 +143,7 @@ describe("Game Maps API - /api/game-maps/", () => {
                 testRequiresAuth(() => makePutRequest());
 
                 it("Should respond with 403 if it's not the user's game map", async () => {
-                    database.checkUserOwnsGameMap.mockResolvedValueOnce(false);
+                    checkUserOwnsGameMap.mockResolvedValueOnce(false);
 
                     const response = await makePutRequest();
 
@@ -257,8 +263,8 @@ describe("Game Maps API - /api/game-maps/", () => {
                 suppressConsoleErrors();
 
                 it.each([
-                    { name: 'database.checkUserOwnsGameMap', databaseFunction: database.checkUserOwnsGameMap },
-                    { name: 'database.getConnection', databaseFunction: database.getConnection }
+                    { name: 'checkUserOwnsGameMap', databaseFunction: checkUserOwnsGameMap },
+                    { name: 'getConnection', databaseFunction: getConnection }
                 ])("Should respond with 500 if there is an unexpected database error during: $name", async ({ databaseFunction }) => {
                     databaseFunction.mockRejectedValueOnce(new Error("Database error"));
 
@@ -317,7 +323,7 @@ describe("Game Maps API - /api/game-maps/", () => {
             beforeEach(() => {
                 rmSpy = jest.spyOn(fs, "rm").mockResolvedValue(undefined);
 
-                database.getGameMapDetails.mockResolvedValue({ id: defaults.id });
+                getGameMapDetails.mockResolvedValue({ id: defaults.id });
                 database.getAllImageIdsForGameMap.mockResolvedValue(mockImageIds);
             });
 
@@ -329,7 +335,7 @@ describe("Game Maps API - /api/game-maps/", () => {
                 testRequiresAuth(() => makeDeleteRequest());
 
                 it("Should respond with 403 if it's not the user's game map", async () => {
-                    database.checkUserOwnsGameMap.mockResolvedValueOnce(false);
+                    checkUserOwnsGameMap.mockResolvedValueOnce(false);
 
                     const response = await makeDeleteRequest();
 
@@ -349,7 +355,7 @@ describe("Game Maps API - /api/game-maps/", () => {
 
             describe("Conflicts (404, 409)", () => {
                 it("Should respond with 404 if the game map does not exist", async () => {
-                    database.getGameMapDetails.mockResolvedValueOnce(null);
+                    getGameMapDetails.mockResolvedValueOnce(null);
 
                     const response = await makeDeleteRequest();
 
@@ -363,9 +369,9 @@ describe("Game Maps API - /api/game-maps/", () => {
                     const response = await makeDeleteRequest();
 
                     expect(database.deleteGameMapById).toHaveBeenCalledWith(mockConnection, defaults.id);
-                    expect(database.deleteImageById).toHaveBeenCalledTimes(mockImageIds.length);
+                    expect(imageQueries.deleteImageById).toHaveBeenCalledTimes(mockImageIds.length);
                     for (const imageId of mockImageIds) {
-                        expect(database.deleteImageById).toHaveBeenCalledWith(mockConnection, imageId);
+                        expect(imageQueries.deleteImageById).toHaveBeenCalledWith(mockConnection, imageId);
                     }
 
                     expect(fs.rm).toHaveBeenCalledWith(
@@ -383,7 +389,7 @@ describe("Game Maps API - /api/game-maps/", () => {
                     const response = await makeDeleteRequest();
 
                     expect(database.deleteGameMapById).toHaveBeenCalledWith(mockConnection, defaults.id);
-                    expect(database.deleteImageById).not.toHaveBeenCalled();
+                    expect(imageQueries.deleteImageById).not.toHaveBeenCalled();
 
                     expect(fs.rm).toHaveBeenCalledWith(
                         expect.stringContaining(defaults.id.toString()),
@@ -419,9 +425,9 @@ describe("Game Maps API - /api/game-maps/", () => {
                 suppressConsoleErrors();
 
                 it.each([
-                    { name: 'database.getGameMapDetails', databaseFunction: database.getGameMapDetails },
-                    { name: 'database.checkUserOwnsGameMap', databaseFunction: database.checkUserOwnsGameMap },
-                    { name: 'database.getConnection', databaseFunction: database.getConnection }
+                    { name: 'getGameMapDetails', databaseFunction: getGameMapDetails },
+                    { name: 'checkUserOwnsGameMap', databaseFunction: checkUserOwnsGameMap },
+                    { name: 'getConnection', databaseFunction: getConnection }
                 ])("Should respond with 500 if there is an unexpected database error during: $name", async ({ databaseFunction }) => {
                     databaseFunction.mockRejectedValueOnce(new Error("Database error"));
 
@@ -449,14 +455,14 @@ describe("Game Maps API - /api/game-maps/", () => {
                     expectErrorResponse(response, 500, ERRORS.GAMEMAP.DELETE_FAILED);
                 });
 
-                it("Should respond with 500 and rollback if deleteImageById returns false", async () => {
-                    database.deleteImageById
+                it("Should respond with 500 and rollback if imageQueries.deleteImageById returns false", async () => {
+                    imageQueries.deleteImageById
                         .mockResolvedValueOnce(true)
                         .mockResolvedValueOnce(false); // second one fails
 
                     const response = await makeDeleteRequest();
 
-                    expect(database.deleteImageById).toHaveBeenCalledTimes(2);
+                    expect(imageQueries.deleteImageById).toHaveBeenCalledTimes(2);
                     expectRollback(mockConnection);
                     expectErrorResponse(response, 500, ERRORS.MAP.IMAGE_DELETIONS_FAILED);
                 });

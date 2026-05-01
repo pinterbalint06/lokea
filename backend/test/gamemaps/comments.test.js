@@ -13,8 +13,9 @@ const { invalidTypeNumbers, invalidIds, negativeNumbers, negativeIntegers, tooBi
 
 const ERRORS = require("#utils/error-messages.js");
 
-const database = require("#sql/database.js");
-const { mockConnection } = database;
+const database = require("#gamemaps/comments/comments.queries.js");
+const { doesGameMapExist } = require("#gamemaps/shared/queries/gamemaps.queries.js");
+const { mockConnection, getConnection } = require("#sql/database.js");
 
 const requestWithSupertest = createTestApp();
 
@@ -326,10 +327,10 @@ describe("Game Maps API - /api/game-maps/", () => {
                 suppressConsoleErrors();
 
                 it.each([
-                    database.getConnection,
-                    mockConnection.beginTransaction,
-                    database.hasUserCommentedOnGameMap
-                ])("Should respond with 500 if there is an unexpected database error during: %s", async (databaseFunction) => {
+                    { name: 'getConnection', databaseFunction: getConnection },
+                    { name: 'mockConnection.beginTransaction', databaseFunction: mockConnection.beginTransaction },
+                    { name: 'database.hasUserCommentedOnGameMap', databaseFunction: database.hasUserCommentedOnGameMap }
+                ])("Should respond with 500 if there is an unexpected database error during: $name", async ({ databaseFunction }) => {
                     databaseFunction.mockRejectedValueOnce(new Error("Database error"));
 
                     const response = await makePutRequest();
@@ -360,7 +361,7 @@ describe("Game Maps API - /api/game-maps/", () => {
 
                     const response = await makePutRequest();
 
-                    expect(database.getConnection).toHaveBeenCalled();
+                    expect(getConnection).toHaveBeenCalled();
                     expect(mockConnection.beginTransaction).toHaveBeenCalled();
                     expect(mockConnection.commit).toHaveBeenCalled();
                     expect(mockConnection.rollback).toHaveBeenCalled();
@@ -384,7 +385,6 @@ describe("Game Maps API - /api/game-maps/", () => {
             );
 
             beforeEach(() => {
-                database.getGameMapDetails.mockResolvedValue({ creator_id: 1, creator_name: "TestUser", title: "Test Map", rating: 4.5, plays: 100, game_created: "2024-01-01T12:00:00Z", game_description: "A test map" });
                 database.hasUserCommentedOnGameMap.mockResolvedValue(false);
             });
 
@@ -463,7 +463,7 @@ describe("Game Maps API - /api/game-maps/", () => {
 
             describe("Conflicts (404, 409)", () => {
                 it("Should respond with 404 if the game map does not exist", async () => {
-                    database.getGameMapDetails.mockResolvedValueOnce(null);
+                    doesGameMapExist.mockResolvedValueOnce(false);
 
                     const response = await makePostRequest();
 
@@ -503,9 +503,9 @@ describe("Game Maps API - /api/game-maps/", () => {
                 suppressConsoleErrors();
 
                 it.each([
-                    { name: 'database.getConnection', databaseFunction: database.getConnection },
+                    { name: 'getConnection', databaseFunction: getConnection },
                     { name: 'mockConnection.beginTransaction', databaseFunction: mockConnection.beginTransaction },
-                    { name: 'database.getGameMapDetails', databaseFunction: database.getGameMapDetails },
+                    { name: 'doesGameMapExist', databaseFunction: doesGameMapExist },
                     { name: 'database.hasUserCommentedOnGameMap', databaseFunction: database.hasUserCommentedOnGameMap }
                 ])("Should respond with 500 if there is an unexpected database error during: $name", async ({ databaseFunction }) => {
                     databaseFunction.mockRejectedValueOnce(new Error("Database error"));
@@ -529,7 +529,7 @@ describe("Game Maps API - /api/game-maps/", () => {
 
                     const response = await makePostRequest();
 
-                    expect(database.getConnection).toHaveBeenCalled();
+                    expect(getConnection).toHaveBeenCalled();
                     expect(mockConnection.beginTransaction).toHaveBeenCalled();
                     expect(mockConnection.commit).toHaveBeenCalled();
                     expect(mockConnection.rollback).toHaveBeenCalled();
@@ -589,7 +589,7 @@ describe("Game Maps API - /api/game-maps/", () => {
                 suppressConsoleErrors();
 
                 it.each([
-                    { name: 'database.getConnection', databaseFunction: database.getConnection },
+                    { name: 'getConnection', databaseFunction: getConnection },
                     { name: 'mockConnection.beginTransaction', databaseFunction: mockConnection.beginTransaction },
                     { name: 'database.hasUserCommentedOnGameMap', databaseFunction: database.hasUserCommentedOnGameMap }
                 ])("Should respond with 500 if there is an unexpected database error during: $name", async ({ databaseFunction }) => {
@@ -624,7 +624,7 @@ describe("Game Maps API - /api/game-maps/", () => {
 
                     const response = await makeDeleteRequest();
 
-                    expect(database.getConnection).toHaveBeenCalled();
+                    expect(getConnection).toHaveBeenCalled();
                     expect(mockConnection.beginTransaction).toHaveBeenCalled();
                     expect(mockConnection.commit).toHaveBeenCalled();
                     expect(mockConnection.rollback).toHaveBeenCalled();
