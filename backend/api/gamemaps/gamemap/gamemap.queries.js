@@ -5,12 +5,14 @@ async function getTopScoresForGameMap(gameMapID) {
     const query = `
         SELECT 
             COALESCE(users.username, 'Ismeretlen felhasználó') AS username,
-            scores.score,
-            scores.score_time
-        FROM scores
-            LEFT JOIN users ON (scores.user_id = users.user_id)
-        WHERE scores.game_maps_id = ?
-        ORDER BY scores.score DESC
+            SUM(session_guesses.points_awarded) AS score,
+            game_sessions.finished_at AS score_time
+        FROM game_sessions
+            LEFT JOIN session_guesses ON (game_sessions.session_id = session_guesses.session_id)
+            LEFT JOIN users ON (game_sessions.user_id = users.user_id)
+        WHERE game_sessions.game_maps_id = ? AND game_sessions.finished_at IS NOT NULL
+        GROUP BY game_sessions.session_id
+        ORDER BY score DESC
         LIMIT 5
     `;
     const [rows] = await pool.execute(query, [gameMapID]);

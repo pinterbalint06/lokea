@@ -1,5 +1,5 @@
 import { EVENTS } from "../shared/EventBus.js";
-import { fetchGameMapDetails } from "../shared/api.js";
+import { fetchGameMapDetails, fetchGameMapFavoriteStatus } from "../shared/api.js";
 
 export class DataManager {
     constructor(eventBus, appStore) {
@@ -20,7 +20,11 @@ export class DataManager {
 
     async #fetchDetails(gameMapId) {
         try {
-            const gameMapDetails = await fetchGameMapDetails(gameMapId);
+            const [gameMapDetails, isFavorite] = await Promise.all([
+                fetchGameMapDetails(gameMapId),
+                fetchGameMapFavoriteStatus(gameMapId).catch(() => false)
+            ]);
+            
             this.appStore.setState({
                 gameMapDetails: {
                     title: gameMapDetails.title,
@@ -30,7 +34,8 @@ export class DataManager {
                     playCount: gameMapDetails.plays,
                     rating: gameMapDetails.rating,
                     isOwner: gameMapDetails.is_owner,
-                    topScores: gameMapDetails.top_scores
+                    topScores: gameMapDetails.top_scores,
+                    isFavorite: isFavorite
                 }
             });
         } catch (error) {
