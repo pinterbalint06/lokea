@@ -19,6 +19,7 @@ export class DetailsManager {
         this.elements.displayRatingValue = document.getElementById("displayRatingValue");
         this.elements.displayRatingStars = document.getElementById("displayRatingStars");
         this.elements.coverImageWrapper = document.getElementById("coverImageWrapper");
+        this.elements.coverActionsWrapper = document.getElementById("coverActionsWrapper");
     }
 
     #updateUI(state) {
@@ -31,13 +32,13 @@ export class DetailsManager {
         this.elements.displayRatingValue.innerText = gameMapDetails.rating;
         this.elements.displayRatingStars.style.setProperty("--rating", gameMapDetails.rating);
 
-        let existingBtn = this.elements.coverImageWrapper.querySelector('.card-favorite-btn');
+        let existingBtn = this.elements.coverActionsWrapper?.querySelector('.card-favorite-btn');
         if (existingBtn) {
             existingBtn.remove();
         }
         if (gameMapDetails.isFavorite != undefined && state.gameMapId) {
             const favoriteBtn = createFavoriteButton(state.gameMapId, gameMapDetails.isFavorite);
-            this.elements.coverImageWrapper.appendChild(favoriteBtn);
+            this.elements.coverActionsWrapper.appendChild(favoriteBtn);
         }
     }
 
