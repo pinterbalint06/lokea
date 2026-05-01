@@ -4,7 +4,6 @@ const ERRORS = require("#utils/error-messages.js");
 
 const RAD_TO_DEG = 180.0 / Math.PI;
 
-// TODO: tesztek
 function radianToDegree(angleInRadians) {
     return angleInRadians * RAD_TO_DEG;
 }
