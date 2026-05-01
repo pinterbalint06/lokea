@@ -25,7 +25,7 @@ function extractError(data) {
 
 export async function nyelvSzinkronizalas() {
     try {
-        let response = await fetch('/api/admin/getLanguage');
+        let response = await fetch('/api/admin/language');
         let data = await response.json();
         if (!response.ok) throw new Error(extractError(data));
         await initI18next(data.language);
@@ -38,7 +38,7 @@ export async function nyelvSzinkronizalas() {
 
 export async function osszesUser() {
     try {
-        let response = await fetch("/api/admin/getUsers");
+        let response = await fetch("/api/admin/users");
         let data = await response.json();
         if (!response.ok) throw new Error(extractError(data));
         return { users: data.users, total: data.total };
@@ -50,7 +50,7 @@ export async function osszesUser() {
 
 export async function getUser(id) {
     try {
-        let response = await fetch(`/api/admin/getUser?id=${id}`);
+        let response = await fetch(`/api/admin/users/${id}`);
         let data = await response.json();
         if (!response.ok) throw new Error(extractError(data));
         return data.users[0];
@@ -85,7 +85,7 @@ export async function sortedUser(params) {
             page: params.page
         }).toString();
 
-        let response = await fetch(`/api/admin/sortedUsers?${queryParams}`);
+        let response = await fetch(`/api/admin/users/sorted?${queryParams}`);
         let data = await response.json();
         if (!response.ok) throw new Error(extractError(data));
         return { users: data.users, total: data.total };
@@ -112,7 +112,7 @@ export async function getProfilePicture(route) {
 
 export async function getDashboardInfo() {
     try {
-        let response = await fetch("/api/admin/getDashboardInfo");
+        let response = await fetch("/api/admin/dashboard");
         let data = await response.json();
         if (!response.ok) throw new Error(extractError(data));
         return data;
@@ -124,7 +124,7 @@ export async function getDashboardInfo() {
 
 export async function getLogs() {
     try {
-        let response = await fetch("/api/admin/getLogs");
+        let response = await fetch("/api/admin/logs");
         let data = await response.json();
         if (!response.ok) throw new Error(extractError(data));
         return { logs: data.logs, total: data.total };
@@ -153,7 +153,7 @@ export async function kijelentkezes() {
 
 export async function newUser(username, email, password, role) {
     try {
-        let response = await fetch("/api/admin/signupFromAdmin", {
+        let response = await fetch("/api/admin/users", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({ username, email, password, role })
@@ -169,10 +169,10 @@ export async function newUser(username, email, password, role) {
 
 export async function userUpdate(user_id, username, email, role) {
     try {
-        let response = await fetch("/api/admin/updateUserFromAdmin", {
+        let response = await fetch(`/api/admin/users/${user_id}`, {
             method: "PUT",
             headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ user_id, username, email, role })
+            body: JSON.stringify({ username, email, role })
         });
         let data = await response.json();
         if (!response.ok) throw new Error(extractError(data));
@@ -185,7 +185,7 @@ export async function userUpdate(user_id, username, email, role) {
 
 export async function userSelfUpdate(username, email) {
     try {
-        let response = await fetch("/api/admin/userSelfUpdate", {
+        let response = await fetch("/api/admin/users/self", {
             method: "PUT",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({ username, email })
@@ -217,7 +217,7 @@ export async function updatePassword(oldPass, newPass) {
 
 export async function updateDarkMode(is_dark) {
     try {
-        let response = await fetch("/api/admin/userDarkMode", {
+        let response = await fetch("/api/admin/settings/dark-mode", {
             method: "PUT",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({ darkmode: is_dark })
@@ -233,7 +233,7 @@ export async function updateDarkMode(is_dark) {
 
 export async function updateLanguage(language) {
     try {
-        let response = await fetch("/api/admin/updateLanguage", {
+        let response = await fetch("/api/admin/settings/language", {
             method: "PUT",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({ language })
@@ -249,7 +249,7 @@ export async function updateLanguage(language) {
 
 export async function getAdminSettings() {
     try {
-        let response = await fetch("/api/admin/getAdminSettings");
+        let response = await fetch("/api/admin/settings");
         let data = await response.json();
         if (!response.ok) throw new Error(extractError(data));
         return { darkmode: data.darkmode, selectedChart: data.selectedChart };
@@ -261,7 +261,7 @@ export async function getAdminSettings() {
 
 export async function updateAdminSettings(darkmode, selected_chart) {
     try {
-        let response = await fetch("/api/admin/updateAdminSettings", {
+        let response = await fetch("/api/admin/settings", {
             method: "PUT",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({
@@ -281,10 +281,9 @@ export async function updateAdminSettings(darkmode, selected_chart) {
 export async function uploadProfilePic(picture, id = -1) {
     try {
         let fd = new FormData();
-        let link = "/api/admin/updateProfilePicFromAdmin";
         fd.append("profilePic", picture);
+        let link = `/api/admin/users/${id}/profile-picture`;
         if (id == -1) link = "/api/updateProfilePic";
-        else fd.append("user_id", id);
 
         let response = await fetch(link, { method: "PUT", body: fd });
         let data = await response.json();
@@ -298,7 +297,7 @@ export async function uploadProfilePic(picture, id = -1) {
 
 export async function exportUsers(filters) {
     try {
-        const response = await fetch('/api/admin/exportUsers', {
+        const response = await fetch('/api/admin/users/exports', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify(filters)
@@ -338,7 +337,7 @@ export async function sortedLogs(variables) {
             activities.forEach(act => queryParams.append('activities', act));
         }
 
-        let response = await fetch(`/api/admin/sortedLogs?${queryParams.toString()}`);
+        let response = await fetch(`/api/admin/logs/sorted?${queryParams.toString()}`);
         let data = await response.json();
         if (!response.ok) throw new Error(extractError(data));
         return { logs: data.logs, total: data.total };
@@ -350,7 +349,7 @@ export async function sortedLogs(variables) {
 
 export async function exportLogs(filters) {
     try {
-        const response = await fetch('/api/admin/exportLogs', {
+        const response = await fetch('/api/admin/logs/exports', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify(filters)
@@ -393,10 +392,10 @@ export async function deleteProfile() {
 
 export async function userToInactive(id, role, deleted) {
     try {
-        let response = await fetch("/api/admin/userToInactive", {
+        let response = await fetch(`/api/admin/users/${id}`, {
             method: "DELETE",
             headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ userId: id, role, deleted })
+            body: JSON.stringify({ role, deleted })
         });
         let data = await response.json();
         if (!response.ok) throw new Error(extractError(data));
@@ -409,11 +408,11 @@ export async function userToInactive(id, role, deleted) {
 
 export async function deleteProfilePicture(id = -1) {
     try {
-        let link = (id !== -1) ? "/api/admin/deleteProfilePicFromAdmin" : "/api/deleteProfilePic";
+        let link = (id !== -1) ? `/api/admin/users/${id}/profile-picture` : "/api/deleteProfilePic";
         let response = await fetch(link, {
             method: "DELETE",
             headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ user_id: id })
+            body: JSON.stringify({})
         });
         let data = await response.json();
         if (!response.ok) throw new Error(extractError(data));

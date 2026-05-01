@@ -63,7 +63,7 @@ export async function dashboardDisplayre(selectedChart) {
     if (chartContainer) {
         chartContainer.innerHTML = "";
         let chartImg = createHTMLelement('img', ['img-fluid', 'rounded']);
-        chartImg.src = `/api/admin/chart/${selectedChart}`;
+        chartImg.src = `/api/admin/charts/${selectedChart}`;
         chartImg.style.maxHeight = "400px";
         chartContainer.appendChild(chartImg);
     }

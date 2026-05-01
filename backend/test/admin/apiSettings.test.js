@@ -21,42 +21,42 @@ describe('Admin Settings API-tesztek', () => {
         jest.clearAllMocks();
     });
 
-    describe('Végpont: GET /getAdminSettings', () => {
-        testRequiresAdminOrAuth(() => request(app).get('/api/admin/getAdminSettings'));
+    describe('Végpont: GET /settings', () => {
+        testRequiresAdminOrAuth(() => request(app).get('/api/admin/settings'));
 
         it('SIKER - 200, admin beállítások lekérése', async () => {
             db.getAdminSettings.mockResolvedValue({ darkmode: 1, selectedChart: "activity-day" });
-            const res = await request(app).get('/api/admin/getAdminSettings').expect(200);
+            const res = await request(app).get('/api/admin/settings').expect(200);
             expect(res.body.darkmode).toBe(1);
             expect(res.body.selectedChart).toBe("activity-day");
         });
 
         it('SIKER - 200, ha nincs még admin beállítás', async () => {
             db.getAdminSettings.mockResolvedValue(undefined);
-            const res = await request(app).get('/api/admin/getAdminSettings').expect(200);
+            const res = await request(app).get('/api/admin/settings').expect(200);
             expect(res.body.darkmode).toBe(0);
             expect(res.body.selectedChart).toBe("activity-week");
         });
 
         it('HIBA - 500, ha az adatbázis összeomlik', async () => {
             db.getAdminSettings.mockRejectedValue(new Error("DB hiba"));
-            const res = await request(app).get('/api/admin/getAdminSettings').expect(500);
+            const res = await request(app).get('/api/admin/settings').expect(500);
             expect(res.body.error).toBe(enTranslations.settingsApi.fetch_error);
         });
     });
-    describe('Végpont: PUT /updateAdminSettings', () => {
-        testRequiresAdminOrAuth(() => request(app).put('/api/admin/updateAdminSettings'));
+    describe('Végpont: PUT /settings', () => {
+        testRequiresAdminOrAuth(() => request(app).put('/api/admin/settings'));
 
         it('HIBA - 400, ha a darkmode értéke nem true/false', async () => {
             await request(app)
-                .put('/api/admin/updateAdminSettings')
+                .put('/api/admin/settings')
                 .send({ darkmode: "not-a-boolean", selected_chart: "activity-day" })
                 .expect(400);
         });
 
         it('HIBA - 400, ha a selected chart nincs benne a megadott listában', async () => {
             await request(app)
-                .put('/api/admin/updateAdminSettings')
+                .put('/api/admin/settings')
                 .send({ darkmode: true, selected_chart: "invalid-chart" })
                 .expect(400);
         });
@@ -64,7 +64,7 @@ describe('Admin Settings API-tesztek', () => {
         it('SIKER - 200, ugyanazok a beállítások miatt nincs frissités', async () => {
             db.updateAdminSettings.mockResolvedValue(0);
             const res = await request(app)
-                .put('/api/admin/updateAdminSettings')
+                .put('/api/admin/settings')
                 .send({ darkmode: true, selected_chart: "activity-day" })
                 .expect(200);
             expect(res.body.message).toBe(enTranslations.settingsApi.update_no_change);
@@ -74,7 +74,7 @@ describe('Admin Settings API-tesztek', () => {
             db.updateAdminSettings.mockResolvedValue(1);
 
             const res = await request(app)
-                .put('/api/admin/updateAdminSettings')
+                .put('/api/admin/settings')
                 .send({ darkmode: true, selected_chart: "activity-day" })
                 .expect(200);
 
@@ -85,7 +85,7 @@ describe('Admin Settings API-tesztek', () => {
             db.updateAdminSettings.mockResolvedValue(2);
 
             const res = await request(app)
-                .put('/api/admin/updateAdminSettings')
+                .put('/api/admin/settings')
                 .send({ darkmode: false, selected_chart: "activity-week" })
                 .expect(200);
 
@@ -95,18 +95,18 @@ describe('Admin Settings API-tesztek', () => {
         it('HIBA - 500, ha az adatbázis összeomlik', async () => {
             db.updateAdminSettings.mockRejectedValue(new Error("DB hiba"));
             const res = await request(app)
-                .put('/api/admin/updateAdminSettings')
+                .put('/api/admin/settings')
                 .send({ darkmode: true, selected_chart: "activity-day" })
                 .expect(500);
             expect(res.body.error).toBe(enTranslations.settingsApi.update_error);
         });
     });
-    describe('Végpont: PUT /userDarkMode', () => {
-        testRequiresAdminOrAuth(() => request(app).put('/api/admin/userDarkMode'));
+    describe('Végpont: PUT /settings/dark-mode', () => {
+        testRequiresAdminOrAuth(() => request(app).put('/api/admin/settings/dark-mode'));
 
         it('HIBA - 400, ha a darkmode értéke nem true/false', async () => {
             await request(app)
-                .put('/api/admin/userDarkMode')
+                .put('/api/admin/settings/dark-mode')
                 .send({ darkmode: "not-a-boolean" })
                 .expect(400);
         });
@@ -114,7 +114,7 @@ describe('Admin Settings API-tesztek', () => {
         it('SIKER - 200, sikeres frissítés', async () => {
             db.updateDarkMode.mockResolvedValue(1);
             const res = await request(app)
-                .put('/api/admin/userDarkMode')
+                .put('/api/admin/settings/dark-mode')
                 .send({ darkmode: true })
                 .expect(200);
             expect(res.body.message).toBe(enTranslations.settingsApi.user_update_success);
@@ -123,7 +123,7 @@ describe('Admin Settings API-tesztek', () => {
         it('SIKER - 200, ha nem történt változtatás', async () => {
             db.updateDarkMode.mockResolvedValue(0);
             const res = await request(app)
-                .put('/api/admin/userDarkMode')
+                .put('/api/admin/settings/dark-mode')
                 .send({ darkmode: true })
                 .expect(200);
             expect(res.body.message).toBe(enTranslations.settingsApi.update_no_change);
@@ -132,18 +132,18 @@ describe('Admin Settings API-tesztek', () => {
         it('HIBA - 500, ha az adatbázis összeomlik', async () => {
             db.updateDarkMode.mockRejectedValue(new Error("DB hiba"));
             const res = await request(app)
-                .put('/api/admin/userDarkMode')
+                .put('/api/admin/settings/dark-mode')
                 .send({ darkmode: true })
                 .expect(500);
             expect(res.body.error).toBe(enTranslations.settingsApi.update_error);
         });
     });
-    describe('Végpont: PUT /updateLanguage', () => {
-        testRequiresAdminOrAuth(() => request(app).put('/api/admin/updateLanguage'));
+    describe('Végpont: PUT /settings/language', () => {
+        testRequiresAdminOrAuth(() => request(app).put('/api/admin/settings/language'));
 
         it('HIBA - 400, ha a language értéke nem "en" vagy "hu"', async () => {
             await request(app)
-                .put('/api/admin/updateLanguage')
+                .put('/api/admin/settings/language')
                 .send({ language: "de" })
                 .expect(400);
         });
@@ -151,7 +151,7 @@ describe('Admin Settings API-tesztek', () => {
         it('SIKER - 200, sikeres frissítés', async () => {
             db.updateLanguage.mockResolvedValue(1);
             const res = await request(app)
-                .put('/api/admin/updateLanguage')
+                .put('/api/admin/settings/language')
                 .send({ language: "hu" })
                 .expect(200);
             expect(res.body.message).toBe(huTranslations.settingsApi.update_success);
@@ -161,7 +161,7 @@ describe('Admin Settings API-tesztek', () => {
         it('SIKER - 200, ha nem történt változtatás', async () => {
             db.updateLanguage.mockResolvedValue(0);
             const res = await request(app)
-                .put('/api/admin/updateLanguage')
+                .put('/api/admin/settings/language')
                 .send({ language: "en" })
                 .expect(200);
             expect(res.body.message).toBe(enTranslations.settingsApi.update_no_change);
@@ -171,7 +171,7 @@ describe('Admin Settings API-tesztek', () => {
         it('HIBA - 500, ha az adatbázis összeomlik', async () => {
             db.updateLanguage.mockRejectedValue(new Error("DB hiba"));
             const res = await request(app)
-                .put('/api/admin/updateLanguage')
+                .put('/api/admin/settings/language')
                 .send({ language: "en" })
                 .expect(500);
             expect(res.body.error).toBe(enTranslations.settingsApi.update_error);

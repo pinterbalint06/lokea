@@ -13,7 +13,7 @@ Chart.register(...registerables);
 
 //API endpoints - GET
 
-router.get('/getLanguage', (request, response) => {
+router.get('/language', (request, response) => {
     try {
         if (!request.session) {
             console.error("Session is missing");
@@ -27,7 +27,7 @@ router.get('/getLanguage', (request, response) => {
 
 });
 
-router.get('/getDashboardInfo', async (request, response) => {
+router.get('/dashboard', async (request, response) => {
     try {
         let playerCount = await databaseAdmin.getUserCount();
         let activePlayerCount = await databaseAdmin.getActiveUserCount();
@@ -39,7 +39,7 @@ router.get('/getDashboardInfo', async (request, response) => {
     }
 });
 
-router.get('/chart/:type', async (request, response) => {
+router.get('/charts/:type', async (request, response) => {
     try {
         let type = request.params.type;
         let dbData, label, color, xKey, yKey;

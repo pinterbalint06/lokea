@@ -21,17 +21,17 @@ describe('Admin API-tesztek', () => {
         jest.clearAllMocks();
     });
 
-    describe('Végpont: GET /getLanguage', () => {
-        testRequiresAdminOrAuth(() => request(app).get('/api/admin/getLanguage'));
+    describe('Végpont: GET /language', () => {
+        testRequiresAdminOrAuth(() => request(app).get('/api/admin/language'));
 
         it('SIKER - 200, nyelv lekérése', async () => {
-            const res = await request(app).get('/api/admin/getLanguage').expect(200);
+            const res = await request(app).get('/api/admin/language').expect(200);
             expect(res.body.language).toBe("en");
         });
     });
 
-    describe('Végpont: PUT /getDashboardInfo', () => {
-        testRequiresAdminOrAuth(() => request(app).get('/api/admin/getDashboardInfo'));
+    describe('Végpont: GET /dashboard', () => {
+        testRequiresAdminOrAuth(() => request(app).get('/api/admin/dashboard'));
 
         it('SIKER - 200, dashboard info lekérése', async () => {
             db.getUserCount.mockResolvedValue(100);
@@ -43,7 +43,7 @@ describe('Admin API-tesztek', () => {
                 ]
             };
             dbLogs.getLogs.mockResolvedValue(mockLogs);
-            const res = await request(app).get('/api/admin/getDashboardInfo').expect(200);
+            const res = await request(app).get('/api/admin/dashboard').expect(200);
             expect(res.body.playerCount).toBe(100);
             expect(res.body.activePlayerCount).toBe(20);
             expect(res.body.logsPreview).toEqual(mockLogs.rows);
@@ -52,19 +52,19 @@ describe('Admin API-tesztek', () => {
         it('HIBA - 500, ha hiba van a lekérdezés során', async () => {
             db.getUserCount.mockRejectedValue(new Error("DB hiba"));
             const res = await request(app)
-                .get('/api/admin/getDashboardInfo')
+                .get('/api/admin/dashboard')
                 .set('forceerror', 'true')
                 .expect(500);
             expect(res.body.error).toBe(enTranslations.adminApi.dashboard_info_error);
         });
     });
 
-    describe('Végpont: GET /chart/:type', () => {
-        testRequiresAdminOrAuth(() => request(app).get('/api/admin/chart/activity-day'));
+    describe('Végpont: GET /charts/:type', () => {
+        testRequiresAdminOrAuth(() => request(app).get('/api/admin/charts/activity-day'));
 
         it('HIBA - 400, érvénytelen típus', async () => {
             const res = await request(app)
-                .get('/api/admin/chart/invalid-type')
+                .get('/api/admin/charts/invalid-type')
                 .expect(400);
             expect(res.body.error).toBe(enTranslations.adminApi.chart_invalid_type);
         });
@@ -75,7 +75,7 @@ describe('Admin API-tesztek', () => {
             ];
             db.getUserActivityByDay.mockResolvedValue(mockData);
             const res = await request(app)
-                .get('/api/admin/chart/activity-day')
+                .get('/api/admin/charts/activity-day')
                 .expect(200);
             expect(res.header['content-type']).toBe('image/webp');
             expect(res.body).toBeDefined();
@@ -84,7 +84,7 @@ describe('Admin API-tesztek', () => {
         it('HIBA - 500, ha hiba van a lekérdezés során', async () => {
             db.getUserActivityByDay.mockRejectedValue(new Error("DB hiba"));
             const res = await request(app)
-                .get('/api/admin/chart/activity-day')
+                .get('/api/admin/charts/activity-day')
                 .set('forceerror', 'true')
                 .expect(500);
             expect(res.body.error).toBe(enTranslations.adminApi.chart_generation_error);

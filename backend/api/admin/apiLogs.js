@@ -8,7 +8,7 @@ const databaseLogs = require('../../sql/admin/databaseLogs.js');
 
 //API endpoints
 
-router.get('/getLogs', async (request, response) => {
+router.get('/logs', async (request, response) => {
     try {
         let logs = await databaseLogs.getLogs();
         response.status(200).json({ message: request.t('admin:logsApi.fetch_success'), logs: logs.rows, total: logs.total });
@@ -18,7 +18,7 @@ router.get('/getLogs', async (request, response) => {
     }
 });
 
-router.get('/sortedLogs',
+router.get('/logs/sorted',
     [
         query('username')
             .optional({ values: 'null' })
@@ -88,7 +88,7 @@ router.get('/sortedLogs',
         }
     });
 
-router.post('/addLog',
+router.post('/logs',
     [
         body('victimid')
             .optional({ values: 'null' })
@@ -123,7 +123,7 @@ router.post('/addLog',
         }
     });
 
-router.post('/exportLogs',
+router.post('/logs/exports',
     [
         body('username')
             .optional({ values: 'null' })

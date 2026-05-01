@@ -2,7 +2,7 @@ const express = require('express');
 const router = express.Router();
 const fs = require('fs/promises');
 const bcrypt = require('bcrypt');
-const { body, query, validationResult } = require('express-validator');
+const { body, query, param, validationResult } = require('express-validator');
 const sharp = require('sharp');
 const { sendWelcomeEmail, sendChangeEmail, sendDeleteEmail } = require('../../utils/mails.js');
 const { validate } = require('../../utils/validate.js');
@@ -32,7 +32,7 @@ const upload = multer({
 
 //GET
 
-router.get('/getUsers', async (request, response) => {
+router.get('/users', async (request, response) => {
     try {
         let users = await databaseUsers.getUsers();
         response.status(200).json({ users: users.rows, total: users.total, message: request.t('admin:usersApi.fetch_success') });
@@ -41,7 +41,7 @@ router.get('/getUsers', async (request, response) => {
     }
 })
 
-router.get('/sortedUsers', [
+router.get('/users/sorted', [
     query('mireKeresek')
         .optional({ values: 'null' })
         .isIn(['user_id', 'username', 'email']).withMessage((value, { req }) => req.t('admin:usersApi.validation_search_type_invalid')),
@@ -84,15 +84,15 @@ router.get('/sortedUsers', [
     }
 });
 
-router.get('/getUser',
+router.get('/users/:id',
     [
-        query('id')
+        param('id')
             .isInt({ min: 1 }).withMessage((value, { req }) => req.t('admin:usersApi.validation_user_id_invalid'))
             .toInt()
     ], validate,
     async (request, response) => {
         try {
-            let params = request.query.id;
+            let params = request.params.id;
             let users = await databaseUsers.getUser(params);
             if (!users || users.length === 0) {
                 response.status(404).json({ error: request.t('admin:usersApi.not_found') });
@@ -107,7 +107,7 @@ router.get('/getUser',
 
 //POST
 
-router.post("/signupFromAdmin",
+router.post("/users",
     [
         body("username")
             .not().isEmail().withMessage((value, { req }) => req.t('admin:usersApi.validation_username_no_email'))
@@ -154,7 +154,7 @@ router.post("/signupFromAdmin",
     }
 );
 
-router.post('/exportUsers',
+router.post('/users/exports',
     [
         body('mireKeresek')
             .optional({ values: 'null' })
@@ -199,9 +199,9 @@ router.post('/exportUsers',
 
 //PUT
 
-router.put('/updateUserFromAdmin',
+router.put('/users/:id',
     [
-        body("user_id")
+        param("id")
             .isInt({ min: 1 }).withMessage((value, { req }) => req.t('admin:usersApi.validation_user_id_invalid'))
             .toInt(),
         body("username")
@@ -219,7 +219,8 @@ router.put('/updateUserFromAdmin',
     ], validate,
     async (request, response) => {
         try {
-            let { user_id, username, email, role } = request.body;
+            let user_id = request.params.id;
+            let { username, email, role } = request.body;
             if ((role === 'ADMIN' || role === 'LORD') && request.session.role !== 'LORD') {
                 return response.status(403).json({ error: request.t('admin:usersApi.permission_denied') });
             }
@@ -240,7 +241,7 @@ router.put('/updateUserFromAdmin',
         }
     })
 
-router.put('/userSelfUpdate',
+router.put('/users/self',
     [
         body("username")
             .optional({ values: 'null' })
@@ -274,7 +275,7 @@ router.put('/userSelfUpdate',
         }
     })
 
-router.put('/updateProfilePicFromAdmin',
+router.put('/users/:id/profile-picture',
     (request, response, next) => {
         upload.single('profilePic')(request, response, (err) => {
             if (err instanceof multer.MulterError) {
@@ -290,7 +291,7 @@ router.put('/updateProfilePicFromAdmin',
         });
     },
     [
-        body("user_id")
+        param("id")
             .isInt({ min: 1 }).withMessage((value, { req }) => req.t('admin:usersApi.validation_user_id_invalid'))
             .toInt()
     ], validate,
@@ -304,7 +305,7 @@ router.put('/updateProfilePicFromAdmin',
                 return response.status(400).json({ error: request.t('admin:usersApi.no_image_provided') });
             }
 
-            let user_id = request.body.user_id;
+            let user_id = request.params.id;
 
             let newFileName = `processed-${Date.now()}.webp`;
             newFilePath = path.join(TARGET_UPLOADS_DIR, newFileName);
@@ -343,7 +344,7 @@ router.put('/updateProfilePicFromAdmin',
 
 //DELETE
 
-router.delete('/userToInactive',
+router.delete('/users/:id',
     [
         body("role")
             .isIn(['user', 'MOD', 'ADMIN', 'LORD']).withMessage((value, { req }) => req.t('admin:usersApi.validation_role_invalid')),
@@ -355,7 +356,7 @@ router.delete('/userToInactive',
             if ((request.body.role === 'ADMIN' || request.body.role === 'LORD') && request.session.role !== 'LORD') {
                 return response.status(403).json({ error: request.t('admin:usersApi.permission_denied') });
             }
-            let { userId } = request.body;
+            let userId = request.params.id;
             let result = await databaseUsers.userToInactive(userId);
             if (result.affectedRows === 0) {
                 response.status(200).json({ message: request.t('admin:usersApi.deactivate_already_inactive') })
@@ -370,15 +371,15 @@ router.delete('/userToInactive',
         }
     })
 
-router.delete('/deleteProfilePicFromAdmin',
+router.delete('/users/:id/profile-picture',
     [
-        body("user_id")
+        param("id")
             .isInt({ min: 1 }).withMessage((value, { req }) => req.t('admin:usersApi.validation_user_id_invalid'))
             .toInt()
     ], validate,
     async (request, response) => {
         try {
-            let user_id = request.body.user_id;
+            let user_id = request.params.id;
             let lastPfp = await databaseUsers.deleteProfilePic(user_id);
 
             if (!lastPfp) {
