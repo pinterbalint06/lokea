@@ -53,7 +53,7 @@ document.addEventListener("DOMContentLoaded", function () {
 async function loadGameMaps(sort) {
     const gameMaps = await fetchURL('/api/choose-game?sort=' + sort + '&offset=' + (cardLoadedTimes * 20));
     let gameMapsContainer = document.getElementById('game_maps_container');
-    if (gameMaps.results && gameMaps.results.length > 0) {
+    if (gameMaps?.results && gameMaps.results.length > 0) {
         for (let i = 0; i < gameMaps.results.length; i++) {
             gameMapsContainer.appendChild(createCard(gameMaps.results[i]));
         }
@@ -203,7 +203,7 @@ function setupContinueGameModal() {
 
 async function checkAndShowContinueModal() {
     const activeGameSession = await fetchURL('/api/choose-game/session');
-    if (activeGameSession.hasActiveSession) {
+    if (activeGameSession?.hasActiveSession) {
         const continueModal = document.getElementById('continueGameModal');
         const continueModalDescription = document.getElementById('continue-modal-desc');
         if (activeGameSession.gameTitle) {
