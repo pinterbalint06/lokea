@@ -84,7 +84,7 @@ function createCard(game_map) {
     game_maps_card_content.appendChild(card_plays);
     game_maps_card_content.appendChild(card_created);
     game_maps_card.appendChild(game_maps_card_content);
-    game_maps_card.appendChild(createFavoriteButton(game_map.game_maps_id));
+    game_maps_card.appendChild(createFavoriteButton(game_map.game_maps_id, game_map.is_favorited));
     game_maps_card.addEventListener('click', function () {
         createModal(game_map);
     });
@@ -149,7 +149,7 @@ async function postGameId(gamemapId) {
             const errorData = await response.json();
             throw new Error('Hiba a játék indításakor: ' + errorData.message);
         }
-        window.location.href = 'game';
+        window.location.href = '/game';
     } catch (error) {
         console.error('POST hiba:', error);
     }
@@ -197,7 +197,7 @@ function setupContinueGameModal() {
     });
 
     continueButton.addEventListener('click', () => {
-        window.location.href = 'game';
+        window.location.href = '/game';
     });
 }
 

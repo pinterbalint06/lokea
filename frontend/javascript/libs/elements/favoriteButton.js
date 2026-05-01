@@ -1,4 +1,4 @@
-export function createFavoriteButton(game_map_id) {
+export function createFavoriteButton(game_map_id, isFavorited = false) {
     let favoriteBtn = document.createElement('button');
     favoriteBtn.classList.add('card-favorite-btn');
     favoriteBtn.title = 'Kedvencekhez adás';
@@ -17,10 +17,26 @@ export function createFavoriteButton(game_map_id) {
 
     favoriteBtn.appendChild(favSvgOutline);
     favoriteBtn.appendChild(favSvgSolid);
+
+    if (isFavorited) favoriteBtn.classList.add('active');
+
     favoriteBtn.addEventListener('click', async function (e) {
         e.stopPropagation();
+        this.disabled = true;
+        const wasActive = this.classList.contains('active');
         this.classList.toggle('active');
-        console.log("nigger");
+        try {
+            const response = await fetch(`/api/game-maps/${game_map_id}/favorite`, {
+                method: wasActive ? 'DELETE' : 'POST'
+            });
+            if (!response.ok) {
+                this.classList.toggle('active');
+            }
+        } catch {
+            this.classList.toggle('active');
+        } finally {
+            this.disabled = false;
+        }
     });
     return favoriteBtn;
 }
