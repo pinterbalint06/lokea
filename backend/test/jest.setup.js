@@ -14,4 +14,5 @@ jest.mock("#gamemaps/gamemap/gamemap.queries.js");
 jest.mock("#imagequeries");
 jest.mock("#gamemaps/shared/queries/gamemaps.queries.js");
 jest.mock("#gamemaps/images/images.queries.js");
+jest.mock("#gamemaps/favorite/favorite.queries.js");
 jest.mock("#sharedapi/queries/ownership.queries.js");
