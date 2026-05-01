@@ -3,8 +3,8 @@ const mysql = require('mysql2/promise');
 const pool = mysql.createPool({
     host: '127.0.0.1',
     user: 'root',
-    password: '',
-    database: 'bigprojekt_db',
+    password: 'rootpassword',
+    database: 'lokea',
     waitForConnections: true,
     connectionLimit: 10,
     queueLimit: 0

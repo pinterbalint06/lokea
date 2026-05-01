@@ -1,5 +1,6 @@
 import { formatDateTime } from "../shared/utils.js";
 import { EVENTS } from "../shared/EventBus.js";
+import { createFavoriteButton } from "../../libs/elements/favoriteButton.js";
 
 export class DetailsManager {
     constructor(eventBus) {
@@ -17,9 +18,12 @@ export class DetailsManager {
         this.elements.playsValue = document.getElementById("playsValue");
         this.elements.displayRatingValue = document.getElementById("displayRatingValue");
         this.elements.displayRatingStars = document.getElementById("displayRatingStars");
+        this.elements.coverImageWrapper = document.getElementById("coverImageWrapper");
+        this.elements.coverActionsWrapper = document.getElementById("coverActionsWrapper");
     }
 
-    #updateUI(gameMapDetails) {
+    #updateUI(state) {
+        const gameMapDetails = state.gameMapDetails;
         this.elements.titleDisplay.innerText = gameMapDetails.title;
         this.elements.creatorValue.innerText = gameMapDetails.creatorName;
         this.elements.descriptionDisplay.innerText = gameMapDetails.description;
@@ -27,11 +31,20 @@ export class DetailsManager {
         this.elements.playsValue.innerText = gameMapDetails.playCount;
         this.elements.displayRatingValue.innerText = gameMapDetails.rating;
         this.elements.displayRatingStars.style.setProperty("--rating", gameMapDetails.rating);
+
+        let existingBtn = this.elements.coverActionsWrapper?.querySelector('.card-favorite-btn');
+        if (existingBtn) {
+            existingBtn.remove();
+        }
+        if (gameMapDetails.isFavorite != undefined && state.gameMapId) {
+            const favoriteBtn = createFavoriteButton(state.gameMapId, gameMapDetails.isFavorite);
+            this.elements.coverActionsWrapper.appendChild(favoriteBtn);
+        }
     }
 
     #bindBusEvents() {
         this.bus.on(EVENTS.STATE_UPDATED, ({ state }) => {
-            this.#updateUI(state.gameMapDetails);
+            this.#updateUI(state);
         });
     }
 }
