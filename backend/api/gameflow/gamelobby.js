@@ -2,6 +2,7 @@ const express = require("express");
 const router = express.Router();
 const { getGameMaps, getImagePath } = require("#gameflow/gamelobby.queries.js");
 const AppError = require("#utils/app-error.js");
+const ERRORS = require("#utils/error-messages.js");
 const path = require("path");
 const sessionsRoutes = require("./sessions/sessions.routes.js");
 
@@ -16,13 +17,13 @@ router.get("/", async (request, response) => {
         if (request.query.offset !== undefined) {
             offset = Number(request.query.offset);
             if (!Number.isInteger(offset) || offset < 0) {
-                throw new AppError("Érvénytelen offset. Pozitív egész számnak kell lennie.", 400);
+                throw new AppError(ERRORS.GAMEFLOW.INVALID_OFFSET, 400);
             }
         }
 
         const validSorts = ["created", "rating", "plays", "favorites"];
         if (!validSorts.includes(sort)) {
-            throw new AppError("Érvénytelen rendezés. Használható: created, rating, plays, favorites", 400);
+            throw new AppError(ERRORS.GAMEFLOW.INVALID_SORT, 400);
         }
 
         const userId = request.session?.userid;
@@ -32,7 +33,7 @@ router.get("/", async (request, response) => {
         if (error instanceof AppError) {
             response.status(error.statusCode).json({ message: error.message });
         } else {
-            response.status(500).json({ message: "Error fetching game maps" });
+            response.status(500).json({ message: ERRORS.GAMEFLOW.FETCH_GAME_MAPS_FAILED });
         }
     }
 });
@@ -47,7 +48,7 @@ router.get("/cover-images/:cover_image_id", async (request, response) => {
         }
         response.sendFile(path.join(UPLOADS_DIR, filePath));
     } catch (error) {
-        response.status(500).json({ message: "Error fetching cover image" });
+        response.status(500).json({ message: ERRORS.GAMEFLOW.FETCH_COVER_IMAGE_FAILED });
     }
 });
 

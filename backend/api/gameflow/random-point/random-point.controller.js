@@ -1,5 +1,6 @@
 const randomPointService = require("./random-point.service.js");
 const AppError = require("#utils/app-error.js");
+const ERRORS = require("#utils/error-messages.js");
 
 async function getRandomPoint(request, response) {
     try {
@@ -22,7 +23,7 @@ async function getRandomPoint(request, response) {
         if (error instanceof AppError) {
             response.status(error.statusCode).json({ message: error.message });
         } else {
-            response.status(500).json({ message: "Error fetching random point" });
+            response.status(500).json({ message: ERRORS.GAMEFLOW.FETCH_RANDOM_POINT_FAILED });
         }
     }
 }

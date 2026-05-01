@@ -1,5 +1,6 @@
 const sessionsService = require("./sessions.service.js");
 const AppError = require("#utils/app-error.js");
+const ERRORS = require("#utils/error-messages.js");
 
 async function getActiveSession(request, response) {
     try {
@@ -16,7 +17,7 @@ async function getActiveSession(request, response) {
         if (error instanceof AppError) {
             response.status(error.statusCode).json({ message: error.message });
         } else {
-            response.status(500).json({ message: "Error checking active session" });
+            response.status(500).json({ message: ERRORS.GAMEFLOW.CHECK_SESSION_FAILED });
         }
     }
 }
@@ -27,12 +28,12 @@ async function createGameSession(request, response) {
         const sessionObject = await sessionsService.createGameSession(userId, request.body);
 
         request.session.game = sessionObject;
-        response.status(200).json({ message: "Game map ID saved in session" });
+        response.status(200).json({ message: "A játék munkamenet elindítva!" });
     } catch (error) {
         if (error instanceof AppError) {
             response.status(error.statusCode).json({ message: error.message });
         } else {
-            response.status(500).json({ message: "Error posting game" });
+            response.status(500).json({ message: ERRORS.GAMEFLOW.CREATE_SESSION_FAILED });
         }
     }
 }
