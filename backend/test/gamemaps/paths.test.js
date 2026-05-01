@@ -4,7 +4,8 @@ const {
     buildRequest,
     testInvalidIDs,
     expectErrorResponse,
-    suppressConsoleErrors
+    suppressConsoleErrors,
+    testRequiresAuth
 } = require("#testhelpers/helpers.js");
 
 const ERRORS = require("#utils/error-messages.js");
@@ -36,6 +37,8 @@ describe("Game Maps API - /api/game-maps/", () => {
             });
 
             describe("Authorization (401, 403)", () => {
+                testRequiresAuth(() => makeGetRequest());
+
                 it("Should respond with 403 if the user is not allowed to access the point", async () => {
                     isAllowedToAccessPoint.mockImplementationOnce((request, response, next) => {
                         response.status(403).json({ error: ERRORS.POINT.NO_ACCESS });

@@ -20,7 +20,8 @@ async function getConnectionsByPointId(pointId) {
             INNER JOIN points end_point ON (point_connections.end_point_id = end_point.point_id)
             INNER JOIN map ON (start_point.map_id = map.map_id)
             LEFT JOIN images ON (map.image_id = images.image_id)
-        WHERE point_connections.start_point_id = ? OR point_connections.end_point_id = ?
+        WHERE (point_connections.start_point_id = ? OR point_connections.end_point_id = ?)
+            AND point_connections.game_maps_id = map.game_maps_id
     `;
     const [rows] = await pool.execute(query, [pointId, pointId]);
     return rows;
