@@ -14,7 +14,7 @@
         "#config/*": "./config/*",
         "#mapcreatortest/*": "./test/mapcreator/*",
         "#gametest/*": "./test/game/*",
-        "#root/*": "./*",
+        "#utils/*": "./*",
         "#mapcreator/*": "./api/mapcreator/*",
         "#gamemaps/*": "./api/gamemaps/*",
         "#testhelpers/*": "./test/helpers/*",

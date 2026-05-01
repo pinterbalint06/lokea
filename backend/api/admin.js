@@ -1,7 +1,7 @@
 const express = require('express');
 const router = express.Router();
 const database = require('#sql/database.js');
-const auth = require('#root/auth.js')
+const auth = require('#utils/auth.js')
 const fs = require('fs/promises');
 const bcrypt = require('bcrypt');
 const validator = require('validator');
@@ -177,7 +177,7 @@ router.post('/userToInactive', auth.checkAuth, auth.checkRole("ADMIN"),
         }
     })
 
-router.post('/updateProfilePicFromAdmin', auth.checkAuth,auth.checkRole("ADMIN"), upload.single('profilePic'), async (request, response) => {
+router.post('/updateProfilePicFromAdmin', auth.checkAuth, auth.checkRole("ADMIN"), upload.single('profilePic'), async (request, response) => {
     let originalFile;
     let newFilePath;
     try {
