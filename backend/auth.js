@@ -12,8 +12,8 @@ const checkAuth = (request, response, next) => {
 
 const checkRole = (...roles) => {
     return (request, response, next) => {
-        if (!roles.includes(request.session.role)) {
-            response.status(404).sendFile(path.join(__dirname, '../frontend/html/notfound.html'));
+        if (!roles.includes(request.session?.role)) {
+            next(new AppError("A keresett oldal nem található.", 404));
         }
         else {
             next();
