@@ -1,6 +1,5 @@
 import { EVENTS } from "../shared/EventBus.js";
-import { loadLowThenHigh } from "../../libs/network/progressiveImage.js";
-import { fetchGameMapCoverImage } from "../../libs/network/gameMapsApi.js";
+import { loadGameMapCoverImageLowThenHigh } from "../../libs/network/progressiveImage.js";
 import { uploadGameMapCoverImage, deleteGameMapCoverImage } from "../shared/api.js";
 
 export class CoverImageManager {
@@ -47,9 +46,9 @@ export class CoverImageManager {
         this.loadAbortController = new AbortController();
 
         try {
-            await loadLowThenHigh({
-                fetchLow: () => fetchGameMapCoverImage(gameMapId, this.loadAbortController.signal, "low"),
-                fetchHigh: () => fetchGameMapCoverImage(gameMapId, this.loadAbortController.signal, "high"),
+            await loadGameMapCoverImageLowThenHigh({
+                gameMapId,
+                signal: this.loadAbortController.signal,
                 isCurrent: () => !this.loadAbortController.signal.aborted,
                 loadToViewer: async (imageData) => {
                     await this.#loadImage(

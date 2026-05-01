@@ -1,7 +1,10 @@
 const path = require("path");
 const crypto = require("crypto");
 const AppError = require("#utils/app-error.js");
-const database = require("#sql/database.js");
+const database = require("#gamemaps/cover-image/cover-image.queries.js");
+const { getConnection } = require("#sql/database.js");
+const { doesGameMapExist } = require("#gamemaps/shared/queries/gamemaps.queries.js");
+const imageQueries = require("#imagequeries");
 const ERRORS = require("#utils/error-messages.js");
 const { UPLOAD_ROOT_MAP_DATA, isInsideRoot } = require("#config/mapdatas-upload-config.js");
 const { processImageMetadata, createWebpAndLowRes, deleteImageAndLowResByMainPath } = require("#utils/image-processor.js");
@@ -41,8 +44,8 @@ async function updateGameMapCoverImage(userId, gameMapID, file) {
             throw new AppError(ERRORS.COMMON.MISSING_IMAGE, 400);
         }
 
-        const gameMapDetails = await database.getGameMapDetails(gameMapID);
-        if (!gameMapDetails) {
+        const gameMapExists = await doesGameMapExist(gameMapID);
+        if (!gameMapExists) {
             throw new AppError(ERRORS.GAMEMAP.NOT_FOUND, 404);
         }
 
@@ -57,10 +60,10 @@ async function updateGameMapCoverImage(userId, gameMapID, file) {
 
         oldCoverImage = await database.getGameMapCoverImage(gameMapID);
 
-        dbConnection = await database.getConnection();
+        dbConnection = await getConnection();
         await dbConnection.beginTransaction();
 
-        const imageId = await database.insertImage(dbConnection, imageData.width, imageData.height, "pending");
+        const imageId = await imageQueries.insertImage(dbConnection, imageData.width, imageData.height, "pending");
 
         // backend/uploads/mapdatas/:userId/:gameMapId/image.jpg example
         const relativeDestDir = path.join(
@@ -81,7 +84,7 @@ async function updateGameMapCoverImage(userId, gameMapID, file) {
 
         const dbPath = path.join(relativeDestDir, processedImagePaths.targetFileName);
 
-        const pathUpdateSuccess = await database.updateImagePath(dbConnection, imageId, dbPath);
+        const pathUpdateSuccess = await imageQueries.updateImagePath(dbConnection, imageId, dbPath);
         if (!pathUpdateSuccess) {
             throw new AppError(ERRORS.GAMEMAP.COVER_IMAGE_UPDATE_FAILED, 500);
         }
@@ -92,7 +95,7 @@ async function updateGameMapCoverImage(userId, gameMapID, file) {
         }
 
         if (oldCoverImage) {
-            const oldDeleteSuccess = await database.deleteImageById(dbConnection, oldCoverImage.image_id);
+            const oldDeleteSuccess = await imageQueries.deleteImageById(dbConnection, oldCoverImage.image_id);
             if (!oldDeleteSuccess) {
                 throw new AppError(ERRORS.GAMEMAP.COVER_IMAGE_UPDATE_FAILED, 500);
             }
@@ -138,10 +141,10 @@ async function deleteGameMapCoverImage(userId, gameMapID) {
             throw new AppError(ERRORS.GAMEMAP.COVER_IMAGE_NOT_FOUND, 404);
         }
 
-        dbConnection = await database.getConnection();
+        dbConnection = await getConnection();
         await dbConnection.beginTransaction();
 
-        const coverDeleteSuccess = await database.deleteImageById(dbConnection, coverImage.image_id);
+        const coverDeleteSuccess = await imageQueries.deleteImageById(dbConnection, coverImage.image_id);
         if (!coverDeleteSuccess) {
             throw new AppError(ERRORS.GAMEMAP.COVER_IMAGE_DELETE_FAILED, 500);
         }
