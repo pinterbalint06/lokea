@@ -1,7 +1,6 @@
-const database = require("#sql/database.js");
-const { mockConnection } = database;
-const enTranslations = require('../../../locales/en/admin.json');
-const huTranslations = require('../../../locales/hu/admin.json');
+const { mockConnection } = require('./mocks.js');
+const enTranslations = require('#locales/en/admin.json');
+const huTranslations = require('#locales/hu/admin.json');
 
 jest.mock('../../../utils/mails.js', () => ({
     sendWelcomeEmail: jest.fn().mockResolvedValue(),
@@ -29,9 +28,15 @@ const mockCheckRole = (...roles) => (req, res, next) => {
 };
 
 const mockI18nMiddleware = (req, res, next) => {
-    if (!req.session) req.session = { userLanguage: 'en' };
     req.t = (key) => {
-        const lang = req.session.userLanguage || 'en';
+        let lang = 'en';
+        try {
+            if (req.session && req.session.userLanguage) {
+                lang = req.session.userLanguage;
+            }
+        } catch (error) {
+            lang = 'en';
+        }
         const translations = lang === 'en' ? enTranslations : huTranslations;
         const [namespace, ...keys] = key.split(':');
         const keyPath = keys.join(':');

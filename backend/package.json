@@ -4,7 +4,7 @@
     "description": "Template project",
     "main": "server.js",
     "scripts": {
-        "test": "jest",
+        "test": "cross-env NODE_ENV=test jest --testTimeout=10000",
         "test:watch": "jest --watchAll",
         "start": "node server.js",
         "dev": "nodemon"
@@ -15,9 +15,11 @@
         "#config/*": "./config/*",
         "#mapcreatortest/*": "./test/mapcreator/*",
         "#root/*": "./*",
+        "#admin/*": "./api/admin/*",
         "#mapcreator/*": "./api/mapcreator/*",
         "#gamemaps/*": "./api/gamemaps/*",
-        "#testhelpers/*": "./test/helpers/*"
+        "#testhelpers/*": "./test/helpers/*",
+        "#locales/*": "./locales/*"
     },
     "author": "Kardos Krisztián",
     "license": "ISC",

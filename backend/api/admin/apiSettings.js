@@ -1,11 +1,11 @@
 const express = require('express');
 const router = express.Router();
 const { body } = require('express-validator');
-const { validate } = require('../../utils/validate.js');
+const { validate } = require('#utils/validate.js');
 
 //?SQL
-const databaseSettings = require('../../sql/admin/databaseSettings.js');
-const databaseLogs = require('../../sql/admin/databaseLogs.js');
+const databaseSettings = require('#sql/admin/databaseSettings.js');
+const databaseLogs = require('#sql/admin/databaseLogs.js');
 
 //API endpoints
 

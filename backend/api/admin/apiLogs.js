@@ -1,10 +1,10 @@
 const express = require('express');
 const router = express.Router();
 const { body, query, validationResult } = require('express-validator');
-const { validate } = require('../../utils/validate.js');
+const { validate } = require('#utils/validate.js');
 
 //?SQL
-const databaseLogs = require('../../sql/admin/databaseLogs.js');
+const databaseLogs = require('#sql/admin/databaseLogs.js');
 
 //API endpoints
 
@@ -23,13 +23,13 @@ router.get('/logs/sorted',
         query('username')
             .optional({ values: 'null' })
             .trim()
-            .isLength({ min: 1, max: 50 }),
+            .isLength({ min: 1, max: 50 }).withMessage((value, { req }) => req.t('admin:logsApi.validation_username_length')),
         query('periodFrom')
             .optional({ values: 'null' })
-            .isISO8601(),
+            .isISO8601().withMessage((value, { req }) => req.t('admin:logsApi.validation_period_from_invalid')),
         query('periodTo')
             .optional({ values: 'null' })
-            .isISO8601()
+            .isISO8601().withMessage((value, { req }) => req.t('admin:logsApi.validation_period_to_invalid_format'))
             .custom((value, { req }) => {
                 if (
                     value &&
@@ -45,22 +45,21 @@ router.get('/logs/sorted',
             .custom((value) => {
                 let arr = Array.isArray(value) ? value : [value];
                 return arr.every(r => ['LORD', 'ADMIN', 'MOD', 'user'].includes(r));
-            }),
+            }).withMessage((value, { req }) => req.t('admin:logsApi.validation_roles_invalid')),
         query('activities')
             .optional({ values: 'null' })
             .custom((value) => {
                 let arr = Array.isArray(value) ? value : [value];
                 return arr.every(a => /^[a-zA-Z0-9 -]+$/.test(a));
-            }),
+            }).withMessage((value, { req }) => req.t('admin:logsApi.validation_activities_invalid')),
         query('page')
             .optional()
             .isInt({
                 min: 1,
                 max: 10000
-            })
+            }).withMessage((value, { req }) => req.t('admin:logsApi.validation_page_invalid'))
             .toInt(),
-        validate
-    ],
+    ], validate,
     async (request, response) => {
         try {
             let { username, periodFrom, periodTo, roles, activities, page } = request.query;
@@ -83,7 +82,7 @@ router.get('/logs/sorted',
         }
         catch (error) {
             response.status(500).json({
-                error: error.message
+                error: request.t('admin:logsApi.fetch_sorted_error')
             });
         }
     });
@@ -95,7 +94,7 @@ router.post('/logs',
             .isInt({
                 min: 1,
                 max: 999999999
-            })
+            }).withMessage((value, { req }) => req.t('admin:logsApi.validation_victimid_invalid'))
             .toInt(),
         body('activity')
             .exists()
@@ -104,11 +103,9 @@ router.post('/logs',
             .isLength({
                 min: 2,
                 max: 100
-            })
+            }).withMessage((value, { req }) => req.t('admin:logsApi.validation_activity_invalid'))
             .escape(),
-
-        validate
-    ],
+    ], validate,
     async (request, response) => {
         try {
             let { victimid, activity } = request.body;
@@ -118,7 +115,7 @@ router.post('/logs',
         }
         catch (error) {
             response.status(500).json({
-                error: error.message
+                error: request.t('admin:logsApi.add_log_error')
             });
         }
     });
@@ -128,13 +125,13 @@ router.post('/logs/exports',
         body('username')
             .optional({ values: 'null' })
             .trim()
-            .isLength({ min: 1, max: 50 }),
+            .isLength({ min: 1, max: 50 }).withMessage((value, { req }) => req.t('admin:logsApi.validation_username_length')),
         body('periodFrom')
             .optional({ values: 'null' })
-            .isISO8601(),
+            .isISO8601().withMessage((value, { req }) => req.t('admin:logsApi.validation_period_from_invalid')),
         body('periodTo')
             .optional({ values: 'null' })
-            .isISO8601()
+            .isISO8601().withMessage((value, { req }) => req.t('admin:logsApi.validation_period_to_invalid_format'))
             .custom((value, { req }) => {
                 if (value && req.body.periodFrom && new Date(value) < new Date(req.body.periodFrom)) {
                     throw new Error(req.t('admin:logsApi.validation_period_to_invalid'));
@@ -146,15 +143,14 @@ router.post('/logs/exports',
             .custom((value) => {
                 let arr = Array.isArray(value) ? value : [value];
                 return arr.every(r => ['LORD', 'ADMIN', 'MOD', 'user'].includes(r));
-            }),
+            }).withMessage((value, { req }) => req.t('admin:logsApi.validation_roles_invalid')),
         body('activities')
             .optional({ values: 'null' })
             .custom((value) => {
                 let arr = Array.isArray(value) ? value : [value];
                 return arr.every(a => /^[a-zA-Z0-9 -]+$/.test(a));
-            }),
-        validate
-    ],
+            }).withMessage((value, { req }) => req.t('admin:logsApi.validation_activities_invalid')),
+    ], validate,
     async (request, response) => {
         try {
             let { username, periodFrom, periodTo, roles, activities } = request.body;
@@ -168,7 +164,7 @@ router.post('/logs/exports',
                 finalRoles,
                 finalActivities,
                 1,
-                999999
+                Number.MAX_SAFE_INTEGER //9 billiárd
             );
 
             if (logs.total === 0) {

@@ -4,10 +4,11 @@ const sharp = require('sharp');
 const { Chart, registerables } = require('chart.js');
 const { Canvas } = require('skia-canvas');
 const router = express.Router();
+const AppError = require('#utils/app-error.js');
 
 //?SQL
-const databaseAdmin = require('../../sql/admin/databaseAdmin.js');
-const databaseLogs = require('../../sql/admin/databaseLogs.js');
+const databaseAdmin = require('#sql/admin/databaseAdmin.js');
+const databaseLogs = require('#sql/admin/databaseLogs.js');
 
 Chart.register(...registerables);
 
@@ -16,11 +17,12 @@ Chart.register(...registerables);
 router.get('/language', (request, response) => {
     try {
         if (!request.session) {
-            console.error("Session is missing");
-            throw new Error();
+            response.status(401).json({ error: request.t('admin:adminApi.language_fetch_error') });
         }
-        let language = request.session.userLanguage;
-        response.status(200).json({ language: request.session.userLanguage });
+        else {
+            let language = request.session.userLanguage;
+            response.status(200).json({ language: request.session.userLanguage });
+        }
     } catch (error) {
         response.status(500).json({ error: request.t('admin:adminApi.language_fetch_error') });
     }
@@ -72,7 +74,7 @@ router.get('/charts/:type', async (request, response) => {
                 color = '#dc3545';
                 break;
             default:
-                return response.status(400).json({ error: request.t('admin:adminApi.chart_invalid_type') });
+                throw new AppError(request.t('admin:adminApi.chart_invalid_type'), 400);
         }
 
         const labels = dbData.map(row => row[xKey]);
@@ -94,6 +96,9 @@ router.get('/charts/:type', async (request, response) => {
 
     } catch (error) {
         console.error(error);
+        if (error instanceof AppError) {
+            return response.status(error.statusCode).json({ error: error.message });
+        }
         response.status(500).json({ error: request.t('admin:adminApi.chart_generation_error') });
     }
 });

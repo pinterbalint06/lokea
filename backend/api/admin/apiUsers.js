@@ -4,17 +4,17 @@ const fs = require('fs/promises');
 const bcrypt = require('bcrypt');
 const { body, query, param, validationResult } = require('express-validator');
 const sharp = require('sharp');
-const { sendWelcomeEmail, sendChangeEmail, sendDeleteEmail } = require('../../utils/mails.js');
-const { validate } = require('../../utils/validate.js');
+const { sendWelcomeEmail, sendChangeEmail, sendDeleteEmail } = require('#utils/mails.js');
+const { validate } = require('#utils/validate.js');
 
 //?SQL
-const databaseUsers = require('../../sql/admin/databaseUsers.js');
-const databaseLogs = require('../../sql/admin/databaseLogs.js');
+const databaseUsers = require('#sql/admin/databaseUsers.js');
+const databaseLogs = require('#sql/admin/databaseLogs.js');
 
 //!Multer
 const multer = require('multer'); //?npm install multer
 const path = require('path');
-const TARGET_UPLOADS_DIR = path.resolve(process.cwd(), 'uploads');
+const { UPLOAD_ROOT } = require('#config/mapdatas-upload-config.js');
 
 const upload = multer({
     limits: { fileSize: 5 * 1024 * 1024 }, // 5 MB
@@ -61,28 +61,28 @@ router.get('/users/sorted', [
         .isBoolean().withMessage((value, { req }) => req.t('admin:usersApi.validation_user_checked_boolean')),
     query('page')
         .isInt({ min: 1 }).withMessage((value, { req }) => req.t('admin:usersApi.validation_page_number_invalid'))
-        .toInt(),
-    validate
-], async (request, response) => {
-    try {
-        let { mireKeresek, mit, status, adminChecked, modChecked, userChecked, lordChecked, page } = request.query;
+        .toInt()
+], validate,
+    async (request, response) => {
+        try {
+            let { mireKeresek, mit, status, adminChecked, modChecked, userChecked, lordChecked, page } = request.query;
 
-        let users = await databaseUsers.sortedUsers(
-            mireKeresek,
-            mit,
-            status,
-            adminChecked,
-            modChecked,
-            userChecked,
-            lordChecked,
-            page
-        );
+            let users = await databaseUsers.sortedUsers(
+                mireKeresek,
+                mit,
+                status,
+                adminChecked,
+                modChecked,
+                userChecked,
+                lordChecked,
+                page
+            );
 
-        response.status(200).json({ users: users.rows, total: users.total, message: request.t('admin:usersApi.fetch_success') });
-    } catch (error) {
-        response.status(500).json({ error: request.t('admin:usersApi.fetch_sorted_error') });
-    }
-});
+            response.status(200).json({ users: users.rows, total: users.total, message: request.t('admin:usersApi.fetch_success') });
+        } catch (error) {
+            response.status(500).json({ error: request.t('admin:usersApi.fetch_sorted_error') });
+        }
+    });
 
 router.get('/users/:id',
     [
@@ -142,7 +142,7 @@ router.post("/users",
             }
             else {
                 if (insert.error === 'User exists') {
-                    response.status(409).json({ error: "A felhasználónév vagy e-mail cím már foglalt!" });
+                    response.status(409).json({ error: request.t('admin:usersApi.error_user_exists') });
                 }
                 else {
                     throw new Error(request.t('admin:usersApi.signup_failed_generic'));
@@ -199,6 +199,40 @@ router.post('/users/exports',
 
 //PUT
 
+router.put('/users/self',
+    [
+        body("username")
+            .optional({ values: 'null' })
+            .not().isEmail().withMessage((value, { req }) => req.t('admin:usersApi.validation_username_no_email'))
+            .matches(/^[a-zA-Z0-9áéíóöőúüűÁÉÍÓÖŐÚÜŰ_-]+$/).withMessage((value, { req }) => req.t('admin:usersApi.validation_username_invalid_chars'))
+            .isLength({ min: 1, max: 20 }).withMessage((value, { req }) => req.t('admin:usersApi.validation_username_length')),
+        body("email")
+            .optional({ values: 'null' })
+            .isEmail().withMessage((value, { req }) => req.t('admin:usersApi.validation_email_format'))
+            .isLength({ min: 5, max: 254 }).withMessage((value, { req }) => req.t('admin:usersApi.validation_email_length')),
+    ], validate,
+    async (request, response) => {
+        try {
+            let { username, email } = request.body;
+            let success = await databaseUsers.updateUserByAdmin(request.session.userid, username, email);
+            if (success === 'User exists') {
+                response.status(409).json({ error: request.t('admin:usersApi.error_user_exists') });
+            }
+            else {
+                if (success == 1) {
+                    await databaseLogs.addLog(request.session.userid, 'User update');
+                    sendChangeEmail(email, username).catch(err => console.log("Email hiba:", err.message));
+                    response.status(200).json({ message: request.t('admin:usersApi.update_success') });
+                }
+                else {
+                    response.status(404).json({ error: request.t('admin:usersApi.update_not_found_or_inactive') });
+                }
+            }
+        } catch (error) {
+            response.status(500).json({ error: request.t('admin:usersApi.update_error') });
+        }
+    })
+
 router.put('/users/:id',
     [
         param("id")
@@ -212,7 +246,7 @@ router.put('/users/:id',
         body("email")
             .optional({ values: 'null' })
             .isEmail().withMessage((value, { req }) => req.t('admin:usersApi.validation_email_format'))
-            .isLength({ min: 5, max: 250 }).withMessage((value, { req }) => req.t('admin:usersApi.validation_email_length')),
+            .isLength({ min: 5, max: 254 }).withMessage((value, { req }) => req.t('admin:usersApi.validation_email_length')),
         body("role")
             .optional({ values: 'null' })
             .isIn(['user', 'MOD', 'ADMIN', 'LORD']).withMessage((value, { req }) => req.t('admin:usersApi.validation_role_invalid')),
@@ -226,7 +260,7 @@ router.put('/users/:id',
             }
             let success = await databaseUsers.updateUserByAdmin(user_id, username, email, role);
             if (success === 'User exists') {
-                return response.status(409).json({ error: "A felhasználónév vagy e-mail cím már foglalt!" });
+                return response.status(409).json({ error: request.t('admin:usersApi.error_user_exists') });
             }
             if (success == 1) {
                 await databaseLogs.addLog(request.session.userid, 'User update (A)', user_id);
@@ -235,40 +269,6 @@ router.put('/users/:id',
             }
             else {
                 response.status(404).json({ error: request.t('admin:usersApi.update_not_found_or_inactive') });
-            }
-        } catch (error) {
-            response.status(500).json({ error: request.t('admin:usersApi.update_error') });
-        }
-    })
-
-router.put('/users/self',
-    [
-        body("username")
-            .optional({ values: 'null' })
-            .not().isEmail().withMessage((value, { req }) => req.t('admin:usersApi.validation_username_no_email'))
-            .matches(/^[a-zA-Z0-9áéíóöőúüűÁÉÍÓÖŐÚÜŰ_-]+$/).withMessage((value, { req }) => req.t('admin:usersApi.validation_username_invalid_chars'))
-            .isLength({ min: 1, max: 20 }).withMessage((value, { req }) => req.t('admin:usersApi.validation_username_length')),
-        body("email")
-            .optional({ values: 'null' })
-            .isEmail().withMessage((value, { req }) => req.t('admin:usersApi.validation_email_format'))
-            .isLength({ min: 5, max: 250 }).withMessage((value, { req }) => req.t('admin:usersApi.validation_email_length'))
-    ], validate,
-    async (request, response) => {
-        try {
-            let { username, email } = request.body;
-            let success = await databaseUsers.updateUserByAdmin(request.session.userid, username, email);
-            if (success === 'User exists') {
-                response.status(409).json({ error: "A felhasználónév vagy e-mail cím már foglalt!" });
-            }
-            else {
-                if (success == 1) {
-                    await databaseLogs.addLog(request.session.userid, 'User update');
-                    sendChangeEmail(email, username).catch(err => console.log("Email hiba:", err.message));
-                    response.status(200).json({ message: request.t('admin:usersApi.update_success') });
-                }
-                else {
-                    response.status(404).json({ error: request.t('admin:usersApi.update_not_found_or_inactive') });
-                }
             }
         } catch (error) {
             response.status(500).json({ error: request.t('admin:usersApi.update_error') });
@@ -308,11 +308,10 @@ router.put('/users/:id/profile-picture',
             let user_id = request.params.id;
 
             let newFileName = `processed-${Date.now()}.webp`;
-            newFilePath = path.join(TARGET_UPLOADS_DIR, newFileName);
+            newFilePath = path.join(UPLOAD_ROOT, newFileName);
 
             sharp.cache(false);
 
-            // FIGYELEM: Itt a memóriából (buffer) olvassuk be az eredeti fájlt, nem a lemezről!
             const metadata = await sharp(request.file.buffer)
                 .rotate()
                 .resize(400, 400, {
@@ -325,9 +324,8 @@ router.put('/users/:id/profile-picture',
             let { width, height } = metadata;
             let lastPfp = await databaseUsers.uploadProfilePic(newFileName, width, height, user_id);
 
-            // Nincs fs.unlink(originalFile), mert nem írtuk ki lemezre! Csak a régi képet töröljük.
             if (lastPfp) {
-                let lastPfpPath = path.join(TARGET_UPLOADS_DIR, lastPfp);
+                let lastPfpPath = path.join(UPLOAD_ROOT, lastPfp);
                 await fs.unlink(lastPfpPath).catch(() => { });
             }
 
@@ -335,7 +333,6 @@ router.put('/users/:id/profile-picture',
             return response.status(201).json({ success: true, message: request.t('admin:usersApi.profile_pic_update_success') });
         } catch (error) {
             console.error("Hiba a képfeldolgozás során:", error);
-            // Hiba esetén csak az újonnan (esetleg félig) létrehozott feldolgozott fájlt kell takarítani
             if (newFilePath) await fs.unlink(newFilePath).catch(() => { });
             response.status(500).json({ error: request.t('admin:usersApi.profile_pic_update_error') });
         }
@@ -386,7 +383,7 @@ router.delete('/users/:id/profile-picture',
                 response.status(200).json({ success: true, message: request.t('admin:usersApi.profile_pic_already_default') });
             }
             else {
-                let lastPfpPath = path.join(TARGET_UPLOADS_DIR, lastPfp);
+                let lastPfpPath = path.join(UPLOAD_ROOT, lastPfp);
                 await fs.unlink(lastPfpPath).catch(() => { });
 
                 await databaseLogs.addLog(request.session.userid, 'Profile picture delete (A)', user_id);

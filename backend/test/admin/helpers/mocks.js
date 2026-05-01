@@ -27,12 +27,30 @@ jest.mock('chart.js', () => {
     return { Chart: ChartMock, registerables: [] };
 });
 
-jest.mock('../../../sql/admin/databaseUsers.js');
-jest.mock('../../../sql/admin/databaseLogs.js');
-jest.mock('../../../sql/admin/databaseAdmin.js');
-jest.mock('../../../sql/admin/databaseSettings.js');
+jest.mock('#sql/admin/databaseUsers.js');
+jest.mock('#sql/admin/databaseLogs.js');
+jest.mock('#sql/admin/databaseAdmin.js');
+jest.mock('#sql/admin/databaseSettings.js');
 
-jest.mock('../../../utils/auth.js', () => {
+jest.mock('#config/mapdatas-upload-config.js', () => {
+    const multer = require('multer');
+    return {
+        UPLOAD_ROOT: 'uploads',
+        upload: multer({
+            limits: { fileSize: 5 * 1024 * 1024 },
+            fileFilter: (request, file, callback) => {
+                if (file.mimetype && file.mimetype.startsWith('image/')) {
+                    callback(null, true);
+                } else {
+                    request.fileValidationError = 'Érvénytelen fájltípus! Csak képeket tölthetsz fel.';
+                    callback(null, false);
+                }
+            }
+        })
+    };
+}, { virtual: true });
+
+jest.mock('#utils/auth.js', () => {
     const helpers = require('./helpers.js');
     return {
         checkAuth: helpers.mockCheckAuth,
@@ -40,9 +58,9 @@ jest.mock('../../../utils/auth.js', () => {
     };
 });
 
-const pool = require('../../../sql/connection.js');
+const pool = require('#sql/connection.js');
 
-jest.mock('../../../sql/connection.js', () => ({
+jest.mock('#sql/connection.js', () => ({
     execute: jest.fn(),
     getConnection: jest.fn()
 }));

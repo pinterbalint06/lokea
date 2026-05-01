@@ -440,7 +440,7 @@ router.get('/game_maps', async (request, response) => {
 router.get('/get_cover_image/:cover_image_id', async (request, response) => {
 
     try {
-        let uploads = path.join(__dirname, '../uploads');
+        let uploads = TARGET_UPLOADS_DIR;
         let fileRes;
         if (!request.params || !request.params.cover_image_id) {
             fileRes = 'cover_images/image-not-found.jpg';

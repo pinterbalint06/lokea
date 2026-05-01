@@ -2,11 +2,11 @@ require('./helpers/mocks.js');
 
 const request = require('supertest');
 const express = require('express');
-const db = require('../../sql/admin/databaseAdmin.js');
-const dbLogs = require('../../sql/admin/databaseLogs.js');
-const auth = require('../../utils/auth.js');
-const enTranslations = require('../../locales/en/admin.json');
-const huTranslations = require('../../locales/hu/admin.json');
+const db = require('#sql/admin/databaseAdmin.js');
+const dbLogs = require('#sql/admin/databaseLogs.js');
+const auth = require('#utils/auth.js');
+const enTranslations = require('#locales/en/admin.json');
+const huTranslations = require('#locales/hu/admin.json');
 const { mockI18nMiddleware, testRequiresAdminOrAuth } = require('./helpers/helpers.js');
 
 const app = express();
@@ -14,12 +14,9 @@ app.use(express.json());
 
 app.use(mockI18nMiddleware);
 
-app.use('/api/admin', auth.checkAuth, auth.checkRole("ADMIN"), require('../../api/admin/index.js'));
+app.use('/api/admin', auth.checkAuth, auth.checkRole("ADMIN"), require('#admin/index.js'));
 
 describe('Admin API-tesztek', () => {
-    beforeEach(() => {
-        jest.clearAllMocks();
-    });
 
     describe('Végpont: GET /language', () => {
         testRequiresAdminOrAuth(() => request(app).get('/api/admin/language'));
@@ -27,6 +24,33 @@ describe('Admin API-tesztek', () => {
         it('SIKER - 200, nyelv lekérése', async () => {
             const res = await request(app).get('/api/admin/language').expect(200);
             expect(res.body.language).toBe("en");
+        });
+
+        it('HIBA - 401, ha nincs session (biztonsági ellenőrzés)', async () => {
+            const tempApp = express();
+            tempApp.use(mockI18nMiddleware);
+            tempApp.use((req, res, next) => {
+                delete req.session;
+                next();
+            });
+            tempApp.use('/api/admin', require('#admin/index.js'));
+            const res = await request(tempApp).get('/api/admin/language').expect(401);
+            expect(res.body.error).toBe(enTranslations.adminApi.language_fetch_error);
+        });
+
+        it('HIBA - 500, ha valami váratlan hiba történik (catch ág)', async () => {
+            const tempApp = express();
+            tempApp.use(mockI18nMiddleware);
+            tempApp.use((req, res, next) => {
+                delete req.session;
+                Object.defineProperty(req, 'session', {
+                    get: () => { throw new Error('Szimulált hiba a catch ág eléréséhez'); }
+                });
+                next();
+            });
+            tempApp.use('/api/admin', require('#admin/index.js'));
+            const res = await request(tempApp).get('/api/admin/language').expect(500);
+            expect(res.body.error).toBe(enTranslations.adminApi.language_fetch_error);
         });
     });
 

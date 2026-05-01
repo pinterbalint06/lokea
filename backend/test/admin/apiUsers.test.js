@@ -4,27 +4,26 @@ const request = require('supertest');
 const express = require('express');
 const path = require('path');
 const fs = require('fs/promises');
-const db = require('../../sql/admin/databaseUsers.js');
-const dbLogs = require('../../sql/admin/databaseLogs.js');
-const auth = require('../../utils/auth.js');
+const db = require('#sql/admin/databaseUsers.js');
+const dbLogs = require('#sql/admin/databaseLogs.js');
+const auth = require('#utils/auth.js');
 const multer = require('multer');
 const sharp = require('sharp');
-const enTranslations = require('../../locales/en/admin.json');
-const huTranslations = require('../../locales/hu/admin.json');
+const enTranslations = require('#locales/en/admin.json');
+const huTranslations = require('#locales/hu/admin.json');
 const { mockI18nMiddleware, testRequiresAdminOrAuth } = require('./helpers/helpers.js');
 
-const { sendWelcomeEmail, sendChangeEmail, sendDeleteEmail } = require('../../utils/mails.js');
+const { sendWelcomeEmail, sendChangeEmail, sendDeleteEmail } = require('#utils/mails.js');
 
 const app = express();
 app.use(express.json());
 
 app.use(mockI18nMiddleware);
 
-app.use('/api/admin', auth.checkAuth, auth.checkRole("ADMIN"), require('../../api/admin/index.js'));
+app.use('/api/admin', auth.checkAuth, auth.checkRole("ADMIN"), require('#admin/index.js'));
 
 describe('Admin Users API-tesztek', () => {
     beforeEach(() => {
-        jest.clearAllMocks();
         fs.unlink.mockResolvedValue(undefined);
     });
 
@@ -230,7 +229,7 @@ describe('Admin Users API-tesztek', () => {
                 .post('/api/admin/users')
                 .send({ username: 'NewUser', email: 'newuser@example.com', password: 'StrongPassword123', role: 'user' })
                 .expect(409);
-            expect(res.body.error).toBe("A felhasználónév vagy e-mail cím már foglalt!");
+            expect(res.body.error).toBe(enTranslations.usersApi.error_user_exists);
             expect(sendWelcomeEmail).not.toHaveBeenCalled();
         });
 
@@ -372,7 +371,7 @@ describe('Admin Users API-tesztek', () => {
                 .put('/api/admin/users/1')
                 .send({ username: 'UpdatedUser', email: 'updateduser@example.com', role: 'user' })
                 .expect(409);
-            expect(res.body.error).toBe("A felhasználónév vagy e-mail cím már foglalt!");
+            expect(res.body.error).toBe(enTranslations.usersApi.error_user_exists);
             expect(sendChangeEmail).not.toHaveBeenCalled();
         });
 
@@ -421,7 +420,7 @@ describe('Admin Users API-tesztek', () => {
                 .put('/api/admin/users/self')
                 .send({ username: 'UpdatedUser', email: 'updateduser@example.com' })
                 .expect(409);
-            expect(res.body.error).toBe("A felhasználónév vagy e-mail cím már foglalt!");
+            expect(res.body.error).toBe(enTranslations.usersApi.error_user_exists);
             expect(sendChangeEmail).not.toHaveBeenCalled();
         });
 

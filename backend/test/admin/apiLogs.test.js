@@ -2,10 +2,10 @@ require('./helpers/mocks.js');
 
 const request = require('supertest');
 const express = require('express');
-const db = require('../../sql/admin/databaseLogs.js');
-const auth = require('../../utils/auth.js');
-const enTranslations = require('../../locales/en/admin.json');
-const huTranslations = require('../../locales/hu/admin.json');
+const db = require('#sql/admin/databaseLogs.js');
+const auth = require('#utils/auth.js');
+const enTranslations = require('#locales/en/admin.json');
+const huTranslations = require('#locales/hu/admin.json');
 const { mockI18nMiddleware, testRequiresAdminOrAuth } = require('./helpers/helpers.js');
 
 const app = express();
@@ -13,13 +13,9 @@ app.use(express.json());
 
 app.use(mockI18nMiddleware);
 
-app.use('/api/admin', auth.checkAuth, auth.checkRole("ADMIN"), require('../../api/admin/index.js'));
+app.use('/api/admin', auth.checkAuth, auth.checkRole("ADMIN"), require('#admin/index.js'));
 
 describe('Admin Logs API Átfogó Tesztek', () => {
-
-    beforeEach(() => {
-        jest.clearAllMocks();
-    });
 
     describe('Végpont: GET /logs', () => {
         testRequiresAdminOrAuth(() => request(app).get('/api/admin/logs'));
@@ -98,7 +94,6 @@ describe('Admin Logs API Átfogó Tesztek', () => {
                 .query({ roles: ['user', 'MOD'], activities: ['Login', 'User update'], page: 1 })
                 .expect(200);
 
-            // A backendnek helyesen, tömbként kell továbbadnia a db rétegnek
             expect(db.sortedLogs).toHaveBeenCalledWith(
                 undefined, undefined, undefined, ['user', 'MOD'], ['Login', 'User update'], "1"
             );
@@ -107,7 +102,7 @@ describe('Admin Logs API Átfogó Tesztek', () => {
         it('HIBA - 500 hibaüzenet ellenőrzése', async () => {
             db.sortedLogs.mockRejectedValue(new Error('SQL Error'));
             const res = await request(app).get('/api/admin/logs/sorted').expect(500);
-            expect(res.body.error).toBe("SQL Error");
+            expect(res.body.error).toBe(enTranslations.logsApi.fetch_sorted_error);
         });
     });
 
@@ -185,7 +180,7 @@ describe('Admin Logs API Átfogó Tesztek', () => {
                 .send({ roles: ['ADMIN', 'MOD'], activities: ['Login'] })
                 .expect(404);
 
-            expect(db.sortedLogs).toHaveBeenCalledWith(undefined, undefined, undefined, ['ADMIN', 'MOD'], ['Login'], 1, 999999);
+            expect(db.sortedLogs).toHaveBeenCalledWith(undefined, undefined, undefined, ['ADMIN', 'MOD'], ['Login'], 1, Number.MAX_SAFE_INTEGER);
         });
 
         it('SIKER - 200, CSV generálása', async () => {
