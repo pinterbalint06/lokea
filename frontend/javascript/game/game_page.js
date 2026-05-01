@@ -220,7 +220,7 @@ async function createPoint(roundTime) {
         }
         startRoundTimer(point.game.roundEndAt);
     } catch (error) {
-        console.error("Error creating point:", error);
+        showError("Error creating point:", error);
     }
 
 }
