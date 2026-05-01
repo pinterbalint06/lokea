@@ -1,4 +1,4 @@
-const { checkGameSession, checkAuth } = require("#root/auth.js");
+const { checkGameSession, checkAuth } = require("#utils/auth.js");
 
 function testRequiresGameSession(requestCallback) {
     it("Should respond with 401 if the user is not authenticated", async () => {

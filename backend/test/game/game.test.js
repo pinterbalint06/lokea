@@ -1,6 +1,6 @@
 const { createGameTestApp } = require("#gametest/helpers/setup-test.js");
 const { testRequiresGameSession, suppressConsoleErrors } = require("#gametest/helpers/helpers.js");
-const { checkGameSession } = require("#root/auth.js");
+const { checkGameSession } = require("#utils/auth.js");
 const database = require("#sql/game.database.js");
 const { mockConnection } = database;
 
