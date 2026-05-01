@@ -20,7 +20,7 @@
         "#mapcreator/*": "./api/mapcreator/*",
         "#gamemaps/*": "./api/gamemaps/*",
         "#testhelpers/*": "./test/helpers/*",
-        "#locales/*": "./locales/*"
+        "#locales/*": "./locales/*",
         "#imagequeries": "./api/shared/queries/shared-images.queries.js",
         "#sharedapi/*": "./api/shared/*"
     },
