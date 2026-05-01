@@ -1,6 +1,6 @@
 const express = require("express");
 const router = express.Router();
-const database = require("#sql/game.database.js");
+const { finishGameSession } = require("#gameflow/sessions/sessions.queries.js");
 const { checkGameSession } = require("#root/auth.js");
 const mapsRoutes = require("./maps/maps.routes.js");
 const randomPointRoutes = require("./random-point/random-point.routes.js");
@@ -30,7 +30,7 @@ router.use("/", guessRoutes);
 
 router.delete("/session", async (request, response) => {
     try {
-        await database.finishGameSession(request.session.game.activeSessionId);
+        await finishGameSession(request.session.game.activeSessionId);
         delete request.session.game;
         response.status(200).json({ message: "Game session finished" });
     } catch (error) {

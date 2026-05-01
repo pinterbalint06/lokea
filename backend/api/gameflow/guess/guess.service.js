@@ -1,4 +1,6 @@
-const database = require("#sql/game.database.js");
+const guessQueries = require("#gameflow/guess/guess.queries.js");
+const { getCurrentPointId } = require("#gameflow/random-point/random-point.queries.js");
+const { getConnection } = require("#sql/database.js");
 const AppError = require("#utils/app-error.js");
 const { COUNTDOWN_SECONDS } = require("../shared/gameflow.utils.js");
 
@@ -75,17 +77,17 @@ function buildGuessResult(guess, game, correctMap, correctMapIndex) {
         const score = calculateScore(distance, timeLeft, game.roundTime, game.sharpness);
         re = { score, distance, pixelDistance, mapIndex: correctMapIndex };
     }
-    
+
     return re;
 }
 
 async function persistGuess(sessionId, game, correctMap, guess, result) {
-    const conn = await database.getConnection();
+    const conn = await getConnection();
     try {
         await conn.beginTransaction();
-        await database.saveGuess(conn, sessionId, game.point.pointId, correctMap.mapId, guess.u, guess.v, result.distance, result.score, game.currentCycle, game.currentRound + 1);
-        await database.incrementCurrentRound(conn, sessionId);
-        await database.clearCurrentPoint(conn, sessionId);
+        await guessQueries.saveGuess(conn, sessionId, game.point.pointId, correctMap.mapId, guess.u, guess.v, result.distance, result.score, game.currentCycle, game.currentRound + 1);
+        await guessQueries.incrementCurrentRound(conn, sessionId);
+        await guessQueries.clearCurrentPoint(conn, sessionId);
         await conn.commit();
     } catch (error) {
         try { await conn.rollback(); } catch (_) { }
@@ -96,7 +98,7 @@ async function persistGuess(sessionId, game, correctMap, guess, result) {
 }
 
 async function processGuess(sessionId, game, body) {
-    const activePointId = await database.getCurrentPointId(sessionId);
+    const activePointId = await getCurrentPointId(sessionId);
     if (!activePointId) {
         throw new AppError("No active round", 400);
     }
@@ -110,13 +112,13 @@ async function processGuess(sessionId, game, body) {
 
     await persistGuess(sessionId, game, correctMap, guess, result);
 
-    const totalScore = await database.totalScore(sessionId);
+    const total = await guessQueries.totalScore(sessionId);
 
     return {
         score: result.score,
         distance: result.pixelDistance,
         mapI: result.mapIndex,
-        totalScore,
+        totalScore: total,
         pointu: game.point.pointu,
         pointv: game.point.pointv,
         pointx: Math.round(game.point.pointu * correctMap.width),

@@ -1,4 +1,4 @@
-const database = require("#sql/game.database.js");
+const sessionsQueries = require("#gameflow/sessions/sessions.queries.js");
 const AppError = require("#utils/app-error.js");
 
 const DIFFICULTY_SHARPNESS = { easy: -1.5, normal: -3, hard: -5 };
@@ -34,7 +34,7 @@ function validateGameStartInput(body) {
 }
 
 async function getActiveSession(userId) {
-    const row = await database.selectLatestActiveGameSession(userId);
+    const row = await sessionsQueries.selectLatestActiveGameSession(userId);
     return row
         ? buildSessionObject({
             activeSessionId: row.session_id,
@@ -53,12 +53,12 @@ async function createGameSession(userId, body) {
     const { gameMapId, rounds, roundTime, difficulty } = validateGameStartInput(body);
     const sharpness = DIFFICULTY_SHARPNESS[difficulty];
 
-    const gameTitle = await database.getGameTitleById(gameMapId);
+    const gameTitle = await sessionsQueries.getGameTitleById(gameMapId);
     if (!gameTitle) {
         throw new AppError("Game map not found", 404);
     }
 
-    const sessionId = await database.insertGameSession(userId, rounds, roundTime, gameMapId, sharpness);
+    const sessionId = await sessionsQueries.insertGameSession(userId, rounds, roundTime, gameMapId, sharpness);
 
     return buildSessionObject({
         activeSessionId: sessionId,

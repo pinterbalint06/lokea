@@ -17,6 +17,7 @@
         "#root/*": "./*",
         "#mapcreator/*": "./api/mapcreator/*",
         "#gamemaps/*": "./api/gamemaps/*",
+        "#gameflow/*": "./api/gameflow/*",
         "#testhelpers/*": "./test/helpers/*",
         "#imagequeries": "./api/shared/queries/shared-images.queries.js",
         "#sharedapi/*": "./api/shared/*"

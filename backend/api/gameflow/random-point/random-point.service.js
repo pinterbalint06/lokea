@@ -1,4 +1,4 @@
-const database = require("#sql/game.database.js");
+const randomPointQueries = require("#gameflow/random-point/random-point.queries.js");
 const AppError = require("#utils/app-error.js");
 const { COUNTDOWN_SECONDS } = require("../shared/gameflow.utils.js");
 
@@ -6,14 +6,14 @@ async function resolveCurrentPoint(gameMapId, sessionId) {
     let point;
     let cycleIncremented = false;
 
-    const currentPointId = await database.getCurrentPointId(sessionId);
+    const currentPointId = await randomPointQueries.getCurrentPointId(sessionId);
     if (currentPointId) {
-        point = await database.getPointById(currentPointId);
+        point = await randomPointQueries.getPointById(currentPointId);
     } else {
-        point = await database.getRandomPoint(gameMapId, sessionId);
+        point = await randomPointQueries.getRandomPoint(gameMapId, sessionId);
         if (!point) {
-            await database.incrementCycle(sessionId);
-            point = await database.getRandomPoint(gameMapId, sessionId);
+            await randomPointQueries.incrementCycle(sessionId);
+            point = await randomPointQueries.getRandomPoint(gameMapId, sessionId);
             cycleIncremented = true;
         }
     }
@@ -49,7 +49,7 @@ async function getRandomPoint(sessionId, game) {
         throw new AppError("No points available", 500);
     }
 
-    await database.setCurrentPoint(sessionId, point.point_id);
+    await randomPointQueries.setCurrentPoint(sessionId, point.point_id);
 
     const timing = calculateRoundTiming(game.roundStartedAt, game.roundTime);
     const { sessionPoint, responsePoint } = buildPointObjects(point, timing);

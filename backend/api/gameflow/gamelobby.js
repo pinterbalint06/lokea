@@ -1,6 +1,6 @@
 const express = require("express");
 const router = express.Router();
-const database = require("#sql/game.database.js");
+const { getGameMaps, getImagePath } = require("#gameflow/gamelobby.queries.js");
 const AppError = require("#utils/app-error.js");
 const path = require("path");
 const sessionsRoutes = require("./sessions/sessions.routes.js");
@@ -26,7 +26,7 @@ router.get("/", async (request, response) => {
         }
 
         const userId = request.session?.userid;
-        const palyak = await database.getGameMaps(sort, userId, offset);
+        const palyak = await getGameMaps(sort, userId, offset);
         response.status(200).json({ results: palyak });
     } catch (error) {
         if (error instanceof AppError) {
@@ -42,7 +42,7 @@ router.get("/cover-images/:cover_image_id", async (request, response) => {
     try {
         let filePath = FALLBACK_COVER_IMAGE;
         if (request.params.cover_image_id) {
-            const dbPath = await database.getImagePath(request.params.cover_image_id);
+            const dbPath = await getImagePath(request.params.cover_image_id);
             if (dbPath) filePath = dbPath;
         }
         response.sendFile(path.join(UPLOADS_DIR, filePath));
