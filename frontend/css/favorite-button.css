@@ -12,7 +12,15 @@
     cursor: pointer;
     color: rgba(255, 255, 255, 0.85);
     transition: color 0.2s ease, transform 0.15s ease;
-    z-index: 2;
+    z-index: 4;
+    padding: 0;
+}
+
+@media (max-width: 576px) {
+    .card-favorite-btn {
+        right: 0.75rem;
+        top: 3.5rem;
+    }
 }
 
 .card-favorite-btn svg {

@@ -3,6 +3,7 @@
 @import url('./hold-to-unlock-button.css');
 @import url('./game-map-base.css');
 @import url('./drag-and-drop-uploader.css');
+@import url('./favorite-button.css');
 
 html,
 body {
