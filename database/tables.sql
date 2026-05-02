@@ -141,7 +141,7 @@ CREATE TABLE game_sessions (
 CREATE TABLE session_guesses (
     guess_id INT AUTO_INCREMENT PRIMARY KEY,
     session_id INT NOT NULL,
-    point_id INT NOT NULL,
+    point_id INT,
     round INT NOT NULL,
     map_id INT,
     guessed_u FLOAT NOT NULL,
@@ -151,7 +151,7 @@ CREATE TABLE session_guesses (
     cycle INT NOT NULL,
     FOREIGN KEY (map_id) REFERENCES map(map_id) ON DELETE CASCADE,
     FOREIGN KEY (session_id) REFERENCES game_sessions(session_id) ON DELETE CASCADE,
-    FOREIGN KEY (point_id) REFERENCES points(point_id) ON DELETE CASCADE
+    FOREIGN KEY (point_id) REFERENCES points(point_id) ON DELETE SET NULL
 );
 
 SET GLOBAL event_scheduler = ON;
