@@ -1,10 +1,9 @@
-import { makeSubtitle, inputGeneral, labelGeneral, gombGeneral, makeSvg } from "./libs/utils/DOMutils.js";
+import { makeSubtitle, inputGeneral, labelGeneral, gombGeneral, makeSvg, showAlert } from "./libs/utils/DOMutils.js";
 import { validalvaBej, validalvaUsername, validalvaEmail, validalvaJelszo, wrongInput } from "./libs/utils/validations.js";
 import { initSocket } from "./libs/utils/socketio.js";
 import i18next, { initI18next } from "./libs/language/i18next.js";
 
 document.addEventListener("DOMContentLoaded", async function () {
-    translatePage(await nyelvSzinkronizalas());
     if (!await isLogined()) {
         document.getElementById('loginButton').addEventListener("click", async function (e) {
             e.preventDefault();
@@ -38,10 +37,9 @@ async function isLogined() {
         if (response.ok) {
             loginStatus = data.login;
             if (loginStatus) {
-                if (data.user.language && data.user.language !== i18next.language) {
-                    await i18next.changeLanguage(data.user.language);
-                    translatePage();
-                }
+                await initI18next(await nyelvSzinkronizalas() || 'hu');
+                translatePage();
+
                 if (data.adminLink) {
                     await dropdownLetrehoz(data.adminLink, data.user.username, data.user.filepath);
                 }
@@ -55,11 +53,16 @@ async function isLogined() {
                 else {
                     body.setAttribute('data-bs-theme', 'light');
                 }
+                return loginStatus;
             }
         }
     } catch (error) {
         console.log(`hálózati hiba: ${error}`);
     }
+
+    await initI18next('hu');
+    translatePage();
+
     return loginStatus;
 }
 
@@ -119,14 +122,7 @@ async function bejelentkezesAnimacio(username, jelszo, remember) {
 
                 title.innerText = "Bejelentkezés sikertelen!";
                 form.classList.add('collapse-out');
-                let message = data.message;
-                if (Array.isArray(message)) {
-                    let errors = message.join('<br>');
-                    modalText.innerHTML = errors;
-                }
-                else {
-                    modalText.innerText = message;
-                }
+                modalText.innerHTML = extractError(data).replace(/\n/g, '<br>');
 
                 setTimeout(() => {
                     container.classList.remove('error-draw');
@@ -139,7 +135,6 @@ async function bejelentkezesAnimacio(username, jelszo, remember) {
                         form.classList.remove('collapse-in');
                     }, 600);
                 }, 2500);
-
             }
         }, 2000);
 
@@ -243,27 +238,19 @@ async function kijelentkezes() {
             }
         });
         let data = await response.json();
-        if (data.success) {
-            setTimeout(() => {
-                location.reload();
-            }, 1000);
-        }
-        else {
-            console.error("baj a kijelentkezésben, baj: " + data.error);
-        }
-
+        if (!response.ok || !data.success) throw new Error(extractError(data));
+        setTimeout(() => {
+            location.reload();
+        }, 1000);
     } catch (error) {
-        console.error(`hálózati hiba: ${error}`);
+        showAlert(error.message);
+        throw error;
     }
 }
 
 //settings
 
 async function showSettingsModal() {
-    let errordiv = document.getElementById('errorLocation');
-    errordiv.classList.add('d-none');
-    errordiv.innerHTML = "";
-
     let hova = document.getElementById('userData');
     hova.innerHTML = "";
 
@@ -431,39 +418,13 @@ async function showSettingsModal() {
                 await uploadProfilePic(tempPfp);
             } else {
                 if (deleteLast) {
-                    let response = await deleteProfilePicture();
-                    let data = await response.json();
-                    if (response.ok) {
-                        console.log(data.message);
-                        document.getElementById('dropdownProfilePicture').src = "../images/default.png";
-                    }
-                    else {
-                        throw new Error(data.message);
-                    }
+                    await deleteProfilePicture();
+                    document.getElementById('dropdownProfilePicture').src = "../images/default.png";
                 }
             }
             settingsModal.hide();
         } catch (error) {
-            errordiv.innerHTML = "";
-            let errorMessages = document.createElement('div');
-            error.message.split("\n").forEach(msg => {
-                let errorText = document.createElement('p');
-                errorText.innerText = msg;
-                errorText.style.margin = "0";
-                errorMessages.appendChild(errorText);
-            });
-
-            let errorBtn = document.createElement('button');
-            errorBtn.classList.add('close-btn');
-            errorBtn.addEventListener("click", function () {
-                errordiv.className = 'd-none';
-                errordiv.innerHTML = "";
-            });
-
-            errorBtn.appendChild(makeSvg("icon-x", null, null));
-            errordiv.appendChild(errorMessages);
-            errordiv.appendChild(errorBtn);
-            errordiv.className = "d-flex";
+            showAlert(error.message);
         }
     }
     row.appendChild(div);
@@ -475,15 +436,12 @@ async function showSettingsModal() {
 async function getUserData() {
     try {
         let response = await fetch('/api/users/me');
-        if (response.ok) {
-            let data = await response.json();
-            return data.users;
-        }
-        else {
-            throw new Error("baj");
-        }
+        let data = await response.json();
+        if (!response.ok) throw new Error(extractError(data));
+        return data.users;
     } catch (error) {
-        console.error(error);
+        showAlert(error.message);
+        throw error;
     }
 }
 
@@ -527,11 +485,9 @@ async function checkModification() {
         let errors = [];
         if (inInput.username != null && !validalvaUsername(inInput.username)) {
             wrongInput(document.getElementById('usernameInput'));
-            errors.push("A felhasználónév nem megfelelő!");
         }
         if (inInput.email != null && !validalvaEmail(inInput.email)) {
             wrongInput(document.getElementById('emailInput'));
-            errors.push("Az email-cím nem megfelelő!");
         }
         if (errors.length > 0) {
             throw new Error(errors.join("\n"));
@@ -543,7 +499,6 @@ async function checkModification() {
 
 async function saveModification(username, email, language, darkmode) {
     try {
-        console.log(username, email, language, darkmode)
         let response = await fetch("/api/users/me", {
             method: "PUT",
             headers: {
@@ -554,29 +509,12 @@ async function saveModification(username, email, language, darkmode) {
             })
         })
         let data = await response.json();
-        if (!response.ok) {
-            if (data.error) {
-                let errordiv = document.getElementById('errorLocation');
-                errordiv.classList.remove('d-none');
-                errordiv.innerHTML = "";
-                let ul = document.createElement('ul');
-                let hibaUzenetek = [];
-                for (let i = 0; i < data.error.length; i++) {
-                    let li = document.createElement('li');
-                    let hiba = data.error[i].msg;
-                    hibaUzenetek.push(`${data.error[i].path}: ${hiba}`);
-                    li.innerText = `${data.error[i].path}: ${hiba}`;
-                    ul.appendChild(li);
-                }
-                errordiv.appendChild(ul);
-                throw new Error(hibaUzenetek.join('\n'));
-            }
-        }
-        else {
-            alert("Sikeres módositás!"); //atmeneti
-            settingsModal.hide();
-        }
+        if (!response.ok) throw new Error(extractError(data));
+        showAlert("Sikeres módosítás!", "success");
+        settingsModal.hide();
+        return data;
     } catch (error) {
+        showAlert(error.message);
         throw error;
     }
 }
@@ -590,95 +528,53 @@ async function deleteProfile() {
             }
         });
         let data = await response.json();
-        if (data.success) {
-            setTimeout(() => {
-                location.reload();
-            }, 1000);
-        }
-        else {
-            console.error("baj a törlésben, baj: " + data.error);
-        }
-
+        if (!response.ok || !data.success) throw new Error(extractError(data));
+        showAlert(data.message, "success");
+        setTimeout(() => {
+            location.reload();
+        }, 1000);
     } catch (error) {
-        console.error(`hálózati hiba: ${error}`);
+        showAlert(error.message);
+        throw error;
     }
 }
 
 async function jelszoValtoztat() {
-    let alertPlaceholder = document.getElementById('passwordAlert');
     let passwordCollapse = document.getElementById('passwordCollapse');
     let oldPass = document.getElementById('oldPassword');
     let newPass = document.getElementById('newPassword');
-    let newAlert = null;
+
     if (oldPass.value == newPass.value) {
-        newAlert = createAlert('Az régi és az új jelszó nem lehet ugyanaz!', 'danger');
+        showAlert('A régi és az új jelszó nem lehet ugyanaz!', 'danger');
+        return;
     }
-    else {
-        if (validalvaJelszo(newPass.value)) {
-            try {
-                let response = await fetch("/api/users/me/password", {
-                    method: "PUT",
-                    headers: {
-                        "Content-Type": "application/json"
-                    },
-                    body: JSON.stringify({
-                        oldPass: oldPass.value,
-                        newPass: newPass.value
-                    })
-                })
-                let data = await response.json();
-                if (response.ok) {
-                    newAlert = createAlert('Sikeres jelszómódosítás!', 'success');
-                    let bsCollapse = bootstrap.Collapse.getInstance(passwordCollapse) || new bootstrap.Collapse(passwordCollapse);
-                    bsCollapse.hide();
-                    oldPass.value = '';
-                    newPass.value = '';
-                }
-                else {
-                    let hibaUzenet = '';
-
-                    if (data.error && Array.isArray(data.error)) {
-                        hibaUzenet = data.error.map(err => err.msg).join('<br>');
-                        newAlert = createAlert(`Hiba! Az alábbi követelmények nem teljesülnek!<br>${hibaUzenet}`, 'danger');
-                    } else {
-                        hibaUzenet = data.message || 'Ismeretlen hiba történt!';
-                        newAlert = createAlert(`Hiba! ${hibaUzenet}`, 'danger');
-                    }
-                }
-            } catch (error) {
-                newAlert = createAlert('Nem sikerült elérni a szervert!', 'danger');
-            }
-        }
-        else {
-            newAlert = createAlert('Az új jelszónak tartalmaznia kell egy nagybetűt, egy számot, minimum 8 és maximum 50 karakter hosszú lehet!', 'danger');
-        }
+    if (!validalvaJelszo(newPass.value)) {
+        showAlert('Az új jelszónak tartalmaznia kell egy nagybetűt, egy számot, minimum 8 és maximum 50 karakter hosszú lehet!', 'danger');
+        return;
     }
-    if (newAlert) {
-        alertPlaceholder.replaceChildren(newAlert);
+
+    try {
+        let response = await fetch("/api/users/me/password", {
+            method: "PUT",
+            headers: {
+                "Content-Type": "application/json"
+            },
+            body: JSON.stringify({
+                oldPass: oldPass.value,
+                newPass: newPass.value
+            })
+        })
+        let data = await response.json();
+        if (!response.ok) throw new Error(extractError(data));
+
+        showAlert(data.message || 'Sikeres jelszómódosítás!', 'success');
+        let bsCollapse = bootstrap.Collapse.getInstance(passwordCollapse) || new bootstrap.Collapse(passwordCollapse);
+        if (bsCollapse) bsCollapse.hide();
+        oldPass.value = '';
+        newPass.value = '';
+    } catch (error) {
+        showAlert(error.message, 'danger');
     }
-}
-
-function createAlert(message, type) {
-    let alertDiv = document.createElement('div');
-    alertDiv.classList.add("alert", "alert-dismissible", "fade", "show");
-    if (type) {
-        alertDiv.classList.add(`alert-${type}`);
-    }
-    alertDiv.role = 'alert';
-
-    let textNode = document.createElement('span');
-    textNode.innerHTML = message;
-    alertDiv.appendChild(textNode);
-
-    let closeBtn = document.createElement('button');
-    closeBtn.type = 'button';
-    closeBtn.className = 'btn-close';
-    closeBtn.setAttribute('data-bs-dismiss', 'alert');
-    closeBtn.setAttribute('aria-label', 'Close');
-
-    alertDiv.appendChild(closeBtn);
-
-    return alertDiv;
 }
 
 //profile picture things
@@ -686,37 +582,39 @@ function createAlert(message, type) {
 async function getProfilePicture(route) {
     try {
         let response = await fetch(`/api/users/profile-picture?route=${route}`);
+        if (!response.ok) {
+            let data = await response.json().catch(() => ({}));
+            throw new Error(extractError(data));
+        }
         let blob = await response.blob();
 
         let objectURL = URL.createObjectURL(blob);
         return objectURL;
     } catch (error) {
-        console.log(error);
+        showAlert(error.message);
+        throw error;
     }
 }
 
 async function uploadProfilePic(picture) {
-    let fd = new FormData();
-    fd.append("profilePic", picture);
     try {
+        let fd = new FormData();
+        fd.append("profilePic", picture);
         let response = await fetch("/api/users/me/profile-picture", {
             method: "PUT",
             body: fd
         });
         let data = await response.json();
-        if (response.ok) {
-            console.log(data.message);
-            let image = document.getElementById('dropdownProfilePicture');
-            if (image) {
-                let preview = await createPreview(picture);
-                image.src = preview;
-            }
+        if (!response.ok) throw new Error(extractError(data));
+
+        let image = document.getElementById('dropdownProfilePicture');
+        if (image) {
+            let preview = await createPreview(picture);
+            image.src = preview;
         }
-        else {
-            throw new Error(data.message);
-        }
+        return data;
     } catch (error) {
-        console.log(`hálózati hiba: ${error}`);
+        showAlert(error.message);
         throw error;
     }
 }
@@ -729,11 +627,11 @@ async function deleteProfilePicture() {
                 "Content-Type": "application/json"
             }
         })
-
-        return response;
         let data = await response.json();
+        if (!response.ok) throw new Error(extractError(data));
+        return data;
     } catch (error) {
-        console.log(`hálózati hiba: ${error}`);
+        showAlert(error.message);
         throw error;
     }
 }
@@ -789,15 +687,27 @@ export async function nyelvSzinkronizalas() {
     try {
         let response = await fetch('/api/users/language');
         let data = await response.json();
-        if (!response.ok) throw new Error(data.message || data.error || "Hiba a nyelv lekérdezésekor");
+        if (!response.ok) throw new Error(extractError(data));
         await initI18next(data.language);
         return data.language;
     } catch (error) {
-        console.warn("Nyelv szinkronizálása sikertelen, visszatérés az alapértelmezett nyelvhez (hu):", error.message);
-        let fallbackLang = 'hu';
-        await initI18next(fallbackLang);
-        return fallbackLang;
+        showAlert(error.message);
+        throw error;
     }
+}
+
+function extractError(data) {
+    let errorMessage = "Ismeretlen hiba történt / Unknown error";
+    if (data.errors && Array.isArray(data.errors) && data.errors.length > 0) {
+        errorMessage = data.errors.map(e => e.msg || e).join('\n');
+    } else if (data.error && Array.isArray(data.error) && data.error.length > 0) {
+        errorMessage = data.error.map(e => e.msg || e).join('\n');
+    } else if (data.error) {
+        errorMessage = data.error;
+    } else if (data.message) {
+        errorMessage = data.message;
+    }
+    return errorMessage;
 }
 
 let modalElement;

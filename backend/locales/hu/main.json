@@ -19,7 +19,8 @@
             "invalid_credentials": "Hibás felhasználónév/e-mail vagy jelszó!",
             "success": "Sikeres bejelentkezés!",
             "error": "Hiba a bejelentkezés során!"
-        }
+        },
+        "language_fetch_error": "Hiba a nyelv lekérdezésekor"
     },
     "apiSettings": {
         "getUserData": {
@@ -146,5 +147,10 @@
         "adminPanel": "Belépés az admin oldalra",
         "logout": "Kijelentkezés",
         "myAccount": "Fiókom"
+    },
+    "footer": {
+        "description": "Lokea - Lokalizációs készségfejlesztő alkalmazás",
+        "rights": "Minden jog fenntartva!",
+        "copyright": "Copyright © 2025-26"
     }
 }

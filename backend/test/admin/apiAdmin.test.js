@@ -55,7 +55,7 @@ describe('Admin API-tesztek', () => {
             const res = await request(app)
                 .get('/api/admin/charts/invalid-type?lang=en')
                 .expect(400);
-            expect(res.body.error).toBe(enTranslations.adminApi.chart_invalid_type);
+            expect(res.body.errors.some(e => e.msg === enTranslations.adminApi.chart_invalid_type)).toBe(true);
         });
 
         it('HIBA - 500, ha hiba van a lekérdezés során', async () => {

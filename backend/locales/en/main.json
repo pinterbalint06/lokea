@@ -147,5 +147,10 @@
         "adminPanel": "Enter admin panel",
         "logout": "Logout",
         "myAccount": "My account"
+    },
+    "footer": {
+        "description": "Lokea - Localization skill development application",
+        "rights": "All rights reserved!",
+        "copyright": "Copyright © 2025-26"
     }
 }

@@ -25,7 +25,7 @@ function extractError(data) {
 
 export async function nyelvSzinkronizalas() {
     try {
-        let response = await fetch('/api/getLanguage');
+        let response = await fetch('/api/users/language');
         let data = await response.json();
         if (!response.ok) throw new Error(extractError(data));
         await initI18next(data.language);
@@ -62,7 +62,7 @@ export async function getUser(id) {
 
 export async function getUserData() {
     try {
-        let response = await fetch('/api/getUserData');
+        let response = await fetch('/api/users/me');
         let data = await response.json();
         if (!response.ok) throw new Error(extractError(data));
         return data.users;
@@ -97,7 +97,7 @@ export async function sortedUser(params) {
 
 export async function getProfilePicture(route) {
     try {
-        let response = await fetch(`/api/getProfilePic?route=${route}`);
+        let response = await fetch(`/api/users/profile-picture?route=${route}`);
         if (!response.ok) {
             let data = await response.json().catch(() => ({}));
             throw new Error(extractError(data));
@@ -138,8 +138,8 @@ export async function getLogs() {
 
 export async function kijelentkezes() {
     try {
-        let response = await fetch("/api/signout", {
-            method: "POST",
+        let response = await fetch("/api/auth/logout", {
+            method: "DELETE",
             headers: { "Content-Type": "application/json" }
         });
         let data = await response.json();
@@ -185,7 +185,7 @@ export async function userUpdate(user_id, username, email, role) {
 
 export async function userSelfUpdate(username, email) {
     try {
-        let response = await fetch("/api/admin/users/self", {
+        let response = await fetch("/api/users/me", {
             method: "PUT",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({ username, email })
@@ -201,7 +201,7 @@ export async function userSelfUpdate(username, email) {
 
 export async function updatePassword(oldPass, newPass) {
     try {
-        let response = await fetch("/api/updatePassword", {
+        let response = await fetch("/api/users/me/password", {
             method: "PUT",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({ oldPass: oldPass, newPass: newPass })
@@ -283,7 +283,7 @@ export async function uploadProfilePic(picture, id = -1) {
         let fd = new FormData();
         fd.append("profilePic", picture);
         let link = `/api/admin/users/${id}/profile-picture`;
-        if (id == -1) link = "/api/updateProfilePic";
+        if (id == -1) link = "/api/users/me/profile-picture";
 
         let response = await fetch(link, { method: "PUT", body: fd });
         let data = await response.json();
@@ -377,7 +377,7 @@ export async function exportLogs(filters) {
 
 export async function deleteProfile() {
     try {
-        let response = await fetch("/api/inactiveUser", {
+        let response = await fetch("/api/users/me", {
             method: "DELETE",
             headers: { "Content-Type": "application/json" }
         });
@@ -408,7 +408,7 @@ export async function userToInactive(id, role, deleted) {
 
 export async function deleteProfilePicture(id = -1) {
     try {
-        let link = (id !== -1) ? `/api/admin/users/${id}/profile-picture` : "/api/deleteProfilePic";
+        let link = (id !== -1) ? `/api/admin/users/${id}/profile-picture` : "/api/users/me/profile-picture";
         let response = await fetch(link, {
             method: "DELETE",
             headers: { "Content-Type": "application/json" },

@@ -12,6 +12,14 @@ export function createElement(tagName, attributes = {}, children = []) {
     return element;
 }
 
+export function createHTMLelement(tag, classes = [], text = "", id = "") {
+    let htmlElement = document.createElement(tag);
+    if (classes.length) htmlElement.classList.add(...classes);
+    if (text) htmlElement.textContent = text;
+    if (id) htmlElement.id = id;
+    return htmlElement;
+};
+
 export function makeSubtitle(text) {
     let subtitle = document.createElement('h5');
     subtitle.classList.add("subtitle");
@@ -96,4 +104,31 @@ export function makeSvg(name, svgclasses, useclasses) {
 
     svg.appendChild(use);
     return svg;
+}
+
+export function showAlert(message, type = 'danger') {
+    let container = document.getElementById('alert-container');
+    if (!container) {
+        container = createHTMLelement('div', ['position-fixed', 'top-0', 'end-0', 'p-3'], null, 'alert-container');
+        container.style.zIndex = '9999';
+        document.body.appendChild(container);
+    }
+
+    let alertDiv = createHTMLelement('div', ['alert', `alert-${type}`, 'alert-dismissible', 'fade', 'show', 'shadow']);
+    alertDiv.setAttribute('role', 'alert');
+
+    let textSpan = createHTMLelement('span', [], message);
+    let closeBtn = createHTMLelement('button', ['btn-close']);
+    closeBtn.setAttribute('type', 'button');
+    closeBtn.setAttribute('data-bs-dismiss', 'alert');
+    closeBtn.setAttribute('aria-label', 'Close');
+
+    alertDiv.appendChild(textSpan);
+    alertDiv.appendChild(closeBtn);
+    container.appendChild(alertDiv);
+
+    setTimeout(() => {
+        alertDiv.classList.remove('show');
+        setTimeout(() => alertDiv.remove(), 150);
+    }, 5000);
 }

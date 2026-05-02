@@ -18,7 +18,7 @@ const CACHE_TTL = 5 * 60 * 1000; // 5 perc (milliszekundumban)
 
 //API endpoints - GET
 
-router.get('/getDashboardInfo', async (request, response) => {
+router.get('/dashboard', async (request, response) => {
     try {
         let playerCount = await databaseAdmin.getUserCount();
         let activePlayerCount = await databaseAdmin.getActiveUserCount();
