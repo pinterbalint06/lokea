@@ -1,6 +1,5 @@
 const mockGameLobbyQueries = {
-    getGameMaps: jest.fn(),
-    getImagePath: jest.fn()
+    getGameMaps: jest.fn()
 };
 
 module.exports = mockGameLobbyQueries;

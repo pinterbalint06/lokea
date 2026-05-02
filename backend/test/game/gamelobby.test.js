@@ -81,42 +81,6 @@ describe("Game Lobby API - /api/choose-game/", () => {
         });
     });
 
-    describe("GET /cover-images/:cover_image_id", () => {
-        describe("Happy paths (200)", () => {
-            it("Should send the file at the path returned by the database", async () => {
-                gameLobbyQueries.getImagePath.mockResolvedValueOnce("cover_images/test.jpg");
-
-                const response = await requestWithSupertest.get("/api/choose-game/cover-images/42");
-
-                expect(response.statusCode).toBe(200);
-                expect(gameLobbyQueries.getImagePath).toHaveBeenCalledWith("42");
-                expect(response.body.filePath).toContain("cover_images");
-                expect(response.body.filePath).toContain("test.jpg");
-            });
-
-            it("Should fall back to not_found.webp when DB returns no path", async () => {
-                gameLobbyQueries.getImagePath.mockResolvedValueOnce(null);
-
-                const response = await requestWithSupertest.get("/api/choose-game/cover-images/99");
-
-                expect(response.statusCode).toBe(200);
-                expect(response.body.filePath).toContain("not_found.webp");
-            });
-        });
-
-        describe("Server errors (500)", () => {
-            suppressConsoleErrors();
-
-            it("Should respond with 500 if the database throws", async () => {
-                gameLobbyQueries.getImagePath.mockRejectedValueOnce(new Error("DB error"));
-
-                const response = await requestWithSupertest.get("/api/choose-game/cover-images/1");
-
-                expect(response.statusCode).toBe(500);
-            });
-        });
-    });
-
     describe("GET /session", () => {
         describe("Authorization (401)", () => {
             testRequiresAuth(() => requestWithSupertest.get("/api/choose-game/session"));
