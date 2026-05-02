@@ -53,7 +53,7 @@ CREATE TABLE game_maps_comments (
 CREATE TABLE map (
     map_id INT AUTO_INCREMENT PRIMARY KEY NOT NULL,
     title VARCHAR(20) NOT NULL,
-    game_maps_id INT,
+    game_maps_id INT NOT NULL,
     image_id INT,
     FOREIGN KEY (game_maps_id) REFERENCES game_maps(game_maps_id) ON DELETE CASCADE,
     FOREIGN KEY (image_id) REFERENCES images(image_id) ON DELETE CASCADE
