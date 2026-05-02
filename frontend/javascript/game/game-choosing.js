@@ -1,5 +1,6 @@
 import { formatSecondsToMinutes } from "./timer-conversion.js";
 import { createFavoriteButton } from "../libs/elements/favoriteButton.js";
+import { loadGameMapCoverImageLowThenHigh } from "../libs/network/progressiveImage.js";
 
 window.addEventListener('pageshow', (event) => {
     if (event.persisted) window.location.reload();
@@ -88,16 +89,10 @@ function createCard(game_map) {
     game_maps_card.addEventListener('click', function () {
         createModal(game_map);
     });
-
-    loadCardBackground(game_maps_card, game_map.cover_image_id);
+    console.log(game_map.game_maps_id);
+    loadCoverImagelowThenHigh(game_maps_card, game_map.game_maps_id);
 
     return game_maps_card;
-}
-
-async function loadCardBackground(card, cover_image_id) {
-    const image = await getCoverImage(cover_image_id);
-    loadedURLs.push(image);
-    card.style.backgroundImage = "url('" + image + "')";
 }
 
 function createReview(rating) {
@@ -169,21 +164,20 @@ async function fetchURL(url) {
     return re;
 }
 
-async function getCoverImage(cover_image_id) {
+async function loadCoverImagelowThenHigh(card, gmId) {
     try {
-        const response = await fetch('/api/choose-game/cover-images/' + cover_image_id, {
-            method: 'GET',
-            headers: {
-                'Content-Type': 'application/json'
-            }
+        await loadGameMapCoverImageLowThenHigh({
+            gameMapId: gmId,
+            loadToViewer: async (imgData) => {
+                const url = imgData.url;
+                imgData.cleanup = () => {};
+                loadedURLs.push(url);
+                card.style.backgroundImage = `url('${url}')`;
+            },
+            isCurrent: () => true
         });
-        if (response.ok) {
-            const blob = await response.blob();
-            const url = window.URL.createObjectURL(blob);
-            return url;
-        }
     } catch (error) {
-        console.error('GET hiba:', error);
+        console.error("Error loading map:", error);
     }
 }
 

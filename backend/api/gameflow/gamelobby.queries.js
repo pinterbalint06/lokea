@@ -13,7 +13,7 @@ async function getGameMaps(sort = 'plays', user_id = null, offset = 0) {
     const isFavorites = safeSort === 'favorites';
     const query = `
         SELECT
-            game_maps.game_maps_id, game_maps.creator_id, game_maps.title, game_maps.cover_image_id,
+            game_maps.game_maps_id, game_maps.creator_id, game_maps.title,
             game_maps.game_created, game_maps.game_description,
             COUNT(points.point_id) AS point_count,
             COALESCE((SELECT ROUND(AVG(gmc.rating), 1) FROM game_maps_comments gmc WHERE gmc.game_maps_id = game_maps.game_maps_id), 0) AS rating,
@@ -34,13 +34,4 @@ async function getGameMaps(sort = 'plays', user_id = null, offset = 0) {
     return result;
 }
 
-async function getImagePath(image_id) {
-    const query = 'SELECT images.filepath FROM images WHERE images.image_id = ?';
-    const [result] = await pool.execute(query, [image_id]);
-    if (result.length === 0) {
-        return null;
-    }
-    return result[0].filepath;
-}
-
-module.exports = { getGameMaps, getImagePath };
+module.exports = { getGameMaps };

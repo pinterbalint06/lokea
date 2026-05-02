@@ -1,14 +1,9 @@
 const express = require("express");
 const router = express.Router();
-const { getGameMaps, getImagePath } = require("#gameflow/gamelobby.queries.js");
+const { getGameMaps } = require("#gameflow/gamelobby.queries.js");
 const AppError = require("#utils/app-error.js");
 const ERRORS = require("#utils/error-messages.js");
-const path = require("path");
 const sessionsRoutes = require("./sessions/sessions.routes.js");
-
-const UPLOADS_DIR = path.join(__dirname, "../../uploads/mapdatas");
-
-const FALLBACK_COVER_IMAGE = "/assets/not_found.webp";
 
 router.get("/", async (request, response) => {
     try {
@@ -35,20 +30,6 @@ router.get("/", async (request, response) => {
         } else {
             response.status(500).json({ message: ERRORS.GAMEFLOW.FETCH_GAME_MAPS_FAILED });
         }
-    }
-});
-
-router.get("/cover-images/:cover_image_id", async (request, response) => {
-    //TODO: képek visszadásának átdolgozása majd a lowhighres szerint
-    try {
-        let filePath = FALLBACK_COVER_IMAGE;
-        if (request.params.cover_image_id) {
-            const dbPath = await getImagePath(request.params.cover_image_id);
-            if (dbPath) filePath = dbPath;
-        }
-        response.sendFile(path.join(UPLOADS_DIR, filePath));
-    } catch (error) {
-        response.status(500).json({ message: ERRORS.GAMEFLOW.FETCH_COVER_IMAGE_FAILED });
     }
 });
 
