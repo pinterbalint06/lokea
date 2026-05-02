@@ -1,3 +1,12 @@
+import { formatSecondsToMinutes } from "./timer-conversion.js";
+import { createFavoriteButton } from "../libs/elements/favoriteButton.js";
+import { loadGameMapCoverImageLowThenHigh } from "../libs/network/progressiveImage.js";
+import { showToast } from "../libs/utils.js";
+
+window.addEventListener('pageshow', (event) => {
+    if (event.persisted) window.location.reload();
+});
+
 var loadedURLs = [];
 var cardLoadedTimes = 0;
 
@@ -11,9 +20,18 @@ function clearLoadedURLs() {
 document.addEventListener("DOMContentLoaded", function () {
     let selectedButton = document.getElementById('sortByPlays');
     let closeBtn = document.querySelector('.modal-close-btn');
+    const settingsForm = document.getElementById('settingsForm');
+    initRoundTimeRange();
     closeBtn.addEventListener('click', () => {
         document.getElementById('myModal').classList.remove('active');
     });
+    settingsForm.addEventListener('submit', (event) => {
+        event.preventDefault();
+        let gameMapId = document.getElementById('myModal').dataset.gameMapId;
+        postGameId(gameMapId);
+    });
+    setupContinueGameModal();
+    checkAndShowContinueModal();
     loadGameMaps('plays');
     document.querySelectorAll('.sortDiv button').forEach(button => {
         button.addEventListener('click', function () {
@@ -35,34 +53,24 @@ document.addEventListener("DOMContentLoaded", function () {
 });
 
 async function loadGameMaps(sort) {
-    const gameMaps = await fetchURL('http://127.0.0.1:3000/api/game_maps?sort=' + sort + '&offset=' + (cardLoadedTimes * 20));
-    let gameMapsContainer = document.getElementById('game_maps_container');
-    if (gameMaps.success) {
-        for (let i = 0; i < gameMaps.results.length; i++) {
-            gameMapsContainer.appendChild(createCard(gameMaps.results[i]));
-        }
-    } else {
-        let p = document.createElement('p');
-        p.classList.add('text-center');
-        p.innerText = 'Nincsenek elérhető játékok.';
-        gameMapsContainer.appendChild(p);
-    }
-}
-
-async function fetchURL(url) {
-    let re;
     try {
-        const response = await fetch(url);
-        if (!response.ok) {
-            throw new Error('Hiba a játék pályák lekérésekor: ' + response.statusText);
+        let gameMaps;
+        gameMaps = await fetchURL('/api/choose-game?sort=' + sort + '&offset=' + (cardLoadedTimes * 20));
+        let gameMapsContainer = document.getElementById('game_maps_container');
+        if (gameMaps.results && gameMaps.results.length > 0) {
+            for (let i = 0; i < gameMaps.results.length; i++) {
+                gameMapsContainer.appendChild(createCard(gameMaps.results[i]));
+            }
+        } else {
+            let p = document.createElement('p');
+            p.classList.add('text-center');
+            p.innerText = 'Nincsenek elérhető játékok.';
+            gameMapsContainer.appendChild(p);
         }
-        re = await response.json();
-    } catch (error) {
-        re = { success: false };
+    } catch {
+        showToast(document.getElementById('toastPlace'), 'A pályák betöltése nem sikerült.', 'danger', true);
     }
-    return re;
 }
-
 
 function createCard(game_map) {
     let game_maps_card = document.createElement('div');
@@ -83,37 +91,13 @@ function createCard(game_map) {
     game_maps_card_content.appendChild(card_plays);
     game_maps_card_content.appendChild(card_created);
     game_maps_card.appendChild(game_maps_card_content);
+    game_maps_card.appendChild(createFavoriteButton(game_map.game_maps_id, game_map.is_favorited));
     game_maps_card.addEventListener('click', function () {
         createModal(game_map);
     });
-
-    loadCardBackground(game_maps_card, game_map.cover_image_id);
+    loadCoverImageLowThenHigh(game_maps_card, game_map.game_maps_id);
 
     return game_maps_card;
-}
-
-async function loadCardBackground(card, cover_image_id) {
-    const image = await getCoverImage(cover_image_id);
-    loadedURLs.push(image);
-    card.style.backgroundImage = "url('" + image + "')";
-}
-
-async function getCoverImage(cover_image_id) {
-    try {
-        const response = await fetch('http://127.0.0.1:3000/api/get_cover_image/' + cover_image_id, {
-            method: 'GET',
-            headers: {
-                'Content-Type': 'application/json'
-            }
-        });
-        if (response.ok) {
-            const blob = await response.blob();
-            const url = window.URL.createObjectURL(blob);
-            return url;
-        }
-    } catch (error) {
-        console.error('GET hiba:', error);
-    }
 }
 
 function createReview(rating) {
@@ -128,10 +112,121 @@ function createModal(game_map) {
     let modalTitle = document.getElementById('modal-title');
     let modalStars = document.getElementById('modal-stars');
     let modalDesc = document.getElementById('modal-desc');
+    let maxUniqueRounds = document.getElementById('maxUniqueRounds');
+    const pointCount = Number(game_map.point_count);
+    const safePointCount = Number.isFinite(pointCount) && pointCount > 0 ? pointCount : 0;
+    modal.dataset.gameMapId = game_map.game_maps_id;
     modal.classList.add('active');
     modalTitle.innerText = game_map.title;
     modalStars.style.setProperty('--rating', game_map.rating);
     modalDesc.innerText = game_map.game_description;
+    maxUniqueRounds.innerText = safePointCount === 0 ? 'N/A' : `${safePointCount} pont`;
 }
 
-//TODO: játék indítása modalból
+function initRoundTimeRange() {
+    let timeRange = document.getElementById("times");
+    updateTimeValue();
+    timeRange.addEventListener("input", updateTimeValue);
+}
+function updateTimeValue() {
+    let timeValue = document.getElementById("timesValue");
+    let timeRange = document.getElementById("times");
+    let seconds = Number.parseInt(timeRange.value);
+    timeValue.value = formatSecondsToMinutes(seconds);
+    timeValue.textContent = formatSecondsToMinutes(seconds);
+}
+
+
+async function postGameId(gamemapId) {
+    const formData = new FormData(document.getElementById('settingsForm'));
+    formData.append('gameMapId', gamemapId);
+    try {
+        const response = await fetch('/api/choose-game/session', {
+            method: 'POST',
+            body: formData
+        });
+        if (!response.ok) {
+            const errorData = await response.json();
+            throw new Error(errorData.message);
+        }
+        window.location.href = '/game';
+    } catch (error) {
+        showToast(document.getElementById('toastPlace'), 'A játék indítása nem sikerült: ' + error.message, 'danger', true);
+    }
+}
+
+async function fetchURL(url) {
+    const response = await fetch(url);
+    if (!response.ok) {
+        throw new Error(response.statusText);
+    }
+    return response.json();
+}
+
+async function loadCoverImageLowThenHigh(card, gmId) {
+    let currentUrl = null;
+    try {
+        await loadGameMapCoverImageLowThenHigh({
+            gameMapId: gmId,
+            loadToViewer: async (imgData) => {
+                imgData.cleanup = () => { };
+                if (currentUrl) {
+                    loadedURLs.splice(loadedURLs.indexOf(currentUrl), 1);
+                    window.URL.revokeObjectURL(currentUrl);
+                }
+                currentUrl = imgData.url;
+                loadedURLs.push(currentUrl);
+                card.style.backgroundImage = `url('${currentUrl}')`;
+            },
+            isCurrent: () => true
+        });
+    } catch {
+        showToast(document.getElementById('toastPlace'), 'A borítókép betöltése nem sikerült.', 'danger', true);
+    }
+}
+
+function setupContinueGameModal() {
+    const dismissButton = document.getElementById('dismissContinueBtn');
+    const continueButton = document.getElementById('continueGameBtn');
+
+    dismissButton.addEventListener('click', () => {
+        document.getElementById('continueGameModal').classList.remove('active');
+        finishStartedGameSession();
+    });
+
+    continueButton.addEventListener('click', () => {
+        window.location.href = '/game';
+    });
+}
+
+async function checkAndShowContinueModal() {
+    try {
+        const activeGameSession = await fetchURL('/api/choose-game/session');
+        if (activeGameSession?.hasActiveSession) {
+            const continueModal = document.getElementById('continueGameModal');
+            const continueModalDescription = document.getElementById('continue-modal-desc');
+            if (activeGameSession.gameTitle) {
+                continueModalDescription.innerText = `Van egy futó játékod ezen a pályán: ${activeGameSession.gameTitle}. Szeretnéd folytatni?`;
+            }
+            continueModal.classList.add('active');
+        }
+    } catch {
+        
+    }
+}
+
+async function finishStartedGameSession() {
+    try {
+        const response = await fetch('/api/game/session', {
+            method: 'DELETE',
+            headers: {
+                'Content-Type': 'application/json'
+            }
+        });
+        if (!response.ok) {
+            throw new Error(response.statusText);
+        }
+    } catch {
+        showToast(document.getElementById('toastPlace'), 'A játék befejezése nem sikerült.', 'danger', true);
+    }
+}

@@ -5,6 +5,15 @@ export async function fetchGameMapDetails(gameMapId) {
     return await fetchAndValidate(`/api/game-maps/${gameMapId}`, "game_map_details");
 }
 
+export async function fetchGameMapFavoriteStatus(gameMapId) {
+    const response = await fetch(`/api/game-maps/${gameMapId}/favorite`);
+    if (!response.ok) {
+        await handleResponseError(response);
+    }
+    const data = await response.json();
+    return data.is_favorited;
+}
+
 export async function uploadGameMapCoverImage(gameMapId, file, abortSignal = null) {
     const formData = new FormData();
     formData.append("coverImage", file);

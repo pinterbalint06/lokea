@@ -10,6 +10,7 @@ const ERRORS = {
         FILE_NOT_FOUND: "A fájl nem létezik vagy helytelen!",
         INVALID_IMAGE_TYPE: "Érvénytelen fájltípus! Csak JPG, PNG, WEBP és GIF képek engedélyezettek!",
         INVALID_PAGE: "Helytelen oldalszám!",
+        ENDPOINT_NOT_FOUND: "A végpont nem létezik!"
     },
 
     GAMEMAP: {
@@ -128,6 +129,26 @@ const ERRORS = {
         TOO_LOW_RATING: "Az értékelésnek legalább 1-nek kell lennie!",
         TOO_HIGH_RATING: "Az értékelésnek legfeljebb 5-nek kell lennie!",
         RATING_REQUIRED: "Az értékelés megadása kötelező!"
+    },
+
+    FAVORITE: {
+        ALREADY_FAVORITED: "Ezt a pályát már kedvencnek jelölted!",
+        NOT_FAVORITED: "Ezt a pályát még nem jelölted kedvencnek!",
+        ADD_FAILED: "A kedvencekhez adás nem sikerült!",
+        REMOVE_FAILED: "A kedvencekből való eltávolítás nem sikerült!"
+    },
+
+    GAMEFLOW: {
+        INVALID_OFFSET: "Érvénytelen offset! Pozitív egész számnak kell lennie.",
+        INVALID_SORT: "Érvénytelen rendezés! Használható: created, rating, plays, favorites.",
+        FETCH_GAME_MAPS_FAILED: "A pályák lekérése nem sikerült!",
+        FETCH_SESSION_FAILED: "A játékmenet adatainak lekérése nem sikerült!",
+        FINISH_SESSION_FAILED: "A játékmenet befejezése nem sikerült!",
+        PROCESS_GUESS_FAILED: "A tipp feldolgozása nem sikerült!",
+        FETCH_RANDOM_POINT_FAILED: "A véletlenszerű pont lekérése nem sikerült!",
+        FETCH_MAPS_FAILED: "A térképek lekérése nem sikerült!",
+        CHECK_SESSION_FAILED: "Az aktív munkamenet ellenőrzése nem sikerült!",
+        CREATE_SESSION_FAILED: "A játékmenet létrehozása nem sikerült!"
     }
 };
 

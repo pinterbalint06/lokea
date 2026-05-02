@@ -52,7 +52,7 @@ export async function usersDisplayre(variables) {
         o.innerText = opt.text;
         if (opt.value === 'user_id') {
             o.selected = true;
-        } 
+        }
         keresoSelect.appendChild(o);
     });
 
@@ -717,11 +717,8 @@ function handleModalUndoClick() {
 async function handleModalSaveClick() {
     let valtozas = false;
     let valids = true;
-    if (State.variables.deleteLast) {
-        await deleteProfilePicture(State.currentData.user_id);
-        valtozas = true;
-    } else if (State.variables.tempPfp) {
-        await uploadProfilePic(State.variables.tempPfp, State.currentData.user_id);
+
+    if (State.variables.deleteLast || State.variables.tempPfp) {
         valtozas = true;
     }
 
@@ -749,6 +746,14 @@ async function handleModalSaveClick() {
 
         if (valids) {
             try {
+                if (State.variables.deleteLast) {
+                    await deleteProfilePicture(State.currentData.user_id);
+                } else {
+                    if (State.variables.tempPfp) {
+                        await uploadProfilePic(State.variables.tempPfp, State.currentData.user_id);
+                    }
+                }
+                
                 let siker = await userUpdate(State.currentData.user_id, inInput.username, inInput.email, inInput.role);
                 if (siker) {
                     State.page = 1;

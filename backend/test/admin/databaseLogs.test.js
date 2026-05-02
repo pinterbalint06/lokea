@@ -1,8 +1,10 @@
 const { mockConnection, setupDbMocks } = require('./helpers/mocks.js');
-const pool = require('../../sql/connection.js');
-const databaseLogs = jest.requireActual('../../sql/admin/databaseLogs.js');
+const pool = require('#sql/connection.js');
+const databaseLogs = jest.requireActual('#sql/admin/databaseLogs.js');
+const { suppressConsoleErrors } = require('./helpers/helpers.js');
 
 describe('Admin Database: databaseLogs.js', () => {
+    suppressConsoleErrors();
     beforeEach(() => {
         setupDbMocks();
     });

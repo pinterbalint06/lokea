@@ -1,5 +1,4 @@
-const pool = require('../connection.js');
-const bcrypt = require('bcrypt');
+const pool = require('#sql/connection.js');
 
 //!SQL Queries
 
@@ -104,6 +103,7 @@ async function getOldPicturePath(user_id) {
 
 async function newUserFromAdmin(username, email, password, role) {
     let connection;
+    let returnValue;
     try {
         connection = await pool.getConnection();
         await connection.beginTransaction();
@@ -111,18 +111,21 @@ async function newUserFromAdmin(username, email, password, role) {
         const [result] = await connection.execute(queryInsertNewUser, [username, email, password, role]);
         if (result.affectedRows == 1) {
             await connection.commit();
-            return { success: true, insertId: result.insertId };
+            returnValue = { success: true, insertId: result.insertId };
+        } else {
+            throw new Error("Insert failed");
         }
-        throw new Error("Insert failed");
     } catch (fault) {
         if (connection) await connection.rollback();
         if (fault.code === 'ER_DUP_ENTRY') {
-            return { success: false, error: 'User exists' };
+            returnValue = { success: false, error: 'User exists' };
+        } else {
+            throw fault;
         }
-        throw fault;
     } finally {
         if (connection) connection.release();
     }
+    return returnValue;
 }
 
 async function uploadProfilePic(filepath, width, height, user_id) {
@@ -161,6 +164,7 @@ async function uploadProfilePic(filepath, width, height, user_id) {
 async function updateUserByAdmin(user_id, username, email, role = null) {
     let connection;
     let affectedRows = 0;
+    let returnValue;
     try {
         const [userCheck] = await pool.execute(
             'SELECT deleted_at FROM users WHERE user_id = ?',
@@ -198,20 +202,21 @@ async function updateUserByAdmin(user_id, username, email, role = null) {
             affectedRows = result.affectedRows;
             await connection.commit();
         }
-        return affectedRows;
-
+        returnValue = affectedRows;
     } catch (error) {
         if (connection) {
             await connection.rollback();
         }
         if (error.code === 'ER_DUP_ENTRY') {
-            return 'User exists';
+            returnValue = 'User exists';
+        } else {
+            throw error;
         }
-        throw error;
     }
     finally {
         if (connection) connection.release();
     }
+    return returnValue;
 }
 
 async function userToInactive(user_id) {
@@ -244,18 +249,21 @@ async function userToInactive(user_id) {
 
 async function deleteProfilePic(user_id) {
     let connection;
+    let returnValue = null;
     try {
         let oldImageData = await getOldPicturePath(user_id);
-        let oldFilePath = oldImageData ? oldImageData.filepath : null;
-        let oldImageId = oldImageData ? oldImageData.image_id : null;
+        if (oldImageData && oldImageData.image_id) {
+            let oldFilePath = oldImageData.filepath;
+            let oldImageId = oldImageData.image_id;
 
-        connection = await pool.getConnection();
-        await connection.beginTransaction();
-        const queryDeleteOldPic = 'DELETE FROM images WHERE image_id = ?';
-        await connection.execute(queryDeleteOldPic, [oldImageId]);
-        await connection.commit();
+            connection = await pool.getConnection();
+            await connection.beginTransaction();
+            const queryDeleteOldPic = 'DELETE FROM images WHERE image_id = ?';
+            await connection.execute(queryDeleteOldPic, [oldImageId]);
+            await connection.commit();
 
-        return oldFilePath;
+            returnValue = oldFilePath;
+        }
     } catch (error) {
         if (connection) {
             await connection.rollback();
@@ -266,6 +274,7 @@ async function deleteProfilePic(user_id) {
     finally {
         if (connection) connection.release();
     }
+    return returnValue;
 }
 
 module.exports = {

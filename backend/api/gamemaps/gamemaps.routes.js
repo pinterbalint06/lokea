@@ -2,22 +2,23 @@ const express = require("express");
 const router = express.Router();
 const multer = require("multer");
 const { validateRequest } = require("#utils/validation.js");
-const { checkAuth } = require("#root/auth.js");
+const { checkAuth } = require("#utils/auth.js");
 const AppError = require("#utils/app-error.js");
 const ERRORS = require("#utils/error-messages.js");
 const { deleteFile } = require("#utils/file-utils.js");
 const gamemapRoutes = require("#gamemaps/gamemap/gamemap.routes.js");
 const imagesRoutes = require("#gamemaps/images/images.routes.js");
-const connectionsRoutes = require("#gamemaps/connections/connections.routes.js");
+const pathsRoutes = require("#gamemaps/paths/paths.routes.js");
 const commentsRoutes = require("#gamemaps/comments/comments.routes.js");
 const coverImageRoutes = require("#gamemaps/cover-image/cover-image.routes.js");
+const favoriteRoutes = require("#gamemaps/favorite/favorite.routes.js");
 const schemas = require("#gamemaps/shared/schemas/gamemaps.schemas.js");
 
 router.use(checkAuth);
 
-router.use("/", imagesRoutes); 
+router.use("/", imagesRoutes);
 
-router.use("/", connectionsRoutes);
+router.use("/", pathsRoutes);
 
 router.use(
     "/:gameMapID/cover-image",
@@ -28,12 +29,17 @@ router.use(
 router.use(
     "/:gameMapID",
     validateRequest(schemas.gameMapIDParamsOnlySchema),
-    commentsRoutes
+    favoriteRoutes
 );
 
 router.use(
     "/:gameMapID",
     validateRequest(schemas.gameMapIDParamsOnlySchema),
+    commentsRoutes
+);
+
+router.use(
+    "/",
     gamemapRoutes
 );
 

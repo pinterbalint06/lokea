@@ -1,5 +1,5 @@
 const AppError = require("#utils/app-error.js");
-const database = require("#sql/database.js");
+const database = require("#gamemaps/images/images.queries.js");
 const ERRORS = require("#utils/error-messages.js");
 const { resolveImagePath } = require("#gamemaps/shared/utils/image-utils.js");
 

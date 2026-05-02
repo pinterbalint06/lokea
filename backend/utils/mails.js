@@ -1,19 +1,25 @@
 const nodemailer = require("nodemailer");
 
+let transporter = null;
 
-const transporter = nodemailer.createTransport({
-    service: "gmail",
-    auth: {
-        user: "muhahaha2005@gmail.com",
-        pass: "jfsd nblp xvsb oyyp",
-    },
-});
+if (!process.env.EMAIL_USER || !process.env.EMAIL_PASS) {
+    console.warn("FIGYELMEZTETÉS: EMAIL_USER és EMAIL_PASS környezeti változók nincsenek beállítva. E-mail küldéskor hiba fog fellépni!");
+} else {
+    transporter = nodemailer.createTransport({
+        service: "gmail",
+        auth: {
+            user: process.env.EMAIL_USER,
+            pass: process.env.EMAIL_PASS,
+        },
+    });
+}
 
 //email texts
 
 const sendWelcomeEmail = async (userEmail, username) => {
+    if (!transporter) throw new Error("E-mail küldés sikertelen: Hiányzó környezeti változók!");
     const mailOptions = {
-        from: '"Lokea Csapata" <muhahaha2005@gmail.com>',
+        from: `"Lokea Csapata" <${process.env.EMAIL_USER}>`,
         to: userEmail,
         subject: "Üdvözlünk a Lokeában! 🌍",
         html: `
@@ -34,8 +40,9 @@ const sendWelcomeEmail = async (userEmail, username) => {
 };
 
 const sendDeleteEmail = async (userEmail, username) => {
+    if (!transporter) throw new Error("E-mail küldés sikertelen: Hiányzó környezeti változók!");
     const mailOptions = {
-        from: '"Lokea Csapata" <muhahaha2005@gmail.com>',
+        from: `"Lokea Csapata" <${process.env.EMAIL_USER}>`,
         to: userEmail,
         subject: "Fiókod törlésre került",
         html: `
@@ -52,8 +59,9 @@ const sendDeleteEmail = async (userEmail, username) => {
 };
 
 const sendChangeEmail = async (userEmail, username) => {
+    if (!transporter) throw new Error("E-mail küldés sikertelen: Hiányzó környezeti változók!");
     const mailOptions = {
-        from: '"Lokea Csapata" <visszaigazolas@lokea.hu>',
+        from: `"Lokea Csapata" <${process.env.EMAIL_USER}>`,
         to: userEmail,
         subject: "Fiókváltozatások",
         html: `
@@ -76,10 +84,11 @@ const sendChangeEmail = async (userEmail, username) => {
 };
 
 const sendPasswordChangeEmail = async (userEmail, username) => {
+    if (!transporter) throw new Error("E-mail küldés sikertelen: Hiányzó környezeti változók!");
     const mailOptions = {
-        from: '"Lokea Csapata" <visszaigazolas@lokea.hu>',
+        from: `"Lokea Csapata" <${process.env.EMAIL_USER}>`,
         to: userEmail,
-        subject: "Jelszó mergváltozott",
+        subject: "Jelszó megváltozott",
         html: `
             <div style="font-family: sans-serif; line-height: 1.6; color: #333;">
             <h2>Jelszavad megváltozott</h2>

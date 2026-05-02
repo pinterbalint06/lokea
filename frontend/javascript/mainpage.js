@@ -560,18 +560,15 @@ async function saveModification(username, email, language, darkmode) {
                 errordiv.classList.remove('d-none');
                 errordiv.innerHTML = "";
                 let ul = document.createElement('ul');
-                let hiba;
                 let hibaUzenetek = [];
                 for (let i = 0; i < data.error.length; i++) {
                     let li = document.createElement('li');
-                    hiba = data.error[i].msg;
                     let hiba = data.error[i].msg;
                     hibaUzenetek.push(`${data.error[i].path}: ${hiba}`);
                     li.innerText = `${data.error[i].path}: ${hiba}`;
                     ul.appendChild(li);
                 }
                 errordiv.appendChild(ul);
-                throw new Error(hiba);
                 throw new Error(hibaUzenetek.join('\n'));
             }
         }

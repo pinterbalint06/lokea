@@ -1,17 +1,17 @@
 const express = require('express');
 const router = express.Router();
-const { body, validationResult } = require('express-validator');
-const { validate } = require('../../utils/validate.js');
+const { body } = require('express-validator');
+const { validate } = require('#utils/validate.js');
 
 //?SQL
-const databaseSettings = require('../../sql/admin/databaseSettings.js');
-const databaseLogs = require('../../sql/admin/databaseLogs.js');
+const databaseSettings = require('#sql/admin/databaseSettings.js');
+const databaseLogs = require('#sql/admin/databaseLogs.js');
 
 //API endpoints
 
 //GET
 
-router.get('/getAdminSettings', async (request, response) => {
+router.get('/settings', async (request, response) => {
     try {
         const result = await databaseSettings.getAdminSettings(request.session.userid);
 
@@ -32,7 +32,7 @@ router.get('/getAdminSettings', async (request, response) => {
 
 //PUT
 
-router.put('/updateAdminSettings',
+router.put('/settings',
     [
         body("darkmode").isBoolean().withMessage((value, { req }) => req.t("admin:settingsApi.validation_darkmode_boolean")),
         body("selected_chart").isIn(["activity-day", "activity-week", "registrations", "matches"]).withMessage((value, { req }) => req.t("admin:settingsApi.validation_chart_type_invalid"))
@@ -56,7 +56,7 @@ router.put('/updateAdminSettings',
         }
     });
 
-router.put('/userDarkMode',
+router.put('/settings/dark-mode',
     [
         body("darkmode").isBoolean().withMessage((value, { req }) => req.t("admin:settingsApi.validation_darkmode_boolean"))
     ],
@@ -78,7 +78,7 @@ router.put('/userDarkMode',
         }
     })
 
-router.put('/updateLanguage', [
+router.put('/settings/language', [
     body("language").isIn(["en", "hu"]).withMessage((value, { req }) => req.t("admin:settingsApi.validation_language_invalid"))
 ], validate,
     async (request, response) => {

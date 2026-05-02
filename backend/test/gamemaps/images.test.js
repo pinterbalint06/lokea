@@ -11,7 +11,7 @@ const { invalidTypeNumbers, invalidCharForHungarian } = require("#testhelpers/te
 const express = require("express");
 const ERRORS = require("#utils/error-messages.js");
 
-const database = require("#sql/database.js");
+const database = require("#gamemaps/images/images.queries.js");
 
 const { UPLOAD_ROOT_MAP_DATA } = require("#config/mapdatas-upload-config.js");
 const { LOW_RES_SUFFIX } = require("#config/image-config.js");

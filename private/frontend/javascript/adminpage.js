@@ -89,7 +89,7 @@ function sidebarvaltoztat() {
         sidebarToogler.value = "⇥";
         sidebarToogler.title = "Expand";
         sidebarToogler.classList.add("mt-2", "w-100", "btn-purple");
-        titleImage.src = "../images/logo_o.png";
+        titleImage.src = "../images/logo_o.webp";
     }
     else {
         mik.forEach(element => {
@@ -101,7 +101,7 @@ function sidebarvaltoztat() {
         sidebarToogler.value = "☰";
         sidebarToogler.title = "Collapse";
         sidebarToogler.classList.remove("mt-2", "w-100", "btn-purple");
-        titleImage.src = "../images/lokea.png";
+        titleImage.src = "../images/lokea.webp";
     }
 }
 

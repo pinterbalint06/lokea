@@ -4,7 +4,7 @@
     "description": "Template project",
     "main": "server.js",
     "scripts": {
-        "test": "jest",
+        "test": "cross-env NODE_ENV=test jest --testTimeout=10000",
         "test:watch": "jest --watchAll",
         "start": "node server.js",
         "dev": "nodemon"
@@ -14,11 +14,18 @@
         "#sql/*": "./sql/*",
         "#config/*": "./config/*",
         "#mapcreatortest/*": "./test/mapcreator/*",
+        "#gametest/*": "./test/game/*",
         "#root/*": "./*",
         "#main/*": "./api/main*",
+        "#admin/*": "./api/admin/*",
         "#mapcreator/*": "./api/mapcreator/*",
         "#gamemaps/*": "./api/gamemaps/*",
-        "#testhelpers/*": "./test/helpers/*"
+        "#gameflow/*": "./api/gameflow/*",
+        "#testhelpers/*": "./test/helpers/*",
+        "#locales/*": "./locales/*",
+        "#imagequeries": "./api/shared/queries/shared-images.queries.js",
+        "#sharedapi/*": "./api/shared/*",
+        "#gameflow/*": "./api/gameflow/*"
     },
     "author": "Kardos Krisztián",
     "license": "ISC",
@@ -32,6 +39,7 @@
         "bcrypt": "^6.0.0",
         "chart.js": "^4.5.1",
         "cors": "^2.8.5",
+        "dotenv": "^17.4.2",
         "express": "^5.1.0",
         "express-session": "^1.18.2",
         "express-validator": "^7.3.1",

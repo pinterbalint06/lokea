@@ -3,12 +3,12 @@ const router = express.Router();
 const multer = require("multer");
 const { deleteFile } = require("#utils/file-utils.js");
 const AppError = require("#utils/app-error.js");
-const { checkAuth } = require("#root/auth.js");
+const { checkAuth } = require("#utils/auth.js");
 const ERRORS = require("#utils/error-messages.js");
 
 const mapsEndpoints = require("#mapcreator/maps/maps.routes.js");
 const pointsEndpoints = require("#mapcreator/points/points.routes.js");
-const connectionsEndpoints = require("#mapcreator/connections/connections.route.js");
+const connectionsEndpoints = require("#mapcreator/connections/connections.routes.js");
 
 router.use("/", checkAuth, mapsEndpoints);
 router.use("/", checkAuth, pointsEndpoints);
