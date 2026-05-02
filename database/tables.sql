@@ -13,7 +13,7 @@ CREATE TABLE images (
 
 CREATE TABLE users (
     user_id INT AUTO_INCREMENT PRIMARY KEY,
-    username VARCHAR(20) NOT NULL UNIQUE BINARY,
+    username VARCHAR(20) BINARY NOT NULL UNIQUE,
     email VARCHAR(254) NOT NULL UNIQUE,
     password VARCHAR(60) NOT NULL,
     role VARCHAR(5) DEFAULT 'user',
@@ -32,7 +32,7 @@ CREATE TABLE admin_settings (
     darkmode BOOLEAN DEFAULT 0,
     selected_chart VARCHAR(20) DEFAULT 'activity-week',
     foreign key (admin_id) references users(user_id) ON DELETE CASCADE
-)
+);
 
 CREATE TABLE game_maps (
     game_maps_id INT AUTO_INCREMENT PRIMARY KEY NOT NULL,
@@ -151,7 +151,7 @@ CREATE TABLE session_guesses (
     cycle INT NOT NULL,
     FOREIGN KEY (map_id) REFERENCES map(map_id) ON DELETE CASCADE,
     FOREIGN KEY (session_id) REFERENCES game_sessions(session_id) ON DELETE CASCADE,
-    FOREIGN KEY (point_id) REFERENCES points(point_id) ON DELETE SET NULL
+    FOREIGN KEY (point_id) REFERENCES points(point_id) ON DELETE CASCADE
 );
 
 SET GLOBAL event_scheduler = ON;

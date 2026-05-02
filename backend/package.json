@@ -33,7 +33,8 @@
         "#testhelpers/*": "./test/helpers/*",
         "#locales/*": "./locales/*",
         "#imagequeries": "./api/shared/queries/shared-images.queries.js",
-        "#sharedapi/*": "./api/shared/*"
+        "#sharedapi/*": "./api/shared/*",
+        "#middlewares/*": "./middlewares/*"
     },
     "author": "Lokea csapata",
     "contributors": [
