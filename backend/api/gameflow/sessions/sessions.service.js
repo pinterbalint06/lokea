@@ -1,5 +1,6 @@
 const sessionsQueries = require("#gameflow/sessions/sessions.queries.js");
 const AppError = require("#utils/app-error.js");
+const ERRORS = require("#utils/error-messages.js");
 
 const DIFFICULTY_SHARPNESS = { easy: -1.5, normal: -3, hard: -5 };
 const MIN_ROUNDS = 1;
@@ -18,16 +19,16 @@ function validateGameStartInput(body) {
     const { difficulty } = body;
 
     if (!Number.isInteger(gameMapId) || gameMapId <= 0) {
-        throw new AppError("Invalid gameMapId", 400);
+        throw new AppError(ERRORS.GAMEMAP.INVALID_ID, 400);
     }
     if (!Number.isInteger(rounds) || rounds < MIN_ROUNDS || rounds > MAX_ROUNDS) {
-        throw new AppError(`Invalid rounds (${MIN_ROUNDS}–${MAX_ROUNDS})`, 400);
+        throw new AppError(ERRORS.GAMEFLOW.INVALID_ROUNDS, 400);
     }
     if (!Number.isInteger(roundTime) || roundTime < MIN_ROUND_TIME || roundTime > MAX_ROUND_TIME) {
-        throw new AppError(`Invalid roundTime (${MIN_ROUND_TIME}–${MAX_ROUND_TIME})`, 400);
+        throw new AppError(ERRORS.GAMEFLOW.INVALID_ROUND_TIME, 400);
     }
     if (!Object.hasOwn(DIFFICULTY_SHARPNESS, difficulty)) {
-        throw new AppError("Invalid difficulty", 400);
+        throw new AppError(ERRORS.GAMEFLOW.INVALID_DIFFICULTY, 400);
     }
 
     return { gameMapId, rounds, roundTime, difficulty };
@@ -35,13 +36,13 @@ function validateGameStartInput(body) {
 
 function validateGameInfo(gameInfo) {
     if (!gameInfo) {
-        throw new AppError("Game map not found", 404);
+        throw new AppError(ERRORS.GAMEMAP.NOT_FOUND, 404);
     }
     if (!gameInfo.map_id) {
-        throw new AppError("Game map has no maps", 400);
+        throw new AppError(ERRORS.GAMEFLOW.GAME_MAP_NO_MAPS, 400);
     }
     if (!gameInfo.point_id) {
-        throw new AppError("Game map has no points", 400);
+        throw new AppError(ERRORS.GAMEFLOW.GAME_MAP_NO_POINTS, 400);
     }
 }
 

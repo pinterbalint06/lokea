@@ -3,6 +3,7 @@ const { getCurrentPointId } = require("#gameflow/random-point/random-point.queri
 const { getMapDimensions } = require("#gameflow/maps/maps.queries.js");
 const { getConnection } = require("#sql/database.js");
 const AppError = require("#utils/app-error.js");
+const ERRORS = require("#utils/error-messages.js");
 const { COUNTDOWN_SECONDS } = require("../shared/gameflow.utils.js");
 
 const MAX_SCORE = 5000;
@@ -11,10 +12,10 @@ const TIME_PUNISHMENT_BUFFER_SECONDS = 5;
 
 function assertSessionReady(game) {
     if (!game.point) {
-        throw new AppError("No active point in session", 400);
+        throw new AppError(ERRORS.GAMEFLOW.NO_ACTIVE_POINT, 400);
     }
     if (game.sharpness == null || !isFinite(game.sharpness)) {
-        throw new AppError("Invalid game configuration", 500);
+        throw new AppError(ERRORS.GAMEFLOW.INVALID_GAME_CONFIG, 500);
     }
 }
 
@@ -23,10 +24,10 @@ function parseGuessInput(body) {
     const v = parseFloat(body.v);
     const mapId = parseInt(body.map_id);
     if (isNaN(u) || isNaN(v) || !isFinite(u) || !isFinite(v)) {
-        throw new AppError("Invalid guess coordinates", 400);
+        throw new AppError(ERRORS.GAMEFLOW.INVALID_GUESS_COORDS, 400);
     }
     if (!Number.isFinite(mapId) || mapId <= 0) {
-        throw new AppError("Invalid map id", 400);
+        throw new AppError(ERRORS.MAP.INVALID_ID, 400);
     }
     return { u, v, mapId };
 }
@@ -89,7 +90,7 @@ async function persistGuess(sessionId, game, guessedMapId, guess, result) {
 async function processGuess(sessionId, game, body) {
     const activePointId = await getCurrentPointId(sessionId);
     if (!activePointId) {
-        throw new AppError("No active round", 400);
+        throw new AppError(ERRORS.GAMEFLOW.NO_ACTIVE_ROUND, 400);
     }
 
     assertSessionReady(game);
@@ -98,7 +99,7 @@ async function processGuess(sessionId, game, body) {
     const correctMapId = game.point.mapId;
     const correctMapDimensions = await getMapDimensions(correctMapId);
     if (!correctMapDimensions) {
-        throw new AppError("Map not found", 500);
+        throw new AppError(ERRORS.MAP.NOT_FOUND, 500);
     }
 
     const result = buildGuessResult(guess, game, correctMapDimensions);

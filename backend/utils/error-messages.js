@@ -148,7 +148,18 @@ const ERRORS = {
         FETCH_RANDOM_POINT_FAILED: "A véletlenszerű pont lekérése nem sikerült!",
         FETCH_MAPS_FAILED: "A térképek lekérése nem sikerült!",
         CHECK_SESSION_FAILED: "Az aktív munkamenet ellenőrzése nem sikerült!",
-        CREATE_SESSION_FAILED: "A játékmenet létrehozása nem sikerült!"
+        CREATE_SESSION_FAILED: "A játékmenet létrehozása nem sikerült!",
+
+        NO_ACTIVE_POINT: "Nincs aktív pont a munkamenetben!",
+        INVALID_GAME_CONFIG: "Érvénytelen játékkonfiguráció!",
+        INVALID_GUESS_COORDS: "Érvénytelen tipp koordináták!",
+        NO_ACTIVE_ROUND: "Nincs aktív kör!",
+        NO_POINTS_AVAILABLE: "Nincs elérhető pont!",
+        INVALID_ROUNDS: "Érvénytelen körök száma!",
+        INVALID_ROUND_TIME: "Érvénytelen körönkénti idő!",
+        INVALID_DIFFICULTY: "Érvénytelen nehézségi szint!",
+        GAME_MAP_NO_MAPS: "A pályának nincsenek térképei!",
+        GAME_MAP_NO_POINTS: "A pályának nincsenek pontjai!"
     }
 };
 
