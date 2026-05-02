@@ -131,9 +131,9 @@ CREATE TABLE game_sessions (
 CREATE TABLE session_guesses (
     guess_id INT AUTO_INCREMENT PRIMARY KEY,
     session_id INT NOT NULL,
-    point_id INT,
+    point_id INT NOT NULL,
     round INT NOT NULL,
-    map_id INT NOT NULL,
+    map_id INT,
     guessed_u FLOAT NOT NULL,
     guessed_v FLOAT NOT NULL,
     points_awarded INT NOT NULL,

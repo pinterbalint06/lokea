@@ -395,19 +395,18 @@ async function finishGame() {
         }
         const result = await response.json();
         totalScoreValue = result.totalScore ?? 0;
+        const panel = document.getElementById('guessPanel');
+        document.getElementById('finalScore').textContent = totalScoreValue;
+        panel.classList.add('open');
+        requestAnimationFrame(() => requestAnimationFrame(() => {
+            panel.classList.add('game-over');
+        }));
+        loadUserComment();
+        loadOtherComments();
+        loadLeaderboard();
     } catch (error) {
         showError("Hiba a játék befejezésekor: " + error.message);
     }
-
-    const panel = document.getElementById('guessPanel');
-    document.getElementById('finalScore').textContent = totalScoreValue;
-    panel.classList.add('open');
-    requestAnimationFrame(() => requestAnimationFrame(() => {
-        panel.classList.add('game-over');
-    }));
-    loadUserComment();
-    loadOtherComments();
-    loadLeaderboard();
 }
 
 async function loadUserComment() {
