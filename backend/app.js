@@ -6,6 +6,7 @@ const cors = require('cors');
 const sessionMiddleware = require('#config/session.js');
 const { i18next, i18n_Middleware } = require('#config/i18n.js');
 const viewRoutes = require('./routes/views.routes.js');
+const auth = require('#utils/auth.js');
 const { notFoundHandler, globalErrorHandler } = require('#middlewares/error-handler.js');
 
 const app = express();
@@ -21,7 +22,11 @@ app.use(i18n_Middleware.handle(i18next));
 
 //! statikus fájlok kiszolgálása
 app.use(express.static(path.join(__dirname, '../frontend')));
-app.use(express.static(path.join(__dirname, '../private/frontend')));
+app.use(
+    "/private",
+    auth.checkRole("ADMIN", "LORD"),
+    express.static(path.join(__dirname, '../private/frontend'))
+);
 app.use('/locales', express.static(path.join(__dirname, 'locales')));
 
 //! Routing: HTML nézetek
