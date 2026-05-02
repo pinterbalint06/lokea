@@ -98,7 +98,7 @@ router.get('/users/:id',
                 response.status(404).json({ error: request.t('admin:usersApi.not_found') });
             }
             else {
-                response.status(200).json({ message: request.t('admin:usersApi.fetch_success'), users: users });
+                response.status(200).json({ message: request.t('admin:usersApi.fetch_success'), user: users[0] });
             }
         } catch (error) {
             response.status(500).json({ error: request.t('admin:usersApi.fetch_one_error') });
@@ -192,7 +192,7 @@ router.post('/users/exports',
             response.status(200).send(csvContent);
 
         } catch (error) {
-            console.log(error.message);
+            console.error(error.message);
             response.status(500).json({ error: request.t('admin:usersApi.export_error') });
         }
     });
@@ -214,18 +214,27 @@ router.put('/users/self',
     async (request, response) => {
         try {
             let { username, email } = request.body;
-            let success = await databaseUsers.updateUserByAdmin(request.session.userid, username, email);
-            if (success === 'User exists') {
-                response.status(409).json({ error: request.t('admin:usersApi.error_user_exists') });
+
+            let targetUser = await databaseUsers.getUser(request.session.userid);
+            if (!targetUser || targetUser.length === 0) {
+                response.status(404).json({ error: request.t('admin:usersApi.update_not_found_or_inactive') });
             }
             else {
-                if (success == 1) {
-                    await databaseLogs.addLog(request.session.userid, 'User update');
-                    sendChangeEmail(email, username).catch(err => console.log("Email hiba:", err.message));
-                    response.status(200).json({ message: request.t('admin:usersApi.update_success') });
+                let success = await databaseUsers.updateUserByAdmin(request.session.userid, username, email);
+                if (success === 'User exists') {
+                    response.status(409).json({ error: request.t('admin:usersApi.error_user_exists') });
                 }
                 else {
-                    response.status(404).json({ error: request.t('admin:usersApi.update_not_found_or_inactive') });
+                    if (success == 1) {
+                        await databaseLogs.addLog(request.session.userid, 'User update');
+                        let targetEmail = email || targetUser[0].email;
+                        let targetUsername = username || targetUser[0].username;
+                        sendChangeEmail(targetEmail, targetUsername).catch(err => console.log("Email hiba:", err.message));
+                        response.status(200).json({ message: request.t('admin:usersApi.update_success') });
+                    }
+                    else {
+                        response.status(404).json({ error: request.t('admin:usersApi.update_not_found_or_inactive') });
+                    }
                 }
             }
         } catch (error) {
@@ -255,7 +264,15 @@ router.put('/users/:id',
         try {
             let user_id = request.params.id;
             let { username, email, role } = request.body;
-            if ((role === 'ADMIN' || role === 'LORD') && request.session.role !== 'LORD') {
+            let targetUser = await databaseUsers.getUser(user_id);
+            if (!targetUser || targetUser.length === 0) {
+                return response.status(404).json({ error: request.t('admin:usersApi.not_found') });
+            }
+            let targetRole = targetUser[0].role;
+            if ((targetRole === 'ADMIN' || targetRole === 'LORD') && request.session.role !== 'LORD') {
+                return response.status(403).json({ error: request.t('admin:usersApi.permission_denied') });
+            }
+            if (role && (role === 'ADMIN' || role === 'LORD') && request.session.role !== 'LORD') {
                 return response.status(403).json({ error: request.t('admin:usersApi.permission_denied') });
             }
             let success = await databaseUsers.updateUserByAdmin(user_id, username, email, role);
@@ -264,7 +281,9 @@ router.put('/users/:id',
             }
             if (success == 1) {
                 await databaseLogs.addLog(request.session.userid, 'User update (A)', user_id);
-                sendChangeEmail(email, username).catch(err => console.log("Email hiba:", err.message));
+                let targetEmail = email || targetUser[0].email;
+                let targetUsername = username || targetUser[0].username;
+                sendChangeEmail(targetEmail, targetUsername).catch(err => console.log("Email hiba:", err.message));
                 response.status(200).json({ message: request.t('admin:usersApi.update_success') });
             }
             else {
@@ -350,10 +369,17 @@ router.delete('/users/:id',
     ], validate,
     async (request, response) => {
         try {
-            if ((request.body.role === 'ADMIN' || request.body.role === 'LORD') && request.session.role !== 'LORD') {
+            let userId = request.params.id;
+
+            let targetUser = await databaseUsers.getUser(userId);
+            if (!targetUser || targetUser.length === 0) {
+                return response.status(404).json({ error: request.t('admin:usersApi.not_found') });
+            }
+            let targetRole = targetUser[0].role;
+
+            if ((targetRole === 'ADMIN' || targetRole === 'LORD') && request.session.role !== 'LORD') {
                 return response.status(403).json({ error: request.t('admin:usersApi.permission_denied') });
             }
-            let userId = request.params.id;
             let result = await databaseUsers.userToInactive(userId);
             if (result.affectedRows === 0) {
                 response.status(200).json({ message: request.t('admin:usersApi.deactivate_already_inactive') })
@@ -387,7 +413,7 @@ router.delete('/users/:id/profile-picture',
                 await fs.unlink(lastPfpPath).catch(() => { });
 
                 await databaseLogs.addLog(request.session.userid, 'Profile picture delete (A)', user_id);
-                response.status(201).json({ success: true, message: request.t('admin:usersApi.profile_pic_delete_success') });
+                response.status(200).json({ success: true, message: request.t('admin:usersApi.profile_pic_delete_success') });
             }
         } catch (error) {
             response.status(500).json({ error: request.t('admin:usersApi.profile_pic_delete_error') });

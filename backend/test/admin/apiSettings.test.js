@@ -13,7 +13,7 @@ app.use(express.json());
 
 app.use(mockI18nMiddleware);
 
-app.use('/api/admin', auth.checkAuth, auth.checkRole("ADMIN"), require('#admin/index.js'));
+app.use('/api/admin', require('#admin/index.js'));
 
 describe('Admin Settings API-tesztek', () => {
     suppressConsoleErrors();

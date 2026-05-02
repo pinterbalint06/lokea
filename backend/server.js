@@ -162,7 +162,7 @@ router.get(
 //!API endpoints
 
 const adminEndpoints = require('./api/admin/index.js');
-app.use('/api/admin', auth.checkAuth, auth.checkRole("ADMIN", "LORD"), adminEndpoints);
+app.use('/api/admin', adminEndpoints);
 
 const endpoints = require('./api/api.js');
 app.use('/api', endpoints);

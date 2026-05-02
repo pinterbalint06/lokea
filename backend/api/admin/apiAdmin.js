@@ -12,6 +12,9 @@ const databaseLogs = require('#sql/admin/databaseLogs.js');
 
 Chart.register(...registerables);
 
+const chartCache = new Map();
+const CACHE_TTL = 5 * 60 * 1000; // 5 perc (milliszekundumban)
+
 //API endpoints - GET
 
 router.get('/language', (request, response) => {
@@ -44,56 +47,73 @@ router.get('/dashboard', async (request, response) => {
 router.get('/charts/:type', async (request, response) => {
     try {
         let type = request.params.type;
+        let lang = request.query.lang || request.session?.userLanguage || 'hu';
+        let cacheKey = `${type}_${lang}`;
         let dbData, label, color, xKey, yKey;
 
-        switch (type) {
-            case 'activity-day':
-                dbData = await databaseAdmin.getUserActivityByDay();
-                label = request.t('admin:adminApi.chart_daily_activity');
-                xKey = 'datum';
-                yKey = 'felhasznalok_szama';
-                break;
-            case 'activity-week':
-                dbData = await databaseAdmin.getUserActivityByWeek();
-                label = request.t('admin:adminApi.chart_weekly_activity');
-                xKey = 'het_megnevezes';
-                yKey = 'bejelentkezesek_szama';
-                break;
-            case 'registrations':
-                dbData = await databaseAdmin.getRegistrationByWeek();
-                label = request.t('admin:adminApi.chart_weekly_registrations');
-                xKey = 'het_megnevezes';
-                yKey = 'regisztraciok_szama';
-                color = '#198754';
-                break;
-            case 'matches':
-                dbData = await databaseAdmin.getMatchCountByWeek();
-                label = request.t('admin:adminApi.chart_weekly_matches');
-                xKey = 'het_megnevezes';
-                yKey = 'meccsek_szama';
-                color = '#dc3545';
-                break;
-            default:
-                throw new AppError(request.t('admin:adminApi.chart_invalid_type'), 400);
+        if (chartCache.has(cacheKey)) {
+            const cached = chartCache.get(cacheKey);
+            if (Date.now() - cached.timestamp < CACHE_TTL) {
+                response.set('Content-Type', 'image/webp');
+                response.set('Cache-Control', 'private, max-age=300');
+                return response.send(cached.buffer);
+            }
         }
+        else {
+            switch (type) {
+                case 'activity-day':
+                    dbData = await databaseAdmin.getUserActivityByDay();
+                    label = request.t('admin:adminApi.chart_daily_activity', { lng: lang });
+                    xKey = 'datum';
+                    yKey = 'felhasznalok_szama';
+                    break;
+                case 'activity-week':
+                    dbData = await databaseAdmin.getUserActivityByWeek();
+                    label = request.t('admin:adminApi.chart_weekly_activity', { lng: lang });
+                    xKey = 'het_megnevezes';
+                    yKey = 'bejelentkezesek_szama';
+                    break;
+                case 'registrations':
+                    dbData = await databaseAdmin.getRegistrationByWeek();
+                    label = request.t('admin:adminApi.chart_weekly_registrations', { lng: lang });
+                    xKey = 'het_megnevezes';
+                    yKey = 'regisztraciok_szama';
+                    color = '#198754';
+                    break;
+                case 'matches':
+                    dbData = await databaseAdmin.getMatchCountByWeek();
+                    label = request.t('admin:adminApi.chart_weekly_matches', { lng: lang });
+                    xKey = 'het_megnevezes';
+                    yKey = 'meccsek_szama';
+                    color = '#dc3545';
+                    break;
+                default:
+                    throw new AppError(request.t('admin:adminApi.chart_invalid_type'), 400);
+            }
 
-        const labels = dbData.map(row => row[xKey]);
-        const values = dbData.map(row => row[yKey]);
+            const labels = dbData.map(row => row[xKey]);
+            const values = dbData.map(row => row[yKey]);
 
-        const canvas = new Canvas(1200, 600);
-        const ctx = canvas.getContext("2d");
-        const chart = new Chart(ctx, createChartConfig(labels, values, label, color));
+            const canvas = new Canvas(1200, 600);
+            const ctx = canvas.getContext("2d");
+            const chart = new Chart(ctx, createChartConfig(labels, values, label, color));
 
-        const rawBuffer = await canvas.toBuffer('png');
-        const optimizedImage = await sharp(rawBuffer)
-            .toFormat('webp', { quality: 95 })
-            .toBuffer();
+            const rawBuffer = await canvas.toBuffer('png');
+            const optimizedImage = await sharp(rawBuffer)
+                .toFormat('webp', { quality: 95 })
+                .toBuffer();
 
-        response.set('Content-Type', 'image/webp');
-        response.send(optimizedImage);
+            chartCache.set(cacheKey, {
+                buffer: optimizedImage,
+                timestamp: Date.now()
+            });
 
-        chart.destroy();
+            response.set('Content-Type', 'image/webp');
+            response.set('Cache-Control', 'private, max-age=300');
+            response.send(optimizedImage);
 
+            chart.destroy();
+        }
     } catch (error) {
         console.error(error);
         if (error instanceof AppError) {

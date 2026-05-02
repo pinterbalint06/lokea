@@ -20,7 +20,7 @@ app.use(express.json());
 
 app.use(mockI18nMiddleware);
 
-app.use('/api/admin', auth.checkAuth, auth.checkRole("ADMIN"), require('#admin/index.js'));
+app.use('/api/admin', require('#admin/index.js'));
 
 describe('Admin Users API-tesztek', () => {
     suppressConsoleErrors();
@@ -137,7 +137,7 @@ describe('Admin Users API-tesztek', () => {
             const res = await request(app)
                 .get('/api/admin/users/1')
                 .expect(200);
-            expect(res.body.users).toEqual(mockUser);
+            expect(res.body.user).toEqual(mockUser[0]);
         });
 
         it('HIBA - 500, adatbázis hiba', async () => {
@@ -281,7 +281,7 @@ describe('Admin Users API-tesztek', () => {
         });
 
         it('SIKER - 200, felhasználók exportálása', async () => {
-            const mockRows = [{ deleted_at: null, user_id: 1, username: 'User1', email: 'user1@example.com', role: 'USER' }];
+            const mockRows = [{ deleted_at: null, user_id: 1, username: 'User1', email: 'user1@example.com', role: 'user' }];
             db.sortedUsers.mockResolvedValue({ rows: mockRows, total: 1 });
             const res = await request(app)
                 .post('/api/admin/users/exports')
@@ -337,6 +337,7 @@ describe('Admin Users API-tesztek', () => {
         });
 
         it('SIKER - 200, felhasználó adatainak frissítése', async () => {
+            db.getUser.mockResolvedValue([{ role: 'user' }]);
             db.updateUserByAdmin.mockResolvedValue(1);
             await request(app)
                 .put('/api/admin/users/1')
@@ -347,6 +348,7 @@ describe('Admin Users API-tesztek', () => {
         });
 
         it('HIBA - 403, ha ADMIN próbál ADMIN rangot adni valakinek', async () => {
+            db.getUser.mockResolvedValue([{ role: 'user' }]);
             const res = await request(app)
                 .put('/api/admin/users/2')
                 .send({ username: 'UpdatedUser', email: 'updated@example.com', role: 'ADMIN' })
@@ -356,6 +358,7 @@ describe('Admin Users API-tesztek', () => {
         });
 
         it('SIKER - 200, ha LORD módosít valakit ADMIN-ná', async () => {
+            db.getUser.mockResolvedValue([{ role: 'user' }]);
             db.updateUserByAdmin.mockResolvedValue(1);
             const res = await request(app)
                 .put('/api/admin/users/2')
@@ -367,6 +370,7 @@ describe('Admin Users API-tesztek', () => {
         });
 
         it('HIBA - 409, foglalt felhasználónév vagy e-mail esetén', async () => {
+            db.getUser.mockResolvedValue([{ role: 'user' }]);
             db.updateUserByAdmin.mockResolvedValue('User exists');
             const res = await request(app)
                 .put('/api/admin/users/1')
@@ -377,6 +381,7 @@ describe('Admin Users API-tesztek', () => {
         });
 
         it('HIBA - 500, adatbázis hiba', async () => {
+            db.getUser.mockResolvedValue([{ role: 'user' }]);
             db.updateUserByAdmin.mockRejectedValue(new Error('Database error'));
             const res = await request(app)
                 .put('/api/admin/users/1')
@@ -406,6 +411,7 @@ describe('Admin Users API-tesztek', () => {
         });
 
         it('SIKER - 200, saját adatainak frissítése', async () => {
+            db.getUser.mockResolvedValue([{ email: 'old@example.com', username: 'OldUser' }]);
             db.updateUserByAdmin.mockResolvedValue(1);
             await request(app)
                 .put('/api/admin/users/self')
@@ -416,6 +422,7 @@ describe('Admin Users API-tesztek', () => {
         });
 
         it('HIBA - 409, foglalt felhasználónév vagy e-mail esetén', async () => {
+            db.getUser.mockResolvedValue([{ email: 'old@example.com', username: 'OldUser' }]);
             db.updateUserByAdmin.mockResolvedValue('User exists');
             const res = await request(app)
                 .put('/api/admin/users/self')
@@ -426,6 +433,7 @@ describe('Admin Users API-tesztek', () => {
         });
 
         it('HIBA - 500, adatbázis hiba', async () => {
+            db.getUser.mockResolvedValue([{ email: 'old@example.com', username: 'OldUser' }]);
             db.updateUserByAdmin.mockRejectedValue(new Error('Database error'));
             const res = await request(app)
                 .put('/api/admin/users/self')
@@ -516,6 +524,7 @@ describe('Admin Users API-tesztek', () => {
         });
 
         it('HIBA - 403, ha ADMIN próbál törölni egy ADMIN-t', async () => {
+            db.getUser.mockResolvedValue([{ role: 'ADMIN' }]);
             const res = await request(app)
                 .delete('/api/admin/users/2')
                 .send({ role: 'ADMIN', deleted: false })
@@ -525,6 +534,7 @@ describe('Admin Users API-tesztek', () => {
         });
 
         it('HIBA - 403, ha ADMIN próbál törölni egy LORD-ot', async () => {
+            db.getUser.mockResolvedValue([{ role: 'LORD' }]);
             const res = await request(app)
                 .delete('/api/admin/users/3')
                 .send({ role: 'LORD', deleted: false })
@@ -533,6 +543,7 @@ describe('Admin Users API-tesztek', () => {
         });
 
         it('SIKER - 200, ha LORD töröl egy ADMIN-t', async () => {
+            db.getUser.mockResolvedValue([{ role: 'ADMIN' }]);
             db.userToInactive.mockResolvedValue({ affectedRows: 1, email: 'admin@example.com', username: 'AdminUser' });
             const res = await request(app)
                 .delete('/api/admin/users/2')
@@ -544,6 +555,7 @@ describe('Admin Users API-tesztek', () => {
         });
 
         it('SIKER - 200, felhasználó inaktívvá tétele', async () => {
+            db.getUser.mockResolvedValue([{ role: 'user' }]);
             db.userToInactive.mockResolvedValue({ affectedRows: 1, email: 'torolt@example.com', username: 'ToroltUser' });
             await request(app)
                 .delete('/api/admin/users/1')
@@ -554,6 +566,7 @@ describe('Admin Users API-tesztek', () => {
         });
 
         it('HIBA - 500, adatbázis hiba', async () => {
+            db.getUser.mockResolvedValue([{ role: 'user' }]);
             db.userToInactive.mockRejectedValue(new Error('Database error'));
             const res = await request(app)
                 .delete('/api/admin/users/1')
@@ -574,12 +587,12 @@ describe('Admin Users API-tesztek', () => {
             expect(res.body.errors.some(e => e.path === 'id')).toBe(true);
         });
 
-        it('SIKER 201 - sikeresen törli a profilképet', async () => {
+        it('SIKER 200 - sikeresen törli a profilképet', async () => {
             db.deleteProfilePic.mockResolvedValue('old-pic.webp');
             const res = await request(app)
                 .delete('/api/admin/users/123/profile-picture')
                 .send({})
-                .expect(201);
+                .expect(200);
             expect(res.body.success).toBe(true);
             expect(fs.unlink).toHaveBeenCalled();
         });

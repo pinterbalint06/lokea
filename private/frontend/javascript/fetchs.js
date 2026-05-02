@@ -53,7 +53,7 @@ export async function getUser(id) {
         let response = await fetch(`/api/admin/users/${id}`);
         let data = await response.json();
         if (!response.ok) throw new Error(extractError(data));
-        return data.users[0];
+        return data.user;
     } catch (error) {
         showAlert(error.message);
         throw error;
@@ -144,11 +144,11 @@ export async function kijelentkezes() {
         });
         let data = await response.json();
         if (!response.ok || !data.success) throw new Error(extractError(data));
-        window.location.href = '/login_page';
     } catch (error) {
         showAlert(error.message);
         throw error;
     }
+    window.location.href = '/login_page';
 }
 
 export async function newUser(username, email, password, role) {

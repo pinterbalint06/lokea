@@ -219,6 +219,7 @@ async function uploadProfilePic(filepath, width, height, user_id) {
 
 async function deleteProfilePic(user_id) {
     let connection;
+    let returnValue;
     try {
         const queryGetLastImage = 'SELECT images.image_id, images.filepath FROM users LEFT JOIN images ON users.pfp = images.image_id WHERE users.user_id = ?'
         const [oldImageData] = await pool.execute(queryGetLastImage, [user_id]);
@@ -227,15 +228,17 @@ async function deleteProfilePic(user_id) {
             throw new Error('Felhasználó nem található!');
         }
 
-        let oldFilePath = oldImageData[0] ? oldImageData[0].filepath : null;
-        let oldImageId = oldImageData[0] ? oldImageData[0].image_id : null;
+        let oldFilePath = oldImageData[0].filepath;
+        let oldImageId = oldImageData[0].image_id;
 
-        connection = await pool.getConnection();
-        await connection.beginTransaction();
-        const queryDeleteOldPic = 'DELETE FROM images WHERE image_id = ?';
-        await connection.execute(queryDeleteOldPic, [oldImageId]);
-        await connection.commit();
-        return oldFilePath;
+        if (oldImageId) {
+            connection = await pool.getConnection();
+            await connection.beginTransaction();
+            const queryDeleteOldPic = 'DELETE FROM images WHERE image_id = ?';
+            await connection.execute(queryDeleteOldPic, [oldImageId]);
+            await connection.commit();
+        }
+        returnValue = oldFilePath;
     } catch (error) {
         if (connection) {
             await connection.rollback();
@@ -246,43 +249,7 @@ async function deleteProfilePic(user_id) {
     finally {
         if (connection) connection.release();
     }
-}
-
-async function addLog(user_id, activity, victimid = null) {
-    let connection;
-    try {
-        const queryGetLastImage = 'SELECT images.image_id, images.filepath FROM users LEFT JOIN images ON users.pfp = images.image_id WHERE users.user_id = ?'
-        const [oldImageData] = await pool.execute(queryGetLastImage, [user_id]);
-
-        if (oldImageData.length === 0) {
-            throw new Error('Felhasználó nem található!');
-        }
-
-        let oldFilePath = oldImageData[0] ? oldImageData[0].filepath : null;
-        let oldImageId = oldImageData[0] ? oldImageData[0].image_id : null;
-
-        connection = await pool.getConnection();
-        await connection.beginTransaction();
-        if (victimid == null) {
-            const query = 'INSERT INTO log (user_id, activity) VALUES (?, ?)';
-            await connection.execute(query, [user_id, activity]);
-        }
-        else {
-            const query = 'INSERT INTO log (user_id, victim_id, activity) VALUES (?, ?, ?)';
-            await connection.execute(query, [user_id, victimid, activity]);
-        }
-        await connection.commit();
-        return oldFilePath;
-    } catch (error) {
-        if (connection) {
-            await connection.rollback();
-        }
-        console.error('DB hiba addLog: ', error);
-        throw error;
-    }
-    finally {
-        if (connection) connection.release();
-    }
+    return returnValue;
 }
 
 async function getConnection() {
@@ -301,6 +268,5 @@ module.exports = {
     updatePassword,
     userToInactive,
     uploadProfilePic,
-    deleteProfilePic,
-    addLog
+    deleteProfilePic
 };

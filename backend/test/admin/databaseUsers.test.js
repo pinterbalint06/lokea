@@ -83,7 +83,7 @@ describe('Admin Database: databaseUsers.js', () => {
     describe('newUserFromAdmin', () => {
         it('SIKER - új felhasználó létrehozása', async () => {
             mockConnection.execute.mockResolvedValue([{ affectedRows: 1, insertId: 10 }]);
-            const result = await databaseUsers.newUserFromAdmin('Test', 'test@test.com', 'hashed', 'USER');
+            const result = await databaseUsers.newUserFromAdmin('Test', 'test@test.com', 'hashed', 'user');
             expect(result).toEqual({ success: true, insertId: 10 });
             expect(mockConnection.commit).toHaveBeenCalled();
         });
@@ -93,20 +93,20 @@ describe('Admin Database: databaseUsers.js', () => {
             dupError.code = 'ER_DUP_ENTRY';
             mockConnection.execute.mockRejectedValue(dupError);
 
-            const result = await databaseUsers.newUserFromAdmin('Test', 'test@test.com', 'hashed', 'USER');
+            const result = await databaseUsers.newUserFromAdmin('Test', 'test@test.com', 'hashed', 'user');
             expect(result).toEqual({ success: false, error: 'User exists' });
             expect(mockConnection.rollback).toHaveBeenCalled();
         });
 
         it('HIBA - egyéb hiba esetén rollback és dobja a hibát', async () => {
             mockConnection.execute.mockRejectedValue(new Error('Egyéb hiba'));
-            await expect(databaseUsers.newUserFromAdmin('Test', 'test@test.com', 'hashed', 'USER')).rejects.toThrow('Egyéb hiba');
+            await expect(databaseUsers.newUserFromAdmin('Test', 'test@test.com', 'hashed', 'user')).rejects.toThrow('Egyéb hiba');
             expect(mockConnection.rollback).toHaveBeenCalled();
         });
 
         it('HIBA - insert failed (affectedRows != 1)', async () => {
             mockConnection.execute.mockResolvedValue([{ affectedRows: 0 }]);
-            await expect(databaseUsers.newUserFromAdmin('Test', 'test@test.com', 'hashed', 'USER')).rejects.toThrow('Insert failed');
+            await expect(databaseUsers.newUserFromAdmin('Test', 'test@test.com', 'hashed', 'user')).rejects.toThrow('Insert failed');
             expect(mockConnection.rollback).toHaveBeenCalled();
         });
     });

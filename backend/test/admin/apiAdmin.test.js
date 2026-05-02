@@ -14,7 +14,7 @@ app.use(express.json());
 
 app.use(mockI18nMiddleware);
 
-app.use('/api/admin', auth.checkAuth, auth.checkRole("ADMIN"), require('#admin/index.js'));
+app.use('/api/admin', require('#admin/index.js'));
 
 describe('Admin API-tesztek', () => {
     suppressConsoleErrors();
@@ -34,7 +34,7 @@ describe('Admin API-tesztek', () => {
                 delete req.session;
                 next();
             });
-            tempApp.use('/api/admin', require('#admin/index.js'));
+            tempApp.use('/api/admin', require('#admin/apiAdmin.js'));
             const res = await request(tempApp).get('/api/admin/language').expect(401);
             expect(res.body.error).toBe(enTranslations.adminApi.language_fetch_error);
         });
@@ -49,7 +49,7 @@ describe('Admin API-tesztek', () => {
                 });
                 next();
             });
-            tempApp.use('/api/admin', require('#admin/index.js'));
+            tempApp.use('/api/admin', require('#admin/apiAdmin.js'));
             const res = await request(tempApp).get('/api/admin/language').expect(500);
             expect(res.body.error).toBe(enTranslations.adminApi.language_fetch_error);
         });
@@ -85,13 +85,22 @@ describe('Admin API-tesztek', () => {
     });
 
     describe('Végpont: GET /charts/:type', () => {
-        testRequiresAdminOrAuth(() => request(app).get('/api/admin/charts/activity-day'));
+        testRequiresAdminOrAuth(() => request(app).get('/api/admin/charts/activity-day?lang=en'));
 
         it('HIBA - 400, érvénytelen típus', async () => {
             const res = await request(app)
-                .get('/api/admin/charts/invalid-type')
+                .get('/api/admin/charts/invalid-type?lang=en')
                 .expect(400);
             expect(res.body.error).toBe(enTranslations.adminApi.chart_invalid_type);
+        });
+
+        it('HIBA - 500, ha hiba van a lekérdezés során', async () => {
+            db.getUserActivityByWeek.mockRejectedValue(new Error("DB hiba"));
+            const res = await request(app)
+                .get('/api/admin/charts/activity-week?lang=en')
+                .set('forceerror', 'true')
+                .expect(500);
+            expect(res.body.error).toBe(enTranslations.adminApi.chart_generation_error);
         });
 
         it('SIKER - 200, helyes típus', async () => {
@@ -100,19 +109,45 @@ describe('Admin API-tesztek', () => {
             ];
             db.getUserActivityByDay.mockResolvedValue(mockData);
             const res = await request(app)
-                .get('/api/admin/charts/activity-day')
+                .get('/api/admin/charts/activity-day?lang=en')
                 .expect(200);
             expect(res.header['content-type']).toBe('image/webp');
             expect(res.body).toBeDefined();
         });
 
-        it('HIBA - 500, ha hiba van a lekérdezés során', async () => {
-            db.getUserActivityByDay.mockRejectedValue(new Error("DB hiba"));
+        it('SIKER - 200, activity-week típus lekérése', async () => {
+            const mockData = [{ het_megnevezes: '12.', bejelentkezesek_szama: 20 }];
+            db.getUserActivityByWeek.mockResolvedValue(mockData);
             const res = await request(app)
-                .get('/api/admin/charts/activity-day')
-                .set('forceerror', 'true')
-                .expect(500);
-            expect(res.body.error).toBe(enTranslations.adminApi.chart_generation_error);
+                .get('/api/admin/charts/activity-week?lang=en')
+                .expect(200);
+            expect(res.header['content-type']).toBe('image/webp');
+            expect(res.body).toBeDefined();
+        });
+
+        it('SIKER - 200, registrations típus lekérése', async () => {
+            const mockData = [{ het_megnevezes: '12.', regisztraciok_szama: 10 }];
+            db.getRegistrationByWeek.mockResolvedValue(mockData);
+            const res = await request(app)
+                .get('/api/admin/charts/registrations?lang=en')
+                .expect(200);
+            expect(res.header['content-type']).toBe('image/webp');
+            expect(res.body).toBeDefined();
+        });
+
+        it('SIKER - 200, grafikon lekérése a gyorsítótárból (cache hit)', async () => {
+            await request(app).get('/api/admin/charts/activity-day?lang=en').expect(200);
+
+            db.getUserActivityByDay.mockClear();
+
+            const res = await request(app)
+                .get('/api/admin/charts/activity-day?lang=en')
+                .expect(200);
+
+            expect(res.header['content-type']).toBe('image/webp');
+            expect(res.header['cache-control']).toBe('private, max-age=300');
+
+            expect(db.getUserActivityByDay).not.toHaveBeenCalled();
         });
     });
 });

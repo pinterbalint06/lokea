@@ -1,6 +1,7 @@
 const express = require('express');
 const router = express.Router();
 const database = require('#sql/database.js');
+const databaseLogs = require('#sql/admin/databaseLogs.js');
 const auth = require('#utils/auth.js')
 const fs = require('fs/promises');
 const bcrypt = require('bcrypt');
@@ -73,7 +74,7 @@ router.post("/signup",
                 let insert = await database.newUser(username, email, hashedPassword);
                 if (insert.success) {
                     let userid = insert.insertId;
-                    await database.addLog(userid, 'Sign up');
+                    await databaseLogs.addLog(userid, 'Sign up');
                     // await sendWelcomeEmail(email, username);
                     response.status(201).json({
                         success: true,
@@ -143,7 +144,7 @@ router.post("/login",
                         request.session.userid = rows[0].user_id;
                         request.session.role = sesRole;
                         request.session.userLanguage = rows[0].language;
-                        await database.addLog(rows[0].user_id, 'Login');
+                        await databaseLogs.addLog(rows[0].user_id, 'Login');
                         response.status(200).json({ message: "Sikeres bejelentkezés", role: sesRole, username: rows[0].username });
                     }
                 }
@@ -238,7 +239,7 @@ router.put('/updateUser', auth.checkAuth,
                 let result = await database.updateUser(request.session.userid, username, email, language, darkmode);
                 if (result == 1) {
                     if (language) request.session.userLanguage = language;
-                    await database.addLog(request.session.userid, 'User update');
+                    await databaseLogs.addLog(request.session.userid, 'User update');
                     response.status(200).json({ message: "Sikeres frissités!" });
                     // await sendChangeEmail(email, username);
                 }
@@ -273,7 +274,7 @@ router.put("/updatePassword", auth.checkAuth,
             else {
                 let { oldPass, newPass } = request.body;
                 let { email, username } = await database.updatePassword(request.session.userid, oldPass, newPass);
-                await database.addLog(request.session.userid, 'Password update');
+                await databaseLogs.addLog(request.session.userid, 'Password update');
                 // await sendPasswordChangeEmail(email, username);
                 response.status(200).json({ message: "Sikeres frissités!" });
             }
@@ -292,7 +293,7 @@ router.delete("/inactiveUser", auth.checkAuth, async (request, response) => {
                 response.status(500).json({ success: false, error: error });
             }
             else {
-                await database.addLog(userid, 'User delete');
+                await databaseLogs.addLog(userid, 'User delete');
                 response.clearCookie('geo.sid');
                 // await sendDeleteEmail(email, username);
                 response.status(200).json({ success: true, message: "Sikeres törlés!" });
@@ -343,7 +344,7 @@ router.put('/updateProfilePic', auth.checkAuth, upload.single('profilePic'), asy
                         console.error("Régi kép törlése sikertelen:", err.path);
                     });
                 }
-                await database.addLog(request.session.userid, 'Profile picture update');
+                await databaseLogs.addLog(request.session.userid, 'Profile picture update');
                 response.status(201).json({ success: true, message: "Profilkép frissítve!" });
             }
         }
@@ -371,7 +372,7 @@ router.delete('/deleteProfilePic', auth.checkAuth, async (request, response) => 
             } catch (error) {
                 console.log("a kép nincs a szerveren!" + error);
             }
-            await database.addLog(request.session.userid, 'Profile picture delete');
+            await databaseLogs.addLog(request.session.userid, 'Profile picture delete');
             response.status(201).json({ success: true, message: "Profilkép törölve!" });
         }
     } catch (error) {
