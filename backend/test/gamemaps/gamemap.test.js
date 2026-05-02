@@ -306,7 +306,7 @@ describe("Game Maps API - /api/game-maps/", () => {
             });
         });
 
-        describe("POST /:gameMapID", () => {
+        describe("POST /", () => {
             const makePostRequest = (overrides = {}) => buildRequest(
                 () => requestWithSupertest.post(`/api/game-maps`),
                 overrides,
