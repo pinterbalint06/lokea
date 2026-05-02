@@ -1,4 +1,6 @@
 const path = require('path');
+const AppError = require('#utils/app-error.js');
+
 
 const checkAuth = (request, response, next) => {
     if (!request.session.userid) {
@@ -10,7 +12,7 @@ const checkAuth = (request, response, next) => {
 const checkRole = (...roles) => {
     return (request, response, next) => {
         if (!roles.includes(request.session.role)) {
-            next(new AppError("A keresett oldal nem található.", 404));
+            return next(new AppError("A keresett oldal nem található.", 404));
         }
         next();
     };

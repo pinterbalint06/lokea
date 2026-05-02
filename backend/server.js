@@ -1,4 +1,5 @@
 //!Module-ok importálása
+require('dotenv').config();
 const express = require('express'); //?npm install express
 const session = require('express-session'); //?npm install express-session
 const path = require('path');
@@ -7,6 +8,9 @@ const { doesGameMapExist } = require('#gamemaps/shared/queries/gamemaps.queries.
 const auth = require('#utils/auth.js')
 const { Server } = require("socket.io");
 const http = require('http');
+const i18next = require('i18next');
+const i18n_Backend = require('i18next-fs-backend');
+const i18n_Middleware = require('i18next-http-middleware');
 const { idSchema } = require('./utils/schemas.js');
 const ERRORS = require('./utils/error-messages.js');
 const { assertUserOwnsGameMap } = require('./api/mapcreator/shared/utils/mapcreator.utils.js');
@@ -22,6 +26,33 @@ const port = 3000;
 const server = http.createServer(app);
 const onlineUsers = new Map();
 const io = new Server(server);
+
+const lngDetector = new i18n_Middleware.LanguageDetector();
+lngDetector.addDetector({
+    name: 'customDetector',
+    lookup(req, res, options) {
+        if (req.session && req.session.userLanguage) {
+            return req.session.userLanguage;
+        }
+        return null;
+    }
+});
+
+const i18nInitPromise = i18next
+    .use(i18n_Backend)
+    .use(lngDetector)
+    .init({
+        fallbackLng: 'en',
+        ns: ['admin', 'common'],
+        defaultNS: 'common',
+        backend: {
+            loadPath: path.join(__dirname, '/locales/{{lng}}/{{ns}}.json'),
+        },
+        detection: {
+            order: ['customDetector', 'querystring', 'cookie'],
+            caches: ['cookie']
+        }
+    });
 
 app.use(cors());
 app.use(express.json()); //?Middleware JSON
@@ -44,6 +75,10 @@ const sessionMiddleware = session({
 });
 app.use(sessionMiddleware);
 io.engine.use(sessionMiddleware);
+app.use(i18n_Middleware.handle(i18next));
+app.use(express.static(path.join(__dirname, '../frontend')));
+app.use(express.static(path.join(__dirname, '../private/frontend')));
+app.use('/locales', express.static(path.join(__dirname, 'locales')));
 
 //!Routing
 //?Főoldal:
@@ -88,8 +123,8 @@ router.get('/game-maps/:gameMapId/edit',
     }
 );
 
-router.get('/admin', auth.checkRole("ADMIN"), (request, response) => {
-    response.sendFile(path.join(__dirname, '../frontend/html/admin.html'));
+router.get('/admin', auth.checkRole("ADMIN", "LORD"), (request, response) => {
+    response.sendFile(path.join(__dirname, '../private/frontend/html/admin.html'));
 });
 router.get('/game-maps', auth.checkAuthPage, (request, response) => {
     response.sendFile(path.join(__dirname, '../frontend/html/game-choosing.html'));
@@ -125,9 +160,8 @@ router.get(
 );
 
 //!API endpoints
-app.use(express.static(path.join(__dirname, '../frontend')));
 
-const adminEndpoints = require('./api/admin.js');
+const adminEndpoints = require('./api/admin/index.js');
 app.use('/api/admin', adminEndpoints);
 
 const endpoints = require('./api/api.js');
@@ -213,10 +247,13 @@ io.on("connection", (socket) => {
     });
 });
 
-
 //!Szerver futtatása
-server.listen(port, ip, () => {
-    console.log(`Szerver elérhetősége: http://${ip}:${port}`);
+i18nInitPromise.then(() => {
+    server.listen(port, ip, () => {
+        console.log(`Szerver elérhetősége: http://${ip}:${port}`);
+    });
+}).catch(err => {
+    console.error("Hiba az i18next inicializálása közben:", err);
 });
 
 //?Szerver futtatása terminalból: npm run dev

@@ -13,7 +13,7 @@ CREATE TABLE images (
 
 CREATE TABLE users (
     user_id INT AUTO_INCREMENT PRIMARY KEY,
-    username VARCHAR(20) NOT NULL UNIQUE,
+    username VARCHAR(20) NOT NULL UNIQUE BINARY,
     email VARCHAR(254) NOT NULL UNIQUE,
     password VARCHAR(60) NOT NULL,
     role VARCHAR(5) DEFAULT 'user',
@@ -25,6 +25,14 @@ CREATE TABLE users (
     deleted_at TIMESTAMP NULL,
     FOREIGN KEY (pfp) REFERENCES images(image_id) ON DELETE SET NULL
 );
+
+CREATE TABLE admin_settings (
+    settings_id INT AUTO_INCREMENT PRIMARY KEY NOT NULL,
+    admin_id INT UNIQUE,
+    darkmode BOOLEAN DEFAULT 0,
+    selected_chart VARCHAR(20) DEFAULT 'activity-week',
+    foreign key (admin_id) references users(user_id) ON DELETE CASCADE
+)
 
 CREATE TABLE game_maps (
     game_maps_id INT AUTO_INCREMENT PRIMARY KEY NOT NULL,
@@ -84,10 +92,12 @@ CREATE TABLE favorites (
 
 CREATE TABLE log (
     log_id INT AUTO_INCREMENT PRIMARY KEY NOT NULL,
-    user_id INT,
+    user_id INT NOT NULL,
+    victim_id INT DEFAULT NULL,
     activity VARCHAR(50),
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    FOREIGN KEY (user_id) REFERENCES users(user_id) ON DELETE CASCADE
+    happened_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (user_id) REFERENCES users(user_id) ON DELETE CASCADE,
+    FOREIGN KEY (victim_id) REFERENCES users(user_id) ON DELETE SET NULL
 );
 
 CREATE TABLE point_connections (

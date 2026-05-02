@@ -406,18 +406,11 @@ async function showSettingsModal() {
     div.appendChild(buttonsDiv);
     div.appendChild(collapseDiv);
 
-
-    div.appendChild(makeSubtitle("Két lépcsős azonosítás"));
-    let checkbox = inputGeneral("checkbox", null, null, "is2faInput", null, false);
-    checkbox.checked = data.is_2fa;
-    div.appendChild(checkbox);
-
     document.getElementById('darkMode').checked = (data.darkmode == 1);
 
     currentSettings = {
         username: data.username,
         email: data.email,
-        is_2fa: data.is_2fa,
         language: data.language,
         darkmode: document.getElementById('darkMode').checked
     };
@@ -501,7 +494,6 @@ async function checkModification() {
     let inInput = {
         username: document.getElementById('usernameInput').value,
         email: document.getElementById('emailInput').value,
-        is_2fa: document.getElementById('is2faInput').checked,
         language: document.getElementById('languageSelect').value,
         darkmode: document.getElementById('darkMode').checked
     }
@@ -530,20 +522,20 @@ async function checkModification() {
             throw new Error(errors.join("\n"));
         }
 
-        await saveModification(inInput.username, inInput.email, inInput.is_2fa, inInput.language, inInput.darkmode);
+        await saveModification(inInput.username, inInput.email, inInput.language, inInput.darkmode);
     }
 }
 
-async function saveModification(username, email, is_2fa, language, darkmode) {
+async function saveModification(username, email, language, darkmode) {
     try {
-        console.log(username, email, is_2fa, language, darkmode)
+        console.log(username, email, language, darkmode)
         let response = await fetch("/api/updateUser", {
             method: "PUT",
             headers: {
                 "Content-Type": "application/json"
             },
             body: JSON.stringify({
-                username, email, is_2fa, language, darkmode
+                username, email, language, darkmode
             })
         })
         let data = await response.json();
@@ -553,15 +545,16 @@ async function saveModification(username, email, is_2fa, language, darkmode) {
                 errordiv.classList.remove('d-none');
                 errordiv.innerHTML = "";
                 let ul = document.createElement('ul');
-                let hiba;
+                let hibaUzenetek = [];
                 for (let i = 0; i < data.error.length; i++) {
                     let li = document.createElement('li');
-                    hiba = data.error[i].msg;
+                    let hiba = data.error[i].msg;
+                    hibaUzenetek.push(`${data.error[i].path}: ${hiba}`);
                     li.innerText = `${data.error[i].path}: ${hiba}`;
                     ul.appendChild(li);
                 }
                 errordiv.appendChild(ul);
-                throw new Error(hiba);
+                throw new Error(hibaUzenetek.join('\n'));
             }
         }
         else {
@@ -576,7 +569,7 @@ async function saveModification(username, email, is_2fa, language, darkmode) {
 async function deleteProfile() {
     try {
         let response = await fetch("/api/inactiveUser", {
-            method: "POST",
+            method: "DELETE",
             headers: {
                 "Content-Type": "application/json"
             }
@@ -692,7 +685,7 @@ async function uploadProfilePic(picture) {
     fd.append("profilePic", picture);
     try {
         let response = await fetch("/api/updateProfilePic", {
-            method: "POST",
+            method: "PUT",
             body: fd
         });
         let data = await response.json();
@@ -764,5 +757,6 @@ async function createPreview(file) {
 let modalElement;
 let settingsModal;
 let currentSettings;
+
 let objectURL;
 let tempPfp;

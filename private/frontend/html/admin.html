@@ -1,0 +1,191 @@
+<!DOCTYPE html>
+<html lang="hu">
+
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Admin</title>
+    <!--!Bootstrap-->
+    <link rel="stylesheet" href="../bootstrap/css/bootstrap.min.css" />
+    <!--?Popper: dropdowns, popovers, tooltips-->
+    <script src="../bootstrap/js/popper.min.js"></script>
+    <script src="../bootstrap/js/bootstrap.min.js"></script>
+    <!--!CSS-->
+    <link rel="stylesheet" href="../css/admin.css" />
+    <link rel="stylesheet" href="../css/settings.css" />
+    <!--!JavaScript-->
+    <script type="module" src="../javascript/adminpage.js"></script>
+</head>
+
+<body>
+    <nav class="navbar navbar-dark bg-dark d-lg-none">
+        <div class="container-fluid">
+            <div class="d-flex flex-column align-items-center justify-content-center">
+                <img src="../images/lokea.webp" alt="Logo" class="navbar-brand img-fluid w-25" id="navbarImage">
+                <a class="navbar-brand adminTitle" data-route="dashboard">Admin</a>
+            </div>
+            <button class="navbar-toggler mb-4" type="button" data-bs-toggle="collapse" data-bs-target="#mobileMenu">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+        </div>
+        <div class="collapse bg-dark w-100" id="mobileMenu">
+            <ul class="navbar-nav nav-pills p-3" id="mobileNavList">
+                <li class="nav-item">
+                    <a class="nav-link active" href="#" title="Dashboard" data-route="dashboard">
+                        <svg class="sidebar-icons">
+                            <use href="../images/icons/sprite.svg#bar-chart-2"></use>
+                        </svg>
+                        <span class="sidebarElementText">Dashboard</span>
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="#" title="Users" data-route="users">
+                        <svg class="sidebar-icons">
+                            <use href="../images/icons/sprite.svg#users"></use>
+                        </svg>
+                        <span class="sidebarElementText">Users</span>
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="#" title="Logs" data-route="logs">
+                        <svg class="sidebar-icons">
+                            <use href="../images/icons/sprite.svg#book-open"></use>
+                        </svg>
+                        <span class="sidebarElementText">Logs</span>
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="#" title="Settings" data-route="settings">
+                        <svg class="sidebar-icons">
+                            <use href="../images/icons/sprite.svg#settings"></use>
+                        </svg>
+                        <span class="sidebarElementText">Settings</span>
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link backToMainBtn" href="#" title="Back to homepage">
+                        <svg class="sidebar-icons">
+                            <use href="../images/icons/sprite.svg#home"></use>
+                        </svg>
+                        <span class="sidebarElementText">Back to homepage</span>
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link signoutBtn" href="#" title="Sign out">
+                        <svg class="sidebar-icons">
+                            <use href="../images/icons/sprite.svg#logout"></use>
+                        </svg>
+                        <span class="sidebarElementText">Sign out</span>
+                    </a>
+                </li>
+            </ul>
+        </div>
+    </nav>
+
+    <div class="container-fluid">
+        <div class="row">
+            <div id="sidebardiv" class="col-lg-2 d-none d-lg-block sticky bg-dark top-0">
+                <div id="sidebar" class="sidebar d-flex flex-column h-100 p-3 text-light justify-content-between">
+                    <div>
+                        <div class="d-flex flex-lg-column flex-xl-row align-items-center justify-content-center"
+                            id="sidebarHead">
+                            <div class="d-flex flex-column align-items-center justify-content-center">
+                                <img src="../images/lokea.webp" alt="Logo" class="navbar-brand img-fluid w-75"
+                                    id="sidebarImage">
+                                <a href="#" class="text-center text-decoration-none text-reset adminTitle"
+                                    data-route="dashboard">Admin
+                                </a>
+                            </div>
+                            <input type="button" value="☰" id="toggleSidebar"
+                                class="btn btn-sm btn-outline-light align-content-center mt-lg-2" title="Collapse">
+                        </div>
+
+                        <hr>
+                        <ul class="nav nav-pills flex-column" id="sidebarMenu">
+                            <li class="nav-item w-auto">
+                                <a class="nav-link active flex-column flex-xl-row text-center text-xl-start" href="#"
+                                    title="Dashboard" data-route="dashboard">
+                                    <svg class="sidebar-icons">
+                                        <use href="../images/icons/sprite.svg#bar-chart-2"></use>
+                                    </svg>
+                                    <span class="sidebarElementText">Dashboard</span>
+                                </a>
+                            </li>
+                            <li class="nav-item w-auto">
+                                <a class="nav-link flex-column flex-xl-row text-center text-xl-start" href="#"
+                                    title="Users" data-route="users">
+                                    <svg class="sidebar-icons">
+                                        <use href="../images/icons/sprite.svg#users"></use>
+                                    </svg>
+                                    <span class="sidebarElementText">Users</span>
+                                </a>
+                            </li>
+                            <li class="nav-item w-auto">
+                                <a class="nav-link flex-column flex-xl-row text-center text-xl-start" href="#"
+                                    title="Logs" data-route="logs">
+                                    <svg class="sidebar-icons">
+                                        <use href="../images/icons/sprite.svg#book-open"></use>
+                                    </svg>
+                                    <span class="sidebarElementText">Logs</span>
+                                </a>
+                            </li>
+                            <li class="nav-item w-auto">
+                                <a class="nav-link flex-column flex-xl-row text-center text-xl-start" href="#"
+                                    title="Settings" data-route="settings">
+                                    <svg class="sidebar-icons">
+                                        <use href="../images/icons/sprite.svg#settings"></use>
+                                    </svg>
+                                    <span class="sidebarElementText">Settings</span>
+                                </a>
+                            </li>
+                        </ul>
+                    </div>
+                    <div class="dropdown d-flex justify-content-lg-start justify-content-xl-center border-top pt-3">
+                        <a href="#" class="d-flex align-items-center text-white text-decoration-none dropdown-toggle"
+                            id="dropdownUser1" data-bs-toggle="dropdown">
+                            <img alt="" width="32" height="32" class="rounded-circle me-2" id="dropdownPfp">
+                            <strong class="sidebarElementText" id="dropdownUsername">Admin</strong>
+                        </a>
+                        <ul class="dropdown-menu dropdown-menu-dark text-small shadow" aria-labelledby="dropdownUser1">
+                            <li><a class="dropdown-item backToMainBtn" href="#">Leave Admin</a></li>
+                            <li>
+                                <hr class="dropdown-divider">
+                            </li>
+                            <li><a class="dropdown-item signoutBtn" href="#" id="signoutBtn">Sign out</a></li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+
+            <div id="contentDisplay" class="col-12 col-lg-10">
+                <div class="container-fluid">
+                    <div id="content"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="modal fade" id="modalView" tabindex="-1" aria-labelledby="exampleModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-xl" id="modalSize">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="modalTitle">Felhasználó szerkesztése</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Bezárás" title="Bezár"
+                        id="modalClose"></button>
+                </div>
+                <div class="modal-body" id="modalContent"></div>
+                <div class="modal-footer justify-content-between">
+                    <p class="text-danger" id="footerText">
+                        Kilépés után a változtatásokat nem lehet visszavonni!
+                    </p>
+                    <div id="footerButtons">
+                        <button type="button" class="btn btn-danger">Változtatások visszavonása</button>
+                        <button type="button" class="btn btn-primary">Mentés</button>
+                        <button type="button" class="btn btn-primary">Mentés és kilépés</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</body>
+
+</html>

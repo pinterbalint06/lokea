@@ -1,0 +1,197 @@
+.sidebar-icons {
+    height: 2vh;
+    width: 2vh;
+}
+
+.sidebar {
+    transition: width 0.3s ease;
+    height: 100%;
+}
+
+#sidebardiv {
+    height: 100vh;
+    top: 0;
+}
+
+.sticky {
+    position: sticky;
+    top: 0;
+    left: 0;
+    height: 100vh;
+}
+
+.sidebarElementText {
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    display: inline-block;
+    max-width: 100%;
+}
+
+.sidebar .nav-link {
+    overflow: hidden;
+    width: 100%;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.sidebar .nav-link,
+.navbar-nav .nav-link {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    color: #ffffffc5;
+}
+
+.sidebar .nav-link:hover,
+.navbar-nav .nav-link:hover {
+    background-color: #343a40;
+    color: #fff;
+}
+
+.sidebar .nav-link.active,
+.navbar-nav .nav-link.active {
+    background-color: #943ec9;
+    color: #fff;
+}
+
+.sidebar.collapsed .nav-link svg {
+    display: block;
+    margin: 0 auto;
+}
+
+.navbar-nav .nav-link {
+    padding: 0.5rem 1rem;
+}
+
+#usersTable th:last-child {
+    text-align: center;
+}
+
+.buttonIcon {
+    height: 15px;
+    width: 15px;
+}
+
+.dashboardShell {
+    height: 215px;
+    overflow-y: auto;
+    font-family: 'Courier New', Courier, monospace;
+    font-size: 0.9rem;
+}
+
+.sidebar.collapsed .nav-link {
+    padding-left: 0 !important;
+    padding-right: 0 !important;
+    display: flex !important;
+    justify-content: center !important;
+    align-items: center !important;
+    width: 100%;
+}
+
+body[data-bs-theme="dark"] {
+    --bs-body-bg: #12121c;
+    --bs-body-color: #e4e4e8;
+    --bs-border-color: #3b3b58;
+
+    --admin-accent: #6f42c1;
+    --admin-accent-glow: rgba(111, 66, 193, 0.15);
+    --admin-accent-glow-strong: rgba(111, 66, 193, 0.4);
+
+    --admin-surface-1: #1a1a27;
+    --admin-surface-2: #222236;
+}
+
+[data-bs-theme="dark"] .card,
+[data-bs-theme="dark"] .accordion-item,
+[data-bs-theme="dark"] .list-group-item,
+[data-bs-theme="dark"] .modal-content,
+[data-bs-theme="dark"] .bg-light {
+    background-color: var(--admin-surface-1) !important;
+    border: 1px solid var(--admin-accent) !important;
+    box-shadow: 0 4px 15px var(--admin-accent-glow);
+    color: var(--bs-body-color) !important;
+}
+
+[data-bs-theme="dark"] .accordion-button {
+    background-color: var(--admin-surface-1);
+    color: var(--bs-body-color);
+}
+
+[data-bs-theme="dark"] .accordion-button:not(.collapsed) {
+    background-color: var(--admin-surface-2);
+    color: #fff;
+    box-shadow: inset 0 -1px 0 var(--admin-accent);
+}
+
+[data-bs-theme="dark"] .form-control,
+[data-bs-theme="dark"] .form-select {
+    background-color: var(--admin-surface-2);
+    border-color: var(--bs-border-color);
+    color: var(--bs-body-color);
+}
+
+[data-bs-theme="dark"] .form-control:focus,
+[data-bs-theme="dark"] .form-select:focus {
+    border-color: var(--admin-accent);
+    background-color: var(--admin-surface-2);
+    color: #fff;
+    box-shadow: 0 0 0 0.25rem var(--admin-accent-glow-strong);
+}
+
+[data-bs-theme="dark"] .dropzone {
+    border: 2px dashed var(--admin-accent) !important;
+    background-color: var(--admin-surface-1);
+}
+
+[data-bs-theme="dark"] .table {
+    --bs-table-bg: var(--admin-surface-1);
+    --bs-table-color: var(--bs-body-color);
+    --bs-table-border-color: var(--bs-border-color);
+    border-collapse: separate;
+    border-spacing: 0;
+    border: 1px solid var(--admin-accent);
+    border-radius: 0.375rem;
+    overflow: hidden;
+}
+
+[data-bs-theme="dark"] .table-striped>tbody>tr:nth-of-type(odd)>* {
+    --bs-table-bg-type: var(--admin-surface-2);
+}
+
+[data-bs-theme="dark"] .text-muted {
+    color: #9898b0 !important;
+}
+
+@media (min-width: 1200px) {
+    .sidebar .nav-link {
+        gap: 12px;
+    }
+}
+
+@media (max-width: 1199px) {
+    .sidebar .nav-link {
+        --bs-nav-link-padding-x: 0.5rem;
+        padding-top: 10px;
+        padding-bottom: 10px;
+        justify-content: center;
+    }
+
+    .sidebarElementText {
+        font-size: 0.75rem;
+        text-align: center;
+    }
+
+    .sidebar-icons {
+        margin-bottom: 4px;
+    }
+}
+
+@media (max-width: 767px) {
+
+    #usersTable th:nth-child(4),
+    #usersTable td:nth-child(4) {
+        display: none;
+    }
+}
