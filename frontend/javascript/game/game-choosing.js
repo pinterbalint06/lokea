@@ -165,19 +165,24 @@ async function fetchURL(url) {
 }
 
 async function loadCoverImageLowThenHigh(card, gmId) {
+    let currentUrl = null;
     try {
         await loadGameMapCoverImageLowThenHigh({
             gameMapId: gmId,
             loadToViewer: async (imgData) => {
-                const url = imgData.url;
                 imgData.cleanup = () => {};
-                loadedURLs.push(url);
-                card.style.backgroundImage = `url('${url}')`;
+                if (currentUrl) {
+                    loadedURLs.splice(loadedURLs.indexOf(currentUrl), 1);
+                    window.URL.revokeObjectURL(currentUrl);
+                }
+                currentUrl = imgData.url;
+                loadedURLs.push(currentUrl);
+                card.style.backgroundImage = `url('${currentUrl}')`;
             },
             isCurrent: () => true
         });
     } catch (error) {
-        console.error("Error loading map:", error);
+        console.error("Error loading cover image:", error);
     }
 }
 
