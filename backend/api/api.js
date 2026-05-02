@@ -10,6 +10,7 @@ const { body, check, validationResult } = require("express-validator");
 const sharp = require('sharp');
 const { sendWelcomeEmail, sendDeleteEmail, sendChangeEmail, sendPasswordChangeEmail } = require('../utils/mails.js')
 const AppError = require('#utils/app-error.js');
+const path = require('path');
 
 //!Multer
 const { uploadDisk: upload } = require('#config/profile-pic-upload-config.js');

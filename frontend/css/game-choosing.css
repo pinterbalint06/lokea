@@ -347,3 +347,43 @@ body {
 .dropdown-toggle::after {
     display: none;
 }
+
+.tabRow {
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    padding-bottom: 12px !important;
+}
+
+.tabRow .btnStyle {
+    flex: 1;
+}
+
+.create-card {
+    justify-content: center !important;
+    align-items: center;
+    border: 2px dashed rgba(216, 188, 255, 0.4) !important;
+}
+
+.create-card-content {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    height: 100%;
+    background: none;
+    text-align: center;
+}
+
+.create-icon {
+    font-size: 3.5rem;
+    line-height: 1;
+    opacity: 0.5;
+    margin-bottom: 10px;
+}
+
+.create-card:hover {
+    border-color: rgba(216, 188, 255, 0.85) !important;
+}
+
+.create-card:hover .create-icon {
+    opacity: 0.85;
+}

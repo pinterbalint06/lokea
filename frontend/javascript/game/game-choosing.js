@@ -9,6 +9,7 @@ window.addEventListener('pageshow', (event) => {
 
 var loadedURLs = [];
 var cardLoadedTimes = 0;
+var activeTab = 'all';
 
 function clearLoadedURLs() {
     for (let url of loadedURLs) {
@@ -32,12 +33,32 @@ document.addEventListener("DOMContentLoaded", function () {
     });
     setupContinueGameModal();
     checkAndShowContinueModal();
-    loadGameMaps('plays');
+    loadGameMaps('plays', null);
+
+    function switchTab(tab) {
+        activeTab = tab;
+        cardLoadedTimes = 0;
+        clearLoadedURLs();
+        const container = document.getElementById('game_maps_container');
+        container.innerHTML = '';
+        document.getElementById('tabAll').classList.toggle('btnPushed', tab === 'all');
+        document.getElementById('tabAll').disabled = tab === 'all';
+        document.getElementById('tabMine').classList.toggle('btnPushed', tab === 'mine');
+        document.getElementById('tabMine').disabled = tab === 'mine';
+        if (tab === 'mine') container.appendChild(createNewGameCard());
+        loadGameMaps(selectedButton.id.replace('sortBy', '').toLowerCase(), tab === 'mine' ? 'mine' : null);
+    }
+
+    document.getElementById('tabAll').addEventListener('click', () => switchTab('all'));
+    document.getElementById('tabMine').addEventListener('click', () => switchTab('mine'));
+
     document.querySelectorAll('.sortDiv button').forEach(button => {
         button.addEventListener('click', function () {
             cardLoadedTimes = 0;
-            document.getElementById('game_maps_container').innerHTML = '';
-            loadGameMaps(this.id.replace('sortBy', '').toLowerCase());
+            const container = document.getElementById('game_maps_container');
+            container.innerHTML = '';
+            if (activeTab === 'mine') container.appendChild(createNewGameCard());
+            loadGameMaps(this.id.replace('sortBy', '').toLowerCase(), activeTab === 'mine' ? 'mine' : null);
             clearLoadedURLs();
             selectedButton.classList.remove('btnPushed');
             selectedButton.removeAttribute('disabled');
@@ -48,20 +69,21 @@ document.addEventListener("DOMContentLoaded", function () {
     });
     document.getElementById('loadMoreBtn').addEventListener('click', function () {
         cardLoadedTimes++;
-        loadGameMaps(selectedButton.id.replace('sortBy', '').toLowerCase());
+        loadGameMaps(selectedButton.id.replace('sortBy', '').toLowerCase(), activeTab === 'mine' ? 'mine' : null);
     });
 });
 
-async function loadGameMaps(sort) {
+async function loadGameMaps(sort, filter = null) {
     try {
-        let gameMaps;
-        gameMaps = await fetchURL('/api/choose-game?sort=' + sort + '&offset=' + (cardLoadedTimes * 20));
+        let url = '/api/choose-game?sort=' + sort + '&offset=' + (cardLoadedTimes * 20);
+        if (filter) url += '&filter=' + filter;
+        let gameMaps = await fetchURL(url);
         let gameMapsContainer = document.getElementById('game_maps_container');
         if (gameMaps.results && gameMaps.results.length > 0) {
             for (let i = 0; i < gameMaps.results.length; i++) {
                 gameMapsContainer.appendChild(createCard(gameMaps.results[i]));
             }
-        } else {
+        } else if (filter !== 'mine') {
             let p = document.createElement('p');
             p.classList.add('text-center');
             p.innerText = 'Nincsenek elérhető játékok.';
@@ -182,6 +204,35 @@ async function loadCoverImageLowThenHigh(card, gmId) {
         });
     } catch {
         showToast(document.getElementById('toastPlace'), 'A borítókép betöltése nem sikerült.', 'danger', true);
+    }
+}
+
+function createNewGameCard() {
+    let card = document.createElement('div');
+    card.classList.add('card', 'glass', 'create-card');
+    let content = document.createElement('div');
+    content.classList.add('card-content', 'create-card-content');
+    let icon = document.createElement('span');
+    icon.classList.add('create-icon');
+    icon.textContent = '+';
+    let title = document.createElement('h3');
+    title.classList.add('card-title');
+    title.textContent = 'Új játék létrehozása';
+    content.appendChild(icon);
+    content.appendChild(title);
+    card.appendChild(content);
+    card.addEventListener('click', handleCreateCardClick);
+    return card;
+}
+
+async function handleCreateCardClick() {
+    try {
+        const response = await fetch('/api/game-maps', { method: 'POST' });
+        if (!response.ok) throw new Error();
+        const { gameMapID } = await response.json();
+        window.location.href = '/game-maps/' + gameMapID;
+    } catch {
+        showToast(document.getElementById('toastPlace'), 'Az új játék létrehozása nem sikerült.', 'danger', true);
     }
 }
 
