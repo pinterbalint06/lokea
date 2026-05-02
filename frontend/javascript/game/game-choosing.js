@@ -1,6 +1,7 @@
 import { formatSecondsToMinutes } from "./timer-conversion.js";
 import { createFavoriteButton } from "../libs/elements/favoriteButton.js";
 import { loadGameMapCoverImageLowThenHigh } from "../libs/network/progressiveImage.js";
+import { showToast } from "../libs/utils.js";
 
 window.addEventListener('pageshow', (event) => {
     if (event.persisted) window.location.reload();
@@ -52,9 +53,15 @@ document.addEventListener("DOMContentLoaded", function () {
 });
 
 async function loadGameMaps(sort) {
-    const gameMaps = await fetchURL('/api/choose-game?sort=' + sort + '&offset=' + (cardLoadedTimes * 20));
+    let gameMaps;
+    try {
+        gameMaps = await fetchURL('/api/choose-game?sort=' + sort + '&offset=' + (cardLoadedTimes * 20));
+    } catch {
+        showToast(document.getElementById('toastPlace'), 'A pályák betöltése nem sikerült.', 'danger', true);
+        return;
+    }
     let gameMapsContainer = document.getElementById('game_maps_container');
-    if (gameMaps?.results && gameMaps.results.length > 0) {
+    if (gameMaps.results && gameMaps.results.length > 0) {
         for (let i = 0; i < gameMaps.results.length; i++) {
             gameMapsContainer.appendChild(createCard(gameMaps.results[i]));
         }
@@ -89,7 +96,6 @@ function createCard(game_map) {
     game_maps_card.addEventListener('click', function () {
         createModal(game_map);
     });
-    console.log(game_map.game_maps_id);
     loadCoverImagelowThenHigh(game_maps_card, game_map.game_maps_id);
 
     return game_maps_card;
@@ -142,26 +148,20 @@ async function postGameId(gamemapId) {
         });
         if (!response.ok) {
             const errorData = await response.json();
-            throw new Error('Hiba a játék indításakor: ' + errorData.message);
+            throw new Error(errorData.message);
         }
         window.location.href = '/game';
     } catch (error) {
-        console.error('POST hiba:', error);
+        showToast(document.getElementById('toastPlace'), 'A játék indítása nem sikerült: ' + error.message, 'danger', true);
     }
 }
 
 async function fetchURL(url) {
-    let re;
-    try {
-        const response = await fetch(url);
-        if (!response.ok) {
-            throw new Error('Hiba a játék pályák lekérésekor: ' + response.statusText);
-        }
-        re = await response.json();
-    } catch (error) {
-        console.error('GET hiba:', error);
+    const response = await fetch(url);
+    if (!response.ok) {
+        throw new Error(response.statusText);
     }
-    return re;
+    return response.json();
 }
 
 async function loadCoverImagelowThenHigh(card, gmId) {
@@ -196,14 +196,18 @@ function setupContinueGameModal() {
 }
 
 async function checkAndShowContinueModal() {
-    const activeGameSession = await fetchURL('/api/choose-game/session');
-    if (activeGameSession?.hasActiveSession) {
-        const continueModal = document.getElementById('continueGameModal');
-        const continueModalDescription = document.getElementById('continue-modal-desc');
-        if (activeGameSession.gameTitle) {
-            continueModalDescription.innerText = `Van egy futó játékod ezen a pályán: ${activeGameSession.gameTitle}. Szeretnéd folytatni?`;
+    try {
+        const activeGameSession = await fetchURL('/api/choose-game/session');
+        if (activeGameSession?.hasActiveSession) {
+            const continueModal = document.getElementById('continueGameModal');
+            const continueModalDescription = document.getElementById('continue-modal-desc');
+            if (activeGameSession.gameTitle) {
+                continueModalDescription.innerText = `Van egy futó játékod ezen a pályán: ${activeGameSession.gameTitle}. Szeretnéd folytatni?`;
+            }
+            continueModal.classList.add('active');
         }
-        continueModal.classList.add('active');
+    } catch {
+        // session check failing silently is acceptable — don't block the page
     }
 }
 
@@ -216,9 +220,9 @@ async function finishStartedGameSession() {
             }
         });
         if (!response.ok) {
-            throw new Error('Hiba a játék befejezésekor: ' + response.statusText);
+            throw new Error(response.statusText);
         }
-    } catch (error) {
-        console.error('POST hiba:', error);
+    } catch {
+        showToast(document.getElementById('toastPlace'), 'A játék befejezése nem sikerült.', 'danger', true);
     }
 }
