@@ -1,8 +1,11 @@
 const { createGameTestApp } = require("#gametest/helpers/setup-test.js");
 const { testRequiresGameSession, suppressConsoleErrors } = require("#gametest/helpers/helpers.js");
 const { checkGameSession } = require("#utils/auth.js");
-const database = require("#sql/game.database.js");
-const { mockConnection } = database;
+const { mockConnection } = require("#sql/database.js");
+const mapsQueries = require("#gameflow/maps/maps.queries.js");
+const randomPointQueries = require("#gameflow/random-point/random-point.queries.js");
+const guessQueries = require("#gameflow/guess/guess.queries.js");
+const sessionsQueries = require("#gameflow/sessions/sessions.queries.js");
 
 const requestWithSupertest = createGameTestApp();
 
@@ -59,7 +62,7 @@ describe("Game API - /api/game/", () => {
 
     describe("GET /maps", () => {
         beforeEach(() => {
-            database.getAllMaps.mockResolvedValue([mockMap]);
+            mapsQueries.getAllMaps.mockResolvedValue([mockMap]);
         });
 
         describe("Authorization (401, 403)", () => {
@@ -74,11 +77,11 @@ describe("Game API - /api/game/", () => {
                 expect(response.body.maps).toHaveLength(1);
                 expect(response.body.maps[0].title).toBe("Test Map");
                 expect(response.body.maps[0].mapId).toBe(1);
-                expect(database.getAllMaps).toHaveBeenCalledWith(100);
+                expect(mapsQueries.getAllMaps).toHaveBeenCalledWith(100);
             });
 
             it("Should return an empty maps array if there are no maps", async () => {
-                database.getAllMaps.mockResolvedValueOnce([]);
+                mapsQueries.getAllMaps.mockResolvedValueOnce([]);
 
                 const response = await requestWithSupertest.get("/api/game/maps");
 
@@ -91,7 +94,7 @@ describe("Game API - /api/game/", () => {
             suppressConsoleErrors();
 
             it("Should respond with 500 if the database throws", async () => {
-                database.getAllMaps.mockRejectedValueOnce(new Error("DB error"));
+                mapsQueries.getAllMaps.mockRejectedValueOnce(new Error("DB error"));
 
                 const response = await requestWithSupertest.get("/api/game/maps");
 
@@ -107,8 +110,8 @@ describe("Game API - /api/game/", () => {
 
         describe("Happy paths (200)", () => {
             it("Should return the existing current point if one is set", async () => {
-                database.getCurrentPointId.mockResolvedValueOnce(10);
-                database.getPointById.mockResolvedValueOnce(mockPoint);
+                randomPointQueries.getCurrentPointId.mockResolvedValueOnce(10);
+                randomPointQueries.getPointById.mockResolvedValueOnce(mockPoint);
 
                 const response = await requestWithSupertest.get("/api/game/round");
 
@@ -116,31 +119,31 @@ describe("Game API - /api/game/", () => {
                 expect(response.body.point.pointId).toBe(mockPoint.point_id);
                 expect(response.body.point.game.timeLeft).toBeGreaterThanOrEqual(0);
                 expect(response.body.point.game.roundEndAt).toBeTruthy();
-                expect(database.getPointById).toHaveBeenCalledWith(10);
+                expect(randomPointQueries.getPointById).toHaveBeenCalledWith(10);
             });
 
             it("Should get a random point if there is no current point", async () => {
-                database.getCurrentPointId.mockResolvedValueOnce(null);
-                database.getRandomPoint.mockResolvedValueOnce(mockPoint);
+                randomPointQueries.getCurrentPointId.mockResolvedValueOnce(null);
+                randomPointQueries.getRandomPoint.mockResolvedValueOnce(mockPoint);
 
                 const response = await requestWithSupertest.get("/api/game/round");
 
                 expect(response.statusCode).toBe(200);
-                expect(database.getRandomPoint).toHaveBeenCalledWith(100, 1);
-                expect(database.incrementCycle).not.toHaveBeenCalled();
+                expect(randomPointQueries.getRandomPoint).toHaveBeenCalledWith(100, 1);
+                expect(randomPointQueries.incrementCycle).not.toHaveBeenCalled();
             });
 
             it("Should increment cycle and retry when no random point is found on first attempt", async () => {
-                database.getCurrentPointId.mockResolvedValueOnce(null);
-                database.getRandomPoint
+                randomPointQueries.getCurrentPointId.mockResolvedValueOnce(null);
+                randomPointQueries.getRandomPoint
                     .mockResolvedValueOnce(null)
                     .mockResolvedValueOnce(mockPoint);
 
                 const response = await requestWithSupertest.get("/api/game/round");
 
                 expect(response.statusCode).toBe(200);
-                expect(database.incrementCycle).toHaveBeenCalledWith(1);
-                expect(database.getRandomPoint).toHaveBeenCalledTimes(2);
+                expect(randomPointQueries.incrementCycle).toHaveBeenCalledWith(1);
+                expect(randomPointQueries.getRandomPoint).toHaveBeenCalledTimes(2);
             });
 
             it("Should set roundStartedAt in session if it was not already set", async () => {
@@ -158,8 +161,8 @@ describe("Game API - /api/game/", () => {
                     request.session = session;
                     next();
                 });
-                database.getCurrentPointId.mockResolvedValueOnce(null);
-                database.getRandomPoint.mockResolvedValueOnce(mockPoint);
+                randomPointQueries.getCurrentPointId.mockResolvedValueOnce(null);
+                randomPointQueries.getRandomPoint.mockResolvedValueOnce(mockPoint);
 
                 const response = await requestWithSupertest.get("/api/game/round");
 
@@ -172,8 +175,8 @@ describe("Game API - /api/game/", () => {
             suppressConsoleErrors();
 
             it("Should respond with 500 if no points are available after cycle increment", async () => {
-                database.getCurrentPointId.mockResolvedValueOnce(null);
-                database.getRandomPoint.mockResolvedValue(null);
+                randomPointQueries.getCurrentPointId.mockResolvedValueOnce(null);
+                randomPointQueries.getRandomPoint.mockResolvedValue(null);
 
                 const response = await requestWithSupertest.get("/api/game/round");
 
@@ -182,7 +185,7 @@ describe("Game API - /api/game/", () => {
             });
 
             it("Should respond with 500 if the database throws", async () => {
-                database.getCurrentPointId.mockRejectedValueOnce(new Error("DB error"));
+                randomPointQueries.getCurrentPointId.mockRejectedValueOnce(new Error("DB error"));
 
                 const response = await requestWithSupertest.get("/api/game/round");
 
@@ -195,7 +198,7 @@ describe("Game API - /api/game/", () => {
         const validGuess = { u: "0.5", v: "0.5", map_i: "0" };
 
         beforeEach(() => {
-            database.getCurrentPointId.mockResolvedValue(10);
+            randomPointQueries.getCurrentPointId.mockResolvedValue(10);
         });
 
         describe("Authorization (401, 403)", () => {
@@ -206,7 +209,7 @@ describe("Game API - /api/game/", () => {
 
         describe("Input validation (400)", () => {
             it("Should respond with 400 if there is no active round", async () => {
-                database.getCurrentPointId.mockResolvedValueOnce(null);
+                randomPointQueries.getCurrentPointId.mockResolvedValueOnce(null);
 
                 const response = await requestWithSupertest
                     .post("/api/game/round/guess")
@@ -340,9 +343,9 @@ describe("Game API - /api/game/", () => {
                 expect(response.body.totalScore).toBe(1000);
                 expect(response.body.pointu).toBe(0.5);
                 expect(response.body.pointv).toBe(0.5);
-                expect(database.saveGuess).toHaveBeenCalled();
-                expect(database.incrementCurrentRound).toHaveBeenCalledWith(mockConnection, 1);
-                expect(database.clearCurrentPoint).toHaveBeenCalledWith(mockConnection, 1);
+                expect(guessQueries.saveGuess).toHaveBeenCalled();
+                expect(guessQueries.incrementCurrentRound).toHaveBeenCalledWith(mockConnection, 1);
+                expect(guessQueries.clearCurrentPoint).toHaveBeenCalledWith(mockConnection, 1);
             });
 
             it("Should apply time penalty when time remaining is below timePunishment", async () => {
@@ -416,7 +419,7 @@ describe("Game API - /api/game/", () => {
             suppressConsoleErrors();
 
             it("Should respond with 500 and rollback if saveGuess throws", async () => {
-                database.saveGuess.mockRejectedValueOnce(new Error("DB error"));
+                guessQueries.saveGuess.mockRejectedValueOnce(new Error("DB error"));
 
                 const response = await requestWithSupertest
                     .post("/api/game/round/guess")
@@ -428,7 +431,7 @@ describe("Game API - /api/game/", () => {
             });
 
             it("Should respond with 500 and rollback if incrementCurrentRound throws", async () => {
-                database.incrementCurrentRound.mockRejectedValueOnce(new Error("DB error"));
+                guessQueries.incrementCurrentRound.mockRejectedValueOnce(new Error("DB error"));
 
                 const response = await requestWithSupertest
                     .post("/api/game/round/guess")
@@ -439,7 +442,8 @@ describe("Game API - /api/game/", () => {
             });
 
             it("Should respond with 500 if getConnection throws", async () => {
-                database.getConnection.mockRejectedValueOnce(new Error("Connection failed"));
+                const { getConnection } = require("#sql/database.js");
+                getConnection.mockRejectedValueOnce(new Error("Connection failed"));
 
                 const response = await requestWithSupertest
                     .post("/api/game/round/guess")
@@ -487,7 +491,7 @@ describe("Game API - /api/game/", () => {
                 const response = await requestWithSupertest.delete("/api/game/session");
 
                 expect(response.statusCode).toBe(200);
-                expect(database.finishGameSession).toHaveBeenCalledWith(1);
+                expect(sessionsQueries.finishGameSession).toHaveBeenCalledWith(1);
             });
         });
 
@@ -495,7 +499,7 @@ describe("Game API - /api/game/", () => {
             suppressConsoleErrors();
 
             it("Should respond with 500 if the database throws", async () => {
-                database.finishGameSession.mockRejectedValueOnce(new Error("DB error"));
+                sessionsQueries.finishGameSession.mockRejectedValueOnce(new Error("DB error"));
 
                 const response = await requestWithSupertest.delete("/api/game/session");
 

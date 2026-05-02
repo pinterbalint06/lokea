@@ -1,7 +1,7 @@
-const database = require("#sql/game.database.js");
+const { getAllMaps: getAllMapsDb } = require("#gameflow/maps/maps.queries.js");
 
 async function getAllMaps(gameMapId) {
-    const maps = await database.getAllMaps(gameMapId);
+    const maps = await getAllMapsDb(gameMapId);
     const mapObjects = [];
     const mapInfo = [];
 

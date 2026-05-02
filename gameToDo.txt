@@ -50,8 +50,8 @@ kesz!!!!--esetleg modal alaphelyzetbe allitasa
 kesz!!!!--svg-k helyes használata   uixwing  ------- utolso prio
 
 Teendők 2:
-!!!felig kesz--játékok befejezése ------pull utan
+!!!!!!!!!!!!!!!!!!felig kesz--játékok befejezése ------pull utan
     --toplista megcsinalasa
     --kommentelés megcsinálása
---vegso panel a finish_game_sessionbol kapja az adatokat   ----pull utan
---mapcover kepek megcsinalasa ----------pull utan
+!!!!!!!!!!!!!!!--vegso panel a finish_game_sessionbol kapja az adatokat   ----pull utan
+kesz--mapcover kepek megcsinalasa ----------pull utan

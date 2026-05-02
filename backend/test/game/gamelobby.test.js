@@ -1,7 +1,8 @@
 const { createGameLobbyTestApp } = require("#gametest/helpers/setup-test.js");
 const { testRequiresAuth, suppressConsoleErrors } = require("#gametest/helpers/helpers.js");
 const AppError = require("#utils/app-error.js");
-const database = require("#sql/game.database.js");
+const gameLobbyQueries = require("#gameflow/gamelobby.queries.js");
+const sessionsQueries = require("#gameflow/sessions/sessions.queries.js");
 
 const requestWithSupertest = createGameLobbyTestApp();
 
@@ -13,7 +14,7 @@ const mockGameMaps = [
 describe("Game Lobby API - /api/choose-game/", () => {
     describe("GET /", () => {
         beforeEach(() => {
-            database.getGameMaps.mockResolvedValue(mockGameMaps);
+            gameLobbyQueries.getGameMaps.mockResolvedValue(mockGameMaps);
         });
 
         describe("Input validation (400)", () => {
@@ -27,7 +28,7 @@ describe("Game Lobby API - /api/choose-game/", () => {
                 const response = await requestWithSupertest.get("/api/choose-game?sort=CREATED");
 
                 expect(response.statusCode).toBe(200);
-                expect(database.getGameMaps).toHaveBeenCalledWith("created", undefined, 0);
+                expect(gameLobbyQueries.getGameMaps).toHaveBeenCalledWith("created", undefined, 0);
             });
 
             it("Should respond with 400 for a negative offset parameter", async () => {
@@ -49,21 +50,21 @@ describe("Game Lobby API - /api/choose-game/", () => {
 
                 expect(response.statusCode).toBe(200);
                 expect(response.body.results).toEqual(mockGameMaps);
-                expect(database.getGameMaps).toHaveBeenCalledWith(sort, undefined, 0);
+                expect(gameLobbyQueries.getGameMaps).toHaveBeenCalledWith(sort, undefined, 0);
             });
 
             it("Should default to 'created' sort when no sort param is given", async () => {
                 const response = await requestWithSupertest.get("/api/choose-game");
 
                 expect(response.statusCode).toBe(200);
-                expect(database.getGameMaps).toHaveBeenCalledWith("created", undefined, 0);
+                expect(gameLobbyQueries.getGameMaps).toHaveBeenCalledWith("created", undefined, 0);
             });
 
             it("Should pass offset to database when provided", async () => {
                 const response = await requestWithSupertest.get("/api/choose-game?offset=10");
 
                 expect(response.statusCode).toBe(200);
-                expect(database.getGameMaps).toHaveBeenCalledWith("created", undefined, 10);
+                expect(gameLobbyQueries.getGameMaps).toHaveBeenCalledWith("created", undefined, 10);
             });
         });
 
@@ -71,45 +72,9 @@ describe("Game Lobby API - /api/choose-game/", () => {
             suppressConsoleErrors();
 
             it("Should respond with 500 if the database throws", async () => {
-                database.getGameMaps.mockRejectedValueOnce(new Error("DB error"));
+                gameLobbyQueries.getGameMaps.mockRejectedValueOnce(new Error("DB error"));
 
                 const response = await requestWithSupertest.get("/api/choose-game");
-
-                expect(response.statusCode).toBe(500);
-            });
-        });
-    });
-
-    describe("GET /cover-images/:cover_image_id", () => {
-        describe("Happy paths (200)", () => {
-            it("Should send the file at the path returned by the database", async () => {
-                database.getImagePath.mockResolvedValueOnce("cover_images/test.jpg");
-
-                const response = await requestWithSupertest.get("/api/choose-game/cover-images/42");
-
-                expect(response.statusCode).toBe(200);
-                expect(database.getImagePath).toHaveBeenCalledWith("42");
-                expect(response.body.filePath).toContain("cover_images");
-                expect(response.body.filePath).toContain("test.jpg");
-            });
-
-            it("Should fall back to not_found.webp when DB returns no path", async () => {
-                database.getImagePath.mockResolvedValueOnce(null);
-
-                const response = await requestWithSupertest.get("/api/choose-game/cover-images/99");
-
-                expect(response.statusCode).toBe(200);
-                expect(response.body.filePath).toContain("not_found.webp");
-            });
-        });
-
-        describe("Server errors (500)", () => {
-            suppressConsoleErrors();
-
-            it("Should respond with 500 if the database throws", async () => {
-                database.getImagePath.mockRejectedValueOnce(new Error("DB error"));
-
-                const response = await requestWithSupertest.get("/api/choose-game/cover-images/1");
 
                 expect(response.statusCode).toBe(500);
             });
@@ -123,7 +88,7 @@ describe("Game Lobby API - /api/choose-game/", () => {
 
         describe("Happy paths (200)", () => {
             it("Should return hasActiveSession: false when there is no active session", async () => {
-                database.selectLatestActiveGameSession.mockResolvedValueOnce(null);
+                sessionsQueries.selectLatestActiveGameSession.mockResolvedValueOnce(null);
 
                 const response = await requestWithSupertest.get("/api/choose-game/session");
 
@@ -132,7 +97,7 @@ describe("Game Lobby API - /api/choose-game/", () => {
             });
 
             it("Should return hasActiveSession: true and gameTitle when session exists", async () => {
-                database.selectLatestActiveGameSession.mockResolvedValueOnce({
+                sessionsQueries.selectLatestActiveGameSession.mockResolvedValueOnce({
                     session_id: 5,
                     game_maps_id: 100,
                     current_cycle: 1,
@@ -155,7 +120,7 @@ describe("Game Lobby API - /api/choose-game/", () => {
             suppressConsoleErrors();
 
             it("Should respond with 500 if the database throws", async () => {
-                database.selectLatestActiveGameSession.mockRejectedValueOnce(new Error("DB error"));
+                sessionsQueries.selectLatestActiveGameSession.mockRejectedValueOnce(new Error("DB error"));
 
                 const response = await requestWithSupertest.get("/api/choose-game/session");
 
@@ -250,7 +215,7 @@ describe("Game Lobby API - /api/choose-game/", () => {
 
         describe("Not found (404)", () => {
             it("Should respond with 404 if the game map does not exist", async () => {
-                database.getGameTitleById.mockResolvedValueOnce(null);
+                sessionsQueries.getGameTitleById.mockResolvedValueOnce(null);
 
                 const response = await requestWithSupertest
                     .post("/api/choose-game/session")
@@ -267,7 +232,7 @@ describe("Game Lobby API - /api/choose-game/", () => {
                     .send(validBody);
 
                 expect(response.statusCode).toBe(200);
-                expect(database.insertGameSession).toHaveBeenCalledWith(1, 5, 60, 100, -3);
+                expect(sessionsQueries.insertGameSession).toHaveBeenCalledWith(1, 5, 60, 100, -3);
             });
 
             it("Should use sharpness -1.5 for easy difficulty", async () => {
@@ -276,7 +241,7 @@ describe("Game Lobby API - /api/choose-game/", () => {
                     .send({ ...validBody, difficulty: "easy" });
 
                 expect(response.statusCode).toBe(200);
-                expect(database.insertGameSession).toHaveBeenCalledWith(1, 5, 60, 100, -1.5);
+                expect(sessionsQueries.insertGameSession).toHaveBeenCalledWith(1, 5, 60, 100, -1.5);
             });
 
             it("Should use sharpness -5 for hard difficulty", async () => {
@@ -285,7 +250,7 @@ describe("Game Lobby API - /api/choose-game/", () => {
                     .send({ ...validBody, difficulty: "hard" });
 
                 expect(response.statusCode).toBe(200);
-                expect(database.insertGameSession).toHaveBeenCalledWith(1, 5, 60, 100, -5);
+                expect(sessionsQueries.insertGameSession).toHaveBeenCalledWith(1, 5, 60, 100, -5);
             });
         });
 
@@ -293,7 +258,7 @@ describe("Game Lobby API - /api/choose-game/", () => {
             suppressConsoleErrors();
 
             it("Should respond with 500 if insertGameSession throws", async () => {
-                database.insertGameSession.mockRejectedValueOnce(new Error("DB error"));
+                sessionsQueries.insertGameSession.mockRejectedValueOnce(new Error("DB error"));
 
                 const response = await requestWithSupertest
                     .post("/api/choose-game/session")
@@ -303,7 +268,7 @@ describe("Game Lobby API - /api/choose-game/", () => {
             });
 
             it("Should respect statusCode from AppError thrown by database", async () => {
-                database.insertGameSession.mockRejectedValueOnce(new AppError("Custom error", 503));
+                sessionsQueries.insertGameSession.mockRejectedValueOnce(new AppError("Custom error", 503));
 
                 const response = await requestWithSupertest
                     .post("/api/choose-game/session")

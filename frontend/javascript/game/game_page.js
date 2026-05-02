@@ -238,162 +238,166 @@ function cycleMaps(direction = 1) {
 function nextMap() {
     const map = maps[mapsIndex];
     mapId = map.mapId;
-    loadMaplowThenHigh(mapId);
     document.getElementById('mapTitle').textContent = map.title || '-';
     removeEverything();
-
+    try {
+        loadMaplowThenHigh(mapId);
+    }
+    catch (error) {
+        showError("Error loading map:", error);
+    }
 }
 
 function startRoundTimer(roundEndAt) {
-    const timerEl = document.getElementById("timer");
-    timerInterval = setInterval(() => {
-        const remaining = Math.ceil((roundEndAt - Date.now()) / 1000);
-        timerEl.textContent = formatSecondsToMinutes(remaining);
-        timerEl.classList.toggle("urgent", remaining <= 5 && remaining > 0);
-        if (remaining <= 0) {
-            sendGuess();
-        }
-    }, 200);
-}
-
-function stopRoundTimer() {
-    clearInterval(timerInterval);
-    timerInterval = null;
-    document.getElementById("timer").classList.remove("urgent");
-}
-
-async function sendGuess() {
-    if (!guessSent) {
-        guessSent = true;
-        stopRoundTimer();
-        document.getElementById("guessBtn").disabled = true;
-        document.getElementById("pictureFullScreenBtn").disabled = true;
-        canPlaceMarker = false;
-        let sendData;
-        if (!doesMarkerExist(0)) {
-            sendData = { u: -1, v: -1 };
-        }
-        else {
-            sendData = markerPosition();
-        }
-        sendData.map_i = mapsIndex;
-        try {
-            const response = await postGameScore('/api/game/round/guess', sendData);
-            showAnswer(response);
-            if (resolveGuess) {
-                resolveGuess();
-                resolveGuess = null;
+        const timerEl = document.getElementById("timer");
+        timerInterval = setInterval(() => {
+            const remaining = Math.ceil((roundEndAt - Date.now()) / 1000);
+            timerEl.textContent = formatSecondsToMinutes(remaining);
+            timerEl.classList.toggle("urgent", remaining <= 5 && remaining > 0);
+            if (remaining <= 0) {
+                sendGuess();
             }
-        } catch (error) {
-            showError('Nem sikerült elküldeni a tippet: ' + error.message);
-        }
-    }
-}
-
-function showAnswer(response) {
-    if (mapsIndex != response.mapI) {
-        mapsIndex = response.mapI;
-        nextMap();
+        }, 200);
     }
 
-    const panel = document.getElementById("guessPanel");
-    document.getElementById("guessPanelScore").textContent = response.score ?? 0;
-    document.getElementById("guessPanelDistance").textContent = response.distance != null ? `Távolság: ${response.distance} px` : "Rossz térkép vagy nincs jelölő";
-    document.getElementById("guessPanelTotal").textContent = response.totalScore ?? 0;
-    panel.classList.add("open");
+    function stopRoundTimer() {
+        clearInterval(timerInterval);
+        timerInterval = null;
+        document.getElementById("timer").classList.remove("urgent");
+    }
 
-    setTimeout(() => {
-        document.getElementById(mapCanvasId).classList.add("full");
-        document.getElementById('bottomRight').classList.add('expanded');
-        placeMarkerByUV(1, response.pointu, response.pointv, 24.0, 32.0, "ready");
-        if (doesMarkerExist(0)) {
-            connectMarker(0, 1, 0);
+    async function sendGuess() {
+        if (!guessSent) {
+            guessSent = true;
+            stopRoundTimer();
+            document.getElementById("guessBtn").disabled = true;
+            document.getElementById("pictureFullScreenBtn").disabled = true;
+            canPlaceMarker = false;
+            let sendData;
+            if (!doesMarkerExist(0)) {
+                sendData = { u: -1, v: -1 };
+            }
+            else {
+                sendData = markerPosition();
+            }
+            sendData.map_i = mapsIndex;
+            try {
+                const response = await postGameScore('/api/game/round/guess', sendData);
+                showAnswer(response);
+                if (resolveGuess) {
+                    resolveGuess();
+                    resolveGuess = null;
+                }
+            } catch (error) {
+                showError('Nem sikerült elküldeni a tippet: ' + error.message);
+            }
         }
+    }
+
+    function showAnswer(response) {
+        if (mapsIndex != response.mapI) {
+            mapsIndex = response.mapI;
+            nextMap();
+        }
+
+        const panel = document.getElementById("guessPanel");
+        document.getElementById("guessPanelScore").textContent = response.score ?? 0;
+        document.getElementById("guessPanelDistance").textContent = response.distance != null ? `Távolság: ${response.distance} px` : "Rossz térkép vagy nincs jelölő";
+        document.getElementById("guessPanelTotal").textContent = response.totalScore ?? 0;
+        panel.classList.add("open");
+
         setTimeout(() => {
-            movetoMarker(response.pointx, response.pointy);
-        }, 500);
-    }, 320);
-}
-
-async function loadPointLowThenHigh(pId) {
-    try {
-        await loadPointEquirectangularLowThenHigh({
-            pointId: pId,
-            loadToViewer: async (imgData) => {
-                await equirectangularViewer.loadImage(imgData.url, imgData.width, imgData.height, degreeToRadian(imgData.northDirection));
-            },
-            isCurrent: () => currentPointId && currentPointId === pId
-        });
-    } catch (error) {
-        console.error("Error loading point:", error);
-    }
-}
-
-async function loadMaplowThenHigh(mId) {
-    try {
-        await loadMapImageLowThenHigh({
-            mapId: mId,
-            loadToViewer: async (imgData) => {
-                await mapViewerEngine.loadMap(imgData.url, imgData.width, imgData.height);
-            },
-            isCurrent: () => mapId && mapId === mId
-        });
-    } catch (error) {
-        console.error("Error loading map:", error);
-    }
-}
-
-async function fetchGameData(url) {
-    const response = await fetch(url);
-    if (!response.ok) {
-        const responseData = await response.json();
-        throw new Error(responseData.message || 'Hálózati hiba');
-    }
-    const data = await response.json();
-    return data;
-}
-
-async function postGameScore(url, data) {
-    const response = await fetch(url, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(data)
-    });
-    if (!response.ok) {
-        const responseData = await response.json();
-        throw new Error(responseData.message || 'Hálózati hiba');
-    }
-    const result = await response.json();
-    return result;
-}
-
-async function finishGame() {
-    try {
-        const response = await fetch('/api/game/session', {
-            method: 'DELETE',
-            headers: {
-                'Content-Type': 'application/json'
+            document.getElementById(mapCanvasId).classList.add("full");
+            document.getElementById('bottomRight').classList.add('expanded');
+            placeMarkerByUV(1, response.pointu, response.pointv, 24.0, 32.0, "ready");
+            if (doesMarkerExist(0)) {
+                connectMarker(0, 1, 0);
             }
+            setTimeout(() => {
+                movetoMarker(response.pointx, response.pointy);
+            }, 500);
+        }, 320);
+    }
+
+    async function loadPointLowThenHigh(pId) {
+        try {
+            await loadPointEquirectangularLowThenHigh({
+                pointId: pId,
+                loadToViewer: async (imgData) => {
+                    await equirectangularViewer.loadImage(imgData.url, imgData.width, imgData.height, degreeToRadian(imgData.northDirection));
+                },
+                isCurrent: () => currentPointId && currentPointId === pId
+            });
+        } catch (error) {
+            throw new Error(error.message || "Error loading point image");
+        }
+    }
+
+    async function loadMaplowThenHigh(mId) {
+        try {
+            await loadMapImageLowThenHigh({
+                mapId: mId,
+                loadToViewer: async (imgData) => {
+                    await mapViewerEngine.loadMap(imgData.url, imgData.width, imgData.height);
+                },
+                isCurrent: () => mapId && mapId === mId
+            });
+        } catch (error) {
+            throw new Error(error.message || "Error loading map image");
+        }
+    }
+
+    async function fetchGameData(url) {
+        const response = await fetch(url);
+        if (!response.ok) {
+            const responseData = await response.json();
+            throw new Error(responseData.message || 'Hálózati hiba');
+        }
+        const data = await response.json();
+        return data;
+    }
+
+    async function postGameScore(url, data) {
+        const response = await fetch(url, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(data)
         });
         if (!response.ok) {
             const responseData = await response.json();
             throw new Error(responseData.message || 'Hálózati hiba');
         }
         const result = await response.json();
-    } catch (error) {
-        showError("Hiba a játék befejezésekor: " + error.message);
+        return result;
     }
 
-    const panel = document.getElementById('guessPanel');
-    document.getElementById('finalScore').textContent = document.getElementById('guessPanelTotal').textContent || '0';
-    panel.classList.add('open');
-    requestAnimationFrame(() => requestAnimationFrame(() => {
-        panel.classList.add('game-over');
-    }));
-}
+    async function finishGame() {
+        try {
+            const response = await fetch('/api/game/session', {
+                method: 'DELETE',
+                headers: {
+                    'Content-Type': 'application/json'
+                }
+            });
+            if (!response.ok) {
+                const responseData = await response.json();
+                throw new Error(responseData.message || 'Hálózati hiba');
+            }
+            const result = await response.json();
+        } catch (error) {
+            showError("Hiba a játék befejezésekor: " + error.message);
+        }
 
-window.mapFullScreen = mapFullScreen;
-window.pictureFullScreen = pictureFullScreen;
-window.nextRound = nextRound;
-window.sendGuess = sendGuess;
-window.finishGame = finishGame;
+        const panel = document.getElementById('guessPanel');
+        document.getElementById('finalScore').textContent = document.getElementById('guessPanelTotal').textContent || '0';
+        panel.classList.add('open');
+        requestAnimationFrame(() => requestAnimationFrame(() => {
+            panel.classList.add('game-over');
+        }));
+    }
+
+    window.mapFullScreen = mapFullScreen;
+    window.pictureFullScreen = pictureFullScreen;
+    window.nextRound = nextRound;
+    window.sendGuess = sendGuess;
+    window.finishGame = finishGame;

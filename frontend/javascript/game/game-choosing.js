@@ -1,5 +1,7 @@
 import { formatSecondsToMinutes } from "./timer-conversion.js";
 import { createFavoriteButton } from "../libs/elements/favoriteButton.js";
+import { loadGameMapCoverImageLowThenHigh } from "../libs/network/progressiveImage.js";
+import { showToast } from "../libs/utils.js";
 
 window.addEventListener('pageshow', (event) => {
     if (event.persisted) window.location.reload();
@@ -51,17 +53,22 @@ document.addEventListener("DOMContentLoaded", function () {
 });
 
 async function loadGameMaps(sort) {
-    const gameMaps = await fetchURL('/api/choose-game?sort=' + sort + '&offset=' + (cardLoadedTimes * 20));
-    let gameMapsContainer = document.getElementById('game_maps_container');
-    if (gameMaps.results && gameMaps.results.length > 0) {
-        for (let i = 0; i < gameMaps.results.length; i++) {
-            gameMapsContainer.appendChild(createCard(gameMaps.results[i]));
+    try {
+        let gameMaps;
+        gameMaps = await fetchURL('/api/choose-game?sort=' + sort + '&offset=' + (cardLoadedTimes * 20));
+        let gameMapsContainer = document.getElementById('game_maps_container');
+        if (gameMaps.results && gameMaps.results.length > 0) {
+            for (let i = 0; i < gameMaps.results.length; i++) {
+                gameMapsContainer.appendChild(createCard(gameMaps.results[i]));
+            }
+        } else {
+            let p = document.createElement('p');
+            p.classList.add('text-center');
+            p.innerText = 'Nincsenek elérhető játékok.';
+            gameMapsContainer.appendChild(p);
         }
-    } else {
-        let p = document.createElement('p');
-        p.classList.add('text-center');
-        p.innerText = 'Nincsenek elérhető játékok.';
-        gameMapsContainer.appendChild(p);
+    } catch {
+        showToast(document.getElementById('toastPlace'), 'A pályák betöltése nem sikerült.', 'danger', true);
     }
 }
 
@@ -88,16 +95,9 @@ function createCard(game_map) {
     game_maps_card.addEventListener('click', function () {
         createModal(game_map);
     });
-
-    loadCardBackground(game_maps_card, game_map.cover_image_id);
+    loadCoverImageLowThenHigh(game_maps_card, game_map.game_maps_id);
 
     return game_maps_card;
-}
-
-async function loadCardBackground(card, cover_image_id) {
-    const image = await getCoverImage(cover_image_id);
-    loadedURLs.push(image);
-    card.style.backgroundImage = "url('" + image + "')";
 }
 
 function createReview(rating) {
@@ -147,43 +147,41 @@ async function postGameId(gamemapId) {
         });
         if (!response.ok) {
             const errorData = await response.json();
-            throw new Error('Hiba a játék indításakor: ' + errorData.message);
+            throw new Error(errorData.message);
         }
         window.location.href = '/game';
     } catch (error) {
-        console.error('POST hiba:', error);
+        showToast(document.getElementById('toastPlace'), 'A játék indítása nem sikerült: ' + error.message, 'danger', true);
     }
 }
 
 async function fetchURL(url) {
-    let re;
-    try {
-        const response = await fetch(url);
-        if (!response.ok) {
-            throw new Error('Hiba a játék pályák lekérésekor: ' + response.statusText);
-        }
-        re = await response.json();
-    } catch (error) {
-        console.error('GET hiba:', error);
+    const response = await fetch(url);
+    if (!response.ok) {
+        throw new Error(response.statusText);
     }
-    return re;
+    return response.json();
 }
 
-async function getCoverImage(cover_image_id) {
+async function loadCoverImageLowThenHigh(card, gmId) {
+    let currentUrl = null;
     try {
-        const response = await fetch('/api/choose-game/cover-images/' + cover_image_id, {
-            method: 'GET',
-            headers: {
-                'Content-Type': 'application/json'
-            }
+        await loadGameMapCoverImageLowThenHigh({
+            gameMapId: gmId,
+            loadToViewer: async (imgData) => {
+                imgData.cleanup = () => { };
+                if (currentUrl) {
+                    loadedURLs.splice(loadedURLs.indexOf(currentUrl), 1);
+                    window.URL.revokeObjectURL(currentUrl);
+                }
+                currentUrl = imgData.url;
+                loadedURLs.push(currentUrl);
+                card.style.backgroundImage = `url('${currentUrl}')`;
+            },
+            isCurrent: () => true
         });
-        if (response.ok) {
-            const blob = await response.blob();
-            const url = window.URL.createObjectURL(blob);
-            return url;
-        }
-    } catch (error) {
-        console.error('GET hiba:', error);
+    } catch {
+        showToast(document.getElementById('toastPlace'), 'A borítókép betöltése nem sikerült.', 'danger', true);
     }
 }
 
@@ -202,14 +200,18 @@ function setupContinueGameModal() {
 }
 
 async function checkAndShowContinueModal() {
-    const activeGameSession = await fetchURL('/api/choose-game/session');
-    if (activeGameSession.hasActiveSession) {
-        const continueModal = document.getElementById('continueGameModal');
-        const continueModalDescription = document.getElementById('continue-modal-desc');
-        if (activeGameSession.gameTitle) {
-            continueModalDescription.innerText = `Van egy futó játékod ezen a pályán: ${activeGameSession.gameTitle}. Szeretnéd folytatni?`;
+    try {
+        const activeGameSession = await fetchURL('/api/choose-game/session');
+        if (activeGameSession?.hasActiveSession) {
+            const continueModal = document.getElementById('continueGameModal');
+            const continueModalDescription = document.getElementById('continue-modal-desc');
+            if (activeGameSession.gameTitle) {
+                continueModalDescription.innerText = `Van egy futó játékod ezen a pályán: ${activeGameSession.gameTitle}. Szeretnéd folytatni?`;
+            }
+            continueModal.classList.add('active');
         }
-        continueModal.classList.add('active');
+    } catch {
+        
     }
 }
 
@@ -222,9 +224,9 @@ async function finishStartedGameSession() {
             }
         });
         if (!response.ok) {
-            throw new Error('Hiba a játék befejezésekor: ' + response.statusText);
+            throw new Error(response.statusText);
         }
-    } catch (error) {
-        console.error('POST hiba:', error);
+    } catch {
+        showToast(document.getElementById('toastPlace'), 'A játék befejezése nem sikerült.', 'danger', true);
     }
 }
