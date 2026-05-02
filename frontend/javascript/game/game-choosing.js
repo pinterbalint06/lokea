@@ -236,13 +236,18 @@ function createNewGameCard() {
     return card;
 }
 
+var isCreating = false;
+
 async function handleCreateCardClick() {
+    if (isCreating) return;
+    isCreating = true;
     try {
         const response = await fetch('/api/game-maps', { method: 'POST' });
         if (!response.ok) throw new Error();
         const { gameMapID } = await response.json();
         window.location.href = '/game-maps/' + gameMapID;
     } catch {
+        isCreating = false;
         showToast(document.getElementById('toastPlace'), 'Az új játék létrehozása nem sikerült.', 'danger', true);
     }
 }

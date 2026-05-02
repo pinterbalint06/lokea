@@ -2,11 +2,24 @@ const pool = require('#sql/connection.js');
 
 async function getGameInfoById(gameMapId) {
     const query = `
-        SELECT game_maps.title, map.map_id, points.point_id
-        FROM game_maps
-        LEFT JOIN map ON game_maps.game_maps_id = map.game_maps_id
-        LEFT JOIN points ON map.map_id = points.map_id
-        WHERE game_maps.game_maps_id = ?
+        SELECT
+             game_maps.title,
+             (
+                 SELECT map.map_id
+                 FROM map
+                 WHERE map.game_maps_id = game_maps.game_maps_id
+                 LIMIT 1
+             ) AS map_id,
+             (
+                 SELECT points.point_id
+                 FROM map
+                 INNER JOIN points ON map.map_id = points.map_id
+                 WHERE map.game_maps_id = game_maps.game_maps_id
+                 LIMIT 1
+             ) AS point_id
+         FROM game_maps
+         WHERE game_maps.game_maps_id = ?
+         LIMIT 1
     `;
     const [result] = await pool.execute(query, [gameMapId]);
     return result.length > 0 ? result[0] : null;

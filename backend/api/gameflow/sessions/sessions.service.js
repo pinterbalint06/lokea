@@ -38,7 +38,7 @@ function validateGameInfo(gameInfo) {
         throw new AppError("Game map not found", 404);
     }
     if (!gameInfo.map_id) {
-        throw new AppError("Game map has no points", 400);
+        throw new AppError("Game map has no maps", 400);
     }
     if (!gameInfo.point_id) {
         throw new AppError("Game map has no points", 400);
