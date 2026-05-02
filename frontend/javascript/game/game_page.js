@@ -381,6 +381,7 @@ async function postGameScore(url, data) {
 }
 
 async function finishGame() {
+    let totalScoreValue = 0;
     try {
         const response = await fetch('/api/game/session', {
             method: 'DELETE',
@@ -393,12 +394,13 @@ async function finishGame() {
             throw new Error(responseData.message || 'Hálózati hiba');
         }
         const result = await response.json();
+        totalScoreValue = result.totalScore ?? 0;
     } catch (error) {
         showError("Hiba a játék befejezésekor: " + error.message);
     }
 
     const panel = document.getElementById('guessPanel');
-    document.getElementById('finalScore').textContent = document.getElementById('guessPanelTotal').textContent || '0';
+    document.getElementById('finalScore').textContent = totalScoreValue;
     panel.classList.add('open');
     requestAnimationFrame(() => requestAnimationFrame(() => {
         panel.classList.add('game-over');
