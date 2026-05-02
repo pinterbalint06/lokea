@@ -18,7 +18,7 @@ router.get('/equirectangular', (request, response) => response.sendFile(path.joi
 router.get('/map', (request, response) => response.sendFile(path.join(FRONTEND_PATH, 'test-map.html')));
 
 router.get('/admin', auth.checkRole("ADMIN", "LORD"), (request, response) => response.sendFile(path.join(PRIVATE_FRONTEND_PATH, 'admin.html')));
-router.get('/game-maps', auth.checkAuthPage, (request, response) => response.sendFile(path.join(FRONTEND_PATH, 'game-choosing.html')));
+router.get('/game-maps', auth.checkAuthPage, (request, response) => response.sendFile(path.join(FRONTEND_PATH, 'game-lobby.html')));
 router.get('/game', auth.checkGameSessionPage, (request, response) => response.sendFile(path.join(FRONTEND_PATH, 'game-page.html')));
 
 // pályaszerkesztő
