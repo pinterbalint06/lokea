@@ -1,11 +1,11 @@
-const pool = require('../../sql/main/connection.js');
+const pool = require('#sql/connection.js');
 const bcrypt = require('bcrypt');
-const databaseSettings = require('../../sql/main/databaseSettings.js');
+const databaseSettings = require('#sql/main/databaseSettings.js');
 const { suppressConsoleErrors, expectSuccessfulTransaction, expectRollback } = require('./helpers/helpers.js');
 
 // Mockok
 jest.mock('bcrypt');
-jest.mock('../../sql/main/connection.js', () => {
+jest.mock('#sql/connection.js', () => {
     const mockConnection = {
         execute: jest.fn(),
         beginTransaction: jest.fn(),

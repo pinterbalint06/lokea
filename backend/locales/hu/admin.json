@@ -170,7 +170,6 @@
         "export_error": "Hiba az exportálás során"
     },
     "adminApi": {
-        "language_fetch_error": "Hiba a nyelv lekérdezésekor",
         "dashboard_info_error": "Hiba a dashboard információk lekérdezésekor",
         "chart_daily_activity": "Napi aktivitás",
         "chart_weekly_activity": "Heti aktivitás",

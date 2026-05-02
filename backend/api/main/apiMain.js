@@ -1,7 +1,9 @@
 const express = require('express');
 const router = express.Router();
-const database = require('../../sql/database.js');
+const database = require('#sql/main/databaseMain.js');
+const databaseLogs = require('#sql/admin/databaseLogs.js');
 const bcrypt = require('bcrypt');
+const auth = require('../../utils/auth.js')
 const validator = require('validator');
 const { body, validationResult } = require("express-validator");
 const { sendWelcomeEmail } = require('../../utils/mails.js');
@@ -29,7 +31,7 @@ router.post("/auth/register",
             let insert = await database.newUser(username, email, hashedPassword);
             if (insert.success) {
                 let userid = insert.insertId;
-                await database.addLog(userid, 'Sign up');
+                await databaseLogs.addLog(userid, 'Sign up');
                 // await sendWelcomeEmail(email, username);
                 response.status(201).json({
                     success: true,
@@ -90,7 +92,7 @@ router.post("/auth/login",
                     request.session.userid = rows[0].user_id;
                     request.session.role = sesRole;
                     request.session.userLanguage = rows[0].language;
-                    await database.addLog(rows[0].user_id, 'Login');
+                    await databaseLogs.addLog(rows[0].user_id, 'Login');
                     response.status(200).json({ message: request.t('main:apiMain.login.success'), role: sesRole, username: rows[0].username });
                 }
             }
@@ -132,7 +134,7 @@ router.get('/auth/status', async (request, response) => {
     }
 })
 
-router.get('/users/language', (request, response) => {
+router.get('/users/language', auth.checkAuth, (request, response) => {
     try {
         if (!request.session) {
             throw new Error();
@@ -141,7 +143,7 @@ router.get('/users/language', (request, response) => {
         let language = request.session.userLanguage;
         response.status(200).json({ language: request.session.userLanguage });
     } catch (error) {
-        response.status(500).json({ error: request.t('admin:adminApi.language_fetch_error') });
+        response.status(500).json({ error: request.t('main:apiMain.language_fetch_error') });
     }
 
 });

@@ -170,7 +170,6 @@
         "export_error": "Export error"
     },
     "adminApi": {
-        "language_fetch_error": "Error fetching language",
         "dashboard_info_error": "Error fetching dashboard information",
         "chart_daily_activity": "Daily activity",
         "chart_weekly_activity": "Weekly activity",

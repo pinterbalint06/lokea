@@ -3,9 +3,12 @@ require('./helpers/mocks.js');
 const request = require('supertest');
 const express = require('express');
 const bcrypt = require('bcrypt');
-const database = require('#sql/database.js');
 const apiMain = require('#main/apiMain.js');
-const { mockI18nMiddleware, suppressConsoleErrors } = require('./helpers/helpers.js');
+const db = require('#sql/main/databaseMain.js');
+const dbLogs = require('#sql/admin/databaseLogs.js');
+const enTranslations = require('#locales/en/main.json');
+const huTranslations = require('#locales/hu/main.json');
+const { mockI18nMiddleware, suppressConsoleErrors, testRequiresAuth } = require('./helpers/helpers.js');
 
 const app = express();
 app.use(express.json());
@@ -48,33 +51,33 @@ describe('Main API Tesztek (apiMain.js)', () => {
 
         it('HIBA - 409, felhasználónév vagy e-mail már foglalt', async () => {
             bcrypt.hash.mockResolvedValue('hashed');
-            database.newUser.mockResolvedValue({ success: false });
+            db.newUser.mockResolvedValue({ success: false });
 
             const res = await request(app)
                 .post('/api/auth/register')
                 .send(validUser).expect(409);
-            expect(res.body.error).toBe('main:apiMain.signup.user_exists');
+            expect(res.body.error).toBe(enTranslations.apiMain.signup.user_exists);
         });
 
         it('SIKER - 201, sikeres regisztráció', async () => {
             bcrypt.hash.mockResolvedValue('hashed');
-            database.newUser.mockResolvedValue({ success: true, insertId: 1 });
-            database.addLog.mockResolvedValue();
+            db.newUser.mockResolvedValue({ success: true, insertId: 1 });
+            dbLogs.addLog.mockResolvedValue();
 
             const res = await request(app)
                 .post('/api/auth/register')
                 .send(validUser)
                 .expect(201);
             expect(res.body.success).toBe(true);
-            expect(database.addLog).toHaveBeenCalledWith(1, 'Sign up');
+            expect(dbLogs.addLog).toHaveBeenCalledWith(1, 'Sign up');
         });
 
         it('HIBA - 500, szerver/DB hiba', async () => {
-            database.newUser.mockRejectedValue(new Error('DB hiba'));
+            db.newUser.mockRejectedValue(new Error('DB hiba'));
             const res = await request(app)
                 .post('/api/auth/register')
                 .send(validUser).expect(500);
-            expect(res.body.error).toBe('main:apiMain.signup.error');
+            expect(res.body.error).toBe(enTranslations.apiMain.signup.error);
         });
     });
 
@@ -98,53 +101,52 @@ describe('Main API Tesztek (apiMain.js)', () => {
         });
 
         it('HIBA - 401, nincs ilyen felhasználó (vagy törölt)', async () => {
-            database.getUserByUsername.mockResolvedValue([]);
+            db.getUserByUsername.mockResolvedValue([]);
             const res = await request(app)
                 .post('/api/auth/login')
                 .send(validLogin)
                 .expect(401);
-            expect(res.body.error).toBe('main:apiMain.login.invalid_credentials');
+            expect(res.body.error).toBe(enTranslations.apiMain.login.invalid_credentials);
         });
 
         it('HIBA - 401, hibás jelszó', async () => {
-            database.getUserByUsername.mockResolvedValue([{ deleted_at: null, password: 'db_hash' }]);
+            db.getUserByUsername.mockResolvedValue([{ deleted_at: null, password: 'db_hash' }]);
             bcrypt.compare.mockResolvedValue(false);
 
             const res = await request(app)
                 .post('/api/auth/login')
                 .send(validLogin)
                 .expect(401);
-            expect(res.body.error).toBe('main:apiMain.login.invalid_credentials');
+            expect(res.body.error).toBe(enTranslations.apiMain.login.invalid_credentials);
         });
 
         it('SIKER - 200, sikeres bejelentkezés (username alapján)', async () => {
-            database.getUserByUsername.mockResolvedValue([{ user_id: 1, username: 'TesztElek', role: 'user', language: 'hu', deleted_at: null, password: 'db_hash' }]);
+            db.getUserByUsername.mockResolvedValue([{ user_id: 1, username: 'TesztElek', role: 'user', language: 'hu', deleted_at: null, password: 'db_hash' }]);
             bcrypt.compare.mockResolvedValue(true);
-            database.addLog.mockResolvedValue();
+            dbLogs.addLog.mockResolvedValue();
 
             const res = await request(app)
                 .post('/api/auth/login')
                 .send(validLogin)
                 .expect(200);
-            expect(res.body.message).toBe('main:apiMain.login.success');
+            expect(res.body.message).toBe(enTranslations.apiMain.login.success);
             expect(res.body.role).toBe('user');
         });
 
         it('SIKER - 200, sikeres bejelentkezés e-mail címmel (validator.isEmail)', async () => {
-            database.getUserByEmail.mockResolvedValue([{ user_id: 2, username: 'Elek', role: 'ADMIN', language: 'en', deleted_at: null, password: 'db_hash' }]);
+            db.getUserByEmail.mockResolvedValue([{ user_id: 2, username: 'Elek', role: 'ADMIN', language: 'en', deleted_at: null, password: 'db_hash' }]);
             bcrypt.compare.mockResolvedValue(true);
 
             const res = await request(app)
                 .post('/api/auth/login')
                 .send({ username: 'teszt@elek.hu', password: 'StrongPassword1' })
                 .expect(200);
-            expect(database.getUserByEmail).toHaveBeenCalledWith('teszt@elek.hu');
+            expect(db.getUserByEmail).toHaveBeenCalledWith('teszt@elek.hu');
             expect(res.body.role).toBe('ADMIN');
         });
     });
-    describe('Végpont: DELETE /auth/logout', () => {
-        testRequiresAuth(() => request(app).put('/api/auth/logout'));
 
+    describe('Végpont: DELETE /auth/logout', () => {
         it('SIKER - 200, sikeres kijelentkezés', async () => {
             const res = await request(app)
                 .delete('/api/auth/logout')
@@ -170,7 +172,7 @@ describe('Main API Tesztek (apiMain.js)', () => {
             loggedInApp.use(mockI18nMiddleware);
             loggedInApp.use('/api', apiMain);
 
-            database.getUserNameProfile.mockResolvedValue([{ username: 'Elek' }]);
+            db.getUserNameProfile.mockResolvedValue([{ username: 'Elek' }]);
 
             const res = await request(loggedInApp)
                 .get('/api/auth/status')
@@ -181,45 +183,32 @@ describe('Main API Tesztek (apiMain.js)', () => {
         });
     });
 
-    describe('Végpont: GET /language', () => {
-        testRequiresAdminOrAuth(() => request(app).get('/api/language'));
+    describe('Végpont: GET /users/language', () => {
+        testRequiresAuth(() => request(app).get('/api/users/language'));
 
         it('SIKER - 200, nyelv lekérése', async () => {
             const res = await request(app)
-                .get('/api/language')
+                .get('/api/users/language')
                 .expect(200);
             expect(res.body.language).toBe("en");
-        });
-
-        it('HIBA - 401, ha nincs session (biztonsági ellenőrzés)', async () => {
-            const tempApp = express();
-            tempApp.use(mockI18nMiddleware);
-            tempApp.use((req, res, next) => {
-                delete req.session;
-                next();
-            });
-            // tempApp.use('/api/admin', require('#admin/apiAdmin.js'));
-            const res = await request(tempApp)
-                .get('/api/language')
-                .expect(401);
-            expect(res.body.error).toBe(enTranslations.adminApi.language_fetch_error);
         });
 
         it('HIBA - 500, ha valami váratlan hiba történik (catch ág)', async () => {
             const tempApp = express();
             tempApp.use(mockI18nMiddleware);
             tempApp.use((req, res, next) => {
-                delete req.session;
-                Object.defineProperty(req, 'session', {
-                    get: () => { throw new Error('Szimulált hiba a catch ág eléréséhez'); }
+                req.session = {};
+                Object.defineProperty(req.session, 'userLanguage', {
+                    get: () => { throw new Error('Szimulált hiba a catch ág eléréséhez'); },
+                    set: () => { }
                 });
                 next();
             });
-            // tempApp.use('/api/admin', require('#admin/apiAdmin.js'));
+            tempApp.use('/api', apiMain);
             const res = await request(tempApp)
-                .get('/api/language')
+                .get('/api/users/language')
                 .expect(500);
-            expect(res.body.error).toBe(enTranslations.adminApi.language_fetch_error);
+            expect(res.body.error).toBe(enTranslations.apiMain.language_fetch_error);
         });
     });
 });

@@ -1,4 +1,4 @@
-const pool = require('./connection.js');
+const pool = require('#sql/connection.js');
 const bcrypt = require('bcrypt');
 const AppError = require('#utils/app-error.js');
 
@@ -185,11 +185,6 @@ async function deleteProfilePic(user_id) {
     }
     return returnValue;
 }
-
-async function getConnection() {
-    return await pool.getConnection();
-}
-
 
 module.exports = {
     getUser,

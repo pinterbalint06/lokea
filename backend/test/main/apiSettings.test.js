@@ -1,10 +1,15 @@
+require('./helpers/mocks.js');
+
 const request = require('supertest');
 const express = require('express');
 const path = require('path');
 const fs = require('fs/promises');
 const sharp = require('sharp');
-const database = require('#sql/database.js');
 const apiSettings = require('#main/apiSettings.js');
+const db = require('#sql/main/databaseSettings.js');
+const dbLogs = require('#sql/admin/databaseLogs.js');
+const enTranslations = require('#locales/en/main.json');
+const huTranslations = require('#locales/hu/main.json');
 const { mockI18nMiddleware, suppressConsoleErrors, testRequiresAuth } = require('./helpers/helpers.js');
 
 const app = express();
@@ -23,7 +28,7 @@ describe('Settings API Tesztek (apiSettings.js)', () => {
         testRequiresAuth(() => request(app).get('/api/users/me'));
 
         it('SIKER - 200, saját adatok lekérése', async () => {
-            database.getUser.mockResolvedValue([{ username: 'Sanyi', role: 'user' }]);
+            db.getUser.mockResolvedValue([{ username: 'Sanyi', role: 'user' }]);
             const res = await request(app)
                 .get('/api/users/me')
                 .expect(200);
@@ -31,11 +36,11 @@ describe('Settings API Tesztek (apiSettings.js)', () => {
         });
 
         it('HIBA - 500, adatbázis hiba', async () => {
-            database.getUser.mockRejectedValue(new Error('DB hiba'));
+            db.getUser.mockRejectedValue(new Error('DB hiba'));
             const res = await request(app)
                 .get('/api/users/me')
                 .expect(500);
-            expect(res.body.error).toBe('main:apiSettings.getUserData.error');
+            expect(res.body.error).toBe(enTranslations.apiSettings.getUserData.error);
         });
     });
 
@@ -65,7 +70,7 @@ describe('Settings API Tesztek (apiSettings.js)', () => {
                 .put('/api/users/me')
                 .send({ language: 'de' })
                 .expect(400);
-            expect(res.body.errors.some(e => e.msg === 'main:apiSettings.updateUser.validation_language_values')).toBe(true);
+            expect(res.body.errors.some(e => e.msg === enTranslations.apiSettings.updateUser.validation_language_values)).toBe(true);
         });
 
         it('HIBA - 400, darkmode nem logikai érték', async () => {
@@ -73,28 +78,28 @@ describe('Settings API Tesztek (apiSettings.js)', () => {
                 .put('/api/users/me')
                 .send({ darkmode: 'valami' })
                 .expect(400);
-            expect(res.body.errors.some(e => e.msg === 'main:apiSettings.updateUser.validation_darkmode_boolean')).toBe(true);
+            expect(res.body.errors.some(e => e.msg === enTranslations.apiSettings.updateUser.validation_darkmode_boolean)).toBe(true);
         });
 
         it('SIKER - 200, adatok frissültek (affectedRows: 1)', async () => {
-            database.updateUser.mockResolvedValue(1);
-            database.addLog.mockResolvedValue();
+            db.updateUser.mockResolvedValue(1);
+            dbLogs.addLog.mockResolvedValue();
 
             const res = await request(app)
                 .put('/api/users/me')
                 .send(validUpdate)
                 .expect(200);
-            expect(res.body.message).toBe('main:apiSettings.updateUser.success');
-            expect(database.updateUser).toHaveBeenCalledWith(1, 'UjNev', 'uj@email.hu', 'en', true);
+            expect(res.body.message).toBe(enTranslations.apiSettings.updateUser.success);
+            expect(db.updateUser).toHaveBeenCalledWith(1, 'UjNev', 'uj@email.hu', 'en', true);
         });
 
         it('SIKER - 200, nem történt változás (affectedRows: 0)', async () => {
-            database.updateUser.mockResolvedValue(0);
+            db.updateUser.mockResolvedValue(0);
             const res = await request(app)
                 .put('/api/users/me')
                 .send(validUpdate)
                 .expect(200);
-            expect(res.body.message).toBe('main:apiSettings.updateUser.no_change');
+            expect(res.body.message).toBe(enTranslations.apiSettings.updateUser.no_change);
         });
     });
 
@@ -120,14 +125,14 @@ describe('Settings API Tesztek (apiSettings.js)', () => {
         });
 
         it('SIKER - 200, sikeres jelszócsere', async () => {
-            database.updatePassword.mockResolvedValue({ email: 'e@e.hu', username: 'Béla' });
-            database.addLog.mockResolvedValue();
+            db.updatePassword.mockResolvedValue({ email: 'e@e.hu', username: 'Béla' });
+            dbLogs.addLog.mockResolvedValue();
 
             const res = await request(app)
                 .put('/api/users/me/password')
                 .send(validPass)
                 .expect(200);
-            expect(res.body.message).toBe('main:apiSettings.updatePassword.success');
+            expect(res.body.message).toBe(enTranslations.apiSettings.updatePassword.success);
         });
     });
 
@@ -135,20 +140,20 @@ describe('Settings API Tesztek (apiSettings.js)', () => {
         testRequiresAuth(() => request(app).delete('/api/users/me'));
 
         it('SIKER - 200, sikeres fiók törlés', async () => {
-            database.userToInactive.mockResolvedValue({ email: 'e@e.hu', username: 'Béla' });
-            database.addLog.mockResolvedValue();
+            db.userToInactive.mockResolvedValue({ email: 'e@e.hu', username: 'Béla' });
+            dbLogs.addLog.mockResolvedValue();
 
             const res = await request(app).delete('/api/users/me').expect(200);
             expect(res.body.success).toBe(true);
-            expect(res.body.message).toBe('main:apiSettings.inactiveUser.success');
+            expect(res.body.message).toBe(enTranslations.apiSettings.inactiveUser.success);
         });
 
         it('HIBA - 500, adatbázis hiba', async () => {
-            database.userToInactive.mockRejectedValue(new Error('DB hiba'));
+            db.userToInactive.mockRejectedValue(new Error('DB hiba'));
             const res = await request(app)
                 .delete('/api/users/me')
                 .expect(500);
-            expect(res.body.error).toBe('main:apiSettings.inactiveUser.error');
+            expect(res.body.error).toBe(enTranslations.apiSettings.inactiveUser.error);
         });
     });
 
@@ -159,7 +164,7 @@ describe('Settings API Tesztek (apiSettings.js)', () => {
             const res = await request(app)
                 .put('/api/users/me/profile-picture')
                 .expect(400);
-            expect(res.body.error).toBe('main:apiSettings.updateProfilePic.no_image');
+            expect(res.body.error).toBe(enTranslations.apiSettings.updateProfilePic.no_image);
         });
 
         it('HIBA - 400, érvénytelen fájltípus (Multer fileFilter teszt)', async () => {
@@ -167,13 +172,13 @@ describe('Settings API Tesztek (apiSettings.js)', () => {
                 .put('/api/users/me/profile-picture')
                 .attach('profilePic', Buffer.from('fake-pdf-content'), { filename: 'teszt.pdf', contentType: 'application/pdf' })
                 .expect(400);
-            expect(res.body.error).toBe('main:apiSettings.updateProfilePic.invalid_file_type');
+            expect(res.body.error).toBe(enTranslations.apiSettings.updateProfilePic.invalid_file_type);
         });
 
         it('SIKER - 201, profilkép feldolgozva és elmentve', async () => {
             fs.unlink.mockResolvedValue();
-            database.uploadProfilePic.mockResolvedValue('regi_kep.webp');
-            database.addLog.mockResolvedValue();
+            db.uploadProfilePic.mockResolvedValue('regi_kep.webp');
+            dbLogs.addLog.mockResolvedValue();
 
             const res = await request(app)
                 .put('/api/users/me/profile-picture')
@@ -182,7 +187,7 @@ describe('Settings API Tesztek (apiSettings.js)', () => {
 
             expect(res.body.success).toBe(true);
             expect(sharp).toHaveBeenCalled();
-            expect(database.uploadProfilePic).toHaveBeenCalled();
+            expect(db.uploadProfilePic).toHaveBeenCalled();
             expect(fs.unlink).toHaveBeenCalled();
         });
     });
@@ -192,32 +197,32 @@ describe('Settings API Tesztek (apiSettings.js)', () => {
         testRequiresAuth(() => request(app).delete('/api/users/me/profile-picture'));
 
         it('SIKER - 200, ha a felhasználónak már nem volt profilképe (alapértelmezett)', async () => {
-            database.deleteProfilePic.mockResolvedValue(null);
+            db.deleteProfilePic.mockResolvedValue(null);
 
             const res = await request(app)
                 .delete('/api/users/me/profile-picture')
                 .expect(200);
-            expect(res.body.message).toBe('main:apiSettings.deleteProfilePic.already_default');
+            expect(res.body.message).toBe(enTranslations.apiSettings.deleteProfilePic.already_default);
         });
 
         it('SIKER - 201, ha volt régi kép és azt kitörli', async () => {
-            database.deleteProfilePic.mockResolvedValue('torlendo_kep.webp');
+            db.deleteProfilePic.mockResolvedValue('torlendo_kep.webp');
             fs.unlink.mockResolvedValue();
-            database.addLog.mockResolvedValue();
+            dbLogs.addLog.mockResolvedValue();
 
             const res = await request(app)
                 .delete('/api/users/me/profile-picture')
                 .expect(201);
-            expect(res.body.message).toBe('main:apiSettings.deleteProfilePic.success');
+            expect(res.body.message).toBe(enTranslations.apiSettings.deleteProfilePic.success);
             expect(fs.unlink).toHaveBeenCalled();
         });
 
         it('HIBA - 500, adatbázis hiba esetén', async () => {
-            database.deleteProfilePic.mockRejectedValue(new Error('DB'));
+            db.deleteProfilePic.mockRejectedValue(new Error('DB'));
             const res = await request(app)
                 .delete('/api/users/me/profile-picture')
                 .expect(500);
-            expect(res.body.error).toBe('main:apiSettings.deleteProfilePic.error');
+            expect(res.body.error).toBe(enTranslations.apiSettings.deleteProfilePic.error);
         });
     });
 
@@ -228,7 +233,7 @@ describe('Settings API Tesztek (apiSettings.js)', () => {
             const res = await request(app)
                 .get('/api/users/profile-picture?route=../../etc/passwd')
                 .expect(400);
-            expect(res.body.errors.some(e => e.msg === 'main:apiSettings.getProfilePic.validation_invalid_filename')).toBe(true);
+            expect(res.body.errors.some(e => e.msg === enTranslations.apiSettings.getProfilePic.validation_invalid_filename)).toBe(true);
         });
 
         it('SIKER - 200/404, valid paraméter esetén express sendFile-ig eljut a logika', async () => {

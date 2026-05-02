@@ -1,38 +1,20 @@
 const express = require('express');
 const router = express.Router();
-const database = require('../../sql/database.js');
-const auth = require('../../utils/auth.js')
+const database = require('#sql/main/databaseSettings.js');
+const databaseLogs = require('#sql/admin/databaseLogs.js');
+const auth = require('../../utils/auth.js');
 const fs = require('fs/promises');
 const { body, query } = require("express-validator");
 const sharp = require('sharp');
 const { sendDeleteEmail, sendChangeEmail, sendPasswordChangeEmail } = require('../../utils/mails.js');
 const { validate } = require('../../utils/validate.js');
+const AppError = require('#utils/app-error.js');
 
 //!Multer
 const multer = require('multer'); //?npm install multer
 const path = require('path');
-
-const storage = multer.diskStorage({
-    destination: (request, file, callback) => {
-        callback(null, path.join(__dirname, '../uploads'));
-    },
-    filename: (request, file, callback) => {
-        callback(null, Date.now() + '-' + file.originalname); //?egyedi név: dátum - file eredeti neve
-    }
-});
-
-const upload = multer({
-    storage: storage,
-    limits: { fileSize: 5 * 1024 * 1024 }, // 5 MB
-    fileFilter: (request, file, callback) => {
-        if (file.mimetype.startsWith('image/')) {
-            callback(null, true);
-        } else {
-            request.fileValidationError = request.t('main:apiSettings.updateProfilePic.invalid_file_type');
-            callback(null, false); // Elutasítja a fájlt mentés nélkül
-        }
-    }
-});
+const { UPLOAD_ROOT } = require('#config/mapdatas-upload-config.js');
+const { uploadMemory: upload } = require('#config/profile-pic-upload-config.js');
 
 //Endpoints - settings
 
@@ -117,7 +99,8 @@ router.put("/users/me/password", auth.checkAuth,
 
 router.delete("/users/me", auth.checkAuth, async (request, response) => {
     try {
-        let { email, username } = await database.userToInactive(request.session.userid);
+        let userid = request.session.userid;
+        let { email, username } = await database.userToInactive(userid);
         request.session.destroy(async (error) => {
             if (error) {
                 response.status(500).json({ success: false, error: error });
@@ -144,7 +127,7 @@ router.put('/users/me/profile-picture', auth.checkAuth, upload.single('profilePi
     let newFilePath;
     try {
         if (request.fileValidationError) {
-            response.status(400).json({ message: request.fileValidationError });
+            response.status(400).json({ error: request.t('main:apiSettings.updateProfilePic.invalid_file_type') });
         }
         else {
             if (!request.file) {

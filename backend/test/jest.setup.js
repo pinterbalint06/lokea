@@ -1,4 +1,3 @@
-jest.mock("#sql/database.js");
 jest.mock("#gameflow/maps/maps.queries.js");
 jest.mock("#gameflow/random-point/random-point.queries.js");
 jest.mock("#gameflow/guess/guess.queries.js");

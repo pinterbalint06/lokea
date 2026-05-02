@@ -19,7 +19,8 @@
             "invalid_credentials": "Invalid username/e-mail or password!",
             "success": "Login successful!",
             "error": "Error during login!"
-        }
+        },
+        "language_fetch_error": "Error fetching language"
     },
     "apiSettings": {
         "getUserData": {
