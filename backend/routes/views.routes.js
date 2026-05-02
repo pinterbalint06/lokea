@@ -1,6 +1,6 @@
 const express = require('express');
 const path = require('path');
-const auth = require('#utils/auth.js');
+const auth = require('#middlewares/auth.js');
 const { doesGameMapExist } = require('#gamemaps/shared/queries/gamemaps.queries.js');
 const { idSchema } = require('#utils/schemas.js');
 const ERRORS = require('#utils/error-messages.js');

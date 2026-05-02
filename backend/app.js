@@ -6,7 +6,7 @@ const cors = require('cors');
 const sessionMiddleware = require('#config/session.js');
 const { i18next, i18n_Middleware } = require('#config/i18n.js');
 const viewRoutes = require('./routes/views.routes.js');
-const auth = require('#utils/auth.js');
+const auth = require('#middlewares/auth.js');
 const { notFoundHandler, globalErrorHandler } = require('#middlewares/error-handler.js');
 
 const app = express();

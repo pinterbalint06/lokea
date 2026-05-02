@@ -1,6 +1,6 @@
 const { createGameTestApp } = require("#gametest/helpers/setup-test.js");
 const { testRequiresGameSession, suppressConsoleErrors } = require("#gametest/helpers/helpers.js");
-const { checkGameSession } = require("#utils/auth.js");
+const { checkGameSession } = require("#middlewares/auth.js");
 const { mockConnection } = require("#sql/database.js");
 const mapsQueries = require("#gameflow/maps/maps.queries.js");
 const randomPointQueries = require("#gameflow/random-point/random-point.queries.js");

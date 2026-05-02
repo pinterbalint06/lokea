@@ -1,7 +1,7 @@
 const express = require("express");
 const router = express.Router();
 const multer = require("multer");
-const { checkAuth } = require("#utils/auth.js");
+const { checkAuth } = require("#middlewares/auth.js");
 const controller = require("./sessions.controller.js");
 
 const upload = multer();
