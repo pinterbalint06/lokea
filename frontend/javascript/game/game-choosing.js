@@ -10,6 +10,7 @@ window.addEventListener('pageshow', (event) => {
 var loadedURLs = [];
 var cardLoadedTimes = 0;
 var activeTab = 'all';
+var selectedButton = null;
 
 function clearLoadedURLs() {
     for (let url of loadedURLs) {
@@ -24,7 +25,7 @@ document.addEventListener("DOMContentLoaded", function () {
     const sortButtonMap = { created: 'sortByCreated', rating: 'sortByRating', plays: 'sortByPlays', favorites: 'sortByFavorites' };
     const initialSort = sortButtonMap[urlParams.get('sort')] ? urlParams.get('sort') : 'plays';
 
-    let selectedButton = document.getElementById(sortButtonMap[initialSort]);
+    selectedButton = document.getElementById(sortButtonMap[initialSort]);
     if (initialSort !== 'plays') {
         document.getElementById('sortByPlays').classList.remove('btnPushed');
         selectedButton.classList.add('btnPushed');
@@ -45,20 +46,6 @@ document.addEventListener("DOMContentLoaded", function () {
     setupContinueGameModal();
     checkAndShowContinueModal();
     switchTab(initialTab);
-
-    function switchTab(tab) {
-        activeTab = tab;
-        cardLoadedTimes = 0;
-        clearLoadedURLs();
-        const container = document.getElementById('game_maps_container');
-        container.innerHTML = '';
-        document.getElementById('tabAll').classList.toggle('btnPushed', tab === 'all');
-        document.getElementById('tabAll').disabled = tab === 'all';
-        document.getElementById('tabMine').classList.toggle('btnPushed', tab === 'mine');
-        document.getElementById('tabMine').disabled = tab === 'mine';
-        if (tab === 'mine') container.appendChild(createNewGameCard());
-        loadGameMaps(selectedButton.id.replace('sortBy', '').toLowerCase(), tab === 'mine' ? 'mine' : null);
-    }
 
     document.getElementById('tabAll').addEventListener('click', () => switchTab('all'));
     document.getElementById('tabMine').addEventListener('click', () => switchTab('mine'));
@@ -83,6 +70,20 @@ document.addEventListener("DOMContentLoaded", function () {
         loadGameMaps(selectedButton.id.replace('sortBy', '').toLowerCase(), activeTab === 'mine' ? 'mine' : null);
     });
 });
+
+function switchTab(tab) {
+    activeTab = tab;
+    cardLoadedTimes = 0;
+    clearLoadedURLs();
+    const container = document.getElementById('game_maps_container');
+    container.innerHTML = '';
+    document.getElementById('tabAll').classList.toggle('btnPushed', tab === 'all');
+    document.getElementById('tabAll').disabled = tab === 'all';
+    document.getElementById('tabMine').classList.toggle('btnPushed', tab === 'mine');
+    document.getElementById('tabMine').disabled = tab === 'mine';
+    if (tab === 'mine') container.appendChild(createNewGameCard());
+    loadGameMaps(selectedButton.id.replace('sortBy', '').toLowerCase(), tab === 'mine' ? 'mine' : null);
+}
 
 async function loadGameMaps(sort, filter = null) {
     try {
