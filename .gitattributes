@@ -8,6 +8,9 @@ backend/package-lock.json linguist-generated
 *.wasm.map binary linguist-generated
 frontend/javascript/libs/webassembly/** linguist-generated
 
+# i18next
+frontend/javascript/libs/i18next/** linguist-generated
+
 # visszamenoen a webassembly es generalt jsek
 engine.js linguist-generated
 webassembly.js linguist-generated
