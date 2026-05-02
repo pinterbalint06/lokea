@@ -39,8 +39,7 @@ router.use(
 );
 
 router.use(
-    "/:gameMapID",
-    validateRequest(schemas.gameMapIDParamsOnlySchema),
+    "/",
     gamemapRoutes
 );
 
