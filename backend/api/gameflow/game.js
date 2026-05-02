@@ -15,6 +15,7 @@ router.get("/session", async (request, response) => {
         response.status(200).json({
             game: {
                 title: game.gameTitle,
+                gameMapId: game.gameMapId,
                 rounds: game.rounds,
                 currentRound: game.currentRound,
                 roundTime: game.roundTime

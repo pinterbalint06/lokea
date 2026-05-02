@@ -16,7 +16,6 @@
 .stars {
     font-size: 18px;
     font-family: Times;
-    --rating-fill-step: 10%;
 }
 
 .rating-stars::before,

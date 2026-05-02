@@ -30,6 +30,9 @@ let timeLeft = 0;
 let guessSent = false;
 
 let currentPointId = null;
+let gameMapId = null;
+let commentIsInEditMode = false;
+let commentIsSubmitting = false;
 
 document.addEventListener("DOMContentLoaded", function () {
     init();
@@ -48,6 +51,10 @@ async function init() {
         }
     }
     document.getElementById("autoRotate").addEventListener("change", setAutoRotate);
+    document.getElementById("submitRatingBtn").addEventListener("click", handleCommentSubmit);
+    document.getElementById("editCommentBtn").addEventListener("click", handleEditComment);
+    document.getElementById("deleteCommentBtn").addEventListener("click", handleDeleteComment);
+    document.getElementById("cancelCommentEditBtn").addEventListener("click", handleCancelCommentEdit);
     equirectangularViewer = new EquirectangularViewer(pictureCanvasId);
     await equirectangularViewer.ready();
 }
@@ -162,6 +169,7 @@ async function startGame() {
         if (!gameData.game || typeof gameData.game.rounds !== 'number' || typeof gameData.game.roundTime !== 'number') {
             throw new Error("Érvénytelen játékadatok érkeztek a szervertől.");
         }
+        gameMapId = gameData.game.gameMapId ?? null;
         maps = mapsData.maps;
         cycleMaps();
         if (maps.length > 1) {
@@ -394,6 +402,183 @@ function startRoundTimer(roundEndAt) {
         requestAnimationFrame(() => requestAnimationFrame(() => {
             panel.classList.add('game-over');
         }));
+        loadUserComment();
+        loadOtherComments();
+    }
+
+    async function loadUserComment() {
+        if (!gameMapId) return;
+        try {
+            const response = await fetch(`/api/game-maps/${gameMapId}/my-comment`);
+            if (response.ok) {
+                const data = await response.json();
+                if (data && data.rating) {
+                    showCommentViewState(data);
+                } else {
+                    showCommentFormState(false);
+                }
+            } else if (response.status === 404) {
+                showCommentFormState(false);
+            }
+        } catch {
+            showCommentFormState(false);
+        }
+    }
+
+    function showCommentFormState(editMode) {
+        commentIsInEditMode = editMode;
+        document.getElementById('gameoverFormState').style.display = '';
+        document.getElementById('gameoverViewState').style.display = 'none';
+        document.getElementById('submitRatingBtn').textContent = editMode ? 'Módosítás mentése' : 'Értékelés küldése';
+        document.getElementById('cancelCommentEditBtn').style.display = editMode ? '' : 'none';
+        if (!editMode) {
+            document.querySelectorAll('[name="gameOverRating"]').forEach(r => r.checked = false);
+            document.getElementById('gameoverCommentText').value = '';
+        }
+    }
+
+    function showCommentViewState(commentData) {
+        document.getElementById('gameoverFormState').style.display = 'none';
+        document.getElementById('gameoverViewState').style.display = '';
+        document.getElementById('gameoverUserRating').style.setProperty('--rating', commentData.rating);
+        document.getElementById('gameoverUserText').textContent = commentData.comment_text || '';
+    }
+
+    async function handleCommentSubmit() {
+        if (commentIsSubmitting || !gameMapId) return;
+        const rating = document.querySelector('[name="gameOverRating"]:checked')?.value;
+        if (!rating) {
+            showGameOverToast('Kérlek válassz legalább 1 csillagot!', true);
+            return;
+        }
+        commentIsSubmitting = true;
+        const btn = document.getElementById('submitRatingBtn');
+        btn.disabled = true;
+        try {
+            const formData = new FormData();
+            formData.append('rating', rating);
+            const text = document.getElementById('gameoverCommentText').value.trim();
+            if (text) formData.append('comment', text);
+            const method = commentIsInEditMode ? 'PUT' : 'POST';
+            const response = await fetch(`/api/game-maps/${gameMapId}/my-comment`, { method, body: formData });
+            if (!response.ok) {
+                const err = await response.json();
+                throw new Error(err.message || 'Hiba történt');
+            }
+            showGameOverToast(commentIsInEditMode ? 'Értékelésed frissítve!' : 'Értékelésed elküldve!');
+            await loadUserComment();
+            loadOtherComments();
+        } catch (error) {
+            showGameOverToast(error.message || 'Hiba az értékelés elküldésekor', true);
+        } finally {
+            commentIsSubmitting = false;
+            btn.disabled = false;
+        }
+    }
+
+    function handleEditComment() {
+        const rating = document.getElementById('gameoverUserRating').style.getPropertyValue('--rating').trim();
+        const text = document.getElementById('gameoverUserText').textContent;
+        showCommentFormState(true);
+        const ratingInput = document.querySelector(`[name="gameOverRating"][value="${rating}"]`);
+        if (ratingInput) ratingInput.checked = true;
+        document.getElementById('gameoverCommentText').value = text;
+    }
+
+    async function handleDeleteComment() {
+        if (commentIsSubmitting || !gameMapId) return;
+        if (!confirm('Biztosan törlöd az értékelésedet?')) return;
+        commentIsSubmitting = true;
+        try {
+            const response = await fetch(`/api/game-maps/${gameMapId}/my-comment`, { method: 'DELETE' });
+            if (!response.ok) {
+                const err = await response.json();
+                throw new Error(err.message || 'Hiba történt');
+            }
+            showGameOverToast('Értékelésed törölve.');
+            showCommentFormState(false);
+            loadOtherComments();
+        } catch (error) {
+            showGameOverToast(error.message || 'Hiba a törléskor', true);
+        } finally {
+            commentIsSubmitting = false;
+        }
+    }
+
+    function handleCancelCommentEdit() {
+        if (!commentIsSubmitting) {
+            loadUserComment();
+        }
+    }
+
+    async function loadOtherComments() {
+        if (!gameMapId) return;
+        const container = document.getElementById('gameOverComments');
+        try {
+            const response = await fetch(`/api/game-maps/${gameMapId}/comments`);
+            if (!response.ok) return;
+            const data = await response.json();
+            renderOtherComments(container, data.comments);
+        } catch {
+            // silently fail
+        }
+    }
+
+    function renderOtherComments(container, comments) {
+        container.innerHTML = '';
+        if (!comments || comments.length === 0) {
+            const empty = document.createElement('p');
+            empty.className = 'gameover-comments-empty';
+            empty.textContent = 'Még nincsenek értékelések.';
+            container.appendChild(empty);
+            return;
+        }
+        const fragment = document.createDocumentFragment();
+        for (const comment of comments) {
+            fragment.appendChild(createCommentItem(comment));
+        }
+        container.appendChild(fragment);
+    }
+
+    function createCommentItem(comment) {
+        const item = document.createElement('div');
+        item.className = 'gameover-comment-item';
+
+        const author = document.createElement('strong');
+        author.className = 'gameover-comment-author';
+        author.textContent = comment.username || 'Ismeretlen';
+
+        const stars = document.createElement('div');
+        stars.className = 'rating-stars gameover-comment-stars';
+        stars.style.setProperty('--rating', comment.rating);
+
+        const header = document.createElement('div');
+        header.className = 'gameover-comment-header';
+        header.appendChild(author);
+        header.appendChild(stars);
+        item.appendChild(header);
+
+        if (comment.comment_text) {
+            const text = document.createElement('p');
+            text.className = 'gameover-comment-text';
+            text.textContent = comment.comment_text;
+            item.appendChild(text);
+        }
+
+        return item;
+    }
+
+    let toastTimeout = null;
+    function showGameOverToast(msg, isError = false) {
+        const existing = document.getElementById('gameoverToast');
+        if (existing) existing.remove();
+        if (toastTimeout) clearTimeout(toastTimeout);
+        const toast = document.createElement('div');
+        toast.id = 'gameoverToast';
+        toast.className = 'gameover-toast' + (isError ? ' gameover-toast--error' : '');
+        toast.textContent = msg;
+        document.body.appendChild(toast);
+        toastTimeout = setTimeout(() => toast.remove(), 3000);
     }
 
     window.mapFullScreen = mapFullScreen;
