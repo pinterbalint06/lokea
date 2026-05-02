@@ -45,4 +45,4 @@ npm start
 
 A vizsgaprojektet fejlesztette: Eördögh Erik, Pintér Bálint és Varga Norbert.
 
-A  sablonért (ISC licenc) külön köszönet Kardos Krisztiánnak.
+A sablonért (ISC licenc) külön köszönet Kardos Krisztiánnak.
