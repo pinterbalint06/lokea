@@ -1,6 +1,8 @@
 @import url('./base.css');
 @import url('./game-map-base.css');
 @import url('./favorite-button.css');
+@import url('./colors.css');
+@import url('./variables.css');
 
 body {
     font-family: sans-serif;

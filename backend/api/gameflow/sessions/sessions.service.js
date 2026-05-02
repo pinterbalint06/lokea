@@ -33,6 +33,18 @@ function validateGameStartInput(body) {
     return { gameMapId, rounds, roundTime, difficulty };
 }
 
+function validateGameInfo(gameInfo) {
+    if (!gameInfo) {
+        throw new AppError("Game map not found", 404);
+    }
+    if (!gameInfo.map_id) {
+        throw new AppError("Game map has no points", 400);
+    }
+    if (!gameInfo.point_id) {
+        throw new AppError("Game map has no points", 400);
+    }
+}
+
 async function getActiveSession(userId) {
     const row = await sessionsQueries.selectLatestActiveGameSession(userId);
     return row
@@ -53,11 +65,8 @@ async function createGameSession(userId, body) {
     const { gameMapId, rounds, roundTime, difficulty } = validateGameStartInput(body);
     const sharpness = DIFFICULTY_SHARPNESS[difficulty];
 
-    const gameTitle = await sessionsQueries.getGameTitleById(gameMapId);
-    if (!gameTitle) {
-        throw new AppError("Game map not found", 404);
-    }
-
+    const gameInfo = await sessionsQueries.getGameInfoById(gameMapId);
+    validateGameInfo(gameInfo);
     const sessionId = await sessionsQueries.insertGameSession(userId, rounds, roundTime, gameMapId, sharpness);
 
     return buildSessionObject({
@@ -68,7 +77,7 @@ async function createGameSession(userId, body) {
         rounds,
         currentRound: 0,
         roundTime,
-        gameTitle
+        gameTitle: gameInfo.title
     });
 }
 

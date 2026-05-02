@@ -60,5 +60,5 @@ kesz!!!!!!!!!!!!!!!--vegso panel a finish_game_sessionbol kapja az adatokat vagy
 
 Maradék teendő 2:
 --hibák átnézése h magyar e
---új játék oldal megcsinálása
+kesz--új játék oldal megcsinálása
 --jatekinditaskor megnezni hogy van e pont meg terkep
