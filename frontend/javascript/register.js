@@ -62,7 +62,7 @@ async function regisztracioAnimacio(username, email, password) {
                 title.innerText = message;
                 modalText.innerText = "Fiók létrehozva. Kérlek, jelentkezz be a folytatáshoz!";
                 setTimeout(() => {
-                    window.location.href = "/main";
+                    window.location.href = "/";
                 }, 3000);
             }
             else {

@@ -1,11 +1,11 @@
 const pool = require('#sql/connection.js');
 
-async function saveGuess(connection, sessionId, pointId, mapId, guessu, guessv, distanceError, score, cycle, round) {
+async function saveGuess(connection, sessionId, pointId, mapId, guessu, guessv, score, cycle, round) {
     const query = `
-        INSERT INTO session_guesses (session_id, point_id, map_id, guessed_u, guessed_v, distance_error, points_awarded, cycle, round)
-        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+        INSERT INTO session_guesses (session_id, point_id, map_id, guessed_u, guessed_v, points_awarded, cycle, round)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?)
     `;
-    const [result] = await connection.execute(query, [sessionId, pointId, mapId, guessu, guessv, distanceError, score, cycle, round]);
+    const [result] = await connection.execute(query, [sessionId, pointId, mapId, guessu, guessv, score, cycle, round]);
     return result.insertId;
 }
 

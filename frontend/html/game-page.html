@@ -7,6 +7,7 @@
     <link rel="stylesheet" href="../bootstrap/css/bootstrap.min.css" />
     <script src="../bootstrap/js/popper.min.js"></script>
     <script src="../bootstrap/js/bootstrap.min.js"></script>
+    <link rel="stylesheet" href="../css/game-map-base.css">
     <link rel="stylesheet" href="../css/game-choosing.css">
     <link rel="stylesheet" href="../css/game-page.css">
     <script type="module" src="../javascript/game/game_page.js"></script>
@@ -41,7 +42,7 @@
             <div id="errorBox">
                 <p class="panel-label">Hiba</p>
                 <p id="errorMessage"></p>
-                <button class="btn-next-round" onclick="location.href='/game-maps'">Vissza a főoldalra</button>
+                <button class="btn-next-round" onclick="location.href='/game-maps'">Vissza a játékválasztó oldalra</button>
             </div>
         </div>
 
@@ -112,23 +113,43 @@
 
                         <div class="gameover-columns">
                             <div class="gameover-left">
-                                <p class="panel-label">Értékeld a pályát</p>
-                                <fieldset class="gameover-rating-group">
-                                    <div class="gameover-rating-input">
-                                        <input type="radio" id="goStar5" name="gameOverRating" value="5">
-                                        <label for="goStar5" aria-label="5 csillag">&#9733;</label>
-                                        <input type="radio" id="goStar4" name="gameOverRating" value="4">
-                                        <label for="goStar4" aria-label="4 csillag">&#9733;</label>
-                                        <input type="radio" id="goStar3" name="gameOverRating" value="3">
-                                        <label for="goStar3" aria-label="3 csillag">&#9733;</label>
-                                        <input type="radio" id="goStar2" name="gameOverRating" value="2">
-                                        <label for="goStar2" aria-label="2 csillag">&#9733;</label>
-                                        <input type="radio" id="goStar1" name="gameOverRating" value="1">
-                                        <label for="goStar1" aria-label="1 csillag">&#9733;</label>
+                                <div id="gameoverFormState">
+                                    <p class="panel-label">Értékeld a pályát</p>
+                                    <fieldset class="gameover-rating-group">
+                                        <div class="gameover-rating-input">
+                                            <input type="radio" id="goStar5" name="gameOverRating" value="5">
+                                            <label for="goStar5" aria-label="5 csillag">&#9733;</label>
+                                            <input type="radio" id="goStar4" name="gameOverRating" value="4">
+                                            <label for="goStar4" aria-label="4 csillag">&#9733;</label>
+                                            <input type="radio" id="goStar3" name="gameOverRating" value="3">
+                                            <label for="goStar3" aria-label="3 csillag">&#9733;</label>
+                                            <input type="radio" id="goStar2" name="gameOverRating" value="2">
+                                            <label for="goStar2" aria-label="2 csillag">&#9733;</label>
+                                            <input type="radio" id="goStar1" name="gameOverRating" value="1">
+                                            <label for="goStar1" aria-label="1 csillag">&#9733;</label>
+                                        </div>
+                                    </fieldset>
+                                    <textarea id="gameoverCommentText" class="gameover-comment-input" rows="3" maxlength="255" placeholder="Írd le a véleményed (opcionális)..."></textarea>
+                                    <button class="btn-next-round" id="submitRatingBtn">Értékelés küldése</button>
+                                    <button id="cancelCommentEditBtn" class="btn-next-round gameover-back-btn" style="display:none;">Mégse</button>
+                                </div>
+
+                                <div id="gameoverViewState" class="gameover-view-state" style="display:none;">
+                                    <p class="panel-label">A te értékelésed</p>
+                                    <div id="gameoverUserRating" class="rating-stars gameover-user-stars" style="--rating: 0;"></div>
+                                    <p id="gameoverUserText" class="gameover-user-text"></p>
+                                    <div class="gameover-comment-buttons">
+                                        <button id="editCommentBtn" class="btn-next-round gameover-back-btn">Szerkesztés</button>
+                                        <button id="deleteCommentBtn" class="btn-next-round gameover-delete-btn">Törlés</button>
                                     </div>
-                                </fieldset>
-                                <button class="btn-next-round" id="submitRatingBtn">Értékelés küldése</button>
+                                </div>
+
                                 <button class="btn-next-round gameover-back-btn" onclick="location.href='/game-maps'">Vissza a főoldalra</button>
+                            </div>
+
+                            <div class="gameover-comments-col">
+                                <p class="panel-label">Értékelések</p>
+                                <div id="gameOverComments" class="gameover-comments-list"></div>
                             </div>
 
                             <div class="gameover-right">

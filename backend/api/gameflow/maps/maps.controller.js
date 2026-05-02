@@ -4,8 +4,7 @@ const ERRORS = require("#utils/error-messages.js");
 
 async function getAllMaps(request, response) {
     try {
-        const { maps, mapInfo } = await mapsService.getAllMaps(request.session.game.gameMapId);
-        request.session.game.mapInfo = mapInfo;
+        const maps = await mapsService.getAllMaps(request.session.game.gameMapId);
         response.status(200).json({ maps });
     } catch (error) {
         if (error instanceof AppError) {

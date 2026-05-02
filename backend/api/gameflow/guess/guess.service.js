@@ -1,5 +1,6 @@
 const guessQueries = require("#gameflow/guess/guess.queries.js");
 const { getCurrentPointId } = require("#gameflow/random-point/random-point.queries.js");
+const { getMapDimensions } = require("#gameflow/maps/maps.queries.js");
 const { getConnection } = require("#sql/database.js");
 const AppError = require("#utils/app-error.js");
 const { COUNTDOWN_SECONDS } = require("../shared/gameflow.utils.js");
@@ -9,9 +10,6 @@ const MIN_TIME_MULTIPLIER = 0.1;
 const TIME_PUNISHMENT_BUFFER_SECONDS = 5;
 
 function assertSessionReady(game) {
-    if (!game.mapInfo) {
-        throw new AppError("Game maps not loaded", 400);
-    }
     if (!game.point) {
         throw new AppError("No active point in session", 400);
     }
@@ -23,22 +21,14 @@ function assertSessionReady(game) {
 function parseGuessInput(body) {
     const u = parseFloat(body.u);
     const v = parseFloat(body.v);
-    const mapI = parseInt(body.map_i);
+    const mapId = parseInt(body.map_id);
     if (isNaN(u) || isNaN(v) || !isFinite(u) || !isFinite(v)) {
         throw new AppError("Invalid guess coordinates", 400);
     }
-    if (isNaN(mapI)) {
-        throw new AppError("Invalid map index", 400);
+    if (!Number.isFinite(mapId) || mapId <= 0) {
+        throw new AppError("Invalid map id", 400);
     }
-    return { u, v, mapI };
-}
-
-function findCorrectMap(game) {
-    const index = game.mapInfo.findIndex(m => m.mapId === game.point.mapId);
-    if (index === -1) {
-        throw new AppError("Invalid map index", 400);
-    }
-    return { map: game.mapInfo[index], index };
+    return { u, v, mapId };
 }
 
 function calculateTimeLeft(game) {
@@ -60,32 +50,31 @@ function calculateScore(distance, timeLeft, roundTime, sharpness) {
     return Math.round(base * multiplier);
 }
 
-function buildGuessResult(guess, game, correctMap, correctMapIndex) {
+function buildGuessResult(guess, game, correctMapDimensions) {
     const outOfBounds = guess.u < 0 || guess.v < 0 || guess.u > 1 || guess.v > 1;
-    const wrongMap = correctMapIndex !== guess.mapI;
-    let re = { score: 0, distance: -1, pixelDistance: null, mapIndex: correctMapIndex };
+    const wrongMap = guess.mapId !== game.point.mapId;
+    let re = { score: 0, pixelDistance: null };
     if (!outOfBounds && !wrongMap) {
         const du = guess.u - game.point.pointu;
         const dv = guess.v - game.point.pointv;
         const distance = Math.sqrt(du * du + dv * dv);
 
-        const pixelDx = du * correctMap.width;
-        const pixelDy = dv * correctMap.height;
+        const pixelDx = du * correctMapDimensions.width;
+        const pixelDy = dv * correctMapDimensions.height;
         const pixelDistance = Math.round(Math.sqrt(pixelDx * pixelDx + pixelDy * pixelDy));
 
         const timeLeft = calculateTimeLeft(game);
         const score = calculateScore(distance, timeLeft, game.roundTime, game.sharpness);
-        re = { score, distance, pixelDistance, mapIndex: correctMapIndex };
+        re = { score, pixelDistance };
     }
-
     return re;
 }
 
-async function persistGuess(sessionId, game, correctMap, guess, result) {
+async function persistGuess(sessionId, game, guessedMapId, guess, result) {
     const conn = await getConnection();
     try {
         await conn.beginTransaction();
-        await guessQueries.saveGuess(conn, sessionId, game.point.pointId, correctMap.mapId, guess.u, guess.v, result.distance, result.score, game.currentCycle, game.currentRound + 1);
+        await guessQueries.saveGuess(conn, sessionId, game.point.pointId, guessedMapId, guess.u, guess.v, result.score, game.currentCycle, game.currentRound + 1);
         await guessQueries.incrementCurrentRound(conn, sessionId);
         await guessQueries.clearCurrentPoint(conn, sessionId);
         await conn.commit();
@@ -106,23 +95,27 @@ async function processGuess(sessionId, game, body) {
     assertSessionReady(game);
 
     const guess = parseGuessInput(body);
-    const { map: correctMap, index: correctMapIndex } = findCorrectMap(game);
+    const correctMapId = game.point.mapId;
+    const correctMapDimensions = await getMapDimensions(correctMapId);
+    if (!correctMapDimensions) {
+        throw new AppError("Map not found", 500);
+    }
 
-    const result = buildGuessResult(guess, game, correctMap, correctMapIndex);
+    const result = buildGuessResult(guess, game, correctMapDimensions);
 
-    await persistGuess(sessionId, game, correctMap, guess, result);
+    await persistGuess(sessionId, game, guess.mapId, guess, result);
 
     const total = await guessQueries.totalScore(sessionId);
 
     return {
         score: result.score,
         distance: result.pixelDistance,
-        mapI: result.mapIndex,
+        correctMapId,
         totalScore: total,
         pointu: game.point.pointu,
         pointv: game.point.pointv,
-        pointx: Math.round(game.point.pointu * correctMap.width),
-        pointy: Math.round(game.point.pointv * correctMap.height)
+        pointx: Math.round(game.point.pointu * correctMapDimensions.width),
+        pointy: Math.round(game.point.pointv * correctMapDimensions.height)
     };
 }
 
