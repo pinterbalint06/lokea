@@ -56,5 +56,12 @@ kesz!!!!!!!!!!!!!!!!!!felig kesz--játékok befejezése
 kesz--mapcover kepek megcsinalasa ----------pull utan
 
 Maradék teendő:
-!!!!!!!!!!!!!!!--vegso panel a finish_game_sessionbol kapja az adatokat vagy a az első lekérésből
---új játék oldal megcsinálása
+kesz!!!!!!!!!!!!!!!--vegso panel a finish_game_sessionbol kapja az adatokat vagy a az első lekérésből
+
+Maradék teendő 2:
+--hibák átnézése h magyar e
+kesz--új játék oldal megcsinálása
+kesz--jatekinditaskor megnezni hogy van e pont meg terkep
+kesz--kulon linkek arra, hogy mit akar a felhasznalo
+--api choose-game nev javitasa
+--choose game filenevek cseréje

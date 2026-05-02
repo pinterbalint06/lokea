@@ -28,7 +28,7 @@ describe("Game Lobby API - /api/choose-game/", () => {
                 const response = await requestWithSupertest.get("/api/choose-game?sort=CREATED");
 
                 expect(response.statusCode).toBe(200);
-                expect(gameLobbyQueries.getGameMaps).toHaveBeenCalledWith("created", undefined, 0);
+                expect(gameLobbyQueries.getGameMaps).toHaveBeenCalledWith("created", undefined, 0, null);
             });
 
             it("Should respond with 400 for a negative offset parameter", async () => {
@@ -50,21 +50,35 @@ describe("Game Lobby API - /api/choose-game/", () => {
 
                 expect(response.statusCode).toBe(200);
                 expect(response.body.results).toEqual(mockGameMaps);
-                expect(gameLobbyQueries.getGameMaps).toHaveBeenCalledWith(sort, undefined, 0);
+                expect(gameLobbyQueries.getGameMaps).toHaveBeenCalledWith(sort, undefined, 0, null);
             });
 
             it("Should default to 'created' sort when no sort param is given", async () => {
                 const response = await requestWithSupertest.get("/api/choose-game");
 
                 expect(response.statusCode).toBe(200);
-                expect(gameLobbyQueries.getGameMaps).toHaveBeenCalledWith("created", undefined, 0);
+                expect(gameLobbyQueries.getGameMaps).toHaveBeenCalledWith("created", undefined, 0, null);
             });
 
             it("Should pass offset to database when provided", async () => {
                 const response = await requestWithSupertest.get("/api/choose-game?offset=10");
 
                 expect(response.statusCode).toBe(200);
-                expect(gameLobbyQueries.getGameMaps).toHaveBeenCalledWith("created", undefined, 10);
+                expect(gameLobbyQueries.getGameMaps).toHaveBeenCalledWith("created", undefined, 10, null);
+            });
+
+            it("Should pass filter='mine' to database when filter param is mine", async () => {
+                const response = await requestWithSupertest.get("/api/choose-game?filter=mine");
+
+                expect(response.statusCode).toBe(200);
+                expect(gameLobbyQueries.getGameMaps).toHaveBeenCalledWith("created", undefined, 0, "mine");
+            });
+
+            it("Should ignore unknown filter values and pass null", async () => {
+                const response = await requestWithSupertest.get("/api/choose-game?filter=invalid");
+
+                expect(response.statusCode).toBe(200);
+                expect(gameLobbyQueries.getGameMaps).toHaveBeenCalledWith("created", undefined, 0, null);
             });
         });
 
@@ -215,7 +229,7 @@ describe("Game Lobby API - /api/choose-game/", () => {
 
         describe("Not found (404)", () => {
             it("Should respond with 404 if the game map does not exist", async () => {
-                sessionsQueries.getGameTitleById.mockResolvedValueOnce(null);
+                sessionsQueries.getGameInfoById.mockResolvedValueOnce(null);
 
                 const response = await requestWithSupertest
                     .post("/api/choose-game/session")

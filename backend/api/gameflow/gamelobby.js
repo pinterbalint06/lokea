@@ -21,8 +21,9 @@ router.get("/", async (request, response) => {
             throw new AppError(ERRORS.GAMEFLOW.INVALID_SORT, 400);
         }
 
+        const filter = request.query.filter === 'mine' ? 'mine' : null;
         const userId = request.session?.userid;
-        const palyak = await getGameMaps(sort, userId, offset);
+        const palyak = await getGameMaps(sort, userId, offset, filter);
         response.status(200).json({ results: palyak });
     } catch (error) {
         if (error instanceof AppError) {
