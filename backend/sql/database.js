@@ -1,5 +1,6 @@
 const pool = require('./connection.js');
 const bcrypt = require('bcrypt');
+const AppError = require('#utils/app-error.js');
 
 //!SQL Queries
 
@@ -129,11 +130,11 @@ async function updatePassword(user_id, oldPass, newPass) {
         const [result] = await pool.execute(getPasswordQuery, [user_id]);
 
         if (result.length == 0) {
-            throw new Error('Felhasználó nem található!');
+            throw new AppError('Felhasználó nem található!', 404);
         }
         let egyezes = await bcrypt.compare(oldPass, result[0].password);
         if (!egyezes) {
-            throw new Error('Nem ez a régi jelszavad!');
+            throw new AppError('Nem ez a régi jelszavad!', 400);
         }
         const hashedPassword = await bcrypt.hash(newPass, 10);
         connection = await pool.getConnection();
@@ -160,7 +161,7 @@ async function userToInactive(user_id) {
         const getUserQuery = 'SELECT users.username, users.email FROM users WHERE users.user_id = ?';
         const [userResult] = await pool.execute(getUserQuery, [user_id]);
         if (userResult.length == 0) {
-            throw new Error('Felhasználó nem található!');
+            throw new AppError('Felhasználó nem található!', 404);
         }
         connection = await pool.getConnection();
         await connection.beginTransaction();
@@ -187,7 +188,7 @@ async function uploadProfilePic(filepath, width, height, user_id) {
         const [oldImageData] = await pool.execute(queryGetLastImage, [user_id]);
 
         if (oldImageData.length === 0) {
-            throw new Error('Felhasználó nem található!');
+            throw new AppError('Felhasználó nem található!', 404);
         }
 
         let oldFilePath = oldImageData[0] ? oldImageData[0].filepath : null;
@@ -225,7 +226,7 @@ async function deleteProfilePic(user_id) {
         const [oldImageData] = await pool.execute(queryGetLastImage, [user_id]);
 
         if (oldImageData.length === 0) {
-            throw new Error('Felhasználó nem található!');
+            throw new AppError('Felhasználó nem található!', 404);
         }
 
         let oldFilePath = oldImageData[0].filepath;

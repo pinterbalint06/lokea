@@ -9,6 +9,7 @@ const validator = require('validator');
 const { body, check, validationResult } = require("express-validator");
 const sharp = require('sharp');
 const { sendWelcomeEmail, sendDeleteEmail, sendChangeEmail, sendPasswordChangeEmail } = require('../utils/mails.js')
+const AppError = require('#utils/app-error.js');
 
 //!Multer
 const { uploadDisk: upload } = require('#config/profile-pic-upload-config.js');
@@ -226,7 +227,11 @@ router.put('/updateUser', auth.checkAuth,
             }
 
         } catch (error) {
-            response.status(500).json({ error: error.message });
+            if (error instanceof AppError) {
+                response.status(error.statusCode).json({ error: error.message });
+            } else {
+                response.status(500).json({ error: error.message });
+            }
         }
     })
 
@@ -278,7 +283,11 @@ router.delete("/inactiveUser", auth.checkAuth, async (request, response) => {
         });
 
     } catch (error) {
-        response.status(500).json({ error: error.message });
+        if (error instanceof AppError) {
+            response.status(error.statusCode).json({ error: error.message });
+        } else {
+            response.status(500).json({ error: error.message });
+        }
     }
 })
 
@@ -332,7 +341,11 @@ router.put('/updateProfilePic', auth.checkAuth, upload.single('profilePic'), asy
         if (newFilePath) {
             await fs.unlink(newFilePath).catch(() => { });
         }
-        response.status(500).json({ error: error.message });
+        if (error instanceof AppError) {
+            response.status(error.statusCode).json({ error: error.message });
+        } else {
+            response.status(500).json({ error: error.message });
+        }
     }
 })
 
@@ -353,7 +366,11 @@ router.delete('/deleteProfilePic', auth.checkAuth, async (request, response) => 
             response.status(201).json({ success: true, message: "Profilkép törölve!" });
         }
     } catch (error) {
-        response.status(500).json({ error: error.message });
+        if (error instanceof AppError) {
+            response.status(error.statusCode).json({ error: error.message });
+        } else {
+            response.status(500).json({ error: error.message });
+        }
     }
 })
 
