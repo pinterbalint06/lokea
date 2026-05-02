@@ -15,18 +15,7 @@ const databaseLogs = require('#sql/admin/databaseLogs.js');
 const multer = require('multer'); //?npm install multer
 const path = require('path');
 const { UPLOAD_ROOT } = require('#config/mapdatas-upload-config.js');
-
-const upload = multer({
-    limits: { fileSize: 5 * 1024 * 1024 }, // 5 MB
-    fileFilter: (request, file, callback) => {
-        if (file.mimetype && file.mimetype.startsWith('image/')) {
-            callback(null, true);
-        } else {
-            request.fileValidationError = 'Érvénytelen fájltípus! Csak képeket tölthetsz fel.';
-            callback(null, false);
-        }
-    }
-});
+const { uploadMemory: upload } = require('#config/profile-pic-upload-config.js');
 
 //API endpoints
 
