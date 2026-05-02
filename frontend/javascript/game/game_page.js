@@ -410,10 +410,10 @@ async function finishGame() {
 
 async function loadUserComment() {
     try {
-        const response = await fetch(`/api/game-maps/${gameMapId}/my-comment`);
         if (!gameMapId) {
             throw new Error('Nincs elérhető pálya a megjegyzés betöltéséhez.');
         }
+        const response = await fetch(`/api/game-maps/${gameMapId}/my-comment`);
         if (response.ok) {
             const data = await response.json();
             if (data && data.rating) {
@@ -580,7 +580,7 @@ function createLeaderboardItem(rank, scoreData) {
 
     const value = document.createElement('span');
     value.className = 'gameover-score-value';
-    value.textContent = scoreData.score;
+    value.textContent = String(scoreData.score ?? 0);
 
     item.appendChild(rankEl);
     item.appendChild(main);

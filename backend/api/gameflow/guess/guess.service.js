@@ -21,11 +21,11 @@ function assertSessionReady(game) {
 function parseGuessInput(body) {
     const u = parseFloat(body.u);
     const v = parseFloat(body.v);
-    const mapId = body.map_id;
+    const mapId = parseInt(body.map_id);
     if (isNaN(u) || isNaN(v) || !isFinite(u) || !isFinite(v)) {
         throw new AppError("Invalid guess coordinates", 400);
     }
-    if (mapId == null) {
+    if (!Number.isFinite(mapId) || mapId <= 0) {
         throw new AppError("Invalid map id", 400);
     }
     return { u, v, mapId };
