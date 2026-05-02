@@ -5,8 +5,9 @@ build/
 backend/temp/*
 backend/coverage
 backend/uploads/mapdatas/*
-!backend/uploads/mapdatas/assets/
-
+backend/package-lock.json
 .env
 *.env
 .claude
+
+!backend/uploads/mapdatas/assets/
