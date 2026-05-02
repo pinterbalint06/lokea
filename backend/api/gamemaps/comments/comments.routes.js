@@ -1,6 +1,6 @@
 const express = require("express");
 const router = express.Router({ mergeParams: true });
-const { validateRequest } = require("#utils/validation.js");
+const { validateRequest } = require("#middlewares/validation.js");
 const { upload } = require("#config/mapdatas-upload-config.js");
 const schemas = require("#gamemaps/comments/comments.schemas.js");
 const controller = require("#gamemaps/comments/comments.controller.js");

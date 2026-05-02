@@ -1,6 +1,6 @@
 const express = require("express");
 const router = express.Router();
-const { validateRequest } = require("#utils/validation.js");
+const { validateRequest } = require("#middlewares/validation.js");
 const schemas = require("#gamemaps/paths/paths.schemas.js");
 const controller = require("#gamemaps/paths/paths.controller.js");
 const { isAllowedToAccessPoint } = require("#gamemaps/shared/middlewares/gamemaps.middleware.js");

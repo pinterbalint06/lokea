@@ -50,7 +50,7 @@ jest.mock('#config/mapdatas-upload-config.js', () => {
     };
 }, { virtual: true });
 
-jest.mock('#utils/auth.js', () => {
+jest.mock('#middlewares/auth.js', () => {
     const helpers = require('./helpers.js');
     return {
         checkAuth: helpers.mockCheckAuth,
