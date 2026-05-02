@@ -19,7 +19,18 @@ function clearLoadedURLs() {
 }
 
 document.addEventListener("DOMContentLoaded", function () {
-    let selectedButton = document.getElementById('sortByPlays');
+    const urlParams = new URLSearchParams(window.location.search);
+    const initialTab = urlParams.get('tab') === 'mine' ? 'mine' : 'all';
+    const sortButtonMap = { created: 'sortByCreated', rating: 'sortByRating', plays: 'sortByPlays', favorites: 'sortByFavorites' };
+    const initialSort = sortButtonMap[urlParams.get('sort')] ? urlParams.get('sort') : 'plays';
+
+    let selectedButton = document.getElementById(sortButtonMap[initialSort]);
+    if (initialSort !== 'plays') {
+        document.getElementById('sortByPlays').classList.remove('btnPushed');
+        selectedButton.classList.add('btnPushed');
+        selectedButton.disabled = true;
+    }
+
     let closeBtn = document.querySelector('.modal-close-btn');
     const settingsForm = document.getElementById('settingsForm');
     initRoundTimeRange();
@@ -33,7 +44,7 @@ document.addEventListener("DOMContentLoaded", function () {
     });
     setupContinueGameModal();
     checkAndShowContinueModal();
-    loadGameMaps('plays', null);
+    switchTab(initialTab);
 
     function switchTab(tab) {
         activeTab = tab;
