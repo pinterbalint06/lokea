@@ -306,6 +306,48 @@ describe("Game Maps API - /api/game-maps/", () => {
             });
         });
 
+        describe("POST /:gameMapID", () => {
+            const makePostRequest = (overrides = {}) => buildRequest(
+                () => requestWithSupertest.post(`/api/game-maps`),
+                overrides,
+                {}
+            );
+
+            beforeEach(() => {
+                database.createGameMap.mockResolvedValue(randomId());
+            });
+
+            describe("Authorization (401, 403)", () => {
+                testRequiresAuth(() => makePostRequest());
+            });
+
+            describe("Happy paths (201)", () => {
+                it("Should respond with 201 and return the newly created game map ID", async () => {
+                    const newId = randomId();
+                    database.createGameMap.mockResolvedValueOnce(newId);
+
+                    const response = await makePostRequest();
+
+                    expect(database.createGameMap).toHaveBeenCalledWith(expect.any(Number));
+
+                    expect(response.statusCode).toBe(201);
+                    expect(response.body).toEqual({ gameMapID: newId });
+                });
+            });
+
+            describe("Server errors (500)", () => {
+                suppressConsoleErrors();
+
+                it("Should respond with 500 if there is an unexpected database error during createGameMap", async () => {
+                    database.createGameMap.mockRejectedValueOnce(new Error("Database error"));
+
+                    const response = await makePostRequest();
+
+                    expectErrorResponse(response, 500, ERRORS.COMMON.UNEXPECTED_ERROR);
+                });
+            });
+        });
+
         describe("DELETE /:gameMapID", () => {
             const defaults = {
                 id: randomId()
