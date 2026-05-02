@@ -142,7 +142,6 @@ const ERRORS = {
         INVALID_OFFSET: "Érvénytelen offset! Pozitív egész számnak kell lennie.",
         INVALID_SORT: "Érvénytelen rendezés! Használható: created, rating, plays, favorites.",
         FETCH_GAME_MAPS_FAILED: "A pályák lekérése nem sikerült!",
-        FETCH_COVER_IMAGE_FAILED: "A borítókép lekérése nem sikerült!",
         FETCH_SESSION_FAILED: "A játékmenet adatainak lekérése nem sikerült!",
         FINISH_SESSION_FAILED: "A játékmenet befejezése nem sikerült!",
         PROCESS_GUESS_FAILED: "A tipp feldolgozása nem sikerült!",

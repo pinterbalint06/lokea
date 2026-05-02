@@ -96,7 +96,7 @@ function createCard(game_map) {
     game_maps_card.addEventListener('click', function () {
         createModal(game_map);
     });
-    loadCoverImagelowThenHigh(game_maps_card, game_map.game_maps_id);
+    loadCoverImageLowThenHigh(game_maps_card, game_map.game_maps_id);
 
     return game_maps_card;
 }
@@ -164,7 +164,7 @@ async function fetchURL(url) {
     return response.json();
 }
 
-async function loadCoverImagelowThenHigh(card, gmId) {
+async function loadCoverImageLowThenHigh(card, gmId) {
     try {
         await loadGameMapCoverImageLowThenHigh({
             gameMapId: gmId,
