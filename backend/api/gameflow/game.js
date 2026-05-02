@@ -1,7 +1,7 @@
 const express = require("express");
 const router = express.Router();
 const { finishGameSession } = require("#gameflow/sessions/sessions.queries.js");
-const { checkGameSession } = require("#root/auth.js");
+const { checkGameSession } = require("#utils/auth.js");
 const ERRORS = require("#utils/error-messages.js");
 const mapsRoutes = require("./maps/maps.routes.js");
 const randomPointRoutes = require("./random-point/random-point.routes.js");
