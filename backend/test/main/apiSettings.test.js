@@ -205,14 +205,14 @@ describe('Settings API Tesztek (apiSettings.js)', () => {
             expect(res.body.message).toBe(enTranslations.apiSettings.deleteProfilePic.already_default);
         });
 
-        it('SIKER - 201, ha volt régi kép és azt kitörli', async () => {
+        it('SIKER - 200, ha volt régi kép és azt kitörli', async () => {
             db.deleteProfilePic.mockResolvedValue('torlendo_kep.webp');
             fs.unlink.mockResolvedValue();
             dbLogs.addLog.mockResolvedValue();
 
             const res = await request(app)
                 .delete('/api/users/me/profile-picture')
-                .expect(201);
+                .expect(200);
             expect(res.body.message).toBe(enTranslations.apiSettings.deleteProfilePic.success);
             expect(fs.unlink).toHaveBeenCalled();
         });

@@ -122,63 +122,64 @@ router.delete("/users/me", auth.checkAuth, async (request, response) => {
     }
 })
 
-router.put('/users/me/profile-picture', auth.checkAuth, upload.single('profilePic'), async (request, response) => {
-    let originalFile;
-    let newFilePath;
-    try {
-        if (request.fileValidationError) {
-            response.status(400).json({ error: request.t('main:apiSettings.updateProfilePic.invalid_file_type') });
-        }
-        else {
-            if (!request.file) {
-                response.status(400).json({ error: request.t('main:apiSettings.updateProfilePic.no_image') });
-            }
-            else {
-                originalFile = request.file.path;
-                let newFileName = `processed-${Date.now()}.webp`;
-                newFilePath = path.join('uploads', newFileName);
-
-                //Kép tömöritése
-                sharp.cache(false);
-                const metadata = await sharp(originalFile)
-                    .rotate()
-                    .resize(400, 400, {
-                        fit: 'cover',
-                        position: 'center'
-                    })
-                    .toFormat('webp')
-                    .toFile(newFilePath);
-
-                let { width, height } = metadata;
-                let finalUrl = `${newFileName}`;
-                let lastPfp = await database.uploadProfilePic(finalUrl, width, height, request.session.userid);
-
-                await fs.unlink(originalFile).catch(() => { });
-
-                if (lastPfp) {
-                    let lastPfpPath = path.join(__dirname, '..', 'uploads', lastPfp);
-                    await fs.unlink(lastPfpPath).catch((err) => {
-                        console.error("Régi kép törlése sikertelen:", err.path);
-                    });
+router.put('/users/me/profile-picture', auth.checkAuth,
+    (request, response, next) => {
+        upload.single('profilePic')(request, response, (err) => {
+            if (err instanceof multer.MulterError) {
+                if (err.code === 'LIMIT_FILE_SIZE') {
+                    request.fileValidationError = 'A fájl túl nagy! Maximum 5 MB engedélyezett.';
+                } else {
+                    request.fileValidationError = `Feltöltési hiba: ${err.message}`;
                 }
-                await databaseLogs.addLog(request.session.userid, 'Profile picture update');
-                response.status(201).json({ success: true, message: request.t('main:apiSettings.updateProfilePic.success') });
+            } else if (err) {
+                return response.status(500).json({ error: 'Rendszerhiba a feltöltés során.' });
             }
-        }
-    } catch (error) {
-        if (originalFile) {
-            await fs.unlink(originalFile).catch(() => { });
-        }
-        if (newFilePath) {
-            await fs.unlink(newFilePath).catch(() => { });
-        }
-        if (error instanceof AppError) {
-            response.status(error.statusCode).json({ error: error.message });
-        } else {
+            next();
+        });
+    },
+    async (request, response) => {
+        let newFilePath = null;
+        try {
+            if (request.fileValidationError) {
+                return response.status(400).json({ error: request.t('main:apiSettings.updateProfilePic.invalid_file_type') });
+            }
+            if (!request.file) {
+                return response.status(400).json({ error: request.t('main:apiSettings.updateProfilePic.no_image') });
+            }
+
+            let user_id = request.session.userid;
+
+            let newFileName = `processed-${Date.now()}.webp`;
+            newFilePath = path.join(UPLOAD_ROOT, newFileName);
+
+            sharp.cache(false);
+
+            const metadata = await sharp(request.file.buffer)
+                .rotate()
+                .resize(400, 400, {
+                    fit: 'cover',
+                    position: 'center'
+                })
+                .toFormat('webp')
+                .toFile(newFilePath);
+
+            let { width, height } = metadata;
+            let lastPfp = await database.uploadProfilePic(newFileName, width, height, user_id);
+
+            if (lastPfp) {
+                let lastPfpPath = path.join(UPLOAD_ROOT, lastPfp);
+                await fs.unlink(lastPfpPath).catch(() => { });
+            }
+
+            await databaseLogs.addLog(user_id, 'Profile picture update');
+            return response.status(201).json({ success: true, message: request.t('main:apiSettings.updateProfilePic.success') });
+        } catch (error) {
+            console.error("Hiba a képfeldolgozás során:", error);
+            if (newFilePath) await fs.unlink(newFilePath).catch(() => { });
             response.status(500).json({ error: request.t('main:apiSettings.updateProfilePic.error') });
         }
     }
-})
+);
 
 router.delete('/users/me/profile-picture', auth.checkAuth, async (request, response) => {
     try {
@@ -187,21 +188,15 @@ router.delete('/users/me/profile-picture', auth.checkAuth, async (request, respo
             response.status(200).json({ success: true, message: request.t('main:apiSettings.deleteProfilePic.already_default') });
         }
         else {
-            let lastPfpPath = path.join(__dirname, '..', 'uploads', lastPfp);
-            try {
-                await fs.unlink(lastPfpPath);
-            } catch (error) {
-                console.log("a kép nincs a szerveren!" + error);
-            }
+            let lastPfpPath = path.join(UPLOAD_ROOT, lastPfp);
+            await fs.unlink(lastPfpPath).catch(() => { });
+
             await databaseLogs.addLog(request.session.userid, 'Profile picture delete');
-            response.status(201).json({ success: true, message: request.t('main:apiSettings.deleteProfilePic.success') });
+            response.status(200).json({ success: true, message: request.t('main:apiSettings.deleteProfilePic.success') });
         }
     } catch (error) {
-        if (error instanceof AppError) {
-            response.status(error.statusCode).json({ error: error.message });
-        } else {
-            response.status(500).json({ error: request.t('main:apiSettings.deleteProfilePic.error') });
-        }
+        response.status(500).json({ error: request.t('main:apiSettings.deleteProfilePic.error') });
+        console.log(error.message)
     }
 })
 
@@ -211,7 +206,7 @@ router.get('/users/profile-picture', auth.checkAuth,
     ], validate, (request, response) => {
         try {
             let pfproute = request.query.route;
-            const root = path.join(__dirname, '..', 'uploads');
+            const root = UPLOAD_ROOT;
 
             response.sendFile(pfproute, { root: root }, (err) => {
                 if (err) {
