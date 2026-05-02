@@ -53,23 +53,22 @@ document.addEventListener("DOMContentLoaded", function () {
 });
 
 async function loadGameMaps(sort) {
-    let gameMaps;
     try {
+        let gameMaps;
         gameMaps = await fetchURL('/api/choose-game?sort=' + sort + '&offset=' + (cardLoadedTimes * 20));
+        let gameMapsContainer = document.getElementById('game_maps_container');
+        if (gameMaps.results && gameMaps.results.length > 0) {
+            for (let i = 0; i < gameMaps.results.length; i++) {
+                gameMapsContainer.appendChild(createCard(gameMaps.results[i]));
+            }
+        } else {
+            let p = document.createElement('p');
+            p.classList.add('text-center');
+            p.innerText = 'Nincsenek elérhető játékok.';
+            gameMapsContainer.appendChild(p);
+        }
     } catch {
         showToast(document.getElementById('toastPlace'), 'A pályák betöltése nem sikerült.', 'danger', true);
-        return;
-    }
-    let gameMapsContainer = document.getElementById('game_maps_container');
-    if (gameMaps.results && gameMaps.results.length > 0) {
-        for (let i = 0; i < gameMaps.results.length; i++) {
-            gameMapsContainer.appendChild(createCard(gameMaps.results[i]));
-        }
-    } else {
-        let p = document.createElement('p');
-        p.classList.add('text-center');
-        p.innerText = 'Nincsenek elérhető játékok.';
-        gameMapsContainer.appendChild(p);
     }
 }
 
@@ -170,7 +169,7 @@ async function loadCoverImageLowThenHigh(card, gmId) {
         await loadGameMapCoverImageLowThenHigh({
             gameMapId: gmId,
             loadToViewer: async (imgData) => {
-                imgData.cleanup = () => {};
+                imgData.cleanup = () => { };
                 if (currentUrl) {
                     loadedURLs.splice(loadedURLs.indexOf(currentUrl), 1);
                     window.URL.revokeObjectURL(currentUrl);
@@ -181,8 +180,8 @@ async function loadCoverImageLowThenHigh(card, gmId) {
             },
             isCurrent: () => true
         });
-    } catch (error) {
-        console.error("Error loading cover image:", error);
+    } catch {
+        showToast(document.getElementById('toastPlace'), 'A borítókép betöltése nem sikerült.', 'danger', true);
     }
 }
 
@@ -212,7 +211,7 @@ async function checkAndShowContinueModal() {
             continueModal.classList.add('active');
         }
     } catch {
-        // session check failing silently is acceptable — don't block the page
+        
     }
 }
 
