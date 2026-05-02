@@ -33,7 +33,7 @@ document.addEventListener("DOMContentLoaded", async function () {
 async function isLogined() {
     let loginStatus = false;
     try {
-        let response = await fetch("/api/loginRole");
+        let response = await fetch("/api/auth/status");
         let data = await response.json();
         if (response.ok) {
             loginStatus = data.login;
@@ -65,7 +65,7 @@ async function isLogined() {
 
 async function bejelentkezes(username, jelszo, remember) {
     try {
-        let response = await fetch("/api/login", {
+        let response = await fetch("/api/auth/login", {
             method: "POST",
             headers: {
                 "Content-Type": "application/json"
@@ -236,8 +236,8 @@ function dropdownDivider() {
 
 async function kijelentkezes() {
     try {
-        let response = await fetch("/api/signout", {
-            method: "POST",
+        let response = await fetch("/api/auth/logout", {
+            method: "DELETE",
             headers: {
                 "Content-Type": "application/json"
             }
@@ -474,7 +474,7 @@ async function showSettingsModal() {
 
 async function getUserData() {
     try {
-        let response = await fetch('/api/getUserData');
+        let response = await fetch('/api/users/me');
         if (response.ok) {
             let data = await response.json();
             return data.users;
@@ -544,7 +544,7 @@ async function checkModification() {
 async function saveModification(username, email, language, darkmode) {
     try {
         console.log(username, email, language, darkmode)
-        let response = await fetch("/api/updateUser", {
+        let response = await fetch("/api/users/me", {
             method: "PUT",
             headers: {
                 "Content-Type": "application/json"
@@ -586,7 +586,7 @@ async function saveModification(username, email, language, darkmode) {
 
 async function deleteProfile() {
     try {
-        let response = await fetch("/api/inactiveUser", {
+        let response = await fetch("/api/users/me", {
             method: "DELETE",
             headers: {
                 "Content-Type": "application/json"
@@ -619,7 +619,7 @@ async function jelszoValtoztat() {
     else {
         if (validalvaJelszo(newPass.value)) {
             try {
-                let response = await fetch("/api/updatePassword", {
+                let response = await fetch("/api/users/me/password", {
                     method: "PUT",
                     headers: {
                         "Content-Type": "application/json"
@@ -688,7 +688,7 @@ function createAlert(message, type) {
 
 async function getProfilePicture(route) {
     try {
-        let response = await fetch(`/api/getProfilePic?route=${route}`);
+        let response = await fetch(`/api/users/profile-picture?route=${route}`);
         let blob = await response.blob();
 
         let objectURL = URL.createObjectURL(blob);
@@ -702,7 +702,7 @@ async function uploadProfilePic(picture) {
     let fd = new FormData();
     fd.append("profilePic", picture);
     try {
-        let response = await fetch("/api/updateProfilePic", {
+        let response = await fetch("/api/users/me/profile-picture", {
             method: "PUT",
             body: fd
         });
@@ -726,7 +726,7 @@ async function uploadProfilePic(picture) {
 
 async function deleteProfilePicture() {
     try {
-        let response = await fetch("/api/deleteProfilePic", {
+        let response = await fetch("/api/users/me/profile-picture", {
             method: "DELETE",
             headers: {
                 "Content-Type": "application/json"
@@ -790,7 +790,7 @@ function translatePage() {
 
 export async function nyelvSzinkronizalas() {
     try {
-        let response = await fetch('/api/getLanguage');
+        let response = await fetch('/api/users/language');
         let data = await response.json();
         if (!response.ok) throw new Error(data.message || data.error || "Hiba a nyelv lekérdezésekor");
         await initI18next(data.language);

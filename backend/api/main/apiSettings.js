@@ -36,7 +36,7 @@ const upload = multer({
 
 //Endpoints - settings
 
-router.get('/getUserData', auth.checkAuth, async (request, response) => {
+router.get('/users/me', auth.checkAuth, async (request, response) => {
     try {
         let users = await database.getUser(request.session.userid);
         let userData = users[0];
@@ -53,7 +53,7 @@ router.get('/getUserData', auth.checkAuth, async (request, response) => {
     }
 })
 
-router.put('/updateUser', auth.checkAuth,
+router.put('/users/me', auth.checkAuth,
     [
         body("username")
             .optional({ nullable: true })
@@ -91,7 +91,7 @@ router.put('/updateUser', auth.checkAuth,
         }
     })
 
-router.put("/updatePassword", auth.checkAuth,
+router.put("/users/me/password", auth.checkAuth,
     [
         body("oldPass")
             .isLength({ min: 8, max: 60 }).withMessage((value, { req }) => req.t('main:apiSettings.updatePassword.validation_old_password_length')),
@@ -112,7 +112,7 @@ router.put("/updatePassword", auth.checkAuth,
         }
     })
 
-router.delete("/inactiveUser", auth.checkAuth, async (request, response) => {
+router.delete("/users/me", auth.checkAuth, async (request, response) => {
     try {
         let { email, username } = await database.userToInactive(request.session.userid);
         request.session.destroy(async (error) => {
@@ -132,7 +132,7 @@ router.delete("/inactiveUser", auth.checkAuth, async (request, response) => {
     }
 })
 
-router.put('/updateProfilePic', auth.checkAuth, upload.single('profilePic'), async (request, response) => {
+router.put('/users/me/profile-picture', auth.checkAuth, upload.single('profilePic'), async (request, response) => {
     let originalFile;
     let newFilePath;
     try {
@@ -186,7 +186,7 @@ router.put('/updateProfilePic', auth.checkAuth, upload.single('profilePic'), asy
     }
 })
 
-router.delete('/deleteProfilePic', auth.checkAuth, async (request, response) => {
+router.delete('/users/me/profile-picture', auth.checkAuth, async (request, response) => {
     try {
         let lastPfp = await database.deleteProfilePic(request.session.userid);
         if (!lastPfp) {
@@ -207,7 +207,7 @@ router.delete('/deleteProfilePic', auth.checkAuth, async (request, response) => 
     }
 })
 
-router.get('/getProfilePic', auth.checkAuth,
+router.get('/users/profile-picture', auth.checkAuth,
     [
         check("route").matches(/^[a-zA-Z0-9_\-]+\.[a-zA-Z0-9]+$/).withMessage((value, { req }) => req.t('main:apiSettings.getProfilePic.validation_invalid_filename'))
     ], (request, response) => {

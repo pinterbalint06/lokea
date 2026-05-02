@@ -16,7 +16,7 @@ document.addEventListener("DOMContentLoaded", function () {
 
 async function regisztracio(username, email, password) {
     try {
-        let response = await fetch("/api/signup", {
+        let response = await fetch("/api/auth/register", {
             method: "POST",
             headers: {
                 "Content-Type": "application/json"
@@ -50,7 +50,7 @@ async function regisztracioAnimacio(username, email, password) {
     try {
         let response = await regisztracio(username, email, password);
         let data = await response.json();
-        let message = data.message;
+        let message = data.message || data.error || data.errors;
         setTimeout(() => {
             container.classList.remove('spinning');
             title.innerHTML = "";
@@ -71,10 +71,10 @@ async function regisztracioAnimacio(username, email, password) {
                 container.classList.remove('spinning');
                 title.innerText = `Regisztrálás sikertelen!`;
                 if (Array.isArray(message)) {
-                    let errors = message.join('<br>');
+                    let errors = message.map(e => e.msg || e).join('<br>');
                     modalText.innerHTML = errors;
                 }
-                else {  
+                else {
                     modalText.innerText = message;
                 }
                 setTimeout(() => {

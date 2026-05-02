@@ -8,7 +8,7 @@ const { sendWelcomeEmail } = require('../../utils/mails.js');
 const { validate } = require('../../utils/validate.js');
 
 //Endpoints - signup, login, signout
-router.post("/signup",
+router.post("/auth/register",
     [
         body("username")
             .not().isEmail().withMessage((value, { req }) => req.t('main:apiMain.signup.validation_username_no_email'))
@@ -48,7 +48,7 @@ router.post("/signup",
     }
 );
 
-router.post("/login",
+router.post("/auth/login",
     [
         body("username")
             .isLength({ min: 1, max: 254 }).withMessage((value, { req }) => req.t('main:apiMain.login.validation_username_length')),
@@ -99,7 +99,7 @@ router.post("/login",
         }
     });
 
-router.post('/signout', (request, response) => {
+router.delete('/auth/logout', (request, response) => {
     request.session.destroy(error => {
         if (error) {
             response.status(500).json({ success: false, error: error });
@@ -111,7 +111,7 @@ router.post('/signout', (request, response) => {
     });
 });
 
-router.get('/loginRole', async (request, response) => {
+router.get('/auth/status', async (request, response) => {
     let login = false;
     try {
         if (!request.session.userid) {
@@ -132,7 +132,7 @@ router.get('/loginRole', async (request, response) => {
     }
 })
 
-router.get('/getLanguage', (request, response) => {
+router.get('/users/language', (request, response) => {
     try {
         if (!request.session) {
             throw new Error();
