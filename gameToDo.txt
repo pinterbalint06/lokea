@@ -63,3 +63,5 @@ Maradék teendő 2:
 kesz--új játék oldal megcsinálása
 kesz--jatekinditaskor megnezni hogy van e pont meg terkep
 kesz--kulon linkek arra, hogy mit akar a felhasznalo
+--api choose-game nev javitasa
+--choose game filenevek cseréje
