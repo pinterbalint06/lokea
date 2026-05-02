@@ -460,33 +460,46 @@ body {
 }
 
 .gameover-columns {
-    display: flex;
+    display: grid;
+    grid-template-columns: 260px 1fr;
+    grid-template-areas:
+        "actions leaderboard"
+        "comments leaderboard";
     gap: 2rem;
     width: 100%;
-    align-items: flex-start;
+    align-items: start;
 }
 
 .gameover-left {
-    flex: 0 0 260px;
+    grid-area: actions;
     display: flex;
     flex-direction: column;
     align-items: stretch;
     gap: 0.6rem;
 }
 
-.gameover-right {
-    flex: 1;
-    min-width: 0;
+.gameover-comments-col {
+    grid-area: comments;
     display: flex;
     flex-direction: column;
     gap: 0.5rem;
+    min-width: 0;
+}
+
+.gameover-right {
+    grid-area: leaderboard;
+    align-self: stretch;
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+    min-width: 0;
 }
 
 .gameover-leaderboard {
     display: flex;
     flex-direction: column;
+    flex: 1;
     gap: 0.5rem;
-    max-height: 260px;
     overflow-y: auto;
 }
 
@@ -514,14 +527,38 @@ body {
     flex-shrink: 0;
 }
 
-.gameover-score-name {
+.gameover-score-main {
     flex: 1;
     min-width: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 0.1rem;
+}
+
+.gameover-score-name {
+    min-width: 0;
+    margin: 0;
     font-weight: 600;
     font-size: 0.88rem;
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
+}
+
+.gameover-score-rank[data-rank="1"] {
+    background: rgba(255, 216, 107, 0.22);
+    color: #ffd86b;
+    box-shadow: 0 0 8px rgba(255, 216, 107, 0.18);
+}
+
+.gameover-score-rank[data-rank="2"] {
+    background: rgba(180, 190, 200, 0.18);
+    color: #b4bec8;
+}
+
+.gameover-score-rank[data-rank="3"] {
+    background: rgba(205, 127, 50, 0.18);
+    color: #cd7f32;
 }
 
 .gameover-score-time {
@@ -675,9 +712,6 @@ body {
     color: #ff8585;
 }
 
-.gameover-comments-label {
-    margin-top: 0.75rem;
-}
 
 .gameover-comments-list {
     display: flex;
@@ -1049,15 +1083,18 @@ body {
     }
 
     .gameover-columns {
-        flex-direction: column;
-    }
-
-    .gameover-left {
-        flex: none;
-        width: 100%;
+        grid-template-columns: 1fr 1fr;
+        grid-template-areas:
+            "actions actions"
+            "comments leaderboard";
+        gap: 1rem;
     }
 
     .gameover-leaderboard {
+        max-height: 200px;
+    }
+
+    .gameover-comments-list {
         max-height: 200px;
     }
 }
