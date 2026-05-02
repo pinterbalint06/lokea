@@ -32,7 +32,7 @@ router.post("/auth/register",
             if (insert.success) {
                 let userid = insert.insertId;
                 await databaseLogs.addLog(userid, 'Sign up');
-                // await sendWelcomeEmail(email, username);
+                await sendWelcomeEmail(email, username);
                 response.status(201).json({
                     success: true,
                     message: request.t('main:apiMain.signup.success')

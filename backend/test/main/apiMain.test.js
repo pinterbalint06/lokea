@@ -6,6 +6,7 @@ const bcrypt = require('bcrypt');
 const apiMain = require('#main/apiMain.js');
 const db = require('#sql/main/databaseMain.js');
 const dbLogs = require('#sql/admin/databaseLogs.js');
+const mails = require('#utils/mails.js');
 const enTranslations = require('#locales/en/main.json');
 const huTranslations = require('#locales/hu/main.json');
 const { mockI18nMiddleware, suppressConsoleErrors, testRequiresAuth } = require('./helpers/helpers.js');
@@ -70,6 +71,7 @@ describe('Main API Tesztek (apiMain.js)', () => {
                 .expect(201);
             expect(res.body.success).toBe(true);
             expect(dbLogs.addLog).toHaveBeenCalledWith(1, 'Sign up');
+            expect(mails.sendWelcomeEmail).toHaveBeenCalledWith('teszt@elek.hu', 'TesztElek');
         });
 
         it('HIBA - 500, szerver/DB hiba', async () => {

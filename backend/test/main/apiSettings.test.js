@@ -8,6 +8,7 @@ const sharp = require('sharp');
 const apiSettings = require('#main/apiSettings.js');
 const db = require('#sql/main/databaseSettings.js');
 const dbLogs = require('#sql/admin/databaseLogs.js');
+const mails = require('#utils/mails.js');
 const enTranslations = require('#locales/en/main.json');
 const huTranslations = require('#locales/hu/main.json');
 const { mockI18nMiddleware, suppressConsoleErrors, testRequiresAuth } = require('./helpers/helpers.js');
@@ -91,6 +92,7 @@ describe('Settings API Tesztek (apiSettings.js)', () => {
                 .expect(200);
             expect(res.body.message).toBe(enTranslations.apiSettings.updateUser.success);
             expect(db.updateUser).toHaveBeenCalledWith(1, 'UjNev', 'uj@email.hu', 'en', true);
+            expect(mails.sendChangeEmail).toHaveBeenCalledWith('uj@email.hu', 'UjNev');
         });
 
         it('SIKER - 200, nem történt változás (affectedRows: 0)', async () => {
@@ -133,6 +135,7 @@ describe('Settings API Tesztek (apiSettings.js)', () => {
                 .send(validPass)
                 .expect(200);
             expect(res.body.message).toBe(enTranslations.apiSettings.updatePassword.success);
+            expect(mails.sendPasswordChangeEmail).toHaveBeenCalledWith('e@e.hu', 'Béla');
         });
     });
 
@@ -146,6 +149,7 @@ describe('Settings API Tesztek (apiSettings.js)', () => {
             const res = await request(app).delete('/api/users/me').expect(200);
             expect(res.body.success).toBe(true);
             expect(res.body.message).toBe(enTranslations.apiSettings.inactiveUser.success);
+            expect(mails.sendDeleteEmail).toHaveBeenCalledWith('e@e.hu', 'Béla');
         });
 
         it('HIBA - 500, adatbázis hiba', async () => {

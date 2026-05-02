@@ -62,7 +62,7 @@ router.put('/users/me', auth.checkAuth,
                 if (language) request.session.userLanguage = language;
                 await databaseLogs.addLog(request.session.userid, 'User update');
                 response.status(200).json({ message: request.t('main:apiSettings.updateUser.success') });
-                // await sendChangeEmail(email, username);
+                await sendChangeEmail(email, username);
             }
             else {
                 response.status(200).json({ message: request.t('main:apiSettings.updateUser.no_change') });
@@ -90,7 +90,7 @@ router.put("/users/me/password", auth.checkAuth,
             let { oldPass, newPass } = request.body;
             let { email, username } = await database.updatePassword(request.session.userid, oldPass, newPass);
             await databaseLogs.addLog(request.session.userid, 'Password update');
-            // await sendPasswordChangeEmail(email, username);
+            await sendPasswordChangeEmail(email, username);
             response.status(200).json({ message: request.t('main:apiSettings.updatePassword.success') });
         } catch (error) {
             response.status(500).json({ error: request.t('main:apiSettings.updatePassword.error') });
@@ -108,7 +108,7 @@ router.delete("/users/me", auth.checkAuth, async (request, response) => {
             else {
                 await databaseLogs.addLog(userid, 'User delete');
                 response.clearCookie('geo.sid');
-                // await sendDeleteEmail(email, username);
+                await sendDeleteEmail(email, username);
                 response.status(200).json({ success: true, message: request.t('main:apiSettings.inactiveUser.success') });
             }
         });
@@ -196,7 +196,6 @@ router.delete('/users/me/profile-picture', auth.checkAuth, async (request, respo
         }
     } catch (error) {
         response.status(500).json({ error: request.t('main:apiSettings.deleteProfilePic.error') });
-        console.log(error.message)
     }
 })
 
