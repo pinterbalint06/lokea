@@ -72,14 +72,13 @@ router.put('/users/me', auth.checkAuth,
         body("darkmode")
             .optional({ values: "null" })
             .isBoolean().withMessage((value, { req }) => req.t('main:apiSettings.updateUser.validation_darkmode_boolean'))
-    ], validate,
-    async (request, response) => {
+    ], validate, async (request, response) => {
         try {
             let { username, email, language, darkmode } = request.body;
             let result = await database.updateUser(request.session.userid, username, email, language, darkmode);
             if (result == 1) {
                 if (language) request.session.userLanguage = language;
-                await database.addLog(request.session.userid, 'User update');
+                await databaseLogs.addLog(request.session.userid, 'User update');
                 response.status(200).json({ message: request.t('main:apiSettings.updateUser.success') });
                 // await sendChangeEmail(email, username);
             }
@@ -87,7 +86,11 @@ router.put('/users/me', auth.checkAuth,
                 response.status(200).json({ message: request.t('main:apiSettings.updateUser.no_change') });
             }
         } catch (error) {
-            response.status(500).json({ error: request.t('main:apiSettings.updateUser.error') });
+            if (error instanceof AppError) {
+                response.status(error.statusCode).json({ error: error.message });
+            } else {
+                response.status(500).json({ error: request.t('main:apiSettings.updateUser.error') });
+            }
         }
     })
 
@@ -104,7 +107,7 @@ router.put("/users/me/password", auth.checkAuth,
         try {
             let { oldPass, newPass } = request.body;
             let { email, username } = await database.updatePassword(request.session.userid, oldPass, newPass);
-            await database.addLog(request.session.userid, 'Password update');
+            await databaseLogs.addLog(request.session.userid, 'Password update');
             // await sendPasswordChangeEmail(email, username);
             response.status(200).json({ message: request.t('main:apiSettings.updatePassword.success') });
         } catch (error) {
@@ -117,10 +120,10 @@ router.delete("/users/me", auth.checkAuth, async (request, response) => {
         let { email, username } = await database.userToInactive(request.session.userid);
         request.session.destroy(async (error) => {
             if (error) {
-                response.status(500).json({ success: false, error: request.t('main:apiSettings.inactiveUser.error') });
+                response.status(500).json({ success: false, error: error });
             }
             else {
-                await database.addLog(request.session.userid, 'User delete');
+                await databaseLogs.addLog(userid, 'User delete');
                 response.clearCookie('geo.sid');
                 // await sendDeleteEmail(email, username);
                 response.status(200).json({ success: true, message: request.t('main:apiSettings.inactiveUser.success') });
@@ -128,7 +131,11 @@ router.delete("/users/me", auth.checkAuth, async (request, response) => {
         });
 
     } catch (error) {
-        response.status(500).json({ error: request.t('main:apiSettings.inactiveUser.error') });
+        if (error instanceof AppError) {
+            response.status(error.statusCode).json({ error: error.message });
+        } else {
+            response.status(500).json({ error: request.t('main:apiSettings.inactiveUser.error') });
+        }
     }
 })
 
@@ -137,7 +144,7 @@ router.put('/users/me/profile-picture', auth.checkAuth, upload.single('profilePi
     let newFilePath;
     try {
         if (request.fileValidationError) {
-            response.status(400).json({ error: request.fileValidationError });
+            response.status(400).json({ message: request.fileValidationError });
         }
         else {
             if (!request.file) {
@@ -171,7 +178,7 @@ router.put('/users/me/profile-picture', auth.checkAuth, upload.single('profilePi
                         console.error("Régi kép törlése sikertelen:", err.path);
                     });
                 }
-                await database.addLog(request.session.userid, 'Profile picture update');
+                await databaseLogs.addLog(request.session.userid, 'Profile picture update');
                 response.status(201).json({ success: true, message: request.t('main:apiSettings.updateProfilePic.success') });
             }
         }
@@ -182,7 +189,11 @@ router.put('/users/me/profile-picture', auth.checkAuth, upload.single('profilePi
         if (newFilePath) {
             await fs.unlink(newFilePath).catch(() => { });
         }
-        response.status(500).json({ error: request.t('main:apiSettings.updateProfilePic.error') });
+        if (error instanceof AppError) {
+            response.status(error.statusCode).json({ error: error.message });
+        } else {
+            response.status(500).json({ error: request.t('main:apiSettings.updateProfilePic.error') });
+        }
     }
 })
 
@@ -199,11 +210,15 @@ router.delete('/users/me/profile-picture', auth.checkAuth, async (request, respo
             } catch (error) {
                 console.log("a kép nincs a szerveren!" + error);
             }
-            await database.addLog(request.session.userid, 'Profile picture delete');
+            await databaseLogs.addLog(request.session.userid, 'Profile picture delete');
             response.status(201).json({ success: true, message: request.t('main:apiSettings.deleteProfilePic.success') });
         }
     } catch (error) {
-        response.status(500).json({ error: request.t('main:apiSettings.deleteProfilePic.error') });
+        if (error instanceof AppError) {
+            response.status(error.statusCode).json({ error: error.message });
+        } else {
+            response.status(500).json({ error: request.t('main:apiSettings.deleteProfilePic.error') });
+        }
     }
 })
 
@@ -224,6 +239,6 @@ router.get('/users/profile-picture', auth.checkAuth,
         } catch (error) {
             response.status(500).json({ error: request.t('main:apiSettings.getProfilePic.error') })
         }
-    });
+    })
 
 module.exports = router;

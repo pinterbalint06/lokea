@@ -164,7 +164,7 @@ router.get(
 const adminEndpoints = require('./api/admin/index.js');
 app.use('/api/admin', adminEndpoints);
 
-const endpoints = require('./api/api.js');
+const endpoints = require('#main/index.js');
 app.use('/api', endpoints);
 
 const gameChoosingEndpoints = require('./api/gameflow/gamelobby.js');

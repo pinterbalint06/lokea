@@ -1,7 +1,9 @@
 const pool = require('./connection.js');
+const bcrypt = require('bcrypt');
+const AppError = require('#utils/app-error.js');
 
 async function getUser(id) {
-    const query = 'SELECT users.user_id, users.username, users.email, users.role, users.is_2fa, users.darkmode, users.language, users.created_at, images.filepath FROM users LEFT JOIN images ON (images.image_id = users.pfp) WHERE users.user_id = ?';
+    const query = 'SELECT users.user_id, users.username, users.email, users.role, users.darkmode, users.language, users.created_at, images.filepath FROM users LEFT JOIN images ON (images.image_id = users.pfp) WHERE users.user_id = ?';
     const [result] = await pool.execute(query, [id]);
     return result;
 }
@@ -61,11 +63,11 @@ async function updatePassword(user_id, oldPass, newPass) {
         const [result] = await pool.execute(getPasswordQuery, [user_id]);
 
         if (result.length == 0) {
-            throw new Error('Felhasználó nem található!');
+            throw new AppError('Felhasználó nem található!', 404);
         }
         let egyezes = await bcrypt.compare(oldPass, result[0].password);
         if (!egyezes) {
-            throw new Error('Nem ez a régi jelszavad!');
+            throw new AppError('Nem ez a régi jelszavad!', 400);
         }
         const hashedPassword = await bcrypt.hash(newPass, 10);
         connection = await pool.getConnection();
@@ -92,7 +94,7 @@ async function userToInactive(user_id) {
         const getUserQuery = 'SELECT users.username, users.email FROM users WHERE users.user_id = ?';
         const [userResult] = await pool.execute(getUserQuery, [user_id]);
         if (userResult.length == 0) {
-            throw new Error('Felhasználó nem található!');
+            throw new AppError('Felhasználó nem található!', 404);
         }
         connection = await pool.getConnection();
         await connection.beginTransaction();
@@ -119,7 +121,7 @@ async function uploadProfilePic(filepath, width, height, user_id) {
         const [oldImageData] = await pool.execute(queryGetLastImage, [user_id]);
 
         if (oldImageData.length === 0) {
-            throw new Error('Felhasználó nem található!');
+            throw new AppError('Felhasználó nem található!', 404);
         }
 
         let oldFilePath = oldImageData[0] ? oldImageData[0].filepath : null;
@@ -151,23 +153,26 @@ async function uploadProfilePic(filepath, width, height, user_id) {
 
 async function deleteProfilePic(user_id) {
     let connection;
+    let returnValue;
     try {
         const queryGetLastImage = 'SELECT images.image_id, images.filepath FROM users LEFT JOIN images ON users.pfp = images.image_id WHERE users.user_id = ?'
         const [oldImageData] = await pool.execute(queryGetLastImage, [user_id]);
 
         if (oldImageData.length === 0) {
-            throw new Error('Felhasználó nem található!');
+            throw new AppError('Felhasználó nem található!', 404);
         }
 
-        let oldFilePath = oldImageData[0] ? oldImageData[0].filepath : null;
-        let oldImageId = oldImageData[0] ? oldImageData[0].image_id : null;
+        let oldFilePath = oldImageData[0].filepath;
+        let oldImageId = oldImageData[0].image_id;
 
-        connection = await pool.getConnection();
-        await connection.beginTransaction();
-        const queryDeleteOldPic = 'DELETE FROM images WHERE image_id = ?';
-        await connection.execute(queryDeleteOldPic, [oldImageId]);
-        await connection.commit();
-        return oldFilePath;
+        if (oldImageId) {
+            connection = await pool.getConnection();
+            await connection.beginTransaction();
+            const queryDeleteOldPic = 'DELETE FROM images WHERE image_id = ?';
+            await connection.execute(queryDeleteOldPic, [oldImageId]);
+            await connection.commit();
+        }
+        returnValue = oldFilePath;
     } catch (error) {
         if (connection) {
             await connection.rollback();
@@ -178,7 +183,13 @@ async function deleteProfilePic(user_id) {
     finally {
         if (connection) connection.release();
     }
+    return returnValue;
 }
+
+async function getConnection() {
+    return await pool.getConnection();
+}
+
 
 module.exports = {
     getUser,

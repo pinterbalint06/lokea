@@ -90,6 +90,10 @@ async function addLog(user_id, activity, victimid = null) {
     }
 }
 
+async function getConnection() {
+    return await pool.getConnection();
+}
+
 module.exports = {
     newUser,
     getUserByUsername,

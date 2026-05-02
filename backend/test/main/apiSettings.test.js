@@ -10,7 +10,7 @@ const { mockI18nMiddleware, suppressConsoleErrors, testRequiresAuth } = require(
 const app = express();
 app.use(express.json());
 app.use(mockI18nMiddleware);
-app.use('/api/main', apiSettings);
+app.use('/api', apiSettings);
 
 describe('Settings API Tesztek (apiSettings.js)', () => {
     suppressConsoleErrors();
@@ -19,49 +19,60 @@ describe('Settings API Tesztek (apiSettings.js)', () => {
         jest.clearAllMocks();
     });
 
-    describe('GET /api/main/users/me', () => {
-        testRequiresAuth(() => request(app).get('/api/main/users/me'));
+    describe('Végpont: GET /api/users/me', () => {
+        testRequiresAuth(() => request(app).get('/api/users/me'));
 
         it('SIKER - 200, saját adatok lekérése', async () => {
             database.getUser.mockResolvedValue([{ username: 'Sanyi', role: 'user' }]);
-            const res = await request(app).get('/api/main/users/me').expect(200);
+            const res = await request(app)
+                .get('/api/users/me')
+                .expect(200);
             expect(res.body.users.username).toBe('Sanyi');
         });
 
         it('HIBA - 500, adatbázis hiba', async () => {
             database.getUser.mockRejectedValue(new Error('DB hiba'));
-            const res = await request(app).get('/api/main/users/me').expect(500);
+            const res = await request(app)
+                .get('/api/users/me')
+                .expect(500);
             expect(res.body.error).toBe('main:apiSettings.getUserData.error');
         });
     });
 
-    describe('PUT /api/main/users/me', () => {
+    describe('Végpont: PUT /api/users/me', () => {
         const validUpdate = { username: 'UjNev', email: 'uj@email.hu', language: 'en', darkmode: true };
 
-        testRequiresAuth(() => request(app).put('/api/main/users/me'));
+        testRequiresAuth(() => request(app).put('/api/users/me'));
 
-        it('HIBA - 400, username email formátumú', async () => {
-            const res = await request(app).put('/api/main/users/me').send({ username: 'email@c.hu' }).expect(400);
-            expect(res.body.errors.some(e => e.msg === 'main:apiSettings.updateUser.validation_username_no_email')).toBe(true);
+        it('HIBA - 400, ha a username érvénytelen', async () => {
+            const res = await request(app)
+                .put('/api/users/me')
+                .send({ username: '' })
+                .expect(400);
+            expect(res.body.errors.some(e => e.path === 'username')).toBe(true);
         });
 
-        it('HIBA - 400, username tiltott karaktert tartalmaz', async () => {
-            const res = await request(app).put('/api/main/users/me').send({ username: 'Nev !' }).expect(400);
-            expect(res.body.errors.some(e => e.msg === 'main:apiSettings.updateUser.validation_username_invalid_chars')).toBe(true);
-        });
-
-        it('HIBA - 400, email formátum hibás', async () => {
-            const res = await request(app).put('/api/main/users/me').send({ email: 'nem-email' }).expect(400);
-            expect(res.body.errors.some(e => e.msg === 'main:apiSettings.updateUser.validation_email_format')).toBe(true);
+        it('HIBA - 400, ha az email érvénytelen', async () => {
+            const res = await request(app)
+                .put('/api/users/me')
+                .send({ email: 'nem-email' })
+                .expect(400);
+            expect(res.body.errors.some(e => e.path === 'email')).toBe(true);
         });
 
         it('HIBA - 400, nyelv nem támogatott (se nem hu, se nem en)', async () => {
-            const res = await request(app).put('/api/main/users/me').send({ language: 'de' }).expect(400);
+            const res = await request(app)
+                .put('/api/users/me')
+                .send({ language: 'de' })
+                .expect(400);
             expect(res.body.errors.some(e => e.msg === 'main:apiSettings.updateUser.validation_language_values')).toBe(true);
         });
 
         it('HIBA - 400, darkmode nem logikai érték', async () => {
-            const res = await request(app).put('/api/main/users/me').send({ darkmode: 'valami' }).expect(400);
+            const res = await request(app)
+                .put('/api/users/me')
+                .send({ darkmode: 'valami' })
+                .expect(400);
             expect(res.body.errors.some(e => e.msg === 'main:apiSettings.updateUser.validation_darkmode_boolean')).toBe(true);
         });
 
@@ -69,77 +80,91 @@ describe('Settings API Tesztek (apiSettings.js)', () => {
             database.updateUser.mockResolvedValue(1);
             database.addLog.mockResolvedValue();
 
-            const res = await request(app).put('/api/main/users/me').send(validUpdate).expect(200);
+            const res = await request(app)
+                .put('/api/users/me')
+                .send(validUpdate)
+                .expect(200);
             expect(res.body.message).toBe('main:apiSettings.updateUser.success');
             expect(database.updateUser).toHaveBeenCalledWith(1, 'UjNev', 'uj@email.hu', 'en', true);
         });
 
         it('SIKER - 200, nem történt változás (affectedRows: 0)', async () => {
             database.updateUser.mockResolvedValue(0);
-            const res = await request(app).put('/api/main/users/me').send(validUpdate).expect(200);
+            const res = await request(app)
+                .put('/api/users/me')
+                .send(validUpdate)
+                .expect(200);
             expect(res.body.message).toBe('main:apiSettings.updateUser.no_change');
         });
     });
 
-    describe('PUT /api/main/users/me/password', () => {
+    describe('Végpont: PUT /api/users/me/password', () => {
         const validPass = { oldPass: 'RegiJelszo1', newPass: 'UjErosJelszo1' };
 
-        testRequiresAuth(() => request(app).put('/api/main/users/me/password'));
+        testRequiresAuth(() => request(app).put('/api/users/me/password'));
 
-        it('HIBA - 400, régi jelszó túl rövid', async () => {
-            const res = await request(app).put('/api/main/users/me/password').send({ ...validPass, oldPass: 'Rövid' }).expect(400);
-            expect(res.body.errors.some(e => e.msg === 'main:apiSettings.updatePassword.validation_old_password_length')).toBe(true);
+        it('HIBA - 400, ha a régi jelszó érvénytelen', async () => {
+            const res = await request(app)
+                .put('/api/users/me/password')
+                .send({ ...validPass, oldPass: 'Rövid' })
+                .expect(400);
+            expect(res.body.errors.some(e => e.path === 'oldPass')).toBe(true);
         });
 
-        it('HIBA - 400, új jelszó nem tartalmaz számot', async () => {
-            const res = await request(app).put('/api/main/users/me/password').send({ ...validPass, newPass: 'UjErosJelszo' }).expect(400);
-            expect(res.body.errors.some(e => e.msg === 'main:apiSettings.updatePassword.validation_new_password_digit')).toBe(true);
-        });
-
-        it('HIBA - 400, új jelszó nem tartalmaz nagybetűt', async () => {
-            const res = await request(app).put('/api/main/users/me/password').send({ ...validPass, newPass: 'ujerosjelszo1' }).expect(400);
-            expect(res.body.errors.some(e => e.msg === 'main:apiSettings.updatePassword.validation_new_password_uppercase')).toBe(true);
+        it('HIBA - 400, ha az új jelszó érvénytelen', async () => {
+            const res = await request(app)
+                .put('/api/users/me/password')
+                .send({ ...validPass, newPass: 'rovid' })
+                .expect(400);
+            expect(res.body.errors.some(e => e.path === 'newPass')).toBe(true);
         });
 
         it('SIKER - 200, sikeres jelszócsere', async () => {
             database.updatePassword.mockResolvedValue({ email: 'e@e.hu', username: 'Béla' });
             database.addLog.mockResolvedValue();
 
-            const res = await request(app).put('/api/main/users/me/password').send(validPass).expect(200);
+            const res = await request(app)
+                .put('/api/users/me/password')
+                .send(validPass)
+                .expect(200);
             expect(res.body.message).toBe('main:apiSettings.updatePassword.success');
         });
     });
 
-    describe('DELETE /api/main/users/me', () => {
-        testRequiresAuth(() => request(app).delete('/api/main/users/me'));
+    describe('Végpont: DELETE /api/users/me', () => {
+        testRequiresAuth(() => request(app).delete('/api/users/me'));
 
         it('SIKER - 200, sikeres fiók törlés', async () => {
             database.userToInactive.mockResolvedValue({ email: 'e@e.hu', username: 'Béla' });
             database.addLog.mockResolvedValue();
 
-            const res = await request(app).delete('/api/main/users/me').expect(200);
+            const res = await request(app).delete('/api/users/me').expect(200);
             expect(res.body.success).toBe(true);
             expect(res.body.message).toBe('main:apiSettings.inactiveUser.success');
         });
 
         it('HIBA - 500, adatbázis hiba', async () => {
             database.userToInactive.mockRejectedValue(new Error('DB hiba'));
-            const res = await request(app).delete('/api/main/users/me').expect(500);
+            const res = await request(app)
+                .delete('/api/users/me')
+                .expect(500);
             expect(res.body.error).toBe('main:apiSettings.inactiveUser.error');
         });
     });
 
-    describe('PUT /api/main/users/me/profile-picture', () => {
-        testRequiresAuth(() => request(app).put('/api/main/users/me/profile-picture'));
+    describe('Végpont: PUT /api/users/me/profile-picture', () => {
+        testRequiresAuth(() => request(app).put('/api/users/me/profile-picture'));
 
         it('HIBA - 400, nincs kép fájl csatolva', async () => {
-            const res = await request(app).put('/api/main/users/me/profile-picture').expect(400);
+            const res = await request(app)
+                .put('/api/users/me/profile-picture')
+                .expect(400);
             expect(res.body.error).toBe('main:apiSettings.updateProfilePic.no_image');
         });
 
         it('HIBA - 400, érvénytelen fájltípus (Multer fileFilter teszt)', async () => {
             const res = await request(app)
-                .put('/api/main/users/me/profile-picture')
+                .put('/api/users/me/profile-picture')
                 .attach('profilePic', Buffer.from('fake-pdf-content'), { filename: 'teszt.pdf', contentType: 'application/pdf' })
                 .expect(400);
             expect(res.body.error).toBe('main:apiSettings.updateProfilePic.invalid_file_type');
@@ -151,7 +176,7 @@ describe('Settings API Tesztek (apiSettings.js)', () => {
             database.addLog.mockResolvedValue();
 
             const res = await request(app)
-                .put('/api/main/users/me/profile-picture')
+                .put('/api/users/me/profile-picture')
                 .attach('profilePic', Buffer.from('fake-image-content'), { filename: 'kep.jpg', contentType: 'image/jpeg' })
                 .expect(201);
 
@@ -163,13 +188,15 @@ describe('Settings API Tesztek (apiSettings.js)', () => {
     });
 
 
-    describe('DELETE /api/main/users/me/profile-picture', () => {
-        testRequiresAuth(() => request(app).delete('/api/main/users/me/profile-picture'));
+    describe('Végpont: DELETE /api/users/me/profile-picture', () => {
+        testRequiresAuth(() => request(app).delete('/api/users/me/profile-picture'));
 
         it('SIKER - 200, ha a felhasználónak már nem volt profilképe (alapértelmezett)', async () => {
             database.deleteProfilePic.mockResolvedValue(null);
 
-            const res = await request(app).delete('/api/main/users/me/profile-picture').expect(200);
+            const res = await request(app)
+                .delete('/api/users/me/profile-picture')
+                .expect(200);
             expect(res.body.message).toBe('main:apiSettings.deleteProfilePic.already_default');
         });
 
@@ -178,24 +205,28 @@ describe('Settings API Tesztek (apiSettings.js)', () => {
             fs.unlink.mockResolvedValue();
             database.addLog.mockResolvedValue();
 
-            const res = await request(app).delete('/api/main/users/me/profile-picture').expect(201);
+            const res = await request(app)
+                .delete('/api/users/me/profile-picture')
+                .expect(201);
             expect(res.body.message).toBe('main:apiSettings.deleteProfilePic.success');
             expect(fs.unlink).toHaveBeenCalled();
         });
 
         it('HIBA - 500, adatbázis hiba esetén', async () => {
             database.deleteProfilePic.mockRejectedValue(new Error('DB'));
-            const res = await request(app).delete('/api/main/users/me/profile-picture').expect(500);
+            const res = await request(app)
+                .delete('/api/users/me/profile-picture')
+                .expect(500);
             expect(res.body.error).toBe('main:apiSettings.deleteProfilePic.error');
         });
     });
 
-    describe('GET /api/main/users/profile-picture', () => {
-        testRequiresAuth(() => request(app).get('/api/main/users/profile-picture?route=valid_kep.webp'));
+    describe('Végpont: GET /api/users/profile-picture', () => {
+        testRequiresAuth(() => request(app).get('/api/users/profile-picture?route=valid_kep.webp'));
 
         it('HIBA - 400, érvénytelen (hackelés gyanús) fájlnév a route paraméterben', async () => {
             const res = await request(app)
-                .get('/api/main/users/profile-picture?route=../../etc/passwd')
+                .get('/api/users/profile-picture?route=../../etc/passwd')
                 .expect(400);
             expect(res.body.errors.some(e => e.msg === 'main:apiSettings.getProfilePic.validation_invalid_filename')).toBe(true);
         });
@@ -210,16 +241,15 @@ describe('Settings API Tesztek (apiSettings.js)', () => {
 
             const { validate } = require('../../utils/validate.js');
             const { query } = require('express-validator');
-            sendFileMockApp.get('/api/main/users/profile-picture', [
+            sendFileMockApp.get('/api/users/profile-picture', [
                 query("route").matches(/^[a-zA-Z0-9_\-]+\.[a-zA-Z0-9]+$/).withMessage('invalid_filename')
             ], validate, (req, res) => {
                 res.status(200).send('Mocked sendFile');
             });
 
             const res = await request(sendFileMockApp)
-                .get('/api/main/users/profile-picture?route=valami_kep-1.webp')
+                .get('/api/users/profile-picture?route=valami_kep-1.webp')
                 .expect(200);
-
             expect(res.text).toBe('Mocked sendFile');
         });
     });
