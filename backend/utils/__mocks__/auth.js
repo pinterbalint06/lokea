@@ -9,7 +9,6 @@ const defaultGameSession = () => ({
         currentRound: 0,
         roundTime: 60,
         gameTitle: "Test Game",
-        mapInfo: [{ mapId: 1, width: 800, height: 600 }],
         point: {
             pointId: 10,
             pointu: 0.5,

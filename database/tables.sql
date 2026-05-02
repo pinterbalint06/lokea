@@ -136,7 +136,6 @@ CREATE TABLE session_guesses (
     map_id INT NOT NULL,
     guessed_u FLOAT NOT NULL,
     guessed_v FLOAT NOT NULL,
-    distance_error FLOAT NOT NULL,
     points_awarded INT NOT NULL,
     guessed_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     cycle INT NOT NULL,

@@ -288,7 +288,7 @@ async function sendGuess() {
         else {
             sendData = markerPosition();
         }
-        sendData.map_i = mapsIndex;
+        sendData.map_id = mapId;
         try {
             const response = await postGameScore('/api/game/round/guess', sendData);
             showAnswer(response);
@@ -303,8 +303,9 @@ async function sendGuess() {
 }
 
 function showAnswer(response) {
-    if (mapsIndex != response.mapI) {
-        mapsIndex = response.mapI;
+    if (mapId !== response.correctMapId) {
+        const idx = maps.findIndex(m => m.mapId === response.correctMapId);
+        if (idx !== -1) mapsIndex = idx;
         nextMap();
     }
 
