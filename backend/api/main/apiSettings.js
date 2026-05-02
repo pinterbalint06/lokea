@@ -3,7 +3,7 @@ const router = express.Router();
 const database = require('../../sql/database.js');
 const auth = require('../../utils/auth.js')
 const fs = require('fs/promises');
-const { body, check, validationResult } = require("express-validator");
+const { body, query } = require("express-validator");
 const sharp = require('sharp');
 const { sendDeleteEmail, sendChangeEmail, sendPasswordChangeEmail } = require('../../utils/mails.js');
 const { validate } = require('../../utils/validate.js');
@@ -209,27 +209,18 @@ router.delete('/users/me/profile-picture', auth.checkAuth, async (request, respo
 
 router.get('/users/profile-picture', auth.checkAuth,
     [
-        check("route").matches(/^[a-zA-Z0-9_\-]+\.[a-zA-Z0-9]+$/).withMessage((value, { req }) => req.t('main:apiSettings.getProfilePic.validation_invalid_filename'))
-    ], (request, response) => {
+        query("route").matches(/^[a-zA-Z0-9_\-]+\.[a-zA-Z0-9]+$/).withMessage((value, { req }) => req.t('main:apiSettings.getProfilePic.validation_invalid_filename'))
+    ], validate, (request, response) => {
         try {
-            const errors = validationResult(request);
-            if (!errors.isEmpty()) {
-                response.status(400).json({
-                    success: false,
-                    error: errors.array()
-                });
-            }
-            else {
-                let pfproute = request.query.route;
-                const root = path.join(__dirname, '..', 'uploads');
+            let pfproute = request.query.route;
+            const root = path.join(__dirname, '..', 'uploads');
 
-                response.sendFile(pfproute, { root: root }, (err) => {
-                    if (err) {
-                        console.log("Hiba a fájl küldéskor:", err);
-                        response.status(err.status || 404).send();
-                    }
-                });
-            }
+            response.sendFile(pfproute, { root: root }, (err) => {
+                if (err) {
+                    console.log("Hiba a fájl küldéskor:", err);
+                    response.status(err.status || 404).send();
+                }
+            });
         } catch (error) {
             response.status(500).json({ error: request.t('main:apiSettings.getProfilePic.error') })
         }
