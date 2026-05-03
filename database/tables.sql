@@ -129,7 +129,6 @@ CREATE TABLE game_sessions (
     current_cycle INT NOT NULL DEFAULT 1,
     current_round INT NOT NULL DEFAULT 0,
     rounds INT NOT NULL DEFAULT 5,
-    sharpness FLOAT NOT NULL DEFAULT -3,
     time_per_round INT NOT NULL DEFAULT 30,
     current_point_id INT NULL,
     FOREIGN KEY (current_point_id) REFERENCES points(point_id) ON DELETE SET NULL,

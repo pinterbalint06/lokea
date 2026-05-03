@@ -228,7 +228,6 @@ describe("Game API - /api/game/", () => {
                         userid: 1,
                         game: {
                             activeSessionId: 1,
-                            sharpness: -3,
                             roundTime: 60,
                             currentCycle: 1
                         }
@@ -302,40 +301,33 @@ describe("Game API - /api/game/", () => {
                 expect(guessQueries.clearCurrentPoint).toHaveBeenCalledWith(mockConnection, 1);
             });
 
-            it("Should apply time penalty when time remaining is below timePunishment", async () => {
-                checkGameSession.mockImplementationOnce((request, response, next) => {
-                    request.session = {
-                        userid: 1,
-                        game: {
-                            activeSessionId: 1,
-                            sharpness: -3,
-                            rounds: 5,
-                            currentRound: 0,
-                            roundTime: 60,
-                            currentCycle: 1,
-                            point: { pointId: 10, pointu: 0.5, pointv: 0.5, mapId: 1 },
-                            roundStartedAt: Date.now() - 30000
-                        }
-                    };
-                    next();
-                });
-
+            it("Should scale score quadratically with bullseye-adjusted pixel distance over diagonal", async () => {
                 const response = await requestWithSupertest
                     .post("/api/game/round/guess")
-                    .send(validGuess);
+                    .send({ u: "0.625", v: "0.5", map_id: 1 });
 
                 expect(response.statusCode).toBe(200);
-                expect(response.body.score).toBeGreaterThan(0);
-                expect(response.body.score).toBeLessThan(5000);
+                expect(response.body.distance).toBe(100);
+                const dEff = 100 / 1000 - 0.01;
+                expect(response.body.score).toBe(Math.round(5000 * Math.exp(-35 * dEff * dEff)));
             });
 
-            it("Should apply minimum score multiplier when time has expired", async () => {
+            it("Should give full 5000 score for guesses inside the 1% bullseye", async () => {
+                const response = await requestWithSupertest
+                    .post("/api/game/round/guess")
+                    .send({ u: "0.5075", v: "0.5", map_id: 1 });
+
+                expect(response.statusCode).toBe(200);
+                expect(response.body.distance).toBe(6);
+                expect(response.body.score).toBe(5000);
+            });
+
+            it("Should score 0 when the round has expired", async () => {
                 checkGameSession.mockImplementationOnce((request, response, next) => {
                     request.session = {
                         userid: 1,
                         game: {
                             activeSessionId: 1,
-                            sharpness: -3,
                             rounds: 5,
                             currentRound: 0,
                             roundTime: 60,
@@ -352,7 +344,8 @@ describe("Game API - /api/game/", () => {
                     .send(validGuess);
 
                 expect(response.statusCode).toBe(200);
-                expect(response.body.score).toBe(Math.round(5000 * 0.1));
+                expect(response.body.score).toBe(0);
+                expect(response.body.distance).toBeNull();
             });
 
             it("Should use transaction: commit on success", async () => {
@@ -402,30 +395,6 @@ describe("Game API - /api/game/", () => {
                     .send(validGuess);
 
                 expect(response.statusCode).toBe(500);
-            });
-
-            it("Should respond with 500 if sharpness is invalid", async () => {
-                checkGameSession.mockImplementationOnce((request, response, next) => {
-                    request.session = {
-                        userid: 1,
-                        game: {
-                            activeSessionId: 1,
-                            sharpness: null,
-                            roundTime: 60,
-                            currentCycle: 1,
-                            point: { pointId: 10, pointu: 0.5, pointv: 0.5, mapId: 1 },
-                            roundStartedAt: Date.now() - 5000
-                        }
-                    };
-                    next();
-                });
-
-                const response = await requestWithSupertest
-                    .post("/api/game/round/guess")
-                    .send(validGuess);
-
-                expect(response.statusCode).toBe(500);
-                expect(response.body.message).toBe(ERRORS.GAMEFLOW.INVALID_GAME_CONFIG);
             });
         });
     });

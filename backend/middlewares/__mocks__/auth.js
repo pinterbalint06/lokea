@@ -4,7 +4,6 @@ const defaultGameSession = () => ({
         activeSessionId: 1,
         gameMapId: 100,
         currentCycle: 1,
-        sharpness: -3,
         rounds: 5,
         currentRound: 0,
         roundTime: 60,

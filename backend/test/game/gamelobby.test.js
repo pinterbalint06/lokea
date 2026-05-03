@@ -116,7 +116,6 @@ describe("Game Lobby API - /api/lobby/", () => {
                     session_id: 5,
                     game_maps_id: 100,
                     current_cycle: 1,
-                    sharpness: -3,
                     rounds: 5,
                     current_round: 2,
                     time_per_round: 60,
@@ -146,7 +145,6 @@ describe("Game Lobby API - /api/lobby/", () => {
 
     describe("POST /session", () => {
         const validBody = {
-            difficulty: "normal",
             gameMapId: 100,
             rounds: 5,
             roundTime: 60
@@ -187,25 +185,17 @@ describe("Game Lobby API - /api/lobby/", () => {
             it("Should respond with 400 if gameMapId is missing", async () => {
                 const response = await requestWithSupertest
                     .post("/api/lobby/session")
-                    .send({ difficulty: "normal", rounds: 5, roundTime: 60 });
+                    .send({ rounds: 5, roundTime: 60 });
 
                 expect(response.statusCode).toBe(400);
                 expect(response.body.message).toBe(ERRORS.GAMEMAP.INVALID_ID);
-            });
-
-            it("Should respond with 400 if difficulty is invalid", async () => {
-                const response = await requestWithSupertest
-                    .post("/api/lobby/session")
-                    .send({ ...validBody, difficulty: "unknown" });
-
-                expect(response.statusCode).toBe(400);
             });
 
             it.each([
                 [{ ...validBody, rounds: "abc" }, "rounds is not a number"],
                 [{ ...validBody, rounds: 0 }, "rounds is below minimum"],
                 [{ ...validBody, rounds: 101 }, "rounds is above maximum"],
-                [{ difficulty: "normal", gameMapId: 100, roundTime: 60 }, "rounds is missing"],
+                [{ gameMapId: 100, roundTime: 60 }, "rounds is missing"],
             ])("Should respond with 400 for invalid rounds (%s)", async (body) => {
                 const response = await requestWithSupertest
                     .post("/api/lobby/session")
@@ -218,7 +208,7 @@ describe("Game Lobby API - /api/lobby/", () => {
                 [{ ...validBody, roundTime: "abc" }, "roundTime is not a number"],
                 [{ ...validBody, roundTime: 0 }, "roundTime is below minimum"],
                 [{ ...validBody, roundTime: 301 }, "roundTime is above maximum"],
-                [{ difficulty: "normal", gameMapId: 100, rounds: 5 }, "roundTime is missing"],
+                [{ gameMapId: 100, rounds: 5 }, "roundTime is missing"],
             ])("Should respond with 400 for invalid roundTime (%s)", async (body) => {
                 const response = await requestWithSupertest
                     .post("/api/lobby/session")
@@ -241,31 +231,13 @@ describe("Game Lobby API - /api/lobby/", () => {
         });
 
         describe("Happy paths (200)", () => {
-            it("Should create a session and return 200 for normal difficulty", async () => {
+            it("Should create a session and return 200", async () => {
                 const response = await requestWithSupertest
                     .post("/api/lobby/session")
                     .send(validBody);
 
                 expect(response.statusCode).toBe(200);
-                expect(sessionsQueries.insertGameSession).toHaveBeenCalledWith(1, 5, 60, 100, -3);
-            });
-
-            it("Should use sharpness -1.5 for easy difficulty", async () => {
-                const response = await requestWithSupertest
-                    .post("/api/lobby/session")
-                    .send({ ...validBody, difficulty: "easy" });
-
-                expect(response.statusCode).toBe(200);
-                expect(sessionsQueries.insertGameSession).toHaveBeenCalledWith(1, 5, 60, 100, -1.5);
-            });
-
-            it("Should use sharpness -5 for hard difficulty", async () => {
-                const response = await requestWithSupertest
-                    .post("/api/lobby/session")
-                    .send({ ...validBody, difficulty: "hard" });
-
-                expect(response.statusCode).toBe(200);
-                expect(sessionsQueries.insertGameSession).toHaveBeenCalledWith(1, 5, 60, 100, -5);
+                expect(sessionsQueries.insertGameSession).toHaveBeenCalledWith(1, 5, 60, 100);
             });
 
             it("Should finish the active session before creating a new one", async () => {
