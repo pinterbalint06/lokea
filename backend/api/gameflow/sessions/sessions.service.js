@@ -39,10 +39,10 @@ function validateGameInfo(gameInfo) {
         throw new AppError(ERRORS.GAMEMAP.NOT_FOUND, 404);
     }
     if (!gameInfo.map_id) {
-        throw new AppError(ERRORS.GAMEFLOW.GAME_MAP_NO_MAPS, 400);
+        throw new AppError(ERRORS.GAMEMAP.NO_MAPS, 400);
     }
     if (!gameInfo.point_id) {
-        throw new AppError(ERRORS.GAMEFLOW.GAME_MAP_NO_POINTS, 400);
+        throw new AppError(ERRORS.GAMEMAP.NO_POINTS, 400);
     }
 }
 

@@ -2,8 +2,9 @@ const AppError = require("#utils/app-error.js");
 const ERRORS = require("#utils/error-messages.js");
 
 const VALID_SORTS = ["created", "rating", "plays", "favorites"];
+const VALID_FILTERS = ["mine"];
 
-async function validateGameLobbyQuery(request, response, next) {
+function validateGameLobbyQuery(request, response, next) {
     try {
         const sort = String(request.query.sort || "created").toLowerCase();
         let offset = 0;
@@ -19,7 +20,9 @@ async function validateGameLobbyQuery(request, response, next) {
             throw new AppError(ERRORS.GAMEFLOW.INVALID_SORT, 400);
         }
 
-        request.lobbyQuery = { sort, offset };
+        const filter = VALID_FILTERS.includes(request.query.filter) ? request.query.filter : null;
+
+        request.lobbyQuery = { sort, offset, filter };
 
         next();
     } catch (error) {
