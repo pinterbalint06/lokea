@@ -4,25 +4,189 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Test map</title>
+    <title>Test map - Enhanced</title>
+    <link rel="stylesheet" href="/bootstrap/css/bootstrap.min.css">
     <link rel="stylesheet" href="/css/test.css">
+    <link rel="stylesheet" href="/css/test-map.css">
+    <script src="/bootstrap/js/popper.min.js"></script>
+    <script src="/bootstrap/js/bootstrap.min.js"></script>
     <script type="module" src="/javascript/test-map.js"></script>
 </head>
 
 <body>
-    <div class="row w100 around wrapreverse">
-        <div class="col wrap gap">
-            <div class="col center">
-                <div>
-                    <p>FPS: <span id="fps"></span></p>
-                    <div class="row center">
-                        <button onclick="fullScreen();">Teljes képernyő</button>
-                        <button onclick="markerPosition();">Térképjelölő helye</button>
+    <div id="toastContainer" class="toast-container position-fixed top-0 end-0 p-3" style="z-index: 1050;"></div>
+
+    <div class="row w100 around wrapreverse gap">
+        <div class="col debug-panel uveg text-main">
+            <h2>Térkép nézegető - Kiterjesztett teszt</h2>
+            <hr class="glass-divider w100">
+
+            <div class="col">
+                <h3>Állapot</h3>
+                <p>FPS: <span id="fps" class="debug-value">0</span></p>
+                <p>Zoom: <span id="debugZoomText" class="debug-value">1.00</span></p>
+                <p>Kurzor pozíció: <span id="debugCursorText" class="debug-value">-,-</span></p>
+                <p>Aktív térképjelölő: <span id="debugActiveMarkerText" class="debug-value">Nincs</span></p>
+            </div>
+
+            <hr class="glass-divider w100">
+
+            <div class="col">
+                <h3>Térképjelölők</h3>
+                <div class="col gap">
+                    <div class="marker-list-container">
+                        <div id="markerListContent" class="marker-list">
+                            <p class="empty-list">Nincs térképjelölő</p>
+                        </div>
+                    </div>
+
+                    <div class="control-group">
+                        <label for="inputMarkerId">Térképjelölő ID:</label>
+                        <input type="number" id="inputMarkerId" value="1" min="1" class="uvegform">
+                    </div>
+
+                    <div class="row gap">
+                        <button id="buttonPlaceMarker" class="btn-outline-secondary test-btn flex1">Elhelyezés</button>
+                        <button id="buttonRemoveMarker"
+                            class="btn-outline-secondary test-btn flex1">Eltávolítás</button>
                     </div>
                 </div>
             </div>
+
+            <hr class="glass-divider w100">
+
             <div class="col">
-                <canvas id="canvas" class="canvasborder"></canvas>
+                <h3>Térképjelölő beállítások</h3>
+
+                <div class="control-group">
+                    <label for="markerTypeSelect">Típus:</label>
+                    <select id="markerTypeSelect" class="uvegform">
+                        <option value="empty">Üres</option>
+                        <option value="edit">Szerkesztés</option>
+                        <option value="ready">Kész</option>
+                        <option value="uploading">Feltöltés</option>
+                        <option value="fov_cone">FOV kúp</option>
+                        <option value="portal">Portál</option>
+                    </select>
+                    <button id="buttonChangeMarkerType" class="btn-outline-secondary test-btn">Beállítás</button>
+                </div>
+
+                <div class="control-group">
+                    <label for="inputMarkerX">X koordináta:</label>
+                    <input type="number" id="inputMarkerX" value="0" class="uvegform">
+                    <button id="buttonSetMarkerX" class="btn-outline-secondary test-btn">Beállítás</button>
+                </div>
+
+                <div class="control-group">
+                    <label for="inputMarkerY">Y koordináta:</label>
+                    <input type="number" id="inputMarkerY" value="0" class="uvegform">
+                    <button id="buttonSetMarkerY" class="btn-outline-secondary test-btn">Beállítás</button>
+                </div>
+
+                <div class="control-group">
+                    <label for="inputMarkerRotation">Forgatás (rad):</label>
+                    <input type="number" id="inputMarkerRotation" value="0" step="0.1" class="uvegform">
+                    <button id="buttonSetMarkerRotation" class="btn-outline-secondary test-btn">Beállítás</button>
+                </div>
+
+                <div class="control-group">
+                    <label for="inputMarkerWidth">Szélesség:</label>
+                    <input type="number" id="inputMarkerWidth" value="24" min="1" class="uvegform">
+                    <label for="inputMarkerHeight">Magasság:</label>
+                    <input type="number" id="inputMarkerHeight" value="32" min="1" class="uvegform">
+                    <button id="buttonResizeMarker" class="btn-outline-secondary test-btn">Beállítás</button>
+                </div>
+
+                <div class="control-group">
+                    <label for="inputMarkerFixedToMap">Rögzítve a térképre:</label>
+                    <input type="checkbox" id="inputMarkerFixedToMap" class="uvegform">
+                    <button id="buttonSetMarkerFixed" class="btn-outline-secondary test-btn">Beállítás</button>
+                </div>
+
+                <div class="control-group">
+                    <button id="buttonMoveMarkerToClick" class="btn-outline-secondary test-btn w100">Mozgatás
+                        kattintásra</button>
+                </div>
+            </div>
+
+            <hr class="glass-divider w100">
+
+            <div class="col">
+                <h3>Kapcsolatok</h3>
+                <div class="col gap">
+                    <div class="connection-list-container">
+                        <div id="connectionListContent" class="connection-list">
+                            <p class="empty-list">Nincs kapcsolat</p>
+                        </div>
+                    </div>
+
+                    <div class="control-group">
+                        <label for="connectionMarkerId1">Első térképjelölő:</label>
+                        <input type="number" id="connectionMarkerId1" value="1" min="1" class="uvegform">
+                        <label for="connectionMarkerId2">Második térképjelölő:</label>
+                        <input type="number" id="connectionMarkerId2" value="2" min="1" class="uvegform">
+                    </div>
+
+                    <div class="control-group">
+                        <label for="inputConnectionId">Kapcsolat ID:</label>
+                        <input type="number" id="inputConnectionId" value="1" min="1" class="uvegform">
+                    </div>
+
+                    <div class="control-group">
+                        <label for="connectionTypeSelect">Típus:</label>
+                        <select id="connectionTypeSelect" class="uvegform">
+                            <option value="default">Alapértelmezett</option>
+                            <option value="editing">Szerkesztés</option>
+                            <option value="unsaved">Mentetlen</option>
+                            <option value="focused">Fókuszban</option>
+                        </select>
+                    </div>
+
+                    <div class="row gap">
+                        <button id="buttonCreateConnection"
+                            class="btn-outline-secondary test-btn flex1">Létrehozás</button>
+                        <button id="buttonRemoveConnection"
+                            class="btn-outline-secondary test-btn flex1">Eltávolítás</button>
+                    </div>
+                </div>
+            </div>
+
+            <hr class="glass-divider w100">
+
+            <div class="col">
+                <h3>Kamera vezérlés</h3>
+
+                <div class="control-group">
+                    <label for="inputPanX">Mozgatás X:</label>
+                    <input type="number" id="inputPanX" value="0" class="uvegform">
+                    <label for="inputPanY">Mozgatás Y:</label>
+                    <input type="number" id="inputPanY" value="0" class="uvegform">
+                    <button id="buttonPanTo" class="btn-outline-secondary test-btn">Mozgatás</button>
+                </div>
+
+                <div class="control-group">
+                    <label for="inputZoomLevel">Zoom [1;50]:</label>
+                    <input type="number" id="inputZoomLevel" value="1" min="1" max="50" step="0.5" class="uvegform">
+                    <button id="buttonSetZoom" class="btn-outline-secondary test-btn">Beállítás</button>
+                </div>
+
+                <div class="control-group">
+                    <button id="buttonResetZoom" class="btn-outline-secondary test-btn w100">Zoom
+                        visszaállítása</button>
+                </div>
+            </div>
+
+            <hr class="glass-divider w100">
+
+            <div class="row center gap">
+                <button id="buttonFullScreen" class="uvegbutton test-btn">Teljes képernyő</button>
+                <button id="buttonClearAll" class="btn-outline-secondary test-btn">Mindent töröl</button>
+            </div>
+        </div>
+
+        <div class="col flex1">
+            <div class="canvasframe">
+                <canvas id="canvas"></canvas>
             </div>
         </div>
     </div>
