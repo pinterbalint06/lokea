@@ -212,7 +212,6 @@ function resetGameState(roundTime, currentRound) {
     document.getElementById("guessBtn").disabled = false;
     document.getElementById("pictureFullScreenBtn").disabled = false;
     mapViewerEngine.resetZoom();
-    equirectangularViewer.clearArrows();
 }
 
 async function createPoint(roundTime) {
@@ -345,7 +344,7 @@ async function loadPointLowThenHigh(pId, markAsLoaded = () => { }) {
                 if (typeof markAsLoaded === "function") {
                     markAsLoaded();
                 }
-                createDirectionArrows(pId);
+                await createDirectionArrows(pId);
             },
             isCurrent: () => currentPointId && currentPointId === pId
         });
@@ -367,6 +366,7 @@ async function createDirectionArrows(pId) {
                         degreeToRadian(path.directionDegrees),
                         async (markAsLoaded) => {
                             currentPointId = path.targetPointId;
+                            equirectangularViewer.clearArrows();
                             await loadPointLowThenHigh(path.targetPointId, markAsLoaded)
                         }
                     );
