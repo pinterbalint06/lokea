@@ -19,7 +19,6 @@ export class GameStartManager {
         this.elements.startPanel = document.getElementById("gameStartPanel");
         this.elements.startForm = document.getElementById("gameStartForm");
         this.elements.roundsInput = document.getElementById("gameStartRounds");
-        this.elements.difficultySelect = document.getElementById("gameStartDifficulty");
         this.elements.roundTimeInput = document.getElementById("gameStartTime");
         this.elements.roundTimeDisplay = document.getElementById("gameStartTimeValue");
         this.elements.startButton = document.getElementById("startGameButton");
