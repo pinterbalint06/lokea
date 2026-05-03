@@ -9,9 +9,9 @@
     <!--?Popper: dropdowns, popovers, tooltips-->
     <script src="../bootstrap/js/popper.min.js"></script>
     <script src="../bootstrap/js/bootstrap.min.js"></script>
-    <link rel="stylesheet" href="../css/game-choosing.css">
-    <script type="module" src="../javascript/game/game-choosing.js"></script>
-    <title data-i18n="choosing.pageTitle">Pályaválasztás</title>
+    <link rel="stylesheet" href="../css/game-lobby.css">
+    <script type="module" src="../javascript/game/game-lobby.js"></script>
+    <title>Pályaválasztás</title>
 </head>
 
 <body>
@@ -68,61 +68,6 @@
             </div>
         </div>
 
-    </div>
-
-    <div class="modal-overlay" id="myModal">
-        <div class="modal-box">
-            <span class="modal-close-btn">&times;</span>
-            <div class="modal-header-block">
-                <h3 id="modal-title"></h3>
-                <div class="stars" id="modal-stars"></div>
-                <p id="modal-desc"></p>
-            </div>
-
-            <form id="settingsForm" class="settings-form" novalidate>
-                <div class="settings-grid">
-                    <label for="rounds" data-i18n="choosing.settings.rounds">Körök száma:</label>
-                    <input name="rounds" type="number" id="rounds" min="1" max="100" value="5">
-
-                    <label for="difficulty" data-i18n="choosing.settings.difficulty">Nehézség:</label>
-                    <select name="difficulty" id="difficulty">
-                        <option value="easy" data-i18n="choosing.settings.easy">Könnyű</option>
-                        <option value="normal" data-i18n="choosing.settings.normal">Közepes</option>
-                        <option value="hard" data-i18n="choosing.settings.hard">Nehéz</option>
-                    </select>
-
-                    <label for="times" data-i18n="choosing.settings.roundTime">Egy kör időtartama:</label>
-                    <div class="time-row">
-                        <input name="roundTime" type="range" id="times" min="1" max="300" step="1" value="30">
-                        <output id="timesValue" for="times">00:30</output>
-                    </div>
-                </div>
-
-                <div class="max-rounds-info" id="maxRoundsInfo">
-                    <p class="info-title" data-i18n="choosing.settings.maxUniqueRounds">Ismétlés nélküli max kör:
-                        <strong id="maxUniqueRounds">-</strong></p>
-                    <p class="info-desc" data-i18n="choosing.settings.notLimitedWarning">A körszám nincs ehhez
-                        limitálva, a pontok újrajátszhatók.</p>
-                </div>
-
-                <button type="submit" class="btn btn-light start-btn" id="startGame"
-                    data-i18n="choosing.settings.startGame">Játék indítása</button>
-            </form>
-        </div>
-    </div>
-
-    <div class="modal-overlay" id="continueGameModal">
-        <div class="modal-box">
-            <h3 id="continue-modal-title" data-i18n="choosing.continueModal.title">Van egy elindított játékod</h3>
-            <p id="continue-modal-desc" data-i18n="choosing.continueModal.description">Szeretnéd folytatni az elkezdett
-                játékodat? Ha nem folytatod, akkor többet nem tudod folytatni.</p>
-            <div class="d-flex justify-content-center gap-3 flex-wrap mt-3">
-                <button class="btn btn-light" id="continueGameBtn"
-                    data-i18n="choosing.continueModal.continueBtn">Folytatás</button>
-                <button class="btn btn-outline-light" id="dismissContinueBtn"
-                    data-i18n="choosing.continueModal.endBtn">Játék befejezése</button>
-            </div>
-        </div>
     </div>
     <div id="toastPlace" class="toast-container position-fixed bottom-0 start-50 translate-middle-x mb-4"></div>
 </body>

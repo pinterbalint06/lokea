@@ -19,42 +19,6 @@ app.use('/api/admin', require('#admin/index.js'));
 describe('Admin API-tesztek', () => {
     suppressConsoleErrors();
 
-    describe('Végpont: GET /language', () => {
-        testRequiresAdminOrAuth(() => request(app).get('/api/admin/language'));
-
-        it('SIKER - 200, nyelv lekérése', async () => {
-            const res = await request(app).get('/api/admin/language').expect(200);
-            expect(res.body.language).toBe("en");
-        });
-
-        it('HIBA - 401, ha nincs session (biztonsági ellenőrzés)', async () => {
-            const tempApp = express();
-            tempApp.use(mockI18nMiddleware);
-            tempApp.use((req, res, next) => {
-                delete req.session;
-                next();
-            });
-            tempApp.use('/api/admin', require('#admin/apiAdmin.js'));
-            const res = await request(tempApp).get('/api/admin/language').expect(401);
-            expect(res.body.error).toBe(enTranslations.adminApi.language_fetch_error);
-        });
-
-        it('HIBA - 500, ha valami váratlan hiba történik (catch ág)', async () => {
-            const tempApp = express();
-            tempApp.use(mockI18nMiddleware);
-            tempApp.use((req, res, next) => {
-                delete req.session;
-                Object.defineProperty(req, 'session', {
-                    get: () => { throw new Error('Szimulált hiba a catch ág eléréséhez'); }
-                });
-                next();
-            });
-            tempApp.use('/api/admin', require('#admin/apiAdmin.js'));
-            const res = await request(tempApp).get('/api/admin/language').expect(500);
-            expect(res.body.error).toBe(enTranslations.adminApi.language_fetch_error);
-        });
-    });
-
     describe('Végpont: GET /dashboard', () => {
         testRequiresAdminOrAuth(() => request(app).get('/api/admin/dashboard'));
 
@@ -91,7 +55,7 @@ describe('Admin API-tesztek', () => {
             const res = await request(app)
                 .get('/api/admin/charts/invalid-type?lang=en')
                 .expect(400);
-            expect(res.body.error).toBe(enTranslations.adminApi.chart_invalid_type);
+            expect(res.body.errors.some(e => e.msg === enTranslations.adminApi.chart_invalid_type)).toBe(true);
         });
 
         it('HIBA - 500, ha hiba van a lekérdezés során', async () => {

@@ -1,3 +1,144 @@
 {
-    "try": "try"
+    "apiMain": {
+        "signup": {
+            "validation_username_no_email": "Username cannot be an e-mail address!",
+            "validation_username_invalid_chars": "Username can only contain letters, numbers, - or _, and accented characters.",
+            "validation_username_length": "Username must be between 1 and 20 characters long!",
+            "validation_email_format": "Invalid e-mail format.",
+            "validation_email_length": "E-mail must be between 5 and 254 characters long!",
+            "validation_password_length": "Password must be between 8 and 60 characters long!",
+            "validation_password_digit": "Password must contain at least one number!",
+            "validation_password_uppercase": "Password must contain at least one uppercase letter!",
+            "success": "Registration successful!",
+            "user_exists": "Username or e-mail is already taken!",
+            "error": "Error during registration!"
+        },
+        "login": {
+            "validation_username_length": "Username/e-mail length is invalid!",
+            "validation_password_length": "Password length is invalid!",
+            "invalid_credentials": "Invalid username/e-mail or password!",
+            "success": "Login successful!",
+            "error": "Error during login!"
+        },
+        "language_fetch_error": "Error fetching language"
+    },
+    "apiSettings": {
+        "getUserData": {
+            "error": "Error fetching user data!"
+        },
+        "updateUser": {
+            "validation_username_no_email": "Username cannot be an e-mail address!",
+            "validation_username_invalid_chars": "Username can only contain letters, numbers, - or _, and accented characters.",
+            "validation_username_length": "Username must be between 1 and 20 characters long!",
+            "validation_email_format": "Invalid e-mail format.",
+            "validation_email_length": "E-mail must be between 5 and 254 characters long!",
+            "validation_language_format": "Language format is invalid!",
+            "validation_language_values": "Available languages are: 'en' or 'hu'!",
+            "validation_darkmode_boolean": "Dark mode value must be a boolean (true/false)!",
+            "success": "Update successful!",
+            "no_change": "No changes made!",
+            "error": "Error updating user!"
+        },
+        "updatePassword": {
+            "validation_old_password_length": "Old password must be between 8 and 60 characters long!",
+            "validation_new_password_length": "New password must be between 8 and 60 characters long!",
+            "validation_new_password_digit": "New password must contain at least one number!",
+            "validation_new_password_uppercase": "New password must contain at least one uppercase letter!",
+            "success": "Password successfully updated!",
+            "error": "Error updating password!"
+        },
+        "inactiveUser": {
+            "success": "Account successfully deactivated!",
+            "error": "Error deactivating account!"
+        },
+        "updateProfilePic": {
+            "invalid_file_type": "Invalid file type! You can only upload images.",
+            "no_image": "No image selected!",
+            "success": "Profile picture successfully updated!",
+            "error": "Error updating profile picture!"
+        },
+        "deleteProfilePic": {
+            "already_default": "Profile picture was already default.",
+            "success": "Profile picture successfully deleted!",
+            "error": "Error deleting profile picture!"
+        },
+        "getProfilePic": {
+            "validation_invalid_filename": "Invalid filename!",
+            "error": "Error fetching profile picture!"
+        }
+    },
+    "title": "Home",
+    "nav": {
+        "ip": "IP: lokea.com",
+        "onlinePlayers": "Online players: ",
+        "logoTitle": "Be anywhere",
+        "login": "Login"
+    },
+    "hero": {
+        "title": "Be where you can't be! Lokea.",
+        "teaserTitle": "Ready to explore?",
+        "teaserText": "Challenge yourself on official and community-created custom maps! Find the exact location and compete with the best.",
+        "playButton": "Map Selection",
+        "tooltipLogin": "Login required to continue!"
+    },
+    "customMaps": {
+        "sectionTitle": "Custom maps created by users",
+        "mapTitlePlaceholder": "Example Map Title",
+        "rating": "Rating",
+        "ratingsCount": "ratings",
+        "plays": "Plays"
+    },
+    "comparison": {
+        "sectionTitle": "Why is Lokea better?",
+        "platform": "Platform",
+        "streetView": "Street View",
+        "multiplayer": "Multiplayer",
+        "championships": "Championships",
+        "customMaps": "Custom maps",
+        "free": "Free",
+        "lokeaAlt": "Lokea"
+    },
+    "loginModal": {
+        "title": "Login",
+        "prompt": "Log in to continue playing!",
+        "usernameLabel": "Username or e-mail",
+        "passwordLabel": "Password",
+        "rememberMe": "Remember me",
+        "registerPrompt": "Don't have an account yet? ",
+        "registerLink": "Register",
+        "loginButton": "Login"
+    },
+    "settingsModal": {
+        "accountTab": "Account",
+        "appearanceTab": "Appearance",
+        "accountSettingsTitle": "Account settings",
+        "notLoggedIn": "You are not logged in!",
+        "uiSettingsTitle": "UI settings",
+        "languageSelection": "Language selection",
+        "hungarian": "Magyar",
+        "english": "English",
+        "appearanceTitle": "Appearance",
+        "darkMode": "Night mode (Dark Mode)",
+        "saveButton": "Save",
+        "uploadImageText": "Click here to upload an image, or drag and drop one!",
+        "deleteProfilePicture": "Delete profile picture",
+        "registeredAt": "Registered:",
+        "username": "Username",
+        "email": "E-mail address",
+        "requestNewPassword": "Request new password",
+        "oldPassword": "Old password:",
+        "newPassword": "New password:",
+        "deleteAccount": "Delete account"
+    },
+    "dropdown": {
+        "myAccount": "My account",
+        "myGames": "My games",
+        "adminPanel": "Enter admin panel",
+        "logout": "Logout"
+    },
+    "footer": {
+        "description": "Lokea - Localization skill development application",
+        "rights": "All rights reserved!",
+        "copyright": "Copyright © 2025-26"
+    }
 }

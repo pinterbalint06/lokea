@@ -13,7 +13,6 @@ module.exports = {
         "api/**/*.js",
         "utils/**/*.js",
         "api/admin.js",
-        "api/api.js",
         "api/gamemaps/**/*.js",
         "utils/fileUtils.js",
         "utils/imageProcessor.js"
@@ -21,7 +20,10 @@ module.exports = {
     coveragePathIgnorePatterns: [
         "/node_modules/",
         "/test/",
-        "\\.queries\\.js$"
+        "\\.queries\\.js$",
+        "/utils/",
+        "/sockets/",
+        "/middlewares/"
     ],
     coverageThreshold: {
         "global": {

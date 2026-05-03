@@ -1,6 +1,7 @@
-import { makeSubtitle, inputGeneral, labelGeneral, gombGeneral, makeSvg } from "./libs/utils/DOMutils.js";
+import { makeSubtitle, inputGeneral, labelGeneral, gombGeneral, makeSvg, showAlert } from "./libs/utils/DOMutils.js";
 import { validalvaBej, validalvaUsername, validalvaEmail, validalvaJelszo, wrongInput } from "./libs/utils/validations.js";
 import { initSocket } from "./libs/utils/socketio.js";
+import i18next, { initI18next } from "./libs/language/i18next.js";
 
 document.addEventListener("DOMContentLoaded", async function () {
     if (!await isLogined()) {
@@ -14,6 +15,7 @@ document.addEventListener("DOMContentLoaded", async function () {
         })
     }
     else {
+        document.getElementById('playButton').classList.remove('disabled');
         document.getElementById('comparisionLokea').innerHTML = "";
         modalElement = document.getElementById('settingsModal');
         settingsModal = new bootstrap.Modal(modalElement);
@@ -31,11 +33,14 @@ document.addEventListener("DOMContentLoaded", async function () {
 async function isLogined() {
     let loginStatus = false;
     try {
-        let response = await fetch("/api/loginRole");
+        let response = await fetch("/api/auth/status");
         let data = await response.json();
         if (response.ok) {
             loginStatus = data.login;
             if (loginStatus) {
+                await initI18next(await nyelvSzinkronizalas() || 'hu');
+                translatePage();
+
                 if (data.adminLink) {
                     await dropdownLetrehoz(data.adminLink, data.user.username, data.user.filepath);
                 }
@@ -49,6 +54,11 @@ async function isLogined() {
                 else {
                     body.setAttribute('data-bs-theme', 'light');
                 }
+
+            }
+            else {
+                await initI18next('hu');
+                translatePage();
             }
         }
     } catch (error) {
@@ -59,7 +69,7 @@ async function isLogined() {
 
 async function bejelentkezes(username, jelszo, remember) {
     try {
-        let response = await fetch("/api/login", {
+        let response = await fetch("/api/auth/login", {
             method: "POST",
             headers: {
                 "Content-Type": "application/json"
@@ -113,14 +123,7 @@ async function bejelentkezesAnimacio(username, jelszo, remember) {
 
                 title.innerText = "Bejelentkezés sikertelen!";
                 form.classList.add('collapse-out');
-                let message = data.message;
-                if (Array.isArray(message)) {
-                    let errors = message.join('<br>');
-                    modalText.innerHTML = errors;
-                }
-                else {
-                    modalText.innerText = message;
-                }
+                modalText.innerHTML = extractError(data).replace(/\n/g, '<br>');
 
                 setTimeout(() => {
                     container.classList.remove('error-draw');
@@ -133,7 +136,6 @@ async function bejelentkezesAnimacio(username, jelszo, remember) {
                         form.classList.remove('collapse-in');
                     }, 600);
                 }, 2500);
-
             }
         }, 2000);
 
@@ -157,7 +159,7 @@ async function dropdownLetrehoz(link, nev, kep) {
     a.classList.add("d-block", "link-light", "text-decoration-none", "dropdown-toggle");
     let img = document.createElement('img');
     if (kep != null) {
-        img.src = await getProfilePicture(kep);
+        img.src = await getProfilePicture();
     }
     else {
         img.src = "../images/default.png";
@@ -175,19 +177,19 @@ async function dropdownLetrehoz(link, nev, kep) {
     let ul = document.createElement('ul');
     ul.classList.add("dropdown-menu", "dropdown-menu-end", "text-small");
 
-    let li = dropdownLink("Fiókom", null, null, "sliders");
+    let li = dropdownLink('dropdown.myAccount', null, null, "sliders");
     li.addEventListener("click", async function () {
         await showSettingsModal();
     })
     ul.appendChild(li);
     ul.appendChild(dropdownDivider());
-    ul.appendChild(dropdownLink("Saját játékaim", null, null, "map"));
+    ul.appendChild(dropdownLink('dropdown.myGames', null, null, "map", "/game-maps?tab=mine"));
     ul.appendChild(dropdownDivider());
     if (link) {
-        ul.appendChild(dropdownLink("Belépés az admin oldalra", 'enterAdmin', null, "shield", link));
+        ul.appendChild(dropdownLink('dropdown.adminPanel', 'enterAdmin', null, "shield", link));
         ul.appendChild(dropdownDivider());
     }
-    li = dropdownLink("Kijelentkezés", 'signOut', ["text-danger"], "logout");
+    li = dropdownLink('dropdown.logout', 'signOut', ["text-danger"], "logout");
     li.addEventListener("click", async function () {
         await kijelentkezes();
     });
@@ -197,7 +199,7 @@ async function dropdownLetrehoz(link, nev, kep) {
     hova.appendChild(div);
 }
 
-function dropdownLink(title, id, customClasses, svgName, link = null) {
+function dropdownLink(i18nKey, id, customClasses, svgName, link = null) {
     let li = document.createElement('li');
 
     let a = document.createElement('a');
@@ -212,7 +214,8 @@ function dropdownLink(title, id, customClasses, svgName, link = null) {
         a.href = link;
     }
     let span = document.createElement('span');
-    span.innerText = title;
+    span.setAttribute('data-i18n', i18nKey);
+    span.innerText = i18next.t(i18nKey);
     a.appendChild(makeSvg(svgName, ["dropdown-icons"], null));
     a.appendChild(span);
 
@@ -230,34 +233,27 @@ function dropdownDivider() {
 
 async function kijelentkezes() {
     try {
-        let response = await fetch("/api/signout", {
-            method: "POST",
+        let response = await fetch("/api/auth/logout", {
+            method: "DELETE",
             headers: {
-                "Content-Type": "application/json"
+                "Content-Type": "application/json",
+                "Accept-Language": document.documentElement.lang || "hu"
             }
         });
         let data = await response.json();
-        if (data.success) {
-            setTimeout(() => {
-                location.reload();
-            }, 1000);
-        }
-        else {
-            console.error("baj a kijelentkezésben, baj: " + data.error);
-        }
-
+        if (!response.ok || !data.success) throw new Error(extractError(data));
+        setTimeout(() => {
+            location.reload();
+        }, 1000);
     } catch (error) {
-        console.error(`hálózati hiba: ${error}`);
+        showAlert(error.message);
+        throw error;
     }
 }
 
 //settings
 
 async function showSettingsModal() {
-    let errordiv = document.getElementById('errorLocation');
-    errordiv.classList.add('d-none');
-    errordiv.innerHTML = "";
-
     let hova = document.getElementById('userData');
     hova.innerHTML = "";
 
@@ -301,7 +297,7 @@ async function showSettingsModal() {
         pfp.src = "../images/default.png";
     }
     else {
-        objectURL = await getProfilePicture(data.filepath);
+        objectURL = await getProfilePicture(data.user_id);
         pfp.src = objectURL;
     }
     pfp.alt = "Profile picture";
@@ -322,7 +318,7 @@ async function showSettingsModal() {
     });
 
     let text = document.createElement('p');
-    text.innerText = "Kép feltöltéshez kattints ide, vagy húzz be egy képet!";
+    text.innerText = i18next.t('settingsModal.uploadImageText');
     text.classList.add("subtitle", "text-center");
 
     dropzone.appendChild(pfp);
@@ -333,7 +329,7 @@ async function showSettingsModal() {
     });
     div.appendChild(dropzone);
     if (data.filepath != null) {
-        let deletePfpButton = gombGeneral("button", "Profilkép törlése", "trash-2", "red", null);
+        let deletePfpButton = gombGeneral("button", i18next.t('settingsModal.deleteProfilePicture'), "trash-2", "red", null);
         deletePfpButton.addEventListener("click", async function () {
             pfp.src = "../images/default.png";
             deleteLast = true;
@@ -348,12 +344,12 @@ async function showSettingsModal() {
 
     let date = new Date(data.created_at);
 
-    div.appendChild(makeSubtitle(`Regisztrált: ${date.toLocaleString("hu-HU")}`));
+    div.appendChild(makeSubtitle(`${i18next.t('settingsModal.registeredAt')} ${date.toLocaleString(i18next.language === 'hu' ? 'hu-HU' : 'en-US')}`));
 
-    div.appendChild(makeSubtitle("Felhasználónév"));
+    div.appendChild(makeSubtitle(i18next.t('settingsModal.username')));
     div.appendChild(inputGeneral("text", "mintajancsi123", data.username, "usernameInput", ["form-control"], false));
 
-    div.appendChild(makeSubtitle("E-mail-cim"));
+    div.appendChild(makeSubtitle(i18next.t('settingsModal.email')));
     div.appendChild(inputGeneral("text", "mintajan@gmail.com", data.email, "emailInput", ["form-control"], false));
 
     let alertPlaceholder = document.createElement('div');
@@ -362,7 +358,7 @@ async function showSettingsModal() {
     let buttonsDiv = document.createElement('div');
     buttonsDiv.classList.add("d-flex", "justify-content-center", "my-3");
 
-    let changePassBtn = gombGeneral("button", "Új jelszó igénylése", null, null, null);
+    let changePassBtn = gombGeneral("button", i18next.t('settingsModal.requestNewPassword'), null, null, null);
     changePassBtn.classList.add("btn", "btn-purple", "px-5", "rounded-pill", "d-block", "mx-auto");
     changePassBtn.setAttribute('data-bs-toggle', 'collapse');
     changePassBtn.setAttribute('data-bs-target', '#passwordCollapse');
@@ -376,26 +372,26 @@ async function showSettingsModal() {
 
     let passGroup = document.createElement('div');
     passGroup.classList.add('d-flex');
-    passGroup.appendChild(labelGeneral('oldPassword', 'Régi jelszó:', ['text-nowrap', 'me-3']));
+    passGroup.appendChild(labelGeneral('oldPassword', i18next.t('settingsModal.oldPassword'), ['text-nowrap', 'me-3']));
     passGroup.appendChild(inputGeneral('password', null, null, 'oldPassword', ["form-control"], false));
     innerCard.appendChild(passGroup);
 
     passGroup = document.createElement('div');
     passGroup.classList.add('d-flex');
-    passGroup.appendChild(labelGeneral('newPassword', 'Új jelszó:', ['text-nowrap', 'me-3']));
+    passGroup.appendChild(labelGeneral('newPassword', i18next.t('settingsModal.newPassword'), ['text-nowrap', 'me-3']));
     passGroup.appendChild(inputGeneral('password', null, null, 'newPassword', ["form-control"], false));
     innerCard.appendChild(passGroup);
 
     let saveBtn = document.createElement('button');
     saveBtn.type = 'button';
     saveBtn.className = 'btn btn-success btn-sm w-100';
-    saveBtn.innerText = 'Mentés';
+    saveBtn.innerText = i18next.t('settingsModal.saveButton');
     saveBtn.onclick = jelszoValtoztat;
 
     innerCard.appendChild(saveBtn);
     collapseDiv.appendChild(innerCard);
 
-    let deleteProfileBtn = gombGeneral("button", "Fiók törlése", null, "red", null);
+    let deleteProfileBtn = gombGeneral("button", i18next.t('settingsModal.deleteAccount'), null, "red", null);
     deleteProfileBtn.addEventListener("click", function () {
         deleteProfile();
     });
@@ -407,6 +403,9 @@ async function showSettingsModal() {
     div.appendChild(collapseDiv);
 
     document.getElementById('darkMode').checked = (data.darkmode == 1);
+    if (data.language) {
+        document.getElementById('languageSelect').value = data.language;
+    }
 
     currentSettings = {
         username: data.username,
@@ -422,39 +421,13 @@ async function showSettingsModal() {
                 await uploadProfilePic(tempPfp);
             } else {
                 if (deleteLast) {
-                    let response = await deleteProfilePicture();
-                    let data = await response.json();
-                    if (response.ok) {
-                        console.log(data.message);
-                        document.getElementById('dropdownProfilePicture').src = "../images/default.png";
-                    }
-                    else {
-                        throw new Error(data.message);
-                    }
+                    await deleteProfilePicture();
+                    document.getElementById('dropdownProfilePicture').src = "../images/default.png";
                 }
             }
             settingsModal.hide();
         } catch (error) {
-            errordiv.innerHTML = "";
-            let errorMessages = document.createElement('div');
-            error.message.split("\n").forEach(msg => {
-                let errorText = document.createElement('p');
-                errorText.innerText = msg;
-                errorText.style.margin = "0";
-                errorMessages.appendChild(errorText);
-            });
-
-            let errorBtn = document.createElement('button');
-            errorBtn.classList.add('close-btn');
-            errorBtn.addEventListener("click", function () {
-                errordiv.className = 'd-none';
-                errordiv.innerHTML = "";
-            });
-
-            errorBtn.appendChild(makeSvg("icon-x", null, null));
-            errordiv.appendChild(errorMessages);
-            errordiv.appendChild(errorBtn);
-            errordiv.className = "d-flex";
+            showAlert(error.message);
         }
     }
     row.appendChild(div);
@@ -465,16 +438,13 @@ async function showSettingsModal() {
 
 async function getUserData() {
     try {
-        let response = await fetch('/api/getUserData');
-        if (response.ok) {
-            let data = await response.json();
-            return data.users;
-        }
-        else {
-            throw new Error("baj");
-        }
+        let response = await fetch('/api/users/me');
+        let data = await response.json();
+        if (!response.ok) throw new Error(extractError(data));
+        return data.users;
     } catch (error) {
-        console.error(error);
+        showAlert(error.message);
+        throw error;
     }
 }
 
@@ -500,6 +470,12 @@ async function checkModification() {
     if (inInput.darkmode != currentSettings.darkmode) {
         ejszakaimod();
     }
+
+    if (inInput.language !== currentSettings.language) {
+        await i18next.changeLanguage(inInput.language);
+        translatePage();
+    }
+
     Object.keys(inInput).forEach(key => {
         if (inInput[key] == currentSettings[key]) {
             inInput[key] = null;
@@ -512,11 +488,9 @@ async function checkModification() {
         let errors = [];
         if (inInput.username != null && !validalvaUsername(inInput.username)) {
             wrongInput(document.getElementById('usernameInput'));
-            errors.push("A felhasználónév nem megfelelő!");
         }
         if (inInput.email != null && !validalvaEmail(inInput.email)) {
             wrongInput(document.getElementById('emailInput'));
-            errors.push("Az email-cím nem megfelelő!");
         }
         if (errors.length > 0) {
             throw new Error(errors.join("\n"));
@@ -528,197 +502,149 @@ async function checkModification() {
 
 async function saveModification(username, email, language, darkmode) {
     try {
-        console.log(username, email, language, darkmode)
-        let response = await fetch("/api/updateUser", {
+        let response = await fetch("/api/users/me", {
             method: "PUT",
             headers: {
-                "Content-Type": "application/json"
+                "Content-Type": "application/json",
+                "Accept-Language": document.documentElement.lang || "hu"
             },
             body: JSON.stringify({
                 username, email, language, darkmode
             })
         })
         let data = await response.json();
-        if (!response.ok) {
-            if (data.error) {
-                let errordiv = document.getElementById('errorLocation');
-                errordiv.classList.remove('d-none');
-                errordiv.innerHTML = "";
-                let ul = document.createElement('ul');
-                let hibaUzenetek = [];
-                for (let i = 0; i < data.error.length; i++) {
-                    let li = document.createElement('li');
-                    let hiba = data.error[i].msg;
-                    hibaUzenetek.push(`${data.error[i].path}: ${hiba}`);
-                    li.innerText = `${data.error[i].path}: ${hiba}`;
-                    ul.appendChild(li);
-                }
-                errordiv.appendChild(ul);
-                throw new Error(hibaUzenetek.join('\n'));
-            }
-        }
-        else {
-            alert("Sikeres módositás!"); //atmeneti
-            settingsModal.hide();
-        }
+        if (!response.ok) throw new Error(extractError(data));
+        showAlert("Sikeres módosítás!", "success");
+        settingsModal.hide();
+        return data;
     } catch (error) {
+        showAlert(error.message);
         throw error;
     }
 }
 
 async function deleteProfile() {
     try {
-        let response = await fetch("/api/inactiveUser", {
+        let response = await fetch("/api/users/me", {
             method: "DELETE",
             headers: {
-                "Content-Type": "application/json"
+                "Content-Type": "application/json",
+                "Accept-Language": document.documentElement.lang || "hu"
             }
         });
         let data = await response.json();
-        if (data.success) {
-            setTimeout(() => {
-                location.reload();
-            }, 1000);
-        }
-        else {
-            console.error("baj a törlésben, baj: " + data.error);
-        }
-
+        if (!response.ok || !data.success) throw new Error(extractError(data));
+        showAlert(data.message, "success");
+        setTimeout(() => {
+            location.reload();
+        }, 1000);
     } catch (error) {
-        console.error(`hálózati hiba: ${error}`);
+        showAlert(error.message);
+        throw error;
     }
 }
 
 async function jelszoValtoztat() {
-    let alertPlaceholder = document.getElementById('passwordAlert');
     let passwordCollapse = document.getElementById('passwordCollapse');
     let oldPass = document.getElementById('oldPassword');
     let newPass = document.getElementById('newPassword');
-    let newAlert = null;
+
     if (oldPass.value == newPass.value) {
-        newAlert = createAlert('Az régi és az új jelszó nem lehet ugyanaz!', 'danger');
+        showAlert('A régi és az új jelszó nem lehet ugyanaz!', 'danger');
+        return;
     }
-    else {
-        if (validalvaJelszo(newPass.value)) {
-            try {
-                let response = await fetch("/api/updatePassword", {
-                    method: "PUT",
-                    headers: {
-                        "Content-Type": "application/json"
-                    },
-                    body: JSON.stringify({
-                        oldPass: oldPass.value,
-                        newPass: newPass.value
-                    })
-                })
-                let data = await response.json();
-                if (response.ok) {
-                    newAlert = createAlert('Sikeres jelszómódosítás!', 'success');
-                    let bsCollapse = bootstrap.Collapse.getInstance(passwordCollapse) || new bootstrap.Collapse(passwordCollapse);
-                    bsCollapse.hide();
-                    oldPass.value = '';
-                    newPass.value = '';
-                }
-                else {
-                    let hibaUzenet = '';
-
-                    if (data.error && Array.isArray(data.error)) {
-                        hibaUzenet = data.error.map(err => err.msg).join('<br>');
-                        newAlert = createAlert(`Hiba! Az alábbi követelmények nem teljesülnek!<br>${hibaUzenet}`, 'danger');
-                    } else {
-                        hibaUzenet = data.message || 'Ismeretlen hiba történt!';
-                        newAlert = createAlert(`Hiba! ${hibaUzenet}`, 'danger');
-                    }
-                }
-            } catch (error) {
-                newAlert = createAlert('Nem sikerült elérni a szervert!', 'danger');
-            }
-        }
-        else {
-            newAlert = createAlert('Az új jelszónak tartalmaznia kell egy nagybetűt, egy számot, minimum 8 és maximum 50 karakter hosszú lehet!', 'danger');
-        }
+    if (!validalvaJelszo(newPass.value)) {
+        showAlert('Az új jelszónak tartalmaznia kell egy nagybetűt, egy számot, minimum 8 és maximum 50 karakter hosszú lehet!', 'danger');
+        return;
     }
-    if (newAlert) {
-        alertPlaceholder.replaceChildren(newAlert);
+
+    try {
+        let response = await fetch("/api/users/me/password", {
+            method: "PUT",
+            headers: {
+                "Content-Type": "application/json",
+                "Accept-Language": document.documentElement.lang || "hu"
+            },
+            body: JSON.stringify({
+                oldPass: oldPass.value,
+                newPass: newPass.value
+            })
+        })
+        let data = await response.json();
+        if (!response.ok) throw new Error(extractError(data));
+
+        showAlert(data.message || 'Sikeres jelszómódosítás!', 'success');
+        let bsCollapse = bootstrap.Collapse.getInstance(passwordCollapse) || new bootstrap.Collapse(passwordCollapse);
+        if (bsCollapse) bsCollapse.hide();
+        oldPass.value = '';
+        newPass.value = '';
+    } catch (error) {
+        showAlert(error.message, 'danger');
     }
-}
-
-function createAlert(message, type) {
-    let alertDiv = document.createElement('div');
-    alertDiv.classList.add("alert", "alert-dismissible", "fade", "show");
-    if (type) {
-        alertDiv.classList.add(`alert-${type}`);
-    }
-    alertDiv.role = 'alert';
-
-    let textNode = document.createElement('span');
-    textNode.innerHTML = message;
-    alertDiv.appendChild(textNode);
-
-    let closeBtn = document.createElement('button');
-    closeBtn.type = 'button';
-    closeBtn.className = 'btn-close';
-    closeBtn.setAttribute('data-bs-dismiss', 'alert');
-    closeBtn.setAttribute('aria-label', 'Close');
-
-    alertDiv.appendChild(closeBtn);
-
-    return alertDiv;
 }
 
 //profile picture things
 
-async function getProfilePicture(route) {
+async function getProfilePicture(userId = 'me') {
     try {
-        let response = await fetch(`/api/getProfilePic?route=${route}`);
+        const endpoint = (userId === null || userId === undefined || userId === 'me')
+            ? '/api/users/me/profile-picture'
+            : `/api/users/${userId}/profile-picture`;
+        let response = await fetch(endpoint);
+        if (!response.ok) {
+            let data = await response.json().catch(() => ({}));
+            throw new Error(extractError(data));
+        }
         let blob = await response.blob();
 
         let objectURL = URL.createObjectURL(blob);
         return objectURL;
     } catch (error) {
-        console.log(error);
+        showAlert(error.message);
+        throw error;
     }
 }
 
 async function uploadProfilePic(picture) {
-    let fd = new FormData();
-    fd.append("profilePic", picture);
     try {
-        let response = await fetch("/api/updateProfilePic", {
+        let fd = new FormData();
+        fd.append("profilePic", picture);
+        let response = await fetch("/api/users/me/profile-picture", {
             method: "PUT",
+            headers: {
+                "Accept-Language": document.documentElement.lang || "hu"
+            },
             body: fd
         });
         let data = await response.json();
-        if (response.ok) {
-            console.log(data.message);
-            let image = document.getElementById('dropdownProfilePicture');
-            if (image) {
-                let preview = await createPreview(picture);
-                image.src = preview;
-            }
+        if (!response.ok) throw new Error(extractError(data));
+
+        let image = document.getElementById('dropdownProfilePicture');
+        if (image) {
+            let preview = await createPreview(picture);
+            image.src = preview;
         }
-        else {
-            throw new Error(data.message);
-        }
+        return data;
     } catch (error) {
-        console.log(`hálózati hiba: ${error}`);
+        showAlert(error.message);
         throw error;
     }
 }
 
 async function deleteProfilePicture() {
     try {
-        let response = await fetch("/api/deleteProfilePic", {
+        let response = await fetch("/api/users/me/profile-picture", {
             method: "DELETE",
             headers: {
-                "Content-Type": "application/json"
+                "Content-Type": "application/json",
+                "Accept-Language": document.documentElement.lang || "hu"
             }
         })
-
-        return response;
         let data = await response.json();
+        if (!response.ok) throw new Error(extractError(data));
+        return data;
     } catch (error) {
-        console.log(`hálózati hiba: ${error}`);
+        showAlert(error.message);
         throw error;
     }
 }
@@ -752,6 +678,49 @@ async function createPreview(file) {
     );
 
     return canvas.toDataURL("image/webp");
+}
+
+function translatePage() {
+    document.querySelectorAll('[data-i18n]').forEach(element => {
+        const key = element.getAttribute('data-i18n');
+        element.innerText = i18next.t(key);
+    });
+    document.querySelectorAll('[data-i18n-label]').forEach(element => {
+        const key = element.getAttribute('data-i18n-label');
+        element.dataset.label = i18next.t(key) + ':';
+    });
+    document.documentElement.lang = i18next.language;
+    const titleKey = document.querySelector('title')?.getAttribute('data-i18n');
+    if (titleKey) {
+        document.title = i18next.t(titleKey);
+    }
+}
+
+export async function nyelvSzinkronizalas() {
+    try {
+        let response = await fetch('/api/users/language');
+        let data = await response.json();
+        if (!response.ok) throw new Error(extractError(data));
+        await initI18next(data.language);
+        return data.language;
+    } catch (error) {
+        showAlert(error.message);
+        throw error;
+    }
+}
+
+function extractError(data) {
+    let errorMessage = "Ismeretlen hiba történt / Unknown error";
+    if (data.errors && Array.isArray(data.errors) && data.errors.length > 0) {
+        errorMessage = data.errors.map(e => e.msg || e).join('\n');
+    } else if (data.error && Array.isArray(data.error) && data.error.length > 0) {
+        errorMessage = data.error.map(e => e.msg || e).join('\n');
+    } else if (data.error) {
+        errorMessage = data.error;
+    } else if (data.message) {
+        errorMessage = data.message;
+    }
+    return errorMessage;
 }
 
 let modalElement;

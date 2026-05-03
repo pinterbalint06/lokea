@@ -18,21 +18,6 @@ const CACHE_TTL = 5 * 60 * 1000; // 5 perc (milliszekundumban)
 
 //API endpoints - GET
 
-router.get('/language', (request, response) => {
-    try {
-        if (!request.session) {
-            response.status(401).json({ error: request.t('admin:adminApi.language_fetch_error') });
-        }
-        else {
-            let language = request.session.userLanguage;
-            response.status(200).json({ language: request.session.userLanguage });
-        }
-    } catch (error) {
-        response.status(500).json({ error: request.t('admin:adminApi.language_fetch_error') });
-    }
-
-});
-
 router.get('/dashboard', async (request, response) => {
     try {
         let playerCount = await databaseAdmin.getUserCount();

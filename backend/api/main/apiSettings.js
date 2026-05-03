@@ -1,0 +1,264 @@
+const express = require('express');
+const router = express.Router();
+const database = require('#sql/main/databaseSettings.js');
+const databaseLogs = require('#sql/admin/databaseLogs.js');
+const auth = require('#middlewares/auth.js');
+const fs = require('fs/promises');
+const { body, query, param } = require("express-validator");
+const sharp = require('sharp');
+const { sendDeleteEmail, sendChangeEmail, sendPasswordChangeEmail } = require('#utils/mails.js');
+const { validate } = require('#utils/validate.js');
+const AppError = require('#utils/app-error.js');
+
+//!Multer
+const multer = require('multer'); //?npm install multer
+const path = require('path');
+const { UPLOAD_ROOT } = require('#config/mapdatas-upload-config.js');
+const { uploadMemory: upload } = require('#config/profile-pic-upload-config.js');
+
+//Endpoints - settings
+
+router.get('/users/me', auth.checkAuth, async (request, response) => {
+    try {
+        let users = await database.getUser(request.session.userid);
+        let userData = users[0];
+        if (userData) {
+            if (userData.role && userData.role !== request.session.role) {
+                request.session.role = userData.role;
+            } else if (!userData.role) {
+                userData.role = request.session.role;
+            }
+        }
+        response.status(200).json({ users: userData });
+    } catch (error) {
+        response.status(500).json({ error: request.t('main:apiSettings.getUserData.error') });
+    }
+})
+
+router.put('/users/me', auth.checkAuth,
+    [
+        body("username")
+            .optional({ nullable: true })
+            .not().isEmail().withMessage((value, { req }) => req.t('main:apiSettings.updateUser.validation_username_no_email'))
+            .matches(/^[a-zA-Z0-9áéíóöőúüűÁÉÍÓÖŐÚÜŰ_-]+$/).withMessage((value, { req }) => req.t('main:apiSettings.updateUser.validation_username_invalid_chars'))
+            .isLength({ min: 1, max: 20 }).withMessage((value, { req }) => req.t('main:apiSettings.updateUser.validation_username_length')),
+        body("email")
+            .optional({ nullable: true })
+            .isEmail().withMessage((value, { req }) => req.t('main:apiSettings.updateUser.validation_email_format'))
+            .isLength({ min: 5, max: 254 }).withMessage((value, { req }) => req.t('main:apiSettings.updateUser.validation_email_length')),
+        body("language")
+            .optional({ values: "null" })
+            .isString().withMessage((value, { req }) => req.t('main:apiSettings.updateUser.validation_language_format'))
+            .isIn(['en', 'hu']).withMessage((value, { req }) => req.t('main:apiSettings.updateUser.validation_language_values')),
+
+        body("darkmode")
+            .optional({ values: "null" })
+            .isBoolean().withMessage((value, { req }) => req.t('main:apiSettings.updateUser.validation_darkmode_boolean'))
+    ], validate, async (request, response) => {
+        try {
+            let { username, email, language, darkmode } = request.body;
+            let result = await database.updateUser(request.session.userid, username, email, language, darkmode);
+            if (result == 1) {
+                if (language) request.session.userLanguage = language;
+                await databaseLogs.addLog(request.session.userid, 'User update');
+                let users = await database.getUser(request.session.userid);
+                sendChangeEmail(users[0].email, users[0].username);
+                response.status(200).json({ message: request.t('main:apiSettings.updateUser.success') });
+            }
+            else {
+                response.status(200).json({ message: request.t('main:apiSettings.updateUser.no_change') });
+            }
+        } catch (error) {
+            if (error instanceof AppError) {
+                response.status(error.statusCode).json({ error: error.message });
+            } else {
+                response.status(500).json({ error: request.t('main:apiSettings.updateUser.error') });
+            }
+        }
+    })
+
+router.put("/users/me/password", auth.checkAuth,
+    [
+        body("oldPass")
+            .isLength({ min: 8, max: 60 }).withMessage((value, { req }) => req.t('main:apiSettings.updatePassword.validation_old_password_length')),
+        body("newPass")
+            .isLength({ min: 8, max: 60 }).withMessage((value, { req }) => req.t('main:apiSettings.updatePassword.validation_new_password_length'))
+            .matches(/\d/).withMessage((value, { req }) => req.t('main:apiSettings.updatePassword.validation_new_password_digit'))
+            .matches(/[A-Z]/).withMessage((value, { req }) => req.t('main:apiSettings.updatePassword.validation_new_password_uppercase'))
+    ], validate,
+    async (request, response) => {
+        try {
+            let { oldPass, newPass } = request.body;
+            let { email, username } = await database.updatePassword(request.session.userid, oldPass, newPass);
+            await databaseLogs.addLog(request.session.userid, 'Password update');
+            sendPasswordChangeEmail(email, username);
+            response.status(200).json({ message: request.t('main:apiSettings.updatePassword.success') });
+        } catch (error) {
+            response.status(500).json({ error: request.t('main:apiSettings.updatePassword.error') });
+        }
+    })
+
+router.delete("/users/me", auth.checkAuth, async (request, response) => {
+    try {
+        let userid = request.session.userid;
+        let { email, username } = await database.userToInactive(userid);
+        request.session.destroy(async (error) => {
+            if (error) {
+                response.status(500).json({ success: false, error: error });
+            }
+            else {
+                await databaseLogs.addLog(userid, 'User delete');
+                response.clearCookie('geo.sid');
+                sendDeleteEmail(email, username);
+                response.status(200).json({ success: true, message: request.t('main:apiSettings.inactiveUser.success') });
+            }
+        });
+
+    } catch (error) {
+        if (error instanceof AppError) {
+            response.status(error.statusCode).json({ error: error.message });
+        } else {
+            response.status(500).json({ error: request.t('main:apiSettings.inactiveUser.error') });
+        }
+    }
+})
+
+router.put('/users/me/profile-picture', auth.checkAuth,
+    (request, response, next) => {
+        upload.single('profilePic')(request, response, (err) => {
+            if (err instanceof multer.MulterError) {
+                if (err.code === 'LIMIT_FILE_SIZE') {
+                    request.fileValidationError = 'A fájl túl nagy! Maximum 5 MB engedélyezett.';
+                } else {
+                    request.fileValidationError = `Feltöltési hiba: ${err.message}`;
+                }
+            } else if (err) {
+                return response.status(500).json({ error: 'Rendszerhiba a feltöltés során.' });
+            }
+            next();
+        });
+    },
+    async (request, response) => {
+        let newFilePath = null;
+        try {
+            if (request.fileValidationError) {
+                return response.status(400).json({ error: request.t('main:apiSettings.updateProfilePic.invalid_file_type') });
+            }
+            if (!request.file) {
+                return response.status(400).json({ error: request.t('main:apiSettings.updateProfilePic.no_image') });
+            }
+
+            let user_id = request.session.userid;
+
+            let newFileName = `processed-${Date.now()}.webp`;
+            newFilePath = path.join(UPLOAD_ROOT, newFileName);
+
+            sharp.cache(false);
+
+            const metadata = await sharp(request.file.buffer)
+                .rotate()
+                .resize(400, 400, {
+                    fit: 'cover',
+                    position: 'center'
+                })
+                .toFormat('webp')
+                .toFile(newFilePath);
+
+            let { width, height } = metadata;
+            let lastPfp = await database.uploadProfilePic(newFileName, width, height, user_id);
+
+            if (lastPfp) {
+                let lastPfpPath = path.join(UPLOAD_ROOT, lastPfp);
+                await fs.unlink(lastPfpPath).catch(() => { });
+            }
+
+            await databaseLogs.addLog(user_id, 'Profile picture update');
+            return response.status(201).json({ success: true, message: request.t('main:apiSettings.updateProfilePic.success') });
+        } catch (error) {
+            console.error("Hiba a képfeldolgozás során:", error);
+            if (newFilePath) await fs.unlink(newFilePath).catch(() => { });
+            response.status(500).json({ error: request.t('main:apiSettings.updateProfilePic.error') });
+        }
+    }
+);
+
+router.delete('/users/me/profile-picture', auth.checkAuth, async (request, response) => {
+    try {
+        let lastPfp = await database.deleteProfilePic(request.session.userid);
+        if (!lastPfp) {
+            response.status(200).json({ success: true, message: request.t('main:apiSettings.deleteProfilePic.already_default') });
+        }
+        else {
+            let lastPfpPath = path.join(UPLOAD_ROOT, lastPfp);
+            await fs.unlink(lastPfpPath).catch(() => { });
+
+            await databaseLogs.addLog(request.session.userid, 'Profile picture delete');
+            response.status(200).json({ success: true, message: request.t('main:apiSettings.deleteProfilePic.success') });
+        }
+    } catch (error) {
+        response.status(500).json({ error: request.t('main:apiSettings.deleteProfilePic.error') });
+    }
+})
+
+router.get('/users/me/profile-picture', auth.checkAuth, async (request, response) => {
+    try {
+        const users = await database.getUser(request.session.userid);
+        const userData = users[0];
+        if (!userData || !userData.filepath) {
+            return response.status(404).json({ error: request.t('main:apiSettings.getProfilePic.error') });
+        }
+
+        response.sendFile(userData.filepath, { root: UPLOAD_ROOT }, (err) => {
+            if (err) {
+                console.log("Hiba a fájl küldéskor:", err);
+                response.status(err.status || 404).send();
+            }
+        });
+    } catch (error) {
+        response.status(500).json({ error: request.t('main:apiSettings.getProfilePic.error') });
+    }
+})
+
+router.get('/users/:id/profile-picture', auth.checkAuth,
+    [
+        param('id').isInt({ min: 1 }).withMessage((value, { req }) => req.t('main:apiSettings.getProfilePic.validation_invalid_user_id'))
+    ], validate, async (request, response) => {
+        try {
+            const user_id = request.params.id;
+            const users = await database.getUser(user_id);
+            const userData = users[0];
+            if (!userData || !userData.filepath) {
+                return response.status(404).json({ error: request.t('main:apiSettings.getProfilePic.error') });
+            }
+
+            response.sendFile(userData.filepath, { root: UPLOAD_ROOT }, (err) => {
+                if (err) {
+                    console.log("Hiba a fájl küldéskor:", err);
+                    response.status(err.status || 404).send();
+                }
+            });
+        } catch (error) {
+            response.status(500).json({ error: request.t('main:apiSettings.getProfilePic.error') });
+        }
+    })
+
+router.get('/users/profile-picture', auth.checkAuth,
+    [
+        query("route").matches(/^[a-zA-Z0-9_\-]+\.[a-zA-Z0-9]+$/).withMessage((value, { req }) => req.t('main:apiSettings.getProfilePic.validation_invalid_filename'))
+    ], validate, (request, response) => {
+        try {
+            let pfproute = request.query.route;
+            const root = UPLOAD_ROOT;
+
+            response.sendFile(pfproute, { root: root }, (err) => {
+                if (err) {
+                    console.log("Hiba a fájl küldéskor:", err);
+                    response.status(err.status || 404).send();
+                }
+            });
+        } catch (error) {
+            response.status(500).json({ error: request.t('main:apiSettings.getProfilePic.error') })
+        }
+    })
+
+module.exports = router;

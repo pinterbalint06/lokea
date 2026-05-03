@@ -72,7 +72,7 @@ export async function settingsDisplayre(adminSettings) {
     if (data.filepath == null) {
         pfp.src = "../images/default.png";
     } else {
-        objectURL = await getProfilePicture(data.filepath);
+        objectURL = await getProfilePicture(data.user_id);
         pfp.src = objectURL;
     }
 

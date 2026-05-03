@@ -20,7 +20,7 @@ function createGameLobbyTestApp() {
         });
         next();
     });
-    app.use("/api/choose-game", gameLobbyEndpoints);
+    app.use("/api/lobby", gameLobbyEndpoints);
     return supertest(app);
 }
 

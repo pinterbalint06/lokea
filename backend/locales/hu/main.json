@@ -1,3 +1,144 @@
 {
-    "try": "try"
+    "apiMain": {
+        "signup": {
+            "validation_username_no_email": "A felhasználónév nem lehet e-mail cím!",
+            "validation_username_invalid_chars": "A felhasználónév csak betűket, számokat, - vagy _ karaktert, és ékezetes betűket tartalmazhat.",
+            "validation_username_length": "A felhasználónév hossza 1 és 20 karakter között kell legyen!",
+            "validation_email_format": "Hibás e-mail formátum.",
+            "validation_email_length": "Az e-mail cím hossza 5 és 254 karakter között kell legyen!",
+            "validation_password_length": "A jelszó hossza 8 és 60 karakter között kell legyen!",
+            "validation_password_digit": "A jelszónak tartalmaznia kell legalább egy számot!",
+            "validation_password_uppercase": "A jelszónak tartalmaznia kell legalább egy nagybetűt!",
+            "success": "Sikeres regisztráció!",
+            "user_exists": "A felhasználónév vagy e-mail cím már foglalt!",
+            "error": "Hiba történt a regisztráció során!"
+        },
+        "login": {
+            "validation_username_length": "A felhasználónév/e-mail hossza nem megfelelő!",
+            "validation_password_length": "A jelszó hossza nem megfelelő!",
+            "invalid_credentials": "Hibás felhasználónév/e-mail vagy jelszó!",
+            "success": "Sikeres bejelentkezés!",
+            "error": "Hiba a bejelentkezés során!"
+        },
+        "language_fetch_error": "Hiba a nyelv lekérdezésekor"
+    },
+    "apiSettings": {
+        "getUserData": {
+            "error": "Hiba a felhasználói adatok lekérése során!"
+        },
+        "updateUser": {
+            "validation_username_no_email": "A felhasználónév nem lehet e-mail cím!",
+            "validation_username_invalid_chars": "A felhasználónév csak betűket, számokat, - vagy _ karaktert, és ékezetes betűket tartalmazhat.",
+            "validation_username_length": "A felhasználónév hossza 1 és 20 karakter között kell legyen!",
+            "validation_email_format": "Hibás e-mail formátum.",
+            "validation_email_length": "Az e-mail cím hossza 5 és 254 karakter között kell legyen!",
+            "validation_language_format": "A nyelv formátuma érvénytelen!",
+            "validation_language_values": "A választható nyelvek: 'en' vagy 'hu'!",
+            "validation_darkmode_boolean": "A sötét mód értéke csak logikai lehet (true/false)!",
+            "success": "Sikeres frissítés!",
+            "no_change": "Nem történt módosítás!",
+            "error": "Hiba a felhasználó frissítése során!"
+        },
+        "updatePassword": {
+            "validation_old_password_length": "A régi jelszó hossza 8 és 60 karakter között kell legyen!",
+            "validation_new_password_length": "Az új jelszó hossza 8 és 60 karakter között kell legyen!",
+            "validation_new_password_digit": "Az új jelszónak tartalmaznia kell legalább egy számot!",
+            "validation_new_password_uppercase": "Az új jelszónak tartalmaznia kell legalább egy nagybetűt!",
+            "success": "Sikeres jelszófrissítés!",
+            "error": "Hiba a jelszó frissítése során!"
+        },
+        "inactiveUser": {
+            "success": "Fiók sikeresen inaktiválva!",
+            "error": "Hiba a fiók inaktiválása során!"
+        },
+        "updateProfilePic": {
+            "invalid_file_type": "Érvénytelen fájltípus! Csak képeket tölthetsz fel.",
+            "no_image": "Nincs kép kiválasztva!",
+            "success": "Profilkép sikeresen frissítve!",
+            "error": "Hiba a profilkép frissítése során!"
+        },
+        "deleteProfilePic": {
+            "already_default": "A profilkép már alapértelmezett volt.",
+            "success": "Profilkép sikeresen törölve!",
+            "error": "Hiba a profilkép törlése során!"
+        },
+        "getProfilePic": {
+            "validation_invalid_filename": "Érvénytelen fájlnév!",
+            "error": "Hiba a profilkép lekérése során!"
+        }
+    },
+    "title": "Főoldal",
+    "nav": {
+        "ip": "IP: lokea.com",
+        "onlinePlayers": "Online játékosok: ",
+        "logoTitle": "Légy bárhol",
+        "login": "Bejelentkezés"
+    },
+    "hero": {
+        "title": "Legyél ott ahol nem tudsz! Lokea.",
+        "teaserTitle": "Készen állsz a felfedezésre?",
+        "teaserText": "Próbáld ki magad a hivatalos és a közösség által készített egyedi térképeken! Találd meg a pontos helyszínt, és versenyezz a legjobbakkal.",
+        "playButton": "Pályaválasztás",
+        "tooltipLogin": "A folytatáshoz bejelentkezés szükséges!"
+    },
+    "customMaps": {
+        "sectionTitle": "Egyedi térképek, amit a felhasználók hoztak létre",
+        "mapTitlePlaceholder": "Főcim focim",
+        "rating": "Csillag",
+        "ratingsCount": "értékelés",
+        "plays": "Játékok"
+    },
+    "comparison": {
+        "sectionTitle": "Miért jobb a lokea?",
+        "platform": "Platform",
+        "streetView": "Street View",
+        "multiplayer": "Multiplayer",
+        "championships": "Bajnokságok",
+        "customMaps": "Saját térképek",
+        "free": "Ingyenes",
+        "lokeaAlt": "Lokea"
+    },
+    "loginModal": {
+        "title": "Bejelentkezés",
+        "prompt": "Jelentkezz be a játék folytatásához!",
+        "usernameLabel": "Felhasználónév vagy e-mail",
+        "passwordLabel": "Jelszó",
+        "rememberMe": "Emlékezz rám",
+        "registerPrompt": "Nincs még fiókod? ",
+        "registerLink": "Regisztrálás",
+        "loginButton": "Bejelentkezés"
+    },
+    "settingsModal": {
+        "accountTab": "Fiók",
+        "appearanceTab": "Megjelenés",
+        "accountSettingsTitle": "Fiókbeállítások",
+        "notLoggedIn": "Nem vagy bejelentkezve!",
+        "uiSettingsTitle": "UI beállítások",
+        "languageSelection": "Nyelvválasztás",
+        "hungarian": "Magyar",
+        "english": "English",
+        "appearanceTitle": "Megjelenés",
+        "darkMode": "Éjszakai üzemmód (Dark Mode)",
+        "saveButton": "Mentés",
+        "uploadImageText": "Kép feltöltéshez kattints ide, vagy húzz be egy képet!",
+        "deleteProfilePicture": "Profilkép törlése",
+        "registeredAt": "Regisztrált:",
+        "username": "Felhasználónév",
+        "email": "E-mail-cim",
+        "requestNewPassword": "Új jelszó igénylése",
+        "oldPassword": "Régi jelszó:",
+        "newPassword": "Új jelszó:",
+        "deleteAccount": "Fiók törlése"
+    },
+    "dropdown": {
+        "myAccount": "Fiókom",
+        "myGames": "Saját játékaim",
+        "adminPanel": "Belépés az admin oldalra",
+        "logout": "Kijelentkezés"
+    },
+    "footer": {
+        "description": "Lokea - Lokalizációs készségfejlesztő alkalmazás",
+        "rights": "Minden jog fenntartva!",
+        "copyright": "Copyright © 2025-26"
+    }
 }

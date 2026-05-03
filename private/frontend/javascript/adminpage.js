@@ -2,6 +2,7 @@ import { dashboardDisplayre } from "./dashboardDisplay.js";
 import { usersDisplayre } from "./usersDisplay.js";
 import { logsDisplayre } from "./logsDisplay.js";
 import { settingsDisplayre } from "./settingsDisplay.js";
+import { testDisplayre } from "./testDisplay.js";
 import { getAdminSettings, getProfilePicture, nyelvSzinkronizalas, kijelentkezes, getUserData } from "./fetchs.js";
 
 document.addEventListener("DOMContentLoaded", async function () {
@@ -59,7 +60,7 @@ document.addEventListener("DOMContentLoaded", async function () {
     if (userData.filepath == null) {
         pfp.src = "../images/default.png";
     } else {
-        objectURL = await getProfilePicture(userData.filepath);
+        objectURL = await getProfilePicture(userData.user_id);
         pfp.src = objectURL;
         await new Promise(res => pfp.onload = res);
         URL.revokeObjectURL(objectURL);
@@ -129,6 +130,9 @@ async function melyikValaszt(melyik) {
             break;
         case "settings":
             await settingsDisplayre(adminSettings);
+            break;
+        case "tests":
+            await testDisplayre();
             break;
     }
 }

@@ -36,11 +36,11 @@ app.use('/', viewRoutes);
 const adminEndpoints = require('#root/api/admin/index.js');
 app.use('/api/admin', adminEndpoints);
 
-const endpoints = require('#root/api/api.js');
+const endpoints = require('#main/index.js');
 app.use('/api', endpoints);
 
-const gameChoosingEndpoints = require('#root/api/gameflow/gamelobby.js');
-app.use('/api/choose-game', gameChoosingEndpoints);
+const gameLobbyEndpoints = require('#root/api/gameflow/gamelobby.js');
+app.use('/api/lobby', gameLobbyEndpoints);
 
 const mapCreationEndpoints = require('#root/api/mapcreator/mapcreator.js');
 app.use('/api/map-creator', mapCreationEndpoints);

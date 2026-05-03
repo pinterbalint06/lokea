@@ -26,6 +26,7 @@
         "#mapcreatortest/*": "./test/mapcreator/*",
         "#gametest/*": "./test/game/*",
         "#root/*": "./*",
+        "#main/*": "./api/main/*",
         "#admin/*": "./api/admin/*",
         "#mapcreator/*": "./api/mapcreator/*",
         "#gamemaps/*": "./api/gamemaps/*",

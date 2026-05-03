@@ -170,7 +170,6 @@
         "export_error": "Export error"
     },
     "adminApi": {
-        "language_fetch_error": "Error fetching language",
         "dashboard_info_error": "Error fetching dashboard information",
         "chart_daily_activity": "Daily activity",
         "chart_weekly_activity": "Weekly activity",
@@ -188,5 +187,10 @@
         "update_error": "Error during update",
         "user_update_success": "User update successful!",
         "validation_language_invalid": "Invalid language!"
+    },
+    "testDisplay": {
+        "title": "Choose from the testing views:",
+        "mapViewer": "Test Map Viewer",
+        "equiViewer": "Test 360 Image Viewer"
     }
 }
