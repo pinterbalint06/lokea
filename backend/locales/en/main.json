@@ -128,11 +128,13 @@
         "requestNewPassword": "Request new password",
         "oldPassword": "Old password:",
         "newPassword": "New password:",
-        "deleteAccount": "Delete account",
+        "deleteAccount": "Delete account"
+    },
+    "dropdown": {
+        "myAccount": "My account",
         "myGames": "My games",
         "adminPanel": "Enter admin panel",
-        "logout": "Logout",
-        "myAccount": "My account"
+        "logout": "Logout"
     },
     "footer": {
         "description": "Lokea - Localization skill development application",

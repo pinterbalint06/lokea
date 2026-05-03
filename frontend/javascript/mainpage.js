@@ -177,19 +177,19 @@ async function dropdownLetrehoz(link, nev, kep) {
     let ul = document.createElement('ul');
     ul.classList.add("dropdown-menu", "dropdown-menu-end", "text-small");
 
-    let li = dropdownLink(i18next.t('settingsModal.myAccount'), null, null, "sliders");
+    let li = dropdownLink('dropdown.myAccount', null, null, "sliders");
     li.addEventListener("click", async function () {
         await showSettingsModal();
     })
     ul.appendChild(li);
     ul.appendChild(dropdownDivider());
-    ul.appendChild(dropdownLink(i18next.t('settingsModal.myGames'), null, null, "map"));
+    ul.appendChild(dropdownLink('dropdown.myGames', null, null, "map"));
     ul.appendChild(dropdownDivider());
     if (link) {
-        ul.appendChild(dropdownLink(i18next.t('settingsModal.adminPanel'), 'enterAdmin', null, "shield", link));
+        ul.appendChild(dropdownLink('dropdown.adminPanel', 'enterAdmin', null, "shield", link));
         ul.appendChild(dropdownDivider());
     }
-    li = dropdownLink(i18next.t('settingsModal.logout'), 'signOut', ["text-danger"], "logout");
+    li = dropdownLink('dropdown.logout', 'signOut', ["text-danger"], "logout");
     li.addEventListener("click", async function () {
         await kijelentkezes();
     });
@@ -199,7 +199,7 @@ async function dropdownLetrehoz(link, nev, kep) {
     hova.appendChild(div);
 }
 
-function dropdownLink(title, id, customClasses, svgName, link = null) {
+function dropdownLink(i18nKey, id, customClasses, svgName, link = null) {
     let li = document.createElement('li');
 
     let a = document.createElement('a');
@@ -214,7 +214,8 @@ function dropdownLink(title, id, customClasses, svgName, link = null) {
         a.href = link;
     }
     let span = document.createElement('span');
-    span.innerText = title;
+    span.setAttribute('data-i18n', i18nKey);
+    span.innerText = i18next.t(i18nKey);
     a.appendChild(makeSvg(svgName, ["dropdown-icons"], null));
     a.appendChild(span);
 
@@ -235,7 +236,8 @@ async function kijelentkezes() {
         let response = await fetch("/api/auth/logout", {
             method: "DELETE",
             headers: {
-                "Content-Type": "application/json"
+                "Content-Type": "application/json",
+                "Accept-Language": document.documentElement.lang || "hu"
             }
         });
         let data = await response.json();
@@ -503,7 +505,8 @@ async function saveModification(username, email, language, darkmode) {
         let response = await fetch("/api/users/me", {
             method: "PUT",
             headers: {
-                "Content-Type": "application/json"
+                "Content-Type": "application/json",
+                "Accept-Language": document.documentElement.lang || "hu"
             },
             body: JSON.stringify({
                 username, email, language, darkmode
@@ -525,7 +528,8 @@ async function deleteProfile() {
         let response = await fetch("/api/users/me", {
             method: "DELETE",
             headers: {
-                "Content-Type": "application/json"
+                "Content-Type": "application/json",
+                "Accept-Language": document.documentElement.lang || "hu"
             }
         });
         let data = await response.json();
@@ -558,7 +562,8 @@ async function jelszoValtoztat() {
         let response = await fetch("/api/users/me/password", {
             method: "PUT",
             headers: {
-                "Content-Type": "application/json"
+                "Content-Type": "application/json",
+                "Accept-Language": document.documentElement.lang || "hu"
             },
             body: JSON.stringify({
                 oldPass: oldPass.value,
@@ -603,6 +608,9 @@ async function uploadProfilePic(picture) {
         fd.append("profilePic", picture);
         let response = await fetch("/api/users/me/profile-picture", {
             method: "PUT",
+            headers: {
+                "Accept-Language": document.documentElement.lang || "hu"
+            },
             body: fd
         });
         let data = await response.json();
@@ -625,7 +633,8 @@ async function deleteProfilePicture() {
         let response = await fetch("/api/users/me/profile-picture", {
             method: "DELETE",
             headers: {
-                "Content-Type": "application/json"
+                "Content-Type": "application/json",
+                "Accept-Language": document.documentElement.lang || "hu"
             }
         })
         let data = await response.json();

@@ -128,11 +128,13 @@
         "requestNewPassword": "Új jelszó igénylése",
         "oldPassword": "Régi jelszó:",
         "newPassword": "Új jelszó:",
-        "deleteAccount": "Fiók törlése",
+        "deleteAccount": "Fiók törlése"
+    },
+    "dropdown": {
+        "myAccount": "Fiókom",
         "myGames": "Saját játékaim",
         "adminPanel": "Belépés az admin oldalra",
-        "logout": "Kijelentkezés",
-        "myAccount": "Fiókom"
+        "logout": "Kijelentkezés"
     },
     "footer": {
         "description": "Lokea - Lokalizációs készségfejlesztő alkalmazás",
