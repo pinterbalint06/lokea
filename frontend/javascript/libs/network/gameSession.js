@@ -1,7 +1,7 @@
 import { handleResponseError } from "./fetch.js";
 
 export async function fetchActiveGameSession() {
-    const response = await fetch("/api/choose-game/session");
+    const response = await fetch("/api/lobby/session");
 
     if (!response.ok) {
         await handleResponseError(response);

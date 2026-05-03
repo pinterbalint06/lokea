@@ -6,7 +6,7 @@ export async function fetchGameMapDetails(gameMapId) {
 }
 
 export async function startGameSession(formData) {
-    const response = await fetch("/api/choose-game/session", {
+    const response = await fetch("/api/lobby/session", {
         method: "POST",
         body: formData
     });

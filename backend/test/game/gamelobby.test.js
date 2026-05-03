@@ -272,7 +272,7 @@ describe("Game Lobby API - /api/lobby/", () => {
                 sessionsQueries.selectLatestActiveGameSession.mockResolvedValueOnce({ session_id: 99 });
 
                 const response = await requestWithSupertest
-                    .post("/api/choose-game/session")
+                    .post("/api/lobby/session")
                     .send(validBody);
 
                 expect(response.statusCode).toBe(200);
@@ -282,7 +282,7 @@ describe("Game Lobby API - /api/lobby/", () => {
 
             it("Should not finish any session if there is no active session", async () => {
                 const response = await requestWithSupertest
-                    .post("/api/choose-game/session")
+                    .post("/api/lobby/session")
                     .send(validBody);
 
                 expect(response.statusCode).toBe(200);
