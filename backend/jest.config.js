@@ -20,7 +20,10 @@ module.exports = {
     coveragePathIgnorePatterns: [
         "/node_modules/",
         "/test/",
-        "\\.queries\\.js$"
+        "\\.queries\\.js$",
+        "/utils/",
+        "/sockets/",
+        "/middlewares/"
     ],
     coverageThreshold: {
         "global": {

@@ -269,12 +269,17 @@ describe('Settings API Tesztek (apiSettings.js)', () => {
 
         it('SIKER - 200, saját profilkép elküldve', async () => {
             db.getUser.mockResolvedValue([{ filepath: 'kep.webp' }]);
-            const sendFileMock = jest.fn((path, opts, cb) => cb(null));
+            const sendFileMock = jest.fn((path, opts, cb) => {
+                cb(null);
+            });
             const sendFileMockApp = express();
             sendFileMockApp.use(express.json());
             sendFileMockApp.use(mockI18nMiddleware);
             sendFileMockApp.use((req, res, next) => {
-                res.sendFile = sendFileMock;
+                res.sendFile = (path, opts, cb) => {
+                    sendFileMock(path, opts, cb);
+                    res.status(200).end();
+                };
                 next();
             });
             sendFileMockApp.use('/api', apiSettings);
@@ -307,12 +312,17 @@ describe('Settings API Tesztek (apiSettings.js)', () => {
 
         it('SIKER - 200, felhasználói profilkép elküldve', async () => {
             db.getUser.mockResolvedValue([{ filepath: 'other.webp' }]);
-            const sendFileMock = jest.fn((path, opts, cb) => cb(null));
+            const sendFileMock = jest.fn((path, opts, cb) => {
+                cb(null);
+            });
             const sendFileMockApp = express();
             sendFileMockApp.use(express.json());
             sendFileMockApp.use(mockI18nMiddleware);
             sendFileMockApp.use((req, res, next) => {
-                res.sendFile = sendFileMock;
+                res.sendFile = (path, opts, cb) => {
+                    sendFileMock(path, opts, cb);
+                    res.status(200).end();
+                };
                 next();
             });
             sendFileMockApp.use('/api', apiSettings);
