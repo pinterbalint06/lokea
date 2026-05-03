@@ -1,0 +1,123 @@
+{
+    "common": {
+        "missingData": "Missing data!",
+        "missingImage": "No image provided!",
+        "fileTooLarge": "File size too large! (Max 10MB)",
+        "fileUploadError": "File upload error occurred!",
+        "imageProcessingError": "Error processing image!",
+        "unexpectedError": "An unexpected error occurred!",
+        "invalidResolution": "Invalid resolution!",
+        "fileNotFound": "File does not exist or is invalid!",
+        "invalidImageType": "Invalid file type! Only JPG, PNG, WEBP, and GIF images are allowed!",
+        "invalidPage": "Invalid page number!",
+        "endpointNotFound": "Endpoint not found!"
+    },
+    "gamemap": {
+        "invalidId": "Invalid game map ID!",
+        "noAccess": "You do not have access to this game map!",
+        "coverImageUpdateFailed": "Failed to update cover image!",
+        "coverImageDeleteFailed": "Failed to delete cover image!",
+        "notFound": "Game map not found!",
+        "coverImageNotFound": "Cover image not found!",
+        "updateFailed": "Failed to update game map data!",
+        "deleteFailed": "Failed to delete game map!",
+        "title": {
+            "invalidPattern": "The game map title can only contain letters, numbers, spaces, hyphens, and underscores!",
+            "tooLong": "The game map title can be a maximum of 50 characters long!",
+            "tooShort": "The game map title must be at least 3 characters long!",
+            "empty": "The game map title cannot be empty!"
+        },
+        "description": {
+            "invalidPattern": "The game map description can only contain letters, numbers, spaces, hyphens, and underscores!",
+            "tooLong": "The game map description can be a maximum of 255 characters long!",
+            "tooShort": "The game map description must be at least 3 characters long!",
+            "empty": "The game map description cannot be empty!"
+        },
+        "atleastTitleOrDescription": "Either the new title or the new description must be provided!"
+    },
+    "map": {
+        "invalidId": "Invalid map ID!",
+        "noAccess": "You do not have access to this map!",
+        "notFound": "Map not found!",
+        "renameFailed": "Failed to rename the map!",
+        "saveFailed": "Failed to save the map!",
+        "deleteFailed": "Failed to delete the map!",
+        "imageDeletionsFailed": "Failed to delete the map's images!",
+        "titleEmpty": "Providing a map name is required!",
+        "titleTooLong": "The map name can be a maximum of 20 characters long!",
+        "titleInvalidChars": "The map name can only contain letters, numbers, spaces, hyphens, and underscores!"
+    },
+    "point": {
+        "invalidId": "Invalid point ID!",
+        "noAccess": "You do not have access to this point!",
+        "notFound": "Point not found!",
+        "alreadyExists": "A point already exists at these coordinates on this map!",
+        "coordinatesUpdateFailed": "Failed to update point coordinates!",
+        "imagePathUpdateFailed": "Failed to update point image path!",
+        "oldImageDeletionFailed": "Failed to delete the old image!",
+        "imageDeletionFailed": "Failed to delete the image!",
+        "deleteFailed": "Failed to delete the point!",
+        "northDirectionUpdateFailed": "Failed to update point north direction!",
+        "uvInvalidType": "The coordinate must be a number!",
+        "uvMinError": "The coordinate cannot be negative!",
+        "uvMaxError": "The coordinate must be less than 1!",
+        "uvRequired": "Providing coordinates is required!",
+        "northDirectionType": "The north direction must be a number!",
+        "northDirectionMin": "The north direction cannot be negative (less than 0)!",
+        "northDirectionMax": "The north direction must be less than 360 degrees!",
+        "northDirectionRequired": "Providing the north direction is required!"
+    },
+    "connection": {
+        "invalidId": "Invalid connection ID!",
+        "invalidStartId": "Invalid start point ID!",
+        "invalidEndId": "Invalid end point ID!",
+        "noAccess": "You do not have access to this connection!",
+        "missingDirectionBody": "No direction provided to modify!",
+        "alreadyExists": "The specified points are already connected!",
+        "notOnSameGameMap": "The specified points do not belong to the same game map!",
+        "updateFailed": "Failed to update connection!",
+        "deleteFailed": "Failed to delete connection!",
+        "notCrossmap": "Only the direction of connections between different maps can be modified!",
+        "directionNotGivenForCrossmap": "Both directions must be provided to create a cross-map connection!",
+        "sameStartEnd": "The start point and end point cannot be the same!",
+        "endMustBeGreater": "The point with the smaller ID must be the start point!",
+        "startToEndType": "The direction from start to end must be a number!",
+        "startToEndMin": "The direction from start to end cannot be negative (less than 0)!",
+        "startToEndMax": "The direction from start to end must be less than 360 degrees!",
+        "endToStartType": "The direction from end to start must be a number!",
+        "endToStartMin": "The direction from end to start cannot be negative (less than 0)!",
+        "endToStartMax": "The direction from end to start must be less than 360 degrees!",
+        "atleastOneDirection": "No direction provided to modify!"
+    },
+    "comment": {
+        "tooLong": "The comment can be a maximum of 255 characters long!",
+        "emptyContent": "The comment cannot be empty!",
+        "invalidCharacters": "The comment can only contain letters, numbers, spaces, hyphens, and underscores!",
+        "alreadyCommented": "You have already commented on this game map!",
+        "notFound": "You have not rated this game map yet!",
+        "updateFailed": "Failed to update the comment!",
+        "deleteFailed": "Failed to delete the comment!",
+        "invalidRating": "Invalid rating!",
+        "tooLowRating": "The rating must be at least 1!",
+        "tooHighRating": "The rating can be at most 5!",
+        "ratingRequired": "Providing a rating is required!"
+    },
+    "favorite": {
+        "alreadyFavorited": "You have already favorited this game map!",
+        "notFavorited": "You have not favorited this game map yet!",
+        "addFailed": "Failed to add to favorites!",
+        "removeFailed": "Failed to remove from favorites!"
+    },
+    "gameflow": {
+        "invalidOffset": "Invalid offset! Must be a positive integer.",
+        "invalidSort": "Invalid sort! Available options: created, rating, plays, favorites.",
+        "fetchGameMapsFailed": "Failed to fetch game maps!",
+        "fetchSessionFailed": "Failed to fetch session data!",
+        "finishSessionFailed": "Failed to finish session!",
+        "processGuessFailed": "Failed to process guess!",
+        "fetchRandomPointFailed": "Failed to fetch a random point!",
+        "fetchMapsFailed": "Failed to fetch maps!",
+        "checkSessionFailed": "Failed to check active session!",
+        "createSessionFailed": "Failed to create session!"
+    }
+}

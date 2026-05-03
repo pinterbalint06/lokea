@@ -1,0 +1,123 @@
+{
+    "common": {
+        "missingData": "Hiányzó adatok!",
+        "missingImage": "Nem adott meg képet!",
+        "fileTooLarge": "Túl nagy fájlméret! (Max 10MB)",
+        "fileUploadError": "Fájlfeltöltési hiba történt!",
+        "imageProcessingError": "Hiba a kép feldolgozásakor!",
+        "unexpectedError": "Váratlan hiba történt!",
+        "invalidResolution": "Helytelen felbontás!",
+        "fileNotFound": "A fájl nem létezik vagy helytelen!",
+        "invalidImageType": "Érvénytelen fájltípus! Csak JPG, PNG, WEBP és GIF képek engedélyezettek!",
+        "invalidPage": "Helytelen oldalszám!",
+        "endpointNotFound": "A végpont nem létezik!"
+    },
+    "gamemap": {
+        "invalidId": "Helytelen pálya ID!",
+        "noAccess": "Nincs hozzáférése ehhez a pályához!",
+        "coverImageUpdateFailed": "A borítókép frissítése nem sikerült!",
+        "coverImageDeleteFailed": "A borítókép törlése nem sikerült!",
+        "notFound": "A pálya nem létezik!",
+        "coverImageNotFound": "A borítókép nem létezik!",
+        "updateFailed": "A pálya adatainak frissítése nem sikerült!",
+        "deleteFailed": "A pálya törlése nem sikerült!",
+        "title": {
+            "invalidPattern": "A pálya címe csak betűket, számokat, szóközöket, kötőjeleket és alulvonásokat tartalmazhat!",
+            "tooLong": "A pálya címe maximum 50 karakter hosszú lehet!",
+            "tooShort": "A pálya címének legalább 3 karakter hosszúnak kell lennie!",
+            "empty": "A pálya címe nem lehet üres!"
+        },
+        "description": {
+            "invalidPattern": "A pálya leírása csak betűket, számokat, szóközöket, kötőjeleket és alulvonásokat tartalmazhat!",
+            "tooLong": "A pálya leírása maximum 255 karakter hosszú lehet!",
+            "tooShort": "A pálya leírásának legalább 3 karakter hosszúnak kell lennie!",
+            "empty": "A pálya leírása nem lehet üres!"
+        },
+        "atleastTitleOrDescription": "Vagy az új címet, vagy az új leírást kötelező megadni!"
+    },
+    "map": {
+        "invalidId": "Helytelen térkép ID!",
+        "noAccess": "Nincs hozzáférése ehhez a térképhez!",
+        "notFound": "A térkép nem létezik!",
+        "renameFailed": "A térkép átnevezése nem sikerült!",
+        "saveFailed": "A térkép mentése nem sikerült!",
+        "deleteFailed": "A térkép törlése nem sikerült!",
+        "imageDeletionsFailed": "A térkép képeinek törlése nem sikerült!",
+        "titleEmpty": "A térképnév megadása kötelező!",
+        "titleTooLong": "A térképnév maximum 20 karakter hosszú lehet!",
+        "titleInvalidChars": "A térképnév csak betűket, számokat, szóközöket, kötőjeleket és alulvonásokat tartalmazhat!"
+    },
+    "point": {
+        "invalidId": "Helytelen pont ID!",
+        "noAccess": "Nincs hozzáférése ehhez a ponthoz!",
+        "notFound": "A pont nem létezik!",
+        "alreadyExists": "Ezen a térképen már létezik pont ezeken a koordinátákon!",
+        "coordinatesUpdateFailed": "A pont koordinátáinak frissítése nem sikerült!",
+        "imagePathUpdateFailed": "A pont útvonalának frissítése nem sikerült!",
+        "oldImageDeletionFailed": "A régi kép törlése nem sikerült!",
+        "imageDeletionFailed": "A kép törlése nem sikerült!",
+        "deleteFailed": "A pont törlése nem sikerült!",
+        "northDirectionUpdateFailed": "A pont északirányának frissítése nem sikerült!",
+        "uvInvalidType": "A koordinátának számnak kell lennie!",
+        "uvMinError": "A koordináta nem lehet negatív!",
+        "uvMaxError": "A koordinátának kisebbnek kell lennie, mint 1!",
+        "uvRequired": "A koordináták megadása kötelező!",
+        "northDirectionType": "Az északiránynak számnak kell lennie!",
+        "northDirectionMin": "Az északirány nem lehet negatív (0-nál kisebb)!",
+        "northDirectionMax": "Az északiránynak 360 foknál kisebbnek kell lennie!",
+        "northDirectionRequired": "Az északirány megadása kötelező!"
+    },
+    "connection": {
+        "invalidId": "Helytelen kapcsolat ID!",
+        "invalidStartId": "Helytelen kezdőpont ID!",
+        "invalidEndId": "Helytelen végpont ID!",
+        "noAccess": "Nincs hozzáférése ehhez a kapcsolathoz!",
+        "missingDirectionBody": "Nem adott meg módosítandó irányt!",
+        "alreadyExists": "A megadott pontok már össze vannak kapcsolva!",
+        "notOnSameGameMap": "A megadott pontok nem ugyanahhoz a pályához tartoznak!",
+        "updateFailed": "A kapcsolat frissítése nem sikerült!",
+        "deleteFailed": "A kapcsolat törlése nem sikerült!",
+        "notCrossmap": "Csak térképek közötti kapcsolatok irányát lehet módosítani!",
+        "directionNotGivenForCrossmap": "Térképek közötti kapcsolat létrehozásához meg kell adni mindkét irányt!",
+        "sameStartEnd": "A kezdőpont és a végpont nem lehet ugyanaz!",
+        "endMustBeGreater": "A kisebbik ID-val rendelkező pontnak kell a kezdőpontnak lennie!",
+        "startToEndType": "A kezdőpontból végpontba iránynak számnak kell lennie!",
+        "startToEndMin": "A kezdőpontból végpontba irány nem lehet negatív (0-nál kisebb)!",
+        "startToEndMax": "A kezdőpontból végpontba iránynak 360 foknál kisebbnek kell lennie!",
+        "endToStartType": "A végpontból kezdőpontba iránynak számnak kell lennie!",
+        "endToStartMin": "A végpontból kezdőpontba irány nem lehet negatív (0-nál kisebb)!",
+        "endToStartMax": "A végpontból kezdőpontba iránynak 360 foknál kisebbnek kell lennie!",
+        "atleastOneDirection": "Nem adott meg módosítandó irányt!"
+    },
+    "comment": {
+        "tooLong": "A hozzászólás maximum 255 karakter hosszú lehet!",
+        "emptyContent": "A hozzászólás nem lehet üres!",
+        "invalidCharacters": "A hozzászólás csak betűket, számokat, szóközöket, kötőjeleket és alulvonásokat tartalmazhat!",
+        "alreadyCommented": "Ehhez a pályához már írtál hozzászólást!",
+        "notFound": "Még nem értékelted ezt a pályát!",
+        "updateFailed": "Nem sikerült frissíteni a hozzászólást!",
+        "deleteFailed": "Nem sikerült törölni a hozzászólást!",
+        "invalidRating": "Helytelen értékelés!",
+        "tooLowRating": "Az értékelésnek legalább 1-nek kell lennie!",
+        "tooHighRating": "Az értékelésnek legfeljebb 5-nek kell lennie!",
+        "ratingRequired": "Az értékelés megadása kötelező!"
+    },
+    "favorite": {
+        "alreadyFavorited": "Ezt a pályát már kedvencnek jelölted!",
+        "notFavorited": "Ezt a pályát még nem jelölted kedvencnek!",
+        "addFailed": "A kedvencekhez adás nem sikerült!",
+        "removeFailed": "A kedvencekből való eltávolítás nem sikerült!"
+    },
+    "gameflow": {
+        "invalidOffset": "Érvénytelen offset! Pozitív egész számnak kell lennie.",
+        "invalidSort": "Érvénytelen rendezés! Használható: created, rating, plays, favorites.",
+        "fetchGameMapsFailed": "A pályák lekérése nem sikerült!",
+        "fetchSessionFailed": "A játékmenet adatainak lekérése nem sikerült!",
+        "finishSessionFailed": "A játékmenet befejezése nem sikerült!",
+        "processGuessFailed": "A tipp feldolgozása nem sikerült!",
+        "fetchRandomPointFailed": "A véletlenszerű pont lekérése nem sikerült!",
+        "fetchMapsFailed": "A térképek lekérése nem sikerült!",
+        "checkSessionFailed": "Az aktív munkamenet ellenőrzése nem sikerült!",
+        "createSessionFailed": "A játékmenet létrehozása nem sikerült!"
+    }
+}
