@@ -77,6 +77,7 @@ async function persistGuess(sessionId, game, guessedMapId, guess, result) {
 }
 
 async function processGuess(sessionId, game, body) {
+    const timeLeft = calculateTimeLeft(game);
     const activePointId = await getCurrentPointId(sessionId);
     if (!activePointId) {
         throw new AppError(ERRORS.GAMEFLOW.NO_ACTIVE_ROUND, 400);
@@ -91,7 +92,6 @@ async function processGuess(sessionId, game, body) {
         throw new AppError(ERRORS.MAP.NOT_FOUND, 500);
     }
 
-    const timeLeft = calculateTimeLeft(game);
     const result = timeLeft === 0
         ? { score: 0, pixelDistance: null }
         : buildGuessResult(guess, game, correctMapDimensions);
