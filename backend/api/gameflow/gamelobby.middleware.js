@@ -19,8 +19,7 @@ async function validateGameLobbyQuery(request, response, next) {
             throw new AppError(ERRORS.GAMEFLOW.INVALID_SORT, 400);
         }
 
-        request.query.sort = sort;
-        request.query.offset = offset;
+        request.lobbyQuery = { sort, offset };
 
         next();
     } catch (error) {

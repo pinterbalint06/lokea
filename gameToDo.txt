@@ -65,3 +65,4 @@ kesz--jatekinditaskor megnezni hogy van e pont meg terkep
 kesz--kulon linkek arra, hogy mit akar a felhasznalo
 kesz--api choose-game nev javitasa
 kesz--choose game filenevek cseréje
+--postgameid zarja le ha van elkezdett sesesion

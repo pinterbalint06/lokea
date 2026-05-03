@@ -8,7 +8,7 @@ const sessionsRoutes = require("./sessions/sessions.routes.js");
 
 router.get("/", validateGameLobbyQuery, async (request, response) => {
     try {
-        const { sort, offset } = request.query;
+        const { sort, offset } = request.lobbyQuery;
         const filter = request.query.filter === 'mine' ? 'mine' : null;
         const userId = request.session?.userid;
         const palyak = await getGameMaps(sort, userId, offset, filter);

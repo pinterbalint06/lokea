@@ -1,6 +1,7 @@
 const { createGameTestApp } = require("#gametest/helpers/setup-test.js");
 const { testRequiresGameSession, suppressConsoleErrors } = require("#gametest/helpers/helpers.js");
 const { checkGameSession } = require("#middlewares/auth.js");
+const ERRORS = require("#utils/error-messages.js");
 const { mockConnection } = require("#sql/database.js");
 const mapsQueries = require("#gameflow/maps/maps.queries.js");
 const randomPointQueries = require("#gameflow/random-point/random-point.queries.js");
@@ -182,7 +183,7 @@ describe("Game API - /api/game/", () => {
                 const response = await requestWithSupertest.get("/api/game/round");
 
                 expect(response.statusCode).toBe(500);
-                expect(response.body.message).toBe("No points available");
+                expect(response.body.message).toBe(ERRORS.GAMEFLOW.NO_POINTS_AVAILABLE);
             });
 
             it("Should respond with 500 if the database throws", async () => {
@@ -218,7 +219,7 @@ describe("Game API - /api/game/", () => {
                     .send(validGuess);
 
                 expect(response.statusCode).toBe(400);
-                expect(response.body.message).toBe("No active round");
+                expect(response.body.message).toBe(ERRORS.GAMEFLOW.NO_ACTIVE_ROUND);
             });
 
             it("Should respond with 400 if there is no active point in session", async () => {
@@ -240,7 +241,7 @@ describe("Game API - /api/game/", () => {
                     .send(validGuess);
 
                 expect(response.statusCode).toBe(400);
-                expect(response.body.message).toBe("No active point in session");
+                expect(response.body.message).toBe(ERRORS.GAMEFLOW.NO_ACTIVE_POINT);
             });
 
             it("Should respond with 400 if guess coordinates are not numbers", async () => {
@@ -249,7 +250,7 @@ describe("Game API - /api/game/", () => {
                     .send({ u: "abc", v: "0.5", map_id: 1 });
 
                 expect(response.statusCode).toBe(400);
-                expect(response.body.message).toBe("Invalid guess coordinates");
+                expect(response.body.message).toBe(ERRORS.GAMEFLOW.INVALID_GUESS_COORDS);
             });
         });
 
@@ -424,7 +425,7 @@ describe("Game API - /api/game/", () => {
                     .send(validGuess);
 
                 expect(response.statusCode).toBe(500);
-                expect(response.body.message).toBe("Invalid game configuration");
+                expect(response.body.message).toBe(ERRORS.GAMEFLOW.INVALID_GAME_CONFIG);
             });
         });
     });
