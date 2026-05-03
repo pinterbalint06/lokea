@@ -202,7 +202,6 @@ async function checkAndShowContinueModal() {
     try {
         const activeGameSession = await fetchActiveGameSession();
         if (activeGameSession?.hasActiveSession) {
-            console.log("Showing continue game modal with title:");
             continueGameModal.show(
                 activeGameSession.gameTitle,
                 () => {
