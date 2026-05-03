@@ -14,7 +14,7 @@ async function getGameMapCoverImage(request, response, next) {
         response.set("imageHeight", height);
         response.sendFile(imagePath, { root: UPLOAD_ROOT_MAP_DATA }, function (err) {
             if (err && !response.headersSent) {
-                response.status(404).json({ error: ERRORS.COMMON.FILE_NOT_FOUND });
+                response.status(404).json({ error: request.t(ERRORS.COMMON.FILE_NOT_FOUND) });
             }
         });
     } catch (error) {
@@ -30,7 +30,7 @@ async function updateGameMapCoverImage(request, response, next) {
 
         await coverImageService.updateGameMapCoverImage(userId, gameMapID, file);
 
-        response.status(204).send();
+        response.status(200).json({ message: request.t('gamemaps:coverImage.updateSuccess') });
     } catch (error) {
         next(error);
     }
@@ -43,7 +43,7 @@ async function deleteGameMapCoverImage(request, response, next) {
 
         await coverImageService.deleteGameMapCoverImage(userId, gameMapID);
 
-        response.status(204).send();
+        response.status(200).json({ message: request.t('gamemaps:coverImage.deleteSuccess') });
     } catch (error) {
         next(error);
     }

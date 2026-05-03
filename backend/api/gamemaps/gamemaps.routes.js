@@ -74,7 +74,7 @@ router.use(async (error, request, response, next) => {
 
     if (!response.headersSent) {
         response.status(statusCode).json({
-            error: errorMessage
+            error: request.t(errorMessage)
         });
     }
 });
