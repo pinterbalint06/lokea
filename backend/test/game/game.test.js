@@ -1,6 +1,6 @@
 const { createGameTestApp } = require("#gametest/helpers/setup-test.js");
 const { testRequiresGameSession, suppressConsoleErrors } = require("#gametest/helpers/helpers.js");
-const { checkGameSession } = require("#utils/auth.js");
+const { checkGameSession } = require("#middlewares/auth.js");
 const { mockConnection } = require("#sql/database.js");
 const mapsQueries = require("#gameflow/maps/maps.queries.js");
 const randomPointQueries = require("#gameflow/random-point/random-point.queries.js");
@@ -37,6 +37,7 @@ describe("Game API - /api/game/", () => {
                 expect(response.statusCode).toBe(200);
                 expect(response.body.game).toEqual({
                     title: "Test Game",
+                    gameMapId: 100,
                     rounds: 5,
                     currentRound: 0,
                     roundTime: 60
@@ -195,10 +196,11 @@ describe("Game API - /api/game/", () => {
     });
 
     describe("POST /round/guess", () => {
-        const validGuess = { u: "0.5", v: "0.5", map_i: "0" };
+        const validGuess = { u: "0.5", v: "0.5", map_id: 1 };
 
         beforeEach(() => {
             randomPointQueries.getCurrentPointId.mockResolvedValue(10);
+            mapsQueries.getMapDimensions.mockResolvedValue({ width: 800, height: 600 });
         });
 
         describe("Authorization (401, 403)", () => {
@@ -219,29 +221,6 @@ describe("Game API - /api/game/", () => {
                 expect(response.body.message).toBe("No active round");
             });
 
-            it("Should respond with 400 if mapInfo is not loaded", async () => {
-                checkGameSession.mockImplementationOnce((request, response, next) => {
-                    request.session = {
-                        userid: 1,
-                        game: {
-                            activeSessionId: 1,
-                            sharpness: -3,
-                            roundTime: 60,
-                            currentCycle: 1,
-                            point: { pointId: 10, pointu: 0.5, pointv: 0.5, mapId: 1 }
-                        }
-                    };
-                    next();
-                });
-
-                const response = await requestWithSupertest
-                    .post("/api/game/round/guess")
-                    .send(validGuess);
-
-                expect(response.statusCode).toBe(400);
-                expect(response.body.message).toBe("Game maps not loaded");
-            });
-
             it("Should respond with 400 if there is no active point in session", async () => {
                 checkGameSession.mockImplementationOnce((request, response, next) => {
                     request.session = {
@@ -250,8 +229,7 @@ describe("Game API - /api/game/", () => {
                             activeSessionId: 1,
                             sharpness: -3,
                             roundTime: 60,
-                            currentCycle: 1,
-                            mapInfo: [{ mapId: 1, width: 800, height: 600 }]
+                            currentCycle: 1
                         }
                     };
                     next();
@@ -268,35 +246,10 @@ describe("Game API - /api/game/", () => {
             it("Should respond with 400 if guess coordinates are not numbers", async () => {
                 const response = await requestWithSupertest
                     .post("/api/game/round/guess")
-                    .send({ u: "abc", v: "0.5", map_i: "0" });
+                    .send({ u: "abc", v: "0.5", map_id: 1 });
 
                 expect(response.statusCode).toBe(400);
                 expect(response.body.message).toBe("Invalid guess coordinates");
-            });
-
-            it("Should respond with 400 if map index is invalid (mapOb not found)", async () => {
-                checkGameSession.mockImplementationOnce((request, response, next) => {
-                    request.session = {
-                        userid: 1,
-                        game: {
-                            activeSessionId: 1,
-                            sharpness: -3,
-                            roundTime: 60,
-                            currentCycle: 1,
-                            mapInfo: [],
-                            point: { pointId: 10, pointu: 0.5, pointv: 0.5, mapId: 999 },
-                            roundStartedAt: Date.now() - 5000
-                        }
-                    };
-                    next();
-                });
-
-                const response = await requestWithSupertest
-                    .post("/api/game/round/guess")
-                    .send(validGuess);
-
-                expect(response.statusCode).toBe(400);
-                expect(response.body.message).toBe("Invalid map index");
             });
         });
 
@@ -304,7 +257,7 @@ describe("Game API - /api/game/", () => {
             it("Should return score 0 when guess is out of bounds (u > 1)", async () => {
                 const response = await requestWithSupertest
                     .post("/api/game/round/guess")
-                    .send({ u: "1.5", v: "0.5", map_i: "0" });
+                    .send({ u: "1.5", v: "0.5", map_id: 1 });
 
                 expect(response.statusCode).toBe(200);
                 expect(response.body.score).toBe(0);
@@ -314,20 +267,20 @@ describe("Game API - /api/game/", () => {
             it("Should return score 0 when guess is out of bounds (v < 0)", async () => {
                 const response = await requestWithSupertest
                     .post("/api/game/round/guess")
-                    .send({ u: "0.5", v: "-0.1", map_i: "0" });
+                    .send({ u: "0.5", v: "-0.1", map_id: 1 });
 
                 expect(response.statusCode).toBe(200);
                 expect(response.body.score).toBe(0);
             });
 
-            it("Should return score 0 and correct mapI when wrong map is selected", async () => {
+            it("Should return score 0 and correct correctMapId when wrong map is selected", async () => {
                 const response = await requestWithSupertest
                     .post("/api/game/round/guess")
-                    .send({ u: "0.5", v: "0.5", map_i: "1" });
+                    .send({ u: "0.5", v: "0.5", map_id: 2 });
 
                 expect(response.statusCode).toBe(200);
                 expect(response.body.score).toBe(0);
-                expect(response.body.mapI).toBe(0);
+                expect(response.body.correctMapId).toBe(1);
             });
         });
 
@@ -359,7 +312,6 @@ describe("Game API - /api/game/", () => {
                             currentRound: 0,
                             roundTime: 60,
                             currentCycle: 1,
-                            mapInfo: [{ mapId: 1, width: 800, height: 600 }],
                             point: { pointId: 10, pointu: 0.5, pointv: 0.5, mapId: 1 },
                             roundStartedAt: Date.now() - 30000
                         }
@@ -387,7 +339,6 @@ describe("Game API - /api/game/", () => {
                             currentRound: 0,
                             roundTime: 60,
                             currentCycle: 1,
-                            mapInfo: [{ mapId: 1, width: 800, height: 600 }],
                             point: { pointId: 10, pointu: 0.5, pointv: 0.5, mapId: 1 },
                             roundStartedAt: Date.now() - 70000
                         }
@@ -461,7 +412,6 @@ describe("Game API - /api/game/", () => {
                             sharpness: null,
                             roundTime: 60,
                             currentCycle: 1,
-                            mapInfo: [{ mapId: 1, width: 800, height: 600 }],
                             point: { pointId: 10, pointu: 0.5, pointv: 0.5, mapId: 1 },
                             roundStartedAt: Date.now() - 5000
                         }

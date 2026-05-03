@@ -3,7 +3,7 @@ require('./helpers/mocks.js');
 const request = require('supertest');
 const express = require('express');
 const db = require('#sql/admin/databaseSettings.js');
-const auth = require('#utils/auth.js');
+const auth = require('#middlewares/auth.js');
 const enTranslations = require('#locales/en/admin.json');
 const huTranslations = require('#locales/hu/admin.json');
 const { mockI18nMiddleware, testRequiresAdminOrAuth, suppressConsoleErrors } = require('./helpers/helpers.js');

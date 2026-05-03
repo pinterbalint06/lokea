@@ -460,34 +460,46 @@ body {
 }
 
 .gameover-columns {
-    display: flex;
+    display: grid;
+    grid-template-columns: 260px 1fr;
+    grid-template-areas:
+        "actions leaderboard"
+        "comments leaderboard";
     gap: 2rem;
     width: 100%;
-    align-items: flex-start;
+    align-items: start;
 }
 
 .gameover-left {
-    flex: 0 0 180px;
+    grid-area: actions;
     display: flex;
     flex-direction: column;
-    align-items: center;
+    align-items: stretch;
+    gap: 0.6rem;
+}
+
+.gameover-comments-col {
+    grid-area: comments;
+    display: flex;
+    flex-direction: column;
     gap: 0.5rem;
-    width: 100%;
+    min-width: 0;
 }
 
 .gameover-right {
-    flex: 1;
-    min-width: 0;
+    grid-area: leaderboard;
+    align-self: stretch;
     display: flex;
     flex-direction: column;
     gap: 0.5rem;
+    min-width: 0;
 }
 
 .gameover-leaderboard {
     display: flex;
     flex-direction: column;
+    flex: 1;
     gap: 0.5rem;
-    max-height: 260px;
     overflow-y: auto;
 }
 
@@ -515,14 +527,38 @@ body {
     flex-shrink: 0;
 }
 
-.gameover-score-name {
+.gameover-score-main {
     flex: 1;
     min-width: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 0.1rem;
+}
+
+.gameover-score-name {
+    min-width: 0;
+    margin: 0;
     font-weight: 600;
     font-size: 0.88rem;
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
+}
+
+.gameover-score-rank[data-rank="1"] {
+    background: rgba(255, 216, 107, 0.22);
+    color: #ffd86b;
+    box-shadow: 0 0 8px rgba(255, 216, 107, 0.18);
+}
+
+.gameover-score-rank[data-rank="2"] {
+    background: rgba(180, 190, 200, 0.18);
+    color: #b4bec8;
+}
+
+.gameover-score-rank[data-rank="3"] {
+    background: rgba(205, 127, 50, 0.18);
+    color: #cd7f32;
 }
 
 .gameover-score-time {
@@ -569,6 +605,165 @@ body {
 
 .gameover-rating-input input:checked ~ label {
     color: #ffd86b;
+}
+
+.gameover-comment-input {
+    width: 100%;
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid rgba(180, 100, 255, 0.15);
+    border-radius: 8px;
+    color: white;
+    padding: 0.6rem 0.75rem;
+    font-size: 0.88rem;
+    font-family: inherit;
+    resize: vertical;
+    outline: none;
+    transition: border-color 0.2s, background 0.2s;
+    box-sizing: border-box;
+}
+
+.gameover-comment-input:focus {
+    border-color: rgba(180, 100, 255, 0.45);
+    background: rgba(255, 255, 255, 0.08);
+}
+
+.gameover-comment-input::placeholder {
+    color: rgba(255, 255, 255, 0.28);
+}
+
+.gameover-view-state {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+    background: rgba(123, 44, 191, 0.08);
+    border: 1px solid rgba(180, 100, 255, 0.15);
+    border-radius: 10px;
+    padding: 0.85rem 0.9rem;
+}
+
+.gameover-user-stars {
+    font-size: 1.35rem;
+    align-self: flex-start;
+}
+
+.gameover-user-text {
+    font-size: 0.88rem;
+    color: rgba(255, 255, 255, 0.72);
+    margin: 0;
+    white-space: pre-wrap;
+    word-break: break-word;
+    min-height: 1em;
+}
+
+.gameover-comment-buttons {
+    display: flex;
+    gap: 0.5rem;
+    margin-top: 0.2rem;
+}
+
+.gameover-comment-buttons .btn-next-round {
+    flex: 1;
+    margin-top: 0;
+    padding: 8px 0;
+    font-size: 13px;
+}
+
+.gameover-delete-btn {
+    background: rgba(230, 57, 70, 0.1);
+    border-color: rgba(230, 57, 70, 0.22);
+    color: rgba(255, 120, 120, 0.9);
+    box-shadow: none;
+}
+
+.gameover-delete-btn:hover {
+    background: rgba(230, 57, 70, 0.26);
+    border-color: rgba(230, 57, 70, 0.45);
+    color: #ff8080;
+    box-shadow: none;
+    transform: none;
+}
+
+#gameoverFormState .btn-next-round {
+    margin-top: 0.35rem;
+    width: 100%;
+}
+
+.gameover-toast {
+    position: fixed;
+    bottom: 1.75rem;
+    left: 50%;
+    transform: translateX(-50%);
+    background: rgba(15, 35, 25, 0.95);
+    border: 1px solid rgba(80, 200, 120, 0.3);
+    color: #7dda9e;
+    border-radius: 8px;
+    padding: 0.6rem 1.4rem;
+    font-size: 0.88rem;
+    font-weight: 600;
+    z-index: 500;
+    white-space: nowrap;
+    pointer-events: none;
+    animation: fadeUp 0.25s ease both;
+}
+
+.gameover-toast--error {
+    background: rgba(40, 10, 10, 0.95);
+    border-color: rgba(230, 57, 70, 0.3);
+    color: #ff8585;
+}
+
+
+.gameover-comments-list {
+    display: flex;
+    flex-direction: column;
+    gap: 0.4rem;
+    max-height: 280px;
+    overflow-y: auto;
+}
+
+.gameover-comments-empty {
+    font-size: 0.85rem;
+    color: rgba(255, 255, 255, 0.38);
+    text-align: center;
+    margin: 0.5rem 0;
+}
+
+.gameover-comment-item {
+    display: flex;
+    flex-direction: column;
+    gap: 0.3rem;
+    border: 1px solid rgba(180, 100, 255, 0.12);
+    border-radius: 8px;
+    background: rgba(30, 15, 50, 0.45);
+    padding: 0.5rem 0.7rem;
+}
+
+.gameover-comment-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.5rem;
+}
+
+.gameover-comment-author {
+    font-weight: 600;
+    font-size: 0.85rem;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.gameover-comment-stars {
+    flex-shrink: 0;
+    font-size: 0.9rem;
+}
+
+.gameover-comment-text {
+    font-size: 0.82rem;
+    color: rgba(255, 255, 255, 0.65);
+    margin: 0;
+    word-break: break-word;
+    white-space: pre-wrap;
 }
 
 .gameover-back-btn {
@@ -856,7 +1051,7 @@ body {
     }
 
     #guessPanel.game-over {
-        position: fixed;
+        position: absolute;
         inset: 0;
         flex: none;
         height: 100%;
@@ -888,15 +1083,18 @@ body {
     }
 
     .gameover-columns {
-        flex-direction: column;
-    }
-
-    .gameover-left {
-        flex: none;
-        width: 100%;
+        grid-template-columns: 1fr 1fr;
+        grid-template-areas:
+            "actions actions"
+            "comments leaderboard";
+        gap: 1rem;
     }
 
     .gameover-leaderboard {
+        max-height: 200px;
+    }
+
+    .gameover-comments-list {
         max-height: 200px;
     }
 }

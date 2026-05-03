@@ -13,7 +13,7 @@ CREATE TABLE images (
 
 CREATE TABLE users (
     user_id INT AUTO_INCREMENT PRIMARY KEY,
-    username VARCHAR(20) NOT NULL UNIQUE BINARY,
+    username VARCHAR(20) BINARY NOT NULL UNIQUE,
     email VARCHAR(254) NOT NULL UNIQUE,
     password VARCHAR(60) NOT NULL,
     role VARCHAR(5) DEFAULT 'user',
@@ -32,7 +32,7 @@ CREATE TABLE admin_settings (
     darkmode BOOLEAN DEFAULT 0,
     selected_chart VARCHAR(20) DEFAULT 'activity-week',
     foreign key (admin_id) references users(user_id) ON DELETE CASCADE
-)
+);
 
 CREATE TABLE game_maps (
     game_maps_id INT AUTO_INCREMENT PRIMARY KEY NOT NULL,
@@ -143,10 +143,9 @@ CREATE TABLE session_guesses (
     session_id INT NOT NULL,
     point_id INT,
     round INT NOT NULL,
-    map_id INT NOT NULL,
+    map_id INT,
     guessed_u FLOAT NOT NULL,
     guessed_v FLOAT NOT NULL,
-    distance_error FLOAT NOT NULL,
     points_awarded INT NOT NULL,
     guessed_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     cycle INT NOT NULL,
