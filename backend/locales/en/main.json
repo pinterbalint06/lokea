@@ -75,25 +75,11 @@
         "login": "Login"
     },
     "hero": {
-        "title": "Be where you can't be! Lokea."
-    },
-    "gamemodes": {
-        "pinpointGoogle": {
-            "title": "Pinpoint on Google Maps",
-            "description": "Find the exact location using Google's official street view!"
-        },
-        "pinpointCustom": {
-            "title": "Pinpoint on user maps",
-            "description": "Find the exact location on custom maps created by the community!"
-        },
-        "guessCountryGoogle": {
-            "title": "Guess the country on Google Maps",
-            "description": "Guess the correct country using Google's official street view!"
-        },
-        "guessCountryCustom": {
-            "title": "Guess the country on user maps",
-            "description": "Guess the correct country on custom maps created by the community!"
-        }
+        "title": "Be where you can't be! Lokea.",
+        "teaserTitle": "Ready to explore?",
+        "teaserText": "Challenge yourself on official and community-created custom maps! Find the exact location and compete with the best.",
+        "playButton": "Map Selection",
+        "tooltipLogin": "Login required to continue!"
     },
     "customMaps": {
         "sectionTitle": "Custom maps created by users",

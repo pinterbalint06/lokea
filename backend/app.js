@@ -36,7 +36,7 @@ app.use('/', viewRoutes);
 const adminEndpoints = require('#root/api/admin/index.js');
 app.use('/api/admin', adminEndpoints);
 
-const endpoints = require('#root/api/api.js');
+const endpoints = require('#main/index.js');
 app.use('/api', endpoints);
 
 const gameChoosingEndpoints = require('#root/api/gameflow/gamelobby.js');

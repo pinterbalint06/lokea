@@ -2,12 +2,12 @@ const express = require('express');
 const router = express.Router();
 const database = require('#sql/main/databaseSettings.js');
 const databaseLogs = require('#sql/admin/databaseLogs.js');
-const auth = require('../../utils/auth.js');
+const auth = require('#middlewares/auth.js');
 const fs = require('fs/promises');
 const { body, query } = require("express-validator");
 const sharp = require('sharp');
-const { sendDeleteEmail, sendChangeEmail, sendPasswordChangeEmail } = require('../../utils/mails.js');
-const { validate } = require('../../utils/validate.js');
+const { sendDeleteEmail, sendChangeEmail, sendPasswordChangeEmail } = require('#utils/mails.js');
+const { validate } = require('#utils/validate.js');
 const AppError = require('#utils/app-error.js');
 
 //!Multer

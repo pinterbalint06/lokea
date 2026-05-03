@@ -11,7 +11,8 @@ main {
 
 /* header, footer */
 
-header, footer {
+header,
+footer {
     background-color: rgba(0, 0, 0, 0.7);
     width: 100%;
     font-family: monospace;
@@ -667,7 +668,7 @@ body.modal-open> :not(.modal):not(.modal-backdrop) {
         justify-content: center;
         text-align: center;
     }
-    
+
     .col-12 .gamemode {
         margin-bottom: 20px;
     }
@@ -681,4 +682,8 @@ body.modal-open> :not(.modal):not(.modal-backdrop) {
     .gamemode img {
         height: 50%;
     }
+}
+
+#playButton.disabled {
+    pointer-events: none;
 }

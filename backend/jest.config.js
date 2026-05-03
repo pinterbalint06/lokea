@@ -13,7 +13,6 @@ module.exports = {
         "api/**/*.js",
         "utils/**/*.js",
         "api/admin.js",
-        "api/api.js",
         "api/gamemaps/**/*.js",
         "utils/fileUtils.js",
         "utils/imageProcessor.js"

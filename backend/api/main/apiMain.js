@@ -3,11 +3,11 @@ const router = express.Router();
 const database = require('#sql/main/databaseMain.js');
 const databaseLogs = require('#sql/admin/databaseLogs.js');
 const bcrypt = require('bcrypt');
-const auth = require('../../utils/auth.js')
+const auth = require('#middlewares/auth.js')
 const validator = require('validator');
 const { body, validationResult } = require("express-validator");
-const { sendWelcomeEmail } = require('../../utils/mails.js');
-const { validate } = require('../../utils/validate.js');
+const { sendWelcomeEmail } = require('#utils/mails.js');
+const { validate } = require('#utils/validate.js');
 
 //Endpoints - signup, login, signout
 router.post("/auth/register",

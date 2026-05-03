@@ -75,25 +75,11 @@
         "login": "Bejelentkezés"
     },
     "hero": {
-        "title": "Legyél ott ahol nem tudsz! Lokea."
-    },
-    "gamemodes": {
-        "pinpointGoogle": {
-            "title": "Pinpoint Google térképen",
-            "description": "Találd meg a pontos helyszínt a Google hivatalos utcaképének segítségével!"
-        },
-        "pinpointCustom": {
-            "title": "Pinpoint felhasználók térképein",
-            "description": "Találd meg a pontos helyszínt a közösség által készített egyedi térképeken!"
-        },
-        "guessCountryGoogle": {
-            "title": "Guess the country a Google térképen",
-            "description": "Találd ki a pontos országot a Google hivatalos utcaképének segítségével!"
-        },
-        "guessCountryCustom": {
-            "title": "Guess the country a felhasználók térképein",
-            "description": "Találd ki a pontos országot a közösség által készített egyedi térképeken!"
-        }
+        "title": "Legyél ott ahol nem tudsz! Lokea.",
+        "teaserTitle": "Készen állsz a felfedezésre?",
+        "teaserText": "Próbáld ki magad a hivatalos és a közösség által készített egyedi térképeken! Találd meg a pontos helyszínt, és versenyezz a legjobbakkal.",
+        "playButton": "Pályaválasztás",
+        "tooltipLogin": "A folytatáshoz bejelentkezés szükséges!"
     },
     "customMaps": {
         "sectionTitle": "Egyedi térképek, amit a felhasználók hoztak létre",

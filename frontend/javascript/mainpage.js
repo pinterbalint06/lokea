@@ -15,6 +15,7 @@ document.addEventListener("DOMContentLoaded", async function () {
         })
     }
     else {
+        document.getElementById('playButton').classList.remove('disabled');
         document.getElementById('comparisionLokea').innerHTML = "";
         modalElement = document.getElementById('settingsModal');
         settingsModal = new bootstrap.Modal(modalElement);
