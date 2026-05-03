@@ -387,3 +387,131 @@ main {
     }
 
 }
+
+/* Game Start Modal Styles */
+.modal-overlay {
+    display: none;
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(14, 5, 28, 0.75);
+    z-index: 1000;
+    justify-content: center;
+    align-items: center;
+    opacity: 0;
+    transition: opacity 0.3s ease;
+}
+
+.modal-overlay.active {
+    display: flex;
+    opacity: 1;
+}
+
+.modal-box {
+    background: linear-gradient(155deg, #2b1548 0%, #3a1f62 100%);
+    border: 1px solid rgba(212, 182, 255, 0.4);
+    width: 90%;
+    max-width: 500px;
+    padding: 30px;
+    border-radius: 10px;
+    box-shadow: 0 16px 36px rgba(10, 2, 20, 0.65);
+    position: relative;
+}
+
+.modal-close-btn {
+    position: absolute;
+    top: 15px;
+    right: 20px;
+    font-size: 24px;
+    cursor: pointer;
+    font-weight: bold;
+    color: #e9deff;
+}
+
+.settings-form {
+    text-align: left;
+}
+
+.settings-form h3 {
+    margin-top: 0;
+    color: #f3ebff;
+    font-size: 1.55rem;
+    letter-spacing: 0.02em;
+}
+
+.settings-grid {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 10px;
+}
+
+.settings-grid label {
+    color: #e8dcff;
+    font-weight: 600;
+    margin-top: 2px;
+}
+
+.settings-grid input[type="number"],
+.settings-grid select {
+    width: 100%;
+    border-radius: 12px;
+    border: 1px solid rgba(216, 188, 255, 0.4);
+    background: rgba(24, 10, 42, 0.72);
+    color: #f8f2ff;
+    padding: 10px 12px;
+    outline: none;
+}
+
+.settings-grid input[type="number"]:focus,
+.settings-grid select:focus,
+.settings-grid input[type="range"]:focus {
+    border-color: rgba(255, 216, 107, 0.7);
+    box-shadow: 0 0 0 3px rgba(255, 216, 107, 0.2);
+}
+
+.time-row {
+    display: grid;
+    grid-template-columns: 1fr auto;
+    align-items: center;
+    gap: 12px;
+}
+
+.settings-grid input[type="range"] {
+    width: 100%;
+    accent-color: #ffd86b;
+}
+
+#gameStartTimeValue {
+    min-width: 58px;
+    text-align: center;
+    border-radius: 999px;
+    border: 1px solid rgba(216, 188, 255, 0.45);
+    background: rgba(255, 255, 255, 0.08);
+    color: #fff3cc;
+    padding: 6px 10px;
+    font-weight: 600;
+}
+
+.start-btn {
+    margin-top: 18px;
+    width: 100%;
+    padding: 11px 14px;
+    border-radius: 14px;
+    font-size: 1rem;
+    letter-spacing: 0.02em;
+}
+
+.modal-box .btn-light {
+    background-color: #d8bcff;
+    border-color: #d8bcff;
+    color: #2a1744;
+    font-weight: 600;
+}
+
+.modal-box .btn-light:hover {
+    background-color: #cfa9ff;
+    border-color: #cfa9ff;
+    color: #210f3a;
+}

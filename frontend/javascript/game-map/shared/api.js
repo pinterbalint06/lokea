@@ -5,6 +5,17 @@ export async function fetchGameMapDetails(gameMapId) {
     return await fetchAndValidate(`/api/game-maps/${gameMapId}`, "game_map_details");
 }
 
+export async function startGameSession(formData) {
+    const response = await fetch("/api/choose-game/session", {
+        method: "POST",
+        body: formData
+    });
+
+    if (!response.ok) {
+        await handleResponseError(response);
+    }
+}
+
 export async function fetchGameMapFavoriteStatus(gameMapId) {
     const response = await fetch(`/api/game-maps/${gameMapId}/favorite`);
     if (!response.ok) {
