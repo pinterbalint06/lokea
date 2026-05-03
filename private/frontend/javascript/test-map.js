@@ -1,6 +1,6 @@
-import { MapViewer } from "./libs/viewer/MapViewer.js";
-import { showToast } from "./libs/utils.js";
-import { createElement } from "./libs/utils/DOMutils.js";
+import { MapViewer } from "/javascript/libs/viewer/MapViewer.js";
+import { showToast } from "/javascript/libs/utils.js";
+import { createElement } from "/javascript/libs/utils/DOMutils.js";
 
 // |------------------|
 // | GLOBAL VARIABLES |

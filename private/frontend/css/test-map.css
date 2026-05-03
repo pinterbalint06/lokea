@@ -1,5 +1,5 @@
-@import url('./variables.css');
-@import url('./base.css');
+@import url('/css/variables.css');
+@import url('/css/base.css');
 
 /* Page Layout & Background */
 html, body {
