@@ -1,6 +1,8 @@
 import { createFavoriteButton } from "../libs/elements/favoriteButton.js";
 import { loadGameMapCoverImageLowThenHigh } from "../libs/network/progressiveImage.js";
 import { showToast } from "../libs/utils.js";
+import { ContinueGameModal } from "../libs/elements/ContinueGameModal.js";
+import { fetchActiveGameSession, finishGameSession } from "../libs/network/gameSession.js";
 
 window.addEventListener('pageshow', (event) => {
     if (event.persisted) window.location.reload();
@@ -10,6 +12,7 @@ var loadedURLs = [];
 var cardLoadedTimes = 0;
 var activeTab = 'all';
 var selectedButton = null;
+let continueGameModal = null;
 
 function clearLoadedURLs() {
     for (let url of loadedURLs) {
@@ -31,7 +34,7 @@ document.addEventListener("DOMContentLoaded", function () {
         selectedButton.disabled = true;
     }
 
-    setupContinueGameModal();
+    continueGameModal = new ContinueGameModal();
     checkAndShowContinueModal();
     switchTab(initialTab);
 
@@ -178,64 +181,43 @@ function createNewGameCard() {
     return card;
 }
 
-var isCreating = false;
+let isCreating = false;
 
 async function handleCreateCardClick() {
-    if (isCreating) return;
-    isCreating = true;
-    try {
-        const response = await fetch('/api/game-maps', { method: 'POST' });
-        if (!response.ok) throw new Error();
-        const { gameMapID } = await response.json();
-        window.location.href = '/game-maps/' + gameMapID;
-    } catch {
-        isCreating = false;
-        showToast(document.getElementById('toastPlace'), 'Az új játék létrehozása nem sikerült.', 'danger', true);
+    if (!isCreating) {
+        isCreating = true;
+        try {
+            const response = await fetch('/api/game-maps', { method: 'POST' });
+            if (!response.ok) throw new Error();
+            const { gameMapID } = await response.json();
+            window.location.href = '/game-maps/' + gameMapID;
+        } catch {
+            isCreating = false;
+            showToast(document.getElementById('toastPlace'), 'Az új játék létrehozása nem sikerült.', 'danger', true);
+        }
     }
-}
-
-function setupContinueGameModal() {
-    const dismissButton = document.getElementById('dismissContinueBtn');
-    const continueButton = document.getElementById('continueGameBtn');
-
-    dismissButton.addEventListener('click', () => {
-        document.getElementById('continueGameModal').classList.remove('active');
-        finishStartedGameSession();
-    });
-
-    continueButton.addEventListener('click', () => {
-        window.location.href = '/game';
-    });
 }
 
 async function checkAndShowContinueModal() {
     try {
-        const activeGameSession = await fetchURL('/api/choose-game/session');
+        const activeGameSession = await fetchActiveGameSession();
         if (activeGameSession?.hasActiveSession) {
-            const continueModal = document.getElementById('continueGameModal');
-            const continueModalDescription = document.getElementById('continue-modal-desc');
-            if (activeGameSession.gameTitle) {
-                continueModalDescription.innerText = `Van egy futó játékod ezen a pályán: ${activeGameSession.gameTitle}. Szeretnéd folytatni?`;
-            }
-            continueModal.classList.add('active');
+            console.log("Showing continue game modal with title:");
+            continueGameModal.show(
+                activeGameSession.gameTitle,
+                () => {
+                    window.location.href = '/game';
+                },
+                async () => {
+                    try {
+                        await finishGameSession();
+                    } catch {
+                        showToast(document.getElementById('toastPlace'), 'A játék befejezése nem sikerült.', 'danger', true);
+                    }
+                }
+            );
         }
     } catch {
-        
-    }
-}
 
-async function finishStartedGameSession() {
-    try {
-        const response = await fetch('/api/game/session', {
-            method: 'DELETE',
-            headers: {
-                'Content-Type': 'application/json'
-            }
-        });
-        if (!response.ok) {
-            throw new Error(response.statusText);
-        }
-    } catch {
-        showToast(document.getElementById('toastPlace'), 'A játék befejezése nem sikerült.', 'danger', true);
     }
 }
