@@ -1,5 +1,5 @@
 const DEFAULT_CONTINUE_GAME_TITLE = "Van egy elindított játékod";
-const DEFAULT_CONTINUE_GAME_DESCRIPTION = "Szeretnéd folytatni az elkezdett játékodat? Ha nem folytatod, akkor többet nem tudos folytatni.";
+const DEFAULT_CONTINUE_GAME_DESCRIPTION = "Szeretnéd folytatni az elkezdett játékodat? Ha nem folytatod, akkor többet nem tudod folytatni.";
 
 export class ContinueGameModal {
     constructor(container = document.body) {
