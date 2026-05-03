@@ -11,7 +11,7 @@
     <script src="../bootstrap/js/bootstrap.min.js"></script>
     <link rel="stylesheet" href="../css/game-choosing.css">
     <script type="module" src="../javascript/game/game-choosing.js"></script>
-    <title>Pályaválasztás</title>
+    <title data-i18n="choosing.pageTitle">Pályaválasztás</title>
 </head>
 
 <body>
@@ -39,28 +39,32 @@
     <div class="d-flex justify-content-center align-items-center mt-4">
         <div class="d-flex align-items-center colDiv flex-column glass">
             <div class="d-flex p-2 pb-0 w-100 gap-2 tabRow">
-                <button class="btnStyle btnPushed" id="tabAll">Összes</button>
-                <button class="btnStyle" id="tabMine">Saját játékaim</button>
+                <button class="btnStyle btnPushed" id="tabAll" data-i18n="choosing.tabs.all">Összes</button>
+                <button class="btnStyle" id="tabMine" data-i18n="choosing.tabs.mine">Saját játékaim</button>
             </div>
             <div class="d-flex p-2 pb-0 w-100">
-                <h3 class="mb-0">Rendezés:</h3>
+                <h3 class="mb-0" data-i18n="choosing.sorting.label">Rendezés:</h3>
             </div>
             <div class="d-flex align-items-center w-100 p-2 pb-0 gap-3 flex-wrap flex justify-content-center">
                 <div class="d-flex gap-3 justify-content-center sortDiv">
-                    <button class="btnStyle btnPushed" id="sortByPlays">Játékok száma</button>
-                    <button class="btnStyle" id="sortByRating">Értékelés</button>
+                    <button class="btnStyle btnPushed" id="sortByPlays" data-i18n="choosing.sorting.plays">Játékok
+                        száma</button>
+                    <button class="btnStyle" id="sortByRating" data-i18n="choosing.sorting.rating">Értékelés</button>
                 </div>
                 <div class="d-flex gap-3 justify-content-center sortDiv">
-                    <button class="btnStyle" id="sortByCreated">Létrehozás dátuma</button>
-                    <button class="btnStyle" id="sortByFavorites">Kedvencek</button>
+                    <button class="btnStyle" id="sortByCreated" data-i18n="choosing.sorting.created">Létrehozás
+                        dátuma</button>
+                    <button class="btnStyle" id="sortByFavorites"
+                        data-i18n="choosing.sorting.favorites">Kedvencek</button>
                 </div>
             </div>
             <div class="d-flex p-2 pb-0 w-100">
-                <h3 class="mb-0">Pályák:</h3>
+                <h3 class="mb-0" data-i18n="choosing.mapsLabel">Pályák:</h3>
             </div>
             <div class="card-container p-3" id="game_maps_container"></div>
             <div class="d-flex justify-content-center w-100 p-3">
-                <button class="btnStyle" id="loadMoreBtn">További pályák betöltése</button>
+                <button class="btnStyle" id="loadMoreBtn" data-i18n="choosing.loadMore">További pályák
+                    betöltése</button>
             </div>
         </div>
 
@@ -77,17 +81,17 @@
 
             <form id="settingsForm" class="settings-form" novalidate>
                 <div class="settings-grid">
-                    <label for="rounds">Körök száma:</label>
+                    <label for="rounds" data-i18n="choosing.settings.rounds">Körök száma:</label>
                     <input name="rounds" type="number" id="rounds" min="1" max="100" value="5">
 
-                    <label for="difficulty">Nehézség:</label>
+                    <label for="difficulty" data-i18n="choosing.settings.difficulty">Nehézség:</label>
                     <select name="difficulty" id="difficulty">
-                        <option value="easy">Könnyű</option>
-                        <option value="normal">Közepes</option>
-                        <option value="hard">Nehéz</option>
+                        <option value="easy" data-i18n="choosing.settings.easy">Könnyű</option>
+                        <option value="normal" data-i18n="choosing.settings.normal">Közepes</option>
+                        <option value="hard" data-i18n="choosing.settings.hard">Nehéz</option>
                     </select>
 
-                    <label for="times">Egy kör időtartama:</label>
+                    <label for="times" data-i18n="choosing.settings.roundTime">Egy kör időtartama:</label>
                     <div class="time-row">
                         <input name="roundTime" type="range" id="times" min="1" max="300" step="1" value="30">
                         <output id="timesValue" for="times">00:30</output>
@@ -95,22 +99,28 @@
                 </div>
 
                 <div class="max-rounds-info" id="maxRoundsInfo">
-                    <p class="info-title">Ismétlés nélküli max kör: <strong id="maxUniqueRounds">-</strong></p>
-                    <p class="info-desc">A körszám nincs ehhez limitálva, a pontok újrajátszhatók.</p>
+                    <p class="info-title" data-i18n="choosing.settings.maxUniqueRounds">Ismétlés nélküli max kör:
+                        <strong id="maxUniqueRounds">-</strong></p>
+                    <p class="info-desc" data-i18n="choosing.settings.notLimitedWarning">A körszám nincs ehhez
+                        limitálva, a pontok újrajátszhatók.</p>
                 </div>
 
-                <button type="submit" class="btn btn-light start-btn" id="startGame">Játék indítása</button>
+                <button type="submit" class="btn btn-light start-btn" id="startGame"
+                    data-i18n="choosing.settings.startGame">Játék indítása</button>
             </form>
         </div>
     </div>
 
     <div class="modal-overlay" id="continueGameModal">
         <div class="modal-box">
-            <h3 id="continue-modal-title">Van egy elindított játékod</h3>
-            <p id="continue-modal-desc">Szeretnéd folytatni az elkezdett játékodat? Ha nem folytatod, akkor többet nem tudod folytatni.</p>
+            <h3 id="continue-modal-title" data-i18n="choosing.continueModal.title">Van egy elindított játékod</h3>
+            <p id="continue-modal-desc" data-i18n="choosing.continueModal.description">Szeretnéd folytatni az elkezdett
+                játékodat? Ha nem folytatod, akkor többet nem tudod folytatni.</p>
             <div class="d-flex justify-content-center gap-3 flex-wrap mt-3">
-                <button class="btn btn-light" id="continueGameBtn">Folytatás</button>
-                <button class="btn btn-outline-light" id="dismissContinueBtn">Játék befejezése</button>
+                <button class="btn btn-light" id="continueGameBtn"
+                    data-i18n="choosing.continueModal.continueBtn">Folytatás</button>
+                <button class="btn btn-outline-light" id="dismissContinueBtn"
+                    data-i18n="choosing.continueModal.endBtn">Játék befejezése</button>
             </div>
         </div>
     </div>

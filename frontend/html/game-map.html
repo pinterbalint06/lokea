@@ -25,9 +25,11 @@
                 <div class="row g-4">
                     <div class="col-12 col-xl-5">
                         <div class="d-flex flex-column gap-3">
-                            <div id="coverImageWrapper" class="cover-image-wrapper uveg rounded-4 overflow-hidden position-relative">
-                                <div id="coverActionsWrapper" class="position-absolute top-0 end-0 p-3 z-3 d-flex gap-2 align-items-center">
-                                    <button id="editCoverImageButton" type="button"
+                            <div id="coverImageWrapper"
+                                class="cover-image-wrapper uveg rounded-4 overflow-hidden position-relative">
+                                <div id="coverActionsWrapper"
+                                    class="position-absolute top-0 end-0 p-3 z-3 d-flex gap-2 align-items-center">
+                                    <button id="editCoverImageButton" type="button" data-i18n="map.cover.edit"
                                         class="btn btn-outline-light btn-sm rounded-pill px-3 cover-edit-button d-none">
                                         Borítókép szerkesztése
                                     </button>
@@ -42,7 +44,8 @@
                                     alt="A pálya borítóképe">
                                 <div class="cover-overlay p-3 z-2">
                                     <div class="d-flex align-items-center gap-2 flex-wrap">
-                                        <span class="small text-uppercase opacity-75">Értékelés</span>
+                                        <span class="small text-uppercase opacity-75"
+                                            data-i18n="map.cover.rating">Értékelés</span>
                                         <div id="displayRatingStars" class="rating-stars"></div>
                                         <span id="displayRatingValue" class="small fw-semibold placeholder-glow"><span
                                                 class="placeholder col-8 rounded"></span></span>
@@ -52,19 +55,19 @@
 
                             <div class="stats-container">
                                 <article class="stat-card uveg rounded-3 p-3">
-                                    <p class="stat-label mb-1">Létrehozva</p>
+                                    <p class="stat-label mb-1" data-i18n="map.stats.created">Létrehozva</p>
                                     <p id="createdAtValue" class="stat-value mb-0 placeholder-glow"><span
                                             class="placeholder col-8 rounded"></span></p>
                                 </article>
                                 <article class="stat-card uveg rounded-3 p-3">
-                                    <p class="stat-label mb-1">Játékok száma</p>
+                                    <p class="stat-label mb-1" data-i18n="map.stats.plays">Játékok száma</p>
                                     <p id="playsValue" class="stat-value mb-0 placeholder-glow"><span
                                             class="placeholder col-4 rounded"></span></p>
                                 </article>
                             </div>
 
                             <section id="leaderboardPanel" class="uveg rounded-4 p-3">
-                                <h2 class="section-title mb-3">Rangsor</h2>
+                                <h2 class="section-title mb-3" data-i18n="map.leaderboard.title">Rangsor</h2>
                                 <div id="leaderboardList" class="leaderboard-list" aria-live="polite">
                                     <article class="score-item placeholder-glow" aria-hidden="true">
                                         <span class="score-rank placeholder"></span>
@@ -135,45 +138,49 @@
                                             <span class="placeholder col-6 rounded"></span>
                                         </h1>
                                         <input id="titleInput" type="text" class="form-control uvegform d-none mt-1"
-                                            maxlength="50" placeholder="Adj meg egy címet...">
+                                            maxlength="50" data-i18n="[placeholder]map.details.titlePlaceholder"
+                                            placeholder="Adj meg egy címet...">
                                         <p class="game-creator mb-0 mt-1 placeholder-glow">
-                                            Készítő: <span id="creatorValue" class="game-creator-value">
+                                            <span data-i18n="map.details.creator">Készítő:</span> <span
+                                                id="creatorValue" class="game-creator-value">
                                                 <span class="placeholder col-4 rounded"></span>
                                             </span>
                                         </p>
                                     </div>
-                                    <button id="enterEditModeBtn"
+                                    <button id="enterEditModeBtn" data-i18n="map.details.editTitleDesc"
                                         class="btn btn-outline-secondary btn-sm rounded-pill px-3 d-none">
                                         Cím és leírás szerkesztése
                                     </button>
                                 </div>
 
                                 <div>
-                                    <h2 class="section-title mb-2">Leírás</h2>
+                                    <h2 class="section-title mb-2" data-i18n="map.details.description">Leírás</h2>
                                     <p id="descriptionDisplay" class="description-text mb-0 placeholder-glow">
                                         <span class="placeholder col-12 rounded"></span>
                                         <span class="placeholder col-9 rounded"></span>
                                         <span class="placeholder col-8 rounded"></span>
                                     </p>
                                     <textarea id="descriptionInput" class="form-control uvegform d-none mt-2" rows="4"
-                                        maxlength="255" placeholder="Írj rövid leírást a pályáról..."></textarea>
+                                        maxlength="255" data-i18n="[placeholder]map.details.descPlaceholder"
+                                        placeholder="Írj rövid leírást a pályáról..."></textarea>
 
                                     <div id="detailsEditActions" class="d-flex flex-wrap gap-2 mt-3 d-none">
-                                        <button id="saveDetailsBtn" type="button"
+                                        <button id="saveDetailsBtn" type="button" data-i18n="map.details.save"
                                             class="btn uvegbutton rounded-pill px-3">
                                             Változások mentése
                                         </button>
-                                        <button id="cancelDetailsBtn" type="button"
+                                        <button id="cancelDetailsBtn" type="button" data-i18n="map.details.cancel"
                                             class="btn btn-outline-secondary rounded-pill px-3">
                                             Mégse
                                         </button>
                                     </div>
                                 </div>
                                 <div id="editDeleteDiv" class="d-flex flex-wrap gap-2 d-none">
-                                    <a id="editMapButton" class="btn btn-outline-secondary rounded-pill px-4">
+                                    <a id="editMapButton" class="btn btn-outline-secondary rounded-pill px-4"
+                                        data-i18n="map.details.editMap">
                                         Pálya szerkesztése
                                     </a>
-                                    <button id="deleteGameMapButton" type="button"
+                                    <button id="deleteGameMapButton" type="button" data-i18n="map.details.deleteMap"
                                         class="btn btn-outline-danger rounded-pill px-4">
                                         Pálya törlése
                                     </button>
@@ -182,7 +189,7 @@
 
                             <section class="uveg rounded-4 p-3 comments-section">
                                 <div class="d-flex justify-content-between align-items-center gap-2 flex-wrap">
-                                    <h2 class="section-title mb-0">Hozzászólások</h2>
+                                    <h2 class="section-title mb-0" data-i18n="map.comments.title">Hozzászólások</h2>
                                     <span id="commentsCountBadge"
                                         class="badge rounded-pill text-bg-secondary placeholder-glow">
                                         <span class="placeholder rounded px-3"></span>
@@ -195,42 +202,53 @@
                                     <span class="placeholder col-12 rounded" style="height: 100px;"></span>
                                     <div class="d-flex justify-content-between mt-3">
                                         <span class="placeholder col-4 rounded d-block" style="height: 30px;"></span>
-                                        <span class="placeholder col-3 rounded-pill d-block" style="height: 38px;"></span>
+                                        <span class="placeholder col-3 rounded-pill d-block"
+                                            style="height: 38px;"></span>
                                     </div>
                                 </div>
 
                                 <form id="commentForm" class="comment-form mt-3 d-none">
-                                    <label for="commentText" class="form-label mb-1">Írj hozzászólást</label>
+                                    <label for="commentText" class="form-label mb-1" data-i18n="map.comments.write">Írj
+                                        hozzászólást</label>
                                     <textarea id="commentText" name="comment" class="form-control uvegform" rows="4"
-                                        maxlength="255" placeholder="A véleményed erről a pályáról..."></textarea>
+                                        maxlength="255" data-i18n="[placeholder]map.comments.placeholder"
+                                        placeholder="A véleményed erről a pályáról..."></textarea>
 
                                     <div class="d-flex flex-wrap justify-content-between align-items-end gap-3 mt-3">
                                         <fieldset class="rating-input-group">
-                                            <legend class="small mb-2">Értékelés</legend>
+                                            <legend class="small mb-2" data-i18n="map.comments.rating">Értékelés
+                                            </legend>
                                             <div class="rating-input">
                                                 <input type="radio" id="csillag5" name="rating" value="5">
-                                                <label for="csillag5" aria-label="5 csillag">&#9733;</label>
+                                                <label for="csillag5" data-i18n="[aria-label]map.aria.star5"
+                                                    aria-label="5 csillag">&#9733;</label>
 
                                                 <input type="radio" id="csillag4" name="rating" value="4">
-                                                <label for="csillag4" aria-label="4 csillag">&#9733;</label>
+                                                <label for="csillag4" data-i18n="[aria-label]map.aria.star4"
+                                                    aria-label="4 csillag">&#9733;</label>
 
                                                 <input type="radio" id="csillag3" name="rating" value="3">
-                                                <label for="csillag3" aria-label="3 csillag">&#9733;</label>
+                                                <label for="csillag3" data-i18n="[aria-label]map.aria.star3"
+                                                    aria-label="3 csillag">&#9733;</label>
 
                                                 <input type="radio" id="csillag2" name="rating" value="2">
-                                                <label for="csillag2" aria-label="2 csillag">&#9733;</label>
+                                                <label for="csillag2" data-i18n="[aria-label]map.aria.star2"
+                                                    aria-label="2 csillag">&#9733;</label>
 
                                                 <input type="radio" id="csillag1" name="rating" value="1">
-                                                <label for="csillag1" aria-label="1 csillag">&#9733;</label>
+                                                <label for="csillag1" data-i18n="[aria-label]map.aria.star1"
+                                                    aria-label="1 csillag">&#9733;</label>
                                             </div>
                                         </fieldset>
 
                                         <div class="d-flex flex-wrap gap-2">
                                             <button id="cancelCommentEditBtn" type="button"
+                                                data-i18n="map.details.cancel"
                                                 class="btn btn-outline-secondary rounded-pill px-4 d-none">
                                                 Mégse
                                             </button>
-                                            <button id="sendCommentBtn" type="submit" class="btn uvegbutton rounded-pill px-4">
+                                            <button id="sendCommentBtn" type="submit"
+                                                class="btn uvegbutton rounded-pill px-4" data-i18n="map.comments.send">
                                                 Hozzászólás küldése
                                             </button>
                                         </div>
@@ -240,17 +258,18 @@
                                 <div id="userCommentSection" class="user-comment-card uveg rounded-4 p-3 mt-3 d-none">
                                     <div class="d-flex justify-content-between align-items-start gap-2 flex-wrap">
                                         <div>
-                                            <span class="small text-uppercase opacity-75 fw-semibold">A te
+                                            <span class="small text-uppercase opacity-75 fw-semibold"
+                                                data-i18n="map.comments.yourRating">A te
                                                 értékelésed</span>
                                             <div id="userCommentRating" class="rating-stars mt-1" style="--rating: 0;">
                                             </div>
                                         </div>
                                         <div class="d-flex gap-2 text-nowrap">
-                                            <button id="editCommentBtn" type="button"
+                                            <button id="editCommentBtn" type="button" data-i18n="map.comments.edit"
                                                 class="btn btn-outline-secondary btn-sm rounded-pill px-3">
                                                 Szerkesztés
                                             </button>
-                                            <button id="deleteCommentBtn" type="button"
+                                            <button id="deleteCommentBtn" type="button" data-i18n="map.comments.delete"
                                                 class="btn btn-outline-danger btn-sm rounded-pill px-3">
                                                 Törlés
                                             </button>
@@ -264,7 +283,8 @@
                                 <div id="commentsList" class="comments-list mt-3">
                                     <div class="text-center p-3 opacity-50">
                                         <div class="spinner-border spinner-border-sm"></div>
-                                        <span class="ms-2">Hozzászólások betöltése...</span>
+                                        <span class="ms-2" data-i18n="map.comments.loading">Hozzászólások
+                                            betöltése...</span>
                                     </div>
                                 </div>
                             </section>
@@ -277,7 +297,8 @@
         <div id="toastPlace" class="toast-container position-fixed bottom-0 start-50 translate-middle-x mb-4"></div>
         <div id="modal-wrapper"></div>
         <button id="playMapButton" type="button"
-            class="btn uvegbutton rounded-circle floating-button floating-button-primary" aria-label="Játék indítása">
+            class="btn uvegbutton rounded-circle floating-button floating-button-primary"
+            data-i18n="[aria-label]map.aria.startGame" aria-label="Játék indítása">
             <svg viewBox="0 0 119.4 122.88" class="play-map-icon">
                 <use href="/images/game-map-icons.svg#icon-start"></use>
             </svg>

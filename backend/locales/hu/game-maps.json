@@ -1,0 +1,77 @@
+{
+    "choosing": {
+        "tabs": {
+            "all": "Összes",
+            "mine": "Saját játékaim"
+        },
+        "sorting": {
+            "label": "Rendezés:",
+            "plays": "Játékok száma",
+            "rating": "Értékelés",
+            "created": "Létrehozás dátuma",
+            "favorites": "Kedvencek"
+        },
+        "mapsLabel": "Pályák:",
+        "loadMore": "További pályák betöltése",
+        "settings": {
+            "rounds": "Körök száma:",
+            "difficulty": "Nehézség:",
+            "easy": "Könnyű",
+            "normal": "Közepes",
+            "hard": "Nehéz",
+            "roundTime": "Egy kör időtartama:",
+            "maxUniqueRounds": "Ismétlés nélküli max kör: ",
+            "notLimitedWarning": "A körszám nincs ehhez limitálva, a pontok újrajátszhatók.",
+            "startGame": "Játék indítása"
+        },
+        "continueModal": {
+            "title": "Van egy elindított játékod",
+            "description": "Szeretnéd folytatni az elkezdett játékodat? Ha nem folytatod, akkor többet nem tudod folytatni.",
+            "continueBtn": "Folytatás",
+            "endBtn": "Játék befejezése"
+        }
+    },
+    "map": {
+        "cover": {
+            "edit": "Borítókép szerkesztése",
+            "rating": "Értékelés"
+        },
+        "stats": {
+            "created": "Létrehozva",
+            "plays": "Játékok száma"
+        },
+        "leaderboard": {
+            "title": "Rangsor"
+        },
+        "details": {
+            "creator": "Készítő:",
+            "titlePlaceholder": "Adj meg egy címet...",
+            "editTitleDesc": "Cím és leírás szerkesztése",
+            "description": "Leírás",
+            "descPlaceholder": "Írj rövid leírást a pályáról...",
+            "save": "Változások mentése",
+            "cancel": "Mégse",
+            "editMap": "Pálya szerkesztése",
+            "deleteMap": "Pálya törlése"
+        },
+        "comments": {
+            "title": "Hozzászólások",
+            "write": "Írj hozzászólást",
+            "placeholder": "A véleményed erről a pályáról...",
+            "rating": "Értékelés",
+            "send": "Hozzászólás küldése",
+            "yourRating": "A te értékelésed",
+            "edit": "Szerkesztés",
+            "delete": "Törlés",
+            "loading": "Hozzászólások betöltése..."
+        },
+        "aria": {
+            "startGame": "Játék indítása",
+            "star5": "5 csillag",
+            "star4": "4 csillag",
+            "star3": "3 csillag",
+            "star2": "2 csillag",
+            "star1": "1 csillag"
+        }
+    }
+}

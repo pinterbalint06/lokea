@@ -1,0 +1,77 @@
+{
+    "choosing": {
+        "tabs": {
+            "all": "All",
+            "mine": "My maps"
+        },
+        "sorting": {
+            "label": "Sort by:",
+            "plays": "Plays",
+            "rating": "Rating",
+            "created": "Date created",
+            "favorites": "Favorites"
+        },
+        "mapsLabel": "Maps:",
+        "loadMore": "Load more maps",
+        "settings": {
+            "rounds": "Number of rounds:",
+            "difficulty": "Difficulty:",
+            "easy": "Easy",
+            "normal": "Normal",
+            "hard": "Hard",
+            "roundTime": "Round duration:",
+            "maxUniqueRounds": "Max unique rounds: ",
+            "notLimitedWarning": "The number of rounds is not limited to this, points can be replayed.",
+            "startGame": "Start game"
+        },
+        "continueModal": {
+            "title": "You have an ongoing game",
+            "description": "Would you like to continue your ongoing game? If not, you won't be able to resume it later.",
+            "continueBtn": "Continue",
+            "endBtn": "End game"
+        }
+    },
+    "map": {
+        "cover": {
+            "edit": "Edit cover image",
+            "rating": "Rating"
+        },
+        "stats": {
+            "created": "Created at",
+            "plays": "Plays"
+        },
+        "leaderboard": {
+            "title": "Leaderboard"
+        },
+        "details": {
+            "creator": "Creator:",
+            "titlePlaceholder": "Enter a title...",
+            "editTitleDesc": "Edit title and description",
+            "description": "Description",
+            "descPlaceholder": "Write a short description...",
+            "save": "Save changes",
+            "cancel": "Cancel",
+            "editMap": "Edit map",
+            "deleteMap": "Delete map"
+        },
+        "comments": {
+            "title": "Comments",
+            "write": "Write a comment",
+            "placeholder": "Your opinion about this map...",
+            "rating": "Rating",
+            "send": "Send comment",
+            "yourRating": "Your rating",
+            "edit": "Edit",
+            "delete": "Delete",
+            "loading": "Loading comments..."
+        },
+        "aria": {
+            "startGame": "Start game",
+            "star5": "5 stars",
+            "star4": "4 stars",
+            "star3": "3 stars",
+            "star2": "2 stars",
+            "star1": "1 star"
+        }
+    }
+}
