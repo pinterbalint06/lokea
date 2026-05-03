@@ -14,8 +14,8 @@ const PRIVATE_FRONTEND_PATH = path.join(__dirname, '../../private/frontend/html'
 
 router.get(['/', '/main'], (request, response) => response.sendFile(path.join(FRONTEND_PATH, 'main.html')));
 router.get('/register_page', (request, response) => response.sendFile(path.join(FRONTEND_PATH, 'register.html')));
-router.get('/equirectangular', (request, response) => response.sendFile(path.join(FRONTEND_PATH, 'test-equirectangular.html')));
-router.get('/map', (request, response) => response.sendFile(path.join(FRONTEND_PATH, 'test-map.html')));
+router.get('/equirectangular', auth.checkRole("ADMIN", "LORD"), (request, response) => response.sendFile(path.join(PRIVATE_FRONTEND_PATH, 'test-equirectangular.html')));
+router.get('/map', auth.checkRole("ADMIN", "LORD"), (request, response) => response.sendFile(path.join(PRIVATE_FRONTEND_PATH, 'test-map.html')));
 
 router.get('/admin', auth.checkRole("ADMIN", "LORD"), (request, response) => response.sendFile(path.join(PRIVATE_FRONTEND_PATH, 'admin.html')));
 router.get('/game-maps', auth.checkAuthPage, (request, response) => response.sendFile(path.join(FRONTEND_PATH, 'game-lobby.html')));

@@ -760,6 +760,12 @@ export class MapViewer extends WASMViewerBase {
         }
     }
 
+    resetZoom() {
+        this._ensureEngineReady();
+        this.cancelPanAnimation();
+        this._engine.resetZoom();
+    }
+
     async cacheMarkers() {
         let promises = [];
 

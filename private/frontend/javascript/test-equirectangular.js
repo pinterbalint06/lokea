@@ -1,5 +1,5 @@
-import { EquirectangularViewer } from "./libs/viewer/EquirectangularViewer.js";
-import { degreeToRadian, normalizeAngleRadians, radianToDegree } from "./libs/math/mathUtils.js";
+import { EquirectangularViewer } from "/javascript/libs/viewer/EquirectangularViewer.js";
+import { degreeToRadian, normalizeAngleRadians, radianToDegree } from "/javascript/libs/math/mathUtils.js";
 
 // |------------------|
 // | GLOBAL VARIABLES |

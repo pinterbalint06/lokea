@@ -39,5 +39,6 @@ EMSCRIPTEN_BINDINGS(mapViewerEngineBinding)
         .function("getCenterOffsetByImageCoords", &MapViewerEngine::getCenterOffsetByImageCoords)
         .function("changeLineColor", &MapViewerEngine::changeLineColor)
         .function("getZoomLevel", &MapViewerEngine::getZoomLevel)
-        .function("resizeMarker", &MapViewerEngine::resizeMarker);
+        .function("resizeMarker", &MapViewerEngine::resizeMarker)
+        .function("resetZoom", &MapViewerEngine::resetZoom);
 }
