@@ -67,6 +67,12 @@ async function createGameSession(userId, body) {
 
     const gameInfo = await sessionsQueries.getGameInfoById(gameMapId);
     validateGameInfo(gameInfo);
+
+    const activeSession = await sessionsQueries.selectLatestActiveGameSession(userId);
+    if (activeSession) {
+        await sessionsQueries.finishGameSession(activeSession.session_id);
+    }
+
     const sessionId = await sessionsQueries.insertGameSession(userId, rounds, roundTime, gameMapId, sharpness);
 
     return buildSessionObject({
