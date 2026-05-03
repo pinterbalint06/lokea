@@ -40,10 +40,11 @@ export class ContinueGameModal {
     #ensureModal() {
         if (!this.overlay) {
             this.overlay = document.createElement("div");
+            this.overlay.id = "continueGameModal";
             this.overlay.classList.add("modal-overlay");
 
             const modalBox = document.createElement("div");
-            modalBox.classList.add("modal-box");
+            modalBox.classList.add("modal-box", "uveg");
 
             const titleElement = document.createElement("h3");
             titleElement.innerText = DEFAULT_CONTINUE_GAME_TITLE;
@@ -56,12 +57,12 @@ export class ContinueGameModal {
 
             this.continueButton = document.createElement("button");
             this.continueButton.type = "button";
-            this.continueButton.classList.add("btn", "btn-light");
+            this.continueButton.classList.add("btn", "uvegbutton", "rounded-pill", "px-4");
             this.continueButton.innerText = "Folytatás";
 
             this.dismissButton = document.createElement("button");
             this.dismissButton.type = "button";
-            this.dismissButton.classList.add("btn", "btn-outline-light");
+            this.dismissButton.classList.add("btn", "btn-outline-secondary", "rounded-pill", "px-4");
             this.dismissButton.innerText = "Játék befejezése";
 
             buttonRow.append(this.continueButton, this.dismissButton);
