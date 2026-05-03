@@ -73,5 +73,80 @@
             "star2": "2 stars",
             "star1": "1 star"
         }
+    },
+    "commentManager": {
+        "holdToDelete": "Hold the button for at least 1.5 seconds to delete!",
+        "saveChanges": "Save changes",
+        "sendComment": "Send comment",
+        "saveInProgress": "Saving comment is already in progress, please wait!",
+        "deleteSuccess": "Your comment has been successfully deleted!",
+        "deleteError": "An error occurred while deleting the comment.",
+        "loadingComments": "Loading comments...",
+        "loadError": "Failed to load comments.",
+        "noComments": "No comments yet.",
+        "unknownAuthor": "Unknown",
+        "updateSuccess": "Your comment has been successfully updated!",
+        "saveSuccess": "Your comment has been successfully saved!",
+        "noChanges": "No changes made to the comment.",
+        "sendError": "An error occurred while sending the comment.",
+        "rateAtLeastOneStar": "Please rate with at least 1 star!"
+    },
+    "modalManager": {
+        "dragCoverImage": "Drag the new cover image here",
+        "clickToUpload": "Click here to upload",
+        "or": "Or",
+        "deleteWarning": "If you remove the cover image, the map will use the default cover image again.",
+        "deleteCoverImage": "Delete cover image",
+        "holdToDelete": "Hold the button for at least 1.5 seconds to delete!",
+        "editCoverImage": "Edit cover image",
+        "cancel": "Cancel",
+        "confirmDeleteMap": "Are you sure you want to delete this map?",
+        "confirmDeleteMapNamed": "Are you sure you want to delete this map: {{name}}?",
+        "cannotBeUndone": "This action cannot be undone. All ",
+        "allDataWillBeDeleted": "maps, points, connections, and images belonging to the map will also be deleted",
+        "deleteMapTitle": "Delete map",
+        "permanentlyDeleteMap": "Permanently delete map",
+        "holdToConfirm": "Hold the button to confirm"
+    },
+    "markerEditor": {
+        "drag360Image": "Drag the 360° image here",
+        "clickToUpload": "Click here to upload",
+        "pointNotChanged": "The point has not changed!"
+    },
+    "mapSelector": {
+        "dragMapFile": "Drag the map file here",
+        "clickToUpload": "Click here to upload",
+        "mapName": "Map name",
+        "nameCannotBeEmpty": "The map name cannot be empty!",
+        "invalidNameFormat": "The map name can be 1-20 characters long, and can only contain letters, numbers, spaces, underscores, and dashes.",
+        "renameAborted": "Renaming aborted!"
+    },
+    "dataManager": {
+        "loadError": "Failed to load map data."
+    },
+    "editManager": {
+        "deletingMap": "Deleting map...",
+        "deleteError": "Failed to delete the map!",
+        "cannotDeleteWhileSaving": "Cannot delete the map while details are being saved!",
+        "savingData": "Saving map details",
+        "saveSuccess": "Map details successfully updated.",
+        "saveError": "Failed to update map details.",
+        "titleMinLength": "Map title must be at least 3 characters long!",
+        "titleMaxLength": "Map title can be a maximum of 50 characters long!",
+        "titleInvalidPattern": "Map title can only contain letters, numbers, spaces, hyphens, and underscores!",
+        "descMinLength": "Map description must be at least 3 characters long!",
+        "descMaxLength": "Map description can be a maximum of 255 characters long!",
+        "descInvalidPattern": "Map description can only contain letters, numbers, spaces, hyphens, and underscores!",
+        "saveInProgressWarning": "Data saving is already in progress, please wait!"
+    },
+    "coverImageManager": {
+        "updatingCover": "Updating cover image",
+        "updateSuccess": "Cover image updated",
+        "updateError": "Failed to update cover image.",
+        "updateInProgressWarning": "A cover image update is already in progress. Please wait until it finishes.",
+        "deletingCover": "Deleting cover image",
+        "deleteSuccess": "Cover image successfully deleted.",
+        "deleteError": "Failed to delete cover image.",
+        "modifyInProgressWarning": "A cover image modification is already in progress."
     }
 }

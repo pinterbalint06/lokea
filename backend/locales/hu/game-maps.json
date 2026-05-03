@@ -73,5 +73,84 @@
             "star2": "2 csillag",
             "star1": "1 csillag"
         }
+    },
+    "commentManager": {
+        "holdToDelete": "A törléshez tartsd lenyomva a gombot legalább 1,5 másodpercig!",
+        "saveChanges": "Módosítás mentése",
+        "sendComment": "Hozzászólás küldése",
+        "saveInProgress": "Már folyamatban van a komment mentése, kérlek várj!",
+        "deleteSuccess": "Hozzászólásod sikeresen törölve!",
+        "deleteError": "Hiba történt a hozzászólás törlésekor.",
+        "loadingComments": "Hozzászólások betöltése...",
+        "loadError": "Nem sikerült betölteni a hozzászólásokat.",
+        "noComments": "Még nincsenek hozzászólások.",
+        "unknownAuthor": "Ismeretlen",
+        "updateSuccess": "Hozzászólásod sikeresen frissítve!",
+        "saveSuccess": "Hozzászólásod sikeresen mentve!",
+        "noChanges": "Nincs változás a hozzászólásban.",
+        "sendError": "Hiba történt a hozzászólás elküldésekor.",
+        "rateAtLeastOneStar": "Kérlek értékeld legalább 1 csillaggal!"
+    },
+    "modalManager": {
+        "dragCoverImage": "Húzd ide az új borítóképet",
+        "clickToUpload": "Kattints ide feltöltéshez",
+        "or": "Vagy",
+        "deleteWarning": "Ha eltávolítod a borítóképet, a pálya ismét az alapértelmezett borítóképet fogja használni.",
+        "deleteCoverImage": "Borítókép törlése",
+        "holdToDelete": "A törléshez tartsd lenyomva a gombot legalább 1,5 másodpercig!",
+        "editCoverImage": "Borítókép szerkesztése",
+        "cancel": "Mégse",
+        "confirmDeleteMap": "Biztosan törölni szeretnéd ezt a pályát?",
+        "confirmDeleteMapNamed": "Biztosan törölni szeretnéd ezt a pályát: {{name}}?",
+        "cannotBeUndone": "Ez a művelet nem vonható vissza. A pályához tartozó ",
+        "allDataWillBeDeleted": "összes térkép, pont, kapcsolat és kép is törlésre kerül",
+        "deleteMapTitle": "Pálya törlése",
+        "permanentlyDeleteMap": "Pálya végleges törlése",
+        "holdToConfirm": "Tartsd lenyomva a gombot a megerősítéshez"
+    },
+    "markerEditor": {
+        "drag360Image": "Húzd ide a 360°-os képet",
+        "clickToUpload": "Kattints ide feltöltéshez",
+        "pointNotChanged": "A pont nem változott!"
+    },
+    "mapSelector": {
+        "dragMapFile": "Húzd ide a térkép fájlt",
+        "clickToUpload": "Kattints ide feltöltéshez",
+        "mapName": "Térkép neve",
+        "nameCannotBeEmpty": "A térkép neve nem lehet üres!",
+        "invalidNameFormat": "A térkép neve 1-20 karakter lehet, csak betű, szám, szóköz, aláhúzás és vonás használható.",
+        "renameAborted": "Az átnevezés megszakítva!"
+    },
+    "dataManager": {
+        "loadError": "Nem sikerült betölteni a pálya adatait."
+    },
+    "editManager": {
+        "deletingMap": "Pálya törlése folyamatban...",
+        "deleteError": "Nem sikerült törölni a pályát!",
+        "cannotDeleteWhileSaving": "Nem lehet törölni a pályát, amíg a részletek mentése folyamatban van!",
+        "savingData": "Pályaadatok mentése",
+        "saveSuccess": "A pálya adatai sikeresen frissítve.",
+        "saveError": "Nem sikerült frissíteni a pálya adatait.",
+        "titleMinLength": "A pálya címének legalább 3 karakter hosszúnak kell lennie!",
+        "titleMaxLength": "A pálya címe maximum 50 karakter hosszú lehet!",
+        "titleInvalidPattern": "A pálya címe csak betűket, számokat, szóközöket, kötőjeleket és alulvonásokat tartalmazhat!",
+        "descMinLength": "A pálya leírásának legalább 3 karakter hosszúnak kell lennie!",
+        "descMaxLength": "A pálya leírása maximum 255 karakter hosszú lehet!",
+        "descInvalidPattern": "A pálya leírása csak betűket, számokat, szóközöket, kötőjeleket és alulvonásokat tartalmazhat!",
+        "saveInProgressWarning": "Már folyamatban van az adatok mentése, kérlek várj!"
+    },
+    "coverImageManager": {
+        "updatingCover": "Borítókép frissítése",
+        "updateSuccess": "Borítókép frissítve",
+        "updateError": "Nem sikerült frissíteni a borítóképet.",
+        "updateInProgressWarning": "Már folyamatban van egy borítókép frissítés. Kérlek várj, amíg az befejeződik.",
+        "deletingCover": "Borítókép törlése",
+        "deleteSuccess": "Borítókép sikeresen törölve.",
+        "deleteError": "Nem sikerült törölni a borítóképet.",
+        "modifyInProgressWarning": "Már folyamatban van egy borítókép módosítás."
+    },
+    "leaderboardManager": {
+        "achievedAt": "Elérve:",
+        "noScoresYet": "Még nincs játék ezen a pályán."
     }
 }

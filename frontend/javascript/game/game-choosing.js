@@ -2,6 +2,7 @@ import { formatSecondsToMinutes } from "./timer-conversion.js";
 import { createFavoriteButton } from "../libs/elements/favoriteButton.js";
 import { loadGameMapCoverImageLowThenHigh } from "../libs/network/progressiveImage.js";
 import { showToast } from "../libs/utils.js";
+import { translatePage, nyelvSzinkronizalas} from "../libs/i18next/translation.js";
 
 window.addEventListener('pageshow', (event) => {
     if (event.persisted) window.location.reload();
@@ -19,7 +20,14 @@ function clearLoadedURLs() {
     loadedURLs = [];
 }
 
-document.addEventListener("DOMContentLoaded", function () {
+document.addEventListener("DOMContentLoaded", async function () {
+    try {
+        await nyelvSzinkronizalas() || 'hu';
+        translatePage();
+    } catch (error) {
+        console.error("Hiba a nyelvi adatok betöltésekor:", error);
+    }
+
     const urlParams = new URLSearchParams(window.location.search);
     const initialTab = urlParams.get('tab') === 'mine' ? 'mine' : 'all';
     const sortButtonMap = { created: 'sortByCreated', rating: 'sortByRating', plays: 'sortByPlays', favorites: 'sortByFavorites' };
@@ -279,7 +287,7 @@ async function checkAndShowContinueModal() {
             continueModal.classList.add('active');
         }
     } catch {
-        
+
     }
 }
 

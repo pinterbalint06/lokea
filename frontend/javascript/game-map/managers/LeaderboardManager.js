@@ -1,6 +1,7 @@
 import { formatDateTime } from "../shared/utils.js";
 import { EVENTS } from "../shared/EventBus.js";
 import { createElement } from "../../libs/utils/DOMUtils.js";
+import i18next from "../../libs/language/i18next.js";
 
 export class LeaderboardManager {
     constructor(eventBus, appStore) {
@@ -44,7 +45,7 @@ export class LeaderboardManager {
         name.innerText = score.username;
 
         const time = createElement("small", { class: "score-time" });
-        time.innerText = `Elérve: ${formatDateTime(score.score_time)}`;
+        time.innerText = `${i18next.t("leaderboardManager.achievedAt")} ${formatDateTime(score.score_time)}`;
 
         const main = createElement("div", { class: "score-main" }, [name, time]);
 
@@ -56,7 +57,7 @@ export class LeaderboardManager {
 
     #createEmptyLeaderboard() {
         const message = createElement("p", { class: "score-name mb-0" });
-        message.textContent = "Még nincs játék ezen a pályán.";
+        message.textContent = i18next.t("leaderboardManager.noScoresYet");
 
         return createElement("article", { class: "score-item" }, [message]);
     }

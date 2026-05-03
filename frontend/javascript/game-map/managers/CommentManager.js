@@ -3,6 +3,7 @@ import { formatDateTime } from "../shared/utils.js";
 import { createElement } from "../../libs/utils/DOMUtils.js";
 import { fetchGameMapComments, postGameMapComment, fetchUserComment, updateUserComment, deleteUserComment } from "../shared/api.js";
 import { HoldToUnlockButton } from "../../libs/elements/HoldToUnlockButton.js";
+import i18next from "../../libs/language/i18next.js";
 
 export class CommentManager {
     constructor(eventBus, appStore) {
@@ -91,7 +92,7 @@ export class CommentManager {
 
         this.elements.holdToDeleteCommentBtn.addEventListener("earlyClick", () => {
             this.bus.emit(EVENTS.TOAST_SHOW, {
-                msg: "A törléshez tartsd lenyomva a gombot legalább 1,5 másodpercig!",
+                msg: i18next.t("commentManager.holdToDelete"),
                 type: "warning"
             });
         });
@@ -147,11 +148,11 @@ export class CommentManager {
     #setCommentFormMode(isEditMode) {
         if (isEditMode) {
             this.elements.commentForm.setAttribute("data-edit-mode", "true");
-            this.elements.sendCommentBtn.innerText = "Módosítás mentése";
+            this.elements.sendCommentBtn.innerText = i18next.t("commentManager.saveChanges");
             this.elements.cancelCommentEditBtn.classList.remove("d-none");
         } else {
             this.elements.commentForm.removeAttribute("data-edit-mode");
-            this.elements.sendCommentBtn.innerText = "Hozzászólás küldése";
+            this.elements.sendCommentBtn.innerText = i18next.t("commentManager.sendComment");
             this.elements.cancelCommentEditBtn.classList.add("d-none");
         }
     }
@@ -191,7 +192,7 @@ export class CommentManager {
                 this.#showUserCommentSection();
             } else {
                 this.bus.emit(EVENTS.TOAST_SHOW, {
-                    msg: "Már folyamatban van a komment mentése, kérlek várj!",
+                    msg: i18next.t("commentManager.saveInProgress"),
                     type: "danger"
                 });
             }
@@ -213,12 +214,12 @@ export class CommentManager {
             this.bus.emit(EVENTS.COMMENT_UPDATED);
 
             this.bus.emit(EVENTS.TOAST_SHOW, {
-                msg: "Hozzászólásod sikeresen törölve!",
+                msg: i18next.t("commentManager.deleteSuccess"),
                 type: "success"
             });
         } catch (error) {
             this.bus.emit(EVENTS.TOAST_SHOW, {
-                msg: error.message || "Hiba történt a hozzászólás törlésekor.",
+                msg: error.message || i18next.t("commentManager.deleteError"),
                 type: "danger"
             });
         }
@@ -255,7 +256,7 @@ export class CommentManager {
 
                     this.#showErrorState();
                     this.bus.emit(EVENTS.TOAST_SHOW, {
-                        msg: error.message || "Hiba történt a hozzászólások betöltésekor.",
+                        msg: error.message || i18next.t("commentManager.loadError"),
                         type: "danger"
                     });
                 }
@@ -268,7 +269,7 @@ export class CommentManager {
     #showLoadingState() {
         const spinner = createElement("div", { class: "spinner-border spinner-border-sm" });
         const text = createElement("span", { class: "ms-2" });
-        text.innerText = "Hozzászólások betöltése...";
+        text.innerText = i18next.t("commentManager.loadingComments");
 
         const loadingContainer = createElement("div", {
             id: "commentsLoader",
@@ -301,7 +302,7 @@ export class CommentManager {
 
         if (this.currentPage == 0) {
             const errorText = createElement("p", { class: "text-danger text-center my-4" });
-            errorText.innerText = "Nem sikerült betölteni a hozzászólásokat.";
+            errorText.innerText = i18next.t("commentManager.loadError");
             this.elements.commentsList.replaceChildren(errorText);
         } else {
             this.elements.commentsList.appendChild(this.sentinel);
@@ -321,7 +322,7 @@ export class CommentManager {
         } else {
             if (this.currentPage == 1) {
                 const emptyText = createElement("p", { class: "text-center opacity-50 my-4" });
-                emptyText.innerText = "Még nincsenek hozzászólások.";
+                emptyText.innerText = i18next.t("commentManager.noComments");
                 fragment.appendChild(emptyText);
             }
         }
@@ -343,7 +344,7 @@ export class CommentManager {
 
     #createCommentItem(comment) {
         const author = createElement("strong");
-        author.innerText = comment.username || "Ismeretlen";
+        author.innerText = comment.username || i18next.t("commentManager.unknownAuthor");
 
         const dateSpan = createElement("span", { class: "small opacity-75" });
         dateSpan.innerText = formatDateTime(comment.created_at);
@@ -420,7 +421,7 @@ export class CommentManager {
                         this.bus.emit(EVENTS.COMMENT_UPDATED);
 
                         this.bus.emit(EVENTS.TOAST_SHOW, {
-                            msg: isEditMode ? "Hozzászólásod sikeresen frissítve!" : "Hozzászólásod sikeresen mentve!",
+                            msg: isEditMode ? i18next.t("commentManager.updateSuccess") : i18next.t("commentManager.saveSuccess"),
                             type: "success"
                         });
                     } else {
@@ -428,19 +429,19 @@ export class CommentManager {
                         this.#showUserCommentSection();
 
                         this.bus.emit(EVENTS.TOAST_SHOW, {
-                            msg: "Nincs változás a hozzászólásban.",
+                            msg: i18next.t("commentManager.noChanges"),
                             type: "info"
                         });
                     }
                 } catch (error) {
                     this.bus.emit(EVENTS.TOAST_SHOW, {
-                        msg: error.message || "Hiba történt a hozzászólás elküldésekor.",
+                        msg: error.message || i18next.t("commentManager.sendError"),
                         type: "danger"
                     });
                 }
             } else {
                 this.bus.emit(EVENTS.TOAST_SHOW, {
-                    msg: "Kérlek értékeld legalább 1 csillaggal!",
+                    msg: i18next.t("commentManager.rateAtLeastOneStar"),
                     type: "danger"
                 });
             }
@@ -449,7 +450,7 @@ export class CommentManager {
             this.elements.cancelCommentEditBtn.disabled = false;
         } else {
             this.bus.emit(EVENTS.TOAST_SHOW, {
-                msg: "Már folyamatban van a komment mentése, kérlek várj!",
+                msg: i18next.t("commentManager.saveInProgress"),
                 type: "danger"
             });
         }
