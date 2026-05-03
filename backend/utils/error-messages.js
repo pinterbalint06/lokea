@@ -38,7 +38,10 @@ const ERRORS = {
             EMPTY: "A pálya leírása nem lehet üres!"
         },
 
-        ATLEAST_TITLE_OR_DESCRIPTION: "Vagy az új címet, vagy az új leírást kötelező megadni!"
+        ATLEAST_TITLE_OR_DESCRIPTION: "Vagy az új címet, vagy az új leírást kötelező megadni!",
+
+        NO_MAPS: "A pályának nincsenek térképei!",
+        NO_POINTS: "A pályának nincsenek pontjai!"
     },
 
     MAP: {
@@ -148,7 +151,16 @@ const ERRORS = {
         FETCH_RANDOM_POINT_FAILED: "A véletlenszerű pont lekérése nem sikerült!",
         FETCH_MAPS_FAILED: "A térképek lekérése nem sikerült!",
         CHECK_SESSION_FAILED: "Az aktív munkamenet ellenőrzése nem sikerült!",
-        CREATE_SESSION_FAILED: "A játékmenet létrehozása nem sikerült!"
+        CREATE_SESSION_FAILED: "A játékmenet létrehozása nem sikerült!",
+
+        NO_ACTIVE_POINT: "Nincs aktív pont a munkamenetben!",
+        INVALID_GAME_CONFIG: "Érvénytelen játékkonfiguráció!",
+        INVALID_GUESS_COORDS: "Érvénytelen tipp koordináták!",
+        NO_ACTIVE_ROUND: "Nincs aktív kör!",
+        NO_POINTS_AVAILABLE: "Nincs elérhető pont!",
+        INVALID_ROUNDS: "Érvénytelen körök száma! (1–100)",
+        INVALID_ROUND_TIME: "Érvénytelen körönkénti idő! (1–300 másodperc)",
+        INVALID_DIFFICULTY: "Érvénytelen nehézségi szint!",
     }
 };
 

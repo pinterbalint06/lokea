@@ -87,7 +87,7 @@ function switchTab(tab) {
 
 async function loadGameMaps(sort, filter = null) {
     try {
-        let url = '/api/choose-game?sort=' + sort + '&offset=' + (cardLoadedTimes * 20);
+        let url = '/api/lobby?sort=' + sort + '&offset=' + (cardLoadedTimes * 20);
         if (filter) url += '&filter=' + filter;
         let gameMaps = await fetchURL(url);
         let gameMapsContainer = document.getElementById('game_maps_container');
@@ -175,7 +175,7 @@ async function postGameId(gamemapId) {
     const formData = new FormData(document.getElementById('settingsForm'));
     formData.append('gameMapId', gamemapId);
     try {
-        const response = await fetch('/api/choose-game/session', {
+        const response = await fetch('/api/lobby/session', {
             method: 'POST',
             body: formData
         });
@@ -269,7 +269,7 @@ function setupContinueGameModal() {
 
 async function checkAndShowContinueModal() {
     try {
-        const activeGameSession = await fetchURL('/api/choose-game/session');
+        const activeGameSession = await fetchURL('/api/lobby/session');
         if (activeGameSession?.hasActiveSession) {
             const continueModal = document.getElementById('continueGameModal');
             const continueModalDescription = document.getElementById('continue-modal-desc');
