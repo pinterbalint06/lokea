@@ -3,6 +3,7 @@ import { EquirectangularViewer } from "../libs/viewer/EquirectangularViewer.js";
 import { formatSecondsToMinutes } from "./timer-conversion.js";
 import { degreeToRadian } from "../libs/math/mathUtils.js";
 import { loadPointEquirectangularLowThenHigh, loadMapImageLowThenHigh } from "../libs/network/progressiveImage.js";
+import i18next from "../libs/language/i18next.js";
 
 const pictureCanvasId = "pictureCanvas";
 const mapCanvasId = "mapCanvas";
@@ -134,7 +135,7 @@ function createCountdownTimer() {
 
 function showError(message) {
     stopRoundTimer();
-    document.getElementById('errorMessage').textContent = message || 'Váratlan hiba történt.';
+    document.getElementById('errorMessage').textContent = message || i18next.t("gamePage.unexpectedError", { defaultValue: "Váratlan hiba történt." });
     document.getElementById('errorOverlay').classList.add('active');
 }
 
@@ -164,10 +165,10 @@ async function startGame() {
 
         if (!Array.isArray(mapsData.maps) || mapsData.maps.length === 0) {
             canPlaceMarker = false;
-            throw new Error("Nincsenek elérhető térképek a játékhoz.");
+            throw new Error(i18next.t("gamePage.noMapsAvailable", { defaultValue: "Nincsenek elérhető térképek a játékhoz." }));
         }
         if (!gameData.game || typeof gameData.game.rounds !== 'number' || typeof gameData.game.roundTime !== 'number') {
-            throw new Error("Érvénytelen játékadatok érkeztek a szervertől.");
+            throw new Error(i18next.t("gamePage.invalidGameData", { defaultValue: "Érvénytelen játékadatok érkeztek a szervertől." }));
         }
         gameMapId = gameData.game.gameMapId ?? null;
         maps = mapsData.maps;
@@ -191,14 +192,14 @@ async function startGame() {
             await createPoint(roundTime);
             await waitForGuess();
             if (isLastRound) {
-                document.getElementById('nextRoundBtn').textContent = 'Eredmények';
+                document.getElementById('nextRoundBtn').textContent = i18next.t("gamePage.resultsBtn", { defaultValue: "Eredmények" });
             }
             await waitForNext();
             removeEverything();
         }
         await finishGame();
     } catch (error) {
-        showError('Nem sikerült csatlakozni a játékhoz: ' + error.message);
+        showError(i18next.t("gamePage.errorConnecting", { defaultValue: "Nem sikerült csatlakozni a játékhoz: " }) + error.message);
     }
 }
 
@@ -297,7 +298,7 @@ async function sendGuess() {
                 resolveGuess = null;
             }
         } catch (error) {
-            showError('Nem sikerült elküldeni a tippet: ' + error.message);
+            showError(i18next.t("gamePage.errorSendingGuess", { defaultValue: "Nem sikerült elküldeni a tippet: " }) + error.message);
         }
     }
 }
@@ -311,7 +312,7 @@ function showAnswer(response) {
 
     const panel = document.getElementById("guessPanel");
     document.getElementById("guessPanelScore").textContent = response.score ?? 0;
-    document.getElementById("guessPanelDistance").textContent = response.distance != null ? `Távolság: ${response.distance} px` : "Rossz térkép vagy nincs jelölő";
+    document.getElementById("guessPanelDistance").textContent = response.distance != null ? i18next.t("gamePage.distance", { distance: response.distance, defaultValue: `Távolság: ${response.distance} px` }) : i18next.t("gamePage.wrongMapOrNoMarker", { defaultValue: "Rossz térkép vagy nincs jelölő" });
     document.getElementById("guessPanelTotal").textContent = response.totalScore ?? 0;
     panel.classList.add("open");
 
@@ -360,7 +361,7 @@ async function fetchGameData(url) {
     const response = await fetch(url);
     if (!response.ok) {
         const responseData = await response.json();
-        throw new Error(responseData.message || 'Hálózati hiba');
+        throw new Error(responseData.message || i18next.t("gamePage.networkError", { defaultValue: "Hálózati hiba" }));
     }
     const data = await response.json();
     return data;
@@ -374,7 +375,7 @@ async function postGameScore(url, data) {
     });
     if (!response.ok) {
         const responseData = await response.json();
-        throw new Error(responseData.message || 'Hálózati hiba');
+        throw new Error(responseData.message || i18next.t("gamePage.networkError", { defaultValue: "Hálózati hiba" }));
     }
     const result = await response.json();
     return result;
@@ -391,7 +392,7 @@ async function finishGame() {
         });
         if (!response.ok) {
             const responseData = await response.json();
-            throw new Error(responseData.message || 'Hálózati hiba');
+            throw new Error(responseData.message || i18next.t("gamePage.networkError", { defaultValue: "Hálózati hiba" }));
         }
         const result = await response.json();
         totalScoreValue = result.totalScore ?? 0;
@@ -405,14 +406,14 @@ async function finishGame() {
         loadOtherComments();
         loadLeaderboard();
     } catch (error) {
-        showError("Hiba a játék befejezésekor: " + error.message);
+        showError(i18next.t("gamePage.errorFinishingGame", { defaultValue: "Hiba a játék befejezésekor: " }) + error.message);
     }
 }
 
 async function loadUserComment() {
     try {
         if (!gameMapId) {
-            throw new Error('Nincs elérhető pálya a megjegyzés betöltéséhez.');
+            throw new Error(i18next.t("gamePage.noMapForComment", { defaultValue: "Nincs elérhető pálya a megjegyzés betöltéséhez." }));
         }
         const response = await fetch(`/api/game-maps/${gameMapId}/my-comment`);
         if (response.ok) {
@@ -434,7 +435,7 @@ function showCommentFormState(editMode) {
     commentIsInEditMode = editMode;
     document.getElementById('gameoverFormState').style.display = '';
     document.getElementById('gameoverViewState').style.display = 'none';
-    document.getElementById('submitRatingBtn').textContent = editMode ? 'Módosítás mentése' : 'Értékelés küldése';
+    document.getElementById('submitRatingBtn').textContent = editMode ? i18next.t("gamePage.saveChanges", { defaultValue: "Módosítás mentése" }) : i18next.t("gamePage.sendRating", { defaultValue: "Értékelés küldése" });
     document.getElementById('cancelCommentEditBtn').style.display = editMode ? '' : 'none';
     if (!editMode) {
         document.querySelectorAll('[name="gameOverRating"]').forEach(r => r.checked = false);
@@ -453,11 +454,11 @@ async function handleCommentSubmit() {
     const btn = document.getElementById('submitRatingBtn');
     try {
         if (commentIsSubmitting || !gameMapId) {
-            throw new Error('Nem lehet elküldeni az értékelést');
+            throw new Error(i18next.t("gamePage.cannotSendRating", { defaultValue: "Nem lehet elküldeni az értékelést" }));
         }
         const rating = document.querySelector('[name="gameOverRating"]:checked')?.value;
         if (!rating) {
-            showGameOverToast('Kérlek válassz legalább 1 csillagot!', true);
+            showGameOverToast(i18next.t("gamePage.selectAtLeastOneStar", { defaultValue: "Kérlek válassz legalább 1 csillagot!" }), true);
             return;
         }
         commentIsSubmitting = true;
@@ -470,13 +471,13 @@ async function handleCommentSubmit() {
         const response = await fetch(`/api/game-maps/${gameMapId}/my-comment`, { method, body: formData });
         if (!response.ok) {
             const err = await response.json();
-            throw new Error(err.message || 'Hiba történt');
+            throw new Error(err.message || i18next.t("gamePage.errorOccurred", { defaultValue: "Hiba történt" }));
         }
-        showGameOverToast(commentIsInEditMode ? 'Értékelésed frissítve!' : 'Értékelésed elküldve!');
+        showGameOverToast(commentIsInEditMode ? i18next.t("gamePage.ratingUpdated", { defaultValue: "Értékelésed frissítve!" }) : i18next.t("gamePage.ratingSent", { defaultValue: "Értékelésed elküldve!" }));
         await loadUserComment();
         loadOtherComments();
     } catch (error) {
-        showGameOverToast(error.message || 'Hiba az értékelés elküldésekor', true);
+        showGameOverToast(error.message || i18next.t("gamePage.errorSendingRating", { defaultValue: "Hiba az értékelés elküldésekor" }), true);
     } finally {
         commentIsSubmitting = false;
         btn.disabled = false;
@@ -495,22 +496,22 @@ function handleEditComment() {
 async function handleDeleteComment() {
     try {
         if (commentIsSubmitting || !gameMapId) {
-            throw new Error('Nem lehet törölni az értékelést');
+            throw new Error(i18next.t("gamePage.cannotDeleteRating", { defaultValue: "Nem lehet törölni az értékelést" }));
         }
-        if (!confirm('Biztosan törlöd az értékelésedet?')) {
-            throw new Error('Törlés megszakítva');
+        if (!confirm(i18next.t("gamePage.confirmDeleteRating", { defaultValue: "Biztosan törlöd az értékelésedet?" }))) {
+            throw new Error(i18next.t("gamePage.deleteAborted", { defaultValue: "Törlés megszakítva" }));
         }
         commentIsSubmitting = true;
         const response = await fetch(`/api/game-maps/${gameMapId}/my-comment`, { method: 'DELETE' });
         if (!response.ok) {
             const err = await response.json();
-            throw new Error(err.message || 'Hiba történt');
+            throw new Error(err.message || i18next.t("gamePage.errorOccurred", { defaultValue: "Hiba történt" }));
         }
-        showGameOverToast('Értékelésed törölve.');
+        showGameOverToast(i18next.t("gamePage.ratingDeleted", { defaultValue: "Értékelésed törölve." }));
         showCommentFormState(false);
         loadOtherComments();
     } catch (error) {
-        showGameOverToast(error.message || 'Hiba a törléskor', true);
+        showGameOverToast(error.message || i18next.t("gamePage.errorDeleting", { defaultValue: "Hiba a törléskor" }), true);
     } finally {
         commentIsSubmitting = false;
     }
@@ -526,16 +527,16 @@ async function loadLeaderboard() {
     const container = document.getElementById('gameOverLeaderboard');
     try {
         if (!gameMapId) {
-            throw new Error('Nincs elérhető pálya az eredménylista betöltéséhez.');
+            throw new Error(i18next.t("gamePage.noMapForLeaderboard", { defaultValue: "Nincs elérhető pálya az eredménylista betöltéséhez." }));
         }
         const response = await fetch(`/api/game-maps/${gameMapId}`);
         if (!response.ok) {
-            throw new Error('Hiba történt az eredménylista betöltésekor.');
+            throw new Error(i18next.t("gamePage.errorLoadingLeaderboard", { defaultValue: "Hiba történt az eredménylista betöltésekor." }));
         }
         const data = await response.json();
         renderLeaderboard(container, data.game_map_details?.top_scores);
     } catch (error) {
-        showGameOverToast(error.message || 'Hiba történt az eredménylista betöltésekor', true);
+        showGameOverToast(error.message || i18next.t("gamePage.errorLoadingLeaderboardToast", { defaultValue: "Hiba történt az eredménylista betöltésekor" }), true);
     }
 }
 
@@ -544,7 +545,7 @@ function renderLeaderboard(container, topScores) {
     if (!topScores || topScores.length === 0) {
         const empty = document.createElement('p');
         empty.className = 'gameover-comments-empty';
-        empty.textContent = 'Még nincs játék ezen a pályán.';
+        empty.textContent = i18next.t("gamePage.noGamesYet", { defaultValue: "Még nincs játék ezen a pályán." });
         container.appendChild(empty);
     }
     else {
@@ -574,7 +575,7 @@ function createLeaderboardItem(rank, scoreData) {
 
     const time = document.createElement('small');
     time.className = 'gameover-score-time';
-    time.textContent = `Elérve: ${formatScoreTime(scoreData.score_time)}`;
+    time.textContent = `${i18next.t("gamePage.achievedAt", { defaultValue: "Elérve:" })} ${formatScoreTime(scoreData.score_time)}`;
 
     main.appendChild(name);
     main.appendChild(time);
@@ -604,16 +605,16 @@ async function loadOtherComments() {
     const container = document.getElementById('gameOverComments');
     try {
         if (!gameMapId) {
-            throw new Error('Nincs elérhető pálya a megjegyzések betöltéséhez.');
+            throw new Error(i18next.t("gamePage.noMapForComments", { defaultValue: "Nincs elérhető pálya a megjegyzések betöltéséhez." }));
         }
         const response = await fetch(`/api/game-maps/${gameMapId}/comments`);
         if (!response.ok) {
-            throw new Error('Hiba történt a megjegyzések betöltésekor.');
+            throw new Error(i18next.t("gamePage.errorLoadingComments", { defaultValue: "Hiba történt a megjegyzések betöltésekor." }));
         }
         const data = await response.json();
         renderOtherComments(container, data.comments);
     } catch (error) {
-        showGameOverToast(error.message || 'Hiba történt a megjegyzések betöltésekor', true);
+        showGameOverToast(error.message || i18next.t("gamePage.errorLoadingCommentsToast", { defaultValue: "Hiba történt a megjegyzések betöltésekor" }), true);
     }
 }
 
@@ -622,7 +623,7 @@ function renderOtherComments(container, comments) {
     if (!comments || comments.length === 0) {
         const empty = document.createElement('p');
         empty.className = 'gameover-comments-empty';
-        empty.textContent = 'Még nincsenek értékelések.';
+        empty.textContent = i18next.t("gamePage.noRatingsYet", { defaultValue: "Még nincsenek értékelések." });
         container.appendChild(empty);
     }
     else {
@@ -641,7 +642,7 @@ function createCommentItem(comment) {
 
     const author = document.createElement('strong');
     author.className = 'gameover-comment-author';
-    author.textContent = comment.username || 'Ismeretlen';
+    author.textContent = comment.username || i18next.t("gamePage.unknownUser", { defaultValue: "Ismeretlen" });
 
     const stars = document.createElement('div');
     stars.className = 'rating-stars gameover-comment-stars';

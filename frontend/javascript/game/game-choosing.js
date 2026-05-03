@@ -2,7 +2,8 @@ import { formatSecondsToMinutes } from "./timer-conversion.js";
 import { createFavoriteButton } from "../libs/elements/favoriteButton.js";
 import { loadGameMapCoverImageLowThenHigh } from "../libs/network/progressiveImage.js";
 import { showToast } from "../libs/utils.js";
-import { translatePage, nyelvSzinkronizalas} from "../libs/i18next/translation.js";
+import { translatePage, nyelvSzinkronizalas } from "../libs/i18next/translation.js";
+import i18next from "../libs/language/i18next.js";
 
 window.addEventListener('pageshow', (event) => {
     if (event.persisted) window.location.reload();
@@ -25,7 +26,7 @@ document.addEventListener("DOMContentLoaded", async function () {
         await nyelvSzinkronizalas() || 'hu';
         translatePage();
     } catch (error) {
-        console.error("Hiba a nyelvi adatok betöltésekor:", error);
+        console.error(i18next.t("choosing.errors.languageLoad", { defaultValue: "Hiba a nyelvi adatok betöltésekor:" }), error);
     }
 
     const urlParams = new URLSearchParams(window.location.search);
@@ -106,11 +107,11 @@ async function loadGameMaps(sort, filter = null) {
         } else if (filter !== 'mine') {
             let p = document.createElement('p');
             p.classList.add('text-center');
-            p.innerText = 'Nincsenek elérhető játékok.';
+            p.innerText = i18next.t("choosing.noGamesAvailable", { defaultValue: "Nincsenek elérhető játékok." });
             gameMapsContainer.appendChild(p);
         }
     } catch {
-        showToast(document.getElementById('toastPlace'), 'A pályák betöltése nem sikerült.', 'danger', true);
+        showToast(document.getElementById('toastPlace'), i18next.t("choosing.errors.loadingMaps", { defaultValue: "A pályák betöltése nem sikerült." }), 'danger', true);
     }
 }
 
@@ -124,10 +125,10 @@ function createCard(game_map) {
     card_name.innerText = game_map.title;
     let card_plays = document.createElement('p');
     card_plays.classList.add('card-desc');
-    card_plays.innerText = `Játékok száma: ${game_map.plays}`;
+    card_plays.innerText = i18next.t("choosing.playsCount", { count: game_map.plays, defaultValue: `Játékok száma: ${game_map.plays}` });
     let card_created = document.createElement('p');
     card_created.classList.add('card-desc');
-    card_created.innerText = `Létrehozva: ${(game_map.game_created.split('T')[0]).replaceAll('-', '.')}`;
+    card_created.innerText = i18next.t("choosing.createdAt", { date: (game_map.game_created.split('T')[0]).replaceAll('-', '.'), defaultValue: `Létrehozva: ${(game_map.game_created.split('T')[0]).replaceAll('-', '.')}` });
     game_maps_card_content.appendChild(card_name);
     game_maps_card_content.appendChild(createReview(game_map.rating));
     game_maps_card_content.appendChild(card_plays);
@@ -162,7 +163,7 @@ function createModal(game_map) {
     modalTitle.innerText = game_map.title;
     modalStars.style.setProperty('--rating', game_map.rating);
     modalDesc.innerText = game_map.game_description;
-    maxUniqueRounds.innerText = safePointCount === 0 ? 'N/A' : `${safePointCount} pont`;
+    maxUniqueRounds.innerText = safePointCount === 0 ? i18next.t("choosing.na", { defaultValue: "N/A" }) : i18next.t("choosing.pointsCount", { count: safePointCount, defaultValue: `${safePointCount} pont` });
 }
 
 function initRoundTimeRange() {
@@ -193,7 +194,7 @@ async function postGameId(gamemapId) {
         }
         window.location.href = '/game';
     } catch (error) {
-        showToast(document.getElementById('toastPlace'), 'A játék indítása nem sikerült: ' + error.message, 'danger', true);
+        showToast(document.getElementById('toastPlace'), i18next.t("choosing.errors.startingGame", { defaultValue: "A játék indítása nem sikerült: " }) + error.message, 'danger', true);
     }
 }
 
@@ -223,7 +224,7 @@ async function loadCoverImageLowThenHigh(card, gmId) {
             isCurrent: () => true
         });
     } catch {
-        showToast(document.getElementById('toastPlace'), 'A borítókép betöltése nem sikerült.', 'danger', true);
+        showToast(document.getElementById('toastPlace'), i18next.t("choosing.errors.loadingCover", { defaultValue: "A borítókép betöltése nem sikerült." }), 'danger', true);
     }
 }
 
@@ -237,7 +238,7 @@ function createNewGameCard() {
     icon.textContent = '+';
     let title = document.createElement('h3');
     title.classList.add('card-title');
-    title.textContent = 'Új játék létrehozása';
+    title.textContent = i18next.t("choosing.createNewGame", { defaultValue: "Új játék létrehozása" });
     content.appendChild(icon);
     content.appendChild(title);
     card.appendChild(content);
@@ -257,7 +258,7 @@ async function handleCreateCardClick() {
         window.location.href = '/game-maps/' + gameMapID;
     } catch {
         isCreating = false;
-        showToast(document.getElementById('toastPlace'), 'Az új játék létrehozása nem sikerült.', 'danger', true);
+        showToast(document.getElementById('toastPlace'), i18next.t("choosing.errors.creatingGame", { defaultValue: "Az új játék létrehozása nem sikerült." }), 'danger', true);
     }
 }
 
@@ -282,7 +283,7 @@ async function checkAndShowContinueModal() {
             const continueModal = document.getElementById('continueGameModal');
             const continueModalDescription = document.getElementById('continue-modal-desc');
             if (activeGameSession.gameTitle) {
-                continueModalDescription.innerText = `Van egy futó játékod ezen a pályán: ${activeGameSession.gameTitle}. Szeretnéd folytatni?`;
+                continueModalDescription.innerText = i18next.t("choosing.continueSpecificGame", { title: activeGameSession.gameTitle, defaultValue: `Van egy futó játékod ezen a pályán: ${activeGameSession.gameTitle}. Szeretnéd folytatni?` });
             }
             continueModal.classList.add('active');
         }
@@ -303,6 +304,6 @@ async function finishStartedGameSession() {
             throw new Error(response.statusText);
         }
     } catch {
-        showToast(document.getElementById('toastPlace'), 'A játék befejezése nem sikerült.', 'danger', true);
+        showToast(document.getElementById('toastPlace'), i18next.t("choosing.errors.endingGame", { defaultValue: "A játék befejezése nem sikerült." }), 'danger', true);
     }
 }

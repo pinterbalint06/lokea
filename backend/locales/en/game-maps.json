@@ -29,7 +29,22 @@
             "description": "Would you like to continue your ongoing game? If not, you won't be able to resume it later.",
             "continueBtn": "Continue",
             "endBtn": "End game"
-        }
+        },
+        "errors": {
+            "languageLoad": "Error loading language data:",
+            "loadingMaps": "Failed to load maps.",
+            "startingGame": "Failed to start game: ",
+            "loadingCover": "Failed to load cover image.",
+            "creatingGame": "Failed to create new game.",
+            "endingGame": "Failed to end game."
+        },
+        "noGamesAvailable": "No games available.",
+        "playsCount": "Plays: {{count}}",
+        "createdAt": "Created at: {{date}}",
+        "na": "N/A",
+        "pointsCount": "{{count}} points",
+        "createNewGame": "Create new game",
+        "continueSpecificGame": "You have an ongoing game on this map: {{title}}. Would you like to continue?"
     },
     "map": {
         "cover": {
@@ -148,5 +163,48 @@
         "deleteSuccess": "Cover image successfully deleted.",
         "deleteError": "Failed to delete cover image.",
         "modifyInProgressWarning": "A cover image modification is already in progress."
+    },
+    "leaderboardManager": {
+        "achievedAt": "Achieved at:",
+        "noScoresYet": "No games played on this map yet."
+    },
+    "dragAndDropUploader": {
+        "or": "or"
+    },
+    "gamePage": {
+        "errorConnecting": "Failed to connect to the game: ",
+        "noMapsAvailable": "No maps available for the game.",
+        "invalidGameData": "Invalid game data received from the server.",
+        "resultsBtn": "Results",
+        "unexpectedError": "An unexpected error occurred.",
+        "errorSendingGuess": "Failed to send guess: ",
+        "distance": "Distance: {{distance}} px",
+        "wrongMapOrNoMarker": "Wrong map or no marker",
+        "errorFinishingGame": "Error finishing game: ",
+        "noMapForComment": "No map available to load comment.",
+        "saveChanges": "Save changes",
+        "sendRating": "Send rating",
+        "cannotSendRating": "Cannot send rating",
+        "selectAtLeastOneStar": "Please select at least 1 star!",
+        "errorOccurred": "An error occurred",
+        "ratingUpdated": "Rating updated!",
+        "ratingSent": "Rating sent!",
+        "errorSendingRating": "Error sending rating",
+        "cannotDeleteRating": "Cannot delete rating",
+        "confirmDeleteRating": "Are you sure you want to delete your rating?",
+        "deleteAborted": "Deletion aborted",
+        "ratingDeleted": "Rating deleted.",
+        "errorDeleting": "Error deleting",
+        "noMapForLeaderboard": "No map available to load leaderboard.",
+        "errorLoadingLeaderboard": "Error loading leaderboard.",
+        "errorLoadingLeaderboardToast": "Error loading leaderboard",
+        "noGamesYet": "No games played on this map yet.",
+        "achievedAt": "Achieved at:",
+        "noMapForComments": "No map available to load comments.",
+        "errorLoadingComments": "Error loading comments.",
+        "errorLoadingCommentsToast": "Error loading comments",
+        "noRatingsYet": "No ratings yet.",
+        "unknownUser": "Unknown",
+        "networkError": "Network error"
     }
 }
