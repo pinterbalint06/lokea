@@ -45,7 +45,7 @@ export class LeaderboardManager {
         name.innerText = score.username;
 
         const time = createElement("small", { class: "score-time" });
-        time.innerText = `${i18next.t("leaderboardManager.achievedAt")} ${formatDateTime(score.score_time)}`;
+        time.innerText = `${i18next.t("game-maps:leaderboardManager.achievedAt")} ${formatDateTime(score.score_time)}`;
 
         const main = createElement("div", { class: "score-main" }, [name, time]);
 
@@ -57,7 +57,7 @@ export class LeaderboardManager {
 
     #createEmptyLeaderboard() {
         const message = createElement("p", { class: "score-name mb-0" });
-        message.textContent = i18next.t("leaderboardManager.noScoresYet");
+        message.textContent = i18next.t("game-maps:leaderboardManager.noScoresYet");
 
         return createElement("article", { class: "score-item" }, [message]);
     }

@@ -33,7 +33,9 @@
             "tooShort": "The game map description must be at least 3 characters long!",
             "empty": "The game map description cannot be empty!"
         },
-        "atleastTitleOrDescription": "Either the new title or the new description must be provided!"
+        "atleastTitleOrDescription": "Either the new title or the new description must be provided!",
+        "noMaps": "The game map has no maps!",
+        "noPoints": "The game map has no points!"
     },
     "map": {
         "invalidId": "Invalid map ID!",
@@ -118,6 +120,12 @@
         "fetchRandomPointFailed": "Failed to fetch a random point!",
         "fetchMapsFailed": "Failed to fetch maps!",
         "checkSessionFailed": "Failed to check active session!",
-        "createSessionFailed": "Failed to create session!"
+        "createSessionFailed": "Failed to create session!",
+        "noActivePoint": "No active point in the session!",
+        "invalidGuessCoords": "Invalid guess coordinates!",
+        "noActiveRound": "No active round!",
+        "noPointsAvailable": "No available points!",
+        "invalidRounds": "Invalid number of rounds! (1–100)",
+        "invalidRoundTime": "Invalid round time! (1–300 seconds)"
     }
 }

@@ -8,7 +8,7 @@ export async function initI18next(nyelv = 'hu') {
             lng: nyelv,
             fallbackLng: 'en',
             ns: ['main', 'common', 'errors', 'game-maps'],
-            defaultNS: 'game-maps',
+            defaultNS: 'main',
             backend: {
                 loadPath: '/locales/{{lng}}/{{ns}}.json'
             }

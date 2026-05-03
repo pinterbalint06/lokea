@@ -92,7 +92,7 @@ export class CommentManager {
 
         this.elements.holdToDeleteCommentBtn.addEventListener("earlyClick", () => {
             this.bus.emit(EVENTS.TOAST_SHOW, {
-                msg: i18next.t("commentManager.holdToDelete"),
+                msg: i18next.t("game-maps:commentManager.holdToDelete"),
                 type: "warning"
             });
         });
@@ -148,11 +148,11 @@ export class CommentManager {
     #setCommentFormMode(isEditMode) {
         if (isEditMode) {
             this.elements.commentForm.setAttribute("data-edit-mode", "true");
-            this.elements.sendCommentBtn.innerText = i18next.t("commentManager.saveChanges");
+            this.elements.sendCommentBtn.innerText = i18next.t("game-maps:commentManager.saveChanges");
             this.elements.cancelCommentEditBtn.classList.remove("d-none");
         } else {
             this.elements.commentForm.removeAttribute("data-edit-mode");
-            this.elements.sendCommentBtn.innerText = i18next.t("commentManager.sendComment");
+            this.elements.sendCommentBtn.innerText = i18next.t("game-maps:commentManager.sendComment");
             this.elements.cancelCommentEditBtn.classList.add("d-none");
         }
     }
@@ -192,7 +192,7 @@ export class CommentManager {
                 this.#showUserCommentSection();
             } else {
                 this.bus.emit(EVENTS.TOAST_SHOW, {
-                    msg: i18next.t("commentManager.saveInProgress"),
+                    msg: i18next.t("game-maps:commentManager.saveInProgress"),
                     type: "danger"
                 });
             }
@@ -214,12 +214,12 @@ export class CommentManager {
             this.bus.emit(EVENTS.COMMENT_UPDATED);
 
             this.bus.emit(EVENTS.TOAST_SHOW, {
-                msg: i18next.t("commentManager.deleteSuccess"),
+                msg: i18next.t("game-maps:commentManager.deleteSuccess"),
                 type: "success"
             });
         } catch (error) {
             this.bus.emit(EVENTS.TOAST_SHOW, {
-                msg: error.message || i18next.t("commentManager.deleteError"),
+                msg: error.message || i18next.t("game-maps:commentManager.deleteError"),
                 type: "danger"
             });
         }
@@ -256,7 +256,7 @@ export class CommentManager {
 
                     this.#showErrorState();
                     this.bus.emit(EVENTS.TOAST_SHOW, {
-                        msg: error.message || i18next.t("commentManager.loadError"),
+                        msg: error.message || i18next.t("game-maps:commentManager.loadError"),
                         type: "danger"
                     });
                 }
@@ -269,7 +269,7 @@ export class CommentManager {
     #showLoadingState() {
         const spinner = createElement("div", { class: "spinner-border spinner-border-sm" });
         const text = createElement("span", { class: "ms-2" });
-        text.innerText = i18next.t("commentManager.loadingComments");
+        text.innerText = i18next.t("game-maps:commentManager.loadingComments");
 
         const loadingContainer = createElement("div", {
             id: "commentsLoader",
@@ -302,7 +302,7 @@ export class CommentManager {
 
         if (this.currentPage == 0) {
             const errorText = createElement("p", { class: "text-danger text-center my-4" });
-            errorText.innerText = i18next.t("commentManager.loadError");
+            errorText.innerText = i18next.t("game-maps:commentManager.loadError");
             this.elements.commentsList.replaceChildren(errorText);
         } else {
             this.elements.commentsList.appendChild(this.sentinel);
@@ -322,7 +322,7 @@ export class CommentManager {
         } else {
             if (this.currentPage == 1) {
                 const emptyText = createElement("p", { class: "text-center opacity-50 my-4" });
-                emptyText.innerText = i18next.t("commentManager.noComments");
+                emptyText.innerText = i18next.t("game-maps:commentManager.noComments");
                 fragment.appendChild(emptyText);
             }
         }
@@ -344,7 +344,7 @@ export class CommentManager {
 
     #createCommentItem(comment) {
         const author = createElement("strong");
-        author.innerText = comment.username || i18next.t("commentManager.unknownAuthor");
+        author.innerText = comment.username || i18next.t("game-maps:commentManager.unknownAuthor");
 
         const dateSpan = createElement("span", { class: "small opacity-75" });
         dateSpan.innerText = formatDateTime(comment.created_at);
@@ -421,7 +421,7 @@ export class CommentManager {
                         this.bus.emit(EVENTS.COMMENT_UPDATED);
 
                         this.bus.emit(EVENTS.TOAST_SHOW, {
-                            msg: isEditMode ? i18next.t("commentManager.updateSuccess") : i18next.t("commentManager.saveSuccess"),
+                            msg: isEditMode ? i18next.t("game-maps:commentManager.updateSuccess") : i18next.t("game-maps:commentManager.saveSuccess"),
                             type: "success"
                         });
                     } else {
@@ -429,19 +429,19 @@ export class CommentManager {
                         this.#showUserCommentSection();
 
                         this.bus.emit(EVENTS.TOAST_SHOW, {
-                            msg: i18next.t("commentManager.noChanges"),
+                            msg: i18next.t("game-maps:commentManager.noChanges"),
                             type: "info"
                         });
                     }
                 } catch (error) {
                     this.bus.emit(EVENTS.TOAST_SHOW, {
-                        msg: error.message || i18next.t("commentManager.sendError"),
+                        msg: error.message || i18next.t("game-maps:commentManager.sendError"),
                         type: "danger"
                     });
                 }
             } else {
                 this.bus.emit(EVENTS.TOAST_SHOW, {
-                    msg: i18next.t("commentManager.rateAtLeastOneStar"),
+                    msg: i18next.t("game-maps:commentManager.rateAtLeastOneStar"),
                     type: "danger"
                 });
             }
@@ -450,7 +450,7 @@ export class CommentManager {
             this.elements.cancelCommentEditBtn.disabled = false;
         } else {
             this.bus.emit(EVENTS.TOAST_SHOW, {
-                msg: i18next.t("commentManager.saveInProgress"),
+                msg: i18next.t("game-maps:commentManager.saveInProgress"),
                 type: "danger"
             });
         }

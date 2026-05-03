@@ -33,7 +33,9 @@
             "tooShort": "A pálya leírásának legalább 3 karakter hosszúnak kell lennie!",
             "empty": "A pálya leírása nem lehet üres!"
         },
-        "atleastTitleOrDescription": "Vagy az új címet, vagy az új leírást kötelező megadni!"
+        "atleastTitleOrDescription": "Vagy az új címet, vagy az új leírást kötelező megadni!",
+        "noMaps": "A pályának nincsenek térképei!",
+        "noPoints": "A pályának nincsenek pontjai!"
     },
     "map": {
         "invalidId": "Helytelen térkép ID!",
@@ -118,6 +120,12 @@
         "fetchRandomPointFailed": "A véletlenszerű pont lekérése nem sikerült!",
         "fetchMapsFailed": "A térképek lekérése nem sikerült!",
         "checkSessionFailed": "Az aktív munkamenet ellenőrzése nem sikerült!",
-        "createSessionFailed": "A játékmenet létrehozása nem sikerült!"
+        "createSessionFailed": "A játékmenet létrehozása nem sikerült!",
+        "noActivePoint": "Nincs aktív pont a munkamenetben!",
+        "invalidGuessCoords": "Érvénytelen tipp koordináták!",
+        "noActiveRound": "Nincs aktív kör!",
+        "noPointsAvailable": "Nincs elérhető pont!",
+        "invalidRounds": "Érvénytelen körök száma! (1–100)",
+        "invalidRoundTime": "Érvénytelen körönkénti idő! (1–300 másodperc)"
     }
 }

@@ -41,7 +41,7 @@ export class DataManager {
             });
         } catch (error) {
             this.eventBus.emit(EVENTS.TOAST_SHOW, {
-                msg: error.message || i18next.t("dataManager.loadError"),
+                msg: error.message || i18next.t("game-maps:dataManager.loadError"),
                 type: "danger"
             });
         }

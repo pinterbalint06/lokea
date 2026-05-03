@@ -72,7 +72,7 @@ export class CoverImageManager {
             this.isUpdatingCover = true;
             const randomToastId = Math.random().toString();
             this.bus.emit(EVENTS.TOAST_SHOW, {
-                msg: i18next.t("coverImageManager.updatingCover"),
+                msg: i18next.t("game-maps:coverImageManager.updatingCover"),
                 type: "info",
                 id: randomToastId,
                 autohide: false,
@@ -97,11 +97,11 @@ export class CoverImageManager {
                 await this.#loadImage(imageUrl);
                 URL.revokeObjectURL(imageUrl);
 
-                this.bus.emit(EVENTS.TOAST_SHOW, { msg: i18next.t("coverImageManager.updateSuccess") });
+                this.bus.emit(EVENTS.TOAST_SHOW, { msg: i18next.t("game-maps:coverImageManager.updateSuccess") });
             } catch (error) {
                 if (error.name != "AbortError") {
                     this.bus.emit(EVENTS.TOAST_SHOW, {
-                        msg: error.message || i18next.t("coverImageManager.updateError"),
+                        msg: error.message || i18next.t("game-maps:coverImageManager.updateError"),
                         type: "danger"
                     });
                 }
@@ -112,7 +112,7 @@ export class CoverImageManager {
             }
         } else {
             this.bus.emit(EVENTS.TOAST_SHOW, {
-                msg: i18next.t("coverImageManager.updateInProgressWarning"),
+                msg: i18next.t("game-maps:coverImageManager.updateInProgressWarning"),
                 type: "danger"
             });
         }
@@ -123,7 +123,7 @@ export class CoverImageManager {
             this.isUpdatingCover = true;
             const randomToastId = Math.random().toString();
             this.bus.emit(EVENTS.TOAST_SHOW, {
-                msg: i18next.t("coverImageManager.deletingCover"),
+                msg: i18next.t("game-maps:coverImageManager.deletingCover"),
                 type: "info",
                 id: randomToastId,
                 autohide: false,
@@ -137,10 +137,10 @@ export class CoverImageManager {
 
                 this.#loadCoverImage(gameMapId);
 
-                this.bus.emit(EVENTS.TOAST_SHOW, { msg: i18next.t("coverImageManager.deleteSuccess"), type: "success" });
+                this.bus.emit(EVENTS.TOAST_SHOW, { msg: i18next.t("game-maps:coverImageManager.deleteSuccess"), type: "success" });
             } catch (error) {
                 this.bus.emit(EVENTS.TOAST_SHOW, {
-                    msg: error.message || i18next.t("coverImageManager.deleteError"),
+                    msg: error.message || i18next.t("game-maps:coverImageManager.deleteError"),
                     type: "danger"
                 });
             } finally {
@@ -149,7 +149,7 @@ export class CoverImageManager {
             }
         } else {
             this.bus.emit(EVENTS.TOAST_SHOW, {
-                msg: i18next.t("coverImageManager.modifyInProgressWarning"),
+                msg: i18next.t("game-maps:coverImageManager.modifyInProgressWarning"),
                 type: "danger"
             });
         }

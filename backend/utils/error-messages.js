@@ -40,8 +40,8 @@ const ERRORS = {
 
         ATLEAST_TITLE_OR_DESCRIPTION: "errors:gamemap.atleastTitleOrDescription",
 
-        NO_MAPS: "A pályának nincsenek térképei!",
-        NO_POINTS: "A pályának nincsenek pontjai!"
+        NO_MAPS: "errors:gamemap.noMaps",
+        NO_POINTS: "errors:gamemap.noPoints"
     },
 
     MAP: {
@@ -152,19 +152,12 @@ const ERRORS = {
         FETCH_MAPS_FAILED: "errors:gameflow.fetchMapsFailed",
         CHECK_SESSION_FAILED: "errors:gameflow.checkSessionFailed",
         CREATE_SESSION_FAILED: "errors:gameflow.createSessionFailed",
-        NO_ACTIVE_POINT: "Nincs aktív pont a munkamenetben!",
-        INVALID_GUESS_COORDS: "Érvénytelen tipp koordináták!",
-        NO_ACTIVE_ROUND: "Nincs aktív kör!",
-        NO_POINTS_AVAILABLE: "Nincs elérhető pont!",
-        INVALID_ROUNDS: "Érvénytelen körök száma! (1–100)",
-        INVALID_ROUND_TIME: "Érvénytelen körönkénti idő! (1–300 másodperc)",
-
-        NO_ACTIVE_POINT: "Nincs aktív pont a munkamenetben!",
-        INVALID_GUESS_COORDS: "Érvénytelen tipp koordináták!",
-        NO_ACTIVE_ROUND: "Nincs aktív kör!",
-        NO_POINTS_AVAILABLE: "Nincs elérhető pont!",
-        INVALID_ROUNDS: "Érvénytelen körök száma! (1–100)",
-        INVALID_ROUND_TIME: "Érvénytelen körönkénti idő! (1–300 másodperc)"
+        NO_ACTIVE_POINT: "errors:gameflow.noActivePoint",
+        INVALID_GUESS_COORDS: "errors:gameflow.invalidGuessCoords",
+        NO_ACTIVE_ROUND: "errors:gameflow.noActiveRound",
+        NO_POINTS_AVAILABLE: "errors:gameflow.noPointsAvailable",
+        INVALID_ROUNDS: "errors:gameflow.invalidRounds",
+        INVALID_ROUND_TIME: "errors:gameflow.invalidRoundTime"
     }
 };
 
