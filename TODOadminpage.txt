@@ -1,1 +1,5 @@
 -a match chart nincs kész!
+
+
+-main 
+getlanguage áttétele sima api

@@ -16,7 +16,7 @@ if (!process.env.EMAIL_USER || !process.env.EMAIL_PASS) {
 
 //email texts
 
-const sendWelcomeEmail = async (userEmail, username) => {
+const sendWelcomeEmail = (userEmail, username) => {
     if (!transporter) throw new Error("E-mail küldés sikertelen: Hiányzó környezeti változók!");
     const mailOptions = {
         from: `"Lokea Csapata" <${process.env.EMAIL_USER}>`,
@@ -34,12 +34,10 @@ const sendWelcomeEmail = async (userEmail, username) => {
             </div>`
     };
 
-    //törlő link, ha esetleg más csinálta a fiókot az ő emailjével
-
-    return transporter.sendMail(mailOptions);
+    transporter.sendMail(mailOptions).catch(e => console.error(e));
 };
 
-const sendDeleteEmail = async (userEmail, username) => {
+const sendDeleteEmail = (userEmail, username) => {
     if (!transporter) throw new Error("E-mail küldés sikertelen: Hiányzó környezeti változók!");
     const mailOptions = {
         from: `"Lokea Csapata" <${process.env.EMAIL_USER}>`,
@@ -53,12 +51,10 @@ const sendDeleteEmail = async (userEmail, username) => {
             </div>`
     };
 
-    //visszavonó link, amivel meggondolhatja magát 
-
-    return transporter.sendMail(mailOptions);
+    transporter.sendMail(mailOptions).catch(e => console.error(e));
 };
 
-const sendChangeEmail = async (userEmail, username) => {
+const sendChangeEmail = (userEmail, username) => {
     if (!transporter) throw new Error("E-mail küldés sikertelen: Hiányzó környezeti változók!");
     const mailOptions = {
         from: `"Lokea Csapata" <${process.env.EMAIL_USER}>`,
@@ -78,12 +74,10 @@ const sendChangeEmail = async (userEmail, username) => {
             </div>`
     };
 
-    //ha más csinálta a változtatásokat, valami visszavonás?
-
-    return transporter.sendMail(mailOptions);
+    transporter.sendMail(mailOptions).catch(e => console.error(e));
 };
 
-const sendPasswordChangeEmail = async (userEmail, username) => {
+const sendPasswordChangeEmail = (userEmail, username) => {
     if (!transporter) throw new Error("E-mail küldés sikertelen: Hiányzó környezeti változók!");
     const mailOptions = {
         from: `"Lokea Csapata" <${process.env.EMAIL_USER}>`,
@@ -103,9 +97,7 @@ const sendPasswordChangeEmail = async (userEmail, username) => {
             </div>`
     };
 
-    //ha más csinálta a változtatásokat, valami visszavonás?
-
-    return transporter.sendMail(mailOptions);
+    transporter.sendMail(mailOptions).catch(e => console.error(e));
 };
 
 module.exports = {

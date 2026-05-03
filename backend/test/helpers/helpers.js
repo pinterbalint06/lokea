@@ -1,9 +1,7 @@
 const { checkAuth } = require("#middlewares/auth.js");
 const { invalidIds, invalidIdsWithNulls } = require("#testhelpers/test-data.js");
 const ERRORS = require("#utils/error-messages.js");
-
-const database = require("#sql/database.js");
-const { mockConnection } = database;
+const { mockConnection } = require('#sql/database.js')
 
 function testRequiresAuth(requestCallback) {
     it("Should respond with 401 if the user is not authenticated", async () => {

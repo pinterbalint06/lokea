@@ -188,5 +188,10 @@
         "update_error": "Hiba a frissítés során",
         "user_update_success": "Sikeres felhasználófrissítés!",
         "validation_language_invalid": "Érvénytelen nyelv!"
+    },
+    "testDisplay": {
+        "title": "Válassz a tesztelési nézetek közül:",
+        "mapViewer": "Teszt térképnézegető",
+        "equiViewer": "Teszt 360 fokos képnézegető"
     }
 }

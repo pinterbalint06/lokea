@@ -4,7 +4,7 @@
 <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Főoldal</title>
+    <title data-i18n="title">Főoldal</title>
     <!--!Bootstrap-->
     <link rel="stylesheet" href="../bootstrap/css/bootstrap.min.css" />
     <!--?Popper: dropdowns, popovers, tooltips-->
@@ -22,16 +22,17 @@
         <div class="container">
             <nav class="nav navbar flex-nowrap justify-content-between align-items-center">
                 <div class="col-4 justify-content-start" id="onlineAndIP">
-                    <p>IP: lokea.com</p>
-                    <p><span class="online-dot"></span>Online játékosok: <span id="onlinePlayerCounter">1</span></p>
+                    <p data-i18n="nav.ip">IP: lokea.com</p>
+                    <p><span class="online-dot"></span><span data-i18n="nav.onlinePlayers">Online játékosok:
+                        </span><span id="onlinePlayerCounter">1</span></p>
                 </div>
                 <div class="col-4 d-flex flex-column align-items-center">
                     <img src="../images/lokea.webp" alt="" class="img-fluid mainLogo">
-                    <p class="text-center logoTitle">Légy bárhol</p>
+                    <p class="text-center logoTitle" data-i18n="nav.logoTitle">Légy bárhol</p>
                 </div>
                 <div class="col-4 d-flex justify-content-end" id="LogOrDropdown">
-                    <button type="button" data-bs-toggle="modal" data-bs-target="#modalRegLog"
-                        class="btn btn-info">Bejelentkezés</button>
+                    <button type="button" data-bs-toggle="modal" data-bs-target="#modalRegLog" class="btn btn-info"
+                        data-i18n="nav.login">Bejelentkezés</button>
                 </div>
             </nav>
         </div>
@@ -42,7 +43,7 @@
                 <div class="row">
                     <div class="col-12 d-flex justify-content-center mt-5">
                         <div class="w-25 text-wrap text-center">
-                            <h1 class="h1">Legyél ott ahol nem tudsz! Lokea.</h1>
+                            <h1 class="h1" data-i18n="hero.title">Legyél ott ahol nem tudsz! Lokea.</h1>
                         </div>
                     </div>
                 </div>
@@ -265,65 +266,46 @@
             </div>
         </section>
         <div class="container">
-            <div class="row">
-                <div class="col-12 col-sm-6 col-lg-3">
-                    <div class="gamemode pinpoint">
-                        <img src="../images/gamemodes/pp-google.png" alt="">
-                        <div class="gamemode-text">
-                            <h5>Pinpoint Google térképen</h5>
-                            <p class="description">Találd meg a pontos helyszínt a Google hivatalos utcaképének
-                                segítségével!</p>
-                        </div>
-                    </div>
+            <div class="row my-5 align-items-center">
+                <div class="col-12 col-md-6 text-center text-md-start mb-4 mb-md-0">
+                    <h2 class="fw-bold mb-3" data-i18n="hero.teaserTitle">Készen állsz a felfedezésre?</h2>
+                    <p class="lead mb-4" data-i18n="hero.teaserText">Próbáld ki magad a hivatalos és a közösség által
+                        készített egyedi térképeken! Találd meg a pontos helyszínt, és versenyezz a legjobbakkal.</p>
+                    <span class="d-inline-block" tabindex="0" data-bs-toggle="tooltip" data-bs-placement="top"
+                        title="A folytatáshoz bejelentkezés szükséges!" data-i18n-title="hero.tooltipLogin"
+                        id="playButtonWrapper">
+                        <a href="/game-maps" id="playButton"
+                            class="btn btn-info btn-lg px-5 py-3 rounded-pill fs-4 shadow text-white disabled"
+                            tabindex="-1" data-i18n="hero.playButton">
+                            Pályaválasztás
+                        </a>
+                    </span>
                 </div>
-                <div class="col-12 col-sm-6 col-lg-3">
-                    <div class="gamemode pinpoint">
-                        <img src="../images/gamemodes/pp-own.png" alt="">
-                        <div class="gamemode-text">
-                            <h5>Pinpoint felhasználók térképein</h5>
-                            <p class="description">Találd meg a pontos helyszínt a közösség által készített egyedi
-                                térképeken!</p>
-                        </div>
-                    </div>
-                </div>
-                <div class="col-12 col-sm-6 col-lg-3">
-                    <div class="gamemode guess-the-country">
-                        <img src="../images/gamemodes/gc-google.png" alt="">
-                        <div class="gamemode-text">
-                            <h5>Guess the country a Google térképen</h5>
-                            <p class="description">Találd ki a pontos országot a Google hivatalos utcaképének
-                                segítségével!</p>
-                        </div>
-                    </div>
-                </div>
-                <div class="col-12 col-sm-6 col-lg-3">
-                    <div class="gamemode guess-the-country">
-                        <img src="../images/gamemodes/gc-own.png" alt="">
-                        <div class="gamemode-text">
-                            <h5>Guess the country a felhasználók térképein</h5>
-                            <p class="description">Találd ki a pontos országot a közösség által készített egyedi
-                                térképeken!</p>
-                        </div>
-                    </div>
+                <div class="col-12 col-md-6 text-center">
+                    <img src="../images/gamemodes/pp-own.png" alt="Kedvcsináló kép" class="img-fluid"
+                        style="max-height: 300px;">
                 </div>
             </div>
             <hr class="m-3">
             <div class="row mb-4">
                 <div class="col-12">
-                    <h3 class="text-center mb-5">Egyedi térképek, amit a felhasználók hoztak létre</h3>
+                    <h3 class="text-center mb-5" data-i18n="customMaps.sectionTitle">Egyedi térképek, amit a
+                        felhasználók hoztak létre</h3>
                     <div class="container">
                         <div class="row">
                             <div class="col-12 col-sm-4 customMaps">
                                 <div
                                     class="border-2 border-black rounded-5 d-flex flex-column justify-content-between overflow-hidden customMap">
-                                    <p class="text-center py-2 m-0 customMapTitle">Főcim focim</p>
+                                    <p class="text-center py-2 m-0 customMapTitle"
+                                        data-i18n="customMaps.mapTitlePlaceholder">Főcim focim</p>
                                     <div class="d-flex justify-content-between px-2 customMapRatings">
                                         <div>
-                                            <p>Csillag 4.0</p>
-                                            <p style="font-size: 10px;">(400 értékelés)</p>
+                                            <p><span data-i18n="customMaps.rating">Csillag</span> 4.0</p>
+                                            <p style="font-size: 10px;">(400 <span
+                                                    data-i18n="customMaps.ratingsCount">értékelés</span>)</p>
                                         </div>
                                         <div>
-                                            <p>Játékok 10k+</p>
+                                            <p><span data-i18n="customMaps.plays">Játékok</span> 10k+</p>
                                         </div>
                                     </div>
                                 </div>
@@ -331,14 +313,16 @@
                             <div class="col-12 col-sm-4 customMaps">
                                 <div
                                     class="border-2 border-black rounded-5 d-flex flex-column justify-content-between overflow-hidden customMap">
-                                    <p class="text-center py-2 m-0 customMapTitle">Főcim focim</p>
+                                    <p class="text-center py-2 m-0 customMapTitle"
+                                        data-i18n="customMaps.mapTitlePlaceholder">Főcim focim</p>
                                     <div class="d-flex justify-content-between px-2 customMapRatings">
                                         <div>
-                                            <p>Csillag 4.0</p>
-                                            <p style="font-size: 10px;">(400 értékelés)</p>
+                                            <p><span data-i18n="customMaps.rating">Csillag</span> 4.0</p>
+                                            <p style="font-size: 10px;">(400 <span
+                                                    data-i18n="customMaps.ratingsCount">értékelés</span>)</p>
                                         </div>
                                         <div>
-                                            <p>Játékok 10k+</p>
+                                            <p><span data-i18n="customMaps.plays">Játékok</span> 10k+</p>
                                         </div>
                                     </div>
                                 </div>
@@ -346,14 +330,16 @@
                             <div class="col-12 col-sm-4 customMaps">
                                 <div
                                     class="border-2 border-black rounded-5 d-flex flex-column justify-content-between overflow-hidden customMap">
-                                    <p class="text-center py-2 m-0 customMapTitle">Főcim focim</p>
+                                    <p class="text-center py-2 m-0 customMapTitle"
+                                        data-i18n="customMaps.mapTitlePlaceholder">Főcim focim</p>
                                     <div class="d-flex justify-content-between px-2 customMapRatings">
                                         <div>
-                                            <p>Csillag 4.0</p>
-                                            <p style="font-size: 10px;">(400 értékelés)</p>
+                                            <p><span data-i18n="customMaps.rating">Csillag</span> 4.0</p>
+                                            <p style="font-size: 10px;">(400 <span
+                                                    data-i18n="customMaps.ratingsCount">értékelés</span>)</p>
                                         </div>
                                         <div>
-                                            <p>Játékok 10k+</p>
+                                            <p><span data-i18n="customMaps.plays">Játékok</span> 10k+</p>
                                         </div>
                                     </div>
                                 </div>
@@ -365,34 +351,38 @@
             <div class="row" id="comparisionLokea">
                 <hr class="m-3">
                 <div class="col-12">
-                    <h3 class="text-center mb-5">Miért jobb a lokea?</h3>
+                    <h3 class="text-center mb-5" data-i18n="comparison.sectionTitle">Miért jobb a lokea?</h3>
                     <div class="comparison-container text-center">
                         <div class="comparison-header row g-0 d-none d-sm-flex">
-                            <div class="col-sm-2 header-item">Platform</div>
-                            <div class="col-sm-2 header-item">Street View</div>
-                            <div class="col-sm-2 header-item">Multiplayer</div>
-                            <div class="col-sm-2 header-item">Bajnokságok</div>
-                            <div class="col-sm-2 header-item">Saját térképek</div>
-                            <div class="col-sm-2 header-item">Ingyenes</div>
+                            <div class="col-sm-2 header-item" data-i18n="comparison.platform">Platform</div>
+                            <div class="col-sm-2 header-item" data-i18n="comparison.streetView">Street View</div>
+                            <div class="col-sm-2 header-item" data-i18n="comparison.multiplayer">Multiplayer</div>
+                            <div class="col-sm-2 header-item" data-i18n="comparison.championships">Bajnokságok</div>
+                            <div class="col-sm-2 header-item" data-i18n="comparison.customMaps">Saját térképek</div>
+                            <div class="col-sm-2 header-item" data-i18n="comparison.free">Ingyenes</div>
                         </div>
 
                         <div class="comparison-row row g-0">
                             <div class="col-sm-2 cell platform-logo">
                                 <img src="../images/lokea.webp" alt="Saját">
                             </div>
-                            <div class="col-sm-2 cell" data-label="Street View:">
-                                <img src="../images/icons/circle-checkmark.png">
-                            </div>
-                            <div class="col-sm-2 cell" data-label="Multiplayer:">
-                                <img src="../images/icons/circle-checkmark.png">
-                            </div>
-                            <div class="col-sm-2 cell" data-label="Bajnokságok:">
+                            <div class="col-sm-2 cell" data-label="Street View:"
+                                data-i18n-label="comparison.streetView">
                                 <img src="../images/icons/circle-x.png">
                             </div>
-                            <div class="col-sm-2 cell" data-label="Saját térképek:">
+                            <div class="col-sm-2 cell" data-label="Multiplayer:"
+                                data-i18n-label="comparison.multiplayer">
+                                <img src="../images/icons/circle-x.png">
+                            </div>
+                            <div class="col-sm-2 cell" data-label="Bajnokságok:"
+                                data-i18n-label="comparison.championships">
+                                <img src="../images/icons/circle-x.png">
+                            </div>
+                            <div class="col-sm-2 cell" data-label="Saját térképek:"
+                                data-i18n-label="comparison.customMaps">
                                 <img src="../images/icons/circle-checkmark.png">
                             </div>
-                            <div class="col-sm-2 cell" data-label="Ingyenes:">
+                            <div class="col-sm-2 cell" data-label="Ingyenes:" data-i18n-label="comparison.free">
                                 <img src="../images/icons/circle-checkmark.png">
                             </div>
                         </div>
@@ -401,19 +391,23 @@
                             <div class="col-sm-2 cell platform-logo">
                                 <img src="../images/geoguessr-logo.png" alt="Geoguessr">
                             </div>
-                            <div class="col-sm-2 cell" data-label="Street View:">
+                            <div class="col-sm-2 cell" data-label="Street View:"
+                                data-i18n-label="comparison.streetView">
                                 <img src="../images/icons/circle-checkmark.png">
                             </div>
-                            <div class="col-sm-2 cell" data-label="Multiplayer:">
+                            <div class="col-sm-2 cell" data-label="Multiplayer:"
+                                data-i18n-label="comparison.multiplayer">
                                 <img src="../images/icons/circle-checkmark.png">
                             </div>
-                            <div class="col-sm-2 cell" data-label="Bajnokságok:">
+                            <div class="col-sm-2 cell" data-label="Bajnokságok:"
+                                data-i18n-label="comparison.championships">
                                 <img src="../images/icons/circle-checkmark.png">
                             </div>
-                            <div class="col-sm-2 cell" data-label="Saját térképek:">
+                            <div class="col-sm-2 cell" data-label="Saját térképek:"
+                                data-i18n-label="comparison.customMaps">
                                 <img src="../images/icons/circle-x.png">
                             </div>
-                            <div class="col-sm-2 cell" data-label="Ingyenes:">
+                            <div class="col-sm-2 cell" data-label="Ingyenes:" data-i18n-label="comparison.free">
                                 <img src="../images/icons/circle-x.png">
                             </div>
                         </div>
@@ -422,6 +416,13 @@
             </div>
         </div>
     </main>
+    <footer>
+        <div>
+            <p data-i18n="footer.description">Lokea - Lokalizációs készségfejlesztő alkalmazás</p>
+            <p data-i18n="footer.rights">Minden jog fenntartva!</p>
+            <p data-i18n="footer.copyright">Copyright © 2025-26</p>
+        </div>
+    </footer>
     <div class="modal fade" id="modalRegLog" tabindex="-1" aria-hidden="true">
         <div class="modal-dialog modal-md modalRegLog">
             <div class="modal-content">
@@ -430,26 +431,29 @@
                         <div class="login-container" id="loginContainer">
                             <img src="../images/logo_o.webp" alt="" class="loge">
                         </div>
-                        <h5 class="h5 text-center" id="loginTitle">Bejelentkezés</h5>
+                        <h5 class="h5 text-center" id="loginTitle" data-i18n="loginModal.title">Bejelentkezés</h5>
                         <h6 class="h6 text-center" id="logText"></h6>
                     </div>
                     <form id="loginForm">
-                        <h6 class="h6">Jelentkezz be a játék folytatásához!</h6>
+                        <h6 class="h6" data-i18n="loginModal.prompt">Jelentkezz be a játék folytatásához!</h6>
                         <div class="input-container">
                             <input type="text" id="loginUser" placeholder=" " required>
-                            <label for="loginUser">Felhasználónév vagy e-mail</label>
+                            <label for="loginUser" data-i18n="loginModal.usernameLabel">Felhasználónév vagy
+                                e-mail</label>
                         </div>
                         <div class="input-container">
                             <input type="password" id="loginPass" placeholder=" " required>
-                            <label for="loginPass">Jelszó</label>
+                            <label for="loginPass" data-i18n="loginModal.passwordLabel">Jelszó</label>
                         </div>
                         <div>
                             <input type="checkbox" id="rememberMe">
-                            <label for="rememberMe">Emlékezz rám</label>
+                            <label for="rememberMe" data-i18n="loginModal.rememberMe">Emlékezz rám</label>
                         </div>
-                        <p class="text-center">Nincs még fiókod? <a href="/register_page">Regisztrálás</a></p>
+                        <p class="text-center"><span data-i18n="loginModal.registerPrompt">Nincs még fiókod? </span><a
+                                href="/register_page" data-i18n="loginModal.registerLink">Regisztrálás</a></p>
                         <div class="form-group mt-3 d-flex justify-content-evenly" id="buttons">
-                            <button type="submit" class="btn btn-primary" id="loginButton">Bejelentkezés</button>
+                            <button type="submit" class="btn btn-primary" id="loginButton"
+                                data-i18n="loginModal.loginButton">Bejelentkezés</button>
                         </div>
                     </form>
                 </div>
@@ -464,11 +468,11 @@
                     <ul class="nav nav-tabs nav-browser-tabs" id="settingsTab">
                         <li class="nav-item">
                             <button type="button" class="nav-link active" data-bs-toggle="tab"
-                                data-bs-target="#accountSettingsTab">Fiók</button>
+                                data-bs-target="#accountSettingsTab" data-i18n="settingsModal.accountTab">Fiók</button>
                         </li>
                         <li class="nav-item">
-                            <button type="button" class="nav-link" data-bs-toggle="tab"
-                                data-bs-target="#uiSettingsTab">Megjelenés</button>
+                            <button type="button" class="nav-link" data-bs-toggle="tab" data-bs-target="#uiSettingsTab"
+                                data-i18n="settingsModal.appearanceTab">Megjelenés</button>
                         </li>
                     </ul>
                     <button type="button" class="btn-close mb-2" data-bs-dismiss="modal"></button>
@@ -478,28 +482,31 @@
                     <div class="tab-content">
                         <div class="tab-pane fade show active" id="accountSettingsTab">
                             <div id="errorLocation" class="d-none"></div>
-                            <h5 class="section-title">Fiókbeállítások</h5>
+                            <h5 class="section-title" data-i18n="settingsModal.accountSettingsTitle">Fiókbeállítások
+                            </h5>
                             <div id="userData">
-                                <h3 class="text-center">Nem vagy bejelentkezve!</h3>
+                                <h3 class="text-center" data-i18n="settingsModal.notLoggedIn">Nem vagy bejelentkezve!
+                                </h3>
                             </div>
                         </div>
 
                         <div class="tab-pane fade" id="uiSettingsTab">
-                            <h5 class="section-title">UI beállítások</h5>
+                            <h5 class="section-title" data-i18n="settingsModal.uiSettingsTitle">UI beállítások</h5>
                             <div class="d-flex flex-column">
-                                <h6 class="subtitle">Nyelvválasztás</h6>
+                                <h6 class="subtitle" data-i18n="settingsModal.languageSelection">Nyelvválasztás</h6>
                                 <select name="lang" class="form-select" id="languageSelect">
-                                    <option value="hu" selected>Magyar</option>
-                                    <option value="en">English</option>
+                                    <option value="hu" selected data-i18n="settingsModal.hungarian">Magyar</option>
+                                    <option value="en" data-i18n="settingsModal.english">English</option>
                                 </select>
                             </div>
 
                             <div class="d-flex flex-column mt-5">
-                                <h6 class="subtitle">Megjelenés</h6>
+                                <h6 class="subtitle" data-i18n="settingsModal.appearanceTitle">Megjelenés</h6>
                                 <div
                                     class="form-check form-switch p-0 d-flex justify-content-between align-items-center">
-                                    <label class="form-check-label" for="darkMode">Éjszakai üzemmód (Dark
-                                        Mode)</label>
+                                    <label class="form-check-label" for="darkMode"
+                                        data-i18n="settingsModal.darkMode">Éjszakai
+                                        üzemmód (Dark Mode)</label>
                                     <input class="form-check-input ms-0" type="checkbox" id="darkMode">
                                 </div>
                             </div>
@@ -507,7 +514,8 @@
                     </div>
                 </div>
                 <div class="modal-footer border-0">
-                    <button class="btn btn-purple px-5 rounded-pill" id="settingsSave">Mentés</button>
+                    <button class="btn btn-purple px-5 rounded-pill" id="settingsSave"
+                        data-i18n="settingsModal.saveButton">Mentés</button>
                 </div>
             </div>
         </div>
