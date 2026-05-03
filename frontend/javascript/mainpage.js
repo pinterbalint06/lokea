@@ -54,7 +54,7 @@ async function isLogined() {
                 else {
                     body.setAttribute('data-bs-theme', 'light');
                 }
-                
+
             }
             else {
                 await initI18next('hu');
@@ -159,7 +159,7 @@ async function dropdownLetrehoz(link, nev, kep) {
     a.classList.add("d-block", "link-light", "text-decoration-none", "dropdown-toggle");
     let img = document.createElement('img');
     if (kep != null) {
-        img.src = await getProfilePicture(kep);
+        img.src = await getProfilePicture();
     }
     else {
         img.src = "../images/default.png";
@@ -297,7 +297,7 @@ async function showSettingsModal() {
         pfp.src = "../images/default.png";
     }
     else {
-        objectURL = await getProfilePicture(data.filepath);
+        objectURL = await getProfilePicture(data.user_id);
         pfp.src = objectURL;
     }
     pfp.alt = "Profile picture";
@@ -585,9 +585,12 @@ async function jelszoValtoztat() {
 
 //profile picture things
 
-async function getProfilePicture(route) {
+async function getProfilePicture(userId = 'me') {
     try {
-        let response = await fetch(`/api/users/profile-picture?route=${route}`);
+        const endpoint = (userId === null || userId === undefined || userId === 'me')
+            ? '/api/users/me/profile-picture'
+            : `/api/users/${userId}/profile-picture`;
+        let response = await fetch(endpoint);
         if (!response.ok) {
             let data = await response.json().catch(() => ({}));
             throw new Error(extractError(data));

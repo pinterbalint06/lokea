@@ -206,7 +206,7 @@ async function editUserToModal(data) {
     let username = data.username;
     let email = data.email;
     let role = data.role;
-    let pfproute = data.filepath;
+    let pfproute = data.user_id;
 
     State.variables.tempPfp = null;
     State.variables.deleteLast = false;
@@ -311,7 +311,7 @@ async function viewUserToModal(data) {
     let username = data.username;
     let email = data.email;
     let role = data.role;
-    let pfproute = data.filepath;
+    let pfproute = data.user_id;
     let container = createHTMLelement('div', ["container-fluid"]);
 
     let row = createHTMLelement('div', ["row"]);
@@ -753,7 +753,7 @@ async function handleModalSaveClick() {
                         await uploadProfilePic(State.variables.tempPfp, State.currentData.user_id);
                     }
                 }
-                
+
                 let siker = await userUpdate(State.currentData.user_id, inInput.username, inInput.email, inInput.role);
                 if (siker) {
                     State.page = 1;

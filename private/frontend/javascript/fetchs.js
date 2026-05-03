@@ -95,9 +95,12 @@ export async function sortedUser(params) {
     }
 }
 
-export async function getProfilePicture(route) {
+export async function getProfilePicture(userId = 'me') {
     try {
-        let response = await fetch(`/api/users/profile-picture?route=${route}`);
+        const endpoint = (userId === null || userId === undefined || userId === 'me')
+            ? '/api/users/me/profile-picture'
+            : `/api/users/${userId}/profile-picture`;
+        let response = await fetch(endpoint);
         if (!response.ok) {
             let data = await response.json().catch(() => ({}));
             throw new Error(extractError(data));

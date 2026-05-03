@@ -187,5 +187,10 @@
         "update_error": "Error during update",
         "user_update_success": "User update successful!",
         "validation_language_invalid": "Invalid language!"
+    },
+    "testDisplay": {
+        "title": "Choose from the testing views:",
+        "mapViewer": "Test Map Viewer",
+        "equiViewer": "Test 360 Image Viewer"
     }
 }

@@ -263,4 +263,73 @@ describe('Settings API Tesztek (apiSettings.js)', () => {
             expect(res.text).toBe('Mocked sendFile');
         });
     });
+
+    describe('Végpont: GET /api/users/me/profile-picture', () => {
+        testRequiresAuth(() => request(app).get('/api/users/me/profile-picture'));
+
+        it('SIKER - 200, saját profilkép elküldve', async () => {
+            db.getUser.mockResolvedValue([{ filepath: 'kep.webp' }]);
+            const sendFileMock = jest.fn((path, opts, cb) => cb(null));
+            const sendFileMockApp = express();
+            sendFileMockApp.use(express.json());
+            sendFileMockApp.use(mockI18nMiddleware);
+            sendFileMockApp.use((req, res, next) => {
+                res.sendFile = sendFileMock;
+                next();
+            });
+            sendFileMockApp.use('/api', apiSettings);
+
+            await request(sendFileMockApp)
+                .get('/api/users/me/profile-picture')
+                .expect(200);
+
+            expect(sendFileMock).toHaveBeenCalledWith('kep.webp', { root: expect.any(String) }, expect.any(Function));
+        });
+
+        it('HIBA - 404, ha nincs profilkép', async () => {
+            db.getUser.mockResolvedValue([{ filepath: null }]);
+            const res = await request(app)
+                .get('/api/users/me/profile-picture')
+                .expect(404);
+            expect(res.body.error).toBe(enTranslations.apiSettings.getProfilePic.error);
+        });
+    });
+
+    describe('Végpont: GET /api/users/:id/profile-picture', () => {
+        testRequiresAuth(() => request(app).get('/api/users/123/profile-picture'));
+
+        it('HIBA - 400, ha az id nem érvényes', async () => {
+            const res = await request(app)
+                .get('/api/users/0/profile-picture')
+                .expect(400);
+            expect(res.body.errors.some(e => e.path === 'id')).toBe(true);
+        });
+
+        it('SIKER - 200, felhasználói profilkép elküldve', async () => {
+            db.getUser.mockResolvedValue([{ filepath: 'other.webp' }]);
+            const sendFileMock = jest.fn((path, opts, cb) => cb(null));
+            const sendFileMockApp = express();
+            sendFileMockApp.use(express.json());
+            sendFileMockApp.use(mockI18nMiddleware);
+            sendFileMockApp.use((req, res, next) => {
+                res.sendFile = sendFileMock;
+                next();
+            });
+            sendFileMockApp.use('/api', apiSettings);
+
+            await request(sendFileMockApp)
+                .get('/api/users/10/profile-picture')
+                .expect(200);
+
+            expect(sendFileMock).toHaveBeenCalledWith('other.webp', { root: expect.any(String) }, expect.any(Function));
+        });
+
+        it('HIBA - 404, ha nincs felhasználói profilkép', async () => {
+            db.getUser.mockResolvedValue([{ filepath: null }]);
+            const res = await request(app)
+                .get('/api/users/15/profile-picture')
+                .expect(404);
+            expect(res.body.error).toBe(enTranslations.apiSettings.getProfilePic.error);
+        });
+    });
 });

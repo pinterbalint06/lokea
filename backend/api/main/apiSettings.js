@@ -4,7 +4,7 @@ const database = require('#sql/main/databaseSettings.js');
 const databaseLogs = require('#sql/admin/databaseLogs.js');
 const auth = require('#middlewares/auth.js');
 const fs = require('fs/promises');
-const { body, query } = require("express-validator");
+const { body, query, param } = require("express-validator");
 const sharp = require('sharp');
 const { sendDeleteEmail, sendChangeEmail, sendPasswordChangeEmail } = require('#utils/mails.js');
 const { validate } = require('#utils/validate.js');
@@ -199,6 +199,48 @@ router.delete('/users/me/profile-picture', auth.checkAuth, async (request, respo
         response.status(500).json({ error: request.t('main:apiSettings.deleteProfilePic.error') });
     }
 })
+
+router.get('/users/me/profile-picture', auth.checkAuth, async (request, response) => {
+    try {
+        const users = await database.getUser(request.session.userid);
+        const userData = users[0];
+        if (!userData || !userData.filepath) {
+            return response.status(404).json({ error: request.t('main:apiSettings.getProfilePic.error') });
+        }
+
+        response.sendFile(userData.filepath, { root: UPLOAD_ROOT }, (err) => {
+            if (err) {
+                console.log("Hiba a fájl küldéskor:", err);
+                response.status(err.status || 404).send();
+            }
+        });
+    } catch (error) {
+        response.status(500).json({ error: request.t('main:apiSettings.getProfilePic.error') });
+    }
+})
+
+router.get('/users/:id/profile-picture', auth.checkAuth,
+    [
+        param('id').isInt({ min: 1 }).withMessage((value, { req }) => req.t('main:apiSettings.getProfilePic.validation_invalid_user_id'))
+    ], validate, async (request, response) => {
+        try {
+            const user_id = request.params.id;
+            const users = await database.getUser(user_id);
+            const userData = users[0];
+            if (!userData || !userData.filepath) {
+                return response.status(404).json({ error: request.t('main:apiSettings.getProfilePic.error') });
+            }
+
+            response.sendFile(userData.filepath, { root: UPLOAD_ROOT }, (err) => {
+                if (err) {
+                    console.log("Hiba a fájl küldéskor:", err);
+                    response.status(err.status || 404).send();
+                }
+            });
+        } catch (error) {
+            response.status(500).json({ error: request.t('main:apiSettings.getProfilePic.error') });
+        }
+    })
 
 router.get('/users/profile-picture', auth.checkAuth,
     [
