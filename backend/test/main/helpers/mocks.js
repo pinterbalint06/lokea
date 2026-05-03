@@ -33,7 +33,3 @@ jest.mock('bcrypt');
 jest.mock('#sql/main/databaseMain.js');
 jest.mock('#sql/main/databaseSettings.js');
 jest.mock('#sql/admin/databaseLogs.js');
-jest.mock('#middlewares/auth.js', () => {
-    const helpers = require('./helpers.js');
-    return { checkAuth: helpers.mockCheckAuth };
-});

@@ -54,16 +54,16 @@ async function isLogined() {
                 else {
                     body.setAttribute('data-bs-theme', 'light');
                 }
-                return loginStatus;
+                
+            }
+            else {
+                await initI18next('hu');
+                translatePage();
             }
         }
     } catch (error) {
         console.log(`hálózati hiba: ${error}`);
     }
-
-    await initI18next('hu');
-    translatePage();
-
     return loginStatus;
 }
 

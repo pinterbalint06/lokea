@@ -101,7 +101,7 @@ router.post("/auth/login",
         }
     });
 
-router.delete('/auth/logout', (request, response) => {
+router.delete('/auth/logout', auth.checkAuth, (request, response) => {
     request.session.destroy(error => {
         if (error) {
             response.status(500).json({ success: false, error: error });
@@ -130,22 +130,21 @@ router.get('/auth/status', async (request, response) => {
             }
         }
     } catch (error) {
-        response.status(500).json({ login, error: error.message });
+        response.status(500).json({ login, error: request.t('main:apiMain.status.error') });
     }
 })
 
 router.get('/users/language', auth.checkAuth, (request, response) => {
     try {
-        if (!request.session) {
+        if (!request.session.userLanguage) {
+            console.error("Session-language is missing");
             throw new Error();
-            console.error("Session is missing");
         }
         let language = request.session.userLanguage;
         response.status(200).json({ language: request.session.userLanguage });
     } catch (error) {
         response.status(500).json({ error: request.t('main:apiMain.language_fetch_error') });
     }
-
 });
 
 module.exports = router;

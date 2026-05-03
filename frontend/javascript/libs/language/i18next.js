@@ -1,5 +1,5 @@
-import i18next from 'https://cdn.jsdelivr.net/npm/i18next@23.7.16/+esm';
-import HttpBackend from 'https://cdn.jsdelivr.net/npm/i18next-http-backend@2.4.2/+esm';
+import i18next from '../i18next/i18next.js';
+import HttpBackend from '../i18next/httpBackend.js';
 
 export async function initI18next(nyelv = 'hu') {
     await i18next

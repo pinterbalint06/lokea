@@ -19,8 +19,8 @@ app.use('/api/admin', require('#admin/index.js'));
 describe('Admin API-tesztek', () => {
     suppressConsoleErrors();
 
-    describe('Végpont: PUT /getDashboardInfo', () => {
-        testRequiresAdminOrAuth(() => request(app).get('/api/admin/getDashboardInfo'));
+    describe('Végpont: GET /dashboard', () => {
+        testRequiresAdminOrAuth(() => request(app).get('/api/admin/dashboard'));
 
         it('SIKER - 200, dashboard info lekérése', async () => {
             db.getUserCount.mockResolvedValue(100);

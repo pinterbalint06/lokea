@@ -61,7 +61,8 @@ router.put('/users/me', auth.checkAuth,
             if (result == 1) {
                 if (language) request.session.userLanguage = language;
                 await databaseLogs.addLog(request.session.userid, 'User update');
-                await sendChangeEmail(email, username);
+                let users = await database.getUser(request.session.userid);
+                await sendChangeEmail(users[0].email, users[0].username);
                 response.status(200).json({ message: request.t('main:apiSettings.updateUser.success') });
             }
             else {

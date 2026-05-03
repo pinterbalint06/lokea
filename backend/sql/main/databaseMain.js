@@ -64,32 +64,6 @@ async function getUserNameProfile(user_id) {
     }
 }
 
-async function addLog(user_id, activity, victimid = null) {
-    let connection;
-    try {
-        connection = await pool.getConnection();
-        await connection.beginTransaction();
-        if (victimid == null) {
-            const query = 'INSERT INTO log (user_id, activity) VALUES (?, ?)';
-            await connection.execute(query, [user_id, activity]);
-        }
-        else {
-            const query = 'INSERT INTO log (user_id, victim_id, activity) VALUES (?, ?, ?)';
-            await connection.execute(query, [user_id, victimid, activity]);
-        }
-        await connection.commit();
-    } catch (error) {
-        if (connection) {
-            await connection.rollback();
-        }
-        console.error('DB hiba addLog: ', error);
-        throw error;
-    }
-    finally {
-        if (connection) connection.release();
-    }
-}
-
 async function getConnection() {
     return await pool.getConnection();
 }
@@ -98,6 +72,5 @@ module.exports = {
     newUser,
     getUserByUsername,
     getUserByEmail,
-    getUserNameProfile,
-    addLog
+    getUserNameProfile
 };
