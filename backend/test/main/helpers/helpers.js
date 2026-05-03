@@ -2,13 +2,6 @@ const { expectSuccessfulTransaction, expectRollback, suppressConsoleErrors } = r
 const enMainTranslations = require('#locales/en/main.json');
 const enAdminTranslations = require('#locales/en/admin.json');
 
-jest.mock('#utils/mails.js', () => ({
-    sendWelcomeEmail: jest.fn().mockResolvedValue(),
-    sendChangeEmail: jest.fn().mockResolvedValue(),
-    sendDeleteEmail: jest.fn().mockResolvedValue(),
-    sendPasswordChangeEmail: jest.fn().mockResolvedValue()
-}));
-
 const mockCheckAuth = (req, res, next) => {
     if (req.headers.unauthenticated) {
         return res.status(401).json({ message: "Bejelentkezés szükséges!" });

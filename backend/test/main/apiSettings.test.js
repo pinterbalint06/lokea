@@ -85,6 +85,7 @@ describe('Settings API Tesztek (apiSettings.js)', () => {
         it('SIKER - 200, adatok frissültek (affectedRows: 1)', async () => {
             db.updateUser.mockResolvedValue(1);
             dbLogs.addLog.mockResolvedValue();
+            db.getUser.mockResolvedValue([{ email: 'uj@email.hu', username: 'UjNev' }]);
 
             const res = await request(app)
                 .put('/api/users/me')

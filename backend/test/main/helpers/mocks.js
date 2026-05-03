@@ -33,3 +33,14 @@ jest.mock('bcrypt');
 jest.mock('#sql/main/databaseMain.js');
 jest.mock('#sql/main/databaseSettings.js');
 jest.mock('#sql/admin/databaseLogs.js');
+
+jest.mock('#middlewares/auth.js', () => ({
+    checkAuth: require('./helpers.js').mockCheckAuth
+}));
+
+jest.mock('#utils/mails.js', () => ({
+    sendWelcomeEmail: jest.fn().mockResolvedValue(),
+    sendChangeEmail: jest.fn().mockResolvedValue(),
+    sendDeleteEmail: jest.fn().mockResolvedValue(),
+    sendPasswordChangeEmail: jest.fn().mockResolvedValue()
+}));

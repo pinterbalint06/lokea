@@ -92,29 +92,4 @@ describe('Adatbázis Main Tesztek (databaseMain.js)', () => {
             });
         });
     });
-
-    describe('addLog()', () => {
-        it('SIKER - Log hozzáadása victim_id nélkül', async () => {
-            mockConn.execute.mockResolvedValue([{ affectedRows: 1 }]);
-
-            await databaseMain.addLog(1, 'Login');
-            expect(mockConn.execute).toHaveBeenCalledWith(expect.stringContaining('INSERT INTO log (user_id, activity)'), [1, 'Login']);
-            expect(mockConn.commit).toHaveBeenCalledTimes(1);
-        });
-
-        it('SIKER - Log hozzáadása victim_id megadásával', async () => {
-            mockConn.execute.mockResolvedValue([{ affectedRows: 1 }]);
-
-            await databaseMain.addLog(1, 'Modositas', 2);
-            expect(mockConn.execute).toHaveBeenCalledWith(expect.stringContaining('INSERT INTO log (user_id, victim_id, activity)'), [1, 2, 'Modositas']);
-            expect(mockConn.commit).toHaveBeenCalledTimes(1);
-        });
-
-        it('HIBA - Tranzakció visszavonása adatbázis hiba esetén', async () => {
-            mockConn.execute.mockRejectedValue(new Error('DB hiba'));
-
-            await expect(databaseMain.addLog(1, 'Login')).rejects.toThrow('DB hiba');
-            expectRollback(mockConn);
-        });
-    });
 });
