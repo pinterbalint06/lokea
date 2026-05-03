@@ -1,6 +1,6 @@
 import { MapViewer } from "../libs/viewer/MapViewer.js";
 import { EquirectangularViewer } from "../libs/viewer/EquirectangularViewer.js";
-import { formatSecondsToMinutes } from "./timer-conversion.js";
+import { formatSecondsToMinutes } from "../libs/utils/timer-conversion.js";
 import { degreeToRadian } from "../libs/math/mathUtils.js";
 import { loadPointEquirectangularLowThenHigh, loadMapImageLowThenHigh } from "../libs/network/progressiveImage.js";
 
@@ -209,6 +209,7 @@ function resetGameState(roundTime, currentRound) {
     document.getElementById('currentRound').textContent = currentRound + 1;
     document.getElementById("guessBtn").disabled = false;
     document.getElementById("pictureFullScreenBtn").disabled = false;
+    mapViewerEngine.resetZoom();
 }
 
 async function createPoint(roundTime) {
@@ -277,6 +278,7 @@ function stopRoundTimer() {
 async function sendGuess() {
     if (!guessSent) {
         guessSent = true;
+        mapViewerEngine.resetZoom();
         stopRoundTimer();
         document.getElementById("guessBtn").disabled = true;
         document.getElementById("pictureFullScreenBtn").disabled = true;

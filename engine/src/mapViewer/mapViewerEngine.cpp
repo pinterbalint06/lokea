@@ -950,3 +950,30 @@ void MapViewerEngine::changeLineColor(int lineId, uint8_t r, uint8_t g, uint8_t 
         emscripten_console_error("Line with given ID doesn't exist");
     }
 }
+
+void MapViewerEngine::resetZoom()
+{
+    if (isMapLoaded_ && mapPlane_ != nullptr)
+    {
+        zoomLevel_ = settings_.minZoom;
+
+        float aspectRatio = (float)width_ / (float)height_;
+        float off = (aspectRatio - 1.0f) * 0.5f;
+        float startU = -off;
+        float endU = 1.0f + off;
+
+        std::vector<Vertex> &mapPlaneVertices = mapPlane_->getVertices();
+        mapPlaneVertices[TOP_LEFT].u = startU;
+        mapPlaneVertices[TOP_LEFT].v = 0.0f;
+        mapPlaneVertices[TOP_RIGHT].u = endU;
+        mapPlaneVertices[TOP_RIGHT].v = 0.0f;
+        mapPlaneVertices[BOTTOM_LEFT].u = startU;
+        mapPlaneVertices[BOTTOM_LEFT].v = 1.0f;
+        mapPlaneVertices[BOTTOM_RIGHT].u = endU;
+        mapPlaneVertices[BOTTOM_RIGHT].v = 1.0f;
+
+        fitMapHorizontally();
+        mapPlane_->setUpOpenGL();
+        updateAllMarkers();
+    }
+}

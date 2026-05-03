@@ -183,7 +183,7 @@ async function dropdownLetrehoz(link, nev, kep) {
     })
     ul.appendChild(li);
     ul.appendChild(dropdownDivider());
-    ul.appendChild(dropdownLink('dropdown.myGames', null, null, "map"));
+    ul.appendChild(dropdownLink('dropdown.myGames', null, null, "map", "/game-maps?tab=mine"));
     ul.appendChild(dropdownDivider());
     if (link) {
         ul.appendChild(dropdownLink('dropdown.adminPanel', 'enterAdmin', null, "shield", link));

@@ -1,7 +1,8 @@
-import { formatSecondsToMinutes } from "./timer-conversion.js";
 import { createFavoriteButton } from "../libs/elements/favoriteButton.js";
 import { loadGameMapCoverImageLowThenHigh } from "../libs/network/progressiveImage.js";
 import { showToast } from "../libs/utils.js";
+import { ContinueGameModal } from "../libs/elements/ContinueGameModal.js";
+import { fetchActiveGameSession, finishGameSession } from "../libs/network/gameSession.js";
 
 window.addEventListener('pageshow', (event) => {
     if (event.persisted) window.location.reload();
@@ -11,6 +12,7 @@ var loadedURLs = [];
 var cardLoadedTimes = 0;
 var activeTab = 'all';
 var selectedButton = null;
+let continueGameModal = null;
 
 function clearLoadedURLs() {
     for (let url of loadedURLs) {
@@ -32,18 +34,7 @@ document.addEventListener("DOMContentLoaded", function () {
         selectedButton.disabled = true;
     }
 
-    let closeBtn = document.querySelector('.modal-close-btn');
-    const settingsForm = document.getElementById('settingsForm');
-    initRoundTimeRange();
-    closeBtn.addEventListener('click', () => {
-        document.getElementById('myModal').classList.remove('active');
-    });
-    settingsForm.addEventListener('submit', (event) => {
-        event.preventDefault();
-        let gameMapId = document.getElementById('myModal').dataset.gameMapId;
-        postGameId(gameMapId);
-    });
-    setupContinueGameModal();
+    continueGameModal = new ContinueGameModal();
     checkAndShowContinueModal();
     switchTab(initialTab);
 
@@ -87,7 +78,7 @@ function switchTab(tab) {
 
 async function loadGameMaps(sort, filter = null) {
     try {
-        let url = '/api/choose-game?sort=' + sort + '&offset=' + (cardLoadedTimes * 20);
+        let url = '/api/lobby?sort=' + sort + '&offset=' + (cardLoadedTimes * 20);
         if (filter) url += '&filter=' + filter;
         let gameMaps = await fetchURL(url);
         let gameMapsContainer = document.getElementById('game_maps_container');
@@ -127,7 +118,7 @@ function createCard(game_map) {
     game_maps_card.appendChild(game_maps_card_content);
     game_maps_card.appendChild(createFavoriteButton(game_map.game_maps_id, game_map.is_favorited));
     game_maps_card.addEventListener('click', function () {
-        createModal(game_map);
+        window.location.href = `/game-maps/${game_map.game_maps_id}`;
     });
     loadCoverImageLowThenHigh(game_maps_card, game_map.game_maps_id);
 
@@ -141,53 +132,6 @@ function createReview(rating) {
     return card_rating;
 }
 
-function createModal(game_map) {
-    let modal = document.getElementById('myModal');
-    let modalTitle = document.getElementById('modal-title');
-    let modalStars = document.getElementById('modal-stars');
-    let modalDesc = document.getElementById('modal-desc');
-    let maxUniqueRounds = document.getElementById('maxUniqueRounds');
-    const pointCount = Number(game_map.point_count);
-    const safePointCount = Number.isFinite(pointCount) && pointCount > 0 ? pointCount : 0;
-    modal.dataset.gameMapId = game_map.game_maps_id;
-    modal.classList.add('active');
-    modalTitle.innerText = game_map.title;
-    modalStars.style.setProperty('--rating', game_map.rating);
-    modalDesc.innerText = game_map.game_description;
-    maxUniqueRounds.innerText = safePointCount === 0 ? 'N/A' : `${safePointCount} pont`;
-}
-
-function initRoundTimeRange() {
-    let timeRange = document.getElementById("times");
-    updateTimeValue();
-    timeRange.addEventListener("input", updateTimeValue);
-}
-function updateTimeValue() {
-    let timeValue = document.getElementById("timesValue");
-    let timeRange = document.getElementById("times");
-    let seconds = Number.parseInt(timeRange.value);
-    timeValue.value = formatSecondsToMinutes(seconds);
-    timeValue.textContent = formatSecondsToMinutes(seconds);
-}
-
-
-async function postGameId(gamemapId) {
-    const formData = new FormData(document.getElementById('settingsForm'));
-    formData.append('gameMapId', gamemapId);
-    try {
-        const response = await fetch('/api/choose-game/session', {
-            method: 'POST',
-            body: formData
-        });
-        if (!response.ok) {
-            const errorData = await response.json();
-            throw new Error(errorData.message);
-        }
-        window.location.href = '/game';
-    } catch (error) {
-        showToast(document.getElementById('toastPlace'), 'A játék indítása nem sikerült: ' + error.message, 'danger', true);
-    }
-}
 
 async function fetchURL(url) {
     const response = await fetch(url);
@@ -237,64 +181,42 @@ function createNewGameCard() {
     return card;
 }
 
-var isCreating = false;
+let isCreating = false;
 
 async function handleCreateCardClick() {
-    if (isCreating) return;
-    isCreating = true;
-    try {
-        const response = await fetch('/api/game-maps', { method: 'POST' });
-        if (!response.ok) throw new Error();
-        const { gameMapID } = await response.json();
-        window.location.href = '/game-maps/' + gameMapID;
-    } catch {
-        isCreating = false;
-        showToast(document.getElementById('toastPlace'), 'Az új játék létrehozása nem sikerült.', 'danger', true);
+    if (!isCreating) {
+        isCreating = true;
+        try {
+            const response = await fetch('/api/game-maps', { method: 'POST' });
+            if (!response.ok) throw new Error();
+            const { gameMapID } = await response.json();
+            window.location.href = '/game-maps/' + gameMapID;
+        } catch {
+            isCreating = false;
+            showToast(document.getElementById('toastPlace'), 'Az új játék létrehozása nem sikerült.', 'danger', true);
+        }
     }
-}
-
-function setupContinueGameModal() {
-    const dismissButton = document.getElementById('dismissContinueBtn');
-    const continueButton = document.getElementById('continueGameBtn');
-
-    dismissButton.addEventListener('click', () => {
-        document.getElementById('continueGameModal').classList.remove('active');
-        finishStartedGameSession();
-    });
-
-    continueButton.addEventListener('click', () => {
-        window.location.href = '/game';
-    });
 }
 
 async function checkAndShowContinueModal() {
     try {
-        const activeGameSession = await fetchURL('/api/choose-game/session');
+        const activeGameSession = await fetchActiveGameSession();
         if (activeGameSession?.hasActiveSession) {
-            const continueModal = document.getElementById('continueGameModal');
-            const continueModalDescription = document.getElementById('continue-modal-desc');
-            if (activeGameSession.gameTitle) {
-                continueModalDescription.innerText = `Van egy futó játékod ezen a pályán: ${activeGameSession.gameTitle}. Szeretnéd folytatni?`;
-            }
-            continueModal.classList.add('active');
+            continueGameModal.show(
+                activeGameSession.gameTitle,
+                () => {
+                    window.location.href = '/game';
+                },
+                async () => {
+                    try {
+                        await finishGameSession();
+                    } catch {
+                        showToast(document.getElementById('toastPlace'), 'A játék befejezése nem sikerült.', 'danger', true);
+                    }
+                }
+            );
         }
     } catch {
-        
-    }
-}
 
-async function finishStartedGameSession() {
-    try {
-        const response = await fetch('/api/game/session', {
-            method: 'DELETE',
-            headers: {
-                'Content-Type': 'application/json'
-            }
-        });
-        if (!response.ok) {
-            throw new Error(response.statusText);
-        }
-    } catch {
-        showToast(document.getElementById('toastPlace'), 'A játék befejezése nem sikerült.', 'danger', true);
     }
 }
