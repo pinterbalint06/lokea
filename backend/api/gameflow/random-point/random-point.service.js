@@ -1,5 +1,6 @@
 const randomPointQueries = require("#gameflow/random-point/random-point.queries.js");
 const AppError = require("#utils/app-error.js");
+const ERRORS = require("#utils/error-messages.js");
 const { COUNTDOWN_SECONDS } = require("../shared/gameflow.utils.js");
 
 async function resolveCurrentPoint(gameMapId, sessionId) {
@@ -46,7 +47,7 @@ function buildPointObjects(point, timing) {
 async function getRandomPoint(sessionId, game) {
     const { point, cycleIncremented } = await resolveCurrentPoint(game.gameMapId, sessionId);
     if (!point) {
-        throw new AppError("No points available", 500);
+        throw new AppError(ERRORS.GAMEFLOW.NO_POINTS_AVAILABLE, 500);
     }
 
     await randomPointQueries.setCurrentPoint(sessionId, point.point_id);

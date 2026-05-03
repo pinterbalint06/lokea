@@ -78,7 +78,7 @@ function switchTab(tab) {
 
 async function loadGameMaps(sort, filter = null) {
     try {
-        let url = '/api/choose-game?sort=' + sort + '&offset=' + (cardLoadedTimes * 20);
+        let url = '/api/lobby?sort=' + sort + '&offset=' + (cardLoadedTimes * 20);
         if (filter) url += '&filter=' + filter;
         let gameMaps = await fetchURL(url);
         let gameMapsContainer = document.getElementById('game_maps_container');

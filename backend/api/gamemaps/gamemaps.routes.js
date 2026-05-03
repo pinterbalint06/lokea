@@ -1,8 +1,8 @@
 const express = require("express");
 const router = express.Router();
 const multer = require("multer");
-const { validateRequest } = require("#utils/validation.js");
-const { checkAuth } = require("#utils/auth.js");
+const { validateRequest } = require("#middlewares/validation.js");
+const { checkAuth } = require("#middlewares/auth.js");
 const AppError = require("#utils/app-error.js");
 const ERRORS = require("#utils/error-messages.js");
 const { deleteFile } = require("#utils/file-utils.js");

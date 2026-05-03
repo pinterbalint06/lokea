@@ -1,7 +1,7 @@
 const express = require('express');
 const router = express.Router();
 
-const auth = require('#utils/auth.js');
+const auth = require('#middlewares/auth.js');
 
 const adminRoutes = require('./apiAdmin.js');
 const userRoutes = require('./apiUsers.js');

@@ -1,6 +1,7 @@
 const { createGameLobbyTestApp } = require("#gametest/helpers/setup-test.js");
 const { testRequiresAuth, suppressConsoleErrors } = require("#gametest/helpers/helpers.js");
 const AppError = require("#utils/app-error.js");
+const ERRORS = require("#utils/error-messages.js");
 const gameLobbyQueries = require("#gameflow/gamelobby.queries.js");
 const sessionsQueries = require("#gameflow/sessions/sessions.queries.js");
 
@@ -11,7 +12,7 @@ const mockGameMaps = [
     { id: 2, title: "Another Map", plays: 5, rating: 3.0 }
 ];
 
-describe("Game Lobby API - /api/choose-game/", () => {
+describe("Game Lobby API - /api/lobby/", () => {
     describe("GET /", () => {
         beforeEach(() => {
             gameLobbyQueries.getGameMaps.mockResolvedValue(mockGameMaps);
@@ -19,26 +20,26 @@ describe("Game Lobby API - /api/choose-game/", () => {
 
         describe("Input validation (400)", () => {
             it("Should respond with 400 for an invalid sort parameter", async () => {
-                const response = await requestWithSupertest.get("/api/choose-game?sort=invalid");
+                const response = await requestWithSupertest.get("/api/lobby?sort=invalid");
 
                 expect(response.statusCode).toBe(400);
             });
 
             it("Should accept uppercase sort by converting to lowercase", async () => {
-                const response = await requestWithSupertest.get("/api/choose-game?sort=CREATED");
+                const response = await requestWithSupertest.get("/api/lobby?sort=CREATED");
 
                 expect(response.statusCode).toBe(200);
                 expect(gameLobbyQueries.getGameMaps).toHaveBeenCalledWith("created", undefined, 0, null);
             });
 
             it("Should respond with 400 for a negative offset parameter", async () => {
-                const response = await requestWithSupertest.get("/api/choose-game?offset=-5");
+                const response = await requestWithSupertest.get("/api/lobby?offset=-5");
 
                 expect(response.statusCode).toBe(400);
             });
 
             it("Should respond with 400 for a non-integer offset parameter", async () => {
-                const response = await requestWithSupertest.get("/api/choose-game?offset=abc");
+                const response = await requestWithSupertest.get("/api/lobby?offset=abc");
 
                 expect(response.statusCode).toBe(400);
             });
@@ -46,7 +47,7 @@ describe("Game Lobby API - /api/choose-game/", () => {
 
         describe("Happy paths (200)", () => {
             it.each(["created", "rating", "plays", "favorites"])("Should return 200 with results for sort=%s", async (sort) => {
-                const response = await requestWithSupertest.get(`/api/choose-game?sort=${sort}`);
+                const response = await requestWithSupertest.get(`/api/lobby?sort=${sort}`);
 
                 expect(response.statusCode).toBe(200);
                 expect(response.body.results).toEqual(mockGameMaps);
@@ -54,28 +55,28 @@ describe("Game Lobby API - /api/choose-game/", () => {
             });
 
             it("Should default to 'created' sort when no sort param is given", async () => {
-                const response = await requestWithSupertest.get("/api/choose-game");
+                const response = await requestWithSupertest.get("/api/lobby");
 
                 expect(response.statusCode).toBe(200);
                 expect(gameLobbyQueries.getGameMaps).toHaveBeenCalledWith("created", undefined, 0, null);
             });
 
             it("Should pass offset to database when provided", async () => {
-                const response = await requestWithSupertest.get("/api/choose-game?offset=10");
+                const response = await requestWithSupertest.get("/api/lobby?offset=10");
 
                 expect(response.statusCode).toBe(200);
                 expect(gameLobbyQueries.getGameMaps).toHaveBeenCalledWith("created", undefined, 10, null);
             });
 
             it("Should pass filter='mine' to database when filter param is mine", async () => {
-                const response = await requestWithSupertest.get("/api/choose-game?filter=mine");
+                const response = await requestWithSupertest.get("/api/lobby?filter=mine");
 
                 expect(response.statusCode).toBe(200);
                 expect(gameLobbyQueries.getGameMaps).toHaveBeenCalledWith("created", undefined, 0, "mine");
             });
 
             it("Should ignore unknown filter values and pass null", async () => {
-                const response = await requestWithSupertest.get("/api/choose-game?filter=invalid");
+                const response = await requestWithSupertest.get("/api/lobby?filter=invalid");
 
                 expect(response.statusCode).toBe(200);
                 expect(gameLobbyQueries.getGameMaps).toHaveBeenCalledWith("created", undefined, 0, null);
@@ -88,7 +89,7 @@ describe("Game Lobby API - /api/choose-game/", () => {
             it("Should respond with 500 if the database throws", async () => {
                 gameLobbyQueries.getGameMaps.mockRejectedValueOnce(new Error("DB error"));
 
-                const response = await requestWithSupertest.get("/api/choose-game");
+                const response = await requestWithSupertest.get("/api/lobby");
 
                 expect(response.statusCode).toBe(500);
             });
@@ -97,14 +98,14 @@ describe("Game Lobby API - /api/choose-game/", () => {
 
     describe("GET /session", () => {
         describe("Authorization (401)", () => {
-            testRequiresAuth(() => requestWithSupertest.get("/api/choose-game/session"));
+            testRequiresAuth(() => requestWithSupertest.get("/api/lobby/session"));
         });
 
         describe("Happy paths (200)", () => {
             it("Should return hasActiveSession: false when there is no active session", async () => {
                 sessionsQueries.selectLatestActiveGameSession.mockResolvedValueOnce(null);
 
-                const response = await requestWithSupertest.get("/api/choose-game/session");
+                const response = await requestWithSupertest.get("/api/lobby/session");
 
                 expect(response.statusCode).toBe(200);
                 expect(response.body.hasActiveSession).toBe(false);
@@ -122,7 +123,7 @@ describe("Game Lobby API - /api/choose-game/", () => {
                     title: "My Game"
                 });
 
-                const response = await requestWithSupertest.get("/api/choose-game/session");
+                const response = await requestWithSupertest.get("/api/lobby/session");
 
                 expect(response.statusCode).toBe(200);
                 expect(response.body.hasActiveSession).toBe(true);
@@ -136,7 +137,7 @@ describe("Game Lobby API - /api/choose-game/", () => {
             it("Should respond with 500 if the database throws", async () => {
                 sessionsQueries.selectLatestActiveGameSession.mockRejectedValueOnce(new Error("DB error"));
 
-                const response = await requestWithSupertest.get("/api/choose-game/session");
+                const response = await requestWithSupertest.get("/api/lobby/session");
 
                 expect(response.statusCode).toBe(500);
             });
@@ -152,49 +153,49 @@ describe("Game Lobby API - /api/choose-game/", () => {
         };
 
         describe("Authorization (401)", () => {
-            testRequiresAuth(() => requestWithSupertest.post("/api/choose-game/session").send(validBody));
+            testRequiresAuth(() => requestWithSupertest.post("/api/lobby/session").send(validBody));
         });
 
         describe("Input validation (400)", () => {
             it("Should respond with 400 if gameMapId is not an integer", async () => {
                 const response = await requestWithSupertest
-                    .post("/api/choose-game/session")
+                    .post("/api/lobby/session")
                     .send({ ...validBody, gameMapId: "abc" });
 
                 expect(response.statusCode).toBe(400);
-                expect(response.body.message).toBe("Invalid gameMapId");
+                expect(response.body.message).toBe(ERRORS.GAMEMAP.INVALID_ID);
             });
 
             it("Should respond with 400 if gameMapId is 0", async () => {
                 const response = await requestWithSupertest
-                    .post("/api/choose-game/session")
+                    .post("/api/lobby/session")
                     .send({ ...validBody, gameMapId: 0 });
 
                 expect(response.statusCode).toBe(400);
-                expect(response.body.message).toBe("Invalid gameMapId");
+                expect(response.body.message).toBe(ERRORS.GAMEMAP.INVALID_ID);
             });
 
             it("Should respond with 400 if gameMapId is negative", async () => {
                 const response = await requestWithSupertest
-                    .post("/api/choose-game/session")
+                    .post("/api/lobby/session")
                     .send({ ...validBody, gameMapId: -5 });
 
                 expect(response.statusCode).toBe(400);
-                expect(response.body.message).toBe("Invalid gameMapId");
+                expect(response.body.message).toBe(ERRORS.GAMEMAP.INVALID_ID);
             });
 
             it("Should respond with 400 if gameMapId is missing", async () => {
                 const response = await requestWithSupertest
-                    .post("/api/choose-game/session")
+                    .post("/api/lobby/session")
                     .send({ difficulty: "normal", rounds: 5, roundTime: 60 });
 
                 expect(response.statusCode).toBe(400);
-                expect(response.body.message).toBe("Invalid gameMapId");
+                expect(response.body.message).toBe(ERRORS.GAMEMAP.INVALID_ID);
             });
 
             it("Should respond with 400 if difficulty is invalid", async () => {
                 const response = await requestWithSupertest
-                    .post("/api/choose-game/session")
+                    .post("/api/lobby/session")
                     .send({ ...validBody, difficulty: "unknown" });
 
                 expect(response.statusCode).toBe(400);
@@ -207,7 +208,7 @@ describe("Game Lobby API - /api/choose-game/", () => {
                 [{ difficulty: "normal", gameMapId: 100, roundTime: 60 }, "rounds is missing"],
             ])("Should respond with 400 for invalid rounds (%s)", async (body) => {
                 const response = await requestWithSupertest
-                    .post("/api/choose-game/session")
+                    .post("/api/lobby/session")
                     .send(body);
 
                 expect(response.statusCode).toBe(400);
@@ -220,7 +221,7 @@ describe("Game Lobby API - /api/choose-game/", () => {
                 [{ difficulty: "normal", gameMapId: 100, rounds: 5 }, "roundTime is missing"],
             ])("Should respond with 400 for invalid roundTime (%s)", async (body) => {
                 const response = await requestWithSupertest
-                    .post("/api/choose-game/session")
+                    .post("/api/lobby/session")
                     .send(body);
 
                 expect(response.statusCode).toBe(400);
@@ -232,7 +233,7 @@ describe("Game Lobby API - /api/choose-game/", () => {
                 sessionsQueries.getGameInfoById.mockResolvedValueOnce(null);
 
                 const response = await requestWithSupertest
-                    .post("/api/choose-game/session")
+                    .post("/api/lobby/session")
                     .send(validBody);
 
                 expect(response.statusCode).toBe(404);
@@ -242,7 +243,7 @@ describe("Game Lobby API - /api/choose-game/", () => {
         describe("Happy paths (200)", () => {
             it("Should create a session and return 200 for normal difficulty", async () => {
                 const response = await requestWithSupertest
-                    .post("/api/choose-game/session")
+                    .post("/api/lobby/session")
                     .send(validBody);
 
                 expect(response.statusCode).toBe(200);
@@ -251,7 +252,7 @@ describe("Game Lobby API - /api/choose-game/", () => {
 
             it("Should use sharpness -1.5 for easy difficulty", async () => {
                 const response = await requestWithSupertest
-                    .post("/api/choose-game/session")
+                    .post("/api/lobby/session")
                     .send({ ...validBody, difficulty: "easy" });
 
                 expect(response.statusCode).toBe(200);
@@ -260,7 +261,7 @@ describe("Game Lobby API - /api/choose-game/", () => {
 
             it("Should use sharpness -5 for hard difficulty", async () => {
                 const response = await requestWithSupertest
-                    .post("/api/choose-game/session")
+                    .post("/api/lobby/session")
                     .send({ ...validBody, difficulty: "hard" });
 
                 expect(response.statusCode).toBe(200);
@@ -296,7 +297,7 @@ describe("Game Lobby API - /api/choose-game/", () => {
                 sessionsQueries.insertGameSession.mockRejectedValueOnce(new Error("DB error"));
 
                 const response = await requestWithSupertest
-                    .post("/api/choose-game/session")
+                    .post("/api/lobby/session")
                     .send(validBody);
 
                 expect(response.statusCode).toBe(500);
@@ -306,7 +307,7 @@ describe("Game Lobby API - /api/choose-game/", () => {
                 sessionsQueries.insertGameSession.mockRejectedValueOnce(new AppError("Custom error", 503));
 
                 const response = await requestWithSupertest
-                    .post("/api/choose-game/session")
+                    .post("/api/lobby/session")
                     .send(validBody);
 
                 expect(response.statusCode).toBe(503);
