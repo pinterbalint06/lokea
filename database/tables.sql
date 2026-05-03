@@ -161,6 +161,9 @@ DO
     UPDATE game_sessions
     SET finished_at = CURRENT_TIMESTAMP
     WHERE finished_at IS NULL
-      AND started_at < DATE_SUB(NOW(), INTERVAL 2 HOUR);
+      AND COALESCE(
+          (SELECT MAX(guessed_at) FROM session_guesses WHERE session_guesses.session_id = game_sessions.session_id),
+          started_at
+      ) < DATE_SUB(NOW(), INTERVAL 2 HOUR);
 
 
