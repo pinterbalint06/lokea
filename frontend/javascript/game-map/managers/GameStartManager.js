@@ -53,8 +53,7 @@ export class GameStartManager {
     async #handleFormSubmit(event) {
         event.preventDefault();
 
-        if (this.isStarting) {
-
+        if (!this.isStarting) {
             this.isStarting = true;
 
             try {
@@ -70,6 +69,7 @@ export class GameStartManager {
 
                 await startGameSession(formData);
 
+                this.isStarting = false;
                 window.location.href = "/game";
             } catch (error) {
                 this.isStarting = false;
