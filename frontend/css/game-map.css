@@ -4,6 +4,7 @@
 @import url('./game-map-base.css');
 @import url('./drag-and-drop-uploader.css');
 @import url('./favorite-button.css');
+@import url('./game-modal-shared.css');
 
 html,
 body {
@@ -386,4 +387,23 @@ main {
         bottom: 0.75rem;
     }
 
+}
+
+.modal-close-btn {
+    position: absolute;
+    top: 15px;
+    right: 20px;
+    font-size: 24px;
+    cursor: pointer;
+    font-weight: bold;
+    color: #e9deff;
+}
+
+.start-btn {
+    margin-top: 18px;
+    width: 100%;
+    padding: 11px 14px;
+    border-radius: 14px;
+    font-size: 1rem;
+    letter-spacing: 0.02em;
 }

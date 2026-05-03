@@ -9,6 +9,7 @@ import { DataManager } from "./managers/DataManager.js";
 import { CoverImageManager } from "./managers/CoverImageManager.js";
 import { ModalManager } from "./managers/ModalManager.js";
 import { CommentManager } from "./managers/CommentManager.js";
+import { GameStartManager } from "./managers/GameStartManager.js";
 
 async function init() {
     const eventBus = new EventBus();
@@ -24,6 +25,7 @@ async function init() {
     new ModalManager(eventBus, appStore);
     new DataManager(eventBus, appStore);
     new CommentManager(eventBus, appStore);
+    new GameStartManager(eventBus, appStore);
 
     eventBus.on(EVENTS.STATE_UPDATED, ({ state }) => {
         if (!editManager && state.gameMapDetails.isOwner) {

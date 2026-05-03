@@ -267,6 +267,27 @@ describe("Game Lobby API - /api/lobby/", () => {
                 expect(response.statusCode).toBe(200);
                 expect(sessionsQueries.insertGameSession).toHaveBeenCalledWith(1, 5, 60, 100, -5);
             });
+
+            it("Should finish the active session before creating a new one", async () => {
+                sessionsQueries.selectLatestActiveGameSession.mockResolvedValueOnce({ session_id: 99 });
+
+                const response = await requestWithSupertest
+                    .post("/api/lobby/session")
+                    .send(validBody);
+
+                expect(response.statusCode).toBe(200);
+                expect(sessionsQueries.finishGameSession).toHaveBeenCalledWith(99);
+                expect(sessionsQueries.insertGameSession).toHaveBeenCalled();
+            });
+
+            it("Should not finish any session if there is no active session", async () => {
+                const response = await requestWithSupertest
+                    .post("/api/lobby/session")
+                    .send(validBody);
+
+                expect(response.statusCode).toBe(200);
+                expect(sessionsQueries.finishGameSession).not.toHaveBeenCalled();
+            });
         });
 
         describe("Server errors (500)", () => {

@@ -181,7 +181,7 @@ async function dropdownLetrehoz(link, nev, kep) {
     })
     ul.appendChild(li);
     ul.appendChild(dropdownDivider());
-    ul.appendChild(dropdownLink("Saját játékaim", null, null, "map"));
+    ul.appendChild(dropdownLink("Saját játékaim", null, null, "map", "/game-maps?tab=mine"));
     ul.appendChild(dropdownDivider());
     if (link) {
         ul.appendChild(dropdownLink("Belépés az admin oldalra", 'enterAdmin', null, "shield", link));

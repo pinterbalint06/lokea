@@ -49,7 +49,7 @@ export class LeaderboardManager {
         const main = createElement("div", { class: "score-main" }, [name, time]);
 
         const value = createElement("span", { class: "score-value" });
-        value.innerText = score.score;
+        value.innerText = score.score || 0;
 
         return createElement("article", { class: "score-item" }, [rank, main, value]);
     }

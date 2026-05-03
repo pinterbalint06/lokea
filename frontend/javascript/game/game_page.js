@@ -1,6 +1,6 @@
 import { MapViewer } from "../libs/viewer/MapViewer.js";
 import { EquirectangularViewer } from "../libs/viewer/EquirectangularViewer.js";
-import { formatSecondsToMinutes } from "./timer-conversion.js";
+import { formatSecondsToMinutes } from "../libs/utils/timer-conversion.js";
 import { degreeToRadian } from "../libs/math/mathUtils.js";
 import { loadPointEquirectangularLowThenHigh, loadMapImageLowThenHigh } from "../libs/network/progressiveImage.js";
 
