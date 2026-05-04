@@ -138,7 +138,7 @@
                                             <span class="placeholder col-6 rounded"></span>
                                         </h1>
                                         <input id="titleInput" type="text" class="form-control uvegform d-none mt-1"
-                                            maxlength="50" data-i18n="[placeholder]map.details.titlePlaceholder"
+                                            maxlength="50" data-i18n-placeholder="game-maps:map.details.titlePlaceholder"
                                             placeholder="Adj meg egy címet...">
                                         <p class="game-creator mb-0 mt-1 placeholder-glow">
                                             <span data-i18n="game-maps:map.details.creator">Készítő:</span> <span
@@ -162,7 +162,7 @@
                                         <span class="placeholder col-8 rounded"></span>
                                     </p>
                                     <textarea id="descriptionInput" class="form-control uvegform d-none mt-2" rows="4"
-                                        maxlength="255" data-i18n="[placeholder]game-maps:map.details.descPlaceholder"
+                                        maxlength="255" data-i18n-placeholder="game-maps:map.details.descPlaceholder"
                                         placeholder="Írj rövid leírást a pályáról..."></textarea>
 
                                     <div id="detailsEditActions" class="d-flex flex-wrap gap-2 mt-3 d-none">
@@ -216,7 +216,7 @@
                                         data-i18n="game-maps:map.comments.write">Írj
                                         hozzászólást</label>
                                     <textarea id="commentText" name="comment" class="form-control uvegform" rows="4"
-                                        maxlength="255" data-i18n="[placeholder]game-maps:map.comments.placeholder"
+                                        maxlength="255" data-i18n-placeholder="game-maps:map.comments.placeholder"
                                         placeholder="A véleményed erről a pályáról..."></textarea>
 
                                     <div class="d-flex flex-wrap justify-content-between align-items-end gap-3 mt-3">
@@ -226,23 +226,23 @@
                                             </legend>
                                             <div class="rating-input">
                                                 <input type="radio" id="csillag5" name="rating" value="5">
-                                                <label for="csillag5" data-i18n="[aria-label]game-maps:map.aria.star5"
+                                                <label for="csillag5" data-i18n-label="game-maps:map.aria.star5"
                                                     aria-label="5 csillag">&#9733;</label>
 
                                                 <input type="radio" id="csillag4" name="rating" value="4">
-                                                <label for="csillag4" data-i18n="[aria-label]game-maps:map.aria.star4"
+                                                <label for="csillag4" data-i18n-label="game-maps:map.aria.star4"
                                                     aria-label="4 csillag">&#9733;</label>
 
                                                 <input type="radio" id="csillag3" name="rating" value="3">
-                                                <label for="csillag3" data-i18n="[aria-label]game-maps:map.aria.star3"
+                                                <label for="csillag3" data-i18n-label="game-maps:map.aria.star3"
                                                     aria-label="3 csillag">&#9733;</label>
 
                                                 <input type="radio" id="csillag2" name="rating" value="2">
-                                                <label for="csillag2" data-i18n="[aria-label]game-maps:map.aria.star2"
+                                                <label for="csillag2" data-i18n-label="game-maps:map.aria.star2"
                                                     aria-label="2 csillag">&#9733;</label>
 
                                                 <input type="radio" id="csillag1" name="rating" value="1">
-                                                <label for="csillag1" data-i18n="[aria-label]game-maps:map.aria.star1"
+                                                <label for="csillag1" data-i18n-label="game-maps:map.aria.star1"
                                                     aria-label="1 csillag">&#9733;</label>
                                             </div>
                                         </fieldset>
@@ -337,7 +337,7 @@
 
         <button id="playMapButton" type="button"
             class="btn uvegbutton rounded-circle floating-button floating-button-primary"
-            data-i18n="[aria-label]game-maps:map.aria.startGame" aria-label="Játék indítása">
+            data-i18n-label="game-maps:map.aria.startGame" aria-label="Játék indítása">
             <svg viewBox="0 0 119.4 122.88" class="play-map-icon">
                 <use href="/images/game-map-icons.svg#icon-start"></use>
             </svg>
