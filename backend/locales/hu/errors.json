@@ -10,7 +10,8 @@
         "fileNotFound": "A fájl nem létezik vagy helytelen!",
         "invalidImageType": "Érvénytelen fájltípus! Csak JPG, PNG, WEBP és GIF képek engedélyezettek!",
         "invalidPage": "Helytelen oldalszám!",
-        "endpointNotFound": "A végpont nem létezik!"
+        "endpointNotFound": "A végpont nem létezik!",
+        "pageNotFound": "A keresett oldal nem található."
     },
     "gamemap": {
         "invalidId": "Helytelen pálya ID!",

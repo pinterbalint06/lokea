@@ -10,7 +10,8 @@ const ERRORS = {
         FILE_NOT_FOUND: "errors:common.fileNotFound",
         INVALID_IMAGE_TYPE: "errors:common.invalidImageType",
         INVALID_PAGE: "errors:common.invalidPage",
-        ENDPOINT_NOT_FOUND: "errors:common.endpointNotFound"
+        ENDPOINT_NOT_FOUND: "errors:common.endpointNotFound",
+        PAGE_NOT_FOUND: "errors:common.pageNotFound"
     },
 
     GAMEMAP: {
