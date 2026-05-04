@@ -99,6 +99,16 @@ describe('Admin API-tesztek', () => {
             expect(res.body).toBeDefined();
         });
 
+        it('SIKER - 200, matches típus lekérése', async () => {
+            const mockData = [{ het_megnevezes: '12.', meccsek_szama: 30 }];
+            db.getMatchCountByWeek.mockResolvedValue(mockData);
+            const res = await request(app)
+                .get('/api/admin/charts/matches?lang=en')
+                .expect(200);
+            expect(res.header['content-type']).toBe('image/webp');
+            expect(res.body).toBeDefined();
+        });
+
         it('SIKER - 200, grafikon lekérése a gyorsítótárból (cache hit)', async () => {
             await request(app).get('/api/admin/charts/activity-day?lang=en').expect(200);
 

@@ -206,7 +206,6 @@ async function editUserToModal(data) {
     let username = data.username;
     let email = data.email;
     let role = data.role;
-    let pfproute = data.user_id;
 
     State.variables.tempPfp = null;
     State.variables.deleteLast = false;
@@ -225,11 +224,11 @@ async function editUserToModal(data) {
     let pfp = document.createElement("img");
     pfp.id = "editPfpImage";
     let deletePfpButton;
-    if (pfproute == null) {
+    if (data.filepath == null || data.deleted_at != null) {
         pfp.src = "../images/default.png";
     }
     else {
-        State.variables.objectURL = await getProfilePicture(pfproute);
+        State.variables.objectURL = await getProfilePicture(data.user_id);
         pfp.src = State.variables.objectURL;
         deletePfpButton = gombGeneral("button", i18next.t('admin:users.delete_profile_picture'), "trash-2", "red", null);
         deletePfpButton.addEventListener("click", handleDeletePfpClick);
@@ -252,7 +251,7 @@ async function editUserToModal(data) {
     dropzone.addEventListener("click", handleDropzoneClick);
 
     colLeft.appendChild(dropzone);
-    if (pfproute != null) {
+    if (data.filepath != null && data.deleted_at == null) {
         colLeft.appendChild(deletePfpButton);
     }
 
@@ -311,7 +310,6 @@ async function viewUserToModal(data) {
     let username = data.username;
     let email = data.email;
     let role = data.role;
-    let pfproute = data.user_id;
     let container = createHTMLelement('div', ["container-fluid"]);
 
     let row = createHTMLelement('div', ["row"]);
@@ -320,11 +318,11 @@ async function viewUserToModal(data) {
     let colLeft = createHTMLelement('div', ["col-4"]);
 
     let pfp = document.createElement("img");
-    if (pfproute == null) {
+    if (data.filepath == null || data.deleted_at != null) {
         pfp.src = "../images/default.png";
     }
     else {
-        State.variables.objectURL = await getProfilePicture(pfproute);
+        State.variables.objectURL = await getProfilePicture(data.user_id);
         pfp.src = State.variables.objectURL;
     }
     pfp.alt = i18next.t('admin:users.profile_picture');
@@ -705,7 +703,7 @@ function handleModalUndoClick() {
     document.getElementById("editUsernameInput").value = State.currentData.username;
     document.getElementById("editEmailInput").value = State.currentData.email;
     document.getElementById("editRoleSelect").value = State.currentData.role;
-    if (State.currentData.filepath == null) {
+    if (State.currentData.filepath == null || State.currentData.deleted_at != null) {
         document.getElementById("editPfpImage").src = "../images/default.png";
     } else {
         document.getElementById("editPfpImage").src = State.variables.objectURL;

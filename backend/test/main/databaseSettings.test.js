@@ -79,7 +79,7 @@ describe('Adatbázis Settings Tesztek (databaseSettings.js)', () => {
 
         it('HIBA - Régi jelszó nem egyezik', async () => {
             pool.execute.mockResolvedValue([[{ password: 'hashed_db_pass' }]]);
-            bcrypt.compare.mockResolvedValue(false); 
+            bcrypt.compare.mockResolvedValue(false);
 
             await expect(databaseSettings.updatePassword(1, 'wrongOld', 'newPass')).rejects.toThrow('Nem ez a régi jelszavad!');
             expect(pool.getConnection).not.toHaveBeenCalled();
@@ -106,12 +106,12 @@ describe('Adatbázis Settings Tesztek (databaseSettings.js)', () => {
         });
 
         it('SIKER - Felhasználó törlése (deleted_at beállítása)', async () => {
-            pool.execute.mockResolvedValue([[{ username: 'Elek', email: 'e@e.hu' }]]);
+            pool.execute.mockResolvedValue([[{ username: 'Elek', email: 'e@e.hu', filepath: null, image_id: null }]]);
             mockConn.execute.mockResolvedValue([{ affectedRows: 1 }]);
 
             const result = await databaseSettings.userToInactive(1);
 
-            expect(result).toEqual({ username: 'Elek', email: 'e@e.hu' });
+            expect(result).toEqual({ username: 'Elek', email: 'e@e.hu', filepath: null });
             expectSuccessfulTransaction(mockConn);
             expect(mockConn.execute).toHaveBeenCalledWith(expect.any(String), [1]);
         });

@@ -9,7 +9,10 @@ const mockCheckAuth = (req, res, next) => {
     if (!req.session) req.session = {};
     req.session.userid = 1;
     req.session.role = req.headers.simulaterole || "user";
-    req.session.destroy = jest.fn(cb => cb(null));
+    req.session.destroy = jest.fn(cb => {
+        if (req.headers.simulatesessionerror) return cb(new Error('Session hiba'));
+        return cb(null);
+    });
     req.session.userLanguage = "en";
     next();
 };

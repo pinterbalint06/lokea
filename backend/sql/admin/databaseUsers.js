@@ -227,12 +227,16 @@ async function userToInactive(user_id) {
         connection = await pool.getConnection();
         await connection.beginTransaction();
 
-        const [rows] = await connection.execute('SELECT email, username FROM users WHERE user_id = ?', [user_id]);
+        const [rows] = await connection.execute('SELECT users.email, users.username, images.filepath, images.image_id FROM users LEFT JOIN images ON users.pfp = images.image_id WHERE users.user_id = ?', [user_id]);
         if (rows.length > 0) {
             userData = rows[0];
         }
 
-        const query = 'UPDATE users SET deleted_at = CURRENT_TIMESTAMP WHERE user_id = ? AND deleted_at IS NULL';
+        if (userData.image_id) {
+            await connection.execute('DELETE FROM images WHERE image_id = ?', [userData.image_id]);
+        }
+
+        const query = "UPDATE users SET deleted_at = CURRENT_TIMESTAMP, username = LEFT(CONCAT('Törölt_', REPLACE(UUID(), '-', '')), 20), email = CONCAT(UUID(), '@lokea.com'), password = '', role = 'user' WHERE user_id = ? AND deleted_at IS NULL";
         [result] = await connection.execute(query, [user_id]);
         await connection.commit();
     } catch (error) {
@@ -244,7 +248,7 @@ async function userToInactive(user_id) {
     finally {
         if (connection) connection.release();
     }
-    return { ...userData, affectedRows: result.affectedRows };
+    return { email: userData.email, username: userData.username, filepath: userData.filepath, affectedRows: result.affectedRows };
 }
 
 async function deleteProfilePic(user_id) {

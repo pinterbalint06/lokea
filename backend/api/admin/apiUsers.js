@@ -315,6 +315,15 @@ router.put('/users/:id/profile-picture',
 
             let user_id = request.params.id;
 
+            let targetUser = await databaseUsers.getUser(user_id);
+            if (!targetUser || targetUser.length === 0) {
+                return response.status(404).json({ error: request.t('admin:usersApi.not_found') });
+            }
+            let targetRole = targetUser[0].role;
+            if ((targetRole === 'ADMIN' || targetRole === 'LORD') && request.session.role !== 'LORD') {
+                return response.status(403).json({ error: request.t('admin:usersApi.permission_denied') });
+            }
+
             let newFileName = `processed-${Date.now()}.webp`;
             newFilePath = path.join(UPLOAD_ROOT, newFileName);
 
@@ -365,7 +374,6 @@ router.delete('/users/:id',
                 return response.status(404).json({ error: request.t('admin:usersApi.not_found') });
             }
             let targetRole = targetUser[0].role;
-
             if ((targetRole === 'ADMIN' || targetRole === 'LORD') && request.session.role !== 'LORD') {
                 return response.status(403).json({ error: request.t('admin:usersApi.permission_denied') });
             }
@@ -374,6 +382,10 @@ router.delete('/users/:id',
                 response.status(200).json({ message: request.t('admin:usersApi.deactivate_already_inactive') })
             }
             else {
+                if (result.filepath) {
+                    let lastPfpPath = path.join(UPLOAD_ROOT, result.filepath);
+                    await fs.unlink(lastPfpPath).catch(() => { });
+                }
                 await databaseLogs.addLog(request.session.userid, 'User delete (A)', userId);
                 sendDeleteEmail(result.email, result.username).catch(err => console.log("Email hiba:", err.message));
                 response.status(200).json({ message: request.t('admin:usersApi.update_success') });

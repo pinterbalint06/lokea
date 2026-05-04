@@ -101,12 +101,16 @@ router.put("/users/me/password", auth.checkAuth,
 router.delete("/users/me", auth.checkAuth, async (request, response) => {
     try {
         let userid = request.session.userid;
-        let { email, username } = await database.userToInactive(userid);
+        let { email, username, filepath } = await database.userToInactive(userid);
         request.session.destroy(async (error) => {
             if (error) {
                 response.status(500).json({ success: false, error: error });
             }
             else {
+                if (filepath) {
+                    let lastPfpPath = path.join(UPLOAD_ROOT, filepath);
+                    await fs.unlink(lastPfpPath).catch(() => { });
+                }
                 await databaseLogs.addLog(userid, 'User delete');
                 response.clearCookie('geo.sid');
                 sendDeleteEmail(email, username);
@@ -128,12 +132,12 @@ router.put('/users/me/profile-picture', auth.checkAuth,
         upload.single('profilePic')(request, response, (err) => {
             if (err instanceof multer.MulterError) {
                 if (err.code === 'LIMIT_FILE_SIZE') {
-                    request.fileValidationError = 'A fájl túl nagy! Maximum 5 MB engedélyezett.';
+                    request.fileValidationError = request.t('errors:common.fileTooLarge');
                 } else {
-                    request.fileValidationError = `Feltöltési hiba: ${err.message}`;
+                    request.fileValidationError = `${request.t('errors:common.fileUploadError')} ${err.message}`;
                 }
             } else if (err) {
-                return response.status(500).json({ error: 'Rendszerhiba a feltöltés során.' });
+                return response.status(500).json({ error: request.t('errors:common.unexpectedError') });
             }
             next();
         });
@@ -142,7 +146,7 @@ router.put('/users/me/profile-picture', auth.checkAuth,
         let newFilePath = null;
         try {
             if (request.fileValidationError) {
-                return response.status(400).json({ error: request.t('main:apiSettings.updateProfilePic.invalid_file_type') });
+                return response.status(400).json({ error: request.fileValidationError });
             }
             if (!request.file) {
                 return response.status(400).json({ error: request.t('main:apiSettings.updateProfilePic.no_image') });
