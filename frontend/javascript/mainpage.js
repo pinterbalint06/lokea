@@ -83,7 +83,7 @@ async function isLogined() {
             }
         }
     } catch (error) {
-        console.log(`hálózati hiba: ${error}`);
+        console.log(`${i18next.t('game:gamePage.networkError')}: ${error}`);
     }
     return loginStatus;
 }
@@ -103,7 +103,7 @@ async function bejelentkezes(username, jelszo, remember) {
         });
         return response;
     } catch (error) {
-        console.log(`hálózati hiba: ${error}`);
+        console.log(`${i18next.t('game:gamePage.networkError')}: ${error}`);
     }
 }
 
@@ -130,10 +130,10 @@ async function bejelentkezesAnimacio(username, jelszo, remember) {
                 container.appendChild(makeSvg("checkmark", ["check-svg"], ["mark"]));
                 container.classList.add('success-draw');
 
-                title.innerText = `Sikeres bejelentkezés!`;
+                title.innerText = i18next.t('main:apiMain.login.success');
                 title.classList.replace("h5", "h2");
                 form.classList.add('collapse-out');
-                modalText.innerText = `Üdv, ${data.username}!`;
+                modalText.innerText = i18next.t('main:loginModal.welcome', { username: data.username, defaultValue: `Üdv, ${data.username}!` });
 
                 setTimeout(() => {
                     const params = new URLSearchParams(window.location.search);
@@ -148,7 +148,7 @@ async function bejelentkezesAnimacio(username, jelszo, remember) {
                 container.appendChild(makeSvg("icon-x", ["check-svg"], ["mark"]));
                 container.classList.add('error-draw');
 
-                title.innerText = "Bejelentkezés sikertelen!";
+                title.innerText = i18next.t('main:apiMain.login.error');
                 form.classList.add('collapse-out');
                 modalText.innerHTML = extractError(data).replace(/\n/g, '<br>');
 
@@ -157,7 +157,7 @@ async function bejelentkezesAnimacio(username, jelszo, remember) {
                     container.querySelectorAll('svg').forEach(svg => svg.remove());
                     form.classList.remove('collapse-out');
                     form.classList.add('collapse-in');
-                    title.innerText = `Bejelentkezés`;
+                    title.innerText = i18next.t('main:loginModal.title');
                     modalText.innerText = "";
                     setTimeout(() => {
                         form.classList.remove('collapse-in');
@@ -168,8 +168,8 @@ async function bejelentkezesAnimacio(username, jelszo, remember) {
 
     } catch (error) {
         container.classList.remove('spinning');
-        title.innerText = "Hiba történt!";
-        modalText.innerText = "Nem sikerült elérni a szervert.";
+        title.innerText = i18next.t('game:gamePage.errorOccurred');
+        modalText.innerText = i18next.t('game:gamePage.networkError');
         console.error(error);
     }
 }
@@ -191,7 +191,7 @@ async function dropdownLetrehoz(link, nev, kep) {
     else {
         img.src = "../images/default.png";
     }
-    img.alt = "Profile pic";
+    img.alt = i18next.t('main:settingsModal.appearanceTitle');
     img.id = "dropdownProfilePicture";
     img.classList.add("img-fluid", "profilePicture");
     let username = document.createElement("span");
@@ -327,8 +327,8 @@ async function showSettingsModal() {
         objectURL = await getProfilePicture(data.user_id);
         pfp.src = objectURL;
     }
-    pfp.alt = "Profile picture";
-    pfp.title = "Profile picture";
+    pfp.alt = i18next.t('main:settingsModal.appearanceTitle');
+    pfp.title = i18next.t('main:settingsModal.appearanceTitle');
     pfp.classList.add("img-fluid", "img-thumbnail", "settingsPfp");
 
     let newPfpInput = inputGeneral("file", null, null, "newPfpInput", ["form-control", "d-none"], false);
@@ -541,7 +541,7 @@ async function saveModification(username, email, language, darkmode) {
         })
         let data = await response.json();
         if (!response.ok) throw new Error(extractError(data));
-        showAlert("Sikeres módosítás!", "success");
+        showAlert(i18next.t('main:apiSettings.updateUser.success'), "success");
         settingsModal.hide();
         return data;
     } catch (error) {
@@ -577,11 +577,11 @@ async function jelszoValtoztat() {
     let newPass = document.getElementById('newPassword');
 
     if (oldPass.value == newPass.value) {
-        showAlert('A régi és az új jelszó nem lehet ugyanaz!', 'danger');
+        showAlert(i18next.t('main:apiSettings.updatePassword.same_password_error', { defaultValue: 'A régi és az új jelszó nem lehet ugyanaz!' }), 'danger');
         return;
     }
     if (!validalvaJelszo(newPass.value)) {
-        showAlert('Az új jelszónak tartalmaznia kell egy nagybetűt, egy számot, minimum 8 és maximum 50 karakter hosszú lehet!', 'danger');
+        showAlert(i18next.t('main:apiMain.signup.validation_password_uppercase'), 'danger');
         return;
     }
 
@@ -600,7 +600,7 @@ async function jelszoValtoztat() {
         let data = await response.json();
         if (!response.ok) throw new Error(extractError(data));
 
-        showAlert(data.message || 'Sikeres jelszómódosítás!', 'success');
+        showAlert(data.message || i18next.t('main:apiSettings.updatePassword.success'), 'success');
         let bsCollapse = bootstrap.Collapse.getInstance(passwordCollapse) || new bootstrap.Collapse(passwordCollapse);
         if (bsCollapse) bsCollapse.hide();
         oldPass.value = '';
@@ -737,7 +737,7 @@ export async function nyelvSzinkronizalas() {
 }
 
 function extractError(data) {
-    let errorMessage = "Ismeretlen hiba történt / Unknown error";
+    let errorMessage = i18next.t('game:gamePage.unexpectedError');
     if (data.errors && Array.isArray(data.errors) && data.errors.length > 0) {
         errorMessage = data.errors.map(e => e.msg || e).join('\n');
     } else if (data.error && Array.isArray(data.error) && data.error.length > 0) {
