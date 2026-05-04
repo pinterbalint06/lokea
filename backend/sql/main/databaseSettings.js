@@ -91,17 +91,22 @@ async function updatePassword(user_id, oldPass, newPass) {
 async function userToInactive(user_id) {
     let connection;
     try {
-        const getUserQuery = 'SELECT users.username, users.email FROM users WHERE users.user_id = ?';
+        const getUserQuery = 'SELECT users.username, users.email, images.filepath, images.image_id FROM users LEFT JOIN images ON users.pfp = images.image_id WHERE users.user_id = ?';
         const [userResult] = await pool.execute(getUserQuery, [user_id]);
         if (userResult.length == 0) {
             throw new AppError('Felhasználó nem található!', 404);
         }
         connection = await pool.getConnection();
         await connection.beginTransaction();
-        const query = 'UPDATE users SET deleted_at = CURRENT_TIMESTAMP WHERE user_id = ? AND deleted_at IS NULL';
+
+        if (userResult[0].image_id) {
+            await connection.execute('DELETE FROM images WHERE image_id = ?', [userResult[0].image_id]);
+        }
+
+        const query = "UPDATE users SET deleted_at = CURRENT_TIMESTAMP, username = LEFT(CONCAT('Törölt_', REPLACE(UUID(), '-', '')), 20), email = CONCAT(UUID(), '@lokea.com'), password = '', role = 'user' WHERE user_id = ? AND deleted_at IS NULL";
         const [result] = await connection.execute(query, [user_id]);
         await connection.commit();
-        return { username: userResult[0].username, email: userResult[0].email };
+        return { username: userResult[0].username, email: userResult[0].email, filepath: userResult[0].filepath };
     } catch (error) {
         if (connection) {
             await connection.rollback();

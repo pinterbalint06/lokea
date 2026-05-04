@@ -544,7 +544,7 @@ describe('Admin Users API-tesztek', () => {
 
         it('SIKER - 200, ha LORD töröl egy ADMIN-t', async () => {
             db.getUser.mockResolvedValue([{ role: 'ADMIN' }]);
-            db.userToInactive.mockResolvedValue({ affectedRows: 1, email: 'admin@example.com', username: 'AdminUser' });
+            db.userToInactive.mockResolvedValue({ affectedRows: 1, email: 'admin@example.com', username: 'AdminUser', filepath: null });
             const res = await request(app)
                 .delete('/api/admin/users/2')
                 .set('simulaterole', 'LORD')
@@ -556,13 +556,14 @@ describe('Admin Users API-tesztek', () => {
 
         it('SIKER - 200, felhasználó inaktívvá tétele', async () => {
             db.getUser.mockResolvedValue([{ role: 'user' }]);
-            db.userToInactive.mockResolvedValue({ affectedRows: 1, email: 'torolt@example.com', username: 'ToroltUser' });
+            db.userToInactive.mockResolvedValue({ affectedRows: 1, email: 'torolt@example.com', username: 'ToroltUser', filepath: 'testpic.webp' });
             await request(app)
                 .delete('/api/admin/users/1')
                 .send({ role: 'user', deleted: false })
                 .expect(200);
             expect(sendDeleteEmail).toHaveBeenCalledTimes(1);
             expect(sendDeleteEmail).toHaveBeenCalledWith('torolt@example.com', 'ToroltUser');
+            expect(fs.unlink).toHaveBeenCalled();
         });
 
         it('HIBA - 500, adatbázis hiba', async () => {

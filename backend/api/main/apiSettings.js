@@ -101,12 +101,16 @@ router.put("/users/me/password", auth.checkAuth,
 router.delete("/users/me", auth.checkAuth, async (request, response) => {
     try {
         let userid = request.session.userid;
-        let { email, username } = await database.userToInactive(userid);
+        let { email, username, filepath } = await database.userToInactive(userid);
         request.session.destroy(async (error) => {
             if (error) {
                 response.status(500).json({ success: false, error: error });
             }
             else {
+                if (filepath) {
+                    let lastPfpPath = path.join(UPLOAD_ROOT, filepath);
+                    await fs.unlink(lastPfpPath).catch(() => { });
+                }
                 await databaseLogs.addLog(userid, 'User delete');
                 response.clearCookie('geo.sid');
                 sendDeleteEmail(email, username);

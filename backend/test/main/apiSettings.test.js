@@ -144,13 +144,15 @@ describe('Settings API Tesztek (apiSettings.js)', () => {
         testRequiresAuth(() => request(app).delete('/api/users/me'));
 
         it('SIKER - 200, sikeres fiók törlés', async () => {
-            db.userToInactive.mockResolvedValue({ email: 'e@e.hu', username: 'Béla' });
+            db.userToInactive.mockResolvedValue({ email: 'e@e.hu', username: 'Béla', filepath: 'kep.webp' });
             dbLogs.addLog.mockResolvedValue();
+            fs.unlink.mockResolvedValue();
 
             const res = await request(app).delete('/api/users/me').expect(200);
             expect(res.body.success).toBe(true);
             expect(res.body.message).toBe(enTranslations.apiSettings.inactiveUser.success);
             expect(mails.sendDeleteEmail).toHaveBeenCalledWith('e@e.hu', 'Béla');
+            expect(fs.unlink).toHaveBeenCalled();
         });
 
         it('HIBA - 500, adatbázis hiba', async () => {

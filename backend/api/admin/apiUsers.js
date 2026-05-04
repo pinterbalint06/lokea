@@ -374,6 +374,10 @@ router.delete('/users/:id',
                 response.status(200).json({ message: request.t('admin:usersApi.deactivate_already_inactive') })
             }
             else {
+                if (result.filepath) {
+                    let lastPfpPath = path.join(UPLOAD_ROOT, result.filepath);
+                    await fs.unlink(lastPfpPath).catch(() => { });
+                }
                 await databaseLogs.addLog(request.session.userid, 'User delete (A)', userId);
                 sendDeleteEmail(result.email, result.username).catch(err => console.log("Email hiba:", err.message));
                 response.status(200).json({ message: request.t('admin:usersApi.update_success') });

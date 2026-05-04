@@ -187,11 +187,11 @@ describe('Admin Database: databaseUsers.js', () => {
     describe('userToInactive', () => {
         it('SIKER - inaktiválja a felhasználót, és visszaadja az emaijét is', async () => {
             mockConnection.execute
-                .mockResolvedValueOnce([[{ email: 'a@a.hu', username: 'A' }]])
+                .mockResolvedValueOnce([[{ email: 'a@a.hu', username: 'A', filepath: null, image_id: null }]])
                 .mockResolvedValueOnce([{ affectedRows: 1 }]);
 
             const result = await databaseUsers.userToInactive(1);
-            expect(result).toEqual({ email: 'a@a.hu', username: 'A', affectedRows: 1 });
+            expect(result).toEqual({ email: 'a@a.hu', username: 'A', filepath: null, affectedRows: 1 });
             expect(mockConnection.commit).toHaveBeenCalled();
         });
 
