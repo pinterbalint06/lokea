@@ -185,5 +185,13 @@
         "nameCannotBeEmpty": "A térkép neve nem lehet üres!",
         "invalidNameFormat": "A térkép neve 1-20 karakter lehet, csak betű, szám, szóköz, aláhúzás és vonás használható.",
         "renameAborted": "Az átnevezés megszakítva!"
+    },
+    "degreeInput": {
+        "rangeError": "A szögnek {{min}} és {{max}} között kell lennie!"
+    },
+    "mapViewer": {
+        "coordTooLarge": "A koordinátáknak kisebbnek kell lennie mint a kép méretei!",
+        "coordTooSmall": "A koordinátáknak nagyobbnak kell lennie mint 0!",
+        "coordNotInteger": "A koordinátáknak egész számnak kell lenniük!"
     }
 }
