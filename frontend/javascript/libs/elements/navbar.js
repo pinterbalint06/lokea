@@ -41,7 +41,7 @@ function buildNavbar() {
         href: "#",
         "data-i18n": "main:dropdown.logout"
     });
-    signOutLink.textContent = "Kijelentkezés";
+    signOutLink.textContent = i18next.t("main:dropdown.logout", { defaultValue: "Kijelentkezés" });;
 
     const signOutItem = createElement("li", {}, [signOutLink]);
 
