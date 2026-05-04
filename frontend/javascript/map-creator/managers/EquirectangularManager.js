@@ -2,6 +2,7 @@ import { EVENTS } from "../shared/EventBus.js";
 import { CONSTANTS } from "../shared/constants.js";
 import { processUploadedImageFile } from "../shared/utils.js";
 import { degreeToRadian } from "../../libs/math/mathUtils.js";
+import i18next from "../../libs/language/i18next.js";
 import { isCancellationError, loadPointEquirectangularLowThenHigh } from "../../libs/network/progressiveImage.js";
 
 
@@ -55,7 +56,7 @@ export class EquirectangularManager {
                 } catch (error) {
                     if (!isCancellationError(error) && this.store.getState().activePoint.id == id && this.activeLoadGeneration == loadGeneration) {
                         console.error(error);
-                        this.bus.emit(EVENTS.TOAST_SHOW, { msg: "Hiba a kép betöltésekor!", type: "danger" });
+                        this.bus.emit(EVENTS.TOAST_SHOW, { msg: i18next.t("game:equirectangularManager.loadImageError"), type: "danger" });
                     }
                 } finally {
                     this.bus.emit(EVENTS.TOAST_HIDE_ID, { id: `loading${loadGeneration}` });
@@ -176,7 +177,7 @@ export class EquirectangularManager {
         } catch (error) {
             console.error(error);
             this.store.setState({ activePoint: { pendingEquirectangularFile: null } });
-            this.bus.emit(EVENTS.TOAST_SHOW, { msg: error.message, type: "danger" });
+            this.bus.emit(EVENTS.TOAST_SHOW, { msg: error.message || i18next.t("game:equirectangularManager.loadImageError"), type: "danger" });
         } finally {
             this.store.setState({ isBusy: { equirectangular: false } });
             this.bus.emit(EVENTS.TOAST_HIDE_ID, { id: uploadToastId });

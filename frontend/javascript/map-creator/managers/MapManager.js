@@ -2,6 +2,7 @@ import { EVENTS } from "../shared/EventBus.js";
 import { ICONS } from "../../libs/icons/icons.js";
 import { CONSTANTS } from "../shared/constants.js";
 import { fetchMapList, saveNewMap, deleteMap as deleteMapApi, renameMap as renameMapApi } from "../shared/api.js";
+import i18next from "../../libs/language/i18next.js";
 import { isCancellationError, loadMapImageLowThenHigh } from "../../libs/network/progressiveImage.js";
 import { processUploadedImageFile } from "../shared/utils.js";
 
@@ -77,7 +78,7 @@ export class MapManager {
             maps = this.#processMapList(mapList);
         } catch (error) {
             console.error(error);
-            this.bus.emit(EVENTS.TOAST_SHOW, { msg: "Nem sikerült betölteni a térképeket.", type: "danger" });
+            this.bus.emit(EVENTS.TOAST_SHOW, { msg: i18next.t("game:mapManager.loadMapsError"), type: "danger" });
         }
         return maps;
     }
@@ -97,14 +98,14 @@ export class MapManager {
     }
 
     async #saveMap(idToSave) {
-        this.store.setState({ isBusy: { map: "Térkép mentése folyamatban, kérlek várj!" } });
+        this.store.setState({ isBusy: { map: i18next.t("game:mapManager.savingMapInProgress") } });
 
-        this.bus.emit(EVENTS.TOAST_SHOW, { id: `savingMap${idToSave}`, msg: "Térkép mentése folyamatban", type: "info", closable: false, autohide: false, spinner: true });
+        this.bus.emit(EVENTS.TOAST_SHOW, { id: `savingMap${idToSave}`, msg: i18next.t("game:mapManager.savingMap"), type: "info", closable: false, autohide: false, spinner: true });
         try {
             let currentMap = this.maps[idToSave];
 
             if (!this.pendingMapFile || !currentMap) {
-                throw new Error("A térkép kép még nincs kiválasztva!");
+                throw new Error(i18next.t("game:mapManager.noMapImageSelected"));
             }
 
             let result = await saveNewMap(this.pendingMapFile, this.store.getState().gameMapId, currentMap.name);
@@ -127,7 +128,7 @@ export class MapManager {
             this.pendingMapFile = null;
             this.pendingMapFileMapId = null;
             this.bus.emit(EVENTS.TOAST_HIDE_ID, { id: `savingMap${idToSave}` });
-            this.bus.emit(EVENTS.TOAST_SHOW, { msg: "Térkép sikeresen mentve!", type: "success", iconObject: ICONS.SAVE_FLOPPY });
+            this.bus.emit(EVENTS.TOAST_SHOW, { msg: i18next.t("game:mapManager.mapSavedSuccess"), type: "success", iconObject: ICONS.SAVE_FLOPPY });
             this.bus.emit(EVENTS.MAP_SAVE_SUCCEEDED, { oldMapId: idToSave, newMapId: newId, maps: this.maps });
         } catch (error) {
             this.bus.emit(EVENTS.TOAST_HIDE_ID, { id: `savingMap${idToSave}` });
@@ -216,7 +217,7 @@ export class MapManager {
                 } catch (error) {
                     if (!isCancellationError(error) && this.store.getState().activeMapId == mapId && this.activeLoadGeneration == loadGeneration) {
                         console.error(error);
-                        this.bus.emit(EVENTS.TOAST_SHOW, { msg: "Hiba a kép betöltésekor!", type: "danger" });
+                        this.bus.emit(EVENTS.TOAST_SHOW, { msg: i18next.t("game:mapManager.loadImageError"), type: "danger" });
                     }
                 } finally {
                     setTimeout(() => this.bus.emit(EVENTS.TOAST_HIDE_ID, { id: `mapSwitching${mapId}-${randomIdForToast}` }), 500);
@@ -236,10 +237,10 @@ export class MapManager {
     }
 
     async #renameMap(mapId, newTitle) {
-        this.bus.emit(EVENTS.TOAST_SHOW, { msg: "Térkép átnevezése folyamatban", type: "info", id: `renamingMap${mapId}`, closable: false, autohide: false, spinner: true });
+        this.bus.emit(EVENTS.TOAST_SHOW, { msg: i18next.t("game:mapManager.renamingMapInProgress"), type: "info", id: `renamingMap${mapId}`, closable: false, autohide: false, spinner: true });
         try {
             if (!this.maps[mapId]) {
-                throw new Error("A térkép nem található!");
+                throw new Error(i18next.t("game:mapManager.mapNotFound"));
             }
 
             let finalTitle;
@@ -277,9 +278,9 @@ export class MapManager {
 
         if (map) {
             try {
-                this.store.setState({ isBusy: { map: "Térkép törlése folyamatban, kérlek várj!" } });
+                this.store.setState({ isBusy: { map: i18next.t("game:mapManager.deletingMapInProgress") } });
 
-                this.bus.emit(EVENTS.TOAST_SHOW, { id: `deletingMap${mapId}`, msg: "Térkép törlése folyamatban", type: "info", closable: false, autohide: false, spinner: true });
+                this.bus.emit(EVENTS.TOAST_SHOW, { id: `deletingMap${mapId}`, msg: i18next.t("game:mapManager.deletingMap"), type: "info", closable: false, autohide: false, spinner: true });
                 if (mapId != CONSTANTS.TEMP_ID) {
                     if (mapId) {
                         await deleteMapApi(mapId);
@@ -306,10 +307,10 @@ export class MapManager {
                 }
 
                 this.bus.emit(EVENTS.MAP_DELETED, { mapId });
-                this.bus.emit(EVENTS.TOAST_SHOW, { msg: "Térkép sikeresen törölve!", type: "success" });
+                this.bus.emit(EVENTS.TOAST_SHOW, { msg: i18next.t("game:mapManager.mapDeletedSuccess"), type: "success" });
             } catch (error) {
                 console.error(error);
-                this.bus.emit(EVENTS.TOAST_SHOW, { msg: "Térkép törlése sikertelen!", type: "danger" });
+                this.bus.emit(EVENTS.TOAST_SHOW, { msg: i18next.t("game:mapManager.mapDeleteFailed"), type: "danger" });
                 this.bus.emit(EVENTS.MAP_DELETE_FAILED);
             } finally {
                 this.bus.emit(EVENTS.TOAST_HIDE_ID, { id: `deletingMap${mapId}` });

@@ -2,6 +2,7 @@ import { EVENTS } from "../shared/EventBus.js";
 import { ICONS } from "../../libs/icons/icons.js";
 import { CONSTANTS } from "../shared/constants.js";
 import { fetchPoints, savePoint as savePointApi, deletePoint as deletePointApi } from "../shared/api.js";
+import i18next from "../../libs/language/i18next.js";
 
 export class MarkerManager {
     constructor(eventBus, mapViewer, appStore) {
@@ -55,8 +56,8 @@ export class MarkerManager {
                     this.mapViewer.canvasInput.setDefaultCursor("crosshair");
 
                     this.bus.emit(EVENTS.TOAST_SHOW, {
-                        id: "placeMarker",
-                        msg: "Kattints a térképre a jelölő elhelyezéséhez!",
+                        id: CONSTANTS.PLACE_MARKER_TOAST_ID,
+                        msg: i18next.t("game:markerManager.clickToPlaceMarker"),
                         iconObject: ICONS.POINTING_HAND,
                         autohide: false,
                         callback: () => {
@@ -67,7 +68,7 @@ export class MarkerManager {
                         }
                     });
                 } else {
-                    this.bus.emit(EVENTS.TOAST_SHOW, { msg: "Először mentsd el a térképet!", type: "danger" });
+                    this.bus.emit(EVENTS.TOAST_SHOW, { msg: i18next.t("game:markerManager.saveMapFirst"), type: "danger" });
                 }
             } else {
                 this.bus.emit(EVENTS.TOAST_SHOW, { msg: lockReason, type: "danger" });
@@ -81,9 +82,9 @@ export class MarkerManager {
             if (activePointId) {
                 if (!this.mapViewer.doesMarkerExist(activePointId)) {
                     event.target.value = event.target.dataset.previousValue;
-                    this.bus.emit(EVENTS.TOAST_SHOW, { msg: "A pont egy másik térképen van, koordináta csak ott módosítható!", type: "danger" });
+                    this.bus.emit(EVENTS.TOAST_SHOW, { msg: i18next.t("game:markerManager.coordinateOnlyModifiableOnMap"), type: "danger" });
                 } else {
-                    let isValid = this.mapViewer.checkCoordinateValid(x, y);
+                    const isValid = this.mapViewer.checkCoordinateValid(x, y);
                     if (isValid.correct) {
                         event.target.dataset.previousValue = event.target.valueAsNumber;
 
@@ -100,7 +101,7 @@ export class MarkerManager {
                         this.store.setState({ activePoint: { isDirty: { position: isPosDirty } } });
 
                         this.bus.emit(EVENTS.MARKER_MOVED, position);
-                    } else {
+                    } else { // Revert to previous value
                         event.target.value = event.target.dataset.previousValue;
                         this.bus.emit(EVENTS.TOAST_SHOW, { msg: isValid.error, type: "danger" });
                     }
@@ -300,7 +301,7 @@ export class MarkerManager {
 
     async #loadPoints(mapId) {
         try {
-            this.bus.emit(EVENTS.TOAST_SHOW, { id: "loadingPoints", msg: "Pontok betöltése", type: "info", closable: false, autohide: false, spinner: true });
+            this.bus.emit(EVENTS.TOAST_SHOW, { id: "loadingPoints", msg: i18next.t("game:markerManager.loadingPoints"), type: "info", closable: false, autohide: false, spinner: true });
             let points = await fetchPoints(mapId);
             if (mapId == this.store.getState().activeMapId) {
                 this.markersCache = {};
@@ -316,28 +317,28 @@ export class MarkerManager {
                 this.bus.emit(EVENTS.POINTS_LOADED, { points: this.markersCache });
             }
         } catch (e) {
-            console.error("Error loading points: ", e);
-            this.bus.emit(EVENTS.TOAST_SHOW, { msg: "Hiba a pontok betöltésekor!", type: "danger" });
+            console.error(i18next.t("game:markerManager.errorLoadingPointsConsole"), e);
+            this.bus.emit(EVENTS.TOAST_SHOW, { msg: i18next.t("game:markerManager.errorLoadingPoints"), type: "danger" });
         } finally {
             this.bus.emit(EVENTS.TOAST_HIDE_ID, { id: "loadingPoints" });
         }
     }
 
     async #savePoint(pointToSave) {
-        this.store.setState({ isBusy: { point: "Pont mentése folyamatban, kérlek várj!" } });
+        this.store.setState({ isBusy: { point: i18next.t("game:markerManager.savingPointInProgress") } });
 
-        this.bus.emit(EVENTS.TOAST_SHOW, { msg: "Pont mentése", type: "info", id: "savingPoint", closable: false, autohide: false, spinner: true });
+        this.bus.emit(EVENTS.TOAST_SHOW, { msg: i18next.t("game:markerManager.savingPoint"), type: "info", id: "savingPoint", closable: false, autohide: false, spinner: true });
         try {
-            let position = this.#getPointPosition(pointToSave);
+            const position = this.#getPointPosition(pointToSave);
             let isNewPoint = pointToSave == CONSTANTS.TEMP_ID;
             let northDirection = this.store.getState().activePoint.northDirection;
 
             let fileBeingSaved = this.store.getState().activePoint.pendingEquirectangularFile;
             if (isNewPoint && this.store.getState().activeMapId == CONSTANTS.TEMP_ID) {
-                throw new Error("Először mentsd el a térképet!");
+                throw new Error(i18next.t("game:markerManager.saveMapFirst"));
             }
             if (isNewPoint && !fileBeingSaved) {
-                throw new Error("Nincs kép kiválasztva!");
+                throw new Error(i18next.t("game:markerManager.noImageSelected"));
             }
 
             let data = await savePointApi({
@@ -409,11 +410,11 @@ export class MarkerManager {
                 }
             });
 
-            this.bus.emit(EVENTS.TOAST_SHOW, { msg: "Pont sikeresen mentve!", type: "success", iconObject: ICONS.SAVE_FLOPPY });
+            this.bus.emit(EVENTS.TOAST_SHOW, { msg: i18next.t("game:markerManager.pointSavedSuccess"), type: "success", iconObject: ICONS.SAVE_FLOPPY });
         } catch (error) {
             this.bus.emit(EVENTS.TOAST_HIDE_ID, { id: "savingPoint" });
             console.error(error);
-            this.bus.emit(EVENTS.TOAST_SHOW, { msg: error.message || "Hiba a pont mentésekor!", type: "danger" });
+            this.bus.emit(EVENTS.TOAST_SHOW, { msg: error.message || i18next.t("game:markerManager.errorSavingPoint"), type: "danger" });
         } finally {
             this.store.setState({ isBusy: { point: false } });
         }
@@ -441,9 +442,9 @@ export class MarkerManager {
                     this.bus.emit(EVENTS.MARKER_DELETED, { pointId: deletedPointId });
                     this.bus.emit(EVENTS.TOAST_SHOW, { msg: "Pont sikeresen törölve!", type: "success" });
                 } catch (error) {
-                    console.error("Error deleting point: ", error);
+                    console.error(i18next.t("game:markerManager.errorDeletingPointConsole"), error);
                     this.store.setState({ isBusy: { point: false } });
-                    this.bus.emit(EVENTS.TOAST_SHOW, { msg: "Hiba a pont törlésekor!", type: "danger" });
+                    this.bus.emit(EVENTS.TOAST_SHOW, { msg: i18next.t("game:markerManager.errorDeletingPoint"), type: "danger" });
                     this.bus.emit(EVENTS.MARKER_DELETE_FAILED);
                 }
             } else {
@@ -515,7 +516,7 @@ export class MarkerManager {
         }
 
         if (!position) {
-            throw new Error("A pont adatai nem elérhetőek!");
+            throw new Error(i18next.t("game:markerManager.pointDataNotAvailable"));
         }
 
         return position;
@@ -545,7 +546,7 @@ export class MarkerManager {
                 if (targetPosition) {
                     this.mapViewer.moveTo(targetPosition.x, targetPosition.y);
                 } else {
-                    this.bus.emit(EVENTS.TOAST_SHOW, { msg: "A pont nem található ezen a térképen!", type: "danger" });
+                    this.bus.emit(EVENTS.TOAST_SHOW, { msg: i18next.t("game:markerManager.pointNotFoundOnMap"), type: "danger" });
                 }
 
                 this.pendingCenterMarker = null;

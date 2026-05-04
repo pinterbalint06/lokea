@@ -1,4 +1,5 @@
 import { fetchAndValidate, handleResponseError } from "../../libs/network/fetch.js";
+import i18next from "../../libs/language/i18next.js";
 
 export async function saveNewMap(mapFile, gameMapID, mapTitle) {
     let formData = new FormData();
@@ -33,7 +34,7 @@ export async function savePoint({
     let method = "";
 
     if (!Number.isFinite(position.u) || !Number.isFinite(position.v)) {
-        throw new Error("Helytelen UV koordináták!");
+        throw new Error(i18next.t("game:api.savePoint.invalidUVCoordinates"));
     }
 
     let formData = new FormData();
@@ -43,7 +44,7 @@ export async function savePoint({
 
     if (isNew) {
         if (!equirectangularFile) {
-            throw new Error("Nincs kép megadva!");
+            throw new Error(i18next.t("game:api.savePoint.noImageProvided"));
         }
         formData.append("equirectangularImage", equirectangularFile);
         url = `/api/map-creator/maps/${mapID}/points`;

@@ -1,4 +1,5 @@
 import { CONSTANTS } from "./constants.js";
+import i18next from "../../libs/language/i18next.js";
 
 export { createSpinnerIcon } from "../../libs/utils.js";
 
@@ -25,10 +26,10 @@ export async function readImageFile(file) {
 
 export async function processUploadedImageFile(file) {
     if (file.size > CONSTANTS.MAX_FILE_SIZE) {
-        throw new Error("Túl nagy fájlméret! (Max 10MB)");
+        throw new Error(i18next.t("errors:common.fileTooLarge"));
     }
     if (!file.type.startsWith("image/")) {
-        throw new Error("Csak kép elfogadott!");
+        throw new Error(i18next.t("errors:common.invalidImageType"));
     }
     return await readImageFile(file);
 }

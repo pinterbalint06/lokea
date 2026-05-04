@@ -25,6 +25,7 @@ async function init() {
     try {
         await nyelvSzinkronizalas() || 'hu';
         translatePage();
+        console.log("")
     } catch (error) {
         console.error(i18next.t("game-maps:choosing.errors.languageLoad", { defaultValue: "Hiba a nyelvi adatok betöltésekor:" }), error);
     }
