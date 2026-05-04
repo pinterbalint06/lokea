@@ -146,7 +146,7 @@ router.put('/users/me/profile-picture', auth.checkAuth,
         let newFilePath = null;
         try {
             if (request.fileValidationError) {
-                return response.status(400).json({ error: request.t('main:apiSettings.updateProfilePic.invalid_file_type') });
+                return response.status(400).json({ error: request.fileValidationError });
             }
             if (!request.file) {
                 return response.status(400).json({ error: request.t('main:apiSettings.updateProfilePic.no_image') });

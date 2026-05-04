@@ -479,6 +479,7 @@ describe('Admin Users API-tesztek', () => {
             };
             sharp.mockReturnValue(sharpMock);
             db.uploadProfilePic.mockResolvedValue('old.webp');
+            db.getUser.mockResolvedValue([{ role: 'user' }]);
 
             const res = await request(app)
                 .put('/api/admin/users/123/profile-picture')
@@ -493,6 +494,7 @@ describe('Admin Users API-tesztek', () => {
             sharp.mockImplementationOnce(() => {
                 throw new Error('Sharp processing failed');
             });
+            db.getUser.mockResolvedValue([{ role: 'user' }]);
 
             const res = await request(app)
                 .put('/api/admin/users/123/profile-picture')
@@ -590,6 +592,7 @@ describe('Admin Users API-tesztek', () => {
 
         it('SIKER 200 - sikeresen törli a profilképet', async () => {
             db.deleteProfilePic.mockResolvedValue('old-pic.webp');
+            db.getUser.mockResolvedValue([{ role: 'user' }]);
             const res = await request(app)
                 .delete('/api/admin/users/123/profile-picture')
                 .send({})
@@ -600,6 +603,7 @@ describe('Admin Users API-tesztek', () => {
 
         it('SIKER 200 - nincs törlendő profilkép', async () => {
             db.deleteProfilePic.mockResolvedValue(null);
+            db.getUser.mockResolvedValue([{ role: 'user' }]);
             const res = await request(app)
                 .delete('/api/admin/users/123/profile-picture')
                 .send({})
@@ -609,6 +613,7 @@ describe('Admin Users API-tesztek', () => {
 
         it('HIBA 500 - adatbázis hiba', async () => {
             db.deleteProfilePic.mockRejectedValue(new Error('DB Error'));
+            db.getUser.mockResolvedValue([{ role: 'user' }]);
             const res = await request(app)
                 .delete('/api/admin/users/123/profile-picture')
                 .send({})

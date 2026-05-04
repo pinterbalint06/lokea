@@ -110,7 +110,7 @@ async function getMatchCountByWeek() {
         const queryMatchCountByWeek = `
         SELECT 
             calendar.het_szama AS het_megnevezes,
-            COUNT(score.score_id) AS meccsek_szama
+            COUNT(game_sessions.session_id) AS meccsek_szama
         FROM (
             SELECT 
                 YEARWEEK(CURDATE() - INTERVAL (a.a) WEEK, 1) AS het_kod,
@@ -121,7 +121,7 @@ async function getMatchCountByWeek() {
                 UNION ALL SELECT 8 UNION ALL SELECT 9 UNION ALL SELECT 10 UNION ALL SELECT 11
             ) AS a
         ) AS calendar
-        LEFT JOIN score ON YEARWEEK(score.score_time, 1) = calendar.het_kod
+        LEFT JOIN game_sessions ON YEARWEEK(game_sessions.started_at, 1) = calendar.het_kod
         GROUP BY calendar.het_kod
         ORDER BY calendar.het_kod ASC;
         `;

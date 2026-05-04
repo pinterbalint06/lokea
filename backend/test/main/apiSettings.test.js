@@ -9,6 +9,8 @@ const apiSettings = require('#main/apiSettings.js');
 const db = require('#sql/main/databaseSettings.js');
 const dbLogs = require('#sql/admin/databaseLogs.js');
 const mails = require('#utils/mails.js');
+const auth = require('#middlewares/auth.js');
+const AppError = require('#utils/app-error.js');
 const enTranslations = require('#locales/en/main.json');
 const huTranslations = require('#locales/hu/main.json');
 const { mockI18nMiddleware, suppressConsoleErrors, testRequiresAuth } = require('./helpers/helpers.js');
@@ -42,6 +44,22 @@ describe('Settings API Tesztek (apiSettings.js)', () => {
                 .get('/api/users/me')
                 .expect(500);
             expect(res.body.error).toBe(enTranslations.apiSettings.getUserData.error);
+        });
+
+        it('SIKER - 200, saját adatok lekérése (role eltér a sessiontől, szinkronizálja)', async () => {
+            db.getUser.mockResolvedValue([{ username: 'Sanyi', role: 'ADMIN' }]);
+            const res = await request(app)
+                .get('/api/users/me')
+                .expect(200);
+            expect(res.body.users.role).toBe('ADMIN');
+        });
+
+        it('SIKER - 200, saját adatok lekérése (nincs role az adatbázisban, átveszi a sessionből)', async () => {
+            db.getUser.mockResolvedValue([{ username: 'Sanyi', role: null }]);
+            const res = await request(app)
+                .get('/api/users/me')
+                .expect(200);
+            expect(res.body.users.role).toBeDefined();
         });
     });
 
@@ -104,6 +122,15 @@ describe('Settings API Tesztek (apiSettings.js)', () => {
                 .expect(200);
             expect(res.body.message).toBe(enTranslations.apiSettings.updateUser.no_change);
         });
+
+        it('HIBA - Egyedi AppError kezelése (pl. 404)', async () => {
+            db.updateUser.mockRejectedValue(new AppError('Egyedi hiba', 404));
+            const res = await request(app)
+                .put('/api/users/me')
+                .send(validUpdate)
+                .expect(404);
+            expect(res.body.error).toBe('Egyedi hiba');
+        });
     });
 
     describe('Végpont: PUT /api/users/me/password', () => {
@@ -162,7 +189,26 @@ describe('Settings API Tesztek (apiSettings.js)', () => {
                 .expect(500);
             expect(res.body.error).toBe(enTranslations.apiSettings.inactiveUser.error);
         });
+
+        it('HIBA - Egyedi AppError kezelése a fióktörlésnél (pl. 404)', async () => {
+            db.userToInactive.mockRejectedValue(new AppError('Felhasználó nem található', 404));
+            const res = await request(app)
+                .delete('/api/users/me')
+                .expect(404);
+            expect(res.body.error).toBe('Felhasználó nem található');
+        });
+
+        it('HIBA - 500, ha a session törlése sikertelen', async () => {
+            db.userToInactive.mockResolvedValue({ email: 'e@e.hu', username: 'Béla', filepath: null });
+
+            const res = await request(app)
+                .delete('/api/users/me')
+                .set('simulatesessionerror', 'true')
+                .expect(500);
+            expect(res.body.success).toBe(false);
+        });
     });
+
 
     describe('Végpont: PUT /api/users/me/profile-picture', () => {
         testRequiresAuth(() => request(app).put('/api/users/me/profile-picture'));
@@ -179,7 +225,24 @@ describe('Settings API Tesztek (apiSettings.js)', () => {
                 .put('/api/users/me/profile-picture')
                 .attach('profilePic', Buffer.from('fake-pdf-content'), { filename: 'teszt.pdf', contentType: 'application/pdf' })
                 .expect(400);
-            expect(res.body.error).toBe(enTranslations.apiSettings.updateProfilePic.invalid_file_type);
+            expect(res.body.error).toBe('Érvénytelen fájltípus! Csak képeket tölthetsz fel.');
+        });
+
+        it('HIBA - 400, túl nagy fájl (LIMIT_FILE_SIZE)', async () => {
+            const largeBuffer = Buffer.alloc(6 * 1024 * 1024);
+            const res = await request(app)
+                .put('/api/users/me/profile-picture')
+                .attach('profilePic', largeBuffer, { filename: 'nagy.jpg', contentType: 'image/jpeg' })
+                .expect(400);
+            expect(res.body.error).toContain('túl nagy');
+        });
+
+        it('HIBA - 400, általános Multer hiba (rossz mezőnév = LIMIT_UNEXPECTED_FILE)', async () => {
+            const res = await request(app)
+                .put('/api/users/me/profile-picture')
+                .attach('wrongField', Buffer.from('fake-image'), { filename: 'kep.jpg', contentType: 'image/jpeg' })
+                .expect(400);
+            expect(res.body.error).toContain('Feltöltési hiba:');
         });
 
         it('SIKER - 201, profilkép feldolgozva és elmentve', async () => {
