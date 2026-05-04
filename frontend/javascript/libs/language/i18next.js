@@ -7,7 +7,7 @@ export async function initI18next(nyelv = 'hu') {
         .init({
             lng: nyelv,
             fallbackLng: 'en',
-            ns: ['main', 'common', 'errors', 'game-maps', 'game'],
+            ns: ['main', 'common', 'errors', 'game-maps', 'game', 'error-page'],
             defaultNS: 'main',
             backend: {
                 loadPath: '/locales/{{lng}}/{{ns}}.json'

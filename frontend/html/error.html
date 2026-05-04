@@ -24,14 +24,15 @@
             </div>
 
             <h1 class="error-code">{{STATUS_CODE}}</h1>
-            <h2 class="h4 mt-3 mb-4 text-white">Hoppáré! Valami elromlott.</h2>
+            <h2 class="h4 mt-3 mb-4 text-white" data-i18n="error-page:subtitle">Hoppáré! Valami elromlott.</h2>
             <p class="text-white-50 mb-5">{{ERROR_MESSAGE}}</p>
 
             <div class="d-flex justify-content-center gap-3 flex-wrap">
-                <button id="backBtn" type="button" class="btn btn-outline-secondary rounded-pill px-4">
+                <button id="backBtn" type="button" class="btn btn-outline-secondary rounded-pill px-4"
+                    data-i18n="error-page:backBtn">
                     Vissza az előző oldalra
                 </button>
-                <a href="/" class="btn uvegbutton rounded-pill px-4">
+                <a href="/" class="btn uvegbutton rounded-pill px-4" data-i18n="error-page:homeBtn">
                     Vissza a főoldalra
                 </a>
             </div>
