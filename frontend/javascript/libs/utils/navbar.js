@@ -1,34 +1,66 @@
 import { showToast } from "../utils.js";
 import i18next from "../language/i18next.js";
+import { createElement } from "./DOMutils.js";
 
-const NAVBAR_HTML = `
-<nav class="navbar navbar-expand-lg navbar-shared">
-    <div class="container-fluid">
-        <a class="navbar-brand" href="/">
-            <img src="/images/lokea.webp" alt="Lokea logo" class="navPic">
-        </a>
-        <ul class="navbar-nav me-auto ms-3">
-            <li class="nav-item nav-item-hide-sm">
-                <a class="nav-link" href="/game-maps" data-i18n="game-maps:choosing.mapsLabel">Pályák</a>
-            </li>
-        </ul>
-        <div class="dropdown">
-            <a href="#" class="d-block link-light text-decoration-none dropdown-toggle" data-bs-toggle="dropdown" aria-expanded="false">
-                <img id="navbarProfilePic" src="/images/default.png" alt="profPic" class="rounded-circle border border-2 navPic">
-            </a>
-            <ul class="dropdown-menu dropdown-menu-end text-small">
-                <li><a class="dropdown-item text-danger" id="signOut" href="#" data-i18n="main:dropdown.logout">Kijelentkezés</a></li>
-            </ul>
-        </div>
-    </div>
-</nav>
-`;
+function buildNavbar() {
+    const logoImg = createElement("img", {
+        src: "/images/lokea.webp",
+        alt: "Lokea logo",
+        class: "navPic"
+    });
+
+    const brandLink = createElement("a", { class: "navbar-brand", href: "/" }, [logoImg]);
+
+    const mapsLink = createElement("a", {
+        class: "nav-link",
+        href: "/game-maps",
+        "data-i18n": "game-maps:choosing.mapsLabel"
+    });
+    mapsLink.textContent = "Pályák";
+
+    const mapsItem = createElement("li", { class: "nav-item nav-item-hide-sm" }, [mapsLink]);
+    const navList = createElement("ul", { class: "navbar-nav me-auto ms-3" }, [mapsItem]);
+
+    const profilePicImg = createElement("img", {
+        id: "navbarProfilePic",
+        src: "/images/default.png",
+        alt: "profPic",
+        class: "rounded-circle border border-2 navPic"
+    });
+
+    const dropdownToggle = createElement("a", {
+        href: "#",
+        class: "d-block link-light text-decoration-none dropdown-toggle",
+        "data-bs-toggle": "dropdown",
+        "aria-expanded": "false"
+    }, [profilePicImg]);
+
+    const signOutLink = createElement("a", {
+        class: "dropdown-item text-danger",
+        id: "signOut",
+        href: "#",
+        "data-i18n": "main:dropdown.logout"
+    });
+    signOutLink.textContent = "Kijelentkezés";
+
+    const signOutItem = createElement("li", {}, [signOutLink]);
+
+    const dropdownMenu = createElement("ul", {
+        class: "dropdown-menu dropdown-menu-end text-small"
+    }, [signOutItem]);
+
+    const dropdown = createElement("div", { class: "dropdown" }, [dropdownToggle, dropdownMenu]);
+
+    const containerFluid = createElement("div", { class: "container-fluid" }, [brandLink, navList, dropdown]);
+
+    return createElement("nav", { class: "navbar navbar-expand-lg navbar-shared" }, [containerFluid]);
+}
 
 export function mountNavbar(target = "#navbar-mount") {
     const mountPoint = typeof target === "string" ? document.querySelector(target) : target;
     if (!mountPoint) return;
 
-    mountPoint.innerHTML = NAVBAR_HTML;
+    mountPoint.appendChild(buildNavbar());
 
     mountPoint.querySelectorAll(".nav-link[href]").forEach((link) => {
         const linkPath = new URL(link.getAttribute("href"), window.location.origin).pathname;
