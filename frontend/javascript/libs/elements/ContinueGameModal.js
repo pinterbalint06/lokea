@@ -1,5 +1,4 @@
-const DEFAULT_CONTINUE_GAME_TITLE = "Van egy elindított játékod";
-const DEFAULT_CONTINUE_GAME_DESCRIPTION = "Szeretnéd folytatni az elkezdett játékodat? Ha nem folytatod, akkor többet nem tudod folytatni.";
+import i18next from "../language/i18next.js";
 
 export class ContinueGameModal {
     constructor(container = document.body) {
@@ -14,11 +13,13 @@ export class ContinueGameModal {
         this.#ensureModal();
 
         const description = gameTitle
-            ? `Van egy futó játékod ezen a pályán: ${gameTitle}. Szeretnéd folytatni?`
-            : DEFAULT_CONTINUE_GAME_DESCRIPTION;
+            ? i18next.t("game-maps:choosing.continueSpecificGame", { title: gameTitle })
+            : i18next.t("game-maps:choosing.continueModal.description");
 
-        this.overlay.querySelector("h3").innerText = DEFAULT_CONTINUE_GAME_TITLE;
+        this.overlay.querySelector("h3").innerText = i18next.t("game-maps:choosing.continueModal.title");
         this.descriptionElement.innerText = description;
+        this.continueButton.innerText = i18next.t("game-maps:choosing.continueModal.continueBtn");
+        this.dismissButton.innerText = i18next.t("game-maps:choosing.continueModal.endBtn");
 
         this.continueButton.onclick = async () => {
             this.hide();
@@ -47,10 +48,10 @@ export class ContinueGameModal {
             modalBox.classList.add("modal-box", "uveg");
 
             const titleElement = document.createElement("h3");
-            titleElement.innerText = DEFAULT_CONTINUE_GAME_TITLE;
+            titleElement.innerText = i18next.t("game-maps:choosing.continueModal.title");
 
             this.descriptionElement = document.createElement("p");
-            this.descriptionElement.innerText = DEFAULT_CONTINUE_GAME_DESCRIPTION;
+            this.descriptionElement.innerText = i18next.t("game-maps:choosing.continueModal.description");
 
             const buttonRow = document.createElement("div");
             buttonRow.classList.add("d-flex", "justify-content-center", "gap-3", "flex-wrap", "mt-3");
@@ -58,12 +59,12 @@ export class ContinueGameModal {
             this.continueButton = document.createElement("button");
             this.continueButton.type = "button";
             this.continueButton.classList.add("btn", "uvegbutton", "rounded-pill", "px-4");
-            this.continueButton.innerText = "Folytatás";
+            this.continueButton.innerText = i18next.t("game-maps:choosing.continueModal.continueBtn");
 
             this.dismissButton = document.createElement("button");
             this.dismissButton.type = "button";
             this.dismissButton.classList.add("btn", "btn-outline-secondary", "rounded-pill", "px-4");
-            this.dismissButton.innerText = "Játék befejezése";
+            this.dismissButton.innerText = i18next.t("game-maps:choosing.continueModal.endBtn");
 
             buttonRow.append(this.continueButton, this.dismissButton);
             modalBox.append(titleElement, this.descriptionElement, buttonRow);
