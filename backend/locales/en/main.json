@@ -87,7 +87,8 @@
         "rating": "Rating",
         "ratingsCount": "ratings",
         "plays": "Plays",
-        "noMaps": "No avaible maps."
+        "noMaps": "No avaible maps.",
+        "loadingError": "Error loading maps. Please try again later."
     },
     "comparison": {
         "sectionTitle": "Why is Lokea better?",

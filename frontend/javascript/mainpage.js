@@ -757,9 +757,12 @@ async function loadTopMaps() {
             const responseData = await response.json();
             const topMaps = Array.isArray(responseData.results) ? responseData.results.slice(0, FEATURED_MAP_LIMIT) : [];
             renderFeaturedMaps(topMaps);
+        } else {
+            renderFeaturedMapsError();
         }
     } catch (err) {
         console.error('Failed to load top maps', err);
+        renderFeaturedMapsError();
     }
 }
 
@@ -800,6 +803,29 @@ function renderFeaturedMapSlot(slotElement, gameMap) {
         slotElement.appendChild(cardElement);
     } else {
         slotElement.classList.add('is-empty');
+    }
+}
+
+function renderFeaturedMapsError() {
+    const featuredContainer = document.querySelector('.topMapsContainer');
+    if (featuredContainer) {
+        const featuredSlots = featuredContainer.querySelectorAll('.customMaps');
+
+        featuredSlots.forEach(slotElement => {
+            slotElement.remove();
+        });
+
+        const existingEmptyState = document.getElementById('featuredMapsError');
+        if (existingEmptyState) {
+            existingEmptyState.remove();
+        }
+
+        const errorState = document.createElement('div');
+        errorState.id = 'featuredMapsError';
+        errorState.classList.add('featuredMapsErrorState');
+        errorState.innerText = i18next.t('main:customMaps.loadingError') || 'Hiba történt a pályák betöltése során. Kérlek próbáld újra később.';
+        errorState.style.color = 'rgb(217, 4, 41, 0.8)';
+        featuredContainer.appendChild(errorState);
     }
 }
 

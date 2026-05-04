@@ -87,7 +87,8 @@
         "rating": "Csillag",
         "ratingsCount": "értékelés",
         "plays": "Játékok",
-        "noMaps": "Nincsenek elérhető pályák."
+        "noMaps": "Nincsenek elérhető pályák.",
+        "loadingError": "Hiba történt a pályák betöltése során. Kérlek próbáld újra később."
     },
     "comparison": {
         "sectionTitle": "Miért jobb a lokea?",
