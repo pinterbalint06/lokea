@@ -75,7 +75,8 @@ export class CoverImageManager {
                 type: "info",
                 id: randomToastId,
                 autohide: false,
-                spinner: true
+                spinner: true,
+                closable: false
             });
             if (this.uploadAbortController) {
                 this.uploadAbortController.abort();

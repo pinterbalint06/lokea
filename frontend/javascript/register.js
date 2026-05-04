@@ -63,7 +63,7 @@ async function regisztracioAnimacio(username, email, password) {
                 modalText.innerText = "Fiók létrehozva. Kérlek, jelentkezz be a folytatáshoz!";
                 setTimeout(() => {
                     window.location.href = "/";
-                }, 3000);
+                }, 1500);
             }
             else {
                 container.appendChild(makeSvg("icon-x", ["check-svg"], ["mark"]));
@@ -80,9 +80,9 @@ async function regisztracioAnimacio(username, email, password) {
                 setTimeout(() => {
                     modal.hide();
                     container.classList.remove('error-draw');
-                }, 3000);
+                }, 1500);
             }
-        }, 2000);
+        }, 1000);
     } catch (error) {
         container.classList.remove('spinning');
         title.innerText = "Hiba történt!";

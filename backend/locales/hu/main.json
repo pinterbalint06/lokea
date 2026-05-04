@@ -86,7 +86,8 @@
         "mapTitlePlaceholder": "Főcim focim",
         "rating": "Csillag",
         "ratingsCount": "értékelés",
-        "plays": "Játékok"
+        "plays": "Játékok",
+        "noMaps": "Nincsenek elérhető pályák."
     },
     "comparison": {
         "sectionTitle": "Miért jobb a lokea?",
@@ -106,7 +107,8 @@
         "rememberMe": "Emlékezz rám",
         "registerPrompt": "Nincs még fiókod? ",
         "registerLink": "Regisztrálás",
-        "loginButton": "Bejelentkezés"
+        "loginButton": "Bejelentkezés",
+        "loginAlert": "Kérlek jelentkezz be a folytatáshoz!"
     },
     "settingsModal": {
         "accountTab": "Fiók",

@@ -86,7 +86,8 @@
         "mapTitlePlaceholder": "Example Map Title",
         "rating": "Rating",
         "ratingsCount": "ratings",
-        "plays": "Plays"
+        "plays": "Plays",
+        "noMaps": "No avaible maps."
     },
     "comparison": {
         "sectionTitle": "Why is Lokea better?",
@@ -106,7 +107,8 @@
         "rememberMe": "Remember me",
         "registerPrompt": "Don't have an account yet? ",
         "registerLink": "Register",
-        "loginButton": "Login"
+        "loginButton": "Login",
+        "loginAlert": "Please login to continue!"
     },
     "settingsModal": {
         "accountTab": "Account",
