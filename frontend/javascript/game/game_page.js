@@ -404,7 +404,7 @@ async function fetchGameData(url) {
     const response = await fetch(url);
     if (!response.ok) {
         const responseData = await response.json();
-        throw new Error(responseData.message || i18next.t("game-maps:gamePage.networkError", { defaultValue: "Hálózati hiba" }));
+        throw new Error(responseData.error || i18next.t("game-maps:gamePage.networkError", { defaultValue: "Hálózati hiba" }));
     }
     const data = await response.json();
     return data;
@@ -418,7 +418,7 @@ async function postGameScore(url, data) {
     });
     if (!response.ok) {
         const responseData = await response.json();
-        throw new Error(responseData.message || i18next.t("game-maps:gamePage.networkError", { defaultValue: "Hálózati hiba" }));
+        throw new Error(responseData.error || i18next.t("game-maps:gamePage.networkError", { defaultValue: "Hálózati hiba" }));
     }
     const result = await response.json();
     return result;
@@ -435,7 +435,7 @@ async function finishGame() {
         });
         if (!response.ok) {
             const responseData = await response.json();
-            throw new Error(responseData.message || i18next.t("game-maps:gamePage.networkError", { defaultValue: "Hálózati hiba" }));
+            throw new Error(responseData.error || i18next.t("game-maps:gamePage.networkError", { defaultValue: "Hálózati hiba" }));
         }
         const result = await response.json();
         totalScoreValue = result.totalScore ?? 0;
@@ -514,7 +514,7 @@ async function handleCommentSubmit() {
         const response = await fetch(`/api/game-maps/${gameMapId}/my-comment`, { method, body: formData });
         if (!response.ok) {
             const err = await response.json();
-            throw new Error(err.message || i18next.t("game-maps:gamePage.errorOccurred", { defaultValue: "Hiba történt" }));
+            throw new Error(err.error || i18next.t("game-maps:gamePage.errorOccurred", { defaultValue: "Hiba történt" }));
         }
         showGameOverToast(commentIsInEditMode ? i18next.t("game-maps:gamePage.ratingUpdated", { defaultValue: "Értékelésed frissítve!" }) : i18next.t("game-maps:gamePage.ratingSent", { defaultValue: "Értékelésed elküldve!" }));
         await loadUserComment();
@@ -548,7 +548,7 @@ async function handleDeleteComment() {
         const response = await fetch(`/api/game-maps/${gameMapId}/my-comment`, { method: 'DELETE' });
         if (!response.ok) {
             const err = await response.json();
-            throw new Error(err.message || i18next.t("game-maps:gamePage.errorOccurred", { defaultValue: "Hiba történt" }));
+            throw new Error(err.error || i18next.t("game-maps:gamePage.errorOccurred", { defaultValue: "Hiba történt" }));
         }
         showGameOverToast(i18next.t("game-maps:gamePage.ratingDeleted", { defaultValue: "Értékelésed törölve." }));
         showCommentFormState(false);
@@ -574,7 +574,8 @@ async function loadLeaderboard() {
         }
         const response = await fetch(`/api/game-maps/${gameMapId}`);
         if (!response.ok) {
-            throw new Error(i18next.t("game-maps:gamePage.errorLoadingLeaderboard", { defaultValue: "Hiba történt az eredménylista betöltésekor." }));
+            const err = await response.json();
+            throw new Error(err.error || i18next.t("game-maps:gamePage.errorLoadingLeaderboard", { defaultValue: "Hiba történt az eredménylista betöltésekor." }));
         }
         const data = await response.json();
         renderLeaderboard(container, data.game_map_details?.top_scores);
@@ -652,7 +653,8 @@ async function loadOtherComments() {
         }
         const response = await fetch(`/api/game-maps/${gameMapId}/comments`);
         if (!response.ok) {
-            throw new Error(i18next.t("game-maps:gamePage.errorLoadingComments", { defaultValue: "Hiba történt a megjegyzések betöltésekor." }));
+            const err = await response.json();
+            throw new Error( err.error || i18next.t("game-maps:gamePage.errorLoadingComments", { defaultValue: "Hiba történt a megjegyzések betöltésekor." }));
         }
         const data = await response.json();
         renderOtherComments(container, data.comments);
