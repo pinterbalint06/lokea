@@ -16,7 +16,7 @@ function buildNavbar() {
         href: "/game-maps",
         "data-i18n": "game-maps:choosing.mapsLabel"
     });
-    mapsLink.textContent = "Pályák";
+    mapsLink.textContent = i18next.t("game-maps:choosing.mapsLabel", { defaultValue: "Pályák" });
 
     const mapsItem = createElement("li", { class: "nav-item nav-item-hide-sm" }, [mapsLink]);
     const navList = createElement("ul", { class: "navbar-nav me-auto ms-3" }, [mapsItem]);
@@ -59,7 +59,7 @@ function buildNavbar() {
 export function mountNavbar(target = "#navbar-mount") {
     const mountPoint = typeof target === "string" ? document.querySelector(target) : target;
     if (mountPoint) {
-        mountPoint.appendChild(buildNavbar());
+        mountPoint.replaceChildren(buildNavbar());
 
         mountPoint.querySelectorAll(".nav-link[href]").forEach((link) => {
             const linkPath = new URL(link.getAttribute("href"), window.location.origin).pathname;
