@@ -2,11 +2,14 @@ const express = require("express");
 const supertest = require("supertest");
 const gameEndpoints = require("#gameflow/game.js");
 const gameLobbyEndpoints = require("#gameflow/gamelobby.js");
+const { notFoundHandler, globalErrorHandler } = require("#middlewares/error-handler.js");
 
 function createGameTestApp() {
     const app = express();
     app.use(express.json());
     app.use("/api/game", gameEndpoints);
+    app.use(notFoundHandler);
+    app.use(globalErrorHandler);
     return supertest(app);
 }
 
@@ -21,6 +24,8 @@ function createGameLobbyTestApp() {
         next();
     });
     app.use("/api/lobby", gameLobbyEndpoints);
+    app.use(notFoundHandler);
+    app.use(globalErrorHandler);
     return supertest(app);
 }
 
