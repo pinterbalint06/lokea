@@ -212,6 +212,8 @@ function resetGameState(roundTime, currentRound) {
     document.getElementById("guessBtn").disabled = false;
     document.getElementById("pictureFullScreenBtn").disabled = false;
     mapViewerEngine.resetZoom();
+    equirectangularViewer.setPitch(0);
+    equirectangularViewer.setHeading(0);
 }
 
 async function createPoint(roundTime) {
