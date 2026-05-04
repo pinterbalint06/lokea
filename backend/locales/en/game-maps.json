@@ -179,7 +179,6 @@
     "dragAndDropUploader": {
         "or": "or"
     },
-    "gamePage": {},
     "testDisplay": {
         "title": "Choose from the testing views:",
         "mapViewer": "Test Map Viewer",
