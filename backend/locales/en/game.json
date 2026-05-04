@@ -170,6 +170,14 @@
         "directionTowardCurrent": "Direction (Toward current point)",
         "deleteConnection": "Delete Connection"
     },
+    "markerEditor": {
+        "discardTitle": "Discard changes",
+        "discardConfirm": "Are you sure you want to discard the changes?",
+        "discardBtn": "Discard changes",
+        "drag360Image": "Drag the 360° image here",
+        "clickToUpload": "Click here to upload",
+        "pointNotChanged": "Point has not changed!"
+    },
     "mapSelector": {
         "dragMapFile": "Drag the map file here",
         "clickToUpload": "Click here to upload",

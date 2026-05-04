@@ -170,6 +170,14 @@
         "directionTowardCurrent": "Irány (Jelenlegi pont felé)",
         "deleteConnection": "Kapcsolat törlése"
     },
+    "markerEditor": {
+        "discardTitle": "Változtatások elvetése",
+        "discardConfirm": "Biztos vagy benne, hogy elveted a változtatásokat?",
+        "discardBtn": "Elvetem a változtatásokat",
+        "drag360Image": "Húzd ide a 360°-os képet",
+        "clickToUpload": "Kattints ide feltöltéshez",
+        "pointNotChanged": "A pont nem változott!"
+    },
     "mapSelector": {
         "dragMapFile": "Húzd ide a térkép fájlt",
         "clickToUpload": "Kattints ide feltöltéshez",

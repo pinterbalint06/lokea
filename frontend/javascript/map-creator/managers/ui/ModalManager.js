@@ -3,6 +3,7 @@ import { createElement } from "../../../libs/utils/DOMUtils.js";
 import { ICONS } from "../../../libs/icons/icons.js";
 import { createSVGIcon } from "../../../libs/utils/svgUtils.js";
 import { EVENTS } from "../../shared/EventBus.js";
+import i18next from "../../../libs/language/i18next.js";
 
 export class ModalManager {
     constructor(eventBus, appStore) {
@@ -89,13 +90,13 @@ export class ModalManager {
         this.currentContext = { type: "discard" };
 
         let p = createElement("p");
-        p.innerText = "Biztos vagy benne, hogy elveted a változtatásokat?";
+        p.innerText = i18next.t("game:markerEditor.discardConfirm");
 
         this.modal.show({
-            title: "Változtatások elvetése",
+            title: i18next.t("game:markerEditor.discardTitle"),
             body: [p],
-            confirmText: "Elvetem a változtatásokat",
-            cancelText: "Mégse",
+            confirmText: i18next.t("game:markerEditor.discardBtn"),
+            cancelText: i18next.t("game:gamePage.cancel"),
             confirmBtnClass: "btn-danger",
             dangerStyle: false,
             isStatic: false
@@ -106,7 +107,9 @@ export class ModalManager {
         this.currentContext = { type: "delete_map", id: mapId };
 
         let desc = createElement("p");
-        desc.innerText = `Biztosan törölni szeretnéd ezt a térképet ${mapName ? `: ${mapName}` : ""}?`;
+        desc.innerText = mapName
+            ? i18next.t("game-maps:modalManager.confirmDeleteMapNamed", { name: mapName })
+            : i18next.t("game-maps:modalManager.confirmDeleteMap");
 
         let warningIcon = createSVGIcon(ICONS.WARNING, {
             height: "1.2em",
@@ -114,23 +117,19 @@ export class ModalManager {
         });
 
         let warning = createElement("p", { class: "text-muted small mb-0" });
-        warning.appendChild(document.createTextNode("Ez a művelet nem vonható vissza. A térképhez tartozó "));
-        let strong = createElement("strong");
-        strong.innerText = "összes pont, kapcsolat és kép is törlésre kerül";
-        warning.appendChild(strong);
-        warning.appendChild(document.createTextNode("."));
+        warning.innerText = i18next.t("game-maps:modalManager.cannotBeUndoneMap");
 
         this.modal.show({
-            title: "Térkép törlése",
+            title: i18next.t("game-maps:modalManager.deleteMapTitle"),
             icon: warningIcon,
             body: [desc, warning],
-            confirmText: "Térkép végleges törlése",
+            confirmText: i18next.t("game-maps:modalManager.permanentlyDeleteMap"),
             confirmBtnClass: "btn-danger",
             dangerStyle: true,
             holdToUnlock: 2000,
             isStatic: true,
             onEarlyClick: () => {
-                this.bus.emit(EVENTS.TOAST_SHOW, { msg: "Tartsd lenyomva a gombot a megerősítéshez", type: "warning" });
+                this.bus.emit(EVENTS.TOAST_SHOW, { msg: i18next.t("game-maps:modalManager.holdToConfirm"), type: "warning" });
             }
         });
     }
@@ -139,7 +138,7 @@ export class ModalManager {
         this.currentContext = { type: "delete_point" };
 
         let desc = createElement("p");
-        desc.innerText = "Biztosan törölni szeretnéd ezt a pontot?";
+        desc.innerText = i18next.t("game-maps:modalManager.confirmDeletePoint");
 
         let warningIcon = createSVGIcon(ICONS.WARNING, {
             height: "1.2em",
@@ -147,23 +146,19 @@ export class ModalManager {
         });
 
         let warning = createElement("p", { class: "text-muted small mb-0" });
-        warning.appendChild(document.createTextNode("Ez a művelet nem vonható vissza. A ponthoz tartozó "));
-        let strong = createElement("strong");
-        strong.innerText = "összes kapcsolat és a 360°-os kép is törlésre kerül";
-        warning.appendChild(strong);
-        warning.appendChild(document.createTextNode("."));
+        warning.innerText = i18next.t("game-maps:modalManager.cannotBeUndonePoint");
 
         this.modal.show({
-            title: "Pont törlése",
+            title: i18next.t("game-maps:modalManager.deletePointTitle"),
             icon: warningIcon,
             body: [desc, warning],
-            confirmText: "Pont végleges törlése",
+            confirmText: i18next.t("game-maps:modalManager.permanentlyDeletePoint"),
             confirmBtnClass: "btn-danger",
             dangerStyle: true,
             holdToUnlock: 2000,
             isStatic: true,
             onEarlyClick: () => {
-                this.bus.emit(EVENTS.TOAST_SHOW, { msg: "Tartsd lenyomva a gombot a megerősítéshez", type: "warning" });
+                this.bus.emit(EVENTS.TOAST_SHOW, { msg: i18next.t("game-maps:modalManager.holdToConfirm"), type: "warning" });
             }
         });
     }
