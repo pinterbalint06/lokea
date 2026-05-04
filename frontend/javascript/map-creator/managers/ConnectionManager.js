@@ -1,6 +1,7 @@
 import { fetchConnections, saveUnsavedConnections, deleteConnection, saveDraftConnectionDirections } from "../shared/api.js";
 import { ICONS } from "../../libs/icons/icons.js";
 import { CONSTANTS } from "../shared/constants.js";
+import i18next from "../../libs/language/i18next.js";
 import { EVENTS } from "../shared/EventBus.js";
 import { degreeToRadian } from "../../libs/math/mathUtils.js";
 
@@ -61,7 +62,7 @@ export class ConnectionManager {
 
         this.bus.on(EVENTS.MAP_CLICKED, () => {
             if (this.store.getState().isConnecting) {
-                this.bus.emit(EVENTS.TOAST_SHOW, { msg: "Kattints egy térképjelölőre!", type: "danger", duration: 1500 });
+                this.bus.emit(EVENTS.TOAST_SHOW, { msg: i18next.t("game:connectionManager.clickOnMarker"), type: "danger", duration: 1500 });
             }
         });
 
@@ -98,14 +99,14 @@ export class ConnectionManager {
 
                         this.bus.emit(EVENTS.NEW_CONNECTION_ADDED, { newConnection });
 
-                        this.bus.emit(EVENTS.TOAST_SHOW, { msg: "Új kapcsolat létrehozva!", type: "success" });
+                        this.bus.emit(EVENTS.TOAST_SHOW, { msg: i18next.t("game:connectionManager.newConnectionCreated"), type: "success" });
                         this.#cancelConnectingMode();
                         this.#updateActivePointConnectionsStore();
                     } else {
-                        this.bus.emit(EVENTS.TOAST_SHOW, { msg: "Ezek a jelölők már össze vannak kapcsolva!", type: "danger" });
+                        this.bus.emit(EVENTS.TOAST_SHOW, { msg: i18next.t("game:connectionManager.markersAlreadyConnected"), type: "danger" });
                     }
                 } else {
-                    this.bus.emit(EVENTS.TOAST_SHOW, { msg: "Ugyanarra a pontra kattintottál. Válassz másik pontot!", type: "danger" });
+                    this.bus.emit(EVENTS.TOAST_SHOW, { msg: i18next.t("game:connectionManager.samePointClicked"), type: "danger" });
                 }
             }
         });
@@ -163,6 +164,8 @@ export class ConnectionManager {
                 }
 
                 this.#renderConnectionsForActiveMap();
+            } else {
+                this.bus.emit(EVENTS.TOAST_SHOW, { msg: i18next.t("game:connectionManager.connectionNotFound"), type: "danger" });
             }
         });
 
@@ -252,7 +255,7 @@ export class ConnectionManager {
                     }
                     this.#renderConnectionsForActiveMap();
                     this.#updateActivePointConnectionsStore();
-                    this.bus.emit(EVENTS.TOAST_SHOW, { msg: "Kapcsolat sikeresen törölve!", type: "success" });
+                    this.bus.emit(EVENTS.TOAST_SHOW, { msg: i18next.t("game:connectionManager.connectionDeletedSuccess"), type: "success" });
                 } else {
                     await this.#deleteConnection(connectionId);
                 }
@@ -289,24 +292,24 @@ export class ConnectionManager {
                 if (activePointId != CONSTANTS.TEMP_ID) {
                     this.store.setState({ isConnecting: true });
                     this.mapViewer.canvasInput.setDefaultCursor("crosshair");
-                    let currentUnsavedConnections = this.store.getState().activePoint.unsavedConnections.length;
+                    const currentUnsavedConnections = this.store.getState().activePoint.unsavedConnections.length;
                     this.bus.emit(EVENTS.TOAST_SHOW, {
                         id: CONSTANTS.CONNECTION_TOAST_ID,
-                        msg: "Kattints a végpontra!",
+                        msg: i18next.t("game:connectionManager.clickOnEndpoint"),
                         type: "info",
                         autohide: false,
                         callback: () => {
                             this.#cancelConnectingMode();
-                            if (currentUnsavedConnections == this.store.getState().activePoint.unsavedConnections.length) {
-                                this.bus.emit(EVENTS.TOAST_SHOW, { msg: "Kapcsolat létrehozás megszakítva!", type: "info" });
+                            if (currentUnsavedConnections === this.store.getState().activePoint.unsavedConnections.length) {
+                                this.bus.emit(EVENTS.TOAST_SHOW, { msg: i18next.t("game:connectionManager.connectionCreationAborted"), type: "info" });
                             }
                         }
                     });
                 } else {
-                    this.bus.emit(EVENTS.TOAST_SHOW, { msg: "Először mentsd el a pontot!", type: "danger" });
+                    this.bus.emit(EVENTS.TOAST_SHOW, { msg: i18next.t("game:connectionManager.savePointFirst"), type: "danger" });
                 }
             } else {
-                this.bus.emit(EVENTS.TOAST_SHOW, { msg: "Először válassz ki egy pontot!", type: "danger" });
+                this.bus.emit(EVENTS.TOAST_SHOW, { msg: i18next.t("game:connectionManager.selectPointFirst"), type: "danger" });
             }
         }
     }
@@ -345,8 +348,8 @@ export class ConnectionManager {
     }
 
     async #saveConnections() {
-        this.store.setState({ isBusy: { connection: "Kapcsolatok mentése folyamatban, kérlek várj!" } });
-        this.bus.emit(EVENTS.TOAST_SHOW, { msg: "Kapcsolatok mentése", type: "info", id: "savingConnections", closable: false, autohide: false, spinner: true });
+        this.store.setState({ isBusy: { connection: i18next.t("game:connectionManager.savingConnectionsInProgress") } });
+        this.bus.emit(EVENTS.TOAST_SHOW, { msg: i18next.t("game:connectionManager.savingConnections"), type: "info", id: "savingConnections", closable: false, autohide: false, spinner: true });
 
         try {
             const state = this.store.getState();
@@ -372,14 +375,14 @@ export class ConnectionManager {
                 }
 
                 for (let fail of saveNewResult.failed) {
-                    this.bus.emit(EVENTS.TOAST_SHOW, { msg: `Új kapcsolat mentése sikertelen: ${fail.message}`, type: "danger" });
+                    this.bus.emit(EVENTS.TOAST_SHOW, { msg: i18next.t("game:connectionManager.newConnectionSaveFailed", { message: fail.message }), type: "danger" });
                 }
 
                 if (newSaveSuccess > 0) {
-                    this.bus.emit(EVENTS.TOAST_SHOW, { msg: `${newSaveSuccess} új kapcsolat sikeresen mentve!`, type: "success", iconObject: ICONS.SAVE_FLOPPY });
+                    this.bus.emit(EVENTS.TOAST_SHOW, { msg: i18next.t("game:connectionManager.newConnectionsSavedSuccess", { newSaveSuccess }), type: "success", iconObject: ICONS.SAVE_FLOPPY });
                 }
                 if (newSaveFailed > 0) {
-                    this.bus.emit(EVENTS.TOAST_SHOW, { msg: `${newSaveFailed} új kapcsolat mentése sikertelen!`, type: "danger" });
+                    this.bus.emit(EVENTS.TOAST_SHOW, { msg: i18next.t("game:connectionManager.newConnectionsSaveFailed", { newSaveFailed }), type: "danger" });
                 }
             }
 
@@ -409,14 +412,14 @@ export class ConnectionManager {
                 }
 
                 for (let fail of draftResult.failed) {
-                    this.bus.emit(EVENTS.TOAST_SHOW, { msg: `Új kapcsolat irány mentése sikertelen: ${fail.message}`, type: "danger" });
+                    this.bus.emit(EVENTS.TOAST_SHOW, { msg: i18next.t("game:connectionManager.newConnectionDirectionSaveFailed", { message: fail.message }), type: "danger" });
                 }
 
                 if (directionSaveSuccess > 0) {
-                    this.bus.emit(EVENTS.TOAST_SHOW, { msg: `${directionSaveSuccess} kapcsolat új irányainak mentése sikeres!`, type: "success", iconObject: ICONS.SAVE_FLOPPY });
+                    this.bus.emit(EVENTS.TOAST_SHOW, { msg: i18next.t("game:connectionManager.connectionDirectionsSavedSuccess", { directionSaveSuccess }), type: "success", iconObject: ICONS.SAVE_FLOPPY });
                 }
                 if (directionSaveFailed > 0) {
-                    this.bus.emit(EVENTS.TOAST_SHOW, { msg: `${directionSaveFailed} kapcsolat új irányainak mentése sikertelen!`, type: "danger" });
+                    this.bus.emit(EVENTS.TOAST_SHOW, { msg: i18next.t("game:connectionManager.connectionDirectionsSaveFailed", { directionSaveFailed }), type: "danger" });
                 }
             }
 
@@ -424,7 +427,7 @@ export class ConnectionManager {
             this.#updateActivePointConnectionsStore();
         } catch (error) {
             console.error("Error saving connections:", error);
-            this.bus.emit(EVENTS.TOAST_SHOW, { msg: "Hiba a kapcsolatok mentésekor!", type: "danger" });
+            this.bus.emit(EVENTS.TOAST_SHOW, { msg: i18next.t("game:connectionManager.errorSavingConnections"), type: "danger" });
         } finally {
             this.bus.emit(EVENTS.TOAST_HIDE_ID, { id: "savingConnections" });
             this.#updateDirtyState();
@@ -434,7 +437,7 @@ export class ConnectionManager {
 
     async #loadConnections() {
         try {
-            this.bus.emit(EVENTS.TOAST_SHOW, { msg: "Kapcsolatok betöltése", type: "info", id: "loadingConnections", closable: false, autohide: false, spinner: true });
+            this.bus.emit(EVENTS.TOAST_SHOW, { msg: i18next.t("game:connectionManager.loadingConnections"), type: "info", id: "loadingConnections", closable: false, autohide: false, spinner: true });
             const gameMapID = this.store.getState().gameMapId;
             let connections = await fetchConnections(gameMapID);
 
@@ -621,8 +624,8 @@ export class ConnectionManager {
     }
 
     async #deleteConnection(connectionId) {
-        this.store.setState({ isBusy: { connection: "Kapcsolat törlése folyamatban, kérlek várj!" } });
-        this.bus.emit(EVENTS.TOAST_SHOW, { msg: "Kapcsolat törlése", type: "info", id: "deletingConnection", closable: false, autohide: false, spinner: true });
+        this.store.setState({ isBusy: { connection: i18next.t("game:connectionManager.deletingConnectionInProgress") } });
+        this.bus.emit(EVENTS.TOAST_SHOW, { msg: i18next.t("game:connectionManager.deletingConnection"), type: "info", id: "deletingConnection", closable: false, autohide: false, spinner: true });
 
         try {
             await deleteConnection(connectionId);
@@ -648,10 +651,10 @@ export class ConnectionManager {
             this.#renderConnectionsForActiveMap();
             this.#updateActivePointConnectionsStore();
 
-            this.bus.emit(EVENTS.TOAST_SHOW, { msg: "Kapcsolat sikeresen törölve!", type: "success" });
+            this.bus.emit(EVENTS.TOAST_SHOW, { msg: i18next.t("game:connectionManager.connectionDeletedSuccess"), type: "success" });
         } catch (error) {
             console.error("Error deleting connection:", error);
-            this.bus.emit(EVENTS.TOAST_SHOW, { msg: "Hiba a kapcsolat törlésekor!", type: "danger" });
+            this.bus.emit(EVENTS.TOAST_SHOW, { msg: i18next.t("game:connectionManager.errorDeletingConnection"), type: "danger" });
         } finally {
             this.bus.emit(EVENTS.TOAST_HIDE_ID, { id: "deletingConnection" });
             this.store.setState({ isBusy: { connection: false } });

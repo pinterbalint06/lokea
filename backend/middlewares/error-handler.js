@@ -16,7 +16,7 @@ const globalErrorHandler = (error, request, response, next) => {
     const rawMessage = (error instanceof AppError)
         ? error.message
         : ERRORS.COMMON.UNEXPECTED_ERROR;
-    const message = request.t ? request.t(rawMessage) : rawMessage;
+    const message = request.t ? request.t(rawMessage) : (rawMessage || "Váratlan hiba történt");
 
     if (statusCode >= 500) {
         console.error(`Unhandled Server Error: ${request.method} ${request.originalUrl}\n`, error);

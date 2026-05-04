@@ -7,10 +7,11 @@ const ERRORS = require("#utils/error-messages.js");
 const mapsRoutes = require("./maps/maps.routes.js");
 const randomPointRoutes = require("./random-point/random-point.routes.js");
 const guessRoutes = require("./guess/guess.routes.js");
+const AppError = require("#utils/app-error.js");
 
 router.use(checkGameSession);
 
-router.get("/session", async (request, response) => {
+router.get("/session", async (request, response, next) => {
     try {
         const game = request.session.game;
         response.status(200).json({
@@ -23,7 +24,7 @@ router.get("/session", async (request, response) => {
             }
         });
     } catch (error) {
-        response.status(500).json({ message: ERRORS.GAMEFLOW.FETCH_SESSION_FAILED });
+        next(new AppError(ERRORS.GAMEFLOW.FETCH_SESSION_FAILED, 500));
     }
 });
 
@@ -31,7 +32,7 @@ router.use("/", mapsRoutes);
 router.use("/", randomPointRoutes);
 router.use("/", guessRoutes);
 
-router.delete("/session", async (request, response) => {
+router.delete("/session", async (request, response, next) => {
     try {
         const sessionId = request.session.game.activeSessionId;
         const total = await totalScore(sessionId);
@@ -39,7 +40,7 @@ router.delete("/session", async (request, response) => {
         delete request.session.game;
         response.status(200).json({ message: "A játékmenet sikeresen befejezve!", totalScore: total });
     } catch (error) {
-        response.status(500).json({ message: ERRORS.GAMEFLOW.FINISH_SESSION_FAILED });
+        next(new AppError(ERRORS.GAMEFLOW.FINISH_SESSION_FAILED, 500));
     }
 });
 

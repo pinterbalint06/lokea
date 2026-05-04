@@ -13,6 +13,10 @@ export function translatePage() {
         const key = element.getAttribute('data-i18n-placeholder');
         element.setAttribute('placeholder', i18next.t(key, { ...element.dataset }));
     });
+    document.querySelectorAll('[data-i18n-title]').forEach(element => { 
+        const key = element.getAttribute('data-i18n-title'); 
+        element.title = i18next.t(key); 
+    });
     document.documentElement.lang = i18next.language;
     const titleKey = document.querySelector('title')?.getAttribute('data-i18n');
     if (titleKey) {

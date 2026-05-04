@@ -18,8 +18,17 @@ import { EquirectangularManager } from "./managers/EquirectangularManager.js";
 import { ConnectionManager } from "./managers/ConnectionManager.js";
 import { ArrowManager } from "./managers/ArrowManager.js";
 import { BreakpointManager } from "./managers/ui/BreakpointManager.js";
+import { translatePage, nyelvSzinkronizalas } from "../libs/i18next/translation.js";
+import i18next from "../libs/language/i18next.js";
 
 async function init() {
+    try {
+        await nyelvSzinkronizalas() || 'hu';
+        translatePage();
+        console.log("")
+    } catch (error) {
+        console.error(i18next.t("game-maps:choosing.errors.languageLoad", { defaultValue: "Hiba a nyelvi adatok betöltésekor:" }), error);
+    }
     const mapViewer = new MapViewer(CONSTANTS.MAP_CANVAS_ID);
     const equirectangularViewer = new EquirectangularViewer(CONSTANTS.EQUIRECTANGULAR_CANVAS_ID);
 

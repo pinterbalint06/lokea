@@ -2,7 +2,7 @@ const guessService = require("./guess.service.js");
 const AppError = require("#utils/app-error.js");
 const ERRORS = require("#utils/error-messages.js");
 
-async function processGuess(request, response) {
+async function processGuess(request, response, next) {
     try {
         const sessionId = request.session.game.activeSessionId;
         const game = request.session.game;
@@ -14,9 +14,9 @@ async function processGuess(request, response) {
         response.status(200).json(result);
     } catch (error) {
         if (error instanceof AppError) {
-            response.status(error.statusCode).json({ message: error.message });
+            next(error);
         } else {
-            response.status(500).json({ message: ERRORS.GAMEFLOW.PROCESS_GUESS_FAILED });
+            next(new AppError(ERRORS.GAMEFLOW.PROCESS_GUESS_FAILED, 500));
         }
     }
 }

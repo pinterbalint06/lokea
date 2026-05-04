@@ -3,6 +3,7 @@ import { CONSTANTS } from "../../shared/constants.js";
 import { savePreviousValue } from "../../shared/utils.js";
 import { DragAndDropUploader } from "../../../libs/elements/DragAndDropUploader.js";
 import { DegreeInput } from "../../../libs/elements/DegreeInput.js";
+import i18next from "../../../libs/language/i18next.js";
 
 export class MarkerEditorManager {
     constructor(eventBus, appStore) {
@@ -51,8 +52,8 @@ export class MarkerEditorManager {
         );
 
         this.elements.equirectangularUploader = new DragAndDropUploader(this.elements.dropZoneEquirectangular, {
-            titleText: "Húzd ide a 360°-os képet",
-            buttonText: "Kattints ide feltöltéshez",
+            titleText: i18next.t("game:markerEditor.drag360Image"),
+            buttonText: i18next.t("game:markerEditor.clickToUpload"),
             accept: "image/*"
         });
 
@@ -154,7 +155,7 @@ export class MarkerEditorManager {
                 if (this.store.doesActivePointHaveUnsavedChanges()) {
                     this.bus.emit(EVENTS.UI_POINT_SAVE_REQUESTED);
                 } else {
-                    this.bus.emit(EVENTS.TOAST_SHOW, { msg: "A pont nem változott!", type: "info" });
+                    this.bus.emit(EVENTS.TOAST_SHOW, { msg: i18next.t("game:markerEditor.pointNotChanged"), type: "info" });
                 }
             } else {
                 this.bus.emit(EVENTS.TOAST_SHOW, { msg: lockReason, type: "danger" });

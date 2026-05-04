@@ -17,7 +17,7 @@ const i18nInitPromise = i18next
     .use(lngDetector)
     .init({
         fallbackLng: 'en',
-        ns: ['main', 'admin', 'common', 'game-maps', 'errors'],
+        ns: ['main', 'admin', 'common', 'game-maps', 'game', 'errors'],
         defaultNS: 'common',
         backend: {
             loadPath: path.join(__dirname, '../locales/{{lng}}/{{ns}}.json'),

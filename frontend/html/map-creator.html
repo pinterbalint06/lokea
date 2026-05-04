@@ -4,7 +4,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Lokea</title>
+    <title data-i18n="game:mapCreator.title">Lokea - Pályaszerkesztő</title>
     <script src="/bootstrap/js/popper.min.js"></script>
     <script src="/bootstrap/js/bootstrap.min.js"></script>
     <link href="/bootstrap/css/bootstrap.min.css" rel="stylesheet">
@@ -38,28 +38,28 @@
 
                 <button id="addNewMapBtn"
                     class="btn btn-sm btn-link text-decoration-none p-0 d-flex align-items-center">
-                    <span class="me-1 fw-semibold text-white">Új</span>
+                    <span class="me-1 fw-semibold text-white" data-i18n="game:mapCreator.new">Új</span>
                 </button>
             </div>
         </div>
         <canvas id="mapCanvas"></canvas>
         <div id="floatingButtonDiv" class="position-absolute bottom-0 end-0 m-3 z-1 d-flex flex-column gap-3">
             <button id="saveMapButton" class="btn uvegbutton rounded-circle floating-button floating-button-success"
-                disabled title="Térkép mentése">
+                disabled data-i18n-title="game:mapCreator.saveMap" title="Térkép mentése">
                 <svg style="height: 1em; fill: white;" viewBox="0 0 512 511.52">
                     <use href="/images/map-creator-icons.svg#icon-save-floppy"></use>
                 </svg>
             </button>
 
             <button id="settingsBtn" class="btn uvegbutton rounded-circle floating-button floating-button-primary"
-                title="Beállítások">
+                data-i18n-title="game:mapCreator.settings" title="Beállítások">
                 <svg style="height: 1.5em; fill: white;" viewBox="0 0 122.881 122.88">
                     <use href="/images/map-creator-icons.svg#icon-settings-cog"></use>
                 </svg>
             </button>
 
             <button id="plusBtn" class="btn uvegbutton rounded-circle floating-button floating-button-primary"
-                title="Új pont hozzáadása">
+                data-i18n-title="game:mapCreator.addNewPoint" title="Új pont hozzáadása">
                 <svg style="height: 1.5em; fill: white;" viewBox="0 0 122.875 122.648">
                     <use href="/images/map-creator-icons.svg#icon-plus"></use>
                 </svg>
@@ -72,7 +72,7 @@
             id="beallitasokCollapse">
             <div class="card h-100" id="beallitasokCard">
                 <div class="card-header d-flex justify-content-between flex-shrink-0 border-0">
-                    <h5 class="card-title m-0 mt-1">Beállítások</h5>
+                    <h5 class="card-title m-0 mt-1" data-i18n="game:mapCreator.settings">Beállítások</h5>
                     <button id="closeBeallitasok" type="button" class="btn-close" data-bs-toggle="collapse"
                         data-bs-target="#beallitasokCollapse"></button>
                 </div>
@@ -82,7 +82,8 @@
                             <h2 class="accordion-header">
                                 <button class="accordion-button" data-bs-toggle="collapse"
                                     data-bs-target="#nezetiBeallitasok" aria-expanded="true"
-                                    aria-controls="nezetiBeallitasok">
+                                    aria-controls="nezetiBeallitasok"
+                                    data-i18n="game:mapCreator.viewSettings">
                                     Nézeti beállítások
                                 </button>
                             </h2>
@@ -91,12 +92,13 @@
                                     <div class="form-check form-switch w-100">
                                         <input class="form-check-input" type="checkbox" role="switch" id="fovToggle"
                                             checked>
-                                        <label class="form-check-label ms-2" for="fovToggle">Látótér
-                                            megjelenítése</label>
+                                        <label class="form-check-label ms-2" for="fovToggle"
+                                            data-i18n="game:mapCreator.showFov">Látótér megjelenítése</label>
                                     </div>
 
                                     <div class="w-100">
-                                        <label class="form-label mb-1" for="fovWidthRange">Látótér szélesség</label>
+                                        <label class="form-label mb-1" for="fovWidthRange"
+                                            data-i18n="game:mapCreator.fovWidth">Látótér szélesség</label>
                                         <div class="d-flex align-items-center gap-2">
                                             <input type="range" class="form-range glass-range flex-grow-1" min="10"
                                                 max="1000" step="10" id="fovWidthRange" value="100">
@@ -107,7 +109,8 @@
                                     </div>
 
                                     <div class="w-100">
-                                        <label class="form-label mb-1" for="fovHeightRange">Látótér magasság</label>
+                                        <label class="form-label mb-1" for="fovHeightRange"
+                                            data-i18n="game:mapCreator.fovHeight">Látótér magasság</label>
                                         <div class="d-flex align-items-center gap-2">
                                             <input type="range" class="form-range glass-range flex-grow-1" min="10"
                                                 max="1000" step="10" id="fovHeightRange" value="100">
@@ -118,19 +121,21 @@
                                     </div>
 
                                     <div class="w-100 border-top border-secondary border-opacity-25 pt-3 mt-1">
-                                        <h6 class="h6 text-uppercase text-body-secondary mb-2">Kapcsolatok</h6>
+                                        <h6 class="h6 text-uppercase text-body-secondary mb-2"
+                                            data-i18n="game:mapCreator.connections">Kapcsolatok</h6>
                                         <div class="form-check form-switch w-100">
                                             <input class="form-check-input" type="checkbox" role="switch"
                                                 id="allConnectionsWhenNotActiveToggle" checked>
-                                            <label class="form-check-label ms-2"
-                                                for="allConnectionsWhenNotActiveToggle">
+                                            <label class="form-check-label ms-2" for="allConnectionsWhenNotActiveToggle"
+                                                data-i18n="game:mapCreator.showAllConnections">
                                                 Összes kapcsolat kijelölés nélküli megjelenítése
                                             </label>
                                         </div>
                                         <div class="form-check form-switch w-100 mb-2">
                                             <input class="form-check-input" type="checkbox" role="switch"
                                                 id="offMapConnectionsToggle" checked>
-                                            <label class="form-check-label ms-2" for="offMapConnectionsToggle">
+                                            <label class="form-check-label ms-2" for="offMapConnectionsToggle"
+                                                data-i18n="game:mapCreator.showCrossMapConnections">
                                                 Térképen átívelő kapcsolatok megjelenítése
                                             </label>
                                         </div>
@@ -147,7 +152,7 @@
             id="ujPontCollapse">
             <div class="card h-100" id="collapseCard">
                 <div class="card-header d-flex justify-content-between flex-shrink-0">
-                    <h5 class="card-title">Pont szerkesztése</h5>
+                    <h5 class="card-title" data-i18n="game:mapCreator.editPoint">Pont szerkesztése</h5>
                     <button id="closeCollapse" type="button" class="btn-close"></button>
                 </div>
                 <div class="card-body d-flex flex-column align-items-start overflow-auto p-0">
@@ -155,7 +160,8 @@
                         <div class="accordion-item">
                             <h2 class="accordion-header">
                                 <button class="accordion-button collapsed" data-bs-toggle="collapse"
-                                    data-bs-target="#koordinatak" aria-expanded="false" aria-controls="koordinatak">
+                                    data-bs-target="#koordinatak" aria-expanded="false" aria-controls="koordinatak"
+                                    data-i18n="game:mapCreator.pointData">
                                     Pont adatai
                                 </button>
                             </h2>
@@ -167,16 +173,19 @@
                                             <use href="/images/map-creator-icons.svg#icon-crosshair"></use>
                                         </svg>
                                         <div class="d-inline-flex flex-column flex-grow-1 ms-2">
-                                            <h6 class="h6 text-uppercase text-body-secondary m-0">Koordináták</h6>
+                                            <h6 class="h6 text-uppercase text-body-secondary m-0"
+                                                data-i18n="game:mapCreator.coordinates">Koordináták</h6>
                                             <div
                                                 class="d-flex flex-wrap align-items-center gap-2 w-auto flex-grow-1 justify-content-around">
                                                 <div class="d-flex gap-1 justify-content-center align-items-center">
-                                                    <label class="form-label m-0" for="coordinateX">X: </label>
+                                                    <label class="form-label m-0" for="coordinateX"
+                                                        data-i18n="game:mapCreator.coordX">X: </label>
                                                     <input class="form-control uvegform p-1" type="number"
                                                         id="coordinateX">
                                                 </div>
                                                 <div class="d-flex gap-1 justify-content-center align-items-center">
-                                                    <label class="form-label m-0" for="coordinateY">Y: </label>
+                                                    <label class="form-label m-0" for="coordinateY"
+                                                        data-i18n="game:mapCreator.coordY">Y: </label>
                                                     <input class="form-control uvegform p-1" type="number"
                                                         id="coordinateY">
                                                 </div>
@@ -196,7 +205,8 @@
                         <div class="accordion-item">
                             <h2 class="accordion-header">
                                 <button class="accordion-button collapsed" data-bs-toggle="collapse"
-                                    data-bs-target="#kepFeltoltes" aria-expanded="false" aria-controls="kepFeltoltes">
+                                    data-bs-target="#kepFeltoltes" aria-expanded="false" aria-controls="kepFeltoltes"
+                                    data-i18n="game:mapCreator.uploadImage">
                                     Kép feltöltése
                                 </button>
                             </h2>
@@ -209,7 +219,8 @@
                         <div class="accordion-item">
                             <h2 class="accordion-header">
                                 <button class="accordion-button collapsed" data-bs-toggle="collapse"
-                                    data-bs-target="#elonezet" aria-expanded="false" aria-controls="elonezet">
+                                    data-bs-target="#elonezet" aria-expanded="false" aria-controls="elonezet"
+                                    data-i18n="game:mapCreator.imagePreview">
                                     Kép előnézete
                                 </button>
                             </h2>
@@ -232,7 +243,7 @@
                             <h2 class="accordion-header">
                                 <button class="accordion-button collapsed" data-bs-toggle="collapse"
                                     data-bs-target="#pontokOsszekapcsolasa" aria-expanded="false"
-                                    aria-controls="pontokOsszekapcsolasa">
+                                    aria-controls="pontokOsszekapcsolasa" data-i18n="game:mapCreator.connectPoints">
                                     Pontok összekapcsolása
                                 </button>
                             </h2>
@@ -244,14 +255,15 @@
                                                 viewBox="0 0 112.55 122.88">
                                                 <use href="/images/map-creator-icons.svg#icon-chain"></use>
                                             </svg>
-                                            <h6 class="h6 text-uppercase text-body-secondary m-0">
+                                            <h6 class="h6 text-uppercase text-body-secondary m-0"
+                                                data-i18n="game:mapCreator.newConnection">
                                                 Új kapcsolat
                                             </h6>
                                         </div>
 
                                         <button id="kapcsolatLetrehozasaBtn"
                                             class="btn btn-sm successColor w-100 rounded-pill d-flex align-items-center justify-content-center gap-2"
-                                            disabled>
+                                            disabled data-i18n="game:mapCreator.createConnection">
                                             <svg style="height: 1em; fill: white;" viewBox="0 0 122.875 122.648">
                                                 <use href="/images/map-creator-icons.svg#icon-plus"></use>
                                             </svg>
@@ -265,14 +277,16 @@
                                                 viewBox="0 0 112.55 122.88">
                                                 <use href="/images/map-creator-icons.svg#icon-chain"></use>
                                             </svg>
-                                            <h6 class="h6 text-uppercase text-body-secondary m-0">
+                                            <h6 class="h6 text-uppercase text-body-secondary m-0"
+                                                data-i18n="game:mapCreator.existingConnections">
                                                 Meglévő kapcsolatok
                                             </h6>
                                         </div>
                                         <div id="kapcsolatokWrapper"
                                             class="d-flex flex-column gap-2 max-height-connections">
                                             <div id="nincsenekKapcsolatok"
-                                                class="dangerColor m-0 py-2 px-3 rounded-2 small text-center">
+                                                class="dangerColor m-0 py-2 px-3 rounded-2 small text-center"
+                                                data-i18n="game:mapCreator.noConnections">
                                                 Nincsenek kapcsolatok
                                             </div>
                                             <div id="kapcsolatokLista" class="p-2">
@@ -288,14 +302,16 @@
                 <div
                     class="card-footer d-flex flex-wrap justify-content-between align-items-center w-100 flex-shrink-0">
                     <button id="deletePointBtn"
-                        class="btn btn-outline-danger btn-sm rounded-pill d-flex align-items-center gap-1 px-3">
+                        class="btn btn-outline-danger btn-sm rounded-pill d-flex align-items-center gap-1 px-3"
+                        data-i18n="game:mapCreator.deletePoint">
                         <svg style="height: 1em; fill: currentColor;" viewBox="0 0 456 511.82">
                             <use href="/images/map-creator-icons.svg#icon-trash"></use>
                         </svg>
                         Pont törlése
                     </button>
 
-                    <button id="savePointButton" class="btn successColor rounded-pill px-3" disabled>Pont
+                    <button id="savePointButton" class="btn successColor rounded-pill px-3" disabled
+                        data-i18n="game:mapCreator.savePoint">Pont
                         mentése</button>
                 </div>
             </div>
@@ -323,21 +339,23 @@
             </div>
             <button
                 class="btn-delete-connection btn-delete btn-hold-to-unlock d-inline-flex align-items-center justify-content-center rounded-circle p-0 flex-shrink-0"
-                title="Kapcsolat törlése">
+                data-i18n-title="game:mapCreator.deleteConnection" title="Kapcsolat törlése">
                 <svg style="height: 1em; width: 1em; fill: currentColor;" viewBox="0 0 456 511.82">
                     <use href="/images/map-creator-icons.svg#icon-trash"></use>
                 </svg>
             </button>
             <div class="connection-direction-wrapper w-100 mt-2 d-none">
                 <div class="w-100 border-top border-secondary border-opacity-25 pt-2 mt-1">
-                    <h6 class="h6 text-uppercase small text-body-secondary mb-2 mt-3">Irány (Másik térkép felé)</h6>
+                    <h6 class="h6 text-uppercase small text-body-secondary mb-2 mt-3"
+                        data-i18n="game:mapCreator.directionTowardOther">Irány (Másik térkép felé)</h6>
                     <div class="d-flex align-items-center gap-2">
                         <svg style="height: 1.5em;" class="text-body" fill="currentColor" viewBox="0 0 122.88 122.88">
                             <use href="/images/map-creator-icons.svg#icon-compass"></use>
                         </svg>
                         <div class="direction-toward-other-wrapper"></div>
                     </div>
-                    <h6 class="h6 text-uppercase small text-body-secondary mb-2">Irány (Jelenlegi pont felé)</h6>
+                    <h6 class="h6 text-uppercase small text-body-secondary mb-2"
+                        data-i18n="game:mapCreator.directionTowardCurrent">Irány (Jelenlegi pont felé)</h6>
                     <div class="d-flex align-items-center gap-2">
                         <svg style="height: 1.5em;" class="text-body" fill="currentColor" viewBox="0 0 122.88 122.88">
                             <use href="/images/map-creator-icons.svg#icon-compass"></use>
