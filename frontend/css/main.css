@@ -67,6 +67,11 @@ footer {
 
 .dropdown-menu {
     opacity: 1 !important;
+    background: rgba(255, 255, 255, 0.25) !important;
+    backdrop-filter: blur(15px);
+    -webkit-backdrop-filter: blur(15px);
+    border: 1px solid rgba(255, 255, 255, 0.4) !important;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
 }
 
 .dropdown:hover .dropdown-menu {
@@ -77,8 +82,12 @@ footer {
     display: block;
 }
 
+.dropdown-menu a {
+    color: #ffffff !important;
+}
+
 .dropdown-menu a:hover {
-    background-color: rgba(25, 31, 197, 0.199);
+    background-color: rgba(148, 62, 201, 0.15) !important;
     cursor: pointer;
 }
 
@@ -233,7 +242,6 @@ body[data-bs-theme="dark"] {
 /* egyedi terkepek */
 
 .customMap {
-    background: url(../images/examplelocation.jpg);
     background-repeat: no-repeat;
     background-size: cover;
     background-position: center;
@@ -251,6 +259,104 @@ body[data-bs-theme="dark"] {
     background-color: black;
     opacity: 0.8;
     color: white;
+}
+
+.customMapPlaceholder {
+    min-height: 400px;
+    pointer-events: none;
+    cursor: default;
+    overflow: hidden;
+}
+
+.topMapsContainer {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 20px;
+}
+
+.customMaps {
+    display: flex;
+    justify-content: center;
+    flex: 0 1 250px;
+    max-width: 250px;
+}
+
+.customMaps.is-empty {
+    display: none;
+}
+
+.featuredMapsEmptyState {
+    flex: 1 0 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 160px;
+    border: 1px dashed rgba(255, 255, 255, 0.22);
+    border-radius: 18px;
+    background: rgba(255, 255, 255, 0.06);
+    color: rgba(255, 255, 255, 0.9);
+    font-size: 1.1rem;
+    font-weight: 600;
+    letter-spacing: 0.02em;
+    text-align: center;
+    padding: 1rem 1.25rem;
+}
+
+.placeholder-card-content {
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-end;
+    height: 100%;
+    gap: 0.75rem;
+    background: linear-gradient(to top, rgba(32, 8, 61, 0.96), rgba(32, 8, 61, 0.1));
+}
+
+.placeholder-line,
+.placeholder-stars {
+    position: relative;
+    overflow: hidden;
+    border-radius: 999px;
+    background: rgba(255, 255, 255, 0.12);
+}
+
+.placeholder-line::after,
+.placeholder-stars::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    transform: translateX(-100%);
+    background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.28), transparent);
+    animation: placeholderShimmer 1.5s infinite;
+}
+
+.placeholder-title-line {
+    width: 78%;
+    height: 1.1rem;
+}
+
+.placeholder-rating-line {
+    width: 55%;
+}
+
+.placeholder-stars {
+    width: 100%;
+    height: 1.4rem;
+}
+
+.placeholder-text-line {
+    width: 100%;
+    height: 0.8rem;
+}
+
+.placeholder-text-line.short {
+    width: 68%;
+}
+
+@keyframes placeholderShimmer {
+    100% {
+        transform: translateX(100%);
+    }
 }
 
 /* osszehasonlitas */
@@ -308,9 +414,150 @@ table img {
 
 /* modalok */
 
-body.modal-open> :not(.modal):not(.modal-backdrop) {
+body.modal-open> :not(.modal):not(.modal-backdrop):not(#toastContainer) {
     filter: blur(8px);
     transition: filter 0.5s ease;
+}
+
+.modal-content {
+    background: rgba(255, 255, 255, 0.25);
+    backdrop-filter: blur(15px);
+    border: 1px solid rgba(255, 255, 255, 0.4);
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
+}
+
+.modal-backdrop {
+    opacity: 0.5 !important;
+}
+
+.modal-content .modal-header,
+.modal-content .modal-body,
+.modal-content .modal-footer {
+    background: transparent;
+    border-color: rgba(255, 255, 255, 0.2);
+    color: #ffffff;
+}
+
+.modal-content input[type="text"],
+.modal-content input[type="password"],
+.modal-content input[type="email"],
+.modal-content select,
+.modal-content textarea {
+    width: 100%;
+    background: rgba(255, 255, 255, 0.95) !important;
+    border: 1px solid rgba(255, 255, 255, 0.6) !important;
+    color: #1a1a1a !important;
+    padding: 10px 12px !important;
+    border-radius: 8px !important;
+    font-size: 16px;
+    transition: all 0.2s ease;
+    box-sizing: border-box;
+}
+
+.modal-content input[type="text"]:-webkit-autofill,
+.modal-content input[type="password"]:-webkit-autofill,
+.modal-content input[type="email"]:-webkit-autofill {
+    -webkit-box-shadow: inset 0 0 0 1000px rgba(255, 255, 255, 0.95) !important;
+    -webkit-text-fill-color: #1a1a1a !important;
+    caret-color: #1a1a1a !important;
+}
+
+.modal-content input[type="text"]:-webkit-autofill:focus,
+.modal-content input[type="password"]:-webkit-autofill:focus,
+.modal-content input[type="email"]:-webkit-autofill:focus {
+    -webkit-box-shadow: inset 0 0 0 1000px #ffffff !important;
+    box-shadow: 0 0 0 3px rgba(148, 62, 201, 0.2) !important;
+    -webkit-text-fill-color: #1a1a1a !important;
+    caret-color: #1a1a1a !important;
+    border-color: #943ec9 !important;
+}
+
+.modal-content input[type="text"]:focus,
+.modal-content input[type="password"]:focus,
+.modal-content input[type="email"]:focus,
+.modal-content select:focus,
+.modal-content textarea:focus {
+    background: #ffffff !important;
+    border-color: #943ec9 !important;
+    box-shadow: 0 0 0 3px rgba(148, 62, 201, 0.2) !important;
+    outline: none;
+}
+
+.modal-content input::placeholder {
+    color: #999 !important;
+    opacity: 1 !important;
+    background-color: transparent !important;
+}
+
+.modal-content textarea::placeholder {
+    color: #999 !important;
+    opacity: 1 !important;
+    background-color: transparent !important;
+}
+
+.modal-content .form-check-input {
+    width: 1.25em;
+    height: 1.25em;
+    background-color: rgba(255, 255, 255, 0.85);
+    border: 2px solid rgba(100, 100, 100, 0.4);
+    border-radius: 3px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    flex-shrink: 0;
+}
+
+.modal-content .form-check-input:hover {
+    border-color: #943ec9 !important;
+    background-color: rgba(255, 255, 255, 1);
+}
+
+.modal-content .form-check-input:checked {
+    background-color: #943ec9 !important;
+    border-color: #943ec9 !important;
+    box-shadow: inset 0 0 0 2px rgba(255, 255, 255, 0.3);
+}
+
+.modal-content .form-check-label {
+    color: #ffffff;
+    font-weight: 500;
+    cursor: pointer;
+    margin-left: 8px;
+    user-select: none;
+}
+
+.modal-content .input-container input {
+    background: rgba(255, 255, 255, 0.95) !important;
+    border: 1px solid rgba(255, 255, 255, 0.6) !important;
+    color: #1a1a1a !important;
+}
+
+.modal-content .input-container input:-webkit-autofill {
+    -webkit-box-shadow: inset 0 0 0 1000px rgba(255, 255, 255, 0.95) !important;
+    -webkit-text-fill-color: #1a1a1a !important;
+}
+
+.modal-content .input-container input:focus {
+    border: 2px solid #943ec9 !important;
+    box-shadow: 0 0 0 3px rgba(148, 62, 201, 0.2) !important;
+}
+
+.modal-content .input-container label {
+    background-color: rgba(255, 255, 255, 0.95) !important;
+    color: #999 !important;
+}
+
+.modal-content .input-container input:focus~label,
+.modal-content .input-container input:not(:placeholder-shown)~label {
+    color: #943ec9 !important;
+}
+
+#toastContainer {
+    z-index: 2000;
+    pointer-events: none;
+}
+
+#toastContainer .toast {
+    pointer-events: auto;
 }
 
 
