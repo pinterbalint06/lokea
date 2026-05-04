@@ -63,10 +63,10 @@ router.put('/users/me', auth.checkAuth,
                 await databaseLogs.addLog(request.session.userid, 'User update');
                 let users = await database.getUser(request.session.userid);
                 sendChangeEmail(users[0].email, users[0].username);
-                response.status(200).json({ message: request.t('main:apiSettings.updateUser.success') });
+                response.status(200).json({ message: request.t('main:apiSettings.updateUser.success', { lng: language }) });
             }
             else {
-                response.status(200).json({ message: request.t('main:apiSettings.updateUser.no_change') });
+                response.status(200).json({ message: request.t('main:apiSettings.updateUser.no_change', { lng: language }) });
             }
         } catch (error) {
             if (error instanceof AppError) {
