@@ -7,6 +7,7 @@ const ERRORS = require("#utils/error-messages.js");
 const mapsRoutes = require("./maps/maps.routes.js");
 const randomPointRoutes = require("./random-point/random-point.routes.js");
 const guessRoutes = require("./guess/guess.routes.js");
+const AppError = require("#utils/app-error.js");
 
 router.use(checkGameSession);
 
