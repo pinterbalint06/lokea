@@ -11,31 +11,12 @@
     <script src="../bootstrap/js/bootstrap.min.js"></script>
     <link rel="stylesheet" href="../css/game-lobby.css">
     <script type="module" src="../javascript/game/game-lobby.js"></script>
+    <script type="module" src="/javascript/libs/utils/navbar.js"></script>
     <title>Pályaválasztás</title>
 </head>
 
 <body>
-    <nav class="navbar navbar-expand-lg navbar-dark glass">
-        <div class="container-fluid">
-            <a class="navbar-brand" href="#"> <!-- Főoldalt be kell majd linkelni -->
-                <img src="../images/lokea.webp" alt="Lokea logo" class="navPic">
-            </a>
-            <div class="dropdown">
-                <a href="#" class="d-block link-light text-decoration-none dropdown-toggle">
-                    <!-- Profiloldal belinkelése -->
-                    <img src="../images/default.png" alt="profPic" class="rounded-circle border border-2 navPic">
-                </a>
-                <ul class="dropdown-menu dropdown-menu-end text-small">
-                    <li><a class="dropdown-item" href="#">Profile</a></li> <!-- Profiloldal belinkelése -->
-                    <li>
-                        <hr class="dropdown-divider">
-                    </li>
-                    <li><a class="dropdown-item text-danger" href="#">Sign out</a></li>
-                    <!-- Kijelentkezés funkció implementálása -->
-                </ul>
-            </div>
-        </div>
-    </nav>
+    <div id="navbar-mount"></div>
     <div class="d-flex justify-content-center align-items-center mt-4">
         <div class="d-flex align-items-center colDiv flex-column glass">
             <div class="d-flex p-2 pb-0 w-100 gap-2 tabRow">

@@ -12,6 +12,10 @@ body {
     color: var(--text-main);
     min-height: 100vh;
     margin: 0;
+    padding: 0;
+}
+
+body > .row {
     padding: 20px;
 }
 
@@ -353,7 +357,7 @@ body {
 }
 
 @media (max-width: 768px) {
-    body {
+    body > .row {
         padding: 10px;
     }
 
