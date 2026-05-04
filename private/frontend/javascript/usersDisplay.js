@@ -228,7 +228,7 @@ async function editUserToModal(data) {
         pfp.src = "../images/default.png";
     }
     else {
-        State.variables.objectURL = await getProfilePicture(user_id);
+        State.variables.objectURL = await getProfilePicture(data.user_id);
         pfp.src = State.variables.objectURL;
         deletePfpButton = gombGeneral("button", i18next.t('admin:users.delete_profile_picture'), "trash-2", "red", null);
         deletePfpButton.addEventListener("click", handleDeletePfpClick);
@@ -322,7 +322,7 @@ async function viewUserToModal(data) {
         pfp.src = "../images/default.png";
     }
     else {
-        State.variables.objectURL = await getProfilePicture(user_id);
+        State.variables.objectURL = await getProfilePicture(data.user_id);
         pfp.src = State.variables.objectURL;
     }
     pfp.alt = i18next.t('admin:users.profile_picture');

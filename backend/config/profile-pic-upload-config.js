@@ -16,7 +16,7 @@ const fileFilter = (request, file, callback) => {
     if (file.mimetype && file.mimetype.startsWith('image/')) {
         callback(null, true);
     } else {
-        request.fileValidationError = 'Érvénytelen fájltípus! Csak képeket tölthetsz fel.';
+        request.fileValidationError = request.t ? request.t('main:apiSettings.updateProfilePic.invalid_file_type') : 'Érvénytelen fájltípus! Csak képeket tölthetsz fel.';
         callback(null, false); // Elutasítja a fájlt mentés nélkül
     }
 };

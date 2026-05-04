@@ -132,12 +132,12 @@ router.put('/users/me/profile-picture', auth.checkAuth,
         upload.single('profilePic')(request, response, (err) => {
             if (err instanceof multer.MulterError) {
                 if (err.code === 'LIMIT_FILE_SIZE') {
-                    request.fileValidationError = 'A fájl túl nagy! Maximum 5 MB engedélyezett.';
+                    request.fileValidationError = request.t('errors:common.fileTooLarge');
                 } else {
-                    request.fileValidationError = `Feltöltési hiba: ${err.message}`;
+                    request.fileValidationError = `${request.t('errors:common.fileUploadError')} ${err.message}`;
                 }
             } else if (err) {
-                return response.status(500).json({ error: 'Rendszerhiba a feltöltés során.' });
+                return response.status(500).json({ error: request.t('errors:common.unexpectedError') });
             }
             next();
         });
