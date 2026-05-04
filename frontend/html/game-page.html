@@ -11,7 +11,7 @@
     <link rel="stylesheet" href="../css/game-lobby.css">
     <link rel="stylesheet" href="../css/game-page.css">
     <script type="module" src="../javascript/game/game_page.js"></script>
-    <title>Lokea</title>
+    <title data-i18n="game-maps:gamePage.title">Lokea</title>
 </head>
 
 <body>
@@ -25,9 +25,11 @@
                     <img src="../images/default.png" alt="profPic" class="rounded-circle border border-2 navPic">
                 </a>
                 <ul class="dropdown-menu dropdown-menu-end text-small">
-                    <li><a class="dropdown-item" href="#">Profile</a></li>
-                    <li><hr class="dropdown-divider"></li>
-                    <li><a class="dropdown-item text-danger" href="#">Sign out</a></li>
+                    <li><a class="dropdown-item" href="#" data-i18n="main:dropdown.myAccount">Profile</a></li>
+                    <li>
+                        <hr class="dropdown-divider">
+                    </li>
+                    <li><a class="dropdown-item text-danger" href="#" data-i18n="main:dropdown.logout">Sign out</a></li>
                 </ul>
             </div>
         </div>
@@ -40,9 +42,10 @@
 
         <div id="errorOverlay" class="error-overlay">
             <div id="errorBox">
-                <p class="panel-label">Hiba</p>
+                <p class="panel-label" data-i18n="game-maps:gamePage.errorOccurred">Hiba</p>
                 <p id="errorMessage"></p>
-                <button class="btn-next-round" onclick="location.href='/game-maps'">Vissza a játékválasztó oldalra</button>
+                <button class="btn-next-round" onclick="location.href='/game-maps'"
+                    data-i18n="game-maps:gamePage.backToLobby">Vissza a játékválasztó oldalra</button>
             </div>
         </div>
 
@@ -52,26 +55,41 @@
 
                 <div id="mapWrapper">
                     <canvas id="mapCanvas"></canvas>
-                    <button class="map-side-btn map-prev" id="mapPrevBtn" title="Előző térkép">
-                        <svg viewBox="0 0 24 24"><polyline points="15 18 9 12 15 6"/></svg>
+                    <button class="map-side-btn map-prev" id="mapPrevBtn" data-i18n-title="game-maps:gamePage.prevMap"
+                        title="Előző térkép">
+                        <svg viewBox="0 0 24 24">
+                            <polyline points="15 18 9 12 15 6" />
+                        </svg>
                     </button>
-                    <button class="map-side-btn map-next" id="mapNextBtn" title="Következő térkép">
-                        <svg viewBox="0 0 24 24"><polyline points="9 18 15 12 9 6"/></svg>
+                    <button class="map-side-btn map-next" id="mapNextBtn" data-i18n-title="game-maps:gamePage.nextMap"
+                        title="Következő térkép">
+                        <svg viewBox="0 0 24 24">
+                            <polyline points="9 18 15 12 9 6" />
+                        </svg>
                     </button>
                     <div id="mapControls">
-                        <button class="map-btn" onclick="mapFullScreen()" title="Teljes képernyő">
-                            <svg><use href="../images/icons/game-icons.svg#fullscreen"/></svg>
+                        <button class="map-btn" onclick="mapFullScreen()"
+                            data-i18n-title="game-maps:gamePage.fullscreen" title="Teljes képernyő">
+                            <svg>
+                                <use href="../images/icons/game-icons.svg#fullscreen" />
+                            </svg>
                         </button>
                     </div>
                 </div>
 
                 <div id="sidebar">
-                    <button class="icon-btn" id="pictureFullScreenBtn" onclick="pictureFullScreen()" title="Teljes képernyő">
-                        <svg><use href="../images/icons/game-icons.svg#fullscreen"/></svg>
+                    <button class="icon-btn" id="pictureFullScreenBtn" onclick="pictureFullScreen()"
+                        data-i18n-title="game-maps:gamePage.fullscreen" title="Teljes képernyő">
+                        <svg>
+                            <use href="../images/icons/game-icons.svg#fullscreen" />
+                        </svg>
                     </button>
-                    <label class="icon-btn" id="autoRotateBtn" title="Automatikus forgatás">
+                    <label class="icon-btn" id="autoRotateBtn" data-i18n-title="game-maps:gamePage.autoRotate"
+                        title="Automatikus forgatás">
                         <input type="checkbox" id="autoRotate" hidden>
-                        <svg><use href="../images/icons/game-icons.svg#auto-rotate"/></svg>
+                        <svg>
+                            <use href="../images/icons/game-icons.svg#auto-rotate" />
+                        </svg>
                     </label>
                 </div>
 
@@ -82,12 +100,17 @@
                 <div id="bottomBar">
                     <div id="bottomRight">
                         <div id="roundCounter">
-                            <span id="mapName" title="Térkép"><svg><use href="../images/icons/game-icons.svg#map"/></svg><span id="mapTitle">-</span></span>
-                            <span id="roundCount">Kör: <span id="currentRound">-</span> / <span id="totalRounds">-</span></span>
+                            <span id="mapName" data-i18n-title="game-maps:gamePage.map" title="Térkép"><svg>
+                                    <use href="../images/icons/game-icons.svg#map" />
+                                </svg><span id="mapTitle">-</span></span>
+                            <span id="roundCount"><span data-i18n="game-maps:gamePage.round">Kör: </span><span
+                                    id="currentRound">-</span> / <span id="totalRounds">-</span></span>
                         </div>
                         <button class="btn-guess" id="guessBtn" onclick="sendGuess()">
-                            <svg><use href="../images/icons/game-icons.svg#guess"/></svg>
-                            Tipp leadása
+                            <svg>
+                                <use href="../images/icons/game-icons.svg#guess" />
+                            </svg>
+                            <span data-i18n="game-maps:gamePage.sendGuess">Tipp leadása</span>
                         </button>
                     </div>
                 </div>
@@ -95,65 +118,80 @@
 
             <div id="guessPanel">
                 <div class="panel-content" id="roundResultContent">
-                    <p class="panel-label">Pontszám</p>
+                    <p class="panel-label" data-i18n="game-maps:gamePage.score">Pontszám</p>
                     <h2 id="guessPanelScore">0</h2>
                     <p id="guessPanelDistance"></p>
                     <hr class="panel-divider">
-                    <p class="panel-label">Összesített pontszám</p>
+                    <p class="panel-label" data-i18n="game-maps:gamePage.totalScore">Összesített pontszám</p>
                     <h4 id="guessPanelTotal">0</h4>
-                    <button class="btn-next-round" id="nextRoundBtn" onclick="nextRound()">Következő kör</button>
+                    <button class="btn-next-round" id="nextRoundBtn" onclick="nextRound()"
+                        data-i18n="game-maps:gamePage.nextRound">Következő kör</button>
                 </div>
                 <div id="gameOverContent">
                     <div id="gameOverInner">
-                        <p class="panel-label">Játék vége</p>
+                        <p class="panel-label" data-i18n="game-maps:gamePage.gameOver">Játék vége</p>
                         <h1 id="finalScore">0</h1>
-                        <p class="panel-label">Végső pontszám</p>
+                        <p class="panel-label" data-i18n="game-maps:gamePage.finalScore">Végső pontszám</p>
 
                         <hr class="panel-divider">
 
                         <div class="gameover-columns">
                             <div class="gameover-left">
                                 <div id="gameoverFormState">
-                                    <p class="panel-label">Értékeld a pályát</p>
+                                    <p class="panel-label" data-i18n="game-maps:gamePage.rateMap">Értékeld a pályát</p>
                                     <fieldset class="gameover-rating-group">
                                         <div class="gameover-rating-input">
                                             <input type="radio" id="goStar5" name="gameOverRating" value="5">
-                                            <label for="goStar5" aria-label="5 csillag">&#9733;</label>
+                                            <label for="goStar5" data-i18n-label="game-maps:map.aria.star5"
+                                                aria-label="5 csillag">&#9733;</label>
                                             <input type="radio" id="goStar4" name="gameOverRating" value="4">
-                                            <label for="goStar4" aria-label="4 csillag">&#9733;</label>
+                                            <label for="goStar4" data-i18n-label="game-maps:map.aria.star4"
+                                                aria-label="4 csillag">&#9733;</label>
                                             <input type="radio" id="goStar3" name="gameOverRating" value="3">
-                                            <label for="goStar3" aria-label="3 csillag">&#9733;</label>
+                                            <label for="goStar3" data-i18n-label="game-maps:map.aria.star3"
+                                                aria-label="3 csillag">&#9733;</label>
                                             <input type="radio" id="goStar2" name="gameOverRating" value="2">
-                                            <label for="goStar2" aria-label="2 csillag">&#9733;</label>
+                                            <label for="goStar2" data-i18n-label="game-maps:map.aria.star2"
+                                                aria-label="2 csillag">&#9733;</label>
                                             <input type="radio" id="goStar1" name="gameOverRating" value="1">
-                                            <label for="goStar1" aria-label="1 csillag">&#9733;</label>
+                                            <label for="goStar1" data-i18n-label="game-maps:map.aria.star1"
+                                                aria-label="1 csillag">&#9733;</label>
                                         </div>
                                     </fieldset>
-                                    <textarea id="gameoverCommentText" class="gameover-comment-input" rows="3" maxlength="255" placeholder="Írd le a véleményed (opcionális)..."></textarea>
-                                    <button class="btn-next-round" id="submitRatingBtn">Értékelés küldése</button>
-                                    <button id="cancelCommentEditBtn" class="btn-next-round gameover-back-btn" style="display:none;">Mégse</button>
+                                    <textarea id="gameoverCommentText" class="gameover-comment-input" rows="3"
+                                        maxlength="255" data-i18n-placeholder="game-maps:gamePage.commentPlaceholder"
+                                        placeholder="Írd le a véleményed (opcionális)..."></textarea>
+                                    <button class="btn-next-round" id="submitRatingBtn"
+                                        data-i18n="game-maps:gamePage.sendRating">Értékelés küldése</button>
+                                    <button id="cancelCommentEditBtn" class="btn-next-round gameover-back-btn"
+                                        style="display:none;" data-i18n="game-maps:map.details.cancel">Mégse</button>
                                 </div>
 
                                 <div id="gameoverViewState" class="gameover-view-state" style="display:none;">
-                                    <p class="panel-label">A te értékelésed</p>
-                                    <div id="gameoverUserRating" class="rating-stars gameover-user-stars" style="--rating: 0;"></div>
+                                    <p class="panel-label" data-i18n="game-maps:map.comments.yourRating">A te
+                                        értékelésed</p>
+                                    <div id="gameoverUserRating" class="rating-stars gameover-user-stars"
+                                        style="--rating: 0;"></div>
                                     <p id="gameoverUserText" class="gameover-user-text"></p>
                                     <div class="gameover-comment-buttons">
-                                        <button id="editCommentBtn" class="btn-next-round gameover-back-btn">Szerkesztés</button>
-                                        <button id="deleteCommentBtn" class="btn-next-round gameover-delete-btn">Törlés</button>
+                                        <button id="editCommentBtn" class="btn-next-round gameover-back-btn"
+                                            data-i18n="game-maps:map.comments.edit">Szerkesztés</button>
+                                        <button id="deleteCommentBtn" class="btn-next-round gameover-delete-btn"
+                                            data-i18n="game-maps:map.comments.delete">Törlés</button>
                                     </div>
                                 </div>
 
-                                <button class="btn-next-round gameover-back-btn" onclick="location.href='/game-maps'">Vissza a főoldalra</button>
+                                <button class="btn-next-round gameover-back-btn" onclick="location.href='/game-maps'"
+                                    data-i18n="game-maps:gamePage.backToMain">Vissza a főoldalra</button>
                             </div>
 
                             <div class="gameover-comments-col">
-                                <p class="panel-label">Értékelések</p>
+                                <p class="panel-label" data-i18n="game-maps:map.comments.title">Értékelések</p>
                                 <div id="gameOverComments" class="gameover-comments-list"></div>
                             </div>
 
                             <div class="gameover-right">
-                                <p class="panel-label">Rangsor</p>
+                                <p class="panel-label" data-i18n="game-maps:map.leaderboard.title">Rangsor</p>
                                 <div id="gameOverLeaderboard" class="gameover-leaderboard"></div>
                             </div>
                         </div>

@@ -3,6 +3,7 @@ import { EquirectangularViewer } from "../libs/viewer/EquirectangularViewer.js";
 import { formatSecondsToMinutes } from "../libs/utils/timer-conversion.js";
 import { degreeToRadian } from "../libs/math/mathUtils.js";
 import { loadPointEquirectangularLowThenHigh, loadMapImageLowThenHigh } from "../libs/network/progressiveImage.js";
+import { translatePage, nyelvSzinkronizalas } from "../libs/i18next/translation.js";
 import i18next from "../libs/language/i18next.js";
 
 const pictureCanvasId = "pictureCanvas";
@@ -41,6 +42,12 @@ document.addEventListener("DOMContentLoaded", async function () {
 });
 
 async function init() {
+    try {
+        await nyelvSzinkronizalas() || 'hu';
+        translatePage();
+    } catch (error) {
+        console.error(i18next.t("game-maps:choosing.errors.languageLoad", { defaultValue: "Hiba a nyelvi adatok betöltésekor:" }), error);
+    }
     mapViewerEngine = new MapViewer(mapCanvasId);
     equirectangularViewer = new EquirectangularViewer(pictureCanvasId);
     await mapViewerEngine.ready();
