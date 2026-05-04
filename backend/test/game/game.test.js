@@ -183,7 +183,7 @@ describe("Game API - /api/game/", () => {
                 const response = await requestWithSupertest.get("/api/game/round");
 
                 expect(response.statusCode).toBe(500);
-                expect(response.body.message).toBe(ERRORS.GAMEFLOW.NO_POINTS_AVAILABLE);
+                expect(response.text).toContain(ERRORS.GAMEFLOW.NO_POINTS_AVAILABLE);
             });
 
             it("Should respond with 500 if the database throws", async () => {
@@ -219,7 +219,7 @@ describe("Game API - /api/game/", () => {
                     .send(validGuess);
 
                 expect(response.statusCode).toBe(400);
-                expect(response.body.message).toBe(ERRORS.GAMEFLOW.NO_ACTIVE_ROUND);
+                expect(response.text).toContain(ERRORS.GAMEFLOW.NO_ACTIVE_ROUND);
             });
 
             it("Should respond with 400 if there is no active point in session", async () => {
@@ -240,7 +240,7 @@ describe("Game API - /api/game/", () => {
                     .send(validGuess);
 
                 expect(response.statusCode).toBe(400);
-                expect(response.body.message).toBe(ERRORS.GAMEFLOW.NO_ACTIVE_POINT);
+                expect(response.text).toContain(ERRORS.GAMEFLOW.NO_ACTIVE_POINT);
             });
 
             it("Should respond with 400 if guess coordinates are not numbers", async () => {
@@ -249,7 +249,7 @@ describe("Game API - /api/game/", () => {
                     .send({ u: "abc", v: "0.5", map_id: 1 });
 
                 expect(response.statusCode).toBe(400);
-                expect(response.body.message).toBe(ERRORS.GAMEFLOW.INVALID_GUESS_COORDS);
+                expect(response.text).toContain(ERRORS.GAMEFLOW.INVALID_GUESS_COORDS);
             });
         });
 

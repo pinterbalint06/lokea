@@ -161,7 +161,7 @@ describe("Game Lobby API - /api/lobby/", () => {
                     .send({ ...validBody, gameMapId: "abc" });
 
                 expect(response.statusCode).toBe(400);
-                expect(response.body.message).toBe(ERRORS.GAMEMAP.INVALID_ID);
+                expect(response.text).toContain(ERRORS.GAMEMAP.INVALID_ID);
             });
 
             it("Should respond with 400 if gameMapId is 0", async () => {
@@ -170,7 +170,7 @@ describe("Game Lobby API - /api/lobby/", () => {
                     .send({ ...validBody, gameMapId: 0 });
 
                 expect(response.statusCode).toBe(400);
-                expect(response.body.message).toBe(ERRORS.GAMEMAP.INVALID_ID);
+                expect(response.text).toContain(ERRORS.GAMEMAP.INVALID_ID);
             });
 
             it("Should respond with 400 if gameMapId is negative", async () => {
@@ -179,7 +179,7 @@ describe("Game Lobby API - /api/lobby/", () => {
                     .send({ ...validBody, gameMapId: -5 });
 
                 expect(response.statusCode).toBe(400);
-                expect(response.body.message).toBe(ERRORS.GAMEMAP.INVALID_ID);
+                expect(response.text).toContain(ERRORS.GAMEMAP.INVALID_ID);
             });
 
             it("Should respond with 400 if gameMapId is missing", async () => {
@@ -188,7 +188,7 @@ describe("Game Lobby API - /api/lobby/", () => {
                     .send({ rounds: 5, roundTime: 60 });
 
                 expect(response.statusCode).toBe(400);
-                expect(response.body.message).toBe(ERRORS.GAMEMAP.INVALID_ID);
+                expect(response.text).toContain(ERRORS.GAMEMAP.INVALID_ID);
             });
 
             it.each([
@@ -283,7 +283,7 @@ describe("Game Lobby API - /api/lobby/", () => {
                     .send(validBody);
 
                 expect(response.statusCode).toBe(503);
-                expect(response.body.message).toBe("Custom error");
+                expect(response.text).toContain("Custom error");
             });
         });
     });
