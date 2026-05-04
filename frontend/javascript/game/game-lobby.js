@@ -99,7 +99,7 @@ async function loadGameMaps(sort, filter = null) {
             showToast(document.getElementById('toastPlace'), 'Nincsenek további elérhető játékok.', 'info', true);
         }
     } catch {
-        showAlert('A pályák betöltése nem sikerült.', 'danger');
+        showAlert(i18next.t("game-maps:choosing.errors.loadingMaps", { defaultValue: "A pályák betöltése nem sikerült." }), 'danger');
     }
 }
 

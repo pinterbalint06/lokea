@@ -1,4 +1,5 @@
 import { showToast } from "../utils.js";
+import i18next from "../language/i18next.js";
 
 const NAVBAR_HTML = `
 <nav class="navbar navbar-expand-lg navbar-shared">
@@ -8,7 +9,7 @@ const NAVBAR_HTML = `
         </a>
         <ul class="navbar-nav me-auto ms-3">
             <li class="nav-item nav-item-hide-sm">
-                <a class="nav-link" href="/game-maps">Pályák</a>
+                <a class="nav-link" href="/game-maps" data-i18n="game-maps:choosing.mapsLabel">Pályák</a>
             </li>
         </ul>
         <div class="dropdown">
@@ -16,7 +17,7 @@ const NAVBAR_HTML = `
                 <img id="navbarProfilePic" src="/images/default.png" alt="profPic" class="rounded-circle border border-2 navPic">
             </a>
             <ul class="dropdown-menu dropdown-menu-end text-small">
-                <li><a class="dropdown-item text-danger" id="signOut" href="#">Kijelentkezés</a></li>
+                <li><a class="dropdown-item text-danger" id="signOut" href="#" data-i18n="main:dropdown.logout">Kijelentkezés</a></li>
             </ul>
         </div>
     </div>
@@ -60,7 +61,7 @@ export function mountNavbar(target = "#navbar-mount") {
                 window.location.href = "/";
             } catch {
                 const toastContainer = document.getElementById('toastPlace') ?? document.getElementById('toastContainer') ?? document.body;
-                showToast(toastContainer, 'A kijelentkezés nem sikerült.', 'danger', true);
+                showToast(toastContainer, i18next.t("main:apiMain.logout.error", { defaultValue: "A kijelentkezés nem sikerült." }), 'danger', true);
             }
         });
     }

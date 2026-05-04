@@ -20,7 +20,7 @@
             "normal": "Normal",
             "hard": "Hard",
             "roundTime": "Round duration:",
-            "maxUniqueRounds": "Max unique rounds: ",
+            "maxUniqueRounds": "Max unique rounds:",
             "notLimitedWarning": "The number of rounds is not limited to this, points can be replayed.",
             "startGame": "Start game"
         },
