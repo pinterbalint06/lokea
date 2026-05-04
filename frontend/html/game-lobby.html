@@ -26,11 +26,12 @@
                     <img src="../images/default.png" alt="profPic" class="rounded-circle border border-2 navPic">
                 </a>
                 <ul class="dropdown-menu dropdown-menu-end text-small">
-                    <li><a class="dropdown-item" href="#">Profile</a></li> <!-- Profiloldal belinkelése -->
+                    <li><a class="dropdown-item" href="#" data-i18n="main:dropdown.myAccount">Profile</a></li>
+                    <!-- Profiloldal belinkelése -->
                     <li>
                         <hr class="dropdown-divider">
                     </li>
-                    <li><a class="dropdown-item text-danger" href="#">Sign out</a></li>
+                    <li><a class="dropdown-item text-danger" href="#" data-i18n="main:dropdown.logout">Sign out</a></li>
                     <!-- Kijelentkezés funkció implementálása -->
                 </ul>
             </div>
@@ -39,31 +40,34 @@
     <div class="d-flex justify-content-center align-items-center mt-4">
         <div class="d-flex align-items-center colDiv flex-column glass">
             <div class="d-flex p-2 pb-0 w-100 gap-2 tabRow">
-                <button class="btnStyle btnPushed" id="tabAll" data-i18n="choosing.tabs.all">Összes</button>
-                <button class="btnStyle" id="tabMine" data-i18n="choosing.tabs.mine">Saját játékaim</button>
+                <button class="btnStyle btnPushed" id="tabAll" data-i18n="game-maps:choosing.tabs.all">Összes</button>
+                <button class="btnStyle" id="tabMine" data-i18n="game-maps:choosing.tabs.mine">Saját játékaim</button>
             </div>
             <div class="d-flex p-2 pb-0 w-100">
-                <h3 class="mb-0" data-i18n="choosing.sorting.label">Rendezés:</h3>
+                <h3 class="mb-0" data-i18n="game-maps:choosing.sorting.label">Rendezés:</h3>
             </div>
             <div class="d-flex align-items-center w-100 p-2 pb-0 gap-3 flex-wrap flex justify-content-center">
                 <div class="d-flex gap-3 justify-content-center sortDiv">
-                    <button class="btnStyle btnPushed" id="sortByPlays" data-i18n="choosing.sorting.plays">Játékok
+                    <button class="btnStyle btnPushed" id="sortByPlays"
+                        data-i18n="game-maps:choosing.sorting.plays">Játékok
                         száma</button>
-                    <button class="btnStyle" id="sortByRating" data-i18n="choosing.sorting.rating">Értékelés</button>
+                    <button class="btnStyle" id="sortByRating"
+                        data-i18n="game-maps:choosing.sorting.rating">Értékelés</button>
                 </div>
                 <div class="d-flex gap-3 justify-content-center sortDiv">
-                    <button class="btnStyle" id="sortByCreated" data-i18n="choosing.sorting.created">Létrehozás
+                    <button class="btnStyle" id="sortByCreated"
+                        data-i18n="game-maps:choosing.sorting.created">Létrehozás
                         dátuma</button>
                     <button class="btnStyle" id="sortByFavorites"
-                        data-i18n="choosing.sorting.favorites">Kedvencek</button>
+                        data-i18n="game-maps:choosing.sorting.favorites">Kedvencek</button>
                 </div>
             </div>
             <div class="d-flex p-2 pb-0 w-100">
-                <h3 class="mb-0" data-i18n="choosing.mapsLabel">Pályák:</h3>
+                <h3 class="mb-0" data-i18n="game-maps:choosing.mapsLabel">Pályák:</h3>
             </div>
             <div class="card-container p-3" id="game_maps_container"></div>
             <div class="d-flex justify-content-center w-100 p-3">
-                <button class="btnStyle" id="loadMoreBtn" data-i18n="choosing.loadMore">További pályák
+                <button class="btnStyle" id="loadMoreBtn" data-i18n="game-maps:choosing.loadMore">További pályák
                     betöltése</button>
             </div>
         </div>
