@@ -219,21 +219,22 @@ function resetGameState(roundTime, currentRound) {
 async function createPoint(roundTime) {
     try {
         const pointData = await fetchGameData('/api/game/round');
-        if (!pointData.point) throw new Error("Failed to fetch random point");
+        if (!pointData.point) throw new Error("Nem sikerült lekérni egy véletlenszerű pontot.");
         const point = pointData.point;
         const showCountdown = point.game.timeLeft > roundTime;
         document.getElementById("timer").textContent = formatSecondsToMinutes(
             showCountdown ? point.game.timeLeft - 3 : point.game.timeLeft
         );
         currentPointId = point.pointId;
-        loadPointLowThenHigh(point.pointId);
+        loadPointLowThenHigh(point.pointId)
+            .catch(error => showError("Hiba a pont képének betöltésekor: " + error.message));
         equirectangularViewer.setZoom(0);
         if (showCountdown) {
             await createCountdownTimer();
         }
         startRoundTimer(point.game.roundEndAt);
     } catch (error) {
-        showError("Error creating point:", error);
+        showError("Hiba a pont létrehozásakor: " + error.message);
     }
 
 }
@@ -253,12 +254,8 @@ function nextMap() {
     mapId = map.mapId;
     document.getElementById('mapTitle').textContent = map.title || '-';
     removeEverything();
-    try {
-        loadMaplowThenHigh(mapId);
-    }
-    catch (error) {
-        showError("Error loading map:", error);
-    }
+    loadMaplowThenHigh(mapId)
+        .catch(error => showError("Hiba a térkép betöltésekor: " + error.message));
 }
 
 function startRoundTimer(roundEndAt) {
@@ -351,7 +348,7 @@ async function loadPointLowThenHigh(pId, markAsLoaded = () => { }) {
             isCurrent: () => currentPointId && currentPointId === pId
         });
     } catch (error) {
-        throw new Error(error.message || "Error loading point image");
+        throw new Error(error.message || "Hiba a pont képének betöltésekor.");
     }
 }
 
@@ -370,13 +367,14 @@ async function createDirectionArrows(pId) {
                             currentPointId = path.targetPointId;
                             equirectangularViewer.clearArrows();
                             await loadPointLowThenHigh(path.targetPointId, markAsLoaded)
+                                .catch(error => showError("Hiba a pont képének betöltésekor: " + error.message));
                         }
                     );
                 }
             );
         });
     } catch (error) {
-        throw new Error(error.message || "Error creating direction arrows");
+        throw new Error(error.message || "Hiba az iránynyilak létrehozásakor.");
     }
 }
 
@@ -390,7 +388,7 @@ async function loadMaplowThenHigh(mId) {
             isCurrent: () => mapId && mapId === mId
         });
     } catch (error) {
-        throw new Error(error.message || "Error loading map image");
+        throw new Error(error.message || "Hiba a térképkép betöltésekor.");
     }
 }
 
