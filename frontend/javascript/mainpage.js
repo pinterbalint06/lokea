@@ -1,10 +1,15 @@
 import { makeSubtitle, inputGeneral, labelGeneral, gombGeneral, makeSvg, showAlert } from "./libs/utils/DOMutils.js";
+import { showToast } from "./libs/utils.js";
 import { validalvaBej, validalvaUsername, validalvaEmail, validalvaJelszo, wrongInput } from "./libs/utils/validations.js";
 import { initSocket } from "./libs/utils/socketio.js";
 import i18next, { initI18next } from "./libs/language/i18next.js";
+import { createGameMapCard } from "./libs/elements/GameMapCard.js";
+
+const FEATURED_MAP_LIMIT = 4;
 
 document.addEventListener("DOMContentLoaded", async function () {
-    if (!await isLogined()) {
+    const loggedIn = await isLogined();
+    if (!loggedIn) {
         document.getElementById('loginButton').addEventListener("click", async function (e) {
             e.preventDefault();
             let username = document.getElementById('loginUser');
@@ -12,7 +17,7 @@ document.addEventListener("DOMContentLoaded", async function () {
             if (validalvaBej(username, password)) {
                 await bejelentkezesAnimacio(username, password, document.getElementById('rememberMe').checked);
             }
-        })
+        });
     }
     else {
         document.getElementById('playButton').classList.remove('disabled');
@@ -27,7 +32,23 @@ document.addEventListener("DOMContentLoaded", async function () {
             }
         });
     }
+    try {
+        const params = new URLSearchParams(window.location.search);
+        if (params.has('hasToLogin')) {
+            if (!loggedIn) {
+                const toastContainer = document.getElementById('toastContainer');
+                showToast(toastContainer, i18next.t('main:loginModal.loginAlert'), 'warning', true, { delay: 2000 });
+                const modalEl = document.getElementById('modalRegLog');
+                if (modalEl) {
+                    const loginModal = new bootstrap.Modal(modalEl);
+                    loginModal.show();
+                }
+            }
+        }
+    } catch (e) {
+    }
     await initSocket();
+    try { await loadTopMaps(); } catch (e) { console.error('loadTopMaps error', e); }
 })
 
 async function isLogined() {
@@ -115,8 +136,14 @@ async function bejelentkezesAnimacio(username, jelszo, remember) {
                 modalText.innerText = `Üdv, ${data.username}!`;
 
                 setTimeout(() => {
-                    location.reload();
-                }, 2500);
+                    const params = new URLSearchParams(window.location.search);
+                    const redirect = params.get('redirection');
+                    if (redirect) {
+                        window.location.href = redirect;
+                    } else {
+                        location.reload();
+                    }
+                }, 1500);
             } else {
                 container.appendChild(makeSvg("icon-x", ["check-svg"], ["mark"]));
                 container.classList.add('error-draw');
@@ -135,9 +162,9 @@ async function bejelentkezesAnimacio(username, jelszo, remember) {
                     setTimeout(() => {
                         form.classList.remove('collapse-in');
                     }, 600);
-                }, 2500);
+                }, 1500);
             }
-        }, 2000);
+        }, 1000);
 
     } catch (error) {
         container.classList.remove('spinning');
@@ -721,6 +748,85 @@ function extractError(data) {
         errorMessage = data.message;
     }
     return errorMessage;
+}
+
+async function loadTopMaps() {
+    try {
+        const response = await fetch('/api/lobby?sort=plays&offset=0');
+        if (response.ok) {
+            const responseData = await response.json();
+            const topMaps = Array.isArray(responseData.results) ? responseData.results.slice(0, FEATURED_MAP_LIMIT) : [];
+            renderFeaturedMaps(topMaps);
+        } else {
+            renderFeaturedMapsError();
+        }
+    } catch (err) {
+        console.error('Failed to load top maps', err);
+        renderFeaturedMapsError();
+    }
+}
+
+function renderFeaturedMaps(topMaps) {
+    const featuredContainer = document.querySelector('.topMapsContainer');
+    if (featuredContainer) {
+        const featuredSlots = Array.from(featuredContainer.querySelectorAll('.customMaps'));
+
+        if (topMaps.length == 0) {
+            featuredSlots.forEach(slotElement => {
+                slotElement.remove();
+            });
+
+            const emptyState = document.createElement('div');
+            emptyState.classList.add('featuredMapsEmptyState');
+            emptyState.textContent = i18next.t('main:customMaps.noMaps');
+            featuredContainer.appendChild(emptyState);
+        } else {
+            const existingEmptyState = featuredContainer.querySelector('.featuredMapsEmptyState');
+            if (existingEmptyState) {
+                existingEmptyState.remove();
+            }
+
+            featuredSlots.forEach((slotElement, slotIndex) => {
+                renderFeaturedMapSlot(slotElement, topMaps[slotIndex]);
+            });
+        }
+    }
+}
+
+function renderFeaturedMapSlot(slotElement, gameMap) {
+    slotElement.innerHTML = '';
+
+    if (gameMap) {
+        const cardElement = createGameMapCard(gameMap);
+        cardElement.classList.add('m-0');
+        slotElement.classList.remove('is-empty');
+        slotElement.appendChild(cardElement);
+    } else {
+        slotElement.classList.add('is-empty');
+    }
+}
+
+function renderFeaturedMapsError() {
+    const featuredContainer = document.querySelector('.topMapsContainer');
+    if (featuredContainer) {
+        const featuredSlots = featuredContainer.querySelectorAll('.customMaps');
+
+        featuredSlots.forEach(slotElement => {
+            slotElement.remove();
+        });
+
+        const existingEmptyState = document.getElementById('featuredMapsError');
+        if (existingEmptyState) {
+            existingEmptyState.remove();
+        }
+
+        const errorState = document.createElement('div');
+        errorState.id = 'featuredMapsError';
+        errorState.classList.add('featuredMapsErrorState');
+        errorState.innerText = i18next.t('main:customMaps.loadingError') || 'Hiba történt a pályák betöltése során. Kérlek próbáld újra később.';
+        errorState.style.color = 'rgb(217, 4, 41, 0.8)';
+        featuredContainer.appendChild(errorState);
+    }
 }
 
 let modalElement;

@@ -35,13 +35,16 @@ let gameMapId = null;
 let commentIsInEditMode = false;
 let commentIsSubmitting = false;
 
-document.addEventListener("DOMContentLoaded", function () {
-    init();
+document.addEventListener("DOMContentLoaded", async function () {
+    await init();
     startGame();
 });
 
 async function init() {
     mapViewerEngine = new MapViewer(mapCanvasId);
+    equirectangularViewer = new EquirectangularViewer(pictureCanvasId);
+    await mapViewerEngine.ready();
+    await equirectangularViewer.ready();
     mapViewerEngine.onClickHandler = (cursorX, cursorY) => {
         if (canPlaceMarker) {
             if (mapViewerEngine.doesMarkerExist(0)) {
@@ -56,8 +59,7 @@ async function init() {
     document.getElementById("editCommentBtn").addEventListener("click", handleEditComment);
     document.getElementById("deleteCommentBtn").addEventListener("click", handleDeleteComment);
     document.getElementById("cancelCommentEditBtn").addEventListener("click", handleCancelCommentEdit);
-    equirectangularViewer = new EquirectangularViewer(pictureCanvasId);
-    await equirectangularViewer.ready();
+
 }
 
 function mapFullScreen() {
@@ -211,19 +213,22 @@ function resetGameState(roundTime, currentRound) {
     document.getElementById("guessBtn").disabled = false;
     document.getElementById("pictureFullScreenBtn").disabled = false;
     mapViewerEngine.resetZoom();
+    equirectangularViewer.setPitch(0);
+    equirectangularViewer.setHeading(0);
 }
 
 async function createPoint(roundTime) {
     try {
         const pointData = await fetchGameData('/api/game/round');
-        if (!pointData.point) throw new Error("Failed to fetch random point");
+        if (!pointData.point) throw new Error("Nem sikerült lekérni egy véletlenszerű pontot.");
         const point = pointData.point;
         const showCountdown = point.game.timeLeft > roundTime;
         document.getElementById("timer").textContent = formatSecondsToMinutes(
             showCountdown ? point.game.timeLeft - 3 : point.game.timeLeft
         );
         currentPointId = point.pointId;
-        loadPointLowThenHigh(point.pointId);
+        loadPointLowThenHigh(point.pointId)
+            .catch(error => showError("Hiba a pont képének betöltésekor: " + error.message));
         equirectangularViewer.setZoom(0);
         if (showCountdown) {
             await createCountdownTimer();
@@ -250,12 +255,8 @@ function nextMap() {
     mapId = map.mapId;
     document.getElementById('mapTitle').textContent = map.title || '-';
     removeEverything();
-    try {
-        loadMaplowThenHigh(mapId);
-    }
-    catch (error) {
-        showError(i18next.t("game-maps:gamePage.errorLoadingMap", { defaultValue: "Hiba a térkép betöltésekor:" }) + " " + error.message);
-    }
+    loadMaplowThenHigh(mapId)
+        .catch(error => showError(i18next.t("game-maps:gamePage.errorLoadingMap", { defaultValue: "Hiba a térkép betöltésekor:" }) + " " + error.message));
 }
 
 function startRoundTimer(roundEndAt) {
@@ -331,17 +332,50 @@ function showAnswer(response) {
     }, 320);
 }
 
-async function loadPointLowThenHigh(pId) {
+async function loadPointLowThenHigh(pId, markAsLoaded = () => { }) {
+    equirectangularViewer.clearArrows();
     try {
         await loadPointEquirectangularLowThenHigh({
             pointId: pId,
             loadToViewer: async (imgData) => {
                 await equirectangularViewer.loadImage(imgData.url, imgData.width, imgData.height, degreeToRadian(imgData.northDirection));
             },
+            onLowReady: async () => {
+                if (typeof markAsLoaded === "function") {
+                    markAsLoaded();
+                }
+                await createDirectionArrows(pId);
+            },
             isCurrent: () => currentPointId && currentPointId === pId
         });
     } catch (error) {
         throw new Error(error.message || i18next.t("game-maps:gamePage.errorLoadingPointImage", { defaultValue: "Hiba a pont képének betöltésekor" }));
+    }
+}
+
+async function createDirectionArrows(pId) {
+    try {
+        const response = await fetchGameData(`/api/game-maps/points/${pId}/paths`);
+        const paths = response.paths;
+        paths.forEach((path, index) => {
+            equirectangularViewer.addArrow(
+                index,
+                degreeToRadian(path.directionDegrees),
+                async () => {
+                    equirectangularViewer.animateDirection(
+                        degreeToRadian(path.directionDegrees),
+                        async (markAsLoaded) => {
+                            currentPointId = path.targetPointId;
+                            equirectangularViewer.clearArrows();
+                            await loadPointLowThenHigh(path.targetPointId, markAsLoaded)
+                                .catch(error => showError("Hiba a pont képének betöltésekor: " + error.message));
+                        }
+                    );
+                }
+            );
+        });
+    } catch (error) {
+        throw new Error(error.message || "Hiba az iránynyilak létrehozásakor.");
     }
 }
 

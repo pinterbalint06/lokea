@@ -20,14 +20,14 @@ const checkRole = (...roles) => {
 
 const checkAuthPage = (request, response, next) => {
     if (!request.session?.userid) {
-        return response.redirect('/');
+        return response.redirect('/?hasToLogin=true&redirection=' + encodeURIComponent(request.originalUrl));
     }
     next();
 };
 
 const checkGameSessionPage = (request, response, next) => {
     if (!request.session?.userid) {
-        return response.redirect('/');
+        return response.redirect('/?hasToLogin=true&redirection=' + encodeURIComponent(request.originalUrl));
     }
     if (!request.session.game?.activeSessionId) {
         return response.redirect('/game-maps');
