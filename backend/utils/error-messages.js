@@ -1,164 +1,164 @@
 const ERRORS = {
     COMMON: {
-        MISSING_DATA: "Hiányzó adatok!",
-        MISSING_IMAGE: "Nem adott meg képet!",
-        FILE_TOO_LARGE: "Túl nagy fájlméret! (Max 10MB)",
-        FILE_UPLOAD_ERROR: "Fájlfeltöltési hiba történt!",
-        IMAGE_PROCESSING_ERROR: "Hiba a kép feldolgozásakor!",
-        UNEXPECTED_ERROR: "Váratlan hiba történt!",
-        INVALID_RESOLUTION: "Helytelen felbontás!",
-        FILE_NOT_FOUND: "A fájl nem létezik vagy helytelen!",
-        INVALID_IMAGE_TYPE: "Érvénytelen fájltípus! Csak JPG, PNG, WEBP és GIF képek engedélyezettek!",
-        INVALID_PAGE: "Helytelen oldalszám!",
-        ENDPOINT_NOT_FOUND: "A végpont nem létezik!"
+        MISSING_DATA: "errors:common.missingData",
+        MISSING_IMAGE: "errors:common.missingImage",
+        FILE_TOO_LARGE: "errors:common.fileTooLarge",
+        FILE_UPLOAD_ERROR: "errors:common.fileUploadError",
+        IMAGE_PROCESSING_ERROR: "errors:common.imageProcessingError",
+        UNEXPECTED_ERROR: "errors:common.unexpectedError",
+        INVALID_RESOLUTION: "errors:common.invalidResolution",
+        FILE_NOT_FOUND: "errors:common.fileNotFound",
+        INVALID_IMAGE_TYPE: "errors:common.invalidImageType",
+        INVALID_PAGE: "errors:common.invalidPage",
+        ENDPOINT_NOT_FOUND: "errors:common.endpointNotFound",
+        PAGE_NOT_FOUND: "errors:common.pageNotFound"
     },
 
     GAMEMAP: {
-        INVALID_ID: "Helytelen pálya ID!",
+        INVALID_ID: "errors:gamemap.invalidId",
 
-        NO_ACCESS: "Nincs hozzáférése ehhez a pályához!",
-        COVER_IMAGE_UPDATE_FAILED: "A borítókép frissítése nem sikerült!",
-        COVER_IMAGE_DELETE_FAILED: "A borítókép törlése nem sikerült!",
-        NOT_FOUND: "A pálya nem létezik!",
-        COVER_IMAGE_NOT_FOUND: "A borítókép nem létezik!",
-        UPDATE_FAILED: "A pálya adatainak frissítése nem sikerült!",
-        DELETE_FAILED: "A pálya törlése nem sikerült!",
+        NO_ACCESS: "errors:gamemap.noAccess",
+        COVER_IMAGE_UPDATE_FAILED: "errors:gamemap.coverImageUpdateFailed",
+        COVER_IMAGE_DELETE_FAILED: "errors:gamemap.coverImageDeleteFailed",
+        NOT_FOUND: "errors:gamemap.notFound",
+        COVER_IMAGE_NOT_FOUND: "errors:gamemap.coverImageNotFound",
+        UPDATE_FAILED: "errors:gamemap.updateFailed",
+        DELETE_FAILED: "errors:gamemap.deleteFailed",
 
         TITLE: {
-            INVALID_PATTERN: "A pálya címe csak betűket, számokat, szóközöket, kötőjeleket és alulvonásokat tartalmazhat!",
-            TOO_LONG: "A pálya címe maximum 50 karakter hosszú lehet!",
-            TOO_SHORT: "A pálya címének legalább 3 karakter hosszúnak kell lennie!",
-            EMPTY: "A pálya címe nem lehet üres!"
+            INVALID_PATTERN: "errors:gamemap.title.invalidPattern",
+            TOO_LONG: "errors:gamemap.title.tooLong",
+            TOO_SHORT: "errors:gamemap.title.tooShort",
+            EMPTY: "errors:gamemap.title.empty"
         },
 
         DESCRIPTION: {
-            INVALID_PATTERN: "A pálya leírása csak betűket, számokat, szóközöket, kötőjeleket és alulvonásokat tartalmazhat!",
-            TOO_LONG: "A pálya leírása maximum 255 karakter hosszú lehet!",
-            TOO_SHORT: "A pálya leírásának legalább 3 karakter hosszúnak kell lennie!",
-            EMPTY: "A pálya leírása nem lehet üres!"
+            INVALID_PATTERN: "errors:gamemap.description.invalidPattern",
+            TOO_LONG: "errors:gamemap.description.tooLong",
+            TOO_SHORT: "errors:gamemap.description.tooShort",
+            EMPTY: "errors:gamemap.description.empty"
         },
 
-        ATLEAST_TITLE_OR_DESCRIPTION: "Vagy az új címet, vagy az új leírást kötelező megadni!",
+        ATLEAST_TITLE_OR_DESCRIPTION: "errors:gamemap.atleastTitleOrDescription",
 
-        NO_MAPS: "A pályának nincsenek térképei!",
-        NO_POINTS: "A pályának nincsenek pontjai!"
+        NO_MAPS: "errors:gamemap.noMaps",
+        NO_POINTS: "errors:gamemap.noPoints"
     },
 
     MAP: {
-        INVALID_ID: "Helytelen térkép ID!",
+        INVALID_ID: "errors:map.invalidId",
 
-        NO_ACCESS: "Nincs hozzáférése ehhez a térképhez!",
-        NOT_FOUND: "A térkép nem létezik!",
+        NO_ACCESS: "errors:map.noAccess",
+        NOT_FOUND: "errors:map.notFound",
 
-        RENAME_FAILED: "A térkép átnevezése nem sikerült!",
-        SAVE_FAILED: "A térkép mentése nem sikerült!",
-        DELETE_FAILED: "A térkép törlése nem sikerült!",
-        IMAGE_DELETIONS_FAILED: "A térkép képeinek törlése nem sikerült!",
+        RENAME_FAILED: "errors:map.renameFailed",
+        SAVE_FAILED: "errors:map.saveFailed",
+        DELETE_FAILED: "errors:map.deleteFailed",
+        IMAGE_DELETIONS_FAILED: "errors:map.imageDeletionsFailed",
 
-        TITLE_EMPTY: "A térképnév megadása kötelező!",
-        TITLE_TOO_LONG: "A térképnév maximum 20 karakter hosszú lehet!",
-        TITLE_INVALID_CHARS: "A térképnév csak betűket, számokat, szóközöket, kötőjeleket és alulvonásokat tartalmazhat!"
+        TITLE_EMPTY: "errors:map.titleEmpty",
+        TITLE_TOO_LONG: "errors:map.titleTooLong",
+        TITLE_INVALID_CHARS: "errors:map.titleInvalidChars"
     },
 
     POINT: {
-        INVALID_ID: "Helytelen pont ID!",
+        INVALID_ID: "errors:point.invalidId",
 
-        NO_ACCESS: "Nincs hozzáférése ehhez a ponthoz!",
-        NOT_FOUND: "A pont nem létezik!",
+        NO_ACCESS: "errors:point.noAccess",
+        NOT_FOUND: "errors:point.notFound",
 
-        ALREADY_EXISTS: "Ezen a térképen már létezik pont ezeken a koordinátákon!",
+        ALREADY_EXISTS: "errors:point.alreadyExists",
 
-        COORDINATES_UPDATE_FAILED: "A pont koordinátáinak frissítése nem sikerült!",
-        IMAGE_PATH_UPDATE_FAILED: "A pont útvonalának frissítése nem sikerült!",
-        OLD_IMAGE_DELETION_FAILED: "A régi kép törlése nem sikerült!",
-        IMAGE_DELETION_FAILED: "A kép törlése nem sikerült!",
-        DELETE_FAILED: "A pont törlése nem sikerült!",
-        NORTH_DIRECTION_UPDATE_FAILED: "A pont északirányának frissítése nem sikerült!",
+        COORDINATES_UPDATE_FAILED: "errors:point.coordinatesUpdateFailed",
+        IMAGE_PATH_UPDATE_FAILED: "errors:point.imagePathUpdateFailed",
+        OLD_IMAGE_DELETION_FAILED: "errors:point.oldImageDeletionFailed",
+        IMAGE_DELETION_FAILED: "errors:point.imageDeletionFailed",
+        DELETE_FAILED: "errors:point.deleteFailed",
+        NORTH_DIRECTION_UPDATE_FAILED: "errors:point.northDirectionUpdateFailed",
 
-        UV_INVALID_TYPE: "A koordinátának számnak kell lennie!",
-        UV_MIN_ERROR: "A koordináta nem lehet negatív!",
-        UV_MAX_ERROR: "A koordinátának kisebbnek kell lennie, mint 1!",
-        UV_REQUIRED: "A koordináták megadása kötelező!",
+        UV_INVALID_TYPE: "errors:point.uvInvalidType",
+        UV_MIN_ERROR: "errors:point.uvMinError",
+        UV_MAX_ERROR: "errors:point.uvMaxError",
+        UV_REQUIRED: "errors:point.uvRequired",
 
-        NORTH_DIRECTION_TYPE: "Az északiránynak számnak kell lennie!",
-        NORTH_DIRECTION_MIN: "Az északirány nem lehet negatív (0-nál kisebb)!",
-        NORTH_DIRECTION_MAX: "Az északiránynak 360 foknál kisebbnek kell lennie!",
-        NORTH_DIRECTION_REQUIRED: "Az északirány megadása kötelező!"
+        NORTH_DIRECTION_TYPE: "errors:point.northDirectionType",
+        NORTH_DIRECTION_MIN: "errors:point.northDirectionMin",
+        NORTH_DIRECTION_MAX: "errors:point.northDirectionMax",
+        NORTH_DIRECTION_REQUIRED: "errors:point.northDirectionRequired"
     },
 
     CONNECTION: {
-        INVALID_ID: "Helytelen kapcsolat ID!",
-        INVALID_START_ID: "Helytelen kezdőpont ID!",
-        INVALID_END_ID: "Helytelen végpont ID!",
+        INVALID_ID: "errors:connection.invalidId",
+        INVALID_START_ID: "errors:connection.invalidStartId",
+        INVALID_END_ID: "errors:connection.invalidEndId",
 
-        NO_ACCESS: "Nincs hozzáférése ehhez a kapcsolathoz!",
+        NO_ACCESS: "errors:connection.noAccess",
 
-        MISSING_DIRECTION_BODY: "Nem adott meg módosítandó irányt!",
+        MISSING_DIRECTION_BODY: "errors:connection.missingDirectionBody",
 
-        ALREADY_EXISTS: "A megadott pontok már össze vannak kapcsolva!",
+        ALREADY_EXISTS: "errors:connection.alreadyExists",
 
-        NOT_ON_SAME_GAME_MAP: "A megadott pontok nem ugyanahhoz a pályához tartoznak!",
+        NOT_ON_SAME_GAME_MAP: "errors:connection.notOnSameGameMap",
 
-        UPDATE_FAILED: "A kapcsolat frissítése nem sikerült!",
-        DELETE_FAILED: "A kapcsolat törlése nem sikerült!",
+        UPDATE_FAILED: "errors:connection.updateFailed",
+        DELETE_FAILED: "errors:connection.deleteFailed",
 
-        NOT_CROSSMAP: "Csak térképek közötti kapcsolatok irányát lehet módosítani!",
-        DIRECTION_NOT_GIVEN_FOR_CROSSMAP: "Térképek közötti kapcsolat létrehozásához meg kell adni mindkét irányt!",
+        NOT_CROSSMAP: "errors:connection.notCrossmap",
+        DIRECTION_NOT_GIVEN_FOR_CROSSMAP: "errors:connection.directionNotGivenForCrossmap",
 
-        SAME_START_END: "A kezdőpont és a végpont nem lehet ugyanaz!",
-        END_MUST_BE_GREATER: "A kisebbik ID-val rendelkező pontnak kell a kezdőpontnak lennie!",
+        SAME_START_END: "errors:connection.sameStartEnd",
+        END_MUST_BE_GREATER: "errors:connection.endMustBeGreater",
 
-        START_TO_END_TYPE: "A kezdőpontból végpontba iránynak számnak kell lennie!",
-        START_TO_END_MIN: "A kezdőpontból végpontba irány nem lehet negatív (0-nál kisebb)!",
-        START_TO_END_MAX: "A kezdőpontból végpontba iránynak 360 foknál kisebbnek kell lennie!",
+        START_TO_END_TYPE: "errors:connection.startToEndType",
+        START_TO_END_MIN: "errors:connection.startToEndMin",
+        START_TO_END_MAX: "errors:connection.startToEndMax",
 
-        END_TO_START_TYPE: "A végpontból kezdőpontba iránynak számnak kell lennie!",
-        END_TO_START_MIN: "A végpontból kezdőpontba irány nem lehet negatív (0-nál kisebb)!",
-        END_TO_START_MAX: "A végpontból kezdőpontba iránynak 360 foknál kisebbnek kell lennie!",
+        END_TO_START_TYPE: "errors:connection.endToStartType",
+        END_TO_START_MIN: "errors:connection.endToStartMin",
+        END_TO_START_MAX: "errors:connection.endToStartMax",
 
-        ATLEAST_ONE_DIRECTION: "Nem adott meg módosítandó irányt!"
+        ATLEAST_ONE_DIRECTION: "errors:connection.atleastOneDirection"
     },
 
     COMMENT: {
-        TOO_LONG: "A hozzászólás maximum 255 karakter hosszú lehet!",
-        EMPTY_CONTENT: "A hozzászólás nem lehet üres!",
-        INVALID_CHARACTERS: "A hozzászólás csak betűket, számokat, szóközöket, kötőjeleket és alulvonásokat tartalmazhat!",
-        ALREADY_COMMENTED: "Ehhez a pályához már írtál hozzászólást!",
-        NOT_FOUND: "Még nem értékelted ezt a pályát!",
-        UPDATE_FAILED: "Nem sikerült frissíteni a hozzászólást!",
-        DELETE_FAILED: "Nem sikerült törölni a hozzászólást!",
+        TOO_LONG: "errors:comment.tooLong",
+        EMPTY_CONTENT: "errors:comment.emptyContent",
+        INVALID_CHARACTERS: "errors:comment.invalidCharacters",
+        ALREADY_COMMENTED: "errors:comment.alreadyCommented",
+        NOT_FOUND: "errors:comment.notFound",
+        UPDATE_FAILED: "errors:comment.updateFailed",
+        DELETE_FAILED: "errors:comment.deleteFailed",
 
-        INVALID_RATING: "Helytelen értékelés!",
-        TOO_LOW_RATING: "Az értékelésnek legalább 1-nek kell lennie!",
-        TOO_HIGH_RATING: "Az értékelésnek legfeljebb 5-nek kell lennie!",
-        RATING_REQUIRED: "Az értékelés megadása kötelező!"
+        INVALID_RATING: "errors:comment.invalidRating",
+        TOO_LOW_RATING: "errors:comment.tooLowRating",
+        TOO_HIGH_RATING: "errors:comment.tooHighRating",
+        RATING_REQUIRED: "errors:comment.ratingRequired"
     },
 
     FAVORITE: {
-        ALREADY_FAVORITED: "Ezt a pályát már kedvencnek jelölted!",
-        NOT_FAVORITED: "Ezt a pályát még nem jelölted kedvencnek!",
-        ADD_FAILED: "A kedvencekhez adás nem sikerült!",
-        REMOVE_FAILED: "A kedvencekből való eltávolítás nem sikerült!"
+        ALREADY_FAVORITED: "errors:favorite.alreadyFavorited",
+        NOT_FAVORITED: "errors:favorite.notFavorited",
+        ADD_FAILED: "errors:favorite.addFailed",
+        REMOVE_FAILED: "errors:favorite.removeFailed"
     },
 
     GAMEFLOW: {
-        INVALID_OFFSET: "Érvénytelen offset! Pozitív egész számnak kell lennie.",
-        INVALID_SORT: "Érvénytelen rendezés! Használható: created, rating, plays, favorites.",
-        FETCH_GAME_MAPS_FAILED: "A pályák lekérése nem sikerült!",
-        FETCH_SESSION_FAILED: "A játékmenet adatainak lekérése nem sikerült!",
-        FINISH_SESSION_FAILED: "A játékmenet befejezése nem sikerült!",
-        PROCESS_GUESS_FAILED: "A tipp feldolgozása nem sikerült!",
-        FETCH_RANDOM_POINT_FAILED: "A véletlenszerű pont lekérése nem sikerült!",
-        FETCH_MAPS_FAILED: "A térképek lekérése nem sikerült!",
-        CHECK_SESSION_FAILED: "Az aktív munkamenet ellenőrzése nem sikerült!",
-        CREATE_SESSION_FAILED: "A játékmenet létrehozása nem sikerült!",
-
-        NO_ACTIVE_POINT: "Nincs aktív pont a munkamenetben!",
-        INVALID_GUESS_COORDS: "Érvénytelen tipp koordináták!",
-        NO_ACTIVE_ROUND: "Nincs aktív kör!",
-        NO_POINTS_AVAILABLE: "Nincs elérhető pont!",
-        INVALID_ROUNDS: "Érvénytelen körök száma! (1–100)",
-        INVALID_ROUND_TIME: "Érvénytelen körönkénti idő! (1–300 másodperc)",
+        INVALID_OFFSET: "errors:gameflow.invalidOffset",
+        INVALID_SORT: "errors:gameflow.invalidSort",
+        FETCH_GAME_MAPS_FAILED: "errors:gameflow.fetchGameMapsFailed",
+        FETCH_SESSION_FAILED: "errors:gameflow.fetchSessionFailed",
+        FINISH_SESSION_FAILED: "errors:gameflow.finishSessionFailed",
+        PROCESS_GUESS_FAILED: "errors:gameflow.processGuessFailed",
+        FETCH_RANDOM_POINT_FAILED: "errors:gameflow.fetchRandomPointFailed",
+        FETCH_MAPS_FAILED: "errors:gameflow.fetchMapsFailed",
+        CHECK_SESSION_FAILED: "errors:gameflow.checkSessionFailed",
+        CREATE_SESSION_FAILED: "errors:gameflow.createSessionFailed",
+        NO_ACTIVE_POINT: "errors:gameflow.noActivePoint",
+        INVALID_GUESS_COORDS: "errors:gameflow.invalidGuessCoords",
+        NO_ACTIVE_ROUND: "errors:gameflow.noActiveRound",
+        NO_POINTS_AVAILABLE: "errors:gameflow.noPointsAvailable",
+        INVALID_ROUNDS: "errors:gameflow.invalidRounds",
+        INVALID_ROUND_TIME: "errors:gameflow.invalidRoundTime"
     }
 };
 

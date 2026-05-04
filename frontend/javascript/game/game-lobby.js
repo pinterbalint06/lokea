@@ -1,5 +1,7 @@
 import { createFavoriteButton } from "../libs/elements/favoriteButton.js";
 import { showAlert } from "../libs/utils/DOMutils.js";
+import { translatePage, nyelvSzinkronizalas } from "../libs/i18next/translation.js";
+import i18next from "../libs/language/i18next.js";
 import { ContinueGameModal } from "../libs/elements/ContinueGameModal.js";
 import { fetchActiveGameSession, finishGameSession } from "../libs/network/gameSession.js";
 import { createGameMapCard } from "../libs/elements/GameMapCard.js";
@@ -21,7 +23,14 @@ function clearLoadedURLs() {
     loadedURLs = [];
 }
 
-document.addEventListener("DOMContentLoaded", function () {
+document.addEventListener("DOMContentLoaded", async function () {
+    try {
+        await nyelvSzinkronizalas() || 'hu';
+        translatePage();
+    } catch (error) {
+        console.error(i18next.t("game-maps:choosing.errors.languageLoad", { defaultValue: "Hiba a nyelvi adatok betöltésekor:" }), error);
+    }
+
     const urlParams = new URLSearchParams(window.location.search);
     const initialTab = urlParams.get('tab') === 'mine' ? 'mine' : 'all';
     const sortButtonMap = { created: 'sortByCreated', rating: 'sortByRating', plays: 'sortByPlays', favorites: 'sortByFavorites' };
@@ -90,7 +99,7 @@ async function loadGameMaps(sort, filter = null) {
             showToast(document.getElementById('toastPlace'), 'Nincsenek további elérhető játékok.', 'info', true);
         }
     } catch {
-        showAlert('A pályák betöltése nem sikerült.', 'danger');
+        showAlert(i18next.t("game-maps:choosing.errors.loadingMaps", { defaultValue: "A pályák betöltése nem sikerült." }), 'danger');
     }
 }
 
@@ -114,7 +123,7 @@ function createNewGameCard() {
     icon.textContent = '+';
     let title = document.createElement('h3');
     title.classList.add('card-title');
-    title.textContent = 'Új játék létrehozása';
+    title.textContent = i18next.t("game-maps:choosing.createNewGame", { defaultValue: "Új játék létrehozása" });
     content.appendChild(icon);
     content.appendChild(title);
     card.appendChild(content);
@@ -134,7 +143,7 @@ async function handleCreateCardClick() {
             window.location.href = '/game-maps/' + gameMapID;
         } catch {
             isCreating = false;
-            showAlert('Az új játék létrehozása nem sikerült.', 'danger');
+            showAlert(i18next.t("game-maps:choosing.errors.creatingGame", { defaultValue: "Az új játék létrehozása nem sikerült." }), 'danger');
         }
     }
 }
@@ -152,7 +161,7 @@ async function checkAndShowContinueModal() {
                     try {
                         await finishGameSession();
                     } catch {
-                        showAlert('A játék befejezése nem sikerült.', 'danger');
+                        showAlert(i18next.t("game-maps:choosing.errors.endingGame", { defaultValue: "A játék befejezése nem sikerült." }), 'danger');
                     }
                 }
             );

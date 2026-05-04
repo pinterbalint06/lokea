@@ -1,5 +1,6 @@
 import { createFavoriteButton } from "./favoriteButton.js";
 import { loadGameMapCoverImageLowThenHigh } from "../network/progressiveImage.js";
+import i18next from "../language/i18next.js";
 import { createHTMLelement, showAlert } from "../utils/DOMutils.js";
 
 let loadedURLs = [];
@@ -40,7 +41,7 @@ async function loadCoverImage(card, gmId) {
             isCurrent: () => true
         });
     } catch (error) {
-        showAlert("A borítókép betöltése nem sikerült.", "danger");
+        showAlert(i18next.t("game-maps:choosing.errors.loadingCover", { defaultValue: "A borítókép betöltése nem sikerült." }), "danger");
     }
 }
 
@@ -49,13 +50,18 @@ export function createGameMapCard(gameMap) {
     let content = createHTMLelement("div", ["card-content"]);
 
     let title = createHTMLelement("h3", ["card-title"], gameMap.title);
-    let plays = createHTMLelement("p", ["card-desc"], `Játékok száma: ${gameMap.plays}`);
+    let plays = createHTMLelement("p", ["card-desc"], i18next.t("game-maps:choosing.playsCount", { count: gameMap.plays, defaultValue: `Játékok száma: ${gameMap.plays}` }));
+    plays.dataset.i18n = "game-maps:choosing.playsCount";
+    plays.dataset.count = gameMap.plays;
 
     let dateString = "";
     if (gameMap.game_created != undefined && gameMap.game_created != null) {
         dateString = gameMap.game_created.split("T")[0].replaceAll("-", ".");
     }
-    let created = createHTMLelement("p", ["card-desc"], `Létrehozva: ${dateString}`);
+    let created = createHTMLelement("p", ["card-desc"], i18next.t("game-maps:choosing.createdAt", { date: dateString, defaultValue: `Létrehozva: ${dateString}` }));
+    created.dataset.i18n = "game-maps:choosing.createdAt";
+    created.dataset.date = dateString;
+
 
     content.appendChild(title);
     content.appendChild(createReview(gameMap.rating));
