@@ -45,6 +45,20 @@
     z-index: 1200;
 }
 
+.navbar-shared .dropdown-menu-end {
+    right: 0;
+    left: auto;
+}
+
+.navbar-shared .dropdown:hover .dropdown-menu,
+.navbar-shared .dropdown:focus-within .dropdown-menu {
+    display: block;
+}
+
+.navbar-shared .dropdown-toggle::after {
+    display: none;
+}
+
 .navbar-shared .nav-item-hide-sm {
     display: none;
 }

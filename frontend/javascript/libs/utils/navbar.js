@@ -1,4 +1,4 @@
-const NAVBAR_CSS_HREF = "/css/navbar.css";
+import { showToast } from "../utils.js";
 
 const NAVBAR_HTML = `
 <nav class="navbar navbar-expand-lg navbar-shared">
@@ -16,27 +16,17 @@ const NAVBAR_HTML = `
                 <img id="navbarProfilePic" src="/images/default.png" alt="profPic" class="rounded-circle border border-2 navPic">
             </a>
             <ul class="dropdown-menu dropdown-menu-end text-small">
-                <li><a class="dropdown-item text-danger" id="signOut" href="#">Sign out</a></li>
+                <li><a class="dropdown-item text-danger" id="signOut" href="#">Kijelentkezés</a></li>
             </ul>
         </div>
     </div>
 </nav>
 `;
 
-function ensureNavbarCSS() {
-    if (document.querySelector(`link[data-navbar-shared]`)) return;
-    const link = document.createElement("link");
-    link.rel = "stylesheet";
-    link.href = NAVBAR_CSS_HREF;
-    link.dataset.navbarShared = "true";
-    document.head.appendChild(link);
-}
-
 export function mountNavbar(target = "#navbar-mount") {
     const mountPoint = typeof target === "string" ? document.querySelector(target) : target;
     if (!mountPoint) return;
 
-    ensureNavbarCSS();
     mountPoint.innerHTML = NAVBAR_HTML;
 
     mountPoint.querySelectorAll(".nav-link[href]").forEach((link) => {
@@ -53,6 +43,13 @@ export function mountNavbar(target = "#navbar-mount") {
         tester.src = "/api/users/me/profile-picture";
     }
 
+    const dropdownToggle = mountPoint.querySelector('[data-bs-toggle="dropdown"]');
+    if (dropdownToggle && window.bootstrap?.Dropdown) {
+        new window.bootstrap.Dropdown(dropdownToggle, {
+            popperConfig: { strategy: 'fixed' }
+        });
+    }
+
     const signOutBtn = mountPoint.querySelector("#signOut");
     if (signOutBtn) {
         signOutBtn.addEventListener("click", async (event) => {
@@ -62,7 +59,8 @@ export function mountNavbar(target = "#navbar-mount") {
                 if (!response.ok) throw new Error();
                 window.location.href = "/";
             } catch {
-                throw new Error("Failed to sign out");
+                const toastContainer = document.getElementById('toastContainer') ?? document.body;
+                showToast(toastContainer, 'A kijelentkezés nem sikerült.', 'danger', true);
             }
         });
     }
