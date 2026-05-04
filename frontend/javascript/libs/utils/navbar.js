@@ -31,7 +31,7 @@ export function mountNavbar(target = "#navbar-mount") {
 
     mountPoint.querySelectorAll(".nav-link[href]").forEach((link) => {
         const linkPath = new URL(link.getAttribute("href"), window.location.origin).pathname;
-        if (linkPath === window.location.pathname) {
+        if (window.location.pathname === linkPath || window.location.pathname.startsWith(linkPath + '/')) {
             link.setAttribute("aria-current", "page");
         }
     });
@@ -59,7 +59,7 @@ export function mountNavbar(target = "#navbar-mount") {
                 if (!response.ok) throw new Error();
                 window.location.href = "/";
             } catch {
-                const toastContainer = document.getElementById('toastContainer') ?? document.body;
+                const toastContainer = document.getElementById('toastPlace') ?? document.getElementById('toastContainer') ?? document.body;
                 showToast(toastContainer, 'A kijelentkezés nem sikerült.', 'danger', true);
             }
         });

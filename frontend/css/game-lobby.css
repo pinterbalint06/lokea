@@ -165,34 +165,6 @@ body {
     color: #ffffff;
 }
 
-.navPic {
-    height: 45px;
-    width: auto;
-}
-
-.dropdown:hover .dropdown-menu {
-    display: block;
-}
-
-.dropdown:focus-within .dropdown-menu {
-    display: block;
-}
-
-.navbar {
-    position: sticky;
-    top: 0;
-    width: 100%;
-    z-index: 1100;
-}
-
-.dropdown-menu {
-    z-index: 1200;
-}
-
-.dropdown-menu-end {
-    right: 0;
-    left: auto;
-}
 
 @media (max-width: 576px) {
     .sortDiv {
@@ -224,9 +196,6 @@ body {
     }
 }
 
-.dropdown-toggle::after {
-    display: none;
-}
 
 .tabRow {
     border-bottom: 1px solid rgba(255, 255, 255, 0.1);
