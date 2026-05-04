@@ -6,7 +6,7 @@ const ERRORS = require("#utils/error-messages.js");
 const { validateGameLobbyQuery } = require("./gamelobby.middleware.js");
 const sessionsRoutes = require("./sessions/sessions.routes.js");
 
-router.get("/", validateGameLobbyQuery, async (request, response) => {
+router.get("/", validateGameLobbyQuery, async (request, response, next) => {
     try {
         const { sort, offset, filter } = request.lobbyQuery;
         const userId = request.session?.userid;
@@ -14,9 +14,9 @@ router.get("/", validateGameLobbyQuery, async (request, response) => {
         response.status(200).json({ results: palyak });
     } catch (error) {
         if (error instanceof AppError) {
-            response.status(error.statusCode).json({ message: error.message });
+            next(error);
         } else {
-            response.status(500).json({ message: ERRORS.GAMEFLOW.FETCH_GAME_MAPS_FAILED });
+            next(new AppError(ERRORS.GAMEFLOW.FETCH_GAME_MAPS_FAILED, 500));
         }
     }
 });

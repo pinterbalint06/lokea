@@ -2,7 +2,7 @@ const sessionsService = require("./sessions.service.js");
 const AppError = require("#utils/app-error.js");
 const ERRORS = require("#utils/error-messages.js");
 
-async function getActiveSession(request, response) {
+async function getActiveSession(request, response, next) {
     try {
         const userId = request.session?.userid;
         const sessionObject = await sessionsService.getActiveSession(userId);
@@ -15,14 +15,14 @@ async function getActiveSession(request, response) {
         }
     } catch (error) {
         if (error instanceof AppError) {
-            response.status(error.statusCode).json({ message: error.message });
+            next(error);
         } else {
-            response.status(500).json({ message: ERRORS.GAMEFLOW.CHECK_SESSION_FAILED });
+            next(new AppError(ERRORS.GAMEFLOW.CHECK_SESSION_FAILED, 500));
         }
     }
 }
 
-async function createGameSession(request, response) {
+async function createGameSession(request, response, next) {
     try {
         const userId = request.session?.userid;
         const sessionObject = await sessionsService.createGameSession(userId, request.body);
@@ -31,9 +31,9 @@ async function createGameSession(request, response) {
         response.status(200).json({ message: "A játék munkamenet elindítva!" });
     } catch (error) {
         if (error instanceof AppError) {
-            response.status(error.statusCode).json({ message: error.message });
+            next(error);
         } else {
-            response.status(500).json({ message: ERRORS.GAMEFLOW.CREATE_SESSION_FAILED });
+            next(new AppError(ERRORS.GAMEFLOW.CREATE_SESSION_FAILED, 500));
         }
     }
 }
