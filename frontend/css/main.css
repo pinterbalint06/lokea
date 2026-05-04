@@ -242,7 +242,6 @@ body[data-bs-theme="dark"] {
 /* egyedi terkepek */
 
 .customMap {
-    background: url(../images/examplelocation.jpg);
     background-repeat: no-repeat;
     background-size: cover;
     background-position: center;
