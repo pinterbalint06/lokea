@@ -2,6 +2,7 @@ import { createFavoriteButton } from "../libs/elements/favoriteButton.js";
 import { showAlert } from "../libs/utils/DOMutils.js";
 import { translatePage, nyelvSzinkronizalas } from "../libs/i18next/translation.js";
 import i18next from "../libs/language/i18next.js";
+import { showToast } from "../libs/utils.js";
 import { ContinueGameModal } from "../libs/elements/ContinueGameModal.js";
 import { fetchActiveGameSession, finishGameSession } from "../libs/network/gameSession.js";
 import { createGameMapCard } from "../libs/elements/GameMapCard.js";
