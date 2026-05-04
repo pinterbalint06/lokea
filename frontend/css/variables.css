@@ -1,3 +1,5 @@
+@import "./navbar.css";
+
 :root {
     --color-white: #ffffff;
     --color-muted: #e0e0e0;

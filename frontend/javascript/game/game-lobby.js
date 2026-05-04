@@ -57,7 +57,6 @@ document.addEventListener("DOMContentLoaded", function () {
         });
     });
     document.getElementById('loadMoreBtn').addEventListener('click', function () {
-        cardLoadedTimes++;
         loadGameMaps(selectedButton.id.replace('sortBy', '').toLowerCase(), activeTab === 'mine' ? 'mine' : null);
     });
 });
@@ -86,11 +85,9 @@ async function loadGameMaps(sort, filter = null) {
             for (let i = 0; i < gameMaps.results.length; i++) {
                 gameMapsContainer.appendChild(createCard(gameMaps.results[i]));
             }
+            cardLoadedTimes++;
         } else if (filter !== 'mine') {
-            let p = document.createElement('p');
-            p.classList.add('text-center');
-            p.innerText = 'Nincsenek elérhető játékok.';
-            gameMapsContainer.appendChild(p);
+            showToast(document.getElementById('toastPlace'), 'Nincsenek további elérhető játékok.', 'info', true);
         }
     } catch {
         showToast(document.getElementById('toastPlace'), 'A pályák betöltése nem sikerült.', 'danger', true);
