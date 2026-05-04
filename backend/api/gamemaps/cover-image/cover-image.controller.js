@@ -30,7 +30,7 @@ async function updateGameMapCoverImage(request, response, next) {
 
         await coverImageService.updateGameMapCoverImage(userId, gameMapID, file);
 
-        response.status(200).json({ message: request.t('gamemaps:coverImage.updateSuccess') });
+        response.status(204).send();
     } catch (error) {
         next(error);
     }
@@ -43,7 +43,7 @@ async function deleteGameMapCoverImage(request, response, next) {
 
         await coverImageService.deleteGameMapCoverImage(userId, gameMapID);
 
-        response.status(200).json({ message: request.t('gamemaps:coverImage.deleteSuccess') });
+        response.status(204).send();
     } catch (error) {
         next(error);
     }

@@ -6,12 +6,32 @@ body {
     background-attachment: fixed;
 }
 
+.registercard,
+.modalReg .modal-content {
+    background: rgba(255, 255, 255, 0.25) !important;
+    backdrop-filter: blur(15px);
+    -webkit-backdrop-filter: blur(15px);
+    border: 1px solid rgba(255, 255, 255, 0.4) !important;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
+    color: #ffffff;
+}
+
+.registercard h4,
+.registercard h6,
+#regModalTitle,
+#regModalText {
+    color: #ffffff;
+}
+
 #regButton {
     background-color: #943ec9;
+    color: white;
+    border: none;
 }
 
 #regButton:hover {
-    background-color: #552373;
+    background-color: #c962d9;
+    box-shadow: 0 0 0 3px rgba(148, 62, 201, 0.2);
 }
 
 .logo {
@@ -71,12 +91,25 @@ body {
 
 .input-container input {
     width: 100%;
-    padding: 12px;
-    border: 1px solid #ccc;
-    border-radius: 4px;
+    padding: 10px 12px;
+    border: 1px solid rgba(255, 255, 255, 0.6);
+    border-radius: 8px;
     font-size: 16px;
     outline: none;
-    background: transparent;
+    background: rgba(255, 255, 255, 0.95) !important;
+    color: #1a1a1a !important;
+    transition: all 0.2s ease;
+    box-sizing: border-box;
+}
+
+.input-container input::placeholder {
+    color: #999 !important;
+}
+
+.input-container input:-webkit-autofill {
+    -webkit-box-shadow: inset 0 0 0 1000px rgba(255, 255, 255, 0.95) !important;
+    -webkit-text-fill-color: #1a1a1a !important;
+    caret-color: #1a1a1a !important;
 }
 
 .input-container label {
@@ -86,7 +119,7 @@ body {
     color: #999;
     transition: 0.2s ease all;
     pointer-events: none;
-    background-color: white;
+    background-color: rgba(255, 255, 255, 0.95);
     padding: 0 4px;
 }
 
@@ -96,11 +129,13 @@ body {
     top: -10px;
     left: 10px;
     font-size: 12px;
-    color: purple;
+    color: #943ec9;
 }
 
 .input-container input:focus {
-    border: 2px solid purple;
+    border: 1px solid rgba(255, 255, 255, 0.6) !important;
+    background: #ffffff !important;
+    box-shadow: 0 0 0 3px rgba(148, 62, 201, 0.2) !important;
 }
 
 .input-requirement {
@@ -108,9 +143,9 @@ body {
     opacity: 0;
     overflow: hidden;
     font-size: 12px;
-    color: #666;
-    background-color: #f8f0ff;
-    border-left: 3px solid purple;
+    color: rgba(255, 255, 255, 0.8);
+    background-color: rgba(148, 62, 201, 0.2);
+    border-left: 3px solid #943ec9;
     margin-top: 5px;
     padding: 0 10px;
     transition: all 0.3s ease-in-out;
@@ -204,11 +239,12 @@ body {
     stroke-dashoffset: 0;
 }
 
-.success-draw .logo,
-.error-draw .logo,
-.error-draw .loge,
 .success-draw .loge {
     opacity: 0;
     transform: scale(0.5);
     transition: opacity 0.3s ease-in-out 0.3s, transform 0.3s ease-in-out 0.3s;
+}
+
+.modal-backdrop {
+    opacity: 0.5 !important;
 }

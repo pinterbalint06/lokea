@@ -14,17 +14,17 @@ const coverImageRoutes = require("#gamemaps/cover-image/cover-image.routes.js");
 const favoriteRoutes = require("#gamemaps/favorite/favorite.routes.js");
 const schemas = require("#gamemaps/shared/schemas/gamemaps.schemas.js");
 
-router.use(checkAuth);
-
-router.use("/", imagesRoutes);
-
-router.use("/", pathsRoutes);
-
 router.use(
     "/:gameMapID/cover-image",
     validateRequest(schemas.gameMapIDParamsOnlySchema),
     coverImageRoutes
 );
+
+router.use(checkAuth);
+
+router.use("/", imagesRoutes);
+
+router.use("/", pathsRoutes);
 
 router.use(
     "/:gameMapID",

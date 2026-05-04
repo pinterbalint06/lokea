@@ -3,15 +3,15 @@ import i18next, { initI18next } from "../language/i18next.js";
 export function translatePage() {
     document.querySelectorAll('[data-i18n]').forEach(element => {
         const key = element.getAttribute('data-i18n');
-        element.innerText = i18next.t(key);
+        element.innerText = i18next.t(key, { ...element.dataset });
     });
     document.querySelectorAll('[data-i18n-label]').forEach(element => {
         const key = element.getAttribute('data-i18n-label');
-        element.dataset.label = i18next.t(key) + ':';
+        element.dataset.label = i18next.t(key, { ...element.dataset }) + ':';
     });
     document.querySelectorAll('[data-i18n-placeholder]').forEach(element => {
         const key = element.getAttribute('data-i18n-placeholder');
-        element.setAttribute('placeholder', i18next.t(key));
+        element.setAttribute('placeholder', i18next.t(key, { ...element.dataset }));
     });
     document.documentElement.lang = i18next.language;
     const titleKey = document.querySelector('title')?.getAttribute('data-i18n');

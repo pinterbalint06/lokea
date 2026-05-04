@@ -11,7 +11,7 @@
             "created": "Létrehozás dátuma",
             "favorites": "Kedvencek"
         },
-        "mapsLabel": "Pályák:",
+        "mapsLabel": "Pályák",
         "loadMore": "További pályák betöltése",
         "settings": {
             "rounds": "Körök száma:",
@@ -20,7 +20,7 @@
             "normal": "Közepes",
             "hard": "Nehéz",
             "roundTime": "Egy kör időtartama:",
-            "maxUniqueRounds": "Ismétlés nélküli max kör: ",
+            "maxUniqueRounds": "Ismétlés nélküli max kör:",
             "notLimitedWarning": "A körszám nincs ehhez limitálva, a pontok újrajátszhatók.",
             "startGame": "Játék indítása"
         },

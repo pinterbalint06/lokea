@@ -11,29 +11,12 @@
     <link rel="stylesheet" href="../css/game-lobby.css">
     <link rel="stylesheet" href="../css/game-page.css">
     <script type="module" src="../javascript/game/game_page.js"></script>
+    <script type="module" src="/javascript/libs/utils/navbar.js"></script>
     <title data-i18n="game:gamePage.title">Lokea</title>
 </head>
 
 <body>
-    <nav class="navbar navbar-expand-lg navbar-dark glass">
-        <div class="container-fluid">
-            <a class="navbar-brand" href="#">
-                <img src="../images/lokea.webp" alt="Lokea logo" class="navPic">
-            </a>
-            <div class="dropdown">
-                <a href="#" class="d-block link-light text-decoration-none dropdown-toggle">
-                    <img src="../images/default.png" alt="profPic" class="rounded-circle border border-2 navPic">
-                </a>
-                <ul class="dropdown-menu dropdown-menu-end text-small">
-                    <li><a class="dropdown-item" href="#" data-i18n="main:dropdown.myAccount">Profile</a></li>
-                    <li>
-                        <hr class="dropdown-divider">
-                    </li>
-                    <li><a class="dropdown-item text-danger" href="#" data-i18n="main:dropdown.logout">Sign out</a></li>
-                </ul>
-            </div>
-        </div>
-    </nav>
+    <div id="navbar-mount"></div>
 
     <div id="gameContainer">
         <div id="countdownOverlay" class="countdown-overlay">

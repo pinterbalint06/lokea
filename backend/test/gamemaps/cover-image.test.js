@@ -82,10 +82,6 @@ describe("Game Maps API - /api/game-maps/", () => {
                 sendFileSpy.mockClear();
             });
 
-            describe("Authorization (401, 403)", () => {
-                testRequiresAuth(() => makeGetRequest());
-            });
-
             describe("Input validation (400, 413, 415, 422)", () => {
                 it("Should respond with 400 if the game map id is incorrect", async () => {
                     await testInvalidIDs(

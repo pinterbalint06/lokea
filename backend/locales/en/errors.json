@@ -10,7 +10,8 @@
         "fileNotFound": "File does not exist or is invalid!",
         "invalidImageType": "Invalid file type! Only JPG, PNG, WEBP, and GIF images are allowed!",
         "invalidPage": "Invalid page number!",
-        "endpointNotFound": "Endpoint not found!"
+        "endpointNotFound": "Endpoint not found!",
+        "pageNotFound": "The requested page was not found."
     },
     "gamemap": {
         "invalidId": "Invalid game map ID!",

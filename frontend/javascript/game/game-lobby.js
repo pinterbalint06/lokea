@@ -1,10 +1,10 @@
 import { createFavoriteButton } from "../libs/elements/favoriteButton.js";
-import { loadGameMapCoverImageLowThenHigh } from "../libs/network/progressiveImage.js";
-import { showToast } from "../libs/utils.js";
+import { showAlert } from "../libs/utils/DOMutils.js";
 import { translatePage, nyelvSzinkronizalas } from "../libs/i18next/translation.js";
 import i18next from "../libs/language/i18next.js";
 import { ContinueGameModal } from "../libs/elements/ContinueGameModal.js";
 import { fetchActiveGameSession, finishGameSession } from "../libs/network/gameSession.js";
+import { createGameMapCard } from "../libs/elements/GameMapCard.js";
 
 window.addEventListener('pageshow', (event) => {
     if (event.persisted) window.location.reload();
@@ -66,7 +66,6 @@ document.addEventListener("DOMContentLoaded", async function () {
         });
     });
     document.getElementById('loadMoreBtn').addEventListener('click', function () {
-        cardLoadedTimes++;
         loadGameMaps(selectedButton.id.replace('sortBy', '').toLowerCase(), activeTab === 'mine' ? 'mine' : null);
     });
 });
@@ -93,52 +92,15 @@ async function loadGameMaps(sort, filter = null) {
         let gameMapsContainer = document.getElementById('game_maps_container');
         if (gameMaps.results && gameMaps.results.length > 0) {
             for (let i = 0; i < gameMaps.results.length; i++) {
-                gameMapsContainer.appendChild(createCard(gameMaps.results[i]));
+                gameMapsContainer.appendChild(createGameMapCard(gameMaps.results[i]));
             }
+            cardLoadedTimes++;
         } else if (filter !== 'mine') {
-            let p = document.createElement('p');
-            p.classList.add('text-center');
-            p.innerText = i18next.t("game-maps:choosing.noGamesAvailable", { defaultValue: "Nincsenek elérhető játékok." });
-            gameMapsContainer.appendChild(p);
+            showToast(document.getElementById('toastPlace'), 'Nincsenek további elérhető játékok.', 'info', true);
         }
     } catch {
-        showToast(document.getElementById('toastPlace'), i18next.t("game-maps:choosing.errors.loadingMaps", { defaultValue: "A pályák betöltése nem sikerült." }), 'danger', true);
+        showAlert(i18next.t("game-maps:choosing.errors.loadingMaps", { defaultValue: "A pályák betöltése nem sikerült." }), 'danger');
     }
-}
-
-function createCard(game_map) {
-    let game_maps_card = document.createElement('div');
-    game_maps_card.classList.add('card', 'glass');
-    let game_maps_card_content = document.createElement('div');
-    game_maps_card_content.classList.add('card-content');
-    let card_name = document.createElement('h3');
-    card_name.classList.add('card-title');
-    card_name.innerText = game_map.title;
-    let card_plays = document.createElement('p');
-    card_plays.classList.add('card-desc');
-    card_plays.innerText = i18next.t("game-maps:choosing.playsCount", { count: game_map.plays, defaultValue: `Játékok száma: ${game_map.plays}` });
-    let card_created = document.createElement('p');
-    card_created.classList.add('card-desc');
-    card_created.innerText = i18next.t("game-maps:choosing.createdAt", { date: (game_map.game_created.split('T')[0]).replaceAll('-', '.'), defaultValue: `Létrehozva: ${(game_map.game_created.split('T')[0]).replaceAll('-', '.')}` });
-    game_maps_card_content.appendChild(card_name);
-    game_maps_card_content.appendChild(createReview(game_map.rating));
-    game_maps_card_content.appendChild(card_plays);
-    game_maps_card_content.appendChild(card_created);
-    game_maps_card.appendChild(game_maps_card_content);
-    game_maps_card.appendChild(createFavoriteButton(game_map.game_maps_id, game_map.is_favorited));
-    game_maps_card.addEventListener('click', function () {
-        window.location.href = `/game-maps/${game_map.game_maps_id}`;
-    });
-    loadCoverImageLowThenHigh(game_maps_card, game_map.game_maps_id);
-
-    return game_maps_card;
-}
-
-function createReview(rating) {
-    let card_rating = document.createElement('div');
-    card_rating.classList.add('stars');
-    card_rating.style.setProperty('--rating', rating);
-    return card_rating;
 }
 
 
@@ -150,27 +112,6 @@ async function fetchURL(url) {
     return response.json();
 }
 
-async function loadCoverImageLowThenHigh(card, gmId) {
-    let currentUrl = null;
-    try {
-        await loadGameMapCoverImageLowThenHigh({
-            gameMapId: gmId,
-            loadToViewer: async (imgData) => {
-                imgData.cleanup = () => { };
-                if (currentUrl) {
-                    loadedURLs.splice(loadedURLs.indexOf(currentUrl), 1);
-                    window.URL.revokeObjectURL(currentUrl);
-                }
-                currentUrl = imgData.url;
-                loadedURLs.push(currentUrl);
-                card.style.backgroundImage = `url('${currentUrl}')`;
-            },
-            isCurrent: () => true
-        });
-    } catch {
-        showToast(document.getElementById('toastPlace'), i18next.t("game-maps:choosing.errors.loadingCover", { defaultValue: "A borítókép betöltése nem sikerült." }), 'danger', true);
-    }
-}
 
 function createNewGameCard() {
     let card = document.createElement('div');
@@ -202,7 +143,7 @@ async function handleCreateCardClick() {
             window.location.href = '/game-maps/' + gameMapID;
         } catch {
             isCreating = false;
-            showToast(document.getElementById('toastPlace'), i18next.t("game-maps:choosing.errors.creatingGame", { defaultValue: "Az új játék létrehozása nem sikerült." }), 'danger', true);
+            showAlert(i18next.t("game-maps:choosing.errors.creatingGame", { defaultValue: "Az új játék létrehozása nem sikerült." }), 'danger');
         }
     }
 }
@@ -220,7 +161,7 @@ async function checkAndShowContinueModal() {
                     try {
                         await finishGameSession();
                     } catch {
-                        showToast(document.getElementById('toastPlace'), i18next.t("game-maps:choosing.errors.endingGame", { defaultValue: "A játék befejezése nem sikerült." }), 'danger', true);
+                        showAlert(i18next.t("game-maps:choosing.errors.endingGame", { defaultValue: "A játék befejezése nem sikerült." }), 'danger');
                     }
                 }
             );

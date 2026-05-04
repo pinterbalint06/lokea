@@ -220,19 +220,22 @@ function resetGameState(roundTime, currentRound) {
     document.getElementById("guessBtn").disabled = false;
     document.getElementById("pictureFullScreenBtn").disabled = false;
     mapViewerEngine.resetZoom();
+    equirectangularViewer.setPitch(0);
+    equirectangularViewer.setHeading(0);
 }
 
 async function createPoint(roundTime) {
     try {
         const pointData = await fetchGameData('/api/game/round');
-        if (!pointData.point) throw new Error("Failed to fetch random point");
+        if (!pointData.point) throw new Error("Nem sikerült lekérni egy véletlenszerű pontot.");
         const point = pointData.point;
         const showCountdown = point.game.timeLeft > roundTime;
         document.getElementById("timer").textContent = formatSecondsToMinutes(
             showCountdown ? point.game.timeLeft - 3 : point.game.timeLeft
         );
         currentPointId = point.pointId;
-        loadPointLowThenHigh(point.pointId);
+        loadPointLowThenHigh(point.pointId)
+            .catch(error => showError("Hiba a pont képének betöltésekor: " + error.message));
         equirectangularViewer.setZoom(0);
         if (showCountdown) {
             await createCountdownTimer();
@@ -259,12 +262,8 @@ function nextMap() {
     mapId = map.mapId;
     document.getElementById('mapTitle').textContent = map.title || '-';
     removeEverything();
-    try {
-        loadMaplowThenHigh(mapId);
-    }
-    catch (error) {
-        showError(i18next.t("game-maps:gamePage.errorLoadingMap", { defaultValue: "Hiba a térkép betöltésekor:" }) + " " + error.message);
-    }
+    loadMaplowThenHigh(mapId)
+        .catch(error => showError(i18next.t("game-maps:gamePage.errorLoadingMap", { defaultValue: "Hiba a térkép betöltésekor:" }) + " " + error.message));
 }
 
 function startRoundTimer(roundEndAt) {
@@ -376,13 +375,14 @@ async function createDirectionArrows(pId) {
                             currentPointId = path.targetPointId;
                             equirectangularViewer.clearArrows();
                             await loadPointLowThenHigh(path.targetPointId, markAsLoaded)
+                                .catch(error => showError("Hiba a pont képének betöltésekor: " + error.message));
                         }
                     );
                 }
             );
         });
     } catch (error) {
-        throw new Error(error.message || "Error creating direction arrows");
+        throw new Error(error.message || "Hiba az iránynyilak létrehozásakor.");
     }
 }
 
