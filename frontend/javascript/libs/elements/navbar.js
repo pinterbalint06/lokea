@@ -1,6 +1,6 @@
 import { showToast } from "../utils.js";
 import i18next from "../language/i18next.js";
-import { createElement } from "./DOMutils.js";
+import { createElement } from "../utils/DOMutils.js";
 
 function buildNavbar() {
     const logoImg = createElement("img", {
@@ -58,44 +58,44 @@ function buildNavbar() {
 
 export function mountNavbar(target = "#navbar-mount") {
     const mountPoint = typeof target === "string" ? document.querySelector(target) : target;
-    if (!mountPoint) return;
+    if (mountPoint) {
+        mountPoint.appendChild(buildNavbar());
 
-    mountPoint.appendChild(buildNavbar());
-
-    mountPoint.querySelectorAll(".nav-link[href]").forEach((link) => {
-        const linkPath = new URL(link.getAttribute("href"), window.location.origin).pathname;
-        if (window.location.pathname === linkPath || window.location.pathname.startsWith(linkPath + '/')) {
-            link.setAttribute("aria-current", "page");
-        }
-    });
-
-    const profilePic = mountPoint.querySelector("#navbarProfilePic");
-    if (profilePic) {
-        const tester = new Image();
-        tester.onload = () => { profilePic.src = tester.src; };
-        tester.src = "/api/users/me/profile-picture";
-    }
-
-    const dropdownToggle = mountPoint.querySelector('[data-bs-toggle="dropdown"]');
-    if (dropdownToggle && window.bootstrap?.Dropdown) {
-        new window.bootstrap.Dropdown(dropdownToggle, {
-            popperConfig: { strategy: 'fixed' }
-        });
-    }
-
-    const signOutBtn = mountPoint.querySelector("#signOut");
-    if (signOutBtn) {
-        signOutBtn.addEventListener("click", async (event) => {
-            event.preventDefault();
-            try {
-                const response = await fetch("/api/auth/logout", { method: "DELETE" });
-                if (!response.ok) throw new Error();
-                window.location.href = "/";
-            } catch {
-                const toastContainer = document.getElementById('toastPlace') ?? document.getElementById('toastContainer') ?? document.body;
-                showToast(toastContainer, i18next.t("main:apiMain.logout.error", { defaultValue: "A kijelentkezés nem sikerült." }), 'danger', true);
+        mountPoint.querySelectorAll(".nav-link[href]").forEach((link) => {
+            const linkPath = new URL(link.getAttribute("href"), window.location.origin).pathname;
+            if (window.location.pathname === linkPath || window.location.pathname.startsWith(linkPath + '/')) {
+                link.setAttribute("aria-current", "page");
             }
         });
+
+        const profilePic = mountPoint.querySelector("#navbarProfilePic");
+        if (profilePic) {
+            const tester = new Image();
+            tester.onload = () => { profilePic.src = tester.src; };
+            tester.src = "/api/users/me/profile-picture";
+        }
+
+        const dropdownToggle = mountPoint.querySelector('[data-bs-toggle="dropdown"]');
+        if (dropdownToggle && window.bootstrap?.Dropdown) {
+            new window.bootstrap.Dropdown(dropdownToggle, {
+                popperConfig: { strategy: 'fixed' }
+            });
+        }
+
+        const signOutBtn = mountPoint.querySelector("#signOut");
+        if (signOutBtn) {
+            signOutBtn.addEventListener("click", async (event) => {
+                event.preventDefault();
+                try {
+                    const response = await fetch("/api/auth/logout", { method: "DELETE" });
+                    if (!response.ok) throw new Error();
+                    window.location.href = "/";
+                } catch {
+                    const toastContainer = document.getElementById('toastPlace') ?? document.getElementById('toastContainer') ?? document.body;
+                    showToast(toastContainer, i18next.t("main:apiMain.logout.error", { defaultValue: "A kijelentkezés nem sikerült." }), 'danger', true);
+                }
+            });
+        }
     }
 }
 
