@@ -1,5 +1,6 @@
 import { createFavoriteButton } from "../libs/elements/favoriteButton.js";
 import { showAlert } from "../libs/utils/DOMutils.js";
+import { showToast } from "../libs/utils.js";
 import { ContinueGameModal } from "../libs/elements/ContinueGameModal.js";
 import { fetchActiveGameSession, finishGameSession } from "../libs/network/gameSession.js";
 import { createGameMapCard } from "../libs/elements/GameMapCard.js";
@@ -89,8 +90,8 @@ async function loadGameMaps(sort, filter = null) {
         } else if (filter !== 'mine') {
             showToast(document.getElementById('toastPlace'), 'Nincsenek további elérhető játékok.', 'info', true);
         }
-    } catch {
-        showAlert('A pályák betöltése nem sikerült.', 'danger');
+    } catch (error) {
+        showAlert('A pályák betöltése nem sikerült: ' + error.message, 'danger');
     }
 }
 
