@@ -1,5 +1,6 @@
 import ModuleBuilder from "../webassembly/mapViewer/mapViewer.js";
 import { WASMViewerBase, WASM_ERROR_TYPES, WebassemblyError } from "./WASMViewerBase.js";
+import i18next from "../language/i18next.js";
 
 const MARKER_URLS = {
     "empty": "/images/markers/empty-marker.webp",
@@ -245,13 +246,13 @@ export class MapViewer extends WASMViewerBase {
                 if (imageX < this.#imageWidth && imageY < this.#imageHeight) {
                     returnObject.correct = true;
                 } else {
-                    returnObject.error = "A koordinátáknak kisebbnek kell lennie mint a kép méretei!";
+                        returnObject.error = i18next.t("game:mapViewer.coordTooLarge", { defaultValue: "A koordinátáknak kisebbnek kell lennie mint a kép méretei!" });
                 }
             } else {
-                returnObject.error = "A koordinátáknak nagyobbnak kell lennie mint 0!";
+                    returnObject.error = i18next.t("game:mapViewer.coordTooSmall", { defaultValue: "A koordinátáknak nagyobbnak kell lennie mint 0!" });
             }
         } else {
-            returnObject.error = "A koordinátáknak egész számnak kell lenniük!";
+                returnObject.error = i18next.t("game:mapViewer.coordNotInteger", { defaultValue: "A koordinátáknak egész számnak kell lenniük!" });
         }
         return returnObject;
     }

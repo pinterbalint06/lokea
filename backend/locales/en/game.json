@@ -185,5 +185,13 @@
         "nameCannotBeEmpty": "Map name cannot be empty!",
         "invalidNameFormat": "Map name must be 1-20 characters, only letters, numbers, spaces, underscores and dashes are allowed.",
         "renameAborted": "Rename aborted!"
+    },
+    "degreeInput": {
+        "rangeError": "The angle must be between {{min}} and {{max}}!"
+    },
+    "mapViewer": {
+        "coordTooLarge": "Coordinates must be smaller than the image dimensions!",
+        "coordTooSmall": "Coordinates must be greater than 0!",
+        "coordNotInteger": "Coordinates must be integers!"
     }
 }

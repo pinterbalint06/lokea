@@ -1,4 +1,5 @@
 import { createElement } from "../utils/DOMUtils.js";
+import i18next from "../language/i18next.js";
 
 export class DegreeInput extends EventTarget {
     #value;
@@ -97,7 +98,7 @@ export class DegreeInput extends EventTarget {
             } else {
                 this.numberInput.value = this.#prevValue;
                 this.dispatchEvent(new CustomEvent("error", {
-                    detail: { message: `A szögnek ${this.#min} és ${this.#max} között kell lennie!` }
+                    detail: { message: i18next.t("game:degreeInput.rangeError", { min: this.#min, max: this.#max, defaultValue: `A szögnek ${this.#min} és ${this.#max} között kell lennie!` }) }
                 }));
             }
         });
