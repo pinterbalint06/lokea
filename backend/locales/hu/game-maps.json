@@ -1,0 +1,276 @@
+{
+    "choosing": {
+        "tabs": {
+            "all": "Összes",
+            "mine": "Saját játékaim"
+        },
+        "sorting": {
+            "label": "Rendezés:",
+            "plays": "Játékok száma",
+            "rating": "Értékelés",
+            "created": "Létrehozás dátuma",
+            "favorites": "Kedvencek"
+        },
+        "mapsLabel": "Pályák",
+        "loadMore": "További pályák betöltése",
+        "settings": {
+            "rounds": "Körök száma:",
+            "difficulty": "Nehézség:",
+            "easy": "Könnyű",
+            "normal": "Közepes",
+            "hard": "Nehéz",
+            "roundTime": "Egy kör időtartama:",
+            "maxUniqueRounds": "Ismétlés nélküli max kör:",
+            "notLimitedWarning": "A körszám nincs ehhez limitálva, a pontok újrajátszhatók.",
+            "startGame": "Játék indítása"
+        },
+        "continueModal": {
+            "title": "Van egy elindított játékod",
+            "description": "Szeretnéd folytatni az elkezdett játékodat? Ha nem folytatod, akkor többet nem tudod folytatni.",
+            "continueBtn": "Folytatás",
+            "endBtn": "Játék befejezése"
+        },
+        "errors": {
+            "languageLoad": "Hiba a nyelvi adatok betöltésekor:",
+            "loadingMaps": "A pályák betöltése nem sikerült.",
+            "startingGame": "A játék indítása nem sikerült: ",
+            "loadingCover": "A borítókép betöltése nem sikerült.",
+            "creatingGame": "Az új játék létrehozása nem sikerült.",
+            "endingGame": "A játék befejezése nem sikerült."
+        },
+        "noGamesAvailable": "Nincsenek elérhető játékok.",
+        "playsCount": "Játékok száma: {{count}}",
+        "createdAt": "Létrehozva: {{date}}",
+        "na": "N/A",
+        "pointsCount": "{{count}} pont",
+        "createNewGame": "Új játék létrehozása",
+        "continueSpecificGame": "Van egy futó játékod ezen a pályán: {{title}}. Szeretnéd folytatni?"
+    },
+    "map": {
+        "cover": {
+            "edit": "Borítókép szerkesztése",
+            "rating": "Értékelés"
+        },
+        "stats": {
+            "created": "Létrehozva",
+            "plays": "Játékok száma"
+        },
+        "leaderboard": {
+            "title": "Rangsor"
+        },
+        "details": {
+            "creator": "Készítő:",
+            "titlePlaceholder": "Adj meg egy címet...",
+            "editTitleDesc": "Cím és leírás szerkesztése",
+            "description": "Leírás",
+            "descPlaceholder": "Írj rövid leírást a pályáról...",
+            "save": "Változások mentése",
+            "cancel": "Mégse",
+            "editMap": "Pálya szerkesztése",
+            "deleteMap": "Pálya törlése"
+        },
+        "comments": {
+            "title": "Hozzászólások",
+            "write": "Írj hozzászólást",
+            "placeholder": "A véleményed erről a pályáról...",
+            "rating": "Értékelés",
+            "send": "Hozzászólás küldése",
+            "yourRating": "A te értékelésed",
+            "edit": "Szerkesztés",
+            "delete": "Törlés",
+            "loading": "Hozzászólások betöltése..."
+        },
+        "aria": {
+            "startGame": "Játék indítása",
+            "star5": "5 csillag",
+            "star4": "4 csillag",
+            "star3": "3 csillag",
+            "star2": "2 csillag",
+            "star1": "1 csillag"
+        }
+    },
+    "commentManager": {
+        "holdToDelete": "A törléshez tartsd lenyomva a gombot legalább 1,5 másodpercig!",
+        "saveChanges": "Módosítás mentése",
+        "sendComment": "Hozzászólás küldése",
+        "saveInProgress": "Már folyamatban van a komment mentése, kérlek várj!",
+        "deleteSuccess": "Hozzászólásod sikeresen törölve!",
+        "deleteError": "Hiba történt a hozzászólás törlésekor.",
+        "loadingComments": "Hozzászólások betöltése...",
+        "loadError": "Nem sikerült betölteni a hozzászólásokat.",
+        "noComments": "Még nincsenek hozzászólások.",
+        "unknownAuthor": "Ismeretlen",
+        "updateSuccess": "Hozzászólásod sikeresen frissítve!",
+        "saveSuccess": "Hozzászólásod sikeresen mentve!",
+        "noChanges": "Nincs változás a hozzászólásban.",
+        "sendError": "Hiba történt a hozzászólás elküldésekor.",
+        "rateAtLeastOneStar": "Kérlek értékeld legalább 1 csillaggal!"
+    },
+    "modalManager": {
+        "dragCoverImage": "Húzd ide az új borítóképet",
+        "clickToUpload": "Kattints ide feltöltéshez",
+        "or": "Vagy",
+        "deleteWarning": "Ha eltávolítod a borítóképet, a pálya ismét az alapértelmezett borítóképet fogja használni.",
+        "deleteCoverImage": "Borítókép törlése",
+        "holdToDelete": "A törléshez tartsd lenyomva a gombot legalább 1,5 másodpercig!",
+        "editCoverImage": "Borítókép szerkesztése",
+        "cancel": "Mégse",
+        "confirmDeleteMap": "Biztosan törölni szeretnéd ezt a pályát?",
+        "confirmDeleteMapNamed": "Biztosan törölni szeretnéd ezt a pályát: {{name}}?",
+        "cannotBeUndone": "Ez a művelet nem vonható vissza. A pályához tartozó ",
+        "allDataWillBeDeleted": "összes térkép, pont, kapcsolat és kép is törlésre kerül",
+        "deleteMapTitle": "Pálya törlése",
+        "permanentlyDeleteMap": "Pálya végleges törlése",
+        "holdToConfirm": "Tartsd lenyomva a gombot a megerősítéshez"
+    },
+    "markerEditor": {
+        "drag360Image": "Húzd ide a 360°-os képet",
+        "clickToUpload": "Kattints ide feltöltéshez",
+        "pointNotChanged": "A pont nem változott!"
+    },
+    "mapSelector": {
+        "dragMapFile": "Húzd ide a térkép fájlt",
+        "clickToUpload": "Kattints ide feltöltéshez",
+        "mapName": "Térkép neve",
+        "nameCannotBeEmpty": "A térkép neve nem lehet üres!",
+        "invalidNameFormat": "A térkép neve 1-20 karakter lehet, csak betű, szám, szóköz, aláhúzás és vonás használható.",
+        "renameAborted": "Az átnevezés megszakítva!"
+    },
+    "dataManager": {
+        "loadError": "Nem sikerült betölteni a pálya adatait."
+    },
+    "editManager": {
+        "deletingMap": "Pálya törlése folyamatban...",
+        "deleteError": "Nem sikerült törölni a pályát!",
+        "cannotDeleteWhileSaving": "Nem lehet törölni a pályát, amíg a részletek mentése folyamatban van!",
+        "savingData": "Pályaadatok mentése",
+        "saveSuccess": "A pálya adatai sikeresen frissítve.",
+        "saveError": "Nem sikerült frissíteni a pálya adatait.",
+        "titleMinLength": "A pálya címének legalább 3 karakter hosszúnak kell lennie!",
+        "titleMaxLength": "A pálya címe maximum 50 karakter hosszú lehet!",
+        "titleInvalidPattern": "A pálya címe csak betűket, számokat, szóközöket, kötőjeleket és alulvonásokat tartalmazhat!",
+        "descMinLength": "A pálya leírásának legalább 3 karakter hosszúnak kell lennie!",
+        "descMaxLength": "A pálya leírása maximum 255 karakter hosszú lehet!",
+        "descInvalidPattern": "A pálya leírása csak betűket, számokat, szóközöket, kötőjeleket és alulvonásokat tartalmazhat!",
+        "saveInProgressWarning": "Már folyamatban van az adatok mentése, kérlek várj!"
+    },
+    "coverImageManager": {
+        "updatingCover": "Borítókép frissítése",
+        "updateSuccess": "Borítókép frissítve",
+        "updateError": "Nem sikerült frissíteni a borítóképet.",
+        "updateInProgressWarning": "Már folyamatban van egy borítókép frissítés. Kérlek várj, amíg az befejeződik.",
+        "deletingCover": "Borítókép törlése",
+        "deleteSuccess": "Borítókép sikeresen törölve.",
+        "deleteError": "Nem sikerült törölni a borítóképet.",
+        "modifyInProgressWarning": "Már folyamatban van egy borítókép módosítás."
+    },
+    "leaderboardManager": {
+        "achievedAt": "Elérve:",
+        "noScoresYet": "Még nincs játék ezen a pályán."
+    },
+    "dragAndDropUploader": {
+        "or": "vagy"
+    },
+    "gamePage": {
+        "errorConnecting": "Nem sikerült csatlakozni a játékhoz: ",
+        "noMapsAvailable": "Nincsenek elérhető térképek a játékhoz.",
+        "invalidGameData": "Érvénytelen játékadatok érkeztek a szervertől.",
+        "resultsBtn": "Eredmények",
+        "unexpectedError": "Váratlan hiba történt.",
+        "errorSendingGuess": "Nem sikerült elküldeni a tippet: ",
+        "distance": "Távolság: {{distance}} px",
+        "wrongMapOrNoMarker": "Rossz térkép vagy nincs jelölő",
+        "errorFinishingGame": "Hiba a játék befejezésekor: ",
+        "noMapForComment": "Nincs elérhető pálya a megjegyzés betöltéséhez.",
+        "saveChanges": "Módosítás mentése",
+        "sendRating": "Értékelés küldése",
+        "cannotSendRating": "Nem lehet elküldeni az értékelést",
+        "selectAtLeastOneStar": "Kérlek válassz legalább 1 csillagot!",
+        "errorOccurred": "Hiba történt",
+        "ratingUpdated": "Értékelésed frissítve!",
+        "ratingSent": "Értékelésed elküldve!",
+        "errorSendingRating": "Hiba az értékelés elküldésekor",
+        "cannotDeleteRating": "Nem lehet törölni az értékelést",
+        "confirmDeleteRating": "Biztosan törlöd az értékelésedet?",
+        "deleteAborted": "Törlés megszakítva",
+        "ratingDeleted": "Értékelésed törölve.",
+        "errorDeleting": "Hiba a törléskor",
+        "noMapForLeaderboard": "Nincs elérhető pálya az eredménylista betöltéséhez.",
+        "errorLoadingLeaderboard": "Hiba történt az eredménylista betöltésekor.",
+        "errorLoadingLeaderboardToast": "Hiba történt az eredménylista betöltésekor",
+        "noGamesYet": "Még nincs játék ezen a pályán.",
+        "achievedAt": "Elérve:",
+        "noMapForComments": "Nincs elérhető pálya a megjegyzések betöltéséhez.",
+        "errorLoadingComments": "Hiba történt a megjegyzések betöltésekor.",
+        "errorLoadingCommentsToast": "Hiba történt a megjegyzések betöltésekor",
+        "noRatingsYet": "Még nincsenek értékelések.",
+        "unknownUser": "Ismeretlen",
+        "networkError": "Hálózati hiba",
+        "errorCreatingPoint": "Hiba a pont létrehozásakor:",
+        "errorLoadingMap": "Hiba a térkép betöltésekor:",
+        "errorLoadingPointImage": "Hiba a pont képének betöltésekor",
+        "errorLoadingMapImage": "Hiba a térkép képének betöltésekor"
+    },
+    "testDisplay": {
+        "title": "Válassz a tesztelési nézetek közül:",
+        "mapViewer": "Teszt térképnézegető",
+        "equiViewer": "Teszt 360 fokos képnézegető"
+    },
+    "testEquirectangular": {
+        "cathedral": "Katedrális (Bal alsó)",
+        "herdecke": "Herdecke (Jobb alsó)",
+        "testImage": "Tesztkép (Bal felső)",
+        "wittenberg": "Wittenberg (Jobb felső)",
+        "inProgress": "Folyamatban",
+        "none": "Nincs"
+    },
+    "testMap": {
+        "markerMoved": "Térképjelölő mozgatva.",
+        "moveToClick": "Mozgatás kattintásra",
+        "invalidMarkerId": "Érvénytelen térképjelölő ID!",
+        "errorPlacing": "Hiba az elhelyezés során:",
+        "errorRemoving": "Hiba az eltávolítás során:",
+        "markerNotFound": "A térképjelölő nem létezik!",
+        "errorChangingType": "Hiba a típus módosítása során:",
+        "errorSettingX": "Hiba az X pozíció beállítása során:",
+        "invalidX": "Érvénytelen X koordináta!",
+        "errorSettingY": "Hiba az Y pozíció beállítása során:",
+        "invalidY": "Érvénytelen Y koordináta!",
+        "errorRotating": "Hiba a forgatás során:",
+        "invalidRotation": "Érvénytelen forgatási szög!",
+        "errorResizing": "Hiba az átméretezés során:",
+        "invalidDimensions": "Érvénytelen szélesség vagy magasság!",
+        "settingCompleted": "Beállítás elvégezve.",
+        "errorSetting": "Hiba a beállítás során:",
+        "selectMarkerInIdField": "Kérjük válasszon ki egy térképjelölőt az ID mezőben!",
+        "clickForStandardEdit": "Kattintás szokványos szerkesztésre",
+        "moveModeInstruction": "Mozgatás mód: kattintson a térképre a térképjelölő mozgatásához.",
+        "standardMode": "Szokványos mód.",
+        "noMarkers": "Nincs térképjelölő",
+        "idLabel": "ID:",
+        "fixed": "Rögzítve",
+        "positionLabel": "Pozíció:",
+        "select": "Kijelölés",
+        "errorCreatingConnection": "Hiba a kapcsolat létrehozása során:",
+        "connectionExists": "Már létezik kapcsolat ezen a marker páron!",
+        "errorUpdatingConnection": "Hiba a kapcsolat frissítése során:",
+        "oneOrBothMarkersNotFound": "Az egyik vagy mindkét térképjelölő nem létezik!",
+        "markersCannotBeSame": "A két térképjelölő nem lehet azonos!",
+        "invalidId": "Érvénytelen ID!",
+        "connectionNotFound": "A kapcsolat nem létezik!",
+        "invalidConnectionId": "Érvénytelen kapcsolat ID!",
+        "noConnections": "Nincs kapcsolat",
+        "errorMoving": "Hiba a mozgatás során:",
+        "invalidPosition": "Érvénytelen pozíció!",
+        "errorSettingZoom": "Hiba a zoom beállítása során:",
+        "invalidZoom": "Érvénytelen zoom érték! (1-50)",
+        "errorResettingZoom": "Hiba a zoom visszaállítása során:",
+        "typeLabel": "Típus:",
+        "none": "Nincs",
+        "errorFullscreen": "Hiba a teljes képernyő mód során:",
+        "errorDeleting": "Hiba a törlés során:",
+        "update": "Frissítés",
+        "place": "Elhelyezés",
+        "create": "Létrehozás"
+    }
+}

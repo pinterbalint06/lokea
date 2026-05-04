@@ -14,7 +14,7 @@ async function getGameMapCoverImage(request, response, next) {
         response.set("imageHeight", height);
         response.sendFile(imagePath, { root: UPLOAD_ROOT_MAP_DATA }, function (err) {
             if (err && !response.headersSent) {
-                response.status(404).json({ error: ERRORS.COMMON.FILE_NOT_FOUND });
+                response.status(404).json({ error: request.t(ERRORS.COMMON.FILE_NOT_FOUND) });
             }
         });
     } catch (error) {

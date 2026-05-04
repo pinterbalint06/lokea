@@ -8,6 +8,7 @@ import {
     DESCRIPTION_MIN_LENGTH,
     DESCRIPTION_MAX_LENGTH
 } from "../shared/constants.js";
+import i18next from "../../libs/language/i18next.js";
 
 export class EditManager {
     constructor(eventBus, appStore) {
@@ -96,15 +97,15 @@ export class EditManager {
         this.bus.on(EVENTS.UI_MODAL_CONFIRMED, async ({ modalType }) => {
             if (modalType == "delete_game_map") {
                 if (!this.isSavingDetails) {
-                    this.bus.emit(EVENTS.TOAST_SHOW, { msg: "Pálya törlése folyamatban...", type: "info", autohide: false, spinner: true });
+                    this.bus.emit(EVENTS.TOAST_SHOW, { msg: i18next.t("game-maps:editManager.deletingMap"), type: "info", autohide: false, spinner: true });
                     try {
                         await deleteGameMap(this.store.getState().gameMapId);
                         window.location.href = "/game-maps";
                     } catch (error) {
-                        this.bus.emit(EVENTS.TOAST_SHOW, { msg: error.message || "Nem sikerült törölni a pályát!", type: "danger" });
+                        this.bus.emit(EVENTS.TOAST_SHOW, { msg: error.message || i18next.t("game-maps:editManager.deleteError"), type: "danger" });
                     }
                 } else {
-                    this.bus.emit(EVENTS.TOAST_SHOW, { msg: "Nem lehet törölni a pályát, amíg a részletek mentése folyamatban van!", type: "danger" });
+                    this.bus.emit(EVENTS.TOAST_SHOW, { msg: i18next.t("game-maps:editManager.cannotDeleteWhileSaving"), type: "danger" });
                 }
             }
         });
@@ -188,7 +189,7 @@ export class EditManager {
                     const loadingToastId = Math.random().toString();
 
                     this.bus.emit(EVENTS.TOAST_SHOW, {
-                        msg: "Pályaadatok mentése",
+                        msg: i18next.t("game-maps:editManager.savingData"),
                         type: "info",
                         id: loadingToastId,
                         autohide: false,
@@ -216,13 +217,13 @@ export class EditManager {
                         });
 
                         this.bus.emit(EVENTS.TOAST_SHOW, {
-                            msg: "A pálya adatai sikeresen frissítve.",
+                            msg: i18next.t("game-maps:editManager.saveSuccess"),
                             type: "success"
                         });
                     } catch (error) {
                         if (error.name != "AbortError") {
                             this.bus.emit(EVENTS.TOAST_SHOW, {
-                                msg: error.message || "Nem sikerült frissíteni a pálya adatait.",
+                                msg: error.message || i18next.t("game-maps:editManager.saveError"),
                                 type: "danger"
                             });
                         }
@@ -244,7 +245,7 @@ export class EditManager {
         } else {
             if (this.isEditing) {
                 this.bus.emit(EVENTS.TOAST_SHOW, {
-                    msg: "Már folyamatban van az adatok mentése, kérlek várj!",
+                    msg: i18next.t("game-maps:editManager.saveInProgressWarning"),
                     type: "danger"
                 });
             }
@@ -276,17 +277,17 @@ export class EditManager {
 
             if (title.length < TITLE_MIN_LENGTH) {
                 isValid = false;
-                message = "A pálya címének legalább 3 karakter hosszúnak kell lennie!";
+                message = i18next.t("game-maps:editManager.titleMinLength");
             }
 
             if (title.length > TITLE_MAX_LENGTH && isValid) {
                 isValid = false;
-                message = "A pálya címe maximum 50 karakter hosszú lehet!";
+                message = i18next.t("game-maps:editManager.titleMaxLength");
             }
 
             if (!DETAILS_ALLOWED_PATTERN.test(title) && isValid) {
                 isValid = false;
-                message = "A pálya címe csak betűket, számokat, szóközöket, kötőjeleket és alulvonásokat tartalmazhat!";
+                message = i18next.t("game-maps:editManager.titleInvalidPattern");
             }
         }
 
@@ -295,17 +296,17 @@ export class EditManager {
 
             if (description.length < DESCRIPTION_MIN_LENGTH) {
                 isValid = false;
-                message = "A pálya leírásának legalább 3 karakter hosszúnak kell lennie!";
+                message = i18next.t("game-maps:editManager.descMinLength");
             }
 
             if (description.length > DESCRIPTION_MAX_LENGTH && isValid) {
                 isValid = false;
-                message = "A pálya leírása maximum 255 karakter hosszú lehet!";
+                message = i18next.t("game-maps:editManager.descMaxLength");
             }
 
             if (!DETAILS_ALLOWED_PATTERN.test(description) && isValid) {
                 isValid = false;
-                message = "A pálya leírása csak betűket, számokat, szóközöket, kötőjeleket és alulvonásokat tartalmazhat!";
+                message = i18next.t("game-maps:editManager.descInvalidPattern");
             }
         }
 

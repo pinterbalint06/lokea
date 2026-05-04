@@ -1,0 +1,276 @@
+{
+    "choosing": {
+        "tabs": {
+            "all": "All",
+            "mine": "My maps"
+        },
+        "sorting": {
+            "label": "Sort by:",
+            "plays": "Plays",
+            "rating": "Rating",
+            "created": "Date created",
+            "favorites": "Favorites"
+        },
+        "mapsLabel": "Maps",
+        "loadMore": "Load more maps",
+        "settings": {
+            "rounds": "Number of rounds:",
+            "difficulty": "Difficulty:",
+            "easy": "Easy",
+            "normal": "Normal",
+            "hard": "Hard",
+            "roundTime": "Round duration:",
+            "maxUniqueRounds": "Max unique rounds:",
+            "notLimitedWarning": "The number of rounds is not limited to this, points can be replayed.",
+            "startGame": "Start game"
+        },
+        "continueModal": {
+            "title": "You have an ongoing game",
+            "description": "Would you like to continue your ongoing game? If not, you won't be able to resume it later.",
+            "continueBtn": "Continue",
+            "endBtn": "End game"
+        },
+        "errors": {
+            "languageLoad": "Error loading language data:",
+            "loadingMaps": "Failed to load maps.",
+            "startingGame": "Failed to start game: ",
+            "loadingCover": "Failed to load cover image.",
+            "creatingGame": "Failed to create new game.",
+            "endingGame": "Failed to end game."
+        },
+        "noGamesAvailable": "No games available.",
+        "playsCount": "Plays: {{count}}",
+        "createdAt": "Created at: {{date}}",
+        "na": "N/A",
+        "pointsCount": "{{count}} points",
+        "createNewGame": "Create new game",
+        "continueSpecificGame": "You have an ongoing game on this map: {{title}}. Would you like to continue?"
+    },
+    "map": {
+        "cover": {
+            "edit": "Edit cover image",
+            "rating": "Rating"
+        },
+        "stats": {
+            "created": "Created at",
+            "plays": "Plays"
+        },
+        "leaderboard": {
+            "title": "Leaderboard"
+        },
+        "details": {
+            "creator": "Creator:",
+            "titlePlaceholder": "Enter a title...",
+            "editTitleDesc": "Edit title and description",
+            "description": "Description",
+            "descPlaceholder": "Write a short description...",
+            "save": "Save changes",
+            "cancel": "Cancel",
+            "editMap": "Edit map",
+            "deleteMap": "Delete map"
+        },
+        "comments": {
+            "title": "Comments",
+            "write": "Write a comment",
+            "placeholder": "Your opinion about this map...",
+            "rating": "Rating",
+            "send": "Send comment",
+            "yourRating": "Your rating",
+            "edit": "Edit",
+            "delete": "Delete",
+            "loading": "Loading comments..."
+        },
+        "aria": {
+            "startGame": "Start game",
+            "star5": "5 stars",
+            "star4": "4 stars",
+            "star3": "3 stars",
+            "star2": "2 stars",
+            "star1": "1 star"
+        }
+    },
+    "commentManager": {
+        "holdToDelete": "Hold the button for at least 1.5 seconds to delete!",
+        "saveChanges": "Save changes",
+        "sendComment": "Send comment",
+        "saveInProgress": "Saving comment is already in progress, please wait!",
+        "deleteSuccess": "Your comment has been successfully deleted!",
+        "deleteError": "An error occurred while deleting the comment.",
+        "loadingComments": "Loading comments...",
+        "loadError": "Failed to load comments.",
+        "noComments": "No comments yet.",
+        "unknownAuthor": "Unknown",
+        "updateSuccess": "Your comment has been successfully updated!",
+        "saveSuccess": "Your comment has been successfully saved!",
+        "noChanges": "No changes made to the comment.",
+        "sendError": "An error occurred while sending the comment.",
+        "rateAtLeastOneStar": "Please rate with at least 1 star!"
+    },
+    "modalManager": {
+        "dragCoverImage": "Drag the new cover image here",
+        "clickToUpload": "Click here to upload",
+        "or": "Or",
+        "deleteWarning": "If you remove the cover image, the map will use the default cover image again.",
+        "deleteCoverImage": "Delete cover image",
+        "holdToDelete": "Hold the button for at least 1.5 seconds to delete!",
+        "editCoverImage": "Edit cover image",
+        "cancel": "Cancel",
+        "confirmDeleteMap": "Are you sure you want to delete this map?",
+        "confirmDeleteMapNamed": "Are you sure you want to delete this map: {{name}}?",
+        "cannotBeUndone": "This action cannot be undone. All ",
+        "allDataWillBeDeleted": "maps, points, connections, and images belonging to the map will also be deleted",
+        "deleteMapTitle": "Delete map",
+        "permanentlyDeleteMap": "Permanently delete map",
+        "holdToConfirm": "Hold the button to confirm"
+    },
+    "markerEditor": {
+        "drag360Image": "Drag the 360° image here",
+        "clickToUpload": "Click here to upload",
+        "pointNotChanged": "The point has not changed!"
+    },
+    "mapSelector": {
+        "dragMapFile": "Drag the map file here",
+        "clickToUpload": "Click here to upload",
+        "mapName": "Map name",
+        "nameCannotBeEmpty": "The map name cannot be empty!",
+        "invalidNameFormat": "The map name can be 1-20 characters long, and can only contain letters, numbers, spaces, underscores, and dashes.",
+        "renameAborted": "Renaming aborted!"
+    },
+    "dataManager": {
+        "loadError": "Failed to load map data."
+    },
+    "editManager": {
+        "deletingMap": "Deleting map...",
+        "deleteError": "Failed to delete the map!",
+        "cannotDeleteWhileSaving": "Cannot delete the map while details are being saved!",
+        "savingData": "Saving map details",
+        "saveSuccess": "Map details successfully updated.",
+        "saveError": "Failed to update map details.",
+        "titleMinLength": "Map title must be at least 3 characters long!",
+        "titleMaxLength": "Map title can be a maximum of 50 characters long!",
+        "titleInvalidPattern": "Map title can only contain letters, numbers, spaces, hyphens, and underscores!",
+        "descMinLength": "Map description must be at least 3 characters long!",
+        "descMaxLength": "Map description can be a maximum of 255 characters long!",
+        "descInvalidPattern": "Map description can only contain letters, numbers, spaces, hyphens, and underscores!",
+        "saveInProgressWarning": "Data saving is already in progress, please wait!"
+    },
+    "coverImageManager": {
+        "updatingCover": "Updating cover image",
+        "updateSuccess": "Cover image updated",
+        "updateError": "Failed to update cover image.",
+        "updateInProgressWarning": "A cover image update is already in progress. Please wait until it finishes.",
+        "deletingCover": "Deleting cover image",
+        "deleteSuccess": "Cover image successfully deleted.",
+        "deleteError": "Failed to delete cover image.",
+        "modifyInProgressWarning": "A cover image modification is already in progress."
+    },
+    "leaderboardManager": {
+        "achievedAt": "Achieved at:",
+        "noScoresYet": "No games played on this map yet."
+    },
+    "dragAndDropUploader": {
+        "or": "or"
+    },
+    "gamePage": {
+        "errorConnecting": "Failed to connect to the game: ",
+        "noMapsAvailable": "No maps available for the game.",
+        "invalidGameData": "Invalid game data received from the server.",
+        "resultsBtn": "Results",
+        "unexpectedError": "An unexpected error occurred.",
+        "errorSendingGuess": "Failed to send guess: ",
+        "distance": "Distance: {{distance}} px",
+        "wrongMapOrNoMarker": "Wrong map or no marker",
+        "errorFinishingGame": "Error finishing game: ",
+        "noMapForComment": "No map available to load comment.",
+        "saveChanges": "Save changes",
+        "sendRating": "Send rating",
+        "cannotSendRating": "Cannot send rating",
+        "selectAtLeastOneStar": "Please select at least 1 star!",
+        "errorOccurred": "An error occurred",
+        "ratingUpdated": "Rating updated!",
+        "ratingSent": "Rating sent!",
+        "errorSendingRating": "Error sending rating",
+        "cannotDeleteRating": "Cannot delete rating",
+        "confirmDeleteRating": "Are you sure you want to delete your rating?",
+        "deleteAborted": "Deletion aborted",
+        "ratingDeleted": "Rating deleted.",
+        "errorDeleting": "Error deleting",
+        "noMapForLeaderboard": "No map available to load leaderboard.",
+        "errorLoadingLeaderboard": "Error loading leaderboard.",
+        "errorLoadingLeaderboardToast": "Error loading leaderboard",
+        "noGamesYet": "No games played on this map yet.",
+        "achievedAt": "Achieved at:",
+        "noMapForComments": "No map available to load comments.",
+        "errorLoadingComments": "Error loading comments.",
+        "errorLoadingCommentsToast": "Error loading comments",
+        "noRatingsYet": "No ratings yet.",
+        "unknownUser": "Unknown",
+        "networkError": "Network error",
+        "errorCreatingPoint": "Error creating point:",
+        "errorLoadingMap": "Error loading map:",
+        "errorLoadingPointImage": "Error loading point image",
+        "errorLoadingMapImage": "Error loading map image"
+    },
+    "testDisplay": {
+        "title": "Choose from the testing views:",
+        "mapViewer": "Test Map Viewer",
+        "equiViewer": "Test 360 Image Viewer"
+    },
+    "testEquirectangular": {
+        "cathedral": "Cathedral (Bottom Left)",
+        "herdecke": "Herdecke (Bottom Right)",
+        "testImage": "Test Image (Top Left)",
+        "wittenberg": "Wittenberg (Top Right)",
+        "inProgress": "In Progress",
+        "none": "None"
+    },
+    "testMap": {
+        "markerMoved": "Marker moved.",
+        "moveToClick": "Move to click",
+        "invalidMarkerId": "Invalid marker ID!",
+        "errorPlacing": "Error during placement:",
+        "errorRemoving": "Error during removal:",
+        "markerNotFound": "Marker does not exist!",
+        "errorChangingType": "Error during type modification:",
+        "errorSettingX": "Error setting X position:",
+        "invalidX": "Invalid X coordinate!",
+        "errorSettingY": "Error setting Y position:",
+        "invalidY": "Invalid Y coordinate!",
+        "errorRotating": "Error during rotation:",
+        "invalidRotation": "Invalid rotation angle!",
+        "errorResizing": "Error during resizing:",
+        "invalidDimensions": "Invalid width or height!",
+        "settingCompleted": "Setting completed.",
+        "errorSetting": "Error during setting:",
+        "selectMarkerInIdField": "Please select a marker in the ID field!",
+        "clickForStandardEdit": "Click for standard edit",
+        "moveModeInstruction": "Move mode: click on the map to move the marker.",
+        "standardMode": "Standard mode.",
+        "noMarkers": "No markers",
+        "idLabel": "ID:",
+        "fixed": "Fixed",
+        "positionLabel": "Position:",
+        "select": "Select",
+        "errorCreatingConnection": "Error creating connection:",
+        "connectionExists": "A connection already exists for this marker pair!",
+        "errorUpdatingConnection": "Error updating connection:",
+        "oneOrBothMarkersNotFound": "One or both markers do not exist!",
+        "markersCannotBeSame": "The two markers cannot be the same!",
+        "invalidId": "Invalid ID!",
+        "connectionNotFound": "Connection does not exist!",
+        "invalidConnectionId": "Invalid connection ID!",
+        "noConnections": "No connections",
+        "errorMoving": "Error during movement:",
+        "invalidPosition": "Invalid position!",
+        "errorSettingZoom": "Error setting zoom:",
+        "invalidZoom": "Invalid zoom value! (1-50)",
+        "errorResettingZoom": "Error resetting zoom:",
+        "typeLabel": "Type:",
+        "none": "None",
+        "errorFullscreen": "Error during fullscreen mode:",
+        "errorDeleting": "Error during deletion:",
+        "update": "Update",
+        "place": "Place",
+        "create": "Create"
+    }
+}

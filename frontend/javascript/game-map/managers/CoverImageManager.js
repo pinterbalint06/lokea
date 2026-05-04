@@ -1,6 +1,7 @@
 import { EVENTS } from "../shared/EventBus.js";
 import { loadGameMapCoverImageLowThenHigh } from "../../libs/network/progressiveImage.js";
 import { uploadGameMapCoverImage, deleteGameMapCoverImage } from "../shared/api.js";
+import i18next from "../../libs/language/i18next.js";
 
 export class CoverImageManager {
     constructor(eventBus, appStore) {
@@ -71,7 +72,7 @@ export class CoverImageManager {
             this.isUpdatingCover = true;
             const randomToastId = Math.random().toString();
             this.bus.emit(EVENTS.TOAST_SHOW, {
-                msg: "Borítókép frissítése",
+                msg: i18next.t("game-maps:coverImageManager.updatingCover"),
                 type: "info",
                 id: randomToastId,
                 autohide: false,
@@ -97,11 +98,11 @@ export class CoverImageManager {
                 await this.#loadImage(imageUrl);
                 URL.revokeObjectURL(imageUrl);
 
-                this.bus.emit(EVENTS.TOAST_SHOW, { msg: "Borítókép frissítve" });
+                this.bus.emit(EVENTS.TOAST_SHOW, { msg: i18next.t("game-maps:coverImageManager.updateSuccess") });
             } catch (error) {
                 if (error.name != "AbortError") {
                     this.bus.emit(EVENTS.TOAST_SHOW, {
-                        msg: error.message || "Nem sikerült frissíteni a borítóképet.",
+                        msg: error.message || i18next.t("game-maps:coverImageManager.updateError"),
                         type: "danger"
                     });
                 }
@@ -112,7 +113,7 @@ export class CoverImageManager {
             }
         } else {
             this.bus.emit(EVENTS.TOAST_SHOW, {
-                msg: "Már folyamatban van egy borítókép frissítés. Kérlek várj, amíg az befejeződik.",
+                msg: i18next.t("game-maps:coverImageManager.updateInProgressWarning"),
                 type: "danger"
             });
         }
@@ -123,7 +124,7 @@ export class CoverImageManager {
             this.isUpdatingCover = true;
             const randomToastId = Math.random().toString();
             this.bus.emit(EVENTS.TOAST_SHOW, {
-                msg: "Borítókép törlése",
+                msg: i18next.t("game-maps:coverImageManager.deletingCover"),
                 type: "info",
                 id: randomToastId,
                 autohide: false,
@@ -137,10 +138,10 @@ export class CoverImageManager {
 
                 this.#loadCoverImage(gameMapId);
 
-                this.bus.emit(EVENTS.TOAST_SHOW, { msg: "Borítókép sikeresen törölve.", type: "success" });
+                this.bus.emit(EVENTS.TOAST_SHOW, { msg: i18next.t("game-maps:coverImageManager.deleteSuccess"), type: "success" });
             } catch (error) {
                 this.bus.emit(EVENTS.TOAST_SHOW, {
-                    msg: error.message || "Nem sikerült törölni a borítóképet.",
+                    msg: error.message || i18next.t("game-maps:coverImageManager.deleteError"),
                     type: "danger"
                 });
             } finally {
@@ -149,7 +150,7 @@ export class CoverImageManager {
             }
         } else {
             this.bus.emit(EVENTS.TOAST_SHOW, {
-                msg: "Már folyamatban van egy borítókép módosítás.",
+                msg: i18next.t("game-maps:coverImageManager.modifyInProgressWarning"),
                 type: "danger"
             });
         }

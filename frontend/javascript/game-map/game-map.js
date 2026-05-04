@@ -10,8 +10,16 @@ import { CoverImageManager } from "./managers/CoverImageManager.js";
 import { ModalManager } from "./managers/ModalManager.js";
 import { CommentManager } from "./managers/CommentManager.js";
 import { GameStartManager } from "./managers/GameStartManager.js";
+import { translatePage, nyelvSzinkronizalas } from "../libs/i18next/translation.js";
+import i18next from "../libs/language/i18next.js";
 
 async function init() {
+    try {
+        await nyelvSzinkronizalas() || 'hu';
+        translatePage();
+    } catch (error) {
+        console.error(i18next.t("game-maps:choosing.errors.languageLoad", { defaultValue: "Hiba a nyelvi adatok betöltésekor:" }), error);
+    }
     const eventBus = new EventBus();
     const gameMapId = getGameMapIdFromUrl();
     const appStore = new AppStore(eventBus, gameMapId);

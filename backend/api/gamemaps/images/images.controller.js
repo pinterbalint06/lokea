@@ -16,7 +16,7 @@ async function getPointImage(request, response, next) {
 
         response.sendFile(imagePath, { root: UPLOAD_ROOT_MAP_DATA }, function (err) {
             if (err && !response.headersSent) {
-                return response.status(404).json({ error: ERRORS.COMMON.FILE_NOT_FOUND });
+                return response.status(404).json({ error: request.t(ERRORS.COMMON.FILE_NOT_FOUND) });
             }
         });
     } catch (error) {
@@ -37,7 +37,7 @@ async function getMapImage(request, response, next) {
 
         response.sendFile(imagePath, { root: UPLOAD_ROOT_MAP_DATA }, function (err) {
             if (err && !response.headersSent) {
-                return response.status(404).json({ error: ERRORS.COMMON.FILE_NOT_FOUND });
+                return response.status(404).json({ error: request.t(ERRORS.COMMON.FILE_NOT_FOUND) });
             }
         });
     } catch (error) {

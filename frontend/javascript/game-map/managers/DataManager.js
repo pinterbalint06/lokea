@@ -1,5 +1,6 @@
 import { EVENTS } from "../shared/EventBus.js";
 import { fetchGameMapDetails, fetchGameMapFavoriteStatus } from "../shared/api.js";
+import i18next from "../../libs/language/i18next.js";
 
 export class DataManager {
     constructor(eventBus, appStore) {
@@ -24,7 +25,7 @@ export class DataManager {
                 fetchGameMapDetails(gameMapId),
                 fetchGameMapFavoriteStatus(gameMapId).catch(() => false)
             ]);
-            
+
             this.appStore.setState({
                 gameMapDetails: {
                     title: gameMapDetails.title,
@@ -40,7 +41,7 @@ export class DataManager {
             });
         } catch (error) {
             this.eventBus.emit(EVENTS.TOAST_SHOW, {
-                msg: error.message || "Nem sikerült betölteni a pálya adatait.",
+                msg: error.message || i18next.t("game-maps:dataManager.loadError"),
                 type: "danger"
             });
         }
