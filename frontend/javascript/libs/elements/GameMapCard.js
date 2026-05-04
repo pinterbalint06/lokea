@@ -51,12 +51,17 @@ export function createGameMapCard(gameMap) {
 
     let title = createHTMLelement("h3", ["card-title"], gameMap.title);
     let plays = createHTMLelement("p", ["card-desc"], i18next.t("game-maps:choosing.playsCount", { count: gameMap.plays, defaultValue: `Játékok száma: ${gameMap.plays}` }));
+    plays.dataset.i18n = "game-maps:choosing.playsCount";
+    plays.dataset.count = gameMap.plays;
 
     let dateString = "";
     if (gameMap.game_created != undefined && gameMap.game_created != null) {
         dateString = gameMap.game_created.split("T")[0].replaceAll("-", ".");
     }
     let created = createHTMLelement("p", ["card-desc"], i18next.t("game-maps:choosing.createdAt", { date: dateString, defaultValue: `Létrehozva: ${dateString}` }));
+    created.dataset.i18n = "game-maps:choosing.createdAt";
+    created.dataset.date = dateString;
+
 
     content.appendChild(title);
     content.appendChild(createReview(gameMap.rating));

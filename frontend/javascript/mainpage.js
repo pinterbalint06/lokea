@@ -710,7 +710,7 @@ async function createPreview(file) {
 function translatePage() {
     document.querySelectorAll('[data-i18n]').forEach(element => {
         const key = element.getAttribute('data-i18n');
-        element.innerText = i18next.t(key);
+        element.innerText = i18next.t(key, { ...element.dataset });
     });
     document.querySelectorAll('[data-i18n-label]').forEach(element => {
         const key = element.getAttribute('data-i18n-label');
