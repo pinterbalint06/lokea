@@ -424,7 +424,7 @@ export class MarkerManager {
         if (deletedPointId) {
             if (deletedPointId != CONSTANTS.TEMP_ID) {
                 try {
-                    this.store.setState({ isBusy: { point: "Pont törlése folyamatban, kérlek várj!" } });
+                    this.store.setState({ isBusy: { point: i18next.t("game:markerManager.deletingPointInProgress") } });
                     await deletePointApi(deletedPointId);
                     if (this.mapViewer.doesMarkerExist(deletedPointId)) {
                         this.mapViewer.removeMarker(deletedPointId);
@@ -440,7 +440,7 @@ export class MarkerManager {
                     this.#resetMarkerPlacingState();
                     this.store.setState({ isBusy: { point: false } });
                     this.bus.emit(EVENTS.MARKER_DELETED, { pointId: deletedPointId });
-                    this.bus.emit(EVENTS.TOAST_SHOW, { msg: "Pont sikeresen törölve!", type: "success" });
+                    this.bus.emit(EVENTS.TOAST_SHOW, { msg: i18next.t("game:markerManager.pointDeletedSuccess"), type: "success" });
                 } catch (error) {
                     console.error(i18next.t("game:markerManager.errorDeletingPointConsole"), error);
                     this.store.setState({ isBusy: { point: false } });

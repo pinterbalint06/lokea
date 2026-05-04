@@ -4,6 +4,7 @@ import { CustomSelect } from "../../../libs/elements/CustomSelect.js";
 import { createElement } from "../../../libs/utils/DOMUtils.js";
 import { ICONS } from "../../../libs/icons/icons.js";
 import { DragAndDropUploader } from "../../../libs/elements/DragAndDropUploader.js";
+import i18next from "../../../libs/language/i18next.js";
 
 export class MapSelectorManager {
     constructor(eventBus, appStore) {
@@ -29,8 +30,8 @@ export class MapSelectorManager {
         );
 
         this.elements.mapUploader = new DragAndDropUploader(this.elements.dropZoneMap, {
-            titleText: "Húzd ide a térkép fájlt",
-            buttonText: "Kattints ide feltöltéshez",
+            titleText: i18next.t("game:mapSelector.dragMapFile"),
+            buttonText: i18next.t("game:mapSelector.clickToUpload"),
             accept: "image/*"
         });
     }
@@ -125,7 +126,7 @@ export class MapSelectorManager {
             class: "form-control form-control-sm map-name-input d-none",
             value: text,
             maxlength: "20",
-            "aria-label": "Térkép neve"
+            "aria-label": i18next.t("game:mapSelector.mapName")
         });
 
         let textContainer = createElement("div", {
@@ -248,13 +249,13 @@ export class MapSelectorManager {
                     if (newTitle.length == 0) {
                         this.#closeRenameContext(mapId);
                         this.bus.emit(EVENTS.TOAST_SHOW, {
-                            msg: "A térkép neve nem lehet üres!",
+                            msg: i18next.t("game:mapSelector.nameCannotBeEmpty"),
                             type: "danger"
                         });
                     } else {
                         if (!newTitle.match(mapTitleRegex)) {
                             this.bus.emit(EVENTS.TOAST_SHOW, {
-                                msg: "A térkép neve 1-20 karakter lehet, csak betű, szám, szóköz, aláhúzás és vonás használható.",
+                                msg: i18next.t("game:mapSelector.invalidNameFormat"),
                                 type: "danger"
                             });
                             inputField.select();
@@ -379,7 +380,7 @@ export class MapSelectorManager {
 
         if (hasClosedRename) {
             this.bus.emit(EVENTS.TOAST_SHOW, {
-                msg: "Az átnevezés megszakítva!"
+                msg: i18next.t("game:mapSelector.renameAborted")
             });
         }
     }

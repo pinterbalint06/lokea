@@ -28,7 +28,7 @@ export class EquirectangularManager {
             if (!isSync) {
                 this.activeLoadGeneration++
                 const loadGeneration = this.activeLoadGeneration;
-                this.bus.emit(EVENTS.TOAST_SHOW, { msg: "Kép betöltése", type: "info", id: `loading${loadGeneration}`, autohide: false, closable: false, spinner: true });
+                this.bus.emit(EVENTS.TOAST_SHOW, { msg: i18next.t("game:equirectangularManager.loadingImage"), type: "info", id: `loading${loadGeneration}`, autohide: false, closable: false, spinner: true });
 
                 if (this.abortController) {
                     this.abortController.abort();
@@ -148,7 +148,7 @@ export class EquirectangularManager {
         const uploadToastId = `uploading${uploadGeneration}`;
 
         this.bus.emit(EVENTS.TOAST_SHOW, {
-            msg: "Kép betöltése",
+            msg: i18next.t("game:equirectangularManager.loadingImage"),
             type: "info",
             id: uploadToastId,
             autohide: false,

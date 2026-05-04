@@ -322,7 +322,7 @@ function showAnswer(response) {
 
     const panel = document.getElementById("guessPanel");
     document.getElementById("guessPanelScore").textContent = response.score ?? 0;
-    document.getElementById("guessPanelDistance").textContent = response.distance != null ? i18next.t("game-maps:gamePage.distance", { distance: response.distance, defaultValue: `Távolság: ${response.distance} px` }) : i18next.t("game-maps:gamePage.wrongMapOrNoMarker", { defaultValue: "Rossz térkép vagy nincs jelölő" });
+    document.getElementById("guessPanelDistance").textContent = response.distance != null ?`${i18next.t("game:gamePage.distance")}: ${response.distance} px` : i18next.t("game:gamePage.wrongMapOrNoMarker", { defaultValue: "Rossz térkép vagy nincs jelölő" });
     document.getElementById("guessPanelTotal").textContent = response.totalScore ?? 0;
     panel.classList.add("open");
 

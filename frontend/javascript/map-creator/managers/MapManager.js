@@ -181,7 +181,7 @@ export class MapManager {
 
             this.bus.emit(EVENTS.MAP_SWITCHED, { mapId });
             let randomIdForToast = Math.floor(Math.random() * 100000);
-            this.bus.emit(EVENTS.TOAST_SHOW, { id: `mapSwitching${mapId}-${randomIdForToast}`, msg: "Váltás: " + mapData.name, type: "info", closable: false, autohide: false });
+            this.bus.emit(EVENTS.TOAST_SHOW, { id: `mapSwitching${mapId}-${randomIdForToast}`, msg: i18next.t("game:mapManager.switchingToMap", { mapName: mapData.name }), type: "info", closable: false, autohide: false });
 
             this.activeLoadGeneration++
             const loadGeneration = this.activeLoadGeneration;
@@ -258,7 +258,7 @@ export class MapManager {
             this.bus.emit(EVENTS.MAP_RENAME_SUCCEEDED, { mapId, newTitle: finalTitle });
             this.bus.emit(EVENTS.TOAST_HIDE_ID, { id: `renamingMap${mapId}` });
             this.bus.emit(EVENTS.TOAST_SHOW, {
-                msg: "Térkép sikeresen átnevezve!",
+                msg: i18next.t("game:mapManager.mapRenamedSuccess"),
                 type: "success",
                 duration: 2000
             });
@@ -317,7 +317,7 @@ export class MapManager {
                 this.store.setState({ isBusy: { map: false } });
             }
         } else {
-            this.bus.emit(EVENTS.TOAST_SHOW, { msg: "A térkép nem található!", type: "danger" });
+            this.bus.emit(EVENTS.TOAST_SHOW, { msg: i18next.t("game:mapManager.mapNotFound"), type: "danger" });
             this.bus.emit(EVENTS.MAP_DELETE_FAILED);
         }
     }

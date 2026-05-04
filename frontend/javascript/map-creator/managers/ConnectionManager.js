@@ -255,7 +255,7 @@ export class ConnectionManager {
                     }
                     this.#renderConnectionsForActiveMap();
                     this.#updateActivePointConnectionsStore();
-                    this.bus.emit(EVENTS.TOAST_SHOW, { msg: "Kapcsolat sikeresen törölve!", type: "success" });
+                    this.bus.emit(EVENTS.TOAST_SHOW, { msg: i18next.t("game:connectionManager.connectionDeletedSuccess"), type: "success" });
                 } else {
                     await this.#deleteConnection(connectionId);
                 }
@@ -295,7 +295,7 @@ export class ConnectionManager {
                     const currentUnsavedConnections = this.store.getState().activePoint.unsavedConnections.length;
                     this.bus.emit(EVENTS.TOAST_SHOW, {
                         id: CONSTANTS.CONNECTION_TOAST_ID,
-                        msg: "Kattints a végpontra!",
+                        msg: i18next.t("game:connectionManager.clickOnEndpoint"),
                         type: "info",
                         autohide: false,
                         callback: () => {
@@ -379,10 +379,10 @@ export class ConnectionManager {
                 }
 
                 if (newSaveSuccess > 0) {
-                    this.bus.emit(EVENTS.TOAST_SHOW, { msg: `${newSaveSuccess} új kapcsolat sikeresen mentve!`, type: "success", iconObject: ICONS.SAVE_FLOPPY });
+                    this.bus.emit(EVENTS.TOAST_SHOW, { msg: i18next.t("game:connectionManager.newConnectionsSavedSuccess", { newSaveSuccess }), type: "success", iconObject: ICONS.SAVE_FLOPPY });
                 }
                 if (newSaveFailed > 0) {
-                    this.bus.emit(EVENTS.TOAST_SHOW, { msg: `${newSaveFailed} új kapcsolat mentése sikertelen!`, type: "danger" });
+                    this.bus.emit(EVENTS.TOAST_SHOW, { msg: i18next.t("game:connectionManager.newConnectionsSaveFailed", { newSaveFailed }), type: "danger" });
                 }
             }
 
@@ -416,10 +416,10 @@ export class ConnectionManager {
                 }
 
                 if (directionSaveSuccess > 0) {
-                    this.bus.emit(EVENTS.TOAST_SHOW, { msg: `${directionSaveSuccess} kapcsolat új irányainak mentése sikeres!`, type: "success", iconObject: ICONS.SAVE_FLOPPY });
+                    this.bus.emit(EVENTS.TOAST_SHOW, { msg: i18next.t("game:connectionManager.connectionDirectionsSavedSuccess", { directionSaveSuccess }), type: "success", iconObject: ICONS.SAVE_FLOPPY });
                 }
                 if (directionSaveFailed > 0) {
-                    this.bus.emit(EVENTS.TOAST_SHOW, { msg: `${directionSaveFailed} kapcsolat új irányainak mentése sikertelen!`, type: "danger" });
+                    this.bus.emit(EVENTS.TOAST_SHOW, { msg: i18next.t("game:connectionManager.connectionDirectionsSaveFailed", { directionSaveFailed }), type: "danger" });
                 }
             }
 
